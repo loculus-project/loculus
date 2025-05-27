@@ -241,6 +241,10 @@ class SubmissionDatabaseService(
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            fileMappingPreconditionValidator
+                .validateFilenamesAreUnique(submittedProcessedData.data.files)
+                .validateCategoriesMatchSchema(submittedProcessedData.data.files, organism)
+
             val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)

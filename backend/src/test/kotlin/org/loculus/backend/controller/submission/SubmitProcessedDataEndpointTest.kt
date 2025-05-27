@@ -487,6 +487,16 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit files to unknown categories THEN fails`() {
+        // TODO
+    }
+
+    @Test
+    fun `WHEN I submit files with duplicate file names THEN fails`() {
+        // TODO
+    }
+
+    @Test
     fun `WHEN I submit non-existing file THEN fails`() {
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)

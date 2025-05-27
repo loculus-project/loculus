@@ -170,4 +170,30 @@ class SubmitEndpointFileSharingTest(
                 ).value("The files in category foo contain duplicate file names: foo.txt"),
             )
     }
+
+    @Test
+    fun `GIVEN unknown file categories THEN the request is not valid`() {
+        val fileIds = filesClient.requestUploads(groupId, 2).andGetFileIds()
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "unknownCategory" to
+                            listOf(FileIdAndName(fileIds[0], "foo.txt")),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+            )
+    }
 }

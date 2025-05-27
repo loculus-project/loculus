@@ -16,10 +16,8 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
-import org.loculus.backend.service.submission.FileMappingPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator

@@ -293,6 +293,35 @@ class ReviseEndpointTest(
             )
     }
 
+    @Test
+    fun `GIVEN unknown file category THEN returns unprocessable entity`() {
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+        )
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            fileMapping = mapOf(
+                "foo" to
+                    mapOf(
+                        "unknownCategory" to
+                            listOf(
+                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            ),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+            )
+    }
+
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
     @MethodSource("badRequestForRevision")
     fun `GIVEN invalid data THEN throws bad request`(

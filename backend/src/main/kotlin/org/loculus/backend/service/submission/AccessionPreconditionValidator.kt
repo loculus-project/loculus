@@ -7,7 +7,6 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator

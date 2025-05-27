@@ -2,10 +2,10 @@ package org.loculus.backend.service.submission
 
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
-import org.loculus.backend.api.categories
-import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
+import org.loculus.backend.api.categories
+import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Component
@@ -25,7 +25,10 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
         return this
     }
 
-    fun validateCategoriesMatchSchema(fileCategoriesFilesMap: FileCategoryFilesMap?, organism: Organism): FileMappingPreconditionValidator {
+    fun validateCategoriesMatchSchema(
+        fileCategoriesFilesMap: FileCategoryFilesMap?,
+        organism: Organism,
+    ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         val allowedCategories = backendConfig
             .getInstanceConfig(organism)
@@ -47,14 +50,19 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
 class SubmissionIdFilesMappingPreconditionValidator(
     private val fileMappingValidator: FileMappingPreconditionValidator,
 ) {
-    fun validateFilenamesAreUnique(submissionIdFilesMap: SubmissionIdFilesMap?): SubmissionIdFilesMappingPreconditionValidator {
+    fun validateFilenamesAreUnique(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateFilenamesAreUnique(it)
         }
         return this
     }
 
-    fun validateCategoriesMatchSchema(submissionIdFilesMap: SubmissionIdFilesMap?, organism: Organism): SubmissionIdFilesMappingPreconditionValidator {
+    fun validateCategoriesMatchSchema(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+        organism: Organism,
+    ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateCategoriesMatchSchema(it, organism)
         }

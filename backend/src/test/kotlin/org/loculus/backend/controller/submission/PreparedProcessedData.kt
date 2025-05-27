@@ -479,7 +479,7 @@ object PreparedProcessedData {
     fun withFiles(accession: Accession, fileId: FileId) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         data = defaultProcessedData.copy(
-            files = mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt"))),
+            files = mapOf("foo" to listOf(FileIdAndName(fileId, "foo.txt"))),
         ),
     )
 }
