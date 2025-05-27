@@ -264,7 +264,7 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `GIVEN duplicate filenames THEN returns bad request`() {
+    fun `GIVEN duplicate filenames THEN returns unprocessable entity`() {
         val accessions = convenienceClient.prepareDataTo(
             status = APPROVED_FOR_RELEASE,
         )
@@ -284,12 +284,12 @@ class ReviseEndpointTest(
                     ),
             ),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files for foo in category bar contain duplicate file names: foo.txt"),
+                ).value("The files in category bar contain duplicate file names: foo.txt"),
             )
     }
 

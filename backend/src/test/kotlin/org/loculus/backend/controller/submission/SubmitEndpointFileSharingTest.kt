@@ -48,7 +48,7 @@ class SubmitEndpointFileSharingTest(
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt")))),
+            fileMapping = mapOf("custom0" to mapOf("foo" to listOf(FileIdAndName(fileId, "foo.txt")))),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -71,7 +71,7 @@ class SubmitEndpointFileSharingTest(
             fileMapping = mapOf(
                 "foobar" to
                     mapOf(
-                        "myFileCategory" to listOf(
+                        "foo" to listOf(
                             FileIdAndName(fileId, "foo.txt"),
                             FileIdAndName(randomId, "bar.txt"),
                         ),
@@ -102,7 +102,7 @@ class SubmitEndpointFileSharingTest(
             fileMapping = mapOf(
                 "custom0" to
                     mapOf(
-                        "myFileCategory" to listOf(
+                        "foo" to listOf(
                             FileIdAndName(fileId, "foo.txt"),
                             FileIdAndName(randomId, "bar.txt"),
                         ),
@@ -133,7 +133,7 @@ class SubmitEndpointFileSharingTest(
             groupId = groupId,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt"))),
+                    mapOf("foo" to listOf(FileIdAndName(fileId, "foo.txt"))),
             ),
         )
             .andExpect(status().isBadRequest())
@@ -157,17 +157,17 @@ class SubmitEndpointFileSharingTest(
             fileMapping = mapOf(
                 "custom0" to
                     mapOf(
-                        "myFileCategory" to
+                        "foo" to
                             listOf(FileIdAndName(fileIds[0], "foo.txt"), FileIdAndName(fileIds[1], "foo.txt")),
                     ),
             ),
         )
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isUnprocessableEntity())
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files for custom0 in category myFileCategory contain duplicate file names: foo.txt"),
+                ).value("The files in category foo contain duplicate file names: foo.txt"),
             )
     }
 }

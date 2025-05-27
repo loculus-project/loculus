@@ -248,7 +248,7 @@ class ExtractUnprocessedDataEndpointTest(
                     hasProperty<OriginalDataWithFileUrls<GeneticSequence>>(
                         "files",
                         hasEntry<String, List<FileIdAndNameAndReadUrl>>(
-                            `is`("myFileCategory"),
+                            `is`("foo"),
                             everyItem(
                                 hasProperty("readUrl", notNullValue()),
                             ),
@@ -267,7 +267,7 @@ class ExtractUnprocessedDataEndpointTest(
             numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
         )
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
-        val url = responseBody.first().data.files!!["myFileCategory"]!!.first().readUrl
+        val url = responseBody.first().data.files!!["foo"]!!.first().readUrl
 
         val client = HttpClient.newHttpClient()
         val request = HttpRequest.newBuilder()

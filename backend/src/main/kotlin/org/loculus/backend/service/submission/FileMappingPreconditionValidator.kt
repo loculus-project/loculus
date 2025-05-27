@@ -12,13 +12,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class FileMappingPreconditionValidator(private val backendConfig: BackendConfig) {
-    fun validateFilenamesAreUnique(submissionIdFilesMap: SubmissionIdFilesMap?): FileMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            this.validateFilenamesAreUnique(it)
-        }
-        return this
-    }
-
     fun validateFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
@@ -28,13 +21,6 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
                     "The files in category $category contain duplicate file names: ${duplicateFileNames.joinToString()}",
                 )
             }
-        }
-        return this
-    }
-
-    fun validateCategoriesMatchSchema(submissionIdFilesMap: SubmissionIdFilesMap?, organism: Organism): FileMappingPreconditionValidator {
-        submissionIdFilesMap?.values?.forEach {
-            this.validateCategoriesMatchSchema(it, organism)
         }
         return this
     }
@@ -49,9 +35,28 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
         fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
-                    "The category $category is not part of the configured categories for $organism.",
+                    "The category $category is not part of the configured categories for ${organism.name}.",
                 )
             }
+        }
+        return this
+    }
+}
+
+@Component
+class SubmissionIdFilesMappingPreconditionValidator(
+    private val fileMappingValidator: FileMappingPreconditionValidator,
+) {
+    fun validateFilenamesAreUnique(submissionIdFilesMap: SubmissionIdFilesMap?): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateFilenamesAreUnique(it)
+        }
+        return this
+    }
+
+    fun validateCategoriesMatchSchema(submissionIdFilesMap: SubmissionIdFilesMap?, organism: Organism): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateCategoriesMatchSchema(it, organism)
         }
         return this
     }
