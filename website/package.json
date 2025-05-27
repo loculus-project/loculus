@@ -22,7 +22,7 @@
     },
     "dependencies": {
         "@astrojs/mdx": "^4.3.0",
-        "@astrojs/node": "^9.2.1",
+        "@astrojs/node": "^9.2.2",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@lokalise/xlsx": "^0.20.3",
@@ -49,7 +49,7 @@
         "luxon": "^3.6.1",
         "neverthrow": "^8.2.0",
         "openid-client": "^5.7.1",
-        "papaparse": "^5.5.2",
+        "papaparse": "^5.5.3",
         "react": "^18.3.1",
         "react-chartjs-2": "^5.3.0",
         "react-confirm-alert": "^3.0.6",
@@ -60,7 +60,7 @@
         "sanitize-html": "^2.17.0",
         "unplugin-icons": "^22.1.0",
         "winston": "^3.17.0",
-        "zod": "^3.25.28"
+        "zod": "^3.25.30"
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.4",
@@ -68,7 +68,7 @@
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.27.0",
-        "@iconify/json": "^2.2.338",
+        "@iconify/json": "^2.2.342",
         "@playwright/test": "^1.52.0",
         "@tailwindcss/forms": "^0.5.9",
         "@tanstack/eslint-plugin-query": "^5.78.0",
@@ -77,9 +77,9 @@
         "@testing-library/react": "^16.3.0",
         "@testing-library/user-event": "^14.6.1",
         "@types/jsonwebtoken": "^9.0.9",
-        "@types/lodash": "^4.17.16",
+        "@types/lodash": "^4.17.17",
         "@types/luxon": "^3.6.2",
-        "@types/node": "^22.15.18",
+        "@types/node": "^22.15.21",
         "@types/papaparse": "^5.3.16",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
@@ -98,7 +98,7 @@
         "eslint-plugin-react-hooks": "^6.0.0",
         "happy-dom": "^17.4.7",
         "jsdom-testing-mocks": "^1.13.1",
-        "msw": "^2.8.2",
+        "msw": "^2.8.4",
         "prettier": "3.5.3",
         "prettier-plugin-astro": "^0.14.1",
         "resize-observer-polyfill": "^1.5.1",
@@ -108,6 +108,6 @@
         "typescript-eslint": "^8.32.1",
         "uuid": "^11.1.0",
         "vite": "^6.3.5",
-        "vitest": "3.1.3"
+        "vitest": "3.1.4"
     }
 }
