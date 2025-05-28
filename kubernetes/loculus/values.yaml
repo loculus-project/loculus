@@ -1802,6 +1802,15 @@ replicas:
   website: 1
   backend: 1
   lapis: 1
+autoscaling:
+  website:
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+  lapis:
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:

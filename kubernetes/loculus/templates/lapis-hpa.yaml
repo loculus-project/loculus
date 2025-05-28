@@ -1,0 +1,21 @@
+{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loculus-lapis-{{ $key }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loculus-lapis-{{ $key }}
+  minReplicas: {{ $.Values.autoscaling.lapis.minReplicas }}
+  maxReplicas: {{ $.Values.autoscaling.lapis.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $.Values.autoscaling.lapis.targetCPUUtilizationPercentage }}
+{{- end }}
