@@ -9,7 +9,9 @@
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
-{{- $replicas := $processingConfig.replicas | default 1 }}
+{{- $replicasCfg := $processingConfig.replicas }}
+{{- $min := ($replicasCfg.min | default (toInt $replicasCfg)) | default 1 }}
+{{- $max := ($replicasCfg.max | default $min) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -18,7 +20,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
-  replicas: {{ $replicas }}
+  {{- if eq $min $max }}
+  replicas: {{ $min }}
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
@@ -61,6 +65,27 @@ spec:
           configMap:
             name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
       {{- end }}
+{{- if ne $min $max }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+  minReplicas: {{ $min }}
+  maxReplicas: {{ $max }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
