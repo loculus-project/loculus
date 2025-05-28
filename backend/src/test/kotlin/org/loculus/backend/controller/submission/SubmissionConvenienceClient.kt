@@ -48,7 +48,11 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
+data class SubmissionResult(
+    val submissionIdMappings: List<SubmissionIdMapping>,
+    val groupId: Int,
+    val submissionIdFilesMap: SubmissionIdFilesMap?,
+)
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
@@ -127,6 +131,7 @@ class SubmissionConvenienceClient(
         return SubmissionResult(
             submissionIdMappings = deserializeJsonResponse(submit),
             groupId = groupIdToSubmitFor,
+            submissionIdFilesMap = fileMapping,
         )
     }
 
