@@ -16,6 +16,7 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -87,6 +88,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val s3Service: S3Service,
 ) {
 
     companion object AcceptedFileTypes {
@@ -115,6 +117,20 @@ class SubmitModel(
         submissionIdFilesMappingPreconditionValidator
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+
+        val usedFileIds = submissionParams.files?.getAllFileIds()
+
+        if (usedFileIds != null) {
+            val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(usedFileIds)
+            uncheckedFileIds.forEach { fileId ->
+                val fileSize = s3Service.getFileSize(fileId)
+                if (fileSize == null) {
+                    throw UnprocessableEntityException("The file $fileId doesn't exist.")
+                } else {
+                    filesDatabaseService.setFileSize(fileId, fileSize)
+                }
+            }
+        }
 
         insertDataIntoAux(
             uploadId,
