@@ -106,8 +106,8 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
                     />
                 </div>
-            ) : (
-                isLoading ? null : <div>Failed to load sequence data</div>
+            ) : isLoading ? null : (
+                <div>Failed to load sequence data</div>
             )}
         </div>
     );
