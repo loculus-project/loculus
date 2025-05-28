@@ -118,6 +118,10 @@ class SubmitModel(
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
 
+        submissionParams.files?.let { submittedFiles ->
+            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+        }
+
         val usedFileIds = submissionParams.files?.getAllFileIds()
 
         if (usedFileIds != null) {
@@ -156,10 +160,6 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
-        }
-
-        submissionParams.files?.let { submittedFiles ->
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {

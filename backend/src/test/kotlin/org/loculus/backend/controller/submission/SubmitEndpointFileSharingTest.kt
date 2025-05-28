@@ -11,6 +11,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForAlternativeUser
@@ -21,6 +22,10 @@ import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.*
 
 @EndpointTest(
@@ -39,16 +44,31 @@ class SubmitEndpointFileSharingTest(
         groupId = groupManagementClient.createNewGroup().andGetGroupId()
     }
 
+    fun uploadContent(presignedWriteUrl: String, content: String) {
+        val client = HttpClient.newBuilder().build()
+        val fileContent = content.toByteArray()
+
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(presignedWriteUrl))
+            .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+            .build()
+
+        client.send(request, HttpResponse.BodyHandlers.ofString())
+    }
+
     @Test
     fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
-        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
+        val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
+        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
             organism = DEFAULT_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt")))),
+            fileMapping = mapOf(
+                "custom0" to mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
+            ),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -60,8 +80,8 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
-        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
-        val randomId = UUID.randomUUID()
+        val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
+        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -72,8 +92,7 @@ class SubmitEndpointFileSharingTest(
                 "foobar" to
                     mapOf(
                         "myFileCategory" to listOf(
-                            FileIdAndName(fileId, "foo.txt"),
-                            FileIdAndName(randomId, "bar.txt"),
+                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
                         ),
                     ),
             ),
@@ -121,10 +140,11 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN file from a different user and group THEN the request is not valid`() {
         val otherGroupId = groupManagementClient.createNewGroup(jwt = jwtForAlternativeUser).andGetGroupId()
-        val fileId = filesClient.requestUploads(
+        val fileIdAndUrl = filesClient.requestUploads(
             groupId = otherGroupId,
             jwt = jwtForAlternativeUser,
-        ).andGetFileIds()[0]
+        ).andGetFileIdsAndUrls()[0]
+        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -133,7 +153,7 @@ class SubmitEndpointFileSharingTest(
             groupId = groupId,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf("myFileCategory" to listOf(FileIdAndName(fileId, "foo.txt"))),
+                    mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrl.fileId, "foo.txt"))),
             ),
         )
             .andExpect(status().isBadRequest())
@@ -141,7 +161,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The File $fileId does not belong to group $groupId."),
+                ).value("The File ${fileIdAndUrl.fileId} does not belong to group $groupId."),
             )
     }
 
