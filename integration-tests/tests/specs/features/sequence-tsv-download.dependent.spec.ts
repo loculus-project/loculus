@@ -25,5 +25,5 @@ test('Download metadata TSV for a single sequence', async ({ page }) => {
     const fields = lines[0].split('\t');
     expect(fields.length).toBeGreaterThan(5);
     const values = lines[1].split('\t');
-    expect(values.length).toBeGreaterThan(5);    
+    expect(values.length).toBeGreaterThan(5);
 });
