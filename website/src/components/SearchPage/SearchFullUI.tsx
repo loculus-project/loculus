@@ -296,6 +296,7 @@ export const InnerSearchFullUI = ({
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -458,6 +459,7 @@ export const InnerSearchFullUI = ({
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}
                                     sequenceFilter={downloadFilter}
+                                    sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
                                 />

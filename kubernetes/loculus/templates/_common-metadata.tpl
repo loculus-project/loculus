@@ -184,8 +184,11 @@ organisms:
         {{- range $linkOut := .linkOuts }}
         - name: {{ quote $linkOut.name }}
           url: {{ quote $linkOut.url }}
+          {{- if $linkOut.maxNumberOfRecommendedEntries }}
+          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
         {{- end }}
-      {{ end }}
+      {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .richFastaHeaderFields}}
       richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}

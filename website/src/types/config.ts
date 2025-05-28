@@ -108,6 +108,7 @@ export type GroupedMetadataFilter = {
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
+    maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;
