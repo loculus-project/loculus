@@ -7,6 +7,8 @@ import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.EditedSequenceEntryData
+import org.loculus.backend.api.FileIdAndName
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -19,6 +21,7 @@ import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.UUID
 
 @EndpointTest
 class SubmitEditedSequenceEntryVersionEndpointTest(
@@ -190,6 +193,59 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessionVersion.accession, version = accessionVersion.version)
             .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `WHEN submitting files with duplicate names THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = OriginalData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "foo" to
+                        listOf(
+                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail", containsString("duplicate file names")),
+            )
+    }
+
+    @Test
+    fun `WHEN submitting unknown file categories THEN an error is returned`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = OriginalData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "unknownCategory" to
+                        listOf(
+                            FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail", containsString("unknownCategory is not part of the configured categories")),
+            )
     }
 
     private fun generateEditedData(accession: String, version: Long = 1) = EditedSequenceEntryData(
