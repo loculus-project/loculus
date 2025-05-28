@@ -13,7 +13,7 @@ const schema: Schema = {
     metadata: [
         { name: 'metadataField1', type: 'string', header: 'testHeader1' },
         { name: 'metadataField2', type: 'string' },
-        { name: 'timestampField', type: 'timestamp' },
+        { name: 'timestampField', type: 'timestamp', displayName: 'Timestamp field' },
     ],
     tableColumns: [],
     defaultOrderBy: 'metadataField1',
