@@ -3,6 +3,7 @@ package org.loculus.backend.service.files
 import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
 import io.minio.SetObjectTagsArgs
+import io.minio.StatObjectArgs
 import io.minio.http.Method
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
@@ -104,4 +105,18 @@ class S3Service(private val s3Config: S3Config) {
             .build()
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
+
+    fun getFileSize(fileId: FileId): Long? {
+        val config = getS3BucketConfig()
+        return try {
+            getInternalClient().statObject(
+                StatObjectArgs.builder()
+                    .bucket(config.bucket)
+                    .`object`(getFileIdPath(fileId))
+                    .build(),
+            ).size()
+        } catch (e: io.minio.errors.ErrorResponseException) {
+            if (e.errorResponse().code() == "NoSuchKey") null else throw e
+        }
+    }
 }
