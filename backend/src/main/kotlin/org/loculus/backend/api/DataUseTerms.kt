@@ -57,6 +57,7 @@ enum class DataUseTermsType {
 )
 @JsonPropertyOrder(value = ["type", "restrictedUntil"])
 sealed interface DataUseTerms {
+    @get:JsonIgnore
     val type: DataUseTermsType
 
     @JsonTypeName("OPEN")
