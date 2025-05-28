@@ -378,7 +378,8 @@ typealias FileCategory = String
  */
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
-fun FileCategoryFilesMap.categories(): Set<FileCategory> = this.keys
+val FileCategoryFilesMap.categories: Set<FileCategory>
+    get() = this.keys
 
 fun FileCategoryFilesMap.addUrls(
     buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,

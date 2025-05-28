@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 class FileMappingPreconditionValidator(private val backendConfig: BackendConfig) {
     fun validateFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
-        fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
+        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             val duplicateFileNames = fileCategoriesFilesMap.getDuplicateFileNames(category)
             if (duplicateFileNames.isNotEmpty()) {
                 throw UnprocessableEntityException(
@@ -34,8 +34,9 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
             .getInstanceConfig(organism)
             .schema.submissionDataTypes.files.categories
             .map { it.name }
+            .toSet()
 
-        fileCategoriesFilesMap.categories().forEach { category: FileCategory ->
+        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
                     "The category $category is not part of the configured categories for ${organism.name}.",
