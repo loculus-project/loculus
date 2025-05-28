@@ -37,4 +37,10 @@ object FilesTable : Table(FILES_TABLE_NAME) {
      * When a file was made public.
      */
     val releasedAtColumn = datetime("released_at").nullable()
+
+    /**
+     * File size in bytes. Can be null.
+     * If null, the file hasn't been uploaded yet, or file size hasn't been checked yet.
+     */
+    val sizeColumn = long("size").nullable()
 }
