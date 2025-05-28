@@ -334,6 +334,7 @@ export const InnerSearchFullUI = ({
                 setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal
+                key={previewedSeqId ?? 'seq-modal'}
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
