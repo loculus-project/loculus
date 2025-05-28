@@ -199,7 +199,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
           # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
           # If changed, ensure it's mirrored to Pathoplexus
-          # Last check: 2024-11-01
+          # Last check: 2025-05-28
           # Last update: 2024-09-18
           - name: Afghanistan
           - name: Albania
