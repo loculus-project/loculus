@@ -3,10 +3,6 @@ import type { Download } from '@playwright/test';
 
 import { expect, test } from './e2e.fixture.ts';
 
-// Reuse the template download logic from the page objects and validate filenames
-// and column headers like in the end-to-end tests. Skip download checks on
-// WebKit as the browser doesn't handle them correctly.
-
 test.describe('Metadata template download', () => {
     test('submission and revision templates can be downloaded', async ({
         submitPage,
