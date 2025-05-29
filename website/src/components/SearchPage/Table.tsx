@@ -1,5 +1,6 @@
 import { capitalCase } from 'change-case';
 import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import ScrollContainer from './ScrollContainer.jsx';
@@ -16,9 +17,9 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: unknown, maxLength: number, type: string): string {
-    if (typeof value === 'string' && value.toString().length > maxLength) {
-        return `${value.toString().slice(0, maxLength)}…`;
+function formatField(value: unknown, type: string): string {
+    if (typeof value === 'string') {
+        return value.toString();
     } else if (typeof value === 'number' && Number.isInteger(value)) {
         if (type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
@@ -48,6 +49,41 @@ type TableProps = {
 const getColumnWidthStyle = (columnWidth: number | undefined) =>
     columnWidth !== undefined ? `${columnWidth}px` : `130px`;
 
+type CellContentProps = {
+    value: Metadatum;
+    type: string;
+    columnWidth: number | undefined;
+};
+
+const CellContent: FC<CellContentProps> = ({ value, type, columnWidth }) => {
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [isTruncated, setIsTruncated] = useState(false);
+
+    useEffect(() => {
+        if (textRef.current) {
+            setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        }
+    }, [value]);
+
+    const formattedValue = formatField(value, type);
+    const tooltipText =
+        typeof formattedValue === 'string'
+            ? formattedValue.slice(0, MAX_TOOLTIP_LENGTH) + (formattedValue.length > MAX_TOOLTIP_LENGTH ? '..' : '')
+            : formattedValue;
+
+    return (
+        <span
+            ref={textRef}
+            className='truncate block'
+            style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
+            data-tooltip-id={isTruncated ? 'table-tip' : undefined}
+            data-tooltip-content={isTruncated ? tooltipText : undefined}
+        >
+            {formattedValue}
+        </span>
+    );
+};
+
 export const Table: FC<TableProps> = ({
     data,
     schema,
@@ -62,15 +98,12 @@ export const Table: FC<TableProps> = ({
 }) => {
     const primaryKey = schema.primaryKey;
 
-    const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
-
     const columns = columnsToShow
         .map((field) => {
             const metadata = schema.metadata.find((m) => m.name === field);
             return {
                 field,
                 headerName: metadata?.displayName ?? capitalCase(field),
-                maxLength: maxLengths[field],
                 type: metadata?.type ?? 'string',
                 columnWidth: metadata?.columnWidth,
                 order: metadata?.order ?? Number.MAX_SAFE_INTEGER,
@@ -225,16 +258,12 @@ export const Table: FC<TableProps> = ({
                                             style={{
                                                 minWidth: getColumnWidthStyle(c.columnWidth),
                                             }}
-                                            data-tooltip-content={
-                                                typeof row[c.field] === 'string' &&
-                                                row[c.field]!.toString().length > c.maxLength
-                                                    ? row[c.field]!.toString().slice(0, MAX_TOOLTIP_LENGTH) +
-                                                      (row[c.field]!.toString().length > MAX_TOOLTIP_LENGTH ? '..' : '')
-                                                    : ''
-                                            }
-                                            data-tooltip-id='table-tip'
                                         >
-                                            {formatField(row[c.field], c.maxLength, c.type)}
+                                            <CellContent
+                                                value={row[c.field]}
+                                                type={c.type}
+                                                columnWidth={c.columnWidth}
+                                            />
                                         </td>
                                     ))}
                                 </tr>
