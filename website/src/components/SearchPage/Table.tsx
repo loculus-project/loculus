@@ -18,9 +18,7 @@ export type TableSequenceData = {
 };
 
 function formatField(value: unknown, type: string): string {
-    if (typeof value === 'string') {
-        return value.toString();
-    } else if (typeof value === 'number' && Number.isInteger(value)) {
+    if (typeof value === 'number' && Number.isInteger(value)) {
         if (type === 'timestamp') {
             return new Date(value * 1000).toISOString().slice(0, 10);
         }
