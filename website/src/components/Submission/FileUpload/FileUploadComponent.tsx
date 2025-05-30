@@ -200,7 +200,7 @@ export const FileUploadComponent = ({
                     >
                         <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Download sequence'>
                             <IcBaselineDownload
-                                className={`${downloadDisabled ? 'text-gray-400' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
+                                className={`${downloadDisabled ? 'text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
                             />
                         </div>
                     </button>
