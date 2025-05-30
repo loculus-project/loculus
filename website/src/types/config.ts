@@ -169,6 +169,11 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
+const fieldToDisplay = z.object({
+    field: z.string(),
+    displayName: z.string(),
+});
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -180,6 +185,7 @@ export const websiteConfig = z.object({
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     enableSeqSets: z.boolean(),
+    seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),

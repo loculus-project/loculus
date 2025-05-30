@@ -5,6 +5,13 @@ seqSets:
   crossRef:
     DOIPrefix: "placeholder"
     endpoint: "https://test.crossref.org"
+  fieldsToDisplay:
+    - field: "geoLocCountry"
+      displayName: "Country"
+    - field: "sampleCollectionDate"
+      displayName: "Collection Date"
+    - field: "authors"
+      displayName: "Authors"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false

@@ -832,6 +832,26 @@
               "description": "The host URL for CrossRef callbacks"
             }
           }
+        },
+        "fieldsToDisplay": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Fields to display in the SeqSets table",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "The metadata field name to display"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the field"
+              }
+            },
+            "required": ["field", "displayName"]
+          }
         }
       }
     },
