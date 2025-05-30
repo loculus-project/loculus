@@ -62,7 +62,6 @@ const fetchRecordsMetadata = async (
                 organism,
             }));
         } catch (_error) {
-            // If this LAPIS instance doesn't have these accessions, it will error - that's ok
             return [];
         }
     });
