@@ -105,7 +105,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
 }) => {
     const singleSegment = editableSequences.rows.length === 1;
     return (
-        <div className='border border-gray-300 rounded-lg p-4'>
+        <>
             <h3 className='subtitle'>{`Nucleotide sequence${singleSegment ? '' : 's'}`}</h3>
             <div className='flex flex-col lg:flex-row gap-6'>
                 {editableSequences.rows.map((field) => (
@@ -159,6 +159,6 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 };
