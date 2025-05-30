@@ -48,7 +48,6 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
-    truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
