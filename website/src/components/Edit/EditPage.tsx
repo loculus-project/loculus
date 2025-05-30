@@ -1,7 +1,6 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import type { Row } from './InputField.tsx';
 import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
 import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -108,7 +107,12 @@ const InnerEditPage: FC<EditPageProps> = ({
             </table>
             {submissionDataTypes.consensusSequences && (
                 <div className='mt-4 space-y-4'>
-                    <SequencesForm editableSequences={editableSequences} setEditableSequences={setEditableSequences} />
+                    <SequencesForm
+                        editableSequences={editableSequences}
+                        setEditableSequences={setEditableSequences}
+                        dataToEdit={dataToEdit}
+                        isLoading={isLoading}
+                    />
                 </div>
             )}
 
@@ -126,19 +130,6 @@ const InnerEditPage: FC<EditPageProps> = ({
                     {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
                 </button>
-
-                {submissionDataTypes.consensusSequences && (
-                    <button
-                        className='btn normal-case'
-                        onClick={() => generateAndDownloadFastaFile(editableSequences.rows, dataToEdit)}
-                        title={`Download the original, unaligned sequence${
-                            editableSequences.rows.length > 1 ? 's' : ''
-                        } as provided by the submitter`}
-                        disabled={isLoading}
-                    >
-                        Download Sequence{editableSequences.rows.length > 1 ? 's' : ''}
-                    </button>
-                )}
             </div>
         </>
     );
@@ -200,22 +191,4 @@ function useSubmitEdit(
             },
         },
     );
-}
-
-function generateAndDownloadFastaFile(editedSequences: Row[], editedData: SequenceEntryToEdit) {
-    const accessionVersion = getAccessionVersionString(editedData);
-    const fileContent =
-        editedSequences.length === 1
-            ? `>${accessionVersion}\n${editedSequences[0].value}`
-            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n`).join('');
-
-    const blob = new Blob([fileContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${accessionVersion}.fasta`;
-    a.click();
-
-    URL.revokeObjectURL(url);
 }
