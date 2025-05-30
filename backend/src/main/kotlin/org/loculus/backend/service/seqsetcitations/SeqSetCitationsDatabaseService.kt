@@ -458,10 +458,15 @@ class SeqSetCitationsDatabaseService(
             throw UnprocessableEntityException("SeqSet must not contain duplicate accessions")
         }
 
-        val accessionsWithoutVersions = seqSetRecords.filter { !it.accession.contains('.') }.map { it.accession }
-        accessionPreconditionValidator.validate {
-            thatAccessionsExist(accessionsWithoutVersions)
-                .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+        val accessionsWithoutVersions = seqSetRecords
+            .filter { !it.accession.contains('.') }
+            .map { it.accession }
+
+        for (chunk in accessionsWithoutVersions.chunked(1000)) {
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(chunk)
+                    .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+            }
         }
         val accessionsWithVersions = try {
             seqSetRecords
@@ -474,9 +479,11 @@ class SeqSetCitationsDatabaseService(
             throw UnprocessableEntityException("Accession versions must be integers")
         }
 
-        accessionPreconditionValidator.validate {
-            thatAccessionVersionsExist(accessionsWithVersions)
-                .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+        for (chunk in accessionsWithVersions.chunked(1000)) {
+            accessionPreconditionValidator.validate {
+                thatAccessionVersionsExist(chunk)
+                    .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+            }
         }
     }
 
