@@ -176,17 +176,15 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                     key={fieldConfig.field}
                                     className='text-left pr-4 truncate max-w-0'
                                     title={
-                                        (metadata?.[fieldConfig.field] !== undefined &&   metadata?.[fieldConfig.field] !== null)
-                                            ? String(metadata[fieldConfig.field])
-                                            : 'N/A'
+                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                        String(metadata?.[fieldConfig.field] ?? '')
                                     }
                                 >
                                     {isLoading ? (
                                         <span className='loading loading-spinner loading-xs'></span>
-                                    ) : metadata?.[fieldConfig.field] !== undefined ? (
-                                        String(metadata[fieldConfig.field])
                                     ) : (
-                                        'N/A'
+                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                        String(metadata?.[fieldConfig.field] ?? '')
                                     )}
                                 </td>
                             ))}
