@@ -24,6 +24,11 @@ spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
+        - name: crash-test-container
+          image: busybox:latest
+          command: ["sh", "-c", "sleep 1 && exit 1"]
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
       containers:
         - name: website
           image: "{{ $.Values.images.website.repository }}:{{ $.Values.images.website.tag | default $dockerTag }}"
@@ -46,10 +51,6 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
-        - name: crash-test-container
-          image: busybox:latest
-          command: ["sh", "-c", "sleep 30 && exit 1"]
-          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
