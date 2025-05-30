@@ -38,8 +38,13 @@ const fetchRecordsMetadata = async (
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
+    // filter out "organism" as substring in lapisUrls
+    const lapisUrlsWithoutDummies = Object.fromEntries(
+        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
+    );
+
     // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(clientConfig.lapisUrls).map(async ([organism, lapisUrl]) => {
+    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
         try {
             const detailsResponse = await axios.post(`${lapisUrl}/sample/details`, {
                 accessionVersion: accessions,
