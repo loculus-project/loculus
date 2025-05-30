@@ -94,8 +94,15 @@ export class EditableSequences {
 type SequenceFormProps = {
     editableSequences: EditableSequences;
     setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
+    dataToEdit?: SequenceEntryToEdit;
+    isLoading?: boolean;
 };
-export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => {
+export const SequencesForm: FC<SequenceFormProps> = ({
+    editableSequences,
+    setEditableSequences,
+    dataToEdit,
+    isLoading,
+}) => {
     const singleSegment = editableSequences.rows.length === 1;
     return (
         <>
@@ -126,6 +133,28 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                                     : undefined
                             }
                             showUndo={true}
+                            onDownload={
+                                field.initialValue.length > 0 && dataToEdit
+                                    ? () => {
+                                          const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
+                                          const fileName = singleSegment
+                                              ? `${accessionVersion}.fasta`
+                                              : `${accessionVersion}_${field.key}.fasta`;
+                                          const fileContent = `>${singleSegment ? accessionVersion : `${accessionVersion}_${field.key}`}\n${field.initialValue}`;
+
+                                          const blob = new Blob([fileContent], { type: 'text/plain' });
+                                          const url = URL.createObjectURL(blob);
+
+                                          const a = document.createElement('a');
+                                          a.href = url;
+                                          a.download = fileName;
+                                          a.click();
+
+                                          URL.revokeObjectURL(url);
+                                      }
+                                    : undefined
+                            }
+                            downloadDisabled={isLoading}
                         />
                     </div>
                 ))}
