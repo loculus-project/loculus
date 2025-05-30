@@ -176,7 +176,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                                     key={fieldConfig.field}
                                     className='text-left pr-4 truncate max-w-0'
                                     title={
-                                        metadata?.[fieldConfig.field] !== undefined
+                                        (metadata?.[fieldConfig.field] !== undefined &&   metadata?.[fieldConfig.field] !== null)
                                             ? String(metadata[fieldConfig.field])
                                             : 'N/A'
                                     }
