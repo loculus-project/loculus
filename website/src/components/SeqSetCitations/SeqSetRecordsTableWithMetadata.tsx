@@ -38,7 +38,9 @@ const fetchRecordsMetadata = async (
     // Extract just the field names for the API request
     const fields = fieldsToDisplay.map((f) => f.field);
 
-    // filter out "organism" as substring in lapisUrls
+    // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
+    // #TODO: do this better, in a less hacky way
+    // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
     const lapisUrlsWithoutDummies = Object.fromEntries(
         Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
