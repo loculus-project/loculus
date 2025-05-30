@@ -97,63 +97,59 @@ environment: local # Do not change this: this setup uses a "local" environment a
 runDevelopmentMainDatabase: true
 runDevelopmentKeycloakDatabase: true
 
-website:
-    runtimeConfig:
-        public:
-            backendUrl: 'https://api.<your domain>/backend'
-            lapisUrlTemplate: 'https://api.<your domain>/%organism%'
-            keycloakUrl: 'https://auth.<your domain>'
+public:
+  backendUrl: 'https://api.<your domain>/backend'
+  lapisUrlTemplate: 'https://api.<your domain>/%organism%'
+  keycloakUrl: 'https://auth.<your domain>'
 
 auth:
-    verifyEmail: false
-    resetPasswordAllowed: false
-    registrationAllowed: true
-    smtp: null
-    identityProviders: null
+  verifyEmail: false
+  resetPasswordAllowed: false
+  registrationAllowed: true
 
 disableIngest: true
 disableEnaSubmission: true
 
 seqSets:
-    enabled: false
+  enabled: false
 
 secrets:
-    keycloak-admin:
-        type: raw
-        data:
-            initialAdminPassword: '<your initial admin password>'
+  keycloak-admin:
+    type: raw
+    data:
+      initialAdminPassword: '<your initial admin password>'
 
 organisms:
-    angelovirus:
-        schema:
-            organismName: 'Angelovirus'
-            metadata:
-                - name: country
-                  type: string
-                  initiallyVisible: true
-                - name: city
-                  type: string
-                  initiallyVisible: true
-            website:
-                tableColumns:
-                    - country
-                    - city
-                defaultOrder: descending
-                defaultOrderBy: country
-        preprocessing:
-            - version: 1
-              image: ghcr.io/loculus-project/preprocessing-nextclade
-              args:
-                  - 'prepro'
-              configFile:
-                  log_level: DEBUG
-                  genes: []
-                  batch_size: 100
-        referenceGenomes:
-            nucleotideSequences:
-                - name: 'main'
-                  sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
-            genes: []
+  angelovirus:
+    schema:
+      organismName: 'Angelovirus'
+      metadata:
+        - name: country
+          type: string
+          initiallyVisible: true
+        - name: city
+          type: string
+          initiallyVisible: true
+      website:
+        tableColumns:
+          - country
+          - city
+        defaultOrder: descending
+        defaultOrderBy: country
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
 ```
 
 ## Step 4: Install and deploy
@@ -300,20 +296,20 @@ Then, adapt `my-values.yaml` and add under the `secrets` key:
 
 ```yaml
 secrets:
-    database:
-        type: raw
-        data:
-            url: 'jdbc:postgresql://<Loculus database host>:<Loculus database port>/<Loculus database name>'
-            username: '<Loculus database user>'
-            password: '<Loculus database password>'
-    keycloak-database:
-        type: raw
-        data:
-            addr: '<Keycloak database host>'
-            port: '<Keycloak database port>'
-            database: '<Keycloak database name>'
-            username: '<Keycloak database user>'
-            password: '<Keycloak database password>'
+  database:
+    type: raw
+    data:
+      url: 'jdbc:postgresql://<Loculus database host>:<Loculus database port>/<Loculus database name>'
+      username: '<Loculus database user>'
+      password: '<Loculus database password>'
+  keycloak-database:
+    type: raw
+    data:
+      addr: '<Keycloak database host>'
+      port: '<Keycloak database port>'
+      database: '<Keycloak database name>'
+      username: '<Keycloak database user>'
+      password: '<Keycloak database password>'
 ```
 
 To reinstall Loculus, execute:

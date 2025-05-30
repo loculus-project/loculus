@@ -1,15 +1,24 @@
 ---
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import type { InputMode } from '../../../../components/Submission/FormOrUploadWrapper';
 import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { dataUseTermsAreEnabled, getGroupedInputFields, getRuntimeConfig, getSchema } from '../../../../config';
+import {
+    dataUseTermsAreEnabled,
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getRuntimeConfig,
+    getSchema,
+} from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
-import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
 
 const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+const inputMode: InputMode = Astro.url.searchParams.get('inputMode') === 'form' ? 'form' : 'bulk';
+const title = inputMode === 'bulk' ? 'Submit sequences' : 'Submit sequence';
 
 if (!cleanedOrganism) {
     return {
@@ -31,7 +40,7 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title='Submit sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title={title} disablePageTitle={true} groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
@@ -42,6 +51,7 @@ Astro.response.headers.append('Expires', '0');
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
+                    inputMode={inputMode}
                     submissionDataTypes={schema.submissionDataTypes}
                     dataUseTermsEnabled={dataUseTermsAreEnabled()}
                     client:load

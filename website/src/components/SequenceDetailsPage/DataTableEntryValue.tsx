@@ -23,12 +23,34 @@ const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
     );
 };
 
+type FileEntry = {
+    fileId: string;
+    name: string;
+    url: string;
+};
+
+const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const fileEntries = JSON.parse(jsonString) as FileEntry[];
+
+    return (
+        <ul>
+            {fileEntries.map((fileEntry) => (
+                <li key={fileEntry.fileId}>
+                    <a href={fileEntry.url} className='underline'>
+                        {fileEntry.name}
+                    </a>
+                </li>
+            ))}
+        </ul>
+    );
+};
+
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>
-            <div className='whitespace-wrap'>
+            <div>
                 {!customDisplay && <PlainValueDisplay value={value} />}
                 {customDisplay?.type === 'percentage' && typeof value === 'number' && `${(100 * value).toFixed(2)}%`}
                 {customDisplay?.type === 'badge' &&
@@ -60,6 +82,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'submittingGroup' && typeof value == 'string' && (
                     <GroupComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'fileList' && typeof value == 'string' && (
+                    <FileListComponent jsonString={value} />
                 )}
             </div>
         </div>

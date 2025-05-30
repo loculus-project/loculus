@@ -1,7 +1,7 @@
 import * as XLSX from '@lokalise/xlsx';
 import * as fflate from 'fflate';
 import * as fzstd from 'fzstd';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
@@ -11,7 +11,7 @@ import PhDnaLight from '~icons/ph/dna-light';
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
 export type FileKind = {
-    type: 'metadata' | 'fasta';
+    type: 'metadata' | 'fasta' | 'singleSegment';
     icon: Icon;
     supportedExtensions: string[];
     processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
@@ -49,7 +49,13 @@ export const METADATA_FILE_KIND: FileKind = {
             }
             return ok(excelFile);
         }
-        return err(new Error());
+        return err(
+            new Error(
+                `Unsupported file extension for metadata upload. Please use one of: ${METADATA_FILE_KIND.supportedExtensions.join(
+                    ', ',
+                )}.`,
+            ),
+        );
     },
 };
 
@@ -58,6 +64,52 @@ export const FASTA_FILE_KIND: FileKind = {
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
     processRawFile: (file) => Promise.resolve(ok(new RawFile(file))),
+};
+
+/**
+ * For files that contain only a single segment.
+ * Can have a FASTA header, but it will be ignored.
+ * Can be multiple lines, the lines will be concatenated, and whitespace stripped on both ends.
+ * Compression not supported.
+ */
+export const PLAIN_SEGMENT_KIND: FileKind = {
+    type: 'singleSegment',
+    icon: PhDnaLight,
+    supportedExtensions: ['sequence'],
+    processRawFile: async (file: File) => {
+        const text = await file.text();
+        const lines = text.split('\n');
+        const firstUntrimmedLine = lines.findIndex((l) => l.trim() !== l);
+        if (firstUntrimmedLine >= 0) {
+            return err(
+                new Error(
+                    `Line ${firstUntrimmedLine + 1} contains leading or trailing whitespace, which is not allowed.`,
+                ),
+            );
+        }
+        const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
+        if (headerLineCount > 1) {
+            return err(
+                new Error(`Found ${headerLineCount} headers in uploaded file, only a single header is allowed.`),
+            );
+        }
+        const segmentData = lines
+            .filter((l) => !l.startsWith('>'))
+            .map((l) => l.trim())
+            .join('');
+        if (segmentData.length === 0) {
+            return err(new Error('Uploaded file does not appear to contain any sequence data.'));
+        }
+        return ok({
+            inner: () => {
+                const blob = new Blob([segmentData], { type: 'text/plain' });
+                return new File([blob], 'segment.txt', { type: 'text/plain' });
+            },
+            text: () => Promise.resolve(segmentData),
+            handle: () => file,
+            warnings: () => [],
+        });
+    },
 };
 
 export interface ProcessedFile {
@@ -92,6 +144,13 @@ export class RawFile implements ProcessedFile {
 
     warnings(): string[] {
         return [];
+    }
+}
+
+export class VirtualFile extends RawFile {
+    constructor(content: string, fileName: string = 'virtual.txt') {
+        const blob = new Blob([content]);
+        super(new File([blob], fileName));
     }
 }
 

@@ -1,6 +1,7 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
+{{- $enaDepositionHost := $testconfig | ternary "http://localhost:5000" "http://loculus-ena-submission-service:5000" }}
 {{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $values.ingest }}
@@ -17,11 +18,17 @@ data:
     nucleotide_sequences: {{- $nucleotideSequencesList | toYaml | nindent 4 }}
     verify_loculus_version_is: {{$dockerTag}}
     check_ena_deposition: {{ not $.Values.disableEnaSubmission }}
+    {{- if not $.Values.disableEnaSubmission }}
+    ena_deposition_url: {{ $enaDepositionHost }}
+    {{- end }}
     organism: {{ $key }}
     backend_url: {{ $backendHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
     {{- if $.Values.ingest.ncbiGatewayUrl }}
     ncbi_gateway_url: {{ $.Values.ingest.ncbiGatewayUrl }}
+    {{- end }}
+    {{- if $.Values.ingest.mirrorBucket }}
+    mirror_bucket: {{ $.Values.ingest.mirrorBucket }}
     {{- end }}
     {{- include "loculus.ingestRename" $metadata | nindent 4 }}
     insdc_segment_specific_fields:

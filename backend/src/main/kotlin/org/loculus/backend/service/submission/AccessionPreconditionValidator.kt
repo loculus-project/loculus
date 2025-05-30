@@ -2,7 +2,6 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.not
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -47,8 +46,8 @@ class AccessionPreconditionValidator(
                 .validateAccessionVersionsExist()
 
         fun thatAccessionsExist(accessions: List<Accession>): CommonPreconditions = AccessionPreconditions(
-            accessions = accessions,
-            groupManagementPreconditionValidator = groupManagementPreconditionValidator,
+            accessions,
+            groupManagementPreconditionValidator,
         )
             .validateAccessionsExist()
     }
@@ -148,7 +147,7 @@ class AccessionPreconditionValidator(
 
             if (sequenceEntriesNotInStatuses.isNotEmpty()) {
                 throw UnprocessableEntityException(
-                    "Accession versions are in not in one of the states $statuses: " +
+                    "Accession versions are not in one of the states $statuses: " +
                         sequenceEntriesNotInStatuses.joinToString(", "),
                 )
             }

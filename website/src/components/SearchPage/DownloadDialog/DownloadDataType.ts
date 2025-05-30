@@ -1,6 +1,10 @@
 export type DownloadDataType =
     | { type: 'metadata' }
-    | { type: 'unalignedNucleotideSequences'; segment?: string }
+    | {
+          type: 'unalignedNucleotideSequences';
+          segment?: string;
+          includeRichFastaHeaders?: boolean;
+      }
     | { type: 'alignedNucleotideSequences'; segment?: string }
     | { type: 'alignedAminoAcidSequences'; gene: string };
 

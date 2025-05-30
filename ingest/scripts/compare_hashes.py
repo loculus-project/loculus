@@ -1,5 +1,6 @@
 import json
 import logging
+import operator
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import md5
@@ -61,12 +62,15 @@ def md5_float(string: str) -> float:
 
 
 def sample_out_hashed_records(
-    insdc_accession_base: str, subsample_fraction: float, sampled_out: dict[str, str], fasta_id: str
+    joint_insdc_accession: str,
+    subsample_fraction: float,
+    sampled_out: dict[str, str],
+    fasta_id: str,
 ) -> tuple[float, list[dict[str, str]]]:
-    hash_float = md5_float(insdc_accession_base)
+    hash_float = md5_float(joint_insdc_accession)
     keep = hash_float <= subsample_fraction
     if not keep:
-        sampled_out.append({fasta_id: insdc_accession_base, "hash": hash_float})
+        sampled_out.append({fasta_id: joint_insdc_accession, "hash": hash_float})
     return hash_float, sampled_out
 
 
@@ -78,6 +82,10 @@ def process_hashes(
     update_manager: SequenceUpdateManager,
 ):
     """
+    Decide if fasta_id should be submitted, revised, or noop
+    The ingested_insdc_accession corresponds to the INSDC accession base
+    for single-segmented sequences, or the joint INSDC accession for
+    multi-segmented sequences.
     Submitted is a dictionary with all Loculus state in the format:
     insdc_accession:
         loculus_accession: abcd
@@ -86,17 +94,19 @@ def process_hashes(
           hash: abcd
           status: APPROVED_FOR_RELEASE
           submitter: insdc_ingest_user
+          jointAccession: insdc_accession.seg1/insdc_accession.seg2
         - version: 2
           hash: efg
           status: HAS_ERRORS
           submitter: curator
+          jointAccession: insdc_accession.seg1/insdc_accession.seg2
     """
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(fasta_id)
         return update_manager
 
     sorted_versions = sorted(
-        submitted[ingested_insdc_accession]["versions"], key=lambda x: x["version"]
+        submitted[ingested_insdc_accession]["versions"], key=operator.itemgetter("version")
     )
     latest = sorted_versions[-1]
     corresponding_loculus_accession = submitted[ingested_insdc_accession]["loculus_accession"]
@@ -125,6 +135,34 @@ def process_hashes(
     else:
         update_manager.noop[fasta_id] = corresponding_loculus_accession
     return update_manager
+
+
+def get_joint_insdc_accession(record, insdc_keys, config, take_subset=False, subset=None):
+    subset = subset or {}
+    pairs = zip(insdc_keys, config.nucleotide_sequences)
+
+    if take_subset:
+        return "/".join(
+            f"{record[key]}.{segment}" for key, segment in pairs if record.get(key) in subset
+        )
+
+    return "/".join(f"{record[key]}.{segment}" for key, segment in pairs if record.get(key))
+
+
+def get_last_joint_accession(accession: str, submitted: dict) -> JointInsdcAccession:
+    sorted_versions = sorted(submitted[accession]["versions"], key=lambda x: int(x["version"]))
+    latest = sorted_versions[-1]
+    return latest["jointAccession"]
+
+
+def get_approved_submitted_accessions(data):
+    approved = set()
+    for insdc_accession, info in data.items():
+        versions = info.get("versions", [])
+        sorted_versions = sorted(versions, key=operator.itemgetter("version"))
+        if sorted_versions and sorted_versions[-1].get("status") == "APPROVED_FOR_RELEASE":
+            approved.add(insdc_accession)
+    return approved
 
 
 @click.command()
@@ -172,6 +210,8 @@ def main(
         config.debug_hashes = True
 
     submitted: dict = json.load(open(old_hashes, encoding="utf-8"))
+    already_ingested_accessions = get_approved_submitted_accessions(submitted)
+    current_ingested_accessions = set()
 
     update_manager = SequenceUpdateManager(
         submit=[],
@@ -197,7 +237,10 @@ def main(
             )
             if config.debug_hashes:
                 update_manager.hashes.append(hash_float)
-            process_hashes(insdc_accession_base, fasta_id, record["hash"], submitted, update_manager)
+            process_hashes(
+                insdc_accession_base, fasta_id, record["hash"], submitted, update_manager
+            )
+            current_ingested_accessions.add(insdc_accession_base)
             continue
 
         insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -208,15 +251,11 @@ def main(
                 "- potential internal error"
             )
             raise ValueError(msg)
-        insdc_accession_base = "/".join(
-            [
-                f"{record[key]}.{segment}"
-                for key, segment in zip(insdc_keys, config.nucleotide_sequences)
-                if record[key]
-            ]
-        )
+        joint_insdc_accession = get_joint_insdc_accession(record, insdc_keys, config)
+        insdc_accessions = [record[key] for key in insdc_keys if record.get(key)]
+        current_ingested_accessions.update(set(insdc_accessions))
         hash_float, update_manager.sampled_out = sample_out_hashed_records(
-            insdc_accession_base, subsample_fraction, update_manager.sampled_out, fasta_id
+            joint_insdc_accession, subsample_fraction, update_manager.sampled_out, fasta_id
         )
         if config.debug_hashes:
             update_manager.hashes.append(hash_float)
@@ -224,23 +263,38 @@ def main(
             update_manager.submit.append(fasta_id)
             continue
         if all(accession in submitted for accession in insdc_accession_base_list) and all(
-            submitted[accession]["jointAccession"] == insdc_accession_base
+            get_last_joint_accession(accession, submitted) == joint_insdc_accession
             for accession in insdc_accession_base_list
         ):
             # grouping is the same, can just look at first segment in group
             accession = insdc_accession_base_list[0]
             process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
             continue
+        # old group is subset of new group, new group has new segments
+        old_submitted = [
+            accession for accession in insdc_accession_base_list if accession in submitted
+        ]
+        if all(
+            get_last_joint_accession(accession, submitted)
+            == get_joint_insdc_accession(
+                record, insdc_keys, config, take_subset=True, subset=set(old_submitted)
+            )
+            for accession in old_submitted
+        ):
+            # has a new segment, must be revised
+            accession = old_submitted[0]
+            process_hashes(accession, fasta_id, record["hash"], submitted, update_manager)
+            continue
         old_accessions = {}
         for accession in insdc_accession_base_list:
             if accession in submitted:
-                old_accessions[submitted[accession]["loculus_accession"]] = submitted[accession][
-                    "jointAccession"
-                ]
+                old_accessions[submitted[accession]["loculus_accession"]] = (
+                    get_last_joint_accession(accession, submitted)
+                )
                 # TODO: Figure out how to check for curation when regrouping - maybe just notify
-        logger.warn(
+        logger.warning(
             "Grouping has changed. Ingest would like to group INSDC samples:"
-            f"{insdc_accession_base}, however these were previously grouped as {old_accessions}"
+            f"{joint_insdc_accession}, however these were previously grouped as {old_accessions}"
         )
         update_manager.revoke[fasta_id] = old_accessions
 
@@ -259,7 +313,27 @@ def main(
     for value, path, text in outputs:
         with open(path, "w", encoding="utf-8") as file:
             json.dump(value, file)
-        logger.info(f"{text}: {len(value)}")
+        if text == "Blocked sequences":
+            for status, accessions in value.items():
+                logger.info(f"Blocked sequences - {status}: {len(accessions)}")
+        else:
+            logger.info(f"{text}: {len(value)}")
+
+    potentially_suppressed = already_ingested_accessions - current_ingested_accessions
+    if len(potentially_suppressed) > 0:
+        warning = (
+            f"{len(potentially_suppressed)} previously ingested INSDC accessions not found in "
+            f"re-ingested metadata - {', '.join(potentially_suppressed)}."
+            " This might be due to these sequences being suppressed in the INSDC database."
+            " Please check the INSDC database for these accessions."
+            " If this is the case, please revoke these accessions in Loculus."
+            " If this is not the case, this indicates a potential ingest error."
+        )
+        logger.warning(warning)
+        notify(
+            config,
+            warning,
+        )
 
 
 if __name__ == "__main__":

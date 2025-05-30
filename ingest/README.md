@@ -56,16 +56,17 @@ We group segments by adding a `jointAccession` field to the metadata which consi
 
 Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose highest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
 
-Hashes and statuses are used to triage sequences into 4 categories which determine the action to be taken:
+Hashes and statuses are used to triage sequences into 5 categories which determine the action to be taken:
 
 - `submit`: Sequences that have not been submitted before
 - `revise`: Sequences that have been submitted before and have changed
 - `no_change`: Sequences that have been submitted before and have not changed
 - `blocked`: Sequences that have been submitted before but are not in a state that allows updating
+- `revoke`: Only for multi-segmented viruses, these are sequences that were submitted before but have now changed their segment grouping. This means the previously submitted segment-grouping needs to be revoked and the new grouping submitted.
 
 ### Uploading sequences to Loculus
 
-Depending on the triage category, sequences are either submitted as new entries or revised.
+Depending on the triage category, sequences are either submitted as new entries or revised. Furthermore, for multi-segmented organisms where reingest has found grouping changes, maintainers can [trigger](#approve-revocations) the `regroup_and_revoke` rule which revokes the sequences with incorrectly grouped segments and submits sequences with the new segment grouping. We currently do not fully automate sequence revocation - a human in the loop needs to trigger the job.
 
 ### Approving sequences in status `WAITING_FOR_APPROVAL`
 
@@ -103,6 +104,14 @@ We use the Snakemake workflow management system which also uses different config
 
 TLDR: The `Snakefile` contains workflows defined as rules with required input and expected output files. By default Snakemake takes the first rule as the target one and then constructs a graph of dependencies (a DAG) required to produce the expected output of the first rule. The target rule can be specified using `snakemake {rule}`
 
+## Approve Revocations
+
+You might be notified that the ingest pipeline would like to regroup segments of multi-segmented organisms, making the previous grouping obsolete. In this case the old segment-grouping needs to be revoked and the new one added. We do not automate this process yet in case of potential reingest bugs leading to erroneous revocation of sequences. However, if you approve with the proposed revocation you can run the `regroup_and_revoke` cronjob using:
+
+```
+kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} -n $NAMESPACE loculus-revoke-and-regroup-cronjob-{config.organism}
+```
+
 ## Local Development
 
 Install micromamba, if you are on a mac:
@@ -121,7 +130,7 @@ source ~/.zshrc
 Then activate the loculus-ingest environment
 
 ```bash
-micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
+micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
 

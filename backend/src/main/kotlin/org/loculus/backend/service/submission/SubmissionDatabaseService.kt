@@ -46,9 +46,12 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.api.FileCategory
+import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalDataWithFileUrls
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
 import org.loculus.backend.api.PreprocessingStatus.PROCESSED
 import org.loculus.backend.api.ProcessedData
@@ -63,6 +66,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
@@ -70,9 +74,15 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.files.FileId
+import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version
@@ -85,7 +95,6 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
 import javax.sql.DataSource
-import kotlin.sequences.Sequence
 
 private val log = KotlinLogging.logger { }
 
@@ -95,8 +104,11 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
+    private val s3Service: S3Service,
+    private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
@@ -173,13 +185,26 @@ class SubmissionDatabaseService(
             .chunked(streamBatchSize)
             .map { chunk ->
                 val chunkOfUnprocessedData = chunk.map {
+                    val originalData = compressionService.decompressSequencesInOriginalData(
+                        it[table.originalDataColumn]!!,
+                        organism,
+                    )
+                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
+                        originalData.metadata,
+                        originalData.unalignedNucleotideSequences,
+                        originalData.files?.let {
+                            it.mapValues {
+                                it.value.map { f ->
+                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
+                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
+                                }
+                            }
+                        },
+                    )
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
-                        data = compressionService.decompressSequencesInOriginalData(
-                            it[table.originalDataColumn]!!,
-                            organism,
-                        ),
+                        data = originalDataWithFileUrls,
                         submissionId = it[table.submissionIdColumn],
                         submitter = it[table.submitterColumn],
                         groupId = it[table.groupIdColumn],
@@ -216,6 +241,10 @@ class SubmissionDatabaseService(
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            fileMappingPreconditionValidator
+                .validateFilenamesAreUnique(submittedProcessedData.data.files)
+                .validateCategoriesMatchSchema(submittedProcessedData.data.files, organism)
+
             val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)
@@ -348,11 +377,28 @@ class SubmissionDatabaseService(
         }
     }
 
+    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+        val result = mutableListOf<FileId>()
+        for (accessionVersionsChunk in sequences.chunked(1000)) {
+            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+                .where {
+                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
+                }
+                .flatMap {
+                    it[SequenceEntriesView.processedDataColumn]?.files?.values.orEmpty()
+                }
+                .flatten()
+                .forEach { result.add(it.fileId) }
+        }
+        return result
+    }
+
     private fun postprocessAndValidateProcessedData(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -432,6 +478,36 @@ class SubmissionDatabaseService(
         throw IllegalStateException(
             "Update processed data: Unexpected error for accession versions $accessionVersion",
         )
+    }
+
+    private fun throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData: SubmittedProcessedData) {
+        // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
+        //  each sequence entry.
+        if (submittedProcessedData.data.files == null) {
+            return
+        }
+        val accessionVersion = submittedProcessedData.displayAccessionVersion()
+        val sequenceEntryGroup = SequenceEntriesTable
+            .select(groupIdColumn)
+            .where {
+                (accessionColumn eq submittedProcessedData.accession) and
+                    (versionColumn eq submittedProcessedData.version)
+            }
+            .single()[groupIdColumn]
+        val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
+        val fileGroups = filesDatabaseService.getGroupIds(fileIds)
+        val notExistingIds = fileIds.subtract(fileGroups.keys)
+        if (notExistingIds.isNotEmpty()) {
+            throw UnprocessableEntityException("The File IDs $notExistingIds do not exist.")
+        }
+        fileGroups.forEach { fileId, fileGroup ->
+            if (fileGroup != sequenceEntryGroup) {
+                throw UnprocessableEntityException(
+                    "Accession version $accessionVersion belongs to group $sequenceEntryGroup but the attached file " +
+                        "$fileId belongs to the group $fileGroup.",
+                )
+            }
+        }
     }
 
     private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> =
@@ -520,6 +596,12 @@ class SubmissionDatabaseService(
                 it[approverColumn] = authenticatedUser.username
             }
         }
+
+        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        for (fileId in filesToPublish) {
+            s3Service.setFileToPublic(fileId)
+        }
+        filesDatabaseService.release(filesToPublish.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -922,6 +1004,10 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
+        fileMappingPreconditionValidator
+            .validateFilenamesAreUnique(editedSequenceEntryData.data.files)
+            .validateCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
+
         SequenceEntriesTable.update(
             where = {
                 SequenceEntriesTable.accessionVersionIsIn(listOf(editedSequenceEntryData))
@@ -1059,6 +1145,7 @@ class SubmissionDatabaseService(
         fields: List<String>?,
     ): Sequence<AccessionVersionOriginalMetadata> {
         val originalMetadata = SequenceEntriesView.originalDataColumn
+            // It's actually <Map<String, String>?> but exposed does not support nullable types here
             .extract<Map<String, String>>("metadata")
             .alias("original_metadata")
 
@@ -1068,6 +1155,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
+                SequenceEntriesView.isRevocationColumn,
             )
             .where(
                 originalMetadataFilter(
@@ -1080,13 +1168,16 @@ class SubmissionDatabaseService(
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
-                val metadata = it[originalMetadata]
-                val selectedMetadata = fields?.associateWith { field -> metadata[field] }
+                // Revoked sequences have no original metdadata, hence null can happen
+                @Suppress("USELESS_ELVIS")
+                val metadata = it[originalMetadata] ?: null
+                val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
                     ?: metadata
                 AccessionVersionOriginalMetadata(
                     it[SequenceEntriesView.accessionColumn],
                     it[SequenceEntriesView.versionColumn],
                     it[SequenceEntriesView.submitterColumn],
+                    it[SequenceEntriesView.isRevocationColumn],
                     selectedMetadata,
                 )
             }
@@ -1150,6 +1241,17 @@ class SubmissionDatabaseService(
             newVersion
         }
     }
+
+    fun getFileId(accessionVersion: AccessionVersion, fileCategory: FileCategory, fileName: String): FileId? =
+        SequenceEntriesView.select(
+            SequenceEntriesView.processedDataColumn,
+        )
+            .where {
+                SequenceEntriesView.accessionVersionEquals(accessionVersion)
+            }
+            .map {
+                it[SequenceEntriesView.processedDataColumn]
+            }.firstOrNull()?.files?.getFileId(fileCategory, fileName)
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {

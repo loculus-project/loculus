@@ -71,6 +71,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
                         else -> decompressNucleotideSequence(compressedSequence, it.key, organism)
                     }
                 },
+            originalData.files,
         )
 
     fun compressSequencesInOriginalData(originalData: OriginalData<GeneticSequence>, organism: Organism) = OriginalData(
@@ -82,6 +83,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
                     else -> compressNucleotideSequence(sequenceData, segmentName, organism)
                 }
             },
+        originalData.files,
     )
 
     fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>, organism: Organism) =
@@ -108,6 +110,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
                 }
             },
             processedData.aminoAcidInsertions,
+            processedData.files,
         )
 
     fun compressSequencesInProcessedData(processedData: ProcessedData<String>, organism: Organism) = ProcessedData(
@@ -133,6 +136,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
             }
         },
         processedData.aminoAcidInsertions,
+        processedData.files,
     )
 
     private fun compress(sequence: GeneticSequence, dictionary: ByteArray?): CompressedSequence {

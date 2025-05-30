@@ -39,6 +39,7 @@ BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
 LAPIS_PORT_MAPPING = "-p 127.0.0.1:8080:80@loadbalancer"
 DATABASE_PORT_MAPPING = "-p 127.0.0.1:5432:30432@agent:0"
 KEYCLOAK_PORT_MAPPING = "-p 127.0.0.1:8083:30083@agent:0"
+S3_PORT_MAPPING = "-p 127.0.0.1:8084:30084@agent:0"
 
 PORTS = [
     WEBSITE_PORT_MAPPING,
@@ -46,6 +47,7 @@ PORTS = [
     LAPIS_PORT_MAPPING,
     DATABASE_PORT_MAPPING,
     KEYCLOAK_PORT_MAPPING,
+    S3_PORT_MAPPING,
 ]
 
 parser = argparse.ArgumentParser(description="Manage k3d cluster and helm installations.")
@@ -156,7 +158,6 @@ def handle_cluster():
             shell=True,
         )
     install_secret_generator()
-    install_reloader()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
         time.sleep(5)
@@ -407,13 +408,14 @@ def generate_config(
 
 def get_codespace_params(codespace_name):
     publicRuntimeConfig = {
+        "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
         "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
         "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
         "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
     }
     return [
         "--set-json",
-        f"website.runtimeConfig.public={json.dumps(publicRuntimeConfig)}",
+        f"public={json.dumps(publicRuntimeConfig)}",
     ]
 
 
@@ -448,37 +450,6 @@ def install_secret_generator():
         "resources.limits.memory=400Mi",
         "--set",
         "resources.requests.memory=200Mi",
-    ]
-    run_command(helm_install_command)
-
-
-def install_reloader():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "stakater",
-        "https://stakater.github.io/stakater-charts",
-    ]
-    run_command(add_helm_repo_command)
-    print("Stakater added to repositories.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "stakater/reloader"
-    print("Installing Reloader...")
-    helm_install_command = [
-        "helm",
-        "upgrade",
-        "--install",
-        "reloader",
-        secret_generator_chart,
-        "--set",
-        "reloader.deployment.resources.limits.memory=200Mi",
-        "--set",
-        "reloader.deployment.resources.requests.memory=100Mi",
     ]
     run_command(helm_install_command)
 

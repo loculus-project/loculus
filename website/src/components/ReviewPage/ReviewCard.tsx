@@ -1,5 +1,6 @@
-import { type FC } from 'react';
+import { type FC, useState, useRef, useEffect } from 'react';
 
+import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTerms,
@@ -26,6 +27,7 @@ import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
+import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
 
@@ -50,9 +52,13 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     organism,
     accessToken,
 }) => {
+    const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
+
+    const notProcessed = sequenceEntryStatus.status !== processedStatus;
+
     return (
-        <div className='px-3 py-2   relative transition-all duration-500'>
+        <div className='px-3 py-2 relative transition-all duration-500'>
             <div className='flex'>
                 <div className='flex flex-grow flex-wrap '>
                     <StatusIcon
@@ -84,6 +90,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     approveAccessionVersion={approveAccessionVersion}
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
+                    viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
                 />
             </div>
 
@@ -97,6 +104,12 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
                 <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
             )}
+
+            <SequencesDialog
+                isOpen={isSequencesDialogOpen}
+                onClose={() => setSequencesDialogOpen(false)}
+                dataToView={data}
+            />
         </div>
     );
 };
@@ -106,6 +119,7 @@ type ButtonBarProps = {
     approveAccessionVersion: () => void;
     deleteAccessionVersion: () => void;
     editAccessionVersion: () => void;
+    viewSequences?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -113,6 +127,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
+    viewSequences,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${
@@ -124,56 +139,76 @@ const ButtonBar: FC<ButtonBarProps> = ({
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
     return (
-        <div className='flex space-x-1 mb-auto pt-3.5'>
-            <button
-                className={buttonBarClass(!approvable)}
-                onClick={approveAccessionVersion}
-                data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
-                key={'approve-button-' + sequenceEntryStatus.accession}
-                disabled={!approvable}
-            >
-                <WpfPaperPlane />
-            </button>
-            <CustomTooltip
-                id={'approve-tooltip' + sequenceEntryStatus.accession}
-                content={
-                    approvable
-                        ? 'Release this sequence entry'
-                        : sequenceEntryStatus.processingResult === errorsProcessingResult
-                          ? 'You need to fix the errors before releasing this sequence entry'
-                          : 'Still awaiting preprocessing'
-                }
-            />
-            {!sequenceEntryStatus.isRevocation && (
+        <div className='flex mb-auto pt-3.5 items-center'>
+            <div className='flex space-x-1'>
+                {viewSequences && (
+                    <>
+                        <button
+                            className={buttonBarClass(notProcessed)}
+                            onClick={viewSequences}
+                            data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                            data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
+                            key={'view-sequences-button-' + sequenceEntryStatus.accession}
+                            disabled={notProcessed}
+                        >
+                            <RiDna />
+                        </button>
+                        <CustomTooltip
+                            id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                            content={notProcessed ? 'Processing...' : 'View processed sequences'}
+                        />
+                    </>
+                )}
+                <div className='mx-3 h-5 mt-0.5 border-l border-gray-300'></div> {/* Vertical separator */}
+                <button
+                    className={buttonBarClass(!approvable)}
+                    onClick={approveAccessionVersion}
+                    data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
+                    key={'approve-button-' + sequenceEntryStatus.accession}
+                    disabled={!approvable}
+                >
+                    <WpfPaperPlane />
+                </button>
+                <CustomTooltip
+                    id={'approve-tooltip' + sequenceEntryStatus.accession}
+                    content={
+                        approvable
+                            ? 'Release this sequence entry'
+                            : sequenceEntryStatus.processingResult === errorsProcessingResult
+                              ? 'You need to fix the errors before releasing this sequence entry'
+                              : 'Still awaiting preprocessing'
+                    }
+                />
+                {!sequenceEntryStatus.isRevocation && (
+                    <button
+                        className={buttonBarClass(notProcessed)}
+                        data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
+                        data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
+                        key={'edit-button-' + sequenceEntryStatus.accession}
+                        onClick={editAccessionVersion}
+                        disabled={notProcessed}
+                    >
+                        <ClarityNoteEditLine />
+                    </button>
+                )}
+                <CustomTooltip
+                    id={'edit-tooltip' + sequenceEntryStatus.accession}
+                    content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
+                />
                 <button
                     className={buttonBarClass(notProcessed)}
-                    data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
-                    data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
-                    key={'edit-button-' + sequenceEntryStatus.accession}
-                    onClick={editAccessionVersion}
+                    onClick={deleteAccessionVersion}
+                    data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
+                    key={'delete-button-' + sequenceEntryStatus.accession}
                     disabled={notProcessed}
                 >
-                    <ClarityNoteEditLine />
+                    <BiTrash />
                 </button>
-            )}
-            <CustomTooltip
-                id={'edit-tooltip' + sequenceEntryStatus.accession}
-                content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
-            />
-
-            <button
-                className={buttonBarClass(notProcessed)}
-                onClick={deleteAccessionVersion}
-                data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
-                key={'delete-button-' + sequenceEntryStatus.accession}
-                disabled={notProcessed}
-            >
-                <BiTrash />
-            </button>
-            <CustomTooltip
-                id={'delete-tooltip' + sequenceEntryStatus.accession}
-                content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}
-            />
+                <CustomTooltip
+                    id={'delete-tooltip' + sequenceEntryStatus.accession}
+                    content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}
+                />
+            </div>
         </div>
     );
 };
@@ -368,19 +403,31 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     const textTooltipId = 'text-tooltip-' + keyName + accessionVersion;
     const noteTooltipId = 'note-tooltip-' + keyName + accessionVersion;
 
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [isTruncated, setIsTruncated] = useState(false);
+
+    useEffect(() => {
+        if (textRef.current) {
+            setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        }
+    }, [value]);
+
+    const showTooltip = primaryMessages !== undefined || isTruncated;
+    const tooltipContent =
+        primaryMessages !== undefined ? primaryMessages.map((annotation) => annotation.message).join(', ') : value;
+
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                <span className={textColor} data-tooltip-id={textTooltipId}>
+                <span
+                    ref={textRef}
+                    className={`${textColor} truncate max-w-xs inline-block`}
+                    data-tooltip-id={showTooltip ? textTooltipId : undefined}
+                >
                     {value}
                 </span>
-                {primaryMessages !== undefined && (
-                    <CustomTooltip
-                        id={textTooltipId}
-                        content={primaryMessages.map((annotation) => annotation.message).join(', ')}
-                    />
-                )}
+                {showTooltip && <CustomTooltip id={textTooltipId} content={tooltipContent} />}
                 {secondaryMessages !== undefined && (
                     <>
                         <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />

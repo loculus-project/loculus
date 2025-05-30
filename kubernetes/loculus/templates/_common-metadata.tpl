@@ -12,6 +12,7 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    includeInDownloadsByDefault: true
   - name: accession
     type: string
     notSearchable: true
@@ -26,8 +27,9 @@ fields:
     header: Submission details
     enableSubstringSearch: true
   - name: isRevocation
+    displayName: Is revocation
     type: boolean
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: submitter
     type: string
@@ -82,6 +84,7 @@ fields:
     autocomplete: true
     displayName: Data use terms
     initiallyVisible: true
+    includeInDownloadsByDefault: true
     customDisplay:
       type: dataUseTerms
     header: Data use terms
@@ -96,14 +99,16 @@ fields:
     type: string
     notSearchable: true
     header: Data use terms
+    includeInDownloadsByDefault: true
     customDisplay:
       type: link
       url: "__value__"
   {{- end}}
   {{- end}}
   - name: versionStatus
+    displayName: Version status
     type: string
-    notSearchable: true
+    autocomplete: true
     hideOnSequenceDetailsPage: true
   - name: versionComment
     type: string
@@ -174,7 +179,20 @@ organisms:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
+      {{ if .linkOuts }}
+      linkOuts:
+        {{- range $linkOut := .linkOuts }}
+        - name: {{ quote $linkOut.name }}
+          url: {{ quote $linkOut.url }}
+          {{- if $linkOut.maxNumberOfRecommendedEntries }}
+          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{ if .richFastaHeaderFields}}
+      richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
+      {{ end }}
       {{- include "loculus.submissionDataTypes" . | nindent 6 }}
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
@@ -194,6 +212,16 @@ organisms:
         {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
+        {{ if .files }}
+        {{- range .files }}
+        - name: {{ .name }}
+          type: string
+          header: "Files"
+          noInput: true
+          customDisplay:
+            type: fileList
+        {{- end }}
+        {{ end }}
       {{ if .metadataTemplate }}
       metadataTemplate:
         {{ .metadataTemplate | toYaml | nindent 8}}
@@ -242,6 +270,9 @@ organisms:
   {{- end }}
   {{- if .order }}
   order: {{ .order }}
+  {{- end }}
+  {{- if .includeInDownloadsByDefault }}
+  includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:
@@ -297,6 +328,12 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
+{{- if .Values.fileSharing }}
+fileSharing:
+  {{ .Values.fileSharing | toYaml | nindent 2 }}
+{{- end }}
+websiteUrl: {{ include "loculus.websiteUrl" . }}
+backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
@@ -410,7 +447,7 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
@@ -420,13 +457,7 @@ fields:
   {{- $lapisUrlTemplate = "http://localhost:8080/%organism%" }}
 {{- end }}
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
-            {{- if $publicRuntimeConfig.backendUrl }}
-            "backendUrl": "{{ $publicRuntimeConfig.backendUrl }}",
-            {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend%s%s" $.Values.subdomainSeparator $.Values.host }}",
-            {{- else }}
-            "backendUrl": "http://localhost:8079",
-            {{- end }}
+            "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}

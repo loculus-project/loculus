@@ -58,6 +58,11 @@ export const metadata = z.object({
     lineageSearch: z.boolean().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
+    includeInDownloadsByDefault: z.boolean().optional(),
+});
+
+export const inputFieldOption = z.object({
+    name: z.string(),
 });
 
 export const inputField = z.object({
@@ -69,8 +74,10 @@ export const inputField = z.object({
     example: z.union([z.string(), z.number()]).optional(),
     guidance: z.string().optional(),
     desired: z.boolean().optional(),
+    options: z.array(inputFieldOption).optional(),
 });
 
+export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
@@ -78,7 +85,6 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    label?: string;
     fieldGroup?: string;
     grouped?: false;
     fieldGroupDisplayName?: string;
@@ -90,22 +96,42 @@ export type GroupedMetadataFilter = {
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
     grouped: true;
-    label?: string;
     displayName?: string;
     isVisible?: boolean;
     notSearchable?: boolean;
     initiallyVisible?: boolean;
+    header?: string;
 };
+
+export const linkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+    maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
+});
+
+export type LinkOut = z.infer<typeof linkOut>;
+
+export const fileCategory = z.object({
+    name: z.string(),
+});
+
+export type FileCategory = z.infer<typeof fileCategory>;
+
+export const submissionFiles = z.object({
+    enabled: z.boolean(),
+    categories: z.array(fileCategory).optional(),
+});
 
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
+    files: submissionFiles.optional(),
 });
+
 export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
 export const schema = z.object({
     organismName: z.string(),
     image: z.string().optional(),
-    description: z.string().optional(),
     metadata: z.array(metadata),
     metadataTemplate: z.array(z.string()).optional(),
     inputFields: z.array(inputField),
@@ -115,6 +141,8 @@ export const schema = z.object({
     defaultOrder: orderByType,
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
+    richFastaHeaderFields: z.array(z.string()).optional(),
+    linkOuts: z.array(linkOut).optional(),
 });
 export type Schema = z.infer<typeof schema>;
 
@@ -160,6 +188,9 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
-export type FieldValues = Record<string, string | number | null>;
+export type FieldValues = {
+    mutation?: string;
+    accession?: string;
+} & Record<string, string | number | null>;
 export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

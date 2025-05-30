@@ -41,6 +41,13 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
                 "A row in metadata file contains no $submissionIdHeader: $record",
             )
         }
+
+        if (submissionId.any { it.isWhitespace() }) {
+            throw UnprocessableEntityException(
+                "A value for $submissionIdHeader contains whitespace: $record",
+            )
+        }
+
         val metadata = record.toMap().filterKeys { it != submissionIdHeader }
         MetadataEntry(submissionId, metadata)
     }.onEach { entry ->

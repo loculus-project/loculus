@@ -12,7 +12,12 @@ import {
     type InputField,
     type SequenceFlaggingConfig,
 } from './types/config.ts';
-import { type ReferenceGenomes } from './types/referencesGenomes.ts';
+import {
+    type NamedSequence,
+    type ReferenceAccession,
+    type ReferenceGenomes,
+    type ReferenceGenomesSequenceNames,
+} from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;
@@ -105,7 +110,6 @@ export function getConfiguredOrganisms() {
         key,
         displayName: instance.schema.organismName,
         image: instance.schema.image,
-        description: instance.schema.description,
     }));
 }
 
@@ -207,9 +211,7 @@ export function getGroupedInputFields(
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
-    if (_runtimeConfig === null) {
-        _runtimeConfig = readTypedConfigFile('runtime_config.json', runtimeConfig);
-    }
+    _runtimeConfig ??= readTypedConfigFile('runtime_config.json', runtimeConfig);
     return _runtimeConfig;
 }
 
@@ -223,6 +225,22 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
 export function getReferenceGenomes(organism: string): ReferenceGenomes {
     return getConfig(organism).referenceGenomes;
 }
+
+const getAccession = (n: NamedSequence): ReferenceAccession => {
+    return {
+        name: n.name,
+        insdcAccessionFull: n.insdcAccessionFull,
+    };
+};
+
+export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
+    const referenceGenomes = getReferenceGenomes(organism);
+    return {
+        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
+        genes: referenceGenomes.genes.map((n) => n.name),
+        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
+    };
+};
 
 export function seqSetsAreEnabled() {
     return getWebsiteConfig().enableSeqSets;

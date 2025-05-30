@@ -2,26 +2,38 @@ name: Mirror NCBI Datasets to Object Storage
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight UTC
+    - cron: '12 */2 * * *' # Runs every two hours at 12 minutes past the hour
 jobs:
   download-and-upload:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         taxon_id:
-          - 10244 # mpox
+          - 10244 # Mpox
+          - 11137 # Coronavirus 229E
+          - 11520 # Influenza B
+          - 31631 # Coronavirus OC43
+          - 31704 # Coxsackievirus A16
+          - 39054 # Enterovirus A71
+          - 86107 # Coxsackievirus A6
           - 197911 # Influenza A
+          - 11250 # RSV
           - 208893 # RSV A
           - 208895 # RSV B
+          - 162145 # Human metapneumovirus
+          - 277944 # Coronavirus NL63
+          - 290028 # Coronavirus HKU1
           - 3048448 # West nile virus
+          - 3050294 # Chickenpox virus
           - 3052460 # Orthoebolavirus sudanense
           - 3052462 # Orthoebolavirus zairense
           - 3052518 # CCHFV
+          - 118655  # Oropouche 
       fail-fast: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: datasets
           create-args: ncbi-datasets-cli s3cmd
@@ -29,6 +41,8 @@ jobs:
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon ${{ matrix.taxon_id }} --no-progressbar --filename ${{ matrix.taxon_id }}.zip
+          unzip -o ${{ matrix.taxon_id }}.zip
+          tar -I 'zstd -T0 -18' -cvf ${{ matrix.taxon_id }}.tar.zst ncbi_dataset
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg
@@ -42,4 +56,18 @@ jobs:
       - name: Upload to Object Storage
         shell: bash -l {0}
         run: |
-          s3cmd put ${{ matrix.taxon_id }}.zip s3://loculus-public/mirror/${{ matrix.taxon_id }}.zip
+          for file in ${{ matrix.taxon_id }}.zip ${{ matrix.taxon_id }}.tar.zst ; do
+            s3cmd put "${file}" s3://loculus-public/mirror/"${file}"
+          done
+  notify_on_failure:  # Runs only if 'build' job fails
+    needs: download-and-upload
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Send Slack Notification
+        env:
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "🚨 Failed to mirror NCBI datasets: ${{ github.repository }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+          }' $SLACK_HOOK

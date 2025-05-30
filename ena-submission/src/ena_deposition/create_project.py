@@ -12,6 +12,7 @@ from .config import Config
 from .ena_submission_helper import (
     CreationResult,
     create_ena_project,
+    get_alias,
     get_ena_config,
     set_error_if_accession_not_exists,
 )
@@ -57,14 +58,11 @@ def construct_project_set_object(
     (ENA blocks multiple submissions with the same alias)
     """
     metadata_dict = config.organisms[entry["organism"]]["enaDeposition"]
-    if test:
-        alias = XmlAttribute(
-            f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
-        )
-    else:
-        alias = XmlAttribute(
-            f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}"
-        )
+    alias = get_alias(
+        f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}",
+        test,
+        config.set_alias_suffix,
+    )
 
     address = group_info["address"]
     group_name = group_info["groupName"]
@@ -128,7 +126,7 @@ def set_project_table_entry(db_config, config, row):
     logger.info("Checking if bioproject actually exists and is public")
     if (
         set_error_if_accession_not_exists(
-            conditions=seq_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+            conditions=group_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
         )
         is False
     ):
@@ -288,7 +286,10 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
 # TODO Allow propagating updated group info https://github.com/loculus-project/loculus/issues/2939
 def project_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
+    db_config: SimpleConnectionPool,
+    config: Config,
+    retry_number: int = 3,
+    test: bool = False,
 ):
     """
     1. Find all entries in project_table in state READY
@@ -413,7 +414,7 @@ def project_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries in project_table in "
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
             f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(

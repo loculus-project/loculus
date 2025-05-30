@@ -1,18 +1,16 @@
 import { sentenceCase } from 'change-case';
 
-import { type BaseType } from './sequenceTypeHelpers';
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import { getReferenceGenomes } from '../config';
-import type { FieldValues, GroupedMetadataFilter, Metadata, MetadataFilter, Schema } from '../types/config';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession, NamedSequence } from '../types/referencesGenomes';
+import type {
+    FieldValues,
+    GroupedMetadataFilter,
+    Metadata,
+    MetadataFilter,
+    MetadataType,
+    Schema,
+} from '../types/config';
 
 export const VISIBILITY_PREFIX = 'visibility_';
-
-export type MutationQuery = {
-    baseType: BaseType;
-    mutationType: 'substitutionOrDeletion' | 'insertion';
-    text: string;
-};
 
 export const COLUMN_VISIBILITY_PREFIX = 'column_';
 
@@ -23,31 +21,6 @@ export const PAGE_KEY = 'page';
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
-};
-
-export function addHiddenFilters(
-    searchFormFilter: MetadataFilter[],
-    hiddenFilters: MetadataFilter[],
-): MetadataFilter[] {
-    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
-    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
-    return [...searchFormFilter, ...hiddenFiltersToAdd];
-}
-
-export const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
-        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
-    };
 };
 
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
@@ -62,7 +35,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 ): Map<string, boolean> => {
     const visibilities = new Map<string, boolean>();
     schema.metadata.forEach((field) => {
-        if (field.hideOnSequenceDetailsPage === true || !visibilitySelectableAccessor(field)) {
+        if (!visibilitySelectableAccessor(field)) {
             return;
         }
 
@@ -107,40 +80,43 @@ export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<str
     );
 };
 
-export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
+const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]): MetadataFilter[] => {
     const result: MetadataFilter[] = [];
     for (const field of metadataSchema) {
         if (field.rangeOverlapSearch) {
             const fieldGroupProps = {
                 fieldGroup: field.rangeOverlapSearch.rangeName,
                 fieldGroupDisplayName: field.rangeOverlapSearch.rangeDisplayName,
+                header: field.header,
             };
             result.push({
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}From`,
-                label: 'From',
+                displayName: 'From',
             });
             result.push({
                 ...field,
                 ...fieldGroupProps,
                 name: `${field.name}To`,
-                label: 'To',
+                displayName: 'To',
             });
         } else if (field.rangeSearch === true) {
             const fromField = {
                 ...field,
                 name: `${field.name}From`,
-                label: 'From',
+                displayName: 'From',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                header: field.header,
             };
             const toField = {
                 ...field,
                 name: `${field.name}To`,
-                label: 'To',
+                displayName: 'To',
                 fieldGroup: field.name,
                 fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
+                header: field.header,
             };
             result.push(fromField);
             result.push(toField);
@@ -151,13 +127,7 @@ export const getMetadataSchemaWithExpandedRanges = (metadataSchema: Metadata[]):
     return result;
 };
 
-export type ConsolidatedMetadataFilters = (MetadataFilter | GroupedMetadataFilter)[];
-
-/**
- * Take a list of MetadataFilters and return a new list where filters that belong to a group
- * are grouped together into GroupedMetadataFilters.
- */
-export const consolidateGroupedFields = (filters: MetadataFilter[]): ConsolidatedMetadataFilters => {
+const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
     const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
     const groupsMap = new Map<string, GroupedMetadataFilter>();
 
@@ -170,8 +140,8 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
                     type: filter.type,
                     grouped: true,
                     displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
                     initiallyVisible: filter.initiallyVisible,
+                    header: filter.header,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
@@ -181,212 +151,84 @@ export const consolidateGroupedFields = (filters: MetadataFilter[]): Consolidate
             fieldList.push(filter);
         }
     }
-
     return fieldList;
 };
 
-export const getFieldValuesFromQuery = (
-    state: Record<string, string>,
-    hiddenFieldValues: FieldValues,
-    schema: Schema,
-): FieldValues => {
-    const values: FieldValues = { ...hiddenFieldValues };
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
-    for (const field of expandedSchema) {
-        if (field.name in state) {
-            values[field.name] = state[field.name];
-        }
-    }
-    if ('accession' in state) {
-        values.accession = state.accession;
-    }
-    if ('mutation' in state) {
-        values.mutation = state.mutation;
-    }
-    return values;
-};
+/**
+ * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
+ * (grouped) filters.
+ */
+export class MetadataFilterSchema {
+    public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
 
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
-        .split(/[\t,;\n ]/)
-        .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
-            }
-            return s;
-        });
-
-    return accessions;
-};
-
-const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
-    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
-    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
-};
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(#3451) use proper types */
-export const getLapisSearchParameters = (
-    fieldValues: Record<string, any>,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-    schema: Schema,
-): Record<string, any> => {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-    const expandedSchema = getMetadataSchemaWithExpandedRanges(schema.metadata);
-
-    const sequenceFilters = Object.fromEntries(
-        Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
-    );
-    for (const field of expandedSchema) {
-        if (field.substringSearch === true && sequenceFilters[field.name] !== undefined) {
-            sequenceFilters[field.name.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                sequenceFilters[field.name],
-            );
-            delete sequenceFilters[field.name];
-        }
+    constructor(metadataSchema: Metadata[]) {
+        const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
+        this.filters = consolidateGroupedFields(expandedFilters);
     }
 
-    if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-        sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+    private ungroupedMetadataFilters(): MetadataFilter[] {
+        return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
     }
 
-    delete sequenceFilters.mutation;
-
-    const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
-
-    return {
-        ...sequenceFilters,
-        nucleotideMutations: mutationFilter
-            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
-        aminoAcidMutations: mutationFilter
-            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
-        nucleotideInsertions: mutationFilter
-            .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-            .map((m) => m.text),
-        aminoAcidInsertions: mutationFilter
-            .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-            .map((m) => m.text),
-    };
-};
-
-export const parseMutationString = (
-    value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): MutationQuery[] => {
-    return value
-        .split(',')
-        .map((mutation) => {
-            const trimmedMutation = mutation.trim();
-            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-            }
-            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-            }
-            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-            }
-            return null;
-        })
-        .filter(Boolean) as MutationQuery[];
-};
-
-export const isValidAminoAcidInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
+    public getType(fieldName: string): MetadataType | undefined {
+        return this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.type;
     }
-};
 
-export const isValidAminoAcidMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const textUpper = text.toUpperCase();
-        const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene)) {
-            return false;
-        }
-        return /^[A-Z*]?[0-9]+[A-Z-*\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
+    /**
+     * Get the display name for simple metadata fields, or displayname + sub label for
+     * ranges, i.e. "released at - from" (<displayname> - <label>)
+     */
+    public getLabel(fieldName: string): string {
+        let displayName = this.filters
+            .map((metadata) => {
+                if (metadata.grouped === true) {
+                    const groupedField = metadata.groupedFields.find(
+                        (groupedMetadata) => groupedMetadata.name === fieldName,
+                    );
+                    if (groupedField) {
+                        return `${metadata.displayName} - ${groupedField.displayName}`;
+                    }
+                }
+            })
+            .find((x) => x !== undefined);
+        displayName ??= this.filters.find((metadata) => metadata.name === fieldName)?.displayName;
+        return displayName ?? fieldName;
     }
-};
 
-export const isValidNucleotideInsertionQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
-            return false;
-        }
-        const query = textUpper.slice(4);
-        const split = query.split(':');
-        const [segment, position, insertion] = isMultiSegmented
-            ? split
-            : ([undefined, ...split] as [undefined | string, string, string]);
-        if (segment !== undefined) {
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
+    public isSubstringSearchEnabled(fieldName: string): boolean {
+        return (
+            this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)
+                ?.substringSearch === true
+        );
+    }
+
+    public filterNameToLabelMap(): Record<string, string> {
+        return this.filters.reduce(
+            (acc, field) => {
+                acc[field.name] = field.displayName ?? sentenceCase(field.name);
+                return acc;
+            },
+            {} as Record<string, string>,
+        );
+    }
+
+    /**
+     * @param queryState the key-values set in the URL.
+     * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
+     */
+    public getFieldValuesFromQuery(queryState: Record<string, string>, hiddenFieldValues: FieldValues): FieldValues {
+        const values: FieldValues = { ...hiddenFieldValues };
+        for (const field of this.ungroupedMetadataFilters()) {
+            if (field.name in queryState) {
+                values[field.name] = queryState[field.name];
             }
         }
-        if (!Number.isInteger(Number(position))) {
-            return false;
+        if ('accession' in queryState) {
+            values.accession = queryState.accession;
         }
-        return /^[A-Z*?]+$/.test(insertion);
-    } catch (_) {
-        return false;
-    }
-};
-
-export const isValidNucleotideMutationQuery = (
-    text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
-): boolean => {
-    try {
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
-        const textUpper = text.toUpperCase();
-        let mutation = textUpper;
-        if (isMultiSegmented) {
-            const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
-            mutation = _mutation;
+        if ('mutation' in queryState) {
+            values.mutation = queryState.mutation;
         }
-        return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
-    } catch (_) {
-        return false;
+        return values;
     }
-};
+}

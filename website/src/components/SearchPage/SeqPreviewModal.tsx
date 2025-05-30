@@ -9,6 +9,7 @@ import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts'
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
+import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -73,10 +74,11 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
-            {data !== null && data.isRevocation && (
-                <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
-                    <strong className='font-bold'>This sequence has been revoked.</strong>
-                </div>
+            {!isLoading && data !== null && (
+                <SequencesBanner
+                    sequenceEntryHistory={data.sequenceEntryHistory}
+                    accessionVersion={data.accessionVersion}
+                />
             )}
 
             {isLoading ? (
@@ -100,7 +102,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     const controls = (
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
-            <div>
+            <div className='flex items-center'>
                 {data !== null && data.sequenceEntryHistory.length > 1 && (
                     <SequenceEntryHistoryMenu
                         sequenceEntryHistory={data.sequenceEntryHistory}
@@ -113,6 +115,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     className={BUTTONCLASS}
                     onClick={() => setIsHalfScreen(!isHalfScreen)}
                     title={isHalfScreen ? 'Expand sequence details view' : 'Dock sequence details view'}
+                    data-testid='toggle-half-screen-button'
                 >
                     {isHalfScreen ? (
                         <MaterialSymbolsLightWidthFull className='w-6 h-6' />
@@ -124,7 +127,13 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
-                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
+                <button
+                    type='button'
+                    className={BUTTONCLASS}
+                    onClick={onClose}
+                    title='Close'
+                    data-testid='close-preview-button'
+                >
                     <MaterialSymbolsClose className='w-6 h-6' />
                 </button>
             </div>
@@ -134,12 +143,20 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     return (
         <Transition appear show={isOpen} as={React.Fragment}>
             {isHalfScreen ? (
-                <div className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'>
+                <div
+                    className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
+                    data-testid='half-screen-preview'
+                >
                     {controls}
                     {content}
                 </div>
             ) : (
-                <Dialog as='div' className='fixed inset-0 z-40 overflow-y-auto' onClose={onClose}>
+                <Dialog
+                    as='div'
+                    className='fixed inset-0 z-40 overflow-y-auto'
+                    onClose={onClose}
+                    data-testid='sequence-preview-modal'
+                >
                     <div className='min-h-screen px-8 text-center'>
                         <div className='fixed inset-0 bg-black opacity-30' />
                         <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
@@ -164,6 +166,11 @@ data class ProcessedData<SequenceType>(
         description = "The key is the gene name, the value is a list of amino acid insertions",
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+    @Schema(
+        example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        description = "The key is the file category name, the value is a list of files, with ID and name.",
+    )
+    val files: FileCategoryFilesMap?,
 )
 
 data class ExternalSubmittedData(
@@ -241,7 +248,7 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData<GeneticSequence>,
+    val data: OriginalDataWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
     @Schema(description = "The username of the submitter")
@@ -252,7 +259,7 @@ data class UnprocessedData(
     val submittedAt: Long,
 ) : AccessionVersionInterface
 
-data class OriginalData<SequenceType>(
+data class OriginalDataInternal<SequenceType, FilesType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -263,13 +270,23 @@ data class OriginalData<SequenceType>(
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
+    @Schema(
+        example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
+        description = "A map from file categories, to lists of files. The files can also have URLs.",
+    )
+    val files: Map<String, List<FilesType>>? = null,
 )
+
+typealias OriginalData<SequenceType> = OriginalDataInternal<SequenceType, FileIdAndName>
+typealias OriginalDataWithFileUrls<SequenceType> =
+    OriginalDataInternal<SequenceType, FileIdAndNameAndReadUrl>
 
 data class AccessionVersionOriginalMetadata(
     override val accession: Accession,
     override val version: Version,
     val submitter: String,
-    val originalMetadata: Map<String, String?>,
+    val isRevocation: Boolean,
+    val originalMetadata: Map<String, String?>?,
 ) : AccessionVersionInterface
 
 enum class Status {
@@ -342,4 +359,48 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
         it.compressionName.equals(source, ignoreCase = true)
     }
         ?: throw IllegalArgumentException("Unknown compression: $source")
+}
+
+typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
+
+fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
+    it.values
+}.flatten().map { it.fileId }.toSet()
+
+/**
+ * A file category like 'raw_reads' or 'logs'.
+ */
+typealias FileCategory = String
+
+/**
+ * Stores a list of file IDs and file names for each file category.
+ * These are the files that were submitted for the given category.
+ */
+typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
+
+val FileCategoryFilesMap.categories: Set<FileCategory>
+    get() = this.keys
+
+fun FileCategoryFilesMap.addUrls(
+    buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
+): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
+    entry.key to
+        entry.value.map { fileIdAndName ->
+            FileIdAndNameAndReadUrl(
+                fileIdAndName.fileId,
+                fileIdAndName.name,
+                buildUrl(entry.key, fileIdAndName.fileId, fileIdAndName.name),
+            )
+        }
+}
+
+fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
+    this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
+
+fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<String> {
+    val nameCounts = this[category]!!
+        .groupingBy { it.name }
+        .eachCount()
+
+    return nameCounts.filterValues { it > 1 }.keys
 }

@@ -4,9 +4,6 @@
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if .enableSubstringSearch }}
-  lapisAllowsRegexSearch: true
-  {{- end }}
   {{- if .lineageSystem }}
   generateIndex: true
   generateLineageIndex: true
@@ -35,8 +32,13 @@ schema:
       name: {{ .name }}
   {{- end }}
   {{- end }}
+  {{- if .files }}
+  {{- range .files }}
+    - type: string
+      name: {{ .name }}
+  {{- end }}
+  {{- end }}
   primaryKey: accessionVersion
-{{ if .silo}}
-  {{- .silo | toYaml | nindent 2 }}
-{{ end }}
+  features:
+    - name: generalizedAdvancedQuery
 {{- end }}

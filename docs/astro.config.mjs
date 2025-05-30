@@ -28,9 +28,7 @@ export default defineConfig({
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',
             },
             customCss: ['./src/styles/tailwind.css', './src/styles/custom.css'],
-            social: {
-                github: 'https://github.com/loculus-project/loculus',
-            },
+            social: [{ icon: 'github', label: 'Github', href: 'https://github.com/loculus-project/loculus' }],
             sidebar: [
                 {
                     label: 'Introduction',
@@ -70,8 +68,8 @@ export default defineConfig({
                             items: [
                                 'for-administrators/pipeline-concept',
                                 'for-administrators/existing-preprocessing-pipelines',
-                                'for-administrators/build-new-preprocessing-pipeline'
-                            ]
+                                'for-administrators/build-new-preprocessing-pipeline',
+                            ],
                         },
                         { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },

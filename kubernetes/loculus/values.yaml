@@ -25,6 +25,13 @@ dataUseTerms:
   urls:
     open: https://#TODO-MVP/open
     restricted: https://#TODO-MVP/restricted
+fileSharing:
+  outputFileUrlType: backend
+s3:
+  enabled: true
+  bucket:
+    region: us-east-1
+    bucket: loculus-preview-private
 name: "Loculus"
 logo:
   url: "/favicon.svg"
@@ -39,10 +46,15 @@ defaultOrganismConfig: &defaultOrganismConfig
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
     image: "/images/organisms/ebolasudan_small.jpg"
+    linkOuts:
+      - name: "Nextclade"
+        maxNumberOfRecommendedEntries: 5
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
     earliestReleaseDate:
       enabled: true
       externalFields:
         - ncbiReleaseDate
+    richFastaHeaderFields: ["displayName"]
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -65,6 +77,8 @@ defaultOrganismConfig: &defaultOrganismConfig
     # initiallyVisible: Whether it appear in searchUI by default (default false)
     # generateIndex: Whether the field should be indexed for search (default false, only allowed for string fields)
     # autocomplete: Whether the field should be used for search autocomplete (default false, only allowed for string fields and probably generateIndex should be true)
+    ## Download related
+    # includeInDownloadsByDefault: Whether this field should be selected by default in download options (default false)
     ## Ingest related
     # ingest: Which NCBI field to map to this field (optional)
     ## Preprocessing related
@@ -75,6 +89,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
+        includeInDownloadsByDefault: true
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -147,6 +162,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         rangeSearch: true
         noInput: true
+        includeInDownloadsByDefault: true
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
@@ -174,319 +190,319 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
+        includeInDownloadsByDefault: true
         header: Sample details
         order: 20
         ingest: country
         required: true
+        options:
+          # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
+          # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
+          # If changed, ensure it's mirrored to Pathoplexus
+          # Last check: 2024-11-01
+          # Last update: 2024-09-18
+          - name: Afghanistan
+          - name: Albania
+          - name: Algeria
+          - name: American Samoa
+          - name: Andorra
+          - name: Angola
+          - name: Anguilla
+          - name: Antarctica
+          - name: Antigua and Barbuda
+          - name: Arctic Ocean
+          - name: Argentina
+          - name: Armenia
+          - name: Aruba
+          - name: Ashmore and Cartier Islands
+          - name: Atlantic Ocean
+          - name: Australia
+          - name: Austria
+          - name: Azerbaijan
+          - name: Bahamas
+          - name: Bahrain
+          - name: Baltic Sea
+          - name: Baker Island
+          - name: Bangladesh
+          - name: Barbados
+          - name: Bassas da India
+          - name: Belarus
+          - name: Belgium
+          - name: Belize
+          - name: Benin
+          - name: Bermuda
+          - name: Bhutan
+          - name: Bolivia
+          - name: Borneo
+          - name: Bosnia and Herzegovina
+          - name: Botswana
+          - name: Bouvet Island
+          - name: Brazil
+          - name: British Virgin Islands
+          - name: Brunei
+          - name: Bulgaria
+          - name: Burkina Faso
+          - name: Burundi
+          - name: Cambodia
+          - name: Cameroon
+          - name: Canada
+          - name: Cape Verde
+          - name: Cayman Islands
+          - name: Central African Republic
+          - name: Chad
+          - name: Chile
+          - name: China
+          - name: Christmas Island
+          - name: Clipperton Island
+          - name: Cocos Islands
+          - name: Colombia
+          - name: Comoros
+          - name: Cook Islands
+          - name: Coral Sea Islands
+          - name: Costa Rica
+          - name: Cote d'Ivoire
+          - name: Croatia
+          - name: Cuba
+          - name: Curacao
+          - name: Cyprus
+          - name: Czechia
+          - name: Democratic Republic of the Congo
+          - name: Denmark
+          - name: Djibouti
+          - name: Dominica
+          - name: Dominican Republic
+          - name: Ecuador
+          - name: Egypt
+          - name: El Salvador
+          - name: Equatorial Guinea
+          - name: Eritrea
+          - name: Estonia
+          - name: Eswatini
+          - name: Ethiopia
+          - name: Europa Island
+          - name: Falkland Islands (Islas Malvinas)
+          - name: Faroe Islands
+          - name: Fiji
+          - name: Finland
+          - name: France
+          - name: French Guiana
+          - name: French Polynesia
+          - name: French Southern and Antarctic Lands
+          - name: Gabon
+          - name: Gambia
+          - name: Gaza Strip
+          - name: Georgia
+          - name: Germany
+          - name: Ghana
+          - name: Gibraltar
+          - name: Glorioso Islands
+          - name: Greece
+          - name: Greenland
+          - name: Grenada
+          - name: Guadeloupe
+          - name: Guam
+          - name: Guatemala
+          - name: Guernsey
+          - name: Guinea
+          - name: Guinea-Bissau
+          - name: Guyana
+          - name: Haiti
+          - name: Heard Island and McDonald Islands
+          - name: Honduras
+          - name: Hong Kong
+          - name: Howland Island
+          - name: Hungary
+          - name: Iceland
+          - name: India
+          - name: Indian Ocean
+          - name: Indonesia
+          - name: Iran
+          - name: Iraq
+          - name: Ireland
+          - name: Isle of Man
+          - name: Israel
+          - name: Italy
+          - name: Jamaica
+          - name: Jan Mayen
+          - name: Japan
+          - name: Jarvis Island
+          - name: Jersey
+          - name: Johnston Atoll
+          - name: Jordan
+          - name: Juan de Nova Island
+          - name: Kazakhstan
+          - name: Kenya
+          - name: Kerguelen Archipelago
+          - name: Kingman Reef
+          - name: Kiribati
+          - name: Kosovo
+          - name: Kuwait
+          - name: Kyrgyzstan
+          - name: Laos
+          - name: Latvia
+          - name: Lebanon
+          - name: Lesotho
+          - name: Liberia
+          - name: Libya
+          - name: Liechtenstein
+          - name: Line Islands
+          - name: Lithuania
+          - name: Luxembourg
+          - name: Macau
+          - name: Madagascar
+          - name: Malawi
+          - name: Malaysia
+          - name: Maldives
+          - name: Mali
+          - name: Malta
+          - name: Marshall Islands
+          - name: Martinique
+          - name: Mauritania
+          - name: Mauritius
+          - name: Mayotte
+          - name: Mediterranean Sea
+          - name: Mexico
+          - name: Micronesia, Federated States of
+          - name: Midway Islands
+          - name: Moldova
+          - name: Monaco
+          - name: Mongolia
+          - name: Montenegro
+          - name: Montserrat
+          - name: Morocco
+          - name: Mozambique
+          - name: Myanmar
+          - name: Namibia
+          - name: Nauru
+          - name: Navassa Island
+          - name: Nepal
+          - name: Netherlands
+          - name: New Caledonia
+          - name: New Zealand
+          - name: Nicaragua
+          - name: Niger
+          - name: Nigeria
+          - name: Niue
+          - name: Norfolk Island
+          - name: North Korea
+          - name: North Macedonia
+          - name: North Sea
+          - name: Northern Mariana Islands
+          - name: Norway
+          - name: Oman
+          - name: Pacific Ocean
+          - name: Pakistan
+          - name: Palau
+          - name: Palmyra Atoll
+          - name: Panama
+          - name: Papua New Guinea
+          - name: Paracel Islands
+          - name: Paraguay
+          - name: Peru
+          - name: Philippines
+          - name: Pitcairn Islands
+          - name: Poland
+          - name: Portugal
+          - name: Puerto Rico
+          - name: Qatar
+          - name: Republic of the Congo
+          - name: Reunion
+          - name: Romania
+          - name: Ross Sea
+          - name: Russia
+          - name: Rwanda
+          - name: Saint Barthelemy
+          - name: Saint Helena
+          - name: Saint Kitts and Nevis
+          - name: Saint Lucia
+          - name: Saint Martin
+          - name: Saint Pierre and Miquelon
+          - name: Saint Vincent and the Grenadines
+          - name: Samoa
+          - name: San Marino
+          - name: Sao Tome and Principe
+          - name: Saudi Arabia
+          - name: Senegal
+          - name: Serbia
+          - name: Seychelles
+          - name: Sierra Leone
+          - name: Singapore
+          - name: Sint Maarten
+          - name: Slovakia
+          - name: Slovenia
+          - name: Solomon Islands
+          - name: Somalia
+          - name: South Africa
+          - name: South Georgia and the South Sandwich Islands
+          - name: South Korea
+          - name: South Sudan
+          - name: Southern Ocean
+          - name: Spain
+          - name: Spratly Islands
+          - name: Sri Lanka
+          - name: State of Palestine
+          - name: Sudan
+          - name: Suriname
+          - name: Svalbard
+          - name: Sweden
+          - name: Switzerland
+          - name: Syria
+          - name: Taiwan
+          - name: Tajikistan
+          - name: Tanzania
+          - name: Tasman Sea
+          - name: Thailand
+          - name: Timor-Leste
+          - name: Togo
+          - name: Tokelau
+          - name: Tonga
+          - name: Trinidad and Tobago
+          - name: Tromelin Island
+          - name: Tunisia
+          - name: Turkey
+          - name: Turkmenistan
+          - name: Turks and Caicos Islands
+          - name: Tuvalu
+          - name: Uganda
+          - name: Ukraine
+          - name: United Arab Emirates
+          - name: United Kingdom
+          - name: Uruguay
+          - name: USA
+          - name: Uzbekistan
+          - name: Vanuatu
+          - name: Venezuela
+          - name: Viet Nam
+          - name: Virgin Islands
+          - name: Wake Island
+          - name: Wallis and Futuna
+          - name: West Bank
+          - name: Western Sahara
+          - name: Yemen
+          - name: Zambia
+          - name: Zimbabwe
+          # Historical Countries in NIH
+          - name: Belgian Congo
+          - name: British Guiana
+          - name: Burma
+          - name: Czechoslovakia
+          - name: Czech Republic
+          - name: East Timor
+          - name: Korea
+          - name: Macedonia
+          - name: Micronesia
+          - name: Netherlands Antilles
+          - name: Serbia and Montenegro
+          - name: Siam
+          - name: Swaziland
+          - name: The former Yugoslav Republic of Macedonia
+          - name: USSR
+          - name: Yugoslavia
+          - name: Zaire
         preprocessing:
           function: process_options
           inputs:
             input: geoLocCountry
-          args:
-            options:
-              # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
-              # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
-              # If changed, ensure it's mirrored to Pathoplexus
-              # Last check: 2024-11-01
-              # Last update: 2024-09-18
-              - Afghanistan
-              - Albania
-              - Algeria
-              - American Samoa
-              - Andorra
-              - Angola
-              - Anguilla
-              - Antarctica
-              - Antigua and Barbuda
-              - Arctic Ocean
-              - Argentina
-              - Armenia
-              - Aruba
-              - Ashmore and Cartier Islands
-              - Atlantic Ocean
-              - Australia
-              - Austria
-              - Azerbaijan
-              - Bahamas
-              - Bahrain
-              - Baltic Sea
-              - Baker Island
-              - Bangladesh
-              - Barbados
-              - Bassas da India
-              - Belarus
-              - Belgium
-              - Belize
-              - Benin
-              - Bermuda
-              - Bhutan
-              - Bolivia
-              - Borneo
-              - Bosnia and Herzegovina
-              - Botswana
-              - Bouvet Island
-              - Brazil
-              - British Virgin Islands
-              - Brunei
-              - Bulgaria
-              - Burkina Faso
-              - Burundi
-              - Cambodia
-              - Cameroon
-              - Canada
-              - Cape Verde
-              - Cayman Islands
-              - Central African Republic
-              - Chad
-              - Chile
-              - China
-              - Christmas Island
-              - Clipperton Island
-              - Cocos Islands
-              - Colombia
-              - Comoros
-              - Cook Islands
-              - Coral Sea Islands
-              - Costa Rica
-              - Cote d'Ivoire
-              - Croatia
-              - Cuba
-              - Curacao
-              - Cyprus
-              - Czechia
-              - Democratic Republic of the Congo
-              - Denmark
-              - Djibouti
-              - Dominica
-              - Dominican Republic
-              - Ecuador
-              - Egypt
-              - El Salvador
-              - Equatorial Guinea
-              - Eritrea
-              - Estonia
-              - Eswatini
-              - Ethiopia
-              - Europa Island
-              - Falkland Islands (Islas Malvinas)
-              - Faroe Islands
-              - Fiji
-              - Finland
-              - France
-              - French Guiana
-              - French Polynesia
-              - French Southern and Antarctic Lands
-              - Gabon
-              - Gambia
-              - Gaza Strip
-              - Georgia
-              - Germany
-              - Ghana
-              - Gibraltar
-              - Glorioso Islands
-              - Greece
-              - Greenland
-              - Grenada
-              - Guadeloupe
-              - Guam
-              - Guatemala
-              - Guernsey
-              - Guinea
-              - Guinea-Bissau
-              - Guyana
-              - Haiti
-              - Heard Island and McDonald Islands
-              - Honduras
-              - Hong Kong
-              - Howland Island
-              - Hungary
-              - Iceland
-              - India
-              - Indian Ocean
-              - Indonesia
-              - Iran
-              - Iraq
-              - Ireland
-              - Isle of Man
-              - Israel
-              - Italy
-              - Jamaica
-              - Jan Mayen
-              - Japan
-              - Jarvis Island
-              - Jersey
-              - Johnston Atoll
-              - Jordan
-              - Juan de Nova Island
-              - Kazakhstan
-              - Kenya
-              - Kerguelen Archipelago
-              - Kingman Reef
-              - Kiribati
-              - Kosovo
-              - Kuwait
-              - Kyrgyzstan
-              - Laos
-              - Latvia
-              - Lebanon
-              - Lesotho
-              - Liberia
-              - Libya
-              - Liechtenstein
-              - Line Islands
-              - Lithuania
-              - Luxembourg
-              - Macau
-              - Madagascar
-              - Malawi
-              - Malaysia
-              - Maldives
-              - Mali
-              - Malta
-              - Marshall Islands
-              - Martinique
-              - Mauritania
-              - Mauritius
-              - Mayotte
-              - Mediterranean Sea
-              - Mexico
-              - Micronesia, Federated States of
-              - Midway Islands
-              - Moldova
-              - Monaco
-              - Mongolia
-              - Montenegro
-              - Montserrat
-              - Morocco
-              - Mozambique
-              - Myanmar
-              - Namibia
-              - Nauru
-              - Navassa Island
-              - Nepal
-              - Netherlands
-              - New Caledonia
-              - New Zealand
-              - Nicaragua
-              - Niger
-              - Nigeria
-              - Niue
-              - Norfolk Island
-              - North Korea
-              - North Macedonia
-              - North Sea
-              - Northern Mariana Islands
-              - Norway
-              - Oman
-              - Pacific Ocean
-              - Pakistan
-              - Palau
-              - Palmyra Atoll
-              - Panama
-              - Papua New Guinea
-              - Paracel Islands
-              - Paraguay
-              - Peru
-              - Philippines
-              - Pitcairn Islands
-              - Poland
-              - Portugal
-              - Puerto Rico
-              - Qatar
-              - Republic of the Congo
-              - Reunion
-              - Romania
-              - Ross Sea
-              - Russia
-              - Rwanda
-              - Saint Barthelemy
-              - Saint Helena
-              - Saint Kitts and Nevis
-              - Saint Lucia
-              - Saint Martin
-              - Saint Pierre and Miquelon
-              - Saint Vincent and the Grenadines
-              - Samoa
-              - San Marino
-              - Sao Tome and Principe
-              - Saudi Arabia
-              - Senegal
-              - Serbia
-              - Seychelles
-              - Sierra Leone
-              - Singapore
-              - Sint Maarten
-              - Slovakia
-              - Slovenia
-              - Solomon Islands
-              - Somalia
-              - South Africa
-              - South Georgia and the South Sandwich Islands
-              - South Korea
-              - South Sudan
-              - Southern Ocean
-              - Spain
-              - Spratly Islands
-              - Sri Lanka
-              - State of Palestine
-              - Sudan
-              - Suriname
-              - Svalbard
-              - Sweden
-              - Switzerland
-              - Syria
-              - Taiwan
-              - Tajikistan
-              - Tanzania
-              - Tasman Sea
-              - Thailand
-              - Timor-Leste
-              - Togo
-              - Tokelau
-              - Tonga
-              - Trinidad and Tobago
-              - Tromelin Island
-              - Tunisia
-              - Turkey
-              - Turkmenistan
-              - Turks and Caicos Islands
-              - Tuvalu
-              - Uganda
-              - Ukraine
-              - United Arab Emirates
-              - United Kingdom
-              - Uruguay
-              - USA
-              - Uzbekistan
-              - Vanuatu
-              - Venezuela
-              - Viet Nam
-              - Virgin Islands
-              - Wake Island
-              - Wallis and Futuna
-              - West Bank
-              - Western Sahara
-              - Yemen
-              - Zambia
-              - Zimbabwe
-              # Historical Countries in NIH
-              - Belgian Congo
-              - British Guiana
-              - Burma
-              - Czechoslovakia
-              - Czech Republic
-              - East Timor
-              - Korea
-              - Macedonia
-              - Micronesia
-              - Netherlands Antilles
-              - Serbia and Montenegro
-              - Siam
-              - Swaziland
-              - The former Yugoslav Republic of Macedonia
-              - USSR
-              - Yugoslavia
-              - Zaire
       - name: geoLocAdmin1
         displayName: Collection subdivision level 1
         desired: true
@@ -528,6 +544,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         enableSubstringSearch: true
         order: 40
+        includeInDownloadsByDefault: true
         truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
@@ -542,6 +559,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
+        includeInDownloadsByDefault: true
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
         generateIndex: true
@@ -1166,8 +1184,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - length
       defaultOrderBy: sampleCollectionDate
       defaultOrder: descending
-    silo:
-      dateToSortBy: sampleCollectionDateRangeUpper
     extraInputFields: []
   preprocessing:
     - &preprocessing
@@ -1178,12 +1194,12 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+        genes: []
         batch_size: 100
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 186540
+      taxon_id: 3052460
   enaDeposition:
     configFile:
       taxon_id: 186540
@@ -1219,18 +1235,27 @@ defaultOrganisms:
     preprocessing:
       - <<: *preprocessing
         version: 1
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-      - <<: *preprocessing # test having 2 simultaneous versions
+        configFile:
+          <<: *preprocessingConfigFile      
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+      - <<: *preprocessing
         version: 2
-        nextclade_dataset_name: nextstrain/ebola/sudan
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+        configFile:
+          <<: *preprocessingConfigFile
+          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+          nextclade_dataset_name: nextstrain/ebola/sudan
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
       organismName: "West Nile Virus"
       image: "/images/organisms/wnv_small.jpg"
+      linkOuts:
+        - name: "Nextclade"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1238,6 +1263,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
         - name: totalStopCodons
@@ -1332,6 +1358,11 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          options:
+            - name: Germany
+            - name: Canada
+            - name: New Zealand
+            - name: Colombia
           header: "Collection Details"
         - name: division
           initiallyVisible: true
@@ -1346,6 +1377,7 @@ defaultOrganisms:
           header: "Collection Details"
         - name: pangoLineage
           initiallyVisible: true
+          displayName: "Pango lineage"
           autocomplete: true
           required: true
           type: string
@@ -1363,8 +1395,6 @@ defaultOrganisms:
           - pangoLineage
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-dummy
@@ -1402,6 +1432,68 @@ defaultOrganisms:
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
+  dummy-organism-with-files:
+    schema:
+      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
+      organismName: "Test organism (with files)"
+      nucleotideSequences: []
+      submissionDataTypes:
+        consensusSequences: false
+        files:
+          enabled: true
+          categories:
+            - name: raw_reads
+      files:
+        - name: raw_reads
+      metadata:
+        - name: date
+          type: date
+          initiallyVisible: true
+          header: "Collection Details"
+          required: true
+          preprocessing:
+            function: parse_and_assert_past_date
+            inputs:
+              date: date
+        - name: region
+          type: string
+          initiallyVisible: true
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: country
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: division
+          initiallyVisible: true
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Collection Details"
+        - name: host
+          initiallyVisible: true
+          type: string
+          autocomplete: true
+          header: "Collection Details"
+      website:
+        tableColumns:
+          - country
+          - division
+          - date
+        defaultOrder: descending
+        defaultOrderBy: date
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-dummy
+        args:
+          - "--watch"
+          - "--disableConsensusSequences"
+    referenceGenomes:
+      nucleotideSequences: []
+      genes: []
   dummy-organism-without-seqs:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
@@ -1449,8 +1541,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 3
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -1507,8 +1597,6 @@ defaultOrganisms:
           - date
         defaultOrder: descending
         defaultOrderBy: date
-      silo:
-        dateToSortBy: date
     preprocessing:
       - version: 4
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -1530,6 +1618,13 @@ defaultOrganisms:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
+      linkOuts:
+        - name: "Nextclade (L)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade (M)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+        - name: "Nextclade (S)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1576,8 +1671,10 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-        nextclade_dataset_name: nextstrain/cchfv/linked
+        segment_identification:
+          method: "align"
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: nextstrain/cchfv/linked
     enaDeposition:
       configFile:
         taxon_id: 3052518
@@ -1602,26 +1699,28 @@ defaultOrganisms:
         - name: NP
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
 auth:
-  smtp:
-    host: "in-v3.mailjet.com"
-    port: 587
-    user: "fafd505de339dd2e9c3e85ad9981af8a"
-    replyTo: "noreply@loculus.org"
-    from: "noreply@loculus.org"
-    envelopeFrom: "noreply@loculus.org"
-  verifyEmail: true
+  verifyEmail: false
   resetPasswordAllowed: true
   registrationAllowed: true
-  identityProviders:
-    orcid:
-      clientId: "APP-P1P7N7T9YVBHQ4EH"
 insecureCookies: false
 bannerMessage: "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly."
 welcomeMessageHTML: null
 additionalHeadHTML: ""
 images:
-  lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.5.3"
-  lapis: "ghcr.io/genspectrum/lapis:0.3.14"
+  lapisSilo:
+    repository: "ghcr.io/genspectrum/lapis-silo"
+    tag: "0.6.0"
+    pullPolicy: IfNotPresent
+  lapis:
+    repository: "ghcr.io/genspectrum/lapis"
+    tag: "0.5.1"
+    pullPolicy: IfNotPresent
+  website:
+    repository: "ghcr.io/loculus-project/website"
+    pullPolicy: Always
+  backend:
+    repository: "ghcr.io/loculus-project/backend"
+    pullPolicy: Always
 secrets:
   smtp-password:
     type: raw
@@ -1680,21 +1779,29 @@ secrets:
     data:
       username: "dummy"
       password: "dummy"
+  s3-bucket:
+    type: raw
+    data:
+      accessKey: "dummyAccessKey"
+      secretKey: "dummySecretKey"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-submitToEnaProduction: false
-enaDbName: Loculus
-enaUniqueSuffix: Loculus
-enaIsBroker: False
+enaDeposition: 
+  submitToEnaProduction: false
+  enaDbName: Loculus
+  enaUniqueSuffix: Loculus
+  enaIsBroker: False
 subdomainSeparator: "-"
 replicas:
   website: 1
   backend: 1
+  lapis: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
@@ -1761,6 +1868,11 @@ resources:
       memory: "20Mi"
     limits:
       memory: "3Gi"
+  minio:
+    requests:
+      memory: "200Mi"
+    limits:
+      memory: "1Gi"
 defaultResources:
   requests:
     memory: "200Mi"
@@ -1770,3 +1882,4 @@ defaultResources:
     cpu: "20m"
 ingest:
   ncbiGatewayUrl: null
+  mirrorBucket: null

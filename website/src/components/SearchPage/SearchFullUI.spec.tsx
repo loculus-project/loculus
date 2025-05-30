@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -44,13 +44,13 @@ const defaultSearchFormFilters: MetadataFilter[] = [
         name: 'field1',
         type: 'string',
         autocomplete: false,
-        label: 'Field 1',
+        displayName: 'Field 1',
         initiallyVisible: true,
     },
     {
         name: 'field3',
         type: 'string',
-        label: 'Field 3',
+        displayName: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
     },
@@ -58,7 +58,6 @@ const defaultSearchFormFilters: MetadataFilter[] = [
         name: 'field4',
         type: 'string',
         autocomplete: false,
-        label: 'Field 4',
         displayName: 'Field 4',
         notSearchable: true,
     },
@@ -163,7 +162,7 @@ describe('SearchFullUI', () => {
         renderSearchFullUI();
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
-        expect(screen.getByText('Field 1')).toBeInTheDocument();
+        expect(screen.getByLabelText('Field 1')).toBeInTheDocument();
         expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
     });
 
@@ -172,7 +171,7 @@ describe('SearchFullUI', () => {
             searchFormFilters: [
                 {
                     name: 'NotSearchable',
-                    label: 'Not searchable',
+                    displayName: 'Not searchable',
                     type: 'string',
                     autocomplete: false,
                     notSearchable: true,
@@ -192,16 +191,14 @@ describe('SearchFullUI', () => {
                 {
                     name: timestampFieldName,
                     type: 'timestamp',
+                    displayName: 'Timestamp field',
                     initiallyVisible: true,
                 },
             ],
         });
 
-        const timestampLabel = screen.getByText('Timestamp field');
-        const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
-        if (!timestampField) {
-            throw new Error('Timestamp field not found');
-        }
+        const timestampField = screen.getByLabelText('Timestamp field');
+        expect(timestampField).toBeInTheDocument();
     });
 
     it('should display date field', () => {
@@ -233,12 +230,9 @@ describe('SearchFullUI', () => {
         const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
         await userEvent.click(field1Checkbox);
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
-        const dialogClosed = waitForElementToBeRemoved(() =>
-            screen.queryByText('Toggle the visibility of search fields'),
-        );
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
-        await dialogClosed;
+
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
@@ -263,9 +257,8 @@ describe('SearchFullUI', () => {
         expect(field4Checkbox).not.toBeChecked();
         await userEvent.click(field4Checkbox);
         expect(field4Checkbox).toBeChecked();
-        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
-        screen.logTestingPlaygroundURL();
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });
 });

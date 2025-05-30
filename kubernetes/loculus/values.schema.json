@@ -5,6 +5,7 @@
   "definitions": {
     "metadata": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "name": {
           "groups": ["metadata"],
@@ -52,6 +53,11 @@
           "type": "boolean",
           "description": "Whether a field with this name is expected as possible input, and so should be included in the metadata template and as a form field. (If set to true it will not be included)."
         },
+        "notSearchable": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, disable search for this field."
+        },
         "generateIndex": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -62,6 +68,11 @@
           "type": "number",
           "description": "The minimum column width for this field on the search table."
         },
+        "truncateColumnDisplayTo": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "The number of characters to truncate the column content to."
+        },
         "order": {
           "groups": ["metadata"],
           "type": "number",
@@ -71,6 +82,23 @@
           "groups": ["metadata"],
           "type": "boolean",
           "description": "Whether autocomplete should be offered for the field. This is only allowed for string fields and probably `generateIndex` should be true."
+        },
+        "options": {
+          "groups": ["metadata"],
+          "type": "array",
+          "description": "An array of options for the value of this field, when it is an input field.",
+          "placeholder": "option",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "groups": ["metadata"],
+                "type": "string",
+                "description": "The name of the option."
+              }
+            }
+          }
         },
         "enableSubstringSearch": {
           "groups": ["metadata"],
@@ -85,9 +113,10 @@
         "rangeOverlapSearch": {
           "groups": ["metadata"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Config settings for enabling range overlap search.",
           "properties": {
-            "rangeId": {
+            "rangeName": {
               "groups": ["metadata"],
               "type": "string",
               "description": "The range that this field belongs to. Two fields (the upper and lower bound) need to be defined with the same range ID."
@@ -120,15 +149,25 @@
           "type": "boolean",
           "description": "If true, hides the field in the search results table (and makes it impossible to show)."
         },
+        "includeInDownloadsByDefault": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "Whether this field should be included in metadata downloads by default."
+        },
         "perSegment": {
           "groups": ["metadata"],
           "type": "boolean",
           "description": "Whether this is a metadata field that should exist for each segment. If so fields will be created as fieldName_A, fieldName_B in the case of an organism with segments A and B."
         },
+        "oneHeader": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "For segmented fields, whether this field should be grouped by segment or not."
+        },
         "customDisplay": {
           "groups": ["metadata"],
           "type": "object",
-          "description": "Custom display settings for the field on the sequence details page.",
+          "description": "Custom display settings for the field on the sequence details page (see [here](#custom-display))",
           "properties": {
             "type": {
               "groups": ["metadata"],
@@ -169,12 +208,14 @@
     },
     "organism": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "schema": {
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
           "description": "Object of type [organism schema](#schema-type)",
+          "additionalProperties": false,
           "properties": {
             "organismName": {
               "groups": ["schema"],
@@ -204,19 +245,74 @@
                   "type": "boolean",
                   "default": true,
                   "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
+                },
+                "files": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "groups": ["schema"],
+                      "type": "boolean",
+                      "default": false,
+                      "description": "If true, enable support for submitting additional files. S3 needs to be configured and categories need to be configured under `categories`."
+                    },
+                    "categories": {
+                      "groups": ["schema"],
+                      "type": "array",
+                      "description": "The file categories that can be submitted for this organism.",
+                      "items": {
+                        "type": "object",
+                        "placeholder": "fileCategory",
+                        "properties": {
+                          "name": {
+                            "groups": ["schema"],
+                            "type": "string",
+                            "description": "The name of the file category, e.g. 'raw_reads'."
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
                 }
-              }
+              },
+              "additionalProperties": false
             },
-            "description": {
+            "files": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
-              "type": "string"
+              "description": "An array of output files.",
+              "type": "array",
+              "placeholder": "file",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "groups": ["schema"],
+                    "type": "string",
+                    "description": "TODO"
+                  },
+                  "multipleFiles": {
+                    "groups": ["schema"],
+                    "type": "boolean",
+                    "description": "TODO"
+                  }
+                },
+                "additionalProperties": false
+              }
             },
             "metadata": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
               "type": "array",
               "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism.",
+              "items": { "$ref": "#/definitions/metadata" }
+            },
+            "metadataAdd": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Array of [Metadata fields (type)](#metadata-type) associated with the organism, in addtion to the fields in `metadata`.",
               "items": { "$ref": "#/definitions/metadata" }
             },
             "metadataTemplate": {
@@ -226,6 +322,52 @@
               "description": "Array of strings. Which input fields to add to the downloadable metadata template on the submission and revision page.",
               "items": {
                 "type": "string"
+              }
+            },
+            "extraInputFields": {
+              "type": "array"
+            },
+            "nucleotideSequences": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Array of strings of nucleotide sequence names. Defaults to a list with just 'main'.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "richFastaHeaderFields": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "Which metadata fields to include in the fasta header when downloading sequences from the website when using the 'Display name' FASTA header style option.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "linkOuts": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "array",
+              "description": "An array of external tools that can be linked to from the search page. Each linkOut has a name and URL. The URL can contain placeholders in the format [dataType] or [dataType:segment] or [dataType+rich] or [dataType:segment+rich|format] which will be replaced with the corresponding data URLs. `rich` means display name faster headers. Valid dataTypes are: unalignedNucleotideSequences, metadata, and alignedNucleotideSequences. You can also use {{this}} notation to URL-encode the contents of the double brackets, and you can {{nest {{these}} }}.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Display name for the external tool link"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "URL template with placeholders. Example: 'https://tool.example.com/?data={{[unalignedNucleotideSequences+rich|fasta]}}'"
+                  },
+                  "maxNumberOfRecommendedEntries": {
+                    "type": "integer",
+                    "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
+                  }
+                },
+                "required": ["name", "url"]
               }
             },
             "earliestReleaseDate": {
@@ -276,24 +418,6 @@
                   "description": "Default order direction."
                 }
               }
-            },
-            "silo": {
-              "groups": ["schema"],
-              "docsIncludePrefix": false,
-              "type": "object",
-              "description": "Configuration regarding the SILO database engine",
-              "additionalProperties": false,
-              "properties": {
-                "dateToSortBy": {
-                  "groups": ["schema"],
-                  "type": "string",
-                  "description": "Name of a field of type date. This might speed up date range searches on this field and improve sequence compression."
-                },
-                "partitionBy": {
-                  "groups": ["schema"],
-                  "type": "string"
-                }
-              }
             }
           },
           "required": ["organismName"]
@@ -303,21 +427,35 @@
           "docsIncludePrefix": false,
           "type": "array",
           "description": "Array of [Preprocessing (type)](#preprocessing-type).",
+          "additionalProperties": false,
           "items": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "version": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "integer",
                 "minimum": 1,
-                "description": "Version of the preprocessing pipeline"
+                "description": "Version of the preprocessing pipeline."
               },
               "image": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "string",
-                "description": "Docker image for the preprocessing pipeline"
+                "description": "Docker image for the preprocessing pipeline."
+              },
+              "dockerTag": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "string",
+                "description": "Docker tag for the preprocessing pipeline."
+              },
+              "replicas": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "number",
+                "description": "How many replicas of the prepreprocessing pipeline to run."
               },
               "args": {
                 "groups": ["preprocessing"],
@@ -332,7 +470,45 @@
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
                 "type": "object",
-                "description": "Fields that should be added to the preprocessing pipeline config file."
+                "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
+                "properties": {
+                    "alignment_requirement": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "enum": ["ALL", "ANY"],
+                      "description": "If multi-segmented viruses should require ALL segments align or ANY segment aligns"
+                    },
+                    "nextclade_dataset_server": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string"
+                    },
+                    "nextclade_dataset_name": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if sequences should be aligned"
+                    },
+                    "require_nextclade_sort_match": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
+                    },
+                    "minimizer_url": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
+                    },
+                    "accepted_dataset_matches": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
+                    }
+                  }
               }
             },
             "required": ["version", "image"]
@@ -356,9 +532,73 @@
               "groups": ["ingest"],
               "docsIncludePrefix": false,
               "type": "object",
-              "description": "Fields that should be added to the ingest pipeline config file"
+              "description": "Object of type [ConfigFile](#ingest-configfile-type), Fields that should be added to the ingest pipeline config file",
+              "properties": {
+                "taxon_id": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "integer",
+                  "description": "NCBI taxon ID for the organism"
+                },
+                "segment_identification": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "If multi-segmented organism, how to identify segments",
+                  "properties": {
+                    "method": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "enum": ["align", "minimizer"],
+                      "description": "Method to identify segments, uses either nextclade align or nextclade sort"
+                    },
+                    "nextclade_dataset_server": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string"
+                    },
+                    "nextclade_dataset_name": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if method is align"
+                    },
+                    "minimizer_parser": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
+                    },
+                    "minimizer_index": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Required if method is minimizer"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "grouping_override": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "string",
+                  "description": "If multi-segmented organism, segment grouping overrides"
+                },
+                "metadata_filter": {
+                  "groups": ["ingest"],
+                  "docsIncludePrefix": false,
+                  "type": "object",
+                  "description": "Filter ingested sequences based on value in metadata. Filter should be a list of metadata field and value pairs."
+                }
+              },
+              "required": ["taxon_id"]
             }
           }
+        },
+        "enaDeposition": {
+          "type": "object",
+          "description": "TODO"
         },
         "referenceGenomes": {
           "docsIncludePrefix": false,
@@ -424,6 +664,7 @@
     },
     "resourceSpec": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
@@ -440,7 +681,29 @@
           }
         }
       }
-    } 
+    },
+    "imageSpec": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The repository to pull the image from. Example: ghcr.io/loculus-project/website"
+        },
+        "tag": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The tag to pull. Examples: latest, 0.5.7"
+        },
+        "pullPolicy": {
+          "groups": ["image"],
+          "type": "string",
+          "description": "The pull policy to use. Examples: IfNotPresent, Always."
+        }
+      },
+      "required": ["repository", "pullPolicy"],
+      "additionalProperties": false
+    }
   },
   "type": "object",
   "additionalProperties": false,
@@ -454,6 +717,7 @@
     "logo": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "description": "Configuration for the logo",
       "properties": {
         "url": {
@@ -523,6 +787,7 @@
     "seqSets": {
       "groups": ["general"],
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "groups": ["general"],
@@ -531,7 +796,8 @@
         },
         "crossRef": {
           "groups": ["general"],
-          "type": ["object"],
+          "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for CrossRef integration. Set to `null` to disable CrossRef integration (you can still use SeqSets without CrossRef DOIs).",
           "properties": {
             "DOIPrefix": {
@@ -606,6 +872,35 @@
       "required": ["github"],
       "additionalProperties": false
     },
+    "public": {
+      "group": ["website"],
+      "type": "object",
+      "description": "TODO",
+      "properties": {
+        "properties": {
+          "backendUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the Loculus backend is publicly available."
+          },
+          "websiteUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the website is publicly available."
+          },
+          "keycloakUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where Keycloak is publicly available."
+          },
+          "lapisUrlTemplate": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
+          }
+        }
+      }
+    },
     "website": {
       "groups": ["website"],
       "type": "object",
@@ -614,6 +909,7 @@
         "websiteConfig": {
           "groups": ["website"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Settings for the `website_config.json`",
           "properties": {
             "enableLoginNavigationItem": {
@@ -638,27 +934,13 @@
         },
         "runtimeConfig": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "public": {
               "groups": ["website"],
               "type": "object",
               "description": "Settings for the `public` section of the `runtime_config.json`",
               "properties": {
-                "backendUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
-                },
-                "keycloakUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
-                },
-                "lapisUrlTemplate": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
-                }
               }
             }
           }
@@ -668,11 +950,13 @@
     "auth": {
       "groups": ["auth"],
       "type": "object",
+      "additionalProperties": false,
       "description": "User authentication (Keycloak settings)",
       "properties": {
         "smtp": {
           "groups": ["auth"],
           "type": "object",
+          "additionalProperties": false,
           "description": "Configuration for email sending",
           "properties": {
             "host": {
@@ -727,6 +1011,23 @@
           "type": "boolean",
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
+        },
+        "identityProviders": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orcid": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "clientId": {
+                  "groups": ["auth"],
+                  "type": "string",
+                  "description": "The client ID to use for ORCiD integration."
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -760,6 +1061,12 @@
       "default": true,
       "description": "If true, makes the database on the argocd preview persistent."
     },
+    "runDevelopmentS3": {
+      "groups": ["db"],
+      "type": "boolean",
+      "default": true,
+      "description": "If true, runs a development MinIO S3 instance within the cluster."
+    },
     "disableWebsite": {
       "groups": ["services"],
       "type": "boolean",
@@ -789,11 +1096,6 @@
       "type": "boolean",
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
-    },
-    "customWebsiteImage": {
-      "groups": ["services"],
-      "type": "string",
-      "description": "Optional custom Docker image for the website."
     },
     "organisms": {
       "groups": ["organism-conf"],
@@ -834,11 +1136,6 @@
         }
       }
     },
-    "enaDbName": {
-      "type": "string",
-      "default": "Loculus",
-      "description": "TODO"
-    },
     "enforceHTTPS": {
       "type": "boolean",
       "default": true,
@@ -878,6 +1175,74 @@
       "required": ["enabled", "urls"],
       "additionalProperties": false
     },
+    "fileSharing": {
+      "type": "object",
+      "groups": ["general"],
+      "description": "Settings related to the file sharing feature.",
+      "properties": {
+        "outputFileUrlType": {
+          "type": "string",
+          "groups": ["general"],
+          "enum": ["website", "backend", "s3"],
+          "description": "Whether the backend should supply file URLs as links using the website, or directly to the S3 objects."
+        }
+      },
+      "required": ["outputFileUrlType"],
+      "additionalProperties": false
+    },    
+    "s3": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "groups": ["s3"],
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to enable S3. S3 is needed for the file sharing feature."
+        },
+        "bucket": {
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "groups": ["s3"],
+              "type": "string",
+              "default": "s3-<host value>",
+              "description": "The endpoint where S3 is running. Do not include a protocol prefix."
+            },
+            "region": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "The region where the bucket is located."
+            },
+            "bucket": {
+              "groups": ["s3"],
+              "type": "string",
+              "description": "The name of the bucket."
+            }
+          },
+          "required": ["bucket"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["enabled"],
+      "dependencies": {
+        "enabled": {
+          "oneOf": [
+            {
+              "properties": {
+                "enabled": { "const": false }
+              }
+            },
+            {
+              "properties": {
+                "enabled": { "const": true }
+              },
+              "required": ["bucket"]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "subdomainSeparator": {
       "type": "string",
       "default": "-"
@@ -891,12 +1256,17 @@
       "properties": {
         "website": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the website deployment",
           "default": 1
         },
         "backend": {
           "type": "integer",
-          "description": "TODO",
+          "description": "Number of replicas for the backend deployment",
+          "default": 1
+        },
+        "lapis": {
+          "type": "integer",
+          "description": "Number of replicas for the LAPIS deployment",
           "default": 1
         }
       },
@@ -907,34 +1277,45 @@
       "description": "TODO",
       "default": 600
     },
-    "enaUniqueSuffix": {
-      "type": "string",
-      "description": "TODO",
-      "default": "Loculus"
-    },
-    "enaIsBroker": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
-    "submitToEnaProduction": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
-    "images": {
+    "enaDeposition": {
       "type": "object",
-      "properties": {
-        "lapisSilo": {
+      "description": "TODO",
+      "properties":{
+        "enaUniqueSuffix": {
           "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis-silo:0.5.2"
+          "description": "Suffix to add to ENA project alias",
+          "default": "Loculus"
         },
-        "lapis": {
+        "enaIsBroker": {
+          "type": "boolean",
+          "description": "If ENA broker account is used",
+          "default": false
+        },
+        "submitToEnaProduction": {
+          "type": "boolean",
+          "description": "If true, the ENA submission will be sent to the production ENA server. If false, it will be sent to the test ENA server.",
+          "default": false
+        },
+        "enaDbName": {
           "type": "string",
-          "description": "TODO",
-          "default": "ghcr.io/genspectrum/lapis:0.3.13"
-        }
+          "description": "Name of Loculus instance in ENA",
+          "default": "Loculus"
+        },
+        "enaGithubTestUrl": {
+          "type": "string",
+          "description": "URL to the test ENA github repository"
+      }
+    }
+  },
+    "images": {
+      "groups": ["general"],
+      "type": "object",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `website` and `backend.`",
+      "properties": {
+        "lapis": { "$ref": "#/definitions/imageSpec" },
+        "lapisSilo": { "$ref": "#/definitions/imageSpec" },
+        "website": { "$ref": "#/definitions/imageSpec" },
+        "backend": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
@@ -962,7 +1343,6 @@
             "memory": { "type": "string" },
             "cpu": { "type": "string" }
           },
-          "required": ["memory", "cpu"],
           "additionalProperties": false
         },
         "limits": {
@@ -971,11 +1351,9 @@
             "memory": { "type": "string" },
             "cpu": { "type": "string" }
           },
-          "required": ["memory", "cpu"],
           "additionalProperties": false
         }
       },
-      "required": ["requests", "limits"],
       "additionalProperties": false
     },
     "resources": {
@@ -1029,14 +1407,15 @@
     "previewDocs": {
       "description": "TODO"
     },
-    "reduceResourceRequest": {
-      "description": "TODO"
-    },
     "ingest": {
       "type": "object",
       "properties": {
         "ncbiGatewayUrl": {
           "type": ["string", "null"]
+        },
+        "mirrorBucket": {
+          "type": ["string", "null"],
+          "description": "Specifies the location of the public mirrored NCBI datasets bucket, where data is stored in the format {TAXON_ID}.zip. If provided with any non-null string, this setting takes priority over ncbiGatewayUrl."
         }
       },
       "additionalProperties": false

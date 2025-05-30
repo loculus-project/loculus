@@ -169,9 +169,53 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+def delete_records_in_db(
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
+) -> int:
+    """
+    Deletes records from the specified table based on the given conditions.
+
+    Args:
+        db_conn_pool (SimpleConnectionPool): Connection pool for PostgreSQL.
+        table_name (TableName): The table to delete records from.
+        conditions (dict[str, str]): A dictionary of column names and values for filtering.
+
+    Returns:
+        int: The number of rows deleted.
+    """
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor() as cur:
+            # Validate table and column names to prevent SQL injection
+            TableName.validate(table_name)
+            for key in conditions:
+                is_valid_column_name(table_name, key)
+
+            query = f"DELETE FROM {table_name}"  # noqa: S608
+
+            if conditions:
+                where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+                query += f" WHERE {where_clause}"
+
+            cur.execute(
+                query,
+                tuple(
+                    str(value) if isinstance(value, (Status, StatusAll)) else value  # noqa: UP038
+                    for value in conditions.values()
+                ),
+            )
+
+            deleted_rows = cur.rowcount  # Get number of affected rows
+
+    finally:
+        db_conn_pool.putconn(con)
+
+    return deleted_rows
+
+
 def find_conditions_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -202,7 +246,7 @@ def find_conditions_in_db(
 
 def find_errors_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 15
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -227,7 +271,7 @@ def find_errors_in_db(
 
 def find_stuck_in_submission_db(
     db_conn_pool: SimpleConnectionPool, time_threshold: int = 48
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -250,7 +294,7 @@ def find_stuck_in_submission_db(
 
 def find_waiting_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 48
-) -> dict[str, str]:
+) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -318,7 +362,7 @@ def add_to_project_table(
         with con, con.cursor() as cur:
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
-            id = cur.execute(
+            cur.execute(
                 "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
                 (
                     project_table_entry.group_id,
@@ -333,8 +377,10 @@ def add_to_project_table(
                 ),
             )
 
+            project_id = cur.fetchone()
+
             con.commit()
-        return id
+        return project_id[0] if project_id else None
     except Exception as e:
         con.rollback()
         print(f"add_to_project_table errored with: {e}")
@@ -387,12 +433,12 @@ def add_to_assembly_table(
                 (
                     assembly_table_entry.accession,
                     assembly_table_entry.version,
-                    assembly_table_entry.errors,
-                    assembly_table_entry.warnings,
+                    json.dumps(assembly_table_entry.errors),
+                    json.dumps(assembly_table_entry.warnings),
                     str(assembly_table_entry.status),
                     assembly_table_entry.started_at,
                     assembly_table_entry.finished_at,
-                    assembly_table_entry.result,
+                    json.dumps(assembly_table_entry.result),
                 ),
             )
             con.commit()
@@ -444,14 +490,14 @@ def add_to_submission_table(
                     submission_table_entry.version,
                     submission_table_entry.organism,
                     submission_table_entry.group_id,
-                    submission_table_entry.errors,
-                    submission_table_entry.warnings,
+                    json.dumps(submission_table_entry.errors),
+                    json.dumps(submission_table_entry.warnings),
                     str(submission_table_entry.status_all),
                     submission_table_entry.started_at,
                     submission_table_entry.finished_at,
                     submission_table_entry.metadata,
                     submission_table_entry.unaligned_nucleotide_sequences,
-                    submission_table_entry.external_metadata,
+                    json.dumps(submission_table_entry.external_metadata),
                 ),
             )
             con.commit()
@@ -462,3 +508,27 @@ def add_to_submission_table(
         return False
     finally:
         db_conn_pool.putconn(con)
+
+
+def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+    """Check if the entry is a revision"""
+    version = seq_key["version"]
+    if version == "1":
+        return False
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return len(all_versions) > 1 and version == all_versions[-1]
+
+
+def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+    if not is_revision(db_config, seq_key):
+        return None
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+    return all_versions[-2]

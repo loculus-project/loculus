@@ -177,7 +177,7 @@ def get_or_create_group_and_return_group_id(config: Config, allow_creation: bool
 @dataclass
 class BatchIterator:
     current_fasta_submission_id: str | None = None
-    current_fasta_header: str | None = None
+    fasta_record_header: str | None = None
 
     record_counter: int = 0
 
@@ -271,7 +271,10 @@ def post_fasta_batches(
                 continue
 
             # add header to batch metadata output
-            if batch_it.record_counter > 1 and batch_it.record_counter % config.batch_chunk_size == 1:
+            if (
+                batch_it.record_counter > 1
+                and batch_it.record_counter % config.batch_chunk_size == 1
+            ):
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -352,21 +355,36 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    new_accessions = response[0]["accession"]  # Will be later added as version comment
-
-    url = f"{organism_url(config)}/revoke"
+    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
+    for item in response:
+        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
-    loc_values = {loc for seq in to_revoke.values() for loc in seq.keys()}
-    loculus_accessions = set(loc_values)
+    old_to_new_loculus_keys: dict[
+        str, list[str]
+    ] = {}  # Map from old loculus accession to corresponding new accession(s)
+    for key, value in to_revoke.items():
+        for loc_accession in value:
+            new_accessions_for_this_old_accession = old_to_new_loculus_keys.get(loc_accession, [])
+            new_accessions_for_this_old_accession.append(submission_id_to_new_accessions[key])
+            old_to_new_loculus_keys[loc_accession] = new_accessions_for_this_old_accession
 
-    accessions = {"accessions": list(loculus_accessions)}
+    url = f"{organism_url(config)}/revoke"
+    responses = []
+    for old_loc_accession, new_loc_accession in old_to_new_loculus_keys.items():
+        logger.debug(f"revoking: {old_loc_accession}")
+        comment = (
+            "INSDC re-ingest found metadata changes which lead the segments in this "
+            "sequence to be grouped differently. The newly grouped sequences can be found "
+            f"here: {', '.join(new_loc_accession)}."
+        )
+        body = {"accessions": [old_loc_accession], "versionComment": comment}
+        response = make_request(HTTPMethod.POST, url, config, json_body=body)
+        logger.debug(f"revocation response: {response.json()}")
+        responses.append(response.json())
 
-    response = make_request(HTTPMethod.POST, url, config, json_body=accessions)
-    logger.debug(f"revocation response: {response.json()}")
-
-    return response.json()
+    return responses
 
 
 def approve(config: Config):
@@ -473,6 +491,10 @@ def get_submitted(config: Config):
 
     # Initialize the dictionary to store results
     submitted_dict: dict[str, dict[str, str | list]] = {}
+    loculus_to_insdc_accession_map: dict[str, list[str]] = {}
+    revocation_dict: dict[
+        str, list[str]
+    ] = {}  # revocations do not have original data or INSDC accession
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
@@ -481,8 +503,13 @@ def get_submitted(config: Config):
 
     for entry in entries:
         loculus_accession = entry["accession"]
-        submitter = entry["submitter"]
         loculus_version = int(entry["version"])
+        submitter = entry["submitter"]
+        if entry["isRevocation"]:
+            if loculus_accession not in revocation_dict:
+                revocation_dict[loculus_accession] = []
+            revocation_dict[loculus_accession].append(loculus_version)
+            continue
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
         if config.segmented:
@@ -500,12 +527,12 @@ def get_submitted(config: Config):
             insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
             joint_accession = original_metadata.get("insdcAccessionBase", "")
 
+        loculus_to_insdc_accession_map[loculus_accession] = insdc_accessions
         for insdc_accession in insdc_accessions:
             if insdc_accession not in submitted_dict:
                 submitted_dict[insdc_accession] = {
                     "loculus_accession": loculus_accession,
                     "versions": [],
-                    "jointAccession": joint_accession,
                 }
             elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
                 message = (
@@ -525,6 +552,26 @@ def get_submitted(config: Config):
                     "submitter": submitter,
                 }
             )
+    # Ensure revocations added to correct INSDC accession
+    for loculus_accession, insdc_accessions in loculus_to_insdc_accession_map.items():
+        if loculus_accession in revocation_dict:
+            for insdc_accession in insdc_accessions:
+                for version in revocation_dict[loculus_accession]:
+                    submitted_dict[insdc_accession]["versions"].append(
+                        {
+                            "version": version,
+                            "hash": "",
+                            "status": "REVOKED",
+                            "jointAccession": "",
+                            "submitter": "",
+                        }
+                    )
+            revocation_dict.pop(loculus_accession)
+
+    if revocation_dict.keys():
+        logger.error(
+            f"Revocation entries found in Loculus but not in original metadata: {revocation_dict}"
+        )
 
     logger.info(f"Got info on {len(submitted_dict)} previously submitted sequences/accessions")
 
@@ -638,7 +685,7 @@ def submit_to_loculus(
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
         response = get_submitted(config)
-        Path(output).write_text(json.dumps(response, indent=4, sort_keys=True), encoding="utf-8")
+        Path(output).write_text(json.dumps(response, indent=4, sort_keys=False), encoding="utf-8")
 
 
 if __name__ == "__main__":

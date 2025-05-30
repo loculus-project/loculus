@@ -106,7 +106,7 @@ class DeleteSequencesEndpointTest(
         )
 
         val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}]"
-        val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
+        val errorString = "Accession versions are not in one of the states $listOfAllowedStatuses: " +
             accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
                 "${it.accession}.${it.version} - ${it.status}"
             }

@@ -45,7 +45,7 @@ const styledHamburger = `
 
 export const SandwichIcon: FC<{ isOpen: boolean }> = ({ isOpen }) => {
     return (
-        <div className='relative' aria-label='main menu'>
+        <div className='relative'>
             <div className='hamburger'>
                 <div className={`burger bg-primary-600 burger1--${isOpen ? 'open' : 'closed'}`} />
                 <div className={`burger bg-primary-600 burger2--${isOpen ? 'open' : 'closed'}`} />

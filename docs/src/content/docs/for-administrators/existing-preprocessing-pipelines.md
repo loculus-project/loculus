@@ -16,8 +16,8 @@ Given a nextclade dataset this pipeline uses [nextclade run](https://docs.nextst
 
 ```yaml
 preprocessing:
-    - configFile:
-          nextclade_dataset_name: nextstrain/mpox/all-clades
+  - configFile:
+      nextclade_dataset_name: nextstrain/mpox/all-clades
 ```
 
 Additionally the pipeline performs checks on the metadata fields. The checks are defined by custom preprocessing functions in the `values.yaml` file. These checks can be applied to and customized for other metadata fields, see [Preprocessing Checks](https://github.com/loculus-project/loculus/blob/main/preprocessing/nextclade/README.md#preprocessing-checks) for more info.

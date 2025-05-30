@@ -1,5 +1,7 @@
 {
   "accessionPrefix": "LOC_",
+  "websiteUrl": "https://example.com",
+  "backendUrl": "http://dummy-backend.com",
   "organisms": {
     "dummyOrganism": {
       "referenceGenomes": {
@@ -102,6 +104,9 @@
     }
   },
   "dataUseTerms": {
+    "enabled": false
+  },
+  "s3": {
     "enabled": false
   }
 }

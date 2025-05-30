@@ -12,6 +12,7 @@ from .config import Config
 from .ena_submission_helper import (
     CreationResult,
     create_ena_sample,
+    get_alias,
     get_ena_config,
     set_error_if_accession_not_exists,
 )
@@ -35,6 +36,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_errors_in_db,
+    is_revision,
     update_db_where_conditions,
 )
 
@@ -99,7 +101,7 @@ def construct_sample_set_object(
     config: Config,
     sample_data_in_submission_table: dict[str, str],
     entry: dict[str, str],
-    test=False,
+    test: bool = False,
 ):
     """
     Construct sample set object, using:
@@ -114,12 +116,11 @@ def construct_sample_set_object(
     center_name = sample_data_in_submission_table["center_name"]
     organism = sample_data_in_submission_table["organism"]
     organism_metadata = config.organisms[organism]["enaDeposition"]
-    if test:
-        alias = XmlAttribute(
-            f"{entry['accession']}:{organism}:{config.unique_project_suffix}:{datetime.now(tz=pytz.utc)}"
-        )
-    else:
-        alias = XmlAttribute(f"{entry['accession']}:{organism}:{config.unique_project_suffix}")
+    alias = get_alias(
+        f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
+        test,
+        config.set_alias_suffix,
+    )
     list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
     if config.ena_checklist:
         # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
@@ -168,7 +169,7 @@ def set_sample_table_entry(db_config, row, seq_key):
     entry = {
         "accession": row["accession"],
         "version": row["version"],
-        "result": {"ena_sample_accession": biosample},
+        "result": {"ena_sample_accession": biosample, "biosample_accession": biosample},
         "status": Status.SUBMITTED,
     }
     sample_table_entry = SampleTableEntry(**entry)
@@ -285,6 +286,40 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
+    """Check if entry is incorrectly added older version - error and do not submit"""
+    version = seq_key["version"]
+    accession = {"accession": seq_key["accession"]}
+    sample_data_in_submission_table = find_conditions_in_db(
+        db_config, table_name="submission_table", conditions=accession
+    )
+    all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
+
+    if version < all_versions[-1]:
+        update_values = {
+            "status": Status.HAS_ERRORS,
+            "errors": json.dumps(["Revision version is not the latest version"]),
+            "started_at": datetime.now(tz=pytz.utc),
+        }
+        number_rows_updated = 0
+        tries = 0
+        while number_rows_updated != 1 and tries < retry_number:
+            if tries > 0:
+                # If state not correctly added retry
+                logger.warning(
+                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
+                )
+            number_rows_updated = update_db_where_conditions(
+                db_config,
+                table_name="sample_table",
+                conditions=seq_key,
+                update_values=update_values,
+            )
+            tries += 1
+        return True
+    return False
+
+
 def sample_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
@@ -316,6 +351,9 @@ def sample_table_create(
             db_config, table_name="submission_table", conditions=seq_key
         )
 
+        if is_old_version(db_config, seq_key, retry_number=3):
+            continue
+
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
         )
@@ -337,7 +375,9 @@ def sample_table_create(
             )
             continue
         logger.info(f"Starting sample creation for accession {row['accession']}")
-        sample_creation_results: CreationResult = create_ena_sample(ena_config, sample_set)
+        sample_creation_results: CreationResult = create_ena_sample(
+            ena_config, sample_set, revision=is_revision(db_config, seq_key)
+        )
         if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,

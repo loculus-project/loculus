@@ -1,5 +1,7 @@
 {
     "accessionPrefix": "LOC_",
+    "websiteUrl": "https://example.com",
+    "backendUrl": "http://dummy-backend.com",
     "dataUseTerms": {
         "enabled": true
     },
@@ -78,5 +80,8 @@
                 ]
             }
         }
+    },
+    "s3": {
+        "enabled": false
     }
 }

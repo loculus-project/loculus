@@ -5,9 +5,12 @@ import org.apache.commons.lang3.StringUtils.lowerCase
 import org.loculus.backend.api.Organism
 
 data class BackendConfig(
+    val websiteUrl: String,
+    val backendUrl: String,
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
+    val fileSharing: FileSharing = FileSharing(),
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
@@ -17,6 +20,28 @@ data class BackendConfig(
 data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)
+
+data class FileSharing(val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE)
+
+/**
+ * The types URLs that can be output for a file.
+ * We can either link direclty to the file in S3, or link to the proxy endpoint on
+ * the website.
+ */
+enum class FileUrlType {
+    @JsonProperty("website")
+    WEBSITE,
+
+    @JsonProperty("backend")
+    BACKEND,
+
+    @JsonProperty("s3")
+    S3,
+
+    ;
+
+    override fun toString(): String = lowerCase(name)
+}
 
 data class InstanceConfig(val schema: Schema, val referenceGenomes: ReferenceGenome)
 
@@ -28,7 +53,14 @@ data class Schema(
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
 )
 
-data class SubmissionDataTypes(val consensusSequences: Boolean = true)
+data class SubmissionDataTypes(
+    val consensusSequences: Boolean = true,
+    val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
+)
+
+data class FilesSubmissionDataType(val enabled: Boolean = false, val categories: List<FileCategory>)
+
+data class FileCategory(val name: String)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it

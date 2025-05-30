@@ -19,6 +19,9 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .processing_functions import trim_ns
+
+logger = logging.getLogger(__name__)
 
 
 class JwtCache:
@@ -42,7 +45,7 @@ jwt_cache = JwtCache()
 
 def get_jwt(config: Config) -> str:
     if cached_token := jwt_cache.get_token():
-        logging.debug("Using cached JWT")
+        logger.debug("Using cached JWT")
         return cached_token
 
     url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
@@ -53,18 +56,18 @@ def get_jwt(config: Config) -> str:
         "grant_type": "password",
     }
 
-    logging.debug(f"Requesting JWT from {url}")
+    logger.debug(f"Requesting JWT from {url}")
 
     with requests.post(url, data=data, timeout=10) as response:
         if response.ok:
-            logging.debug("JWT fetched successfully.")
+            logger.debug("JWT fetched successfully.")
             token = response.json()["access_token"]
             decoded = jwt.decode(token, options={"verify_signature": False})
             expiration = dt.datetime.fromtimestamp(decoded.get("exp", 0), tz=pytz.UTC)
             jwt_cache.set_token(token, expiration)
             return token
         error_msg = f"Fetching JWT failed with status code {response.status_code}: {response.text}"
-        logging.error(error_msg)
+        logger.error(error_msg)
         raise Exception(error_msg)
 
 
@@ -82,14 +85,20 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse JSON: {json_str_processed}"
             raise ValueError(error_msg) from e
+        unaligned_nucleotide_sequences = json_object["data"]["unalignedNucleotideSequences"]
+        trimmed_unaligned_nucleotide_sequences = {
+            key: trim_ns(value) if value else None
+            for key, value in unaligned_nucleotide_sequences.items()
+        }
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
+            unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
+            if unaligned_nucleotide_sequences
+            else {},
         )
         entry = UnprocessedEntry(
-            accessionVersion=f"{json_object['accession']}.{
-                json_object['version']}",
+            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
             data=unprocessed_data,
         )
         entries.append(entry)
@@ -101,15 +110,15 @@ def fetch_unprocessed_sequences(
 ) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
     n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
-    logging.debug(f"Fetching {n} unprocessed sequences from {url}")
+    logger.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {
         "Authorization": "Bearer " + get_jwt(config),
         **({"If-None-Match": etag} if etag else {}),
     }
-    logging.debug(f"Requesting data with ETag: {etag}")
+    logger.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
-    logging.info(
+    logger.info(
         f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}"
     )
     match response.status_code:
@@ -119,12 +128,12 @@ def fetch_unprocessed_sequences(
             try:
                 parsed_ndjson = parse_ndjson(response.text)
             except ValueError as e:
-                logging.error(e)
+                logger.error(e)
                 time.sleep(10 * 1)
                 return None, None
             return response.headers["ETag"], parsed_ndjson
         case HTTPStatus.UNPROCESSABLE_ENTITY:
-            logging.debug(f"{response.text}.\nSleeping for a while.")
+            logger.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
             return None, None
         case _:
@@ -161,4 +170,21 @@ def submit_processed_sequences(
             f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
-    logging.info("Processed data submitted successfully")
+    logger.info("Processed data submitted successfully")
+
+
+def download_minimizer(url, save_path):
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(save_path).write_bytes(response.content)
+
+        logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
+
+    except requests.exceptions.RequestException as e:
+        msg = f"Failed to download minimizer: {e}"
+        logger.error(msg)
+        raise RuntimeError(msg) from e
+

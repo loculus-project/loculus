@@ -8,15 +8,20 @@ import { SandwichIcon } from '../SandwichIcon';
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;
     gitHubMainUrl: string | undefined;
+    siteName: string;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl, siteName }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
         <div className='relative'>
             {!isOpen ? (
-                <button className='absolute z-50 bg-transparent border-none cursor-pointer' onClick={toggleMenu}>
+                <button
+                    className='absolute z-50 bg-transparent border-none cursor-pointer'
+                    onClick={toggleMenu}
+                    aria-label='Open main menu'
+                >
                     <SandwichIcon isOpen={isOpen} />
                 </button>
             ) : (
@@ -31,13 +36,14 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
                 <button
                     className='absolute z-50 bg-transparent border-none cursor-pointer right-3 top-4'
                     onClick={toggleMenu}
+                    aria-label='Close main menu'
                 >
                     <SandwichIcon isOpen={isOpen} />
                 </button>
                 <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10'>
-                            <a href='/'>Loculus</a>
+                            <a href='/'>{siteName}</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             {topNavigationItems.map(({ text, path }) => (

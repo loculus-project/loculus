@@ -1,3 +1,5 @@
+import type { InputMode } from '../components/Submission/FormOrUploadWrapper';
+
 type BaseSubmissionRoute<Name> = {
     name: Name;
     organism: string;
@@ -5,7 +7,9 @@ type BaseSubmissionRoute<Name> = {
 };
 
 type PortalPageRoute = BaseSubmissionRoute<'portal'>;
-type SubmitPageRoute = BaseSubmissionRoute<'submit'>;
+type SubmitPageRoute = BaseSubmissionRoute<'submit'> & {
+    inputMode: InputMode;
+};
 type RevisePageRoute = BaseSubmissionRoute<'revise'>;
 type ReviewPageRoute = BaseSubmissionRoute<'review'>;
 type ReleasedPageRoute = BaseSubmissionRoute<'released'> & {
@@ -40,31 +44,37 @@ export const SubmissionRouteUtils = {
         if (remaining2.length > 0) {
             return undefined;
         }
+        const searchParams = new URLSearchParams(search);
         switch (subpage) {
             case 'submit':
-                return { ...baseRoute, name: 'submit' };
+                return {
+                    ...baseRoute,
+                    name: 'submit',
+                    inputMode: searchParams.get('inputMode') === 'form' ? 'form' : 'bulk',
+                };
             case 'revise':
                 return { ...baseRoute, name: 'revise' };
             case 'review':
                 return { ...baseRoute, name: 'review' };
             case 'released': {
-                const searchParams = new URLSearchParams(search);
                 return { ...baseRoute, name: 'released', searchParams };
             }
         }
         return undefined;
         /* eslint-enable @typescript-eslint/no-unnecessary-condition */
     },
+
     toUrl(route: SubmissionRoute): string {
         const baseUrl = `/${route.organism}/submission/${route.groupId}`;
 
         switch (route.name) {
             case 'portal':
                 return baseUrl;
-            case 'submit':
             case 'revise':
             case 'review':
                 return `${baseUrl}/${route.name}`;
+            case 'submit':
+                return `${baseUrl}/${route.name}?inputMode=${route.inputMode}`;
             case 'released':
                 return `${baseUrl}/released?${route.searchParams}`;
         }

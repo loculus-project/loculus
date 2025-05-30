@@ -1,5 +1,7 @@
 package org.loculus.backend.controller
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -28,6 +30,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -58,6 +61,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -78,6 +82,7 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
+    private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -99,6 +104,13 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
+        @Parameter(
+            description =
+            "A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
+                "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
+                "/files/request-upload endpoint.",
+        )
+        @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
@@ -108,12 +120,14 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
+        val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
+            fileMappingParsed,
             groupId,
             DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
         )
@@ -132,12 +146,15 @@ open class SubmissionController(
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile?,
+        @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
+        val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
+            fileMappingParsed,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -521,5 +538,19 @@ open class SubmissionController(
             }
         }
         MDC.remove(REQUEST_ID_MDC_KEY)
+    }
+
+    fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
+        val fileMappingParsed = fileMapping?.let {
+            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
+                throw BadRequestException("the ${organism.name} organism does not support file submission.")
+            }
+            try {
+                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+            } catch (e: Exception) {
+                throw BadRequestException("Failed to parse file mapping.", e)
+            }
+        }
+        return fileMappingParsed
     }
 }

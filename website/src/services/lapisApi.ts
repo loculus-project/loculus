@@ -6,6 +6,7 @@ import {
     detailsResponse,
     insertionsResponse,
     lapisBaseRequest,
+    lineageDefinition,
     mutationsRequest,
     mutationsResponse,
     sequenceRequest,
@@ -174,6 +175,14 @@ const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     response: z.string(),
 });
 
+const lineageDefinitionEndpoint = makeEndpoint({
+    method: 'get',
+    path: withSample('/lineageDefinition/:column'),
+    alias: 'lineageDefinition',
+    immutable: true,
+    response: lineageDefinition,
+});
+
 export const lapisApi = makeApi([
     detailsEndpoint,
     aggregatedEndpoint,
@@ -186,4 +195,5 @@ export const lapisApi = makeApi([
     unalignedNucleotideSequencesEndpoint,
     unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
+    lineageDefinitionEndpoint,
 ]);

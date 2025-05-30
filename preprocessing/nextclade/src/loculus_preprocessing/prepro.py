@@ -11,20 +11,23 @@ from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 
 import dpath
+import pandas as pd
 from Bio import SeqIO
 
-from .backend import fetch_unprocessed_sequences, submit_processed_sequences
+from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
 from .datatypes import (
     AccessionVersion,
+    Alerts,
     AminoAcidInsertion,
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    GenericSequence,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -47,9 +50,6 @@ logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/15063936
 csv.field_size_limit(sys.maxsize)
-
-
-GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
 
 
 # Functions related to reading and writing files
@@ -120,6 +120,124 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
+def run_sort(
+    result_file_dir: str,
+    input_file: str,
+    alerts: Alerts,
+    config: Config,
+    segment: SegmentName,
+    dataset_dir: str,
+) -> Alerts:
+    """
+    Run nextclade
+    - use config.minimizer_url or default minimizer from nextclade server
+    - assert highest score is in config.accepted_dataset_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+    if not config.accepted_dataset_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
+    nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
+
+    if config.minimizer_url:
+        minimizer_file = dataset_dir + "/minimizer/minimizer.json"
+
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
+
+    result_file = result_file_dir + "/sort_output.tsv"
+    command = [
+        "nextclade3",
+        "sort",
+        input_file,
+        "-m" if config.minimizer_url else "",
+        f"{minimizer_file}" if config.minimizer_url else "",
+        "--output-results-tsv",
+        f"{result_file}",
+        "--max-score-gap",
+        "0.3",
+        "--min-score",
+        "0.05",
+        "--min-hits",
+        "2",
+        "--all-matches",
+        "--server",
+        f"{nextclade_dataset_server}",
+    ]
+
+    logger.debug(f"Running nextclade sort: {command}")
+
+    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    if exit_code != 0:
+        msg = f"nextclade sort failed with exit code {exit_code}"
+        raise Exception(msg)
+
+    df = pd.read_csv(
+        result_file,
+        sep="\t",
+        dtype={
+            "index": "Int64",
+            "score": "float64",
+            "seqName": "string",
+            "dataset": "string",
+        },
+    )
+
+    hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+    best_hits = hits.groupby("seqName", as_index=False).first()
+
+    all_ids = df["seqName"].unique()
+    hit_ids = best_hits["seqName"]
+    missing_ids = set(all_ids) - set(hit_ids)
+
+    for seq in missing_ids:
+        alerts.warnings[seq].append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ],
+                processedFields=[
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ],
+                message=(
+                    "Sequence does not appear to match reference, per `nextclade sort`. "
+                    "Double check you are submitting to the correct organism."
+                ),
+            )
+        )
+
+    for _, row in best_hits.iterrows():
+        # If best match is not the same as the dataset we are submitting to, add an error
+        if row["dataset"] not in accepted_dataset_names:
+            alerts.errors[row["seqName"]].append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                        ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    message=(
+                        f"This sequence best matches {row['dataset']}, "
+                        "a different organism than the one you are submitting to: "
+                        f"{config.organism}. It is therefore not possible to release. "
+                        "Contact the administrator if you think this message is an error."
+                    ),
+                )
+            )
+
+    return alerts
+
+
 def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
@@ -139,7 +257,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
-    error_dict: dict[AccessionVersion, list[ProcessingAnnotation]] = {}
+    alerts: Alerts = Alerts()
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
@@ -154,6 +272,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
+        alerts.warnings[id] = []
+        alerts.errors[id] = []
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
@@ -167,25 +287,20 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             ]
             if len(unaligned_segment) > 1:
                 num_duplicate_segments += len(unaligned_segment)
-                error_dict[id] = error_dict.get(id, [])
-                error_dict[id].append(
+                alerts.errors[id].append(
                     ProcessingAnnotation(
-                        unprocessedFields=(
-                            (
-                                AnnotationSource(
-                                    name=segment,
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
-                        ),
-                        processedFields=(
-                            (
-                                AnnotationSource(
-                                    name=segment,
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
-                        ),
+                        unprocessedFields=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        ],
+                        processedFields=[
+                            AnnotationSource(
+                                name=segment,
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            ),
+                        ],
                         message="Found multiple sequences with the same segment name.",
                     )
                 )
@@ -202,23 +317,20 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             - num_duplicate_segments
             > 0
         ):
-            error_dict[id] = error_dict.get(id, [])
-            error_dict[id].append(
+            alerts.errors[id].append(
                 ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
-                    processedFields=(
-                            (
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                ),
-                            )
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
+                    ],
                     message=(
                         "Found unknown segments in the input data - "
                         "check your segments are annotated correctly."
@@ -250,6 +362,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                         is_empty = False
             if is_empty:
                 continue
+
+            if config.require_nextclade_sort_match:
+                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment, dataset_dir)
 
             command = [
                 "nextclade3",
@@ -292,7 +407,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                     # TODO: Add warning to each sequence
                     logger.info(
                         f"Gene {gene} not found in Nextclade results expected at: {
-                            translation_path}"
+                            translation_path
+                        }"
                     )
 
             nextclade_metadata = parse_nextclade_json(
@@ -311,7 +427,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
-            errors=error_dict.get(id, []),
+            errors=alerts.errors[id],
+            warnings=alerts.warnings[id],
         )
         for id in unaligned_nucleotide_sequences
     }
@@ -392,13 +509,15 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
     input_path: str,
+    config: Config,
 ) -> str | None:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
-        segment = spec.args["segment"] if spec.args and "segment" in spec.args else "main"
+        segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
         if not unprocessed.nextcladeMetadata:
             # This field should never be empty
             message = (
@@ -407,18 +526,18 @@ def add_input_metadata(
             )
             errors.append(
                 ProcessingAnnotation(
-                    unprocessedFields=(
+                    unprocessedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
-                    processedFields=(
+                    ],
+                    processedFields=[
                         AnnotationSource(
                             name=segment,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                    ),
+                    ],
                     message=message,
                 )
             )
@@ -431,24 +550,27 @@ def add_input_metadata(
                     if segment == "main"
                     else f"Nucleotide sequence for {segment} failed to align"
                 )
-                errors.append(
-                    ProcessingAnnotation(
-                        unprocessedFields=(
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                annotation = ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                        processedFields=(
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
-                        message=message,
-                    )
+                    ],
+                    message=message,
                 )
+                if config.multi_segment and config.alignment_requirement == "ANY":
+                    warnings.append(annotation)
+                    return None
+                errors.append(annotation)
                 return None
+            spec.args["some_segment_aligned"] = True
             result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -487,6 +609,7 @@ def get_metadata(  # noqa: PLR0913, PLR0917
     unprocessed: UnprocessedAfterNextclade | UnprocessedData,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    config: Config,
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
     input_fields: list[str] = []
@@ -500,7 +623,9 @@ def get_metadata(  # noqa: PLR0913, PLR0917
         args["submitter"] = unprocessed.submitter
     else:
         for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = add_input_metadata(spec, unprocessed, errors, input_path)
+            input_data[arg_name] = add_input_metadata(
+                spec, unprocessed, errors, warnings, input_path, config
+            )
             input_fields.append(input_path)
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
@@ -533,23 +658,15 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     unprocessed: UnprocessedData,
     config: Config,
     output_metadata: ProcessedMetadata,
-    errors=list[ProcessingAnnotation],
-    warnings=list[ProcessingAnnotation],
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
 ) -> ProcessedEntry:
     """Process a single sequence without alignment"""
 
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    aligned_aminoacid_sequences: dict[
-        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
-    ] = {}
-    nucleotide_insertions: defaultdict[
-        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
-    amino_acid_insertions: defaultdict[
-        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
-    ] = defaultdict(lambda: defaultdict(list))
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
+    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
+    amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
     for segment in config.nucleotideSequences:
         aligned_nucleotide_sequences[segment] = None
@@ -570,8 +687,8 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             alignedAminoAcidSequences=aligned_aminoacid_sequences,
             aminoAcidInsertions=amino_acid_insertions,
         ),
-        errors=list(set(errors)),
-        warnings=list(set(warnings)),
+        errors=errors,
+        warnings=warnings,
     )
 
 
@@ -586,7 +703,8 @@ def process_single(  # noqa: C901
     errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
     if isinstance(unprocessed, UnprocessedAfterNextclade):
-        # Break if there are sequence related errors
+        if unprocessed.warnings:
+            warnings += unprocessed.warnings
         if unprocessed.errors:
             errors += unprocessed.errors
         elif not any(unprocessed.unalignedNucleotideSequences.values()):
@@ -594,36 +712,20 @@ def process_single(  # noqa: C901
                 ProcessingAnnotation(
                     unprocessedFields=[
                         AnnotationSource(
-                            name="main",
+                            name="alignment",
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
                     ],
-                    processedFields=(
-                            AnnotationSource(
-                                name="main",
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         ),
+                    ],
                     message="No sequence data found - check segments are annotated correctly",
                 )
             )
 
-        if errors:
-            # Break early
-            return ProcessedEntry(
-                accession=accession_from_str(id),
-                version=version_from_str(id),
-                data=ProcessedData(
-                    metadata=output_metadata,
-                    unalignedNucleotideSequences={},
-                    alignedNucleotideSequences={},
-                    nucleotideInsertions={},
-                    alignedAminoAcidSequences={},
-                    aminoAcidInsertions={},
-                ),
-                errors=list(set(errors)),
-                warnings=list(set(warnings)),
-            )
         submitter = unprocessed.inputMetadata["submitter"]
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
@@ -638,6 +740,7 @@ def process_single(  # noqa: C901
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
+    some_segment_aligned = False
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
@@ -652,6 +755,7 @@ def process_single(  # noqa: C901
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
+        spec.args["some_segment_aligned"] = some_segment_aligned
         processing_result = get_metadata(
             id,
             spec,
@@ -659,8 +763,14 @@ def process_single(  # noqa: C901
             unprocessed,
             errors,
             warnings,
+            config,
         )
         output_metadata[output_field] = processing_result.datum
+        if not isinstance(spec.args["some_segment_aligned"], bool):
+            raise ValueError(
+                f"Internal Error: Expected some_segment_aligned to be a boolean, got {type(spec.args['some_segment_aligned'])}"
+            )
+        some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
             and spec.required
@@ -672,7 +782,8 @@ def process_single(  # noqa: C901
                         AnnotationSource(
                             name=input,
                             type=AnnotationSourceType.METADATA,
-                        ) for input in spec.inputs.values()
+                        )
+                        for input in spec.inputs.values()
                     ],
                     processedFields=[
                         AnnotationSource(
@@ -688,6 +799,25 @@ def process_single(  # noqa: C901
     if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(
             id, unprocessed, config, output_metadata, errors, warnings
+        )
+
+    if not some_segment_aligned:
+        errors.append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                processedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message=("No segment aligned."),
+            )
         )
 
     return ProcessedEntry(
@@ -711,7 +841,7 @@ def processed_entry_with_errors(id):
         accession=accession_from_str(id),
         version=version_from_str(id),
         data=ProcessedData(
-            metadata=defaultdict(dict[str, ProcessedMetadataValue]),
+            metadata=dict[str, ProcessedMetadataValue](),
             unalignedNucleotideSequences=defaultdict(dict[str, Any]),
             alignedNucleotideSequences=defaultdict(dict[str, Any]),
             nucleotideInsertions=defaultdict(dict[str, Any]),
@@ -754,27 +884,35 @@ def process_all(
             try:
                 processed_single = process_single(entry.accessionVersion, entry.data, config)
             except Exception as e:
-                logger.error(f"Processing failed for {id} with error: {e}")
-                processed_single = processed_entry_with_errors(id)
+                logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
+                processed_single = processed_entry_with_errors(entry.accessionVersion)
             processed_results.append(processed_single)
 
     return processed_results
 
 
+def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | None:
+    if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
+        return config.nextclade_dataset_name_map[segment]
+    if not config.nextclade_dataset_name:
+        return None
+    return (
+        config.nextclade_dataset_name
+        if segment == "main"
+        else config.nextclade_dataset_name + "/" + segment
+    )
+
+
+def get_nextclade_dataset_server(config: Config, segment: SegmentName) -> str:
+    if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
+        return config.nextclade_dataset_server_map[segment]
+    return config.nextclade_dataset_server
+
+
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for segment in config.nucleotideSequences:
-        if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
-            nextclade_dataset_name = config.nextclade_dataset_name_map[segment]
-        else:
-            nextclade_dataset_name = (
-                config.nextclade_dataset_name
-                if segment == "main"
-                else config.nextclade_dataset_name + "/" + segment
-            )
-
-        nextclade_dataset_server = config.nextclade_dataset_server
-        if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
-            nextclade_dataset_server = config.nextclade_dataset_server_map[segment]
+        nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+        nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
         dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
         dataset_download_command = [
@@ -800,6 +938,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
+        if config.minimizer_url and config.require_nextclade_sort_match:
+            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

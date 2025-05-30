@@ -1,6 +1,13 @@
 import yaml
 import os
 from pathlib import Path
+from enum import Enum
+
+
+class SegmentDetectionMethod(Enum):
+    ALIGN = "align"
+    MINIMIZER = "minimizer"
+
 
 with open("config/defaults.yaml") as f:
     defaults = yaml.safe_load(f)
@@ -21,44 +28,51 @@ with open("results/config.yaml", "w") as f:
 
 TAXON_ID = config["taxon_id"]
 SEGMENTED = config["segmented"]
+segment_detection_method: SegmentDetectionMethod | None = (
+    None  # align uses nextclade align to determine segments it is slower but more precise, minimizer uses nextclade sort and requires a minimizer index
+)
 LOG_LEVEL = config.get("log_level", "INFO")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
-FILTER_FASTA_HEADERS = config.get("filter_fasta_headers", None)
+MIRROR_BUCKET = config.get("mirror_bucket", "")
 APPROVE_TIMEOUT_MIN = config.get("approve_timeout_min")  # time in minutes
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
-ALIGN = True
-GROUPS_OVERRIDE_JSON = None
+FILTER = config.get("metadata_filter", None)
+GROUPS_OVERRIDE_JSON = config.get(
+    "grouping_override", None
+)  # JSON map from group to segments' insdcAccessionFull
 
-dataset_server_map = {}
-dataset_name_map = {}
 
 if SEGMENTED:
-    GROUPS_OVERRIDE_JSON = config.get("grouping_override", None)  # JSON map from group to segments' insdcAccessionFull
-    if config.get("minimizer_index") and config.get("minimizer_parser"):
-        ALIGN = False
-    if ALIGN:
+    dataset_server_map = {}
+    dataset_name_map = {}
+
+    try:
+        segment_identification = config.get("segment_identification", None)
+        segment_detection_method = SegmentDetectionMethod(
+            segment_identification.get("method")
+        )
+    except:
+        raise ValueError(
+            "Segmented sequences require segment_identification and method"
+        )
+    if segment_detection_method == SegmentDetectionMethod.ALIGN:
         for segment in config["nucleotide_sequences"]:
-            if (
-                config.get("nextclade_dataset_server_map")
-                and segment in config["nextclade_dataset_server_map"]
-            ):
-                dataset_server_map[segment] = config["nextclade_dataset_server_map"][
-                    segment
-                ]
-            else:
-                dataset_server_map[segment] = config.get("nextclade_dataset_server")
-            if (
-                config.get("nextclade_dataset_name_map")
-                and segment in config["nextclade_dataset_name_map"]
-            ):
-                dataset_name_map[segment] = config["nextclade_dataset_name_map"][
-                    segment
-                ]
-            else:
-                dataset_name_map[segment] = (
-                    config.get("nextclade_dataset_name") + "/" + segment
-                )
+            dataset_server_map[segment] = segment_identification.get(
+                "nextclade_dataset_server_map", {}
+            ).get(segment, segment_identification.get("nextclade_dataset_server"))
+            dataset_name_map[segment] = segment_identification.get(
+                "nextclade_dataset_name_map", {}
+            ).get(
+                segment,
+                segment_identification.get("nextclade_dataset_name") + "/" + segment,
+            )
+
+APPLY_MINIMIZER = (
+    SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
+) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+
+print(segment_detection_method)
 
 if os.uname().sysname == "Darwin":
     # Don't use conda-forge unzip on macOS
@@ -66,6 +80,14 @@ if os.uname().sysname == "Darwin":
     unzip = "/usr/bin/unzip"
 else:
     unzip = "unzip"
+
+
+def prepped_metadata():
+    if FILTER:
+        return "results/metadata_filtered.ndjson"
+    if SEGMENTED:
+        return "results/metadata_post_group.ndjson"
+    return "results/metadata_post_prepare.ndjson"
 
 
 rule all:
@@ -83,39 +105,70 @@ rule clean:
         "rm -rf results/*"
 
 
-rule fetch_ncbi_dataset_package:
+rule fetch_inflate_ncbi_dataset_package:
     output:
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_report="results/ncbi_dataset/data/data_report.jsonl",
+        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     params:
         taxon_id=TAXON_ID,
         api_key=NCBI_API_KEY,
-        gateway=f'--gateway-url {NCBI_GATEWAY_URL}' if NCBI_GATEWAY_URL else '',
+        gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
+        use_mirror=bool(MIRROR_BUCKET),
+        mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
+        unzip=unzip,
+        dataset_package=directory("results/ncbi_dataset"),
+        compressed_package_tzst="results/dataset.tar.zst",
+        compressed_package_zip="results/dataset.zip",
     shell:
         """
-        datasets download virus genome taxon {params.taxon_id} \
-            --no-progressbar \
-            --filename {output.dataset_package} \
-            --api-key {params.api_key} \
-            {params.gateway}
+        if [[ "{params.use_mirror}" == "True" ]]; then
+            curl {params.mirror_url} -o {params.compressed_package_tzst}
+            tar xvf {params.compressed_package_tzst} -C results
+        else
+            datasets download virus genome taxon {params.taxon_id} \
+                --no-progressbar \
+                --filename {params.compressed_package_zip} \
+                --api-key {params.api_key} \
+                {params.gateway} \
+            && {params.unzip} \
+                -o {params.compressed_package_zip} \
+                -d results
+        fi
         """
 
 
 rule format_ncbi_dataset_report:
     input:
         script="scripts/format_ncbi_metadata.py",
-        dataset_package="results/ncbi_dataset.zip",
+        dataset_report="results/ncbi_dataset/data/data_report.jsonl",
         config="results/config.yaml",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-    params:
-        unzip=unzip,
     shell:
         """
-        {params.unzip} -o {input.dataset_package} -d results
         python {input.script} \
             --config-file {input.config} \
-            --input results/ncbi_dataset/data/data_report.jsonl \
+            --input {input.dataset_report} \
             --output {output.ncbi_dataset_tsv}
+        echo "Processed metadata file lines: $(wc -l < {output.ncbi_dataset_tsv})"
+        echo "Hash of output: $(md5sum {output.ncbi_dataset_tsv})"
+        echo "Hash of sorted output: $(md5sum <(sort {output.ncbi_dataset_tsv}))"
+        """
+
+
+rule format_ncbi_dataset_sequences:
+    input:
+        dataset_sequences="results/ncbi_dataset/data/genomic.fna",
+    output:
+        ncbi_dataset_sequences="results/sequences.fasta",
+    shell:
+        """
+        seqkit seq -w0 -i \
+            {input.dataset_sequences} \
+            > {output.ncbi_dataset_sequences}
+        echo "Stats of NCBI dataset sequences: $(seqkit stats {output.ncbi_dataset_sequences})"
+        echo "seqkit hash of NCBI dataset sequences: $(seqkit sum -a -s {output.ncbi_dataset_sequences})"
+        echo "Plain hash of NCBI dataset sequences: $(md5sum {output.ncbi_dataset_sequences})"
         """
 
 
@@ -126,15 +179,13 @@ if CHECK_ENA_DEPOSITION:
             script="scripts/get_loculus_depositions.py",
             config="results/config.yaml",
         output:
-            exclude_insdc_accessions="results/insdc_accessions_to_exclude.tsv",
-            exclude_biosample_accessions="results/biosample_accessions_to_exclude.tsv",
+            exclude_insdc_accessions="results/accessions_to_exclude.json",
         params:
             log_level=LOG_LEVEL,
         shell:
             """
             python {input.script} \
             --output-insdc-accessions {output.exclude_insdc_accessions} \
-            --output-biosample-accessions {output.exclude_biosample_accessions} \
             --log-level {params.log_level} \
             --config-file {input.config} \
             """
@@ -142,8 +193,7 @@ if CHECK_ENA_DEPOSITION:
     rule filter_out_loculus_depositions:
         input:
             ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-            exclude_biosample_accessions="results/biosample_accessions_to_exclude.tsv",
-            exclude_insdc_accessions="results/insdc_accessions_to_exclude.tsv",
+            exclude_insdc_accessions="results/accessions_to_exclude.json",
             script="scripts/filter_out_depositions.py",
             config="results/config.yaml",
         output:
@@ -155,32 +205,10 @@ if CHECK_ENA_DEPOSITION:
             python {input.script} \
             --input-metadata-tsv {input.ncbi_dataset_tsv} \
             --exclude-insdc-accessions {input.exclude_insdc_accessions} \
-            --exclude-biosample-accessions {input.exclude_biosample_accessions} \
             --log-level {params.log_level} \
             --config-file {input.config} \
             --output-metadata-tsv {output.metadata_tsv} \
             """
-
-
-rule extract_ncbi_dataset_sequences:
-    """
-    For unsegmented sequences, we only keep the sequence ID in the header.
-    For sequences where we filter, we keep full header.
-    """
-    input:
-        dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_sequences="results/sequences.fasta",
-    params:
-        header_arg="" if FILTER_FASTA_HEADERS else "-i",  # Keep full header if segmented
-        unzip=unzip,
-    shell:
-        """
-        {params.unzip} -jp {input.dataset_package} \
-        ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 {params.header_arg} \
-        > {output.ncbi_dataset_sequences}
-        """
 
 
 rule calculate_sequence_hashes:
@@ -191,46 +219,23 @@ rule calculate_sequence_hashes:
     output:
         sequence_hashes="results/sequence_hashes.ndjson",
         sequence_json="results/sequences.ndjson",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python {input.script} \
             --input {input.sequences} \
             --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
+            --output-sequences {output.sequence_json} \
+            --log-level {params.log_level}
         """
 
 
-if FILTER_FASTA_HEADERS:
-
-    rule filter_fasta_headers:
-        input:
-            sequences="results/sequences.fasta",
-            script="scripts/filter_sequences.py",
-            config="results/config.yaml",
-        output:
-            results="results/sequences_filtered.fasta",
-        params:
-            filter_fasta_headers=FILTER_FASTA_HEADERS,
-            log_level=LOG_LEVEL,
-        shell:
-            """
-            python {input.script} \
-            --input-seq {input.sequences} \
-            --output-seq {output.results} \
-            --log-level {params.log_level} \
-            --config-file {input.config} \
-            """
-
-
-if ALIGN:
+if SEGMENTED and segment_detection_method == SegmentDetectionMethod.ALIGN:
 
     rule align:
         input:
-            sequences=(
-                "results/sequences_filtered.fasta"
-                if FILTER_FASTA_HEADERS
-                else "results/sequences.fasta"
-            ),
+            sequences="results/sequences.fasta",
         output:
             results="results/nextclade_{segment}.tsv",
         params:
@@ -251,34 +256,35 @@ if ALIGN:
                 "results/nextclade_{segment}.tsv",
                 segment=config["nucleotide_sequences"],
             ),
+            script="scripts/parse_alignment_output.py",
         output:
             merged="results/nextclade_merged.tsv",
         params:
-            # -f segment_name1=segment_path1 - segment_name2=segment_path2
-            # to do source tracking with tsv-append
-            # https://github.com/eBay/tsv-utils/blob/master/docs/tool_reference/tsv-append.md
             segment_paths=" ".join(
                 [
-                    f"-f {segment}=results/nextclade_{segment}.tsv"
+                    f" --alignment-results results/nextclade_{segment}.tsv"
                     for segment in config["nucleotide_sequences"]
                 ]
             ),
         shell:
             """
-            tsv-append --header --source-header segment \
-                {params.segment_paths} \
-            | tsv-filter --header --not-empty alignmentScore \
-            | tsv-select --header --fields seqName,segment \
-            > {output.merged}
-            """
+        python {input.script} \
+            {params.segment_paths} \
+            --output {output.merged}
+        """
 
 
-if not ALIGN:
+if APPLY_MINIMIZER:
+
     rule download_minimizer:
         output:
             results="results/minimizer.json",
         params:
-            minimizer=config.get("minimizer_index"),
+            minimizer=(
+                config.get("segment_identification").get("minimizer_index")
+                if config.get("segment_identification")
+                else config.get("minimizer_index")
+            ),
         shell:
             """
             curl -L -o {output.results} {params.minimizer}
@@ -286,7 +292,7 @@ if not ALIGN:
 
     rule nextclade_sort:
         input:
-            sequences= "results/sequences.fasta",
+            sequences="results/sequences.fasta",
             minimizer="results/minimizer.json",
         output:
             results="results/sort_results.tsv",
@@ -325,30 +331,42 @@ rule prepare_metadata:
             if CHECK_ENA_DEPOSITION
             else "results/metadata_post_rename.tsv"
         ),
-        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.ndjson",
         config="results/config.yaml",
+        segments=(
+            "results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else "results/config.yaml"
+        ),
+        # else is just a dummy
     output:
         metadata="results/metadata_post_prepare.ndjson",
     params:
         log_level=LOG_LEVEL,
+        segments=(
+            f"--segments results/nextclade_merged.tsv"
+            if (SEGMENTED or APPLY_MINIMIZER)
+            else ""
+        ),
     shell:
         """
         python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
-            --segments {input.segments} \
+            {params.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
 
+
 if GROUPS_OVERRIDE_JSON:
+
     rule download_groups:
         output:
             results="results/groups.json",
         params:
-            grouping=config.get("grouping_override")
+            grouping=config.get("grouping_override"),
         shell:
             """
             curl -L -o {output.results} {params.grouping}
@@ -388,17 +406,33 @@ rule heuristic_group_segments:
     """Group segments based on heuristic, join with previous groups if available"""
     input:
         script="scripts/heuristic_group_segments.py",
-        metadata="results/metadata_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
-        sequences="results/sequences_ungrouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
-        metadata_grouped="results/metadata_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/metadata_post_prepare.ndjson",
-        sequences_grouped="results/sequences_grouped.ndjson" if GROUPS_OVERRIDE_JSON else "results/sequences.ndjson",
+        metadata=(
+            "results/metadata_ungrouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/metadata_post_prepare.ndjson"
+        ),
+        sequences=(
+            "results/sequences_ungrouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/sequences.ndjson"
+        ),
+        metadata_grouped=(
+            "results/metadata_grouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/metadata_post_prepare.ndjson"
+        ),
+        sequences_grouped=(
+            "results/sequences_grouped.ndjson"
+            if GROUPS_OVERRIDE_JSON
+            else "results/sequences.ndjson"
+        ),
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_group.ndjson",
         sequences="results/sequences_post_group.ndjson",
     params:
         log_level=LOG_LEVEL,
-        GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false"
+        GROUPS_OVERRIDE_JSON="true" if GROUPS_OVERRIDE_JSON else "false",
     shell:
         """
         python {input.script} \
@@ -413,6 +447,43 @@ rule heuristic_group_segments:
             cat {input.sequences_grouped} >> {output.sequences}
         fi
         """
+
+
+if FILTER:
+
+    rule metadata_filter:
+        """
+        FILTER allows you to throw out sequences you don't want to ingest based on metadata
+        E.g. only H5N1, when the genbank download contains all influenza
+        """
+        input:
+            metadata=(
+                "results/metadata_post_group.ndjson"
+                if SEGMENTED
+                else "results/metadata_post_prepare.ndjson"
+            ),
+            sequences=(
+                "results/sequences_post_group.ndjson"
+                if SEGMENTED
+                else "results/sequences.ndjson"
+            ),
+            script="scripts/metadata_filter.py",
+            config="results/config.yaml",
+        output:
+            sequences="results/sequences_filtered.ndjson",
+            metadata="results/metadata_filtered.ndjson",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python {input.script} \
+            --input-seq {input.sequences} \
+            --output-seq {output.sequences} \
+            --input-metadata {input.metadata} \
+            --output-metadata {output.metadata} \
+            --log-level {params.log_level} \
+            --config-file {input.config} \
+            """
 
 
 rule get_previous_submissions:
@@ -434,11 +505,7 @@ rule get_previous_submissions:
         # Reduce likelihood of race condition of multi-submission
         # By delaying the start of the script
         script="scripts/call_loculus.py",
-        prepped_metadata=(
-            "results/metadata_post_group.ndjson"
-            if SEGMENTED
-            else "results/metadata_post_prepare.ndjson"
-        ),
+        prepped_metadata=prepped_metadata(),
         config="results/config.yaml",
     output:
         hashes="results/previous_submissions.json",
@@ -461,11 +528,7 @@ rule compare_hashes:
         script="scripts/compare_hashes.py",
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
-        metadata=(
-            "results/metadata_post_group.ndjson"
-            if SEGMENTED
-            else "results/metadata_post_prepare.ndjson"
-        ),
+        metadata=prepped_metadata(),
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
@@ -497,15 +560,15 @@ rule prepare_files:
     input:
         script="scripts/prepare_files.py",
         config="results/config.yaml",
-        metadata=(
-            "results/metadata_post_group.ndjson"
-            if SEGMENTED
-            else "results/metadata_post_prepare.ndjson"
-        ),
+        metadata=prepped_metadata(),
         sequences=(
-            "results/sequences_post_group.ndjson"
-            if SEGMENTED
-            else "results/sequences.ndjson"
+            "results/sequences_filtered.ndjson"
+            if FILTER
+            else (
+                "results/sequences_post_group.ndjson"
+                if SEGMENTED
+                else "results/sequences.ndjson"
+            )
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",

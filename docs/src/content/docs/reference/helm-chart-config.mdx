@@ -46,11 +46,11 @@ Here's an example of a `lineageDefinitions` section:
 
 ```yaml
 lineageSystemDefinitions:
-    pangoLineage: # Lineage name to use in metadata fields
-        1: https://example.org/lineage_defintions_v1.yaml # Definition per pipeline version
-        2: https://example.org/lineage_defintions_v2.yaml
-    myLineage:
-        1: ...
+  pangoLineage: # Lineage name to use in metadata fields
+    1: https://example.org/lineage_defintions_v1.yaml # Definition per pipeline version
+    2: https://example.org/lineage_defintions_v2.yaml
+  myLineage:
+    1: ...
 ```
 
 <SchemaDocs group='lineage-system-definitions' fieldColumnClass='w-48' />
@@ -71,12 +71,39 @@ Definition of metadata fields for sequence entries of an organism, for example t
 
 <SchemaDocs group='metadata' fieldColumnClass='w-56' />
 
+#### Custom display
+
+Use the optional `customDisplay` object on a metadata field to change how the
+value appears on the sequence details page. The object can contain
+`type`, `url`, `html`, `value` and `displayGroup` properties. The `type`
+property controls the behaviour:
+
+- `link` – open the value as a hyperlink using the `url` where `__value__` is
+  replaced by the actual value.
+- `badge` – show mutation lists as coloured badges (requires `value`).
+- `htmlTemplate` – replace `__value__` in the provided `html` string and render
+  the resulting HTML snippet.
+- `percentage` – display numeric values as percentages.
+- `dataUseTerms` – show the value together with a data use terms history modal.
+- `submittingGroup` – interpret the value as JSON with group details and link to
+  the group page.
+- `fileList` – interpret the value as a JSON list of files and show them as
+  download links.
+
+When `displayGroup` is provided, all entries with the same group are collapsed
+into a single row.
+
 ### Preprocessing (type)
 
 <SchemaDocs group='preprocessing' fieldColumnClass='w-28' />
 
 The values for `args` and `configFile` depend on the used preprocessing pipeline.
-For the Nextclade preprocessing pipeline, please see
+
+#### Nextclade Preprocessing Pipeline ConfigFile (type)
+
+<SchemaDocs group='nextcladePipelineConfigFile' fieldColumnClass='w-28' />
+
+For more details on the Nextclade preprocessing pipeline, please see
 [here](../../for-administrators/existing-preprocessing-pipelines/#nextclade-based-pipeline).
 
 ### Ingest (type)
@@ -84,11 +111,12 @@ For the Nextclade preprocessing pipeline, please see
 <SchemaDocs group='ingest' fieldColumnClass='w-28' />
 
 The values for `configFile` depend on the used preprocessing pipeline.
-For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest)
-which downloads data from NCBI GenBank using NCBI Datasets, the config file needs to
-contain the taxon_id of the organism and additionally, if the organism is multi-segmented,
-it requires a list of segment names (nucleotide_sequences) and the nextclade_dataset that
-can be used for segment identification and alignment.
+
+#### Ingest ConfigFile (type)
+
+For [our ingest pipeline](https://github.com/loculus-project/loculus/tree/main/ingest) we require the following fields:
+
+<SchemaDocs group='ingestPipelineConfigFile' fieldColumnClass='w-28' />
 
 ### NucleotideSequence (type)
 
@@ -97,3 +125,7 @@ can be used for segment identification and alignment.
 ### Gene (type)
 
 <SchemaDocs group='gene' fieldColumnClass='w-48' />
+
+### Image spec (type)
+
+<SchemaDocs group='image' fieldColumnClass='w-48' />

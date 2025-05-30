@@ -64,6 +64,13 @@ const aggregatedItem = z
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 
+const lineageDefinitionEntry = z.object({
+    parents: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
+});
+export const lineageDefinition = z.record(z.string(), lineageDefinitionEntry);
+export type LineageDefinition = z.infer<typeof lineageDefinition>;
+
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {
     return z.object({
         data,
@@ -116,6 +123,16 @@ export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry
 export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
+
+export function getLatestAccessionVersion(
+    sequenceEntryHistory: SequenceEntryHistory,
+): SequenceEntryHistoryEntry | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    const clonedSequenceEntryHistory = [...sequenceEntryHistory];
+    return clonedSequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+}
 
 export enum FileType {
     TSV = 'tsv',

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.GeneName
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
@@ -60,6 +61,7 @@ val defaultProcessedData = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    files = null,
 )
 
 val defaultProcessedDataMultiSegmented = ProcessedData(
@@ -98,6 +100,7 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    files = null,
 )
 
 val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
@@ -113,6 +116,7 @@ val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
     nucleotideInsertions = emptyMap(),
     alignedAminoAcidSequences = emptyMap(),
     aminoAcidInsertions = emptyMap(),
+    files = null,
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
@@ -468,6 +472,13 @@ object PreparedProcessedData {
                 ),
                 "dummy nucleotide sequence error",
             ),
+        ),
+    )
+
+    fun withFiles(accession: Accession, files: FileCategoryFilesMap) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            files = files,
         ),
     )
 }

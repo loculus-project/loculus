@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
@@ -11,11 +12,15 @@ import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
+import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.api.toFileIdAndName
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -29,11 +34,18 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+)
 class ApproveProcessedDataEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val objectMapper: ObjectMapper,
 ) {
 
     @Test
@@ -182,7 +194,7 @@ class ApproveProcessedDataEndpointTest(
                 jsonPath(
                     "$.detail",
                     containsString(
-                        "Accession versions are in not in one of the states " +
+                        "Accession versions are not in one of the states " +
                             "[$PROCESSED]: " +
                             "${accessionVersionNotInCorrectState.first().displayAccessionVersion()} - $IN_PROCESSING",
                     ),
@@ -403,5 +415,38 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
 
         convenienceClient.getSequenceEntry(accessionVersions.first()).assertStatusIs(APPROVED_FOR_RELEASE)
+    }
+
+    @Test
+    fun `WHEN entries with extra files are approved THEN the files become public`() {
+        convenienceClient.submitDefaultFiles(includeFileMapping = true)
+        val unprocessedData = convenienceClient.extractUnprocessedData()
+        // create submittable data with the file IDs included
+        val submittableData: List<SubmittedProcessedData> = unprocessedData.map {
+            SubmittedProcessedData(
+                accession = it.accession,
+                version = it.version,
+                data = defaultProcessedData.copy(
+                    files = it.data.files!!.map {
+                        it.key to it.value.map { x -> x.toFileIdAndName() }
+                    }.toMap(),
+                ),
+            )
+        }
+        convenienceClient.submitProcessedData(submittableData)
+        client.approveProcessedSequenceEntries(ALL)
+        val releasedData = convenienceClient.getReleasedData()
+
+        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asText())
+
+        val fileUrl = tree.get(0).get("url").asText()
+
+        val client = HttpClient.newHttpClient()
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(fileUrl))
+            .build()
+
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        assertThat(response.statusCode(), `is`(200))
     }
 }

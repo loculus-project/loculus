@@ -10,7 +10,6 @@ import {
     dataUseTermsHistoryEntry,
     editedSequenceEntryData,
     getSequencesResponse,
-    info,
     problemDetail,
     revocationRequest,
     sequenceEntryToEdit,
@@ -30,7 +29,11 @@ const submitEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles,
+            schema: submitFiles.transform((submitData) => {
+                // stringify the fileMapping
+                const { fileMapping, ...rest } = submitData;
+                return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
+            }),
         },
     ],
     response: z.array(submissionIdMapping),
@@ -248,13 +251,6 @@ const setDataUseTerms = makeEndpoint({
     ],
 });
 
-const infoEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/',
-    alias: 'info',
-    response: info,
-});
-
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -268,5 +264,4 @@ export const backendApi = makeApi([
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,
     setDataUseTerms,
-    infoEndpoint,
 ]);

@@ -310,6 +310,36 @@ When processing is finished the response should look like:
 ]
 ```
 
+## 4. Submitting annotated assemblies to ENA
+
+In order to submit annotated assemblies you must register a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) with your study. This can be done programmatically when registering a project - however it can only be registered in the production environment.
+
+The prefix you register must follow the listed conventions or it will not be accepted:
+- Must begin with a letter
+- All letters must be upper case
+- Must from 3 to 12 characters in length
+- All characters must be alphanumeric with no diacritics and none such as -_*
+- Each prefix can only be registered to a **single** study; you cannot reuse a prefix from another study, or one which another user has registered.
+
+Once you have registered a locus_tag_prefix it can be used to annotate flatfiles, e.g. 
+
+```
+FT      /locus_tag="BN5_00001"
+```
+
+where the locus_tag must be of the form: `<locus_tag_prefix>_<id>`. 
+
+# Revising Submissions to ENA
+
+## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
+Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated. 
+
+## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
+It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added). 
+However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
+
+Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest. 
+
 ## Promises made to ENA
 
 - "I confirm that the data submitted through this account is NOT sensitive, restricted-access or human-identifiable." -> We will want to mirror this into Pathoplexus submissions, at least the sensitive and human-identifiable parts.

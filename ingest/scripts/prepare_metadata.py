@@ -73,7 +73,7 @@ def main(
         record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
     }
 
-    if config.segmented:
+    if segments:
         segments_dict: dict[FastaIdField, dict[str, str]] = {}
         segment_df = pd.read_csv(segments, sep="\t")
         segmented_fields = list(segment_df.columns)
@@ -93,7 +93,7 @@ def main(
         record["submissionId"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
-        if config.segmented:
+        if segments:
             results_dic = segments_dict.get(record[config.fasta_id_field], {})
             for key in segmented_fields:
                 record[key] = results_dic.get(key, "")
@@ -106,7 +106,7 @@ def main(
         ]
         if missing_a_segment:
             logger.info(
-                f"Missing segment for {len(missing_a_segment)} records: {", ".join(missing_a_segment)}"
+                f"Missing segment for {len(missing_a_segment)} records: {', '.join(missing_a_segment)}"
             )
 
     for record in metadata:

@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 240 }}
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 600 }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
@@ -76,7 +76,7 @@ jobs:
       - name: Run Integration test
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY

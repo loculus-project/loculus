@@ -9,7 +9,6 @@ metadata:
   name: loculus-ingest-deployment-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-options: Force=true,Replace=true
-    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -20,6 +19,8 @@ spec:
       component: loculus-ingest-deployment-{{ $key }}
   template:
     metadata:
+      annotations:
+        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: loculus-ingest-deployment-{{ $key }}
@@ -56,21 +57,6 @@ spec:
                 secretKeyRef:
                   name: service-accounts
                   key: insdcIngestUserPassword
-            - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: database
-                  key: url
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: database
-                  key: username
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: database
-                  key: password
             - name: SLACK_HOOK
               valueFrom:
                 secretKeyRef:
@@ -118,6 +104,7 @@ spec:
             app: loculus
             component: loculus-ingest-cronjob-{{ $key }}
         spec:
+          {{- include "possiblePriorityClassName" $ | nindent 10 }}
           restartPolicy: Never
           containers:
             - name: ingest-{{ $key }}

@@ -42,6 +42,7 @@ function renderEditPage({
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
+                segmentNames={['originalSequenceName']}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 groupedInputFields={groupedInputFields}
@@ -76,20 +77,11 @@ describe('EditPage', () => {
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 
-    test('should show original data and processed data', () => {
+    test('should show original data', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
-
-        expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
-        expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
-
-        expect(screen.getByText('processedInsertionSequenceName:')).toBeInTheDocument();
-        expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
-
-        expect(screen.getByText('processedInsertionGeneName:')).toBeInTheDocument();
-        expect(screen.getByText('aminoAcidInsertion1,aminoAcidInsertion2')).toBeInTheDocument();
     });
 
     test('should show error and warning tooltips', () => {
@@ -122,11 +114,6 @@ describe('EditPage', () => {
 });
 
 const expectTextInSequenceData = {
-    original: (metadata: Record<string, string>): void =>
-        Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByDisplayValue(value)).toBeInTheDocument();
-        }),
     originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();

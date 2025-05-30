@@ -25,7 +25,7 @@ lapisClientHooks.mockReturnValue({
 describe('AutoCompleteField', () => {
     const field: MetadataFilter = {
         name: 'testField',
-        label: 'Test Field',
+        displayName: 'Test Field',
         type: 'string',
         autocomplete: true,
     };
@@ -49,13 +49,16 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -85,9 +88,13 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -102,19 +109,22 @@ describe('AutoCompleteField', () => {
     });
 
     it('displays loading state when aggregated endpoint is in isLoading state', async () => {
-        mockUseAggregated.mockReturnValueOnce({
+        mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: true,
             error: null,
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -125,19 +135,22 @@ describe('AutoCompleteField', () => {
     });
 
     it('displays error message when aggregated returns an error', async () => {
-        mockUseAggregated.mockReturnValueOnce({
+        mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: false,
             error: { message: 'Error message', stack: 'Error stack' },
             mutate: vi.fn(),
         });
-
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -162,9 +175,13 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
@@ -192,19 +209,58 @@ describe('AutoCompleteField', () => {
         render(
             <AutoCompleteField
                 field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
                 fieldValue='Option 1'
-                lapisSearchParameters={lapisSearchParameters}
             />,
         );
 
         const input = screen.getByLabelText('Test Field');
         await userEvent.click(input);
 
-        const clearButton = screen.getByLabelText('Clear');
+        const clearButton = screen.getByLabelText('Clear Test Field');
         await userEvent.click(clearButton);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
+    });
+
+    it('shows at most a configured number of options', async () => {
+        const data = [];
+        for (let i = 0; i < 100; i++) {
+            data.push({ testField: `Option ${i}`, count: 10 });
+        }
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data,
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+                fieldValue='Option 1'
+                maxDisplayedOptions={50}
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options).toHaveLength(50);
     });
 });

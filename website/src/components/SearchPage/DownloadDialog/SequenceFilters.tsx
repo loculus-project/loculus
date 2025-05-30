@@ -1,8 +1,12 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { ConsolidatedMetadataFilters } from '../../../utils/search.ts';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { intoMutationSearchParams } from '../../../utils/mutation.ts';
+import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
+
+export type LapisSearchParameters = Record<string, any>;
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -17,7 +21,7 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to use in API Queries.
      */
-    toApiParams(): Record<string, any>;
+    toApiParams(): LapisSearchParameters;
 
     /**
      * Return the filter as params to build a URL from.
@@ -31,22 +35,46 @@ export interface SequenceFilter {
 }
 
 /**
- * Filter sequences based on certain fields that have to match, i.e. 'country == China' or
- * 'data use terms == OPEN'.
+ * A collection of {@link FieldValues} which can be used to retrieve a filtered subset of sequence entries.
+ * Sequences are filtered based on certain fields that have to match, i.e. 'country == China' or 'data use terms == OPEN'.
  */
-export class FieldFilter implements SequenceFilter {
-    private readonly lapisSearchParameters: Record<string, any>;
+export class FieldFilterSet implements SequenceFilter {
+    private readonly filterSchema: MetadataFilterSchema;
+    private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly schema: ConsolidatedMetadataFilters;
+    private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 
+    /**
+     * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
+     *     additional info for how to apply a certain value to a metadata field as a filter.
+     * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
+     * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
+     *     displaying the field values (because these are default values).
+     * @param referenceGenomeSequenceNames Necessary to construct mutation API params.
+     */
     constructor(
-        lapisSearchParamters: Record<string, any>,
+        filterSchema: MetadataFilterSchema,
+        fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        schema: ConsolidatedMetadataFilters,
+        referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
     ) {
-        this.lapisSearchParameters = lapisSearchParamters;
+        this.filterSchema = filterSchema;
+        this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.schema = schema;
+        this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
+    }
+
+    /**
+     * Creates an empty filter.
+     * This is a convenience function, mostly used for testing.
+     */
+    public static empty() {
+        return new FieldFilterSet(
+            new MetadataFilterSchema([]),
+            {},
+            {},
+            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+        );
     }
 
     public sequenceCount(): number | undefined {
@@ -57,8 +85,35 @@ export class FieldFilter implements SequenceFilter {
         return this.toDisplayStrings().size === 0;
     }
 
-    public toApiParams(): Record<string, any> {
-        return this.lapisSearchParameters;
+    public toApiParams(): LapisSearchParameters {
+        const sequenceFilters = Object.fromEntries(
+            Object.entries(this.fieldValues as Record<string, any>).filter(
+                ([, value]) => value !== undefined && value !== '',
+            ),
+        );
+        for (const filterName of Object.keys(sequenceFilters)) {
+            if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
+                sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
+                    sequenceFilters[filterName],
+                );
+                delete sequenceFilters[filterName];
+            }
+        }
+
+        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
+            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        }
+
+        delete sequenceFilters.mutation;
+        const mutationSearchParams = intoMutationSearchParams(
+            this.fieldValues.mutation as any,
+            this.referenceGenomeSequenceNames,
+        );
+
+        return {
+            ...sequenceFilters,
+            ...mutationSearchParams,
+        };
     }
 
     public toUrlSearchParams(): [string, string][] {
@@ -74,20 +129,22 @@ export class FieldFilter implements SequenceFilter {
         ];
         const skipKeys = mutationKeys.concat([accessionKey]);
 
+        const lapisSearchParameters = this.toApiParams();
+
         // accession
-        if (this.lapisSearchParameters.accession !== undefined) {
-            this.lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
+        if (lapisSearchParameters.accession !== undefined) {
+            lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
         }
 
         // mutations
         mutationKeys.forEach((key) => {
-            if (this.lapisSearchParameters[key] !== undefined) {
-                result.push([key, this.lapisSearchParameters[key].join(',')]);
+            if (lapisSearchParameters[key] !== undefined) {
+                (lapisSearchParameters[key] as string[]).forEach((m) => result.push([key, m]));
             }
         });
 
         // default keys
-        for (const [key, value] of Object.entries(this.lapisSearchParameters)) {
+        for (const [key, value] of Object.entries(lapisSearchParameters)) {
             if (skipKeys.includes(key)) {
                 continue;
             }
@@ -101,51 +158,61 @@ export class FieldFilter implements SequenceFilter {
         return result;
     }
 
+    private isHiddenFieldValue(fieldName: string, fieldValue: unknown) {
+        return (
+            Object.keys(this.hiddenFieldValues).includes(fieldName) && this.hiddenFieldValues[fieldName] === fieldValue
+        );
+    }
+
     public toDisplayStrings(): Map<string, [string, string]> {
         return new Map(
-            Object.entries(this.lapisSearchParameters)
-                .filter((vals) => vals[1] !== undefined && vals[1] !== '')
-                .filter(
-                    ([name, val]) =>
-                        !(Object.keys(this.hiddenFieldValues).includes(name) && this.hiddenFieldValues[name] === val),
-                )
-                .map(([name, filterValue]) => ({ name, filterValue: filterValue !== null ? filterValue : '' }))
-                .filter(({ filterValue }) => filterValue.length > 0)
-                .map(({ name, filterValue }): [string, [string, string]] => [
+            Object.entries(this.fieldValues)
+                .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
+                .map(([name, filterValue]): [string, [string, string]] => [
                     name,
-                    [
-                        this.findSchemaLabel(name),
-                        typeof filterValue === 'object' ? filterValue.join(', ') : filterValue,
-                    ],
+                    [this.filterSchema.getLabel(name), this.filterValueDisplayString(name, filterValue)],
                 ]),
         );
     }
 
-    private findSchemaLabel(filterName: string): string {
-        let displayName = this.schema
-            .map((metadata) => {
-                if (metadata.grouped === true) {
-                    const groupedField = metadata.groupedFields.find(
-                        (groupedMetadata) => groupedMetadata.name === filterName,
-                    );
-                    if (groupedField) {
-                        return `${metadata.displayName} - ${groupedField.label}`;
-                    }
-                }
-            })
-            .find((x) => x !== undefined);
-        if (displayName === undefined) {
-            displayName = this.schema.find((metadata) => metadata.name === filterName)?.displayName;
+    private filterValueDisplayString(fieldName: string, value: any): string {
+        let result = value;
+        if (this.filterSchema.getType(fieldName) === 'timestamp') {
+            const date = new Date(Number(value) * 1000);
+            result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
-        return displayName ?? filterName;
+        if (result.length > 40) {
+            result = `${result.substring(0, 37)}...`;
+        }
+        return result;
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
+const textAccessionsToList = (text: string): string[] => {
+    const accessions = text
+        .split(/[\t,;\n ]/)
+        .map((s) => s.trim())
+        .filter((s) => s !== '')
+        .map((s) => {
+            if (s.includes('.')) {
+                return s.split('.')[0];
+            }
+            return s;
+        });
+
+    return accessions;
+};
+
+const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
+    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
+    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+};
+
 /**
- * Filter sequences based on an explicit set of accessionVersions.
+ * A {@link SequenceFilter} implementation that filters using an explicit list of accessionVersions.
  */
-export class SelectFilter implements SequenceFilter {
+export class SequenceEntrySelection implements SequenceFilter {
     private readonly selectedSequences: Set<string>;
 
     constructor(selectedSequences: Set<string>) {

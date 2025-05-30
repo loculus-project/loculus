@@ -35,6 +35,14 @@ object BackendSpringProperty {
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
+
+    const val S3_ENABLED = "loculus.s3.enabled"
+    const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
+    const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
+    const val S3_BUCKET_BUCKET = "loculus.s3.bucket.bucket"
+    const val S3_BUCKET_REGION = "loculus.s3.bucket.region"
+    const val S3_BUCKET_ACCESS_KEY = "loculus.s3.bucket.access-key"
+    const val S3_BUCKET_SECRET_KEY = "loculus.s3.bucket.secret-key"
 }
 
 const val DEBUG_MODE_ON_VALUE = "true"
@@ -100,6 +108,25 @@ class BackendSpringConfig {
 
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+
+    @Bean
+    fun s3Config(
+        @Value("\${${BackendSpringProperty.S3_ENABLED}}") enabled: Boolean = false,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_ENDPOINT}}") endpoint: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_INTERNAL_ENDPOINT}:#{null}}") internalEndpoint: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_REGION}}") region: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_BUCKET}}") bucket: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_ACCESS_KEY}}") accessKey: String? = null,
+        @Value("\${${BackendSpringProperty.S3_BUCKET_SECRET_KEY}}") secretKey: String? = null,
+    ): S3Config {
+        if (!enabled) {
+            return S3Config(false, null)
+        }
+        if (endpoint != null && bucket != null && accessKey != null && secretKey != null) {
+            return S3Config(true, S3BucketConfig(endpoint, internalEndpoint, region, bucket, accessKey, secretKey))
+        }
+        throw IllegalStateException("S3 bucket configurations are incomplete.")
+    }
 
     @Bean
     fun headerCustomizer() = OperationCustomizer { operation, _ ->
