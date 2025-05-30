@@ -4,6 +4,7 @@
 # produce the same output as would be sent to ENA by the pipeline.
 
 # WARNING: Please still review submission files manually before using them!!
+# WARNING: If submitting as a broker please add `is_broker=true` to the config file
 import json
 import logging
 import os
@@ -28,13 +29,14 @@ logging.basicConfig(
 @click.command()
 @click.option(
     "--data-to-submit",
-    required=False,
+    required=True,
     type=click.Path(exists=True),
 )
 @click.option(
     "--config-file",
     required=False,
     type=click.Path(exists=True),
+    default="config/config.yaml",
 )
 @click.option(
     "--mode",
@@ -152,11 +154,13 @@ def local_ena_submission_generator(
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
-            "java -jarwebin-cli.jar -username $ena_submission_username "
+            "java -jar webin-cli.jar -username $ena_submission_username "
             "-password $ena_submission_password -context genome "
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
             "\n Remember to submit with -test if you do not want to submit to production"
+            "\n Remember to add `is_broker=true` to config and modify ADDRESS "
+            "if you are submitting as a broker"
         )
 
 
