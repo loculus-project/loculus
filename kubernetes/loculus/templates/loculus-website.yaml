@@ -46,6 +46,10 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
+        - name: crash-test-container
+          image: busybox:latest
+          command: ["sh", "-c", "exit 1"]
+          imagePullPolicy: IfNotPresent
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
