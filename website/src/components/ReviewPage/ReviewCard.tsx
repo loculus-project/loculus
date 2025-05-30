@@ -90,7 +90,11 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     approveAccessionVersion={approveAccessionVersion}
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
-                    viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
+                    viewSequences={
+                        data && !notProcessed && sequenceEntryStatus.processingResult !== errorsProcessingResult
+                            ? () => setSequencesDialogOpen(true)
+                            : undefined
+                    }
                 />
             </div>
 
@@ -141,24 +145,28 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex space-x-1'>
-                {viewSequences && (
-                    <>
-                        <button
-                            className={buttonBarClass(notProcessed)}
-                            onClick={viewSequences}
-                            data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
-                            data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
-                            key={'view-sequences-button-' + sequenceEntryStatus.accession}
-                            disabled={notProcessed}
-                        >
-                            <RiDna />
-                        </button>
-                        <CustomTooltip
-                            id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
-                            content={notProcessed ? 'Processing...' : 'View processed sequences'}
-                        />
-                    </>
-                )}
+                <>
+                    <button
+                        className={buttonBarClass(!viewSequences)}
+                        onClick={viewSequences}
+                        data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                        data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
+                        key={'view-sequences-button-' + sequenceEntryStatus.accession}
+                        disabled={!viewSequences}
+                    >
+                        <RiDna />
+                    </button>
+                    <CustomTooltip
+                        id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
+                        content={
+                            notProcessed
+                                ? 'Processing...'
+                                : sequenceEntryStatus.processingResult === errorsProcessingResult
+                                  ? 'No processed sequence available due to errors'
+                                  : 'View processed sequences'
+                        }
+                    />
+                </>
                 <div className='mx-3 h-5 mt-0.5 border-l border-gray-300'></div> {/* Vertical separator */}
                 <button
                     className={buttonBarClass(!approvable)}
