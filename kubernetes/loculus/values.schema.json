@@ -1272,6 +1272,30 @@
       },
       "additionalProperties": false
     },
+    "autoscaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "website": {
+          "type": "object",
+          "properties": {
+            "minReplicas": { "type": "integer", "default": 1 },
+            "maxReplicas": { "type": "integer", "default": 3 },
+            "targetCPUUtilizationPercentage": { "type": "integer", "default": 80 }
+          },
+          "additionalProperties": false
+        },
+        "lapis": {
+          "type": "object",
+          "properties": {
+            "minReplicas": { "type": "integer", "default": 1 },
+            "maxReplicas": { "type": "integer", "default": 3 },
+            "targetCPUUtilizationPercentage": { "type": "integer", "default": 80 }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
     "preprocessingTimeout": {
       "type": "integer",
       "description": "TODO",
