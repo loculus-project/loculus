@@ -1,5 +1,8 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 
+{{- $replicas := $.Values.replicas.lapis }}
+{{- $min := $replicas.min | default 1 }}
+{{- $max := $replicas.max | default $min }}
 {{- range $key, $organism := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: apps/v1
@@ -8,7 +11,9 @@ metadata:
   name: loculus-lapis-{{ $key }}
   annotations:
 spec:
-  replicas: {{ $.Values.replicas.lapis | default 1 }}
+  {{- if eq $min $max }}
+  replicas: {{ $min }}
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
@@ -68,4 +73,26 @@ spec:
             timeoutSeconds: 5
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+{{- if ne $min $max }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loculus-lapis-{{ $key }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loculus-lapis-{{ $key }}
+  minReplicas: {{ $min }}
+  maxReplicas: {{ $max }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
 {{- end }}
+{{- end }}
+
