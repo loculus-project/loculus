@@ -19,18 +19,18 @@ The form submits a single individual sequence entry, to submit multiple sequence
 
 ## Submit sequences via file upload
 
-Before you begin this process, you should ensure your data is in the correct format. Each sequence should have a unique submissionID that can be used to associate it with its corresponding metadata entry.
+Before you begin this process, you should ensure your data is in the correct format. Each sequence should have a unique ID that can be used to associate it with its corresponding metadata entry.
 
 Loculus expects:
 
-- Sequence data in [`fasta` format](../../reference/fasta-format) with a unique submissionID per sequence.
+- Sequence data in [`fasta` format](../../reference/fasta-format) with a unique ID per sequence.
 - Metadata for each sequence. If you upload through the API, only `tsv` is supported. If you upload through the Website, you can also use Excel files (`xlsx` format). If you need help formatting metadata, there is a metadata template for each organism on the submission page in each of the supported formats. You can also map columns in your file to the expected upload column names by clicking the 'Add column mapping' button.
 
 ![Metadata template.](../../../assets/MetadataTemplate.png)
 
 ### Multi-segmented Pathogens
 
-Loculus expects multi-segmented pathogens to have one unique submissionID per **isolate** (pathogen sample containing all segments). However, `fasta` files should still have a separate entry/record per segment. Therefore, each record id should include the unique submissionID of the isolate and the segment name, for example: `submissionID + '_' + segmentName`. The metadata is uploaded per isolate, i.e. there will be only one row for each `submissionID` and segmented metadata parameters need to be uploaded individually, i.e. under `length_{segmentName}` etc.
+Loculus expects multi-segmented pathogens to have one unique ID per **isolate** (pathogen sample containing all segments). However, `fasta` files should still have a separate entry/record per segment. Therefore, each record id should include the unique ID of the isolate and the segment name, for example: `ID + '_' + segmentName`. The metadata is uploaded per isolate, i.e. there will be only one row for each `ID` and segmented metadata parameters need to be uploaded individually, i.e. under `length_{segmentName}` etc.
 
 ### Website
 

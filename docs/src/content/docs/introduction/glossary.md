@@ -95,9 +95,9 @@ SILO is an [open-source query engine](https://github.com/GenSpectrum/LAPIS-SILO)
 
 A submission adds new [sequence entries](#sequence-entry). See also [revision](#revision) and [revocation](#revocation).
 
-### Submission ID
+### ID
 
-When users upload [sequence entries](#sequence-entry), they have to provide a submission ID to link the entries in the [metadata](#metadata) file and the FASTA file. Each submission ID must be unique within the submission, but re-use across submissions is acceptable.
+When users upload [sequence entries](#sequence-entry), they have to provide an ID to link the entries in the [metadata](#metadata) file and the FASTA file. Each ID must be unique within the submission, but re-use across submissions is acceptable.
 
 ### Submitter
 
