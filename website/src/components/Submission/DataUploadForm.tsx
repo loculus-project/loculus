@@ -86,7 +86,7 @@ const InnerDataUploadForm = ({
         const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
 
         if (submissionId === undefined && inputMode === 'form') {
-            onError('No submission ID specified.');
+            onError('No sequence ID specified.');
             return;
         }
 
@@ -283,7 +283,7 @@ const ExtraFilesUpload = ({
                 <h2 className='font-medium text-lg'>Extra files</h2>
                 <p className='text-gray-500 text-sm'>
                     {inputMode === 'bulk'
-                        ? 'The folder you select needs to contain one folder per submission ID, which contains the files for that submission ID'
+                        ? 'The folder you select needs to contain one folder per sequence ID, which contains the files for that sequence entry'
                         : 'Upload a folder of files for this sequence'}
                 </p>
             </div>

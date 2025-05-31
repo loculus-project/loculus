@@ -173,7 +173,7 @@ Additionally, if you are using the preprocessing or ingest pipelines, `nucleotid
 
 Metadata fields can be isolate- or segment-specific. By default we assume metadata fields are isolate-specific (i.e. are shared across all segments), therefore segment-specific fields must be marked as `perSegment` in the config file. Marking a field as `perSegment` will result in that field existing for each segment. In the example above, instead of there being one metadata field called `length` there will now be three fields called `length_L`, `length_M` and `length_S`.
 
-Loculus expects multi-segmented pathogen sequences to be submitted in a specific format. Fasta files should have a separate entry/record for each segment, with a Fasta header of `>[submissionID]_[segmentName]`, e.g. `>sample123_L` for the `L` segment of the sample with the submissionID `sample123`. Metadata is uploaded for an entire sequence entry, rather than per segment, i.e. there will be only one row for each `submissionID`.
+Loculus expects multi-segmented pathogen sequences to be submitted in a specific format. Fasta files should have a separate entry/record for each segment, with a Fasta header of `>[ID]_[segmentName]`, e.g. `>sample123_L` for the `L` segment of the sample with the ID `sample123`. Metadata is uploaded for an entire sequence entry, rather than per segment, i.e. there will be only one row for each `ID`.
 
 ## Secrets
 

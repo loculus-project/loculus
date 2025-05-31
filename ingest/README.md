@@ -22,7 +22,7 @@ Sequences and metadata are transformed into (nd)json files to simplify (de)seria
 
 ### Segmented viruses
 
-NCBI handles segmented viruses differently than Loculus. In NCBI, the primary level of accession is per segment of a genomic sequence, with each segment having its own metadata. In Loculus a sample is uploaded with all its segments grouped under a collective accession ID, and metadata applies at the sample (or group) level. FASTA files when downloaded have each segment headed under `>[accessionID]_[segmentName]`. (When uploaded to Loculus they need be headed as `>[submissionID]_[segmentName]`)
+NCBI handles segmented viruses differently than Loculus. In NCBI, the primary level of accession is per segment of a genomic sequence, with each segment having its own metadata. In Loculus a sample is uploaded with all its segments grouped under a collective accession ID, and metadata applies at the sample (or group) level. FASTA files when downloaded have each segment headed under `>[accessionID]_[segmentName]`. (When uploaded to Loculus they need be headed as `>[ID]_[segmentName]`)
 
 The segment a sample corresponds to can only be determined from the descriptions of a sequence fasta record. In `get_segment_details.py` we discard all sequences with unclear segment annotations and add `segment` as a metadata field. (TODO #2079: Use nextclade instead of a regex search to determine which segment the sequence aligns with best to keep as much data as possible).
 
@@ -34,7 +34,7 @@ Metadata as received from `datasets` is transformed to conform to Loculus' expec
 - transforming values, e.g. turn author strings from `LastName1, Initial1, LastName2, Initial2` into `Initial1 LastName1, Initial2 LastName2`
 - splitting fields, e.g. NCBI's single, complex collection country field (`Germany: Munich, Bavaria`) is split into multiple fields `country`, `state`, `division` (`Germany`, `Bavaria`, `Munich`)
 
-Note that the `submissionId` is just the `genbankAccession` for non-segmented viruses, but the concatenation of the `genbankAccession` of each segment (with the appended segment name for each segment) for segmented viruses.
+Note that the `id` is just the `genbankAccession` for non-segmented viruses, but the concatenation of the `genbankAccession` of each segment (with the appended segment name for each segment) for segmented viruses.
 
 ### Calculating a hash for each sequence entry
 
