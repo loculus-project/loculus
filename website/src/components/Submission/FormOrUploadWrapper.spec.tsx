@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
-import { SUBMISSION_ID_FIELD } from '../../settings';
+import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
@@ -12,8 +12,8 @@ const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
         'Required Fields',
         [
             {
-                name: SUBMISSION_ID_FIELD,
-                displayName: 'Submission ID',
+                name: SUBMISSION_ID_INPUT_FIELD,
+                displayName: 'ID',
                 noEdit: true,
             },
             {

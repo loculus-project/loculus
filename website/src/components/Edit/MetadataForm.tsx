@@ -4,7 +4,7 @@ import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
 import type { Row } from './InputField';
-import { ACCESSION_FIELD, SUBMISSION_ID_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
 
@@ -62,7 +62,7 @@ export class EditableMetadata {
      * Helper function to get the Submission ID from the rows, if it is present.
      */
     getSubmissionId(): string | undefined {
-        const row = this.rows.find((row) => row.key === SUBMISSION_ID_FIELD);
+        const row = this.rows.find((row) => row.key === SUBMISSION_ID_INPUT_FIELD);
         return row ? row.value : undefined;
     }
 
@@ -77,7 +77,7 @@ export class EditableMetadata {
         if (!this.rows.some((row) => row.value !== '')) return undefined;
 
         // If only the submission ID is set, that't not enough, also return undefined.
-        if (this.rows.length === 1 && this.rows[0].key === SUBMISSION_ID_FIELD) {
+        if (this.rows.length === 1 && this.rows[0].key === SUBMISSION_ID_INPUT_FIELD) {
             return undefined;
         }
 
@@ -86,7 +86,7 @@ export class EditableMetadata {
         this.rows.forEach((row) => tsvFields.set(row.key, row.value));
 
         if (submissionId) {
-            tsvFields.set(SUBMISSION_ID_FIELD, submissionId);
+            tsvFields.set(SUBMISSION_ID_INPUT_FIELD, submissionId);
         }
 
         if (accession) {

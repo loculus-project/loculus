@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
-import { SUBMISSION_ID_FIELD } from '../../settings.ts';
+import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
@@ -72,7 +72,7 @@ function renderSubmissionForm({
                     [
                         'fooSection',
                         [
-                            { name: SUBMISSION_ID_FIELD, displayName: 'Submission ID', noEdit: true },
+                            { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'Submission ID', noEdit: true },
                             { name: 'foo' },
                             { name: 'bar' },
                         ],
