@@ -70,7 +70,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         ) {
             result.topmatter.authors = entry.value
                 .toString()
-                .split(',')
+                .split(';')
                 .map((x) => x.trim());
             continue;
         }
