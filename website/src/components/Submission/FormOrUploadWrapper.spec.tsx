@@ -104,7 +104,7 @@ describe('FormOrUploadWrapper', () => {
 
         test('renders all metadata fields and sequence segments', () => {
             renderForm(true);
-            expect(screen.getByText(/Submission ID/)).toBeTruthy();
+            expect(screen.getByText(/ID/)).toBeTruthy();
             expect(screen.getByText(/Collection date/)).toBeTruthy();
             expect(screen.getByText(/Collection country/)).toBeTruthy();
             expect(screen.getByText(/Host/)).toBeTruthy();
@@ -118,9 +118,9 @@ describe('FormOrUploadWrapper', () => {
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test('error when only Submission ID is entered', async () => {
+        test('error when only ID is entered', async () => {
             renderForm(true);
-            await enterInputValue('Submission ID', 'foo');
+            await enterInputValue('ID', 'foo');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -132,9 +132,9 @@ describe('FormOrUploadWrapper', () => {
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test('error when only Submission ID and metadata is entered', async () => {
+        test('error when only ID and metadata is entered', async () => {
             renderForm(true);
-            await enterInputValue('Submission ID', 'foo');
+            await enterInputValue('ID', 'foo');
             await enterInputValue('Host', 'human');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
@@ -148,7 +148,7 @@ describe('FormOrUploadWrapper', () => {
             expect(sequenceFileResult.type).toBe('error');
         });
 
-        test('error when Submission ID is omitted', async () => {
+        test('error when ID is omitted', async () => {
             renderForm(true);
             await enterInputValue('Host', 'human');
             await uploadSegmentData('foo', 'ACTG');
@@ -159,7 +159,7 @@ describe('FormOrUploadWrapper', () => {
 
         test('ok when submission ID, metadata and sequence data is entered', async () => {
             renderForm(true);
-            await enterInputValue('Submission ID', 'foo');
+            await enterInputValue('ID', 'foo');
             await enterInputValue('Host', 'human');
             await uploadSegmentData('foo', 'ACTG');
             await uploadSegmentData('bar', 'ACTG');
@@ -169,7 +169,7 @@ describe('FormOrUploadWrapper', () => {
 
         test('does not render sequence section when consensus sequences are disabled', () => {
             renderForm(false);
-            expect(screen.getByText(/Submission ID/)).toBeTruthy();
+            expect(screen.getByText(/ID/)).toBeTruthy();
             expect(screen.getByText(/Collection date/)).toBeTruthy();
             expect(screen.getByText(/Collection country/)).toBeTruthy();
             expect(screen.getByText(/Host/)).toBeTruthy();
@@ -179,7 +179,7 @@ describe('FormOrUploadWrapper', () => {
 
         test('TSV file contains all entered information', async () => {
             renderForm(false);
-            await enterInputValue('Submission ID', 'foo');
+            await enterInputValue('ID', 'foo');
             await enterInputValue('Collection country', 'Kenia');
             await enterInputValue('Collection date', '2021-05-17');
             await enterInputValue('Host', 'google');
@@ -188,20 +188,20 @@ describe('FormOrUploadWrapper', () => {
             const sequenceFile = sequenceFileResult as SequenceData;
             const tsvRows = (await sequenceFile.metadataFile.text()).trim().split('\n');
             expect(tsvRows.length).toBe(2);
-            expect(tsvRows[0]).toBe('submissionId\tcollectionCountry\tcollectionDate\thost');
+            expect(tsvRows[0]).toBe('id\tcollectionCountry\tcollectionDate\thost');
             expect(tsvRows[1]).toBe('foo\tKenia\t2021-05-17\tgoogle');
         });
 
         test('TSV file escapes entered data correctly', async () => {
             renderForm(false);
-            await enterInputValue('Submission ID', 'foo');
+            await enterInputValue('ID', 'foo');
             await enterInputValue('Collection country', 'Foo\tBar');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('ok');
             const sequenceFile = sequenceFileResult as SequenceData;
             const tsvRows = (await sequenceFile.metadataFile.text()).trim().split('\n');
             expect(tsvRows.length).toBe(2);
-            expect(tsvRows[0]).toBe('submissionId\tcollectionCountry');
+            expect(tsvRows[0]).toBe('id\tcollectionCountry');
             expect(tsvRows[1]).toBe('foo\t"Foo\tBar"');
         });
     });

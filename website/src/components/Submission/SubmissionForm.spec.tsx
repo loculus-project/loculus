@@ -72,7 +72,7 @@ function renderSubmissionForm({
                     [
                         'fooSection',
                         [
-                            { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'Submission ID', noEdit: true },
+                            { name: SUBMISSION_ID_INPUT_FIELD, displayName: 'ID', noEdit: true },
                             { name: 'foo' },
                             { name: 'bar' },
                         ],
@@ -109,7 +109,7 @@ describe('SubmitForm', () => {
 
             switch (inputMode) {
                 case 'form': {
-                    await userEvent.type(getByLabelText(/Submission ID/), 'myId');
+                    await userEvent.type(getByLabelText(/^ID:$/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
                     break;
@@ -167,7 +167,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
-        await userEvent.type(getByLabelText(/Submission ID/), 'myId');
+        await userEvent.type(getByLabelText(/^ID:$/), 'myId');
         await userEvent.type(getByLabelText(/Foo/), 'foo');
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
@@ -193,7 +193,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
-        await userEvent.type(getByLabelText(/Submission ID/), 'myId');
+        await userEvent.type(getByLabelText(/^ID:$/), 'myId');
         await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
@@ -326,7 +326,7 @@ describe('SubmitForm', () => {
 
             switch (inputMode) {
                 case 'form': {
-                    await userEvent.type(getByLabelText(/Submission ID/), 'myId');
+                    await userEvent.type(getByLabelText(/^ID:$/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
                     await userEvent.upload(getByLabelText(/main segment file/i), sequenceFile);
                     break;
