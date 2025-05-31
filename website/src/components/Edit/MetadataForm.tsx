@@ -170,7 +170,7 @@ type SubmissionProps = {
 
 export const SubmissionIdRow: FC<SubmissionProps> = ({ submissionId }) => (
     <tr>
-        <td className='w-1/4'>Submission ID:</td>
+        <td className='w-1/4'>ID:</td>
         <td className='pr-3 text-right '></td>
         <td className='w-full'>{submissionId}</td>
     </tr>
