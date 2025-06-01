@@ -517,4 +517,66 @@ class SubmitEndpointTest(
             )
         }
     }
+
+    @Test
+    fun `GIVEN metadata file with old submissionId header THEN submission still works (BACKCOMPAT)`() {
+        val metadataWithSubmissionId = SubmitFiles.metadataFileWith(
+            content = """
+                submissionId	date	region	country	division	host
+                custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+                custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            """.trimIndent()
+        )
+        
+        val sequencesFile = SubmitFiles.sequenceFileWith(
+            content = """
+                >custom0_main
+                ACTG
+                >custom1_main
+                ACTG
+            """.trimIndent()
+        )
+
+        submissionControllerClient.submit(
+            metadataWithSubmissionId,
+            sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[1].submissionId").value("custom1"))
+    }
+
+    @Test
+    fun `GIVEN metadata file with both id and submissionId headers THEN submission fails`() {
+        val metadataWithBothHeaders = SubmitFiles.metadataFileWith(
+            content = """
+                id	submissionId	date	region	country	division	host
+                custom0	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+                custom1	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            """.trimIndent()
+        )
+        
+        val sequencesFile = SubmitFiles.sequenceFileWith(
+            content = """
+                >custom0_main
+                ACTG
+                >custom1_main
+                ACTG
+            """.trimIndent()
+        )
+
+        submissionControllerClient.submit(
+            metadataWithBothHeaders,
+            sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "The metadata file contains both 'id' and 'submissionId'. Only one is allowed."
+                )
+            )
+    }
 }
