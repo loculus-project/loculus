@@ -483,8 +483,6 @@ class SubmissionConvenienceClient(
             groupId = groupId,
             dataUseTerms = dataUseTerms,
         )
-
-        else -> throw Exception("Test issue: No data preparation defined for status $status")
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
