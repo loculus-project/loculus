@@ -184,8 +184,11 @@ organisms:
         {{- range $linkOut := .linkOuts }}
         - name: {{ quote $linkOut.name }}
           url: {{ quote $linkOut.url }}
+          {{- if $linkOut.maxNumberOfRecommendedEntries }}
+          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+          {{- end }}
         {{- end }}
-      {{ end }}
+      {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .richFastaHeaderFields}}
       richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
@@ -325,6 +328,12 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
+{{- if .Values.fileSharing }}
+fileSharing:
+  {{ .Values.fileSharing | toYaml | nindent 2 }}
+{{- end }}
+websiteUrl: {{ include "loculus.websiteUrl" . }}
+backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
@@ -438,7 +447,7 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $publicRuntimeConfig := (($.Values.website).runtimeConfig).public }}
+{{- $publicRuntimeConfig := $.Values.public }}
 {{- $lapisUrlTemplate := "" }}
 {{- if $publicRuntimeConfig.lapisUrlTemplate }}
   {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
@@ -448,13 +457,7 @@ fields:
   {{- $lapisUrlTemplate = "http://localhost:8080/%organism%" }}
 {{- end }}
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
-            {{- if $publicRuntimeConfig.backendUrl }}
-            "backendUrl": "{{ $publicRuntimeConfig.backendUrl }}",
-            {{- else if eq $.Values.environment "server" }}
-            "backendUrl": "https://{{ printf "backend%s%s" $.Values.subdomainSeparator $.Values.host }}",
-            {{- else }}
-            "backendUrl": "http://localhost:8079",
-            {{- end }}
+            "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
 {{- end }}

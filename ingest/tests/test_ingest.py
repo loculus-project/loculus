@@ -53,14 +53,33 @@ def compare_json_files(file1, file2):
 
 def compare_ndjson_files(file1, file2):
     def create_dict_from_ndjson(file):
-        dict = {}
+        records = {}
         for record in orjsonl.stream(file):
-            dict[record["id"]] = record["metadata"]
+            records[record["id"]] = record["metadata"]
+        return records
 
     dict1 = create_dict_from_ndjson(file1)
     dict2 = create_dict_from_ndjson(file2)
 
+    if set(dict1.keys()) != set(dict2.keys()):
+        print(f"Keys do not match: {dict1.keys()} vs {dict2.keys()}")
+        return False
+    for key in dict1:
+        if dict1[key] != dict2[key]:
+            for field in dict1[key]:
+                if field not in dict2[key]:
+                    print(f"Field {field} not found in second file for key {key}")
+                elif dict1[key][field] != dict2[key][field]:
+                    print(
+                        f"Field {field} does not match for key {key}: {dict1[key][field]} vs {dict2[key][field]}"
+                    )
+            for field in dict2[key]:
+                if field not in dict1[key]:
+                    print(f"Field {field} not found in first file for key {key}")
+            return False
+
     return dict1 == dict2
+
 
 def compare_tsv_files(file1, file2):
     df1 = pd.read_csv(file1, sep="\t")

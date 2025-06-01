@@ -2,10 +2,13 @@
 import '@testing-library/jest-dom';
 
 import { HttpStatusCode } from 'axios';
+import { mockAnimationsApi } from 'jsdom-testing-mocks';
 import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+
+mockAnimationsApi();
 
 import {
     type GetSequencesResponse,

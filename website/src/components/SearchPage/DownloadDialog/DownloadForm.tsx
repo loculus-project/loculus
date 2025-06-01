@@ -22,10 +22,17 @@ type DownloadFormProps = {
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
 };
 
-// Helper function to ensure accessionVersion is always the first field
-function ensureAccessionVersionField(fields: string[]): string[] {
+// Sort fields by their order in the search table and ensure accessionVersion is the first field
+function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[] {
     const fieldsWithoutAccessionVersion = fields.filter((field) => field !== ACCESSION_VERSION_FIELD);
-    return [ACCESSION_VERSION_FIELD, ...fieldsWithoutAccessionVersion];
+    const orderMap = new Map<string, number>();
+    for (const m of metadata) {
+        orderMap.set(m.name, m.order ?? Number.MAX_SAFE_INTEGER);
+    }
+    const ordered = fieldsWithoutAccessionVersion
+        .slice()
+        .sort((a, b) => (orderMap.get(a) ?? Number.MAX_SAFE_INTEGER) - (orderMap.get(b) ?? Number.MAX_SAFE_INTEGER));
+    return [ACCESSION_VERSION_FIELD, ...ordered];
 }
 
 export const DownloadForm: FC<DownloadFormProps> = ({
@@ -86,7 +93,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         onChange({
             dataType: downloadDataType,
             includeRestricted: includeRestricted === 1,
-            fields: dataType === 0 ? ensureAccessionVersionField(selectedFields) : undefined, // Always include accessionVersion as first field
+            fields: dataType === 0 ? orderFieldsForDownload(selectedFields, metadata) : undefined,
             compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
             dataFormat: undefined,
         });

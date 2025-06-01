@@ -512,13 +512,14 @@ def generate_config(
 
 def get_codespace_params(codespace_name):
     publicRuntimeConfig = {
+        "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
         "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
         "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
         "keycloakUrl": f"https://{codespace_name}-8083.app.github.dev",
     }
     return [
         "--set-json",
-        f"website.runtimeConfig.public={json.dumps(publicRuntimeConfig)}",
+        f"public={json.dumps(publicRuntimeConfig)}",
     ]
 
 

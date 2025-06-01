@@ -102,7 +102,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     const controls = (
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
-            <div>
+            <div className='flex items-center'>
                 {data !== null && data.sequenceEntryHistory.length > 1 && (
                     <SequenceEntryHistoryMenu
                         sequenceEntryHistory={data.sequenceEntryHistory}

@@ -280,12 +280,25 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         sequencesFile: MockMultipartFile?,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
+        fileMapping: SubmissionIdFilesMap? = null,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/revise", organism = organism))
             .apply {
                 sequencesFile?.let { file(sequencesFile) }
             }
             .file(metadataFile)
+            .apply {
+                fileMapping?.let {
+                    file(
+                        MockMultipartFile(
+                            "fileMapping",
+                            "originalfile.txt",
+                            "application/json",
+                            objectMapper.writeValueAsBytes(fileMapping),
+                        ),
+                    )
+                }
+            }
             .withAuth(jwt),
     )
 

@@ -85,7 +85,6 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    label?: string;
     fieldGroup?: string;
     grouped?: false;
     fieldGroupDisplayName?: string;
@@ -97,7 +96,6 @@ export type GroupedMetadataFilter = {
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
     grouped: true;
-    label?: string;
     displayName?: string;
     isVisible?: boolean;
     notSearchable?: boolean;
@@ -108,6 +106,7 @@ export type GroupedMetadataFilter = {
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
+    maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;

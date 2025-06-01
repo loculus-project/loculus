@@ -1,7 +1,7 @@
 import * as XLSX from '@lokalise/xlsx';
 import * as fflate from 'fflate';
 import * as fzstd from 'fzstd';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { Result, ok, err } from 'neverthrow';
 import { type SVGProps, type ForwardRefExoticComponent } from 'react';
 
@@ -49,7 +49,13 @@ export const METADATA_FILE_KIND: FileKind = {
             }
             return ok(excelFile);
         }
-        return err(new Error());
+        return err(
+            new Error(
+                `Unsupported file extension for metadata upload. Please use one of: ${METADATA_FILE_KIND.supportedExtensions.join(
+                    ', ',
+                )}.`,
+            ),
+        );
     },
 };
 

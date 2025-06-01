@@ -2,13 +2,13 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.4.5'
+    id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
-    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.20'
-    id 'org.jlleitschuh.gradle.ktlint' version '12.1.2'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.21'
+    id 'org.jlleitschuh.gradle.ktlint' version '12.3.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
@@ -35,15 +35,15 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql:42.7.5"
-    implementation "org.apache.commons:commons-csv:1.13.0"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6"
-    implementation "org.flywaydb:flyway-database-postgresql:11.3.2"
-    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.59.0"
-    implementation "org.jetbrains.exposed:exposed-jdbc:0.59.0"
-    implementation "org.jetbrains.exposed:exposed-json:0.59.0"
-    implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.59.0"
+    implementation "org.apache.commons:commons-csv:1.14.0"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8"
+    implementation "org.flywaydb:flyway-database-postgresql:11.8.2"
+    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
+    implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
+    implementation "org.jetbrains.exposed:exposed-json:0.61.0"
+    implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.2"
-    implementation "org.hibernate.validator:hibernate-validator:8.0.2.Final"
+    implementation "org.hibernate.validator:hibernate-validator:9.0.0.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.5"
     implementation("io.minio:minio:8.5.17")
 
@@ -51,11 +51,11 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress:1.27.1'
-    implementation 'com.github.luben:zstd-jni:1.5.7-2'
+    implementation 'com.github.luben:zstd-jni:1.5.7-3'
     implementation 'org.tukaani:xz:1.10'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
-    implementation("org.jsoup:jsoup:1.18.3")
+    implementation("org.jsoup:jsoup:1.20.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
@@ -64,10 +64,10 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.20.4"
-    testImplementation "org.testcontainers:minio:1.20.6"
-    testImplementation "org.junit.platform:junit-platform-launcher:1.11.4"
-    ktlint("com.pinterest.ktlint:ktlint-cli:1.5.0") {
+    testImplementation "org.testcontainers:postgresql:1.21.0"
+    testImplementation "org.testcontainers:minio:1.21.0"
+    testImplementation "org.junit.platform:junit-platform-launcher:1.12.2"
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.6.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
         }
@@ -92,7 +92,9 @@ task checkDocker {
 
 tasks.named('test') {
     // Docker is required to start the testing database with https://java.testcontainers.org/
-    dependsOn checkDocker
+    if (!System.getenv('USE_NONDOCKER_INFRA')?.toBoolean()) {
+        dependsOn checkDocker
+    }
     useJUnitPlatform()
     testLogging {
         events TestLogEvent.FAILED
@@ -113,4 +115,20 @@ tasks.named("jar") {
 tasks.named("bootJar") {
     enabled = true
     archiveVersion.set("")
+}
+
+task downloadDependencies {
+    doLast {
+        configurations.all { configuration ->
+            if (configuration.canBeResolved) {
+                println "Downloading dependencies for: ${configuration.name}"
+                try {
+                    configuration.resolve()
+                } catch (Exception e) {
+                    println "Failed to download dependencies for: ${configuration.name}"
+                    println e.message
+                }
+            }
+        }
+    }
 }

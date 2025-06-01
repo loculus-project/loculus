@@ -1,0 +1,72 @@
+{{- define "loculus.backendUrl" -}}
+{{- $publicRuntimeConfig := $.Values.public }}
+  {{- if $publicRuntimeConfig.backendUrl }}
+    {{- $publicRuntimeConfig.backendUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- (printf "https://backend%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+  {{- else -}}
+    {{- "http://localhost:8079" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "loculus.websiteUrl" -}}
+{{- $publicRuntimeConfig := $.Values.public }}
+  {{- if $publicRuntimeConfig.websiteUrl }}
+    {{- $publicRuntimeConfig.websiteUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- (printf "https://%s" $.Values.host) -}}
+  {{- else -}}
+    {{- "http://localhost:3000" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "loculus.s3Url" -}}
+  {{- if $.Values.runDevelopmentS3 }}
+    {{- if eq $.Values.environment "server" -}}
+        {{- (printf "https://s3%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+    {{- else -}}
+        {{- "http://localhost:8084" -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $.Values.s3.bucket.endpoint }}
+  {{- end -}}
+{{- end -}}
+
+{{- define "loculus.s3UrlInternal" -}}
+  {{- if $.Values.runDevelopmentS3 }}
+    {{- "http://loculus-minio-service:8084" -}}
+  {{- else -}}
+    {{- $.Values.s3.bucket.endpoint }}
+  {{- end -}}
+{{- end -}}
+
+{{- define "loculus.keycloakUrl" -}}
+{{- $publicRuntimeConfig := $.Values.public }}
+  {{- if $publicRuntimeConfig.keycloakUrl }}
+    {{- $publicRuntimeConfig.keycloakUrl -}}
+  {{- else if eq $.Values.environment "server" -}}
+    {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
+  {{- else -}}
+    {{- "http://localhost:8083" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* generates internal LAPIS urls from given config object */}}
+{{ define "loculus.generateInternalLapisUrls" }}
+  {{ range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://localhost:8080/{{ $key }}{{ end }}"
+  {{ end }}
+{{ end }}
+
+{{/* generates external LAPIS urls from { config, host } */}}
+{{ define "loculus.generateExternalLapisUrls"}}
+{{ $lapisUrlTemplate := .lapisUrlTemplate }}
+{{ range $key, $_ := (.config.organisms | default .config.defaultOrganisms) }}
+"{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
+{{ end }}
+{{ end }}
+
+{{/* generates the LAPIS service name for a given organism key */}}
+{{- define "loculus.lapisServiceName"}}
+{{- printf "loculus-lapis-service-%s" . }}
+{{- end }}

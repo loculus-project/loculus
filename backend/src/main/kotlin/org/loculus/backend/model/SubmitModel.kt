@@ -20,6 +20,7 @@ import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionVa
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
+import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
@@ -83,6 +84,7 @@ class SubmitModel(
     private val filesDatabaseService: FilesDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
+    private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
 ) {
@@ -109,6 +111,11 @@ class SubmitModel(
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
         }
+
+        submissionIdFilesMappingPreconditionValidator
+            .validateFilenamesAreUnique(submissionParams.files)
+            .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+
         insertDataIntoAux(
             uploadId,
             submissionParams,

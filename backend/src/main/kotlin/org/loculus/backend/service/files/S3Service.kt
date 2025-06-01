@@ -13,8 +13,10 @@ private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
 @Service
 class S3Service(private val s3Config: S3Config) {
-    private val client: MinioClient = createClient(getS3BucketConfig())
-    private val internalClient: MinioClient = createClient(getS3BucketConfig(), true)
+
+    private val minioClient: MinioClient by lazy { createClient(getS3BucketConfig()) }
+
+    private val internalMinioClient: MinioClient by lazy { createClient(getS3BucketConfig(), true) }
 
     fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
@@ -43,7 +45,7 @@ class S3Service(private val s3Config: S3Config) {
                     ),
                 )
         }
-        return getClient().getPresignedObjectUrl(args.build())
+        return minioClient.getPresignedObjectUrl(args.build())
     }
 
     /**
@@ -87,12 +89,12 @@ class S3Service(private val s3Config: S3Config) {
     /**
      * Use the client to generate URLs that are accessible from outside the cluster.
      */
-    private fun getClient(): MinioClient = client
+    private fun getClient(): MinioClient = minioClient
 
     /**
      * Use the internal client to make direct requests to S3.
      */
-    private fun getInternalClient(): MinioClient = internalClient
+    private fun getInternalClient(): MinioClient = internalMinioClient
 
     private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
         MinioClient.builder()

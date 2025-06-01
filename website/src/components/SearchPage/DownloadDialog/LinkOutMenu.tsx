@@ -15,11 +15,13 @@ type DataType = (typeof DATA_TYPES)[number];
 type LinkOut = {
     name: string;
     url: string;
+    maxNumberOfRecommendedEntries?: number;
 };
 
 type LinkOutMenuProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
+    sequenceCount?: number;
     linkOuts: LinkOut[];
     dataUseTermsEnabled: boolean;
 };
@@ -27,6 +29,7 @@ type LinkOutMenuProps = {
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
+    sequenceCount,
     linkOuts,
     dataUseTermsEnabled,
 }) => {
@@ -36,6 +39,18 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
     const handleLinkClick = (linkOut: LinkOut) => {
         currentLinkOut.current = linkOut;
+        if (
+            linkOut.maxNumberOfRecommendedEntries !== undefined &&
+            sequenceCount !== undefined &&
+            sequenceCount > linkOut.maxNumberOfRecommendedEntries
+        ) {
+            const proceed = confirm(
+                `Warning: This tool is recommended for at most ${linkOut.maxNumberOfRecommendedEntries} sequences. You are attempting to use ${sequenceCount}. Continue?`,
+            );
+            if (!proceed) {
+                return;
+            }
+        }
         if (dataUseTermsEnabled) {
             setDataUseTermsModalVisible(true);
         } else {

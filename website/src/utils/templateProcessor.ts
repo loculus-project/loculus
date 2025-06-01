@@ -64,7 +64,7 @@ export function processTemplate(template: string, placeholdersAndValues: Record<
     // Replace special placeholders with their values
     let result = template;
     Object.entries(placeholdersAndValues).forEach(([key, value]) => {
-        result = result.replace(`[${key}]`, value || '');
+        result = result.replaceAll(`[${key}]`, value || '');
     });
 
     // Process all {{ }} expressions recursively
