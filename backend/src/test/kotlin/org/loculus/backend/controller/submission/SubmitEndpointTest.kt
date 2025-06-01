@@ -530,9 +530,9 @@ class SubmitEndpointTest(
 
         val sequencesFile = SubmitFiles.sequenceFileWith(
             content = """
-                >custom0_main
+                >custom0
                 ACTG
-                >custom1_main
+                >custom1
                 ACTG
             """.trimIndent(),
         )
