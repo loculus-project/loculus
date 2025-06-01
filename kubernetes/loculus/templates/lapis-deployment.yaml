@@ -43,13 +43,6 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
-          startupProbe:
-            httpGet:
-              path: /sample/info
-              port: 8080
-            periodSeconds: 10
-            failureThreshold: 5
-            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /sample/info
