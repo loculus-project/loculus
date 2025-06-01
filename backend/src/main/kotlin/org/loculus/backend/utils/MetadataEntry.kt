@@ -12,9 +12,9 @@ import java.io.InputStreamReader
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val csvParser = CSVParser(
+    val csvParser = CSVParser.parse(
         InputStreamReader(metadataInputStream),
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get(),
     )
 
     if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
@@ -55,9 +55,9 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
-    val csvParser = CSVParser(
+    val csvParser = CSVParser.parse(
         InputStreamReader(metadataInputStream),
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get(),
     )
 
     if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
