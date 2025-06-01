@@ -525,16 +525,16 @@ class SubmitEndpointTest(
                 submissionId	date	region	country	division	host
                 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
                 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            """.trimIndent()
+            """.trimIndent(),
         )
-        
+
         val sequencesFile = SubmitFiles.sequenceFileWith(
             content = """
                 >custom0_main
                 ACTG
                 >custom1_main
                 ACTG
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         submissionControllerClient.submit(
@@ -554,16 +554,16 @@ class SubmitEndpointTest(
                 id	submissionId	date	region	country	division	host
                 custom0	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
                 custom1	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            """.trimIndent()
+            """.trimIndent(),
         )
-        
+
         val sequencesFile = SubmitFiles.sequenceFileWith(
             content = """
                 >custom0_main
                 ACTG
                 >custom1_main
                 ACTG
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         submissionControllerClient.submit(
@@ -575,8 +575,8 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "The metadata file contains both 'id' and 'submissionId'. Only one is allowed."
-                )
+                    "The metadata file contains both 'id' and 'submissionId'. Only one is allowed.",
+                ),
             )
     }
 }
