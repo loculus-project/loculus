@@ -1808,16 +1808,18 @@ resources:
   website:
     requests:
       memory: "200Mi"
+      cpu: "100m"
     limits:
       memory: "1Gi"
   docs:
     requests:
-      memory: "200Mi"
+      memory: "100Mi"
+      cpu: "10m"
     limits:
       memory: "1Gi"
   ena-submission:
     requests:
-      memory: "80Mi"
+      memory: "200Mi"
       cpu: "10m"
     limits:
       memory: "10Gi"
@@ -1829,48 +1831,51 @@ resources:
       memory: "10Gi"
   ingest:
     requests:
-      memory: "1Gi"
+      memory: "200Mi"
       cpu: "200m"
     limits:
-      cpu: "200m"
+      cpu: "1"
       memory: "10Gi"
   keycloak:
     requests:
-      memory: "500Mi"
-      cpu: "20m"
+      memory: "700Mi"
+      cpu: "40m"
     limits:
       memory: "3Gi"
   silo:
     requests:
-      memory: "100Mi"
-      cpu: "10m"
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "10Gi"
   lapis:
     requests:
-      memory: "220Mi"
-      cpu: "30m"
+      memory: "500Mi"
+      cpu: "100m"
     limits:
       memory: "5Gi"
   silo-preprocessing:
     requests:
       memory: "20Mi"
+      cpu: "20m"
     limits:
       memory: "10Gi"
   backend:
     requests:
-      memory: "640Mi"
-      cpu: "250m"
+      memory: "700Mi"
+      cpu: "200m"
     limits:
-      memory: "3Gi" # Backend requires at least 635741K of memory
+      memory: "3Gi"
   preprocessing:
     requests:
-      memory: "20Mi"
+      memory: "300Mi"
+      cpu: "50m"
     limits:
       memory: "3Gi"
   minio:
     requests:
-      memory: "200Mi"
+      memory: "400Mi"
+      cpu: "10m"
     limits:
       memory: "1Gi"
 defaultResources:
