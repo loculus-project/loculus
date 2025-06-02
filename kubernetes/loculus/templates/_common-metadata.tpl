@@ -265,9 +265,6 @@ organisms:
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
   {{- end }}
-  {{- if .truncateColumnDisplayTo }}
-  truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
-  {{- end }}
   {{- if .columnWidth }}
   columnWidth: {{ .columnWidth }}
   {{- end }}

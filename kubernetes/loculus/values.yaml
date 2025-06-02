@@ -552,7 +552,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         enableSubstringSearch: true
         order: 40
         includeInDownloadsByDefault: true
-        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
           function: check_authors
@@ -563,7 +562,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Author affiliations
         desired: true
         enableSubstringSearch: true
-        truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
         includeInDownloadsByDefault: true
