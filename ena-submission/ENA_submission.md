@@ -440,7 +440,7 @@ The nextclade.json that is produced also contains annotations - we are [working]
       }
 ```
 
-I previously reformatted the .tbl file to produce the required .embl annotations (using the Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. When used on the GFF file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output embl file) due to the `region` and `seq_index` being unknown - these are not required so they could just be removed. However as we need to add additional `country` and `collection_date` qualifiers to our embl files and I do not believe the package has this functionality.
+Another way to add annotations to the .embl flat file is to reformat the .tbl file produced by nextclade (using the python Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an .embl flat file given a sequence's gff3 file. However, when used on the GFF3 file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output .embl flat file) making the files un-submittable without further processing. This is due to the gff3 files containing non-standard annotations (e.g. `region` and `seq_index`). A work around would be removing them from the GFF3 file before using the package. The package also does not give an option to add additional `country` and `collection_date` qualifiers to the .embl flat files which we typically add when submitting to ENA. So I decided against using it.
 
 ## Submitting raw reads to ENA
 
