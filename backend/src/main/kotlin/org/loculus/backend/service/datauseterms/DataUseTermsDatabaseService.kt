@@ -1,5 +1,6 @@
 package org.loculus.backend.service.datauseterms
 
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
@@ -23,6 +24,20 @@ class DataUseTermsDatabaseService(
     private val dateProvider: DateProvider,
 ) {
 
+    private fun getCurrentDataUseTerms(accession: Accession): DataUseTerms? {
+        return DataUseTermsTable
+            .selectAll()
+            .where { DataUseTermsTable.accessionColumn eq accession }
+            .orderBy(DataUseTermsTable.changeDateColumn, SortOrder.DESC)
+            .limit(1)
+            .firstOrNull()
+            ?.let { row ->
+                val type = DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn])
+                val restrictedUntilDate = row[DataUseTermsTable.restrictedUntilColumn] // This is kotlinx.datetime.LocalDate?
+                DataUseTerms.fromParameters(type, restrictedUntilDate)
+            }
+    }
+
     fun setNewDataUseTerms(
         authenticatedUser: AuthenticatedUser,
         accessions: List<Accession>,
@@ -38,7 +53,20 @@ class DataUseTermsDatabaseService(
         dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(accessions, newDataUseTerms)
         dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)
 
-        DataUseTermsTable.batchInsert(accessions) {
+        val accessionsToUpdate = accessions.filter { accession ->
+            val currentDataUseTerms = getCurrentDataUseTerms(accession)
+            currentDataUseTerms == null || currentDataUseTerms != newDataUseTerms
+        }
+
+        if (accessionsToUpdate.isEmpty()) {
+            auditLogger.log(
+                username = authenticatedUser.username,
+                description = "Attempted to set data use terms to $newDataUseTerms for accessions ${accessions.joinToString()}, but terms were already up-to-date. No changes made."
+            )
+            return
+        }
+
+        DataUseTermsTable.batchInsert(accessionsToUpdate) {
             this[DataUseTermsTable.accessionColumn] = it
             this[DataUseTermsTable.changeDateColumn] = now
             this[DataUseTermsTable.dataUseTermsTypeColumn] = newDataUseTerms.type.toString()
@@ -51,7 +79,12 @@ class DataUseTermsDatabaseService(
 
         auditLogger.log(
             username = authenticatedUser.username,
-            description = "Set data use terms to $newDataUseTerms for accessions ${accessions.joinToString()}",
+            description = "Set data use terms to $newDataUseTerms for accessions ${accessionsToUpdate.joinToString()}. " +
+                  if (accessionsToUpdate.size < accessions.size) {
+                      "Other ${accessions.size - accessionsToUpdate.size} accessions already had these terms and were not updated."
+                  } else {
+                      ""
+                  }
         )
     }
 
