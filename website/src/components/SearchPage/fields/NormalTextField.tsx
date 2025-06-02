@@ -20,7 +20,7 @@ export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((p
 
     return (
         <TextField
-            label={field.displayName}
+            label={field.displayName ?? field.name}
             type={field.type}
             fieldValue={fieldValue}
             onFocus={onFocus}
