@@ -27,7 +27,7 @@ export const AuthorList: FC<AuthorsListProps> = ({ authors }) => {
         authorsElements = authors.map((author, index) => (
             <span key={index}>
                 {author}
-                {index !== authors.length - 1 ? ', ' : ''}
+                {index !== authors.length - 1 ? '; ' : ''}
             </span>
         ));
     } else {
