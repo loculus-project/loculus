@@ -320,7 +320,7 @@ Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3
 nextclade run {sequence.fasta}  --output-all annotations --server {server} --output-annotation-tbl annotations.embl --dataset-name {dataset}
 ```
 
-The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on storing this JSON in Loculus and then converting the annotations to the required .embl annotation format upon deposition:
+The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on using this annotation object to add annotations to the .embl flat files we submit:
 
 ```
 "annotation": {
