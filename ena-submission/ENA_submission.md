@@ -322,7 +322,7 @@ nextclade run {sequence.fasta}  --output-all annotations --server {server} --out
 
 The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on using this annotation object to add annotations to the .embl flat files we submit:
 
-```
+```json
 "annotation": {
         "genes": [
           {
