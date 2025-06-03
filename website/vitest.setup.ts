@@ -8,6 +8,7 @@ import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
+// eslint-disable-next-line  @typescript-eslint/no-unsafe-call
 mockAnimationsApi();
 
 import {

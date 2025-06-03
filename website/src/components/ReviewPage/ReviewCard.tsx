@@ -1,5 +1,6 @@
 import { type FC, useState, useRef, useEffect } from 'react';
 
+import { FilesDialog } from './FilesDialog.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -31,7 +32,6 @@ import RiDna from '~icons/mdi/dna';
 import Files from '~icons/mdi/files';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
-import { FilesDialog } from './FilesDialog.tsx';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -114,11 +114,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
             />
-            <FilesDialog
-                isOpen={isFilesDialogOpen}
-                onClose={() => setFilesDialogOpen(false)}
-                dataToView={data}
-            />
+            <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
         </div>
     );
 };
@@ -138,12 +134,10 @@ const ButtonBar: FC<ButtonBarProps> = ({
     deleteAccessionVersion,
     editAccessionVersion,
     viewSequences,
-    viewFiles
+    viewFiles,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
-        `${
-            disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
-        } inline-block text-xl`;
+        `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
     const approvable =
         sequenceEntryStatus.status === processedStatus &&
         !(sequenceEntryStatus.processingResult === errorsProcessingResult);
