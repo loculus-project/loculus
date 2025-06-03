@@ -12,7 +12,10 @@ export class GroupPage {
     }
 
     public async goToGroupCreationPage() {
-        const linkToNewGroup = this.page.getByRole('link', { name: 'Create a new submitting group', exact: false });
+        const linkToNewGroup = this.page.getByRole('link', {
+            name: 'Create a new submitting group',
+            exact: false,
+        });
         await linkToNewGroup.click();
     }
 
@@ -20,7 +23,6 @@ export class GroupPage {
         await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
         await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
-
 
     public async editGroupName(groupName: string) {
         const newGroupField = this.page.getByLabel('Group name');
@@ -67,7 +69,6 @@ export class GroupPage {
         await newPostalCodeField.fill(postalCode);
     }
 
-
     public async createGroup(uniqueGroupName: string) {
         await this.editGroupName(uniqueGroupName);
         await this.editInstitution(DEFAULT_GROUP.institution);
@@ -90,7 +91,6 @@ export class GroupPage {
         const newGroupEntry = this.page.locator('ul').getByText(groupName);
         await expect(newGroupEntry).toBeVisible();
     }
-
 
     public async leaveGroup() {
         const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
