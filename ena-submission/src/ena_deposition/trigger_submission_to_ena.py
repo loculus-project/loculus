@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
-    for accession, data in sequences_to_upload.items():
-        version = data["metadata"]["version"]
+    for full_accession, data in sequences_to_upload.items():
+        accession, version = full_accession.split(".")
         if in_submission_table(db_config, {"accession": accession, "version": version}):
             continue
         entry = {
@@ -36,7 +36,7 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         }
         submission_table_entry = SubmissionTableEntry(**entry)
         add_to_submission_table(db_config, submission_table_entry)
-        logger.info(f"Uploaded {accession}.{version} to submission_table")
+        logger.info(f"Uploaded {full_accession} to submission_table")
 
 
 def trigger_submission_to_ena(

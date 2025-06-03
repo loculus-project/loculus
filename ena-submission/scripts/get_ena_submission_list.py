@@ -26,12 +26,13 @@ logging.basicConfig(
 )
 
 Accession = str
+AccessionVersion = str
 
 
 @dataclass
 class SubmissionResults:
-    entries_to_submit: dict[Accession, dict[str, Any]]
-    entries_with_ext_metadata_to_submit: dict[Accession, dict[str, Any]]
+    entries_to_submit: dict[AccessionVersion, dict[str, Any]]
+    entries_with_ext_metadata_to_submit: dict[AccessionVersion, dict[str, Any]]
 
 
 def filter_for_submission(
@@ -51,10 +52,8 @@ def filter_for_submission(
         - as an extra check we discard all sequences with ena-specific-metadata fields
         (if users uploaded correctly this should not be needed)
     """
-    submission_results = SubmissionResults(
-        entries_to_submit={},
-        entries_with_ext_metadata_to_submit={},
-    )
+    data_dict: dict[Accession, dict[str, Any]] = {}
+    data_dict_with_external_metadata: dict[Accession, dict[str, Any]] = {}
     for entry in entries_iterator:
         accession_version = entry["metadata"]["accessionVersion"]
         accession, version = entry["metadata"]["accessionVersion"].split(".")
@@ -69,16 +68,12 @@ def filter_for_submission(
         if other_versions_list and int(other_versions_list[-1]) >= int(version):
             # If the latest version in the db is greater or equal than the current version, ignore
             continue
-        if (
-            accession in submission_results.entries_to_submit
-            and submission_results.entries_to_submit[accession]["version"] >= version
-        ):
+        if accession in data_dict and data_dict[accession]["version"] >= version:
             # If the accession is already in the dict and the version is greater or equal, ignore
             continue
         if (
-            accession in submission_results.entries_with_ext_metadata_to_submit
-            and submission_results.entries_with_ext_metadata_to_submit[accession]["version"]
-            >= version
+            accession in data_dict_with_external_metadata
+            and data_dict_with_external_metadata[accession]["version"] >= version
         ):
             continue
         entry["organism"] = organism
@@ -87,16 +82,22 @@ def filter_for_submission(
                 f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
                 f"submitted by us or {config.ingest_pipeline_submission_group}."
             )
-            submission_results.entries_with_ext_metadata_to_submit[accession] = entry
+            data_dict_with_external_metadata[accession] = entry
             continue
-        submission_results.entries_to_submit[accession] = entry
-    return submission_results
+        data_dict[accession] = entry
+    return SubmissionResults(
+        entries_to_submit={f"{key}.{data['version']}": data for key, data in data_dict.items()},
+        entries_with_ext_metadata_to_submit={
+            f"{key}.{data['version']}": data
+            for key, data in data_dict_with_external_metadata.items()
+        },
+    )
 
 
 def send_slack_notification_with_file(
     slack_config: SlackConfig,
     message: str,
-    entries_to_submit: dict[Accession, dict[str, Any]],
+    entries_to_submit: dict[AccessionVersion, dict[str, Any]],
     output_file,
 ) -> None:
     len_entries = len(entries_to_submit)
@@ -146,7 +147,7 @@ def get_ena_submission_list(config_file):
         slack_channel_id_default=config.slack_channel_id,
     )
 
-    all_entries_to_submit = {}
+    all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
         ena_specific_metadata = [
             value["name"] for value in config.organisms[organism]["externalMetadata"]
