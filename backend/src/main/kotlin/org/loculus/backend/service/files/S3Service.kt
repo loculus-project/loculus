@@ -106,6 +106,9 @@ class S3Service(private val s3Config: S3Config) {
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 
+    /**
+     * Returns the file size in bytes, or `null` if the file doesn't exist.
+     */
     fun getFileSize(fileId: FileId): Long? {
         val config = getS3BucketConfig()
         return try {
