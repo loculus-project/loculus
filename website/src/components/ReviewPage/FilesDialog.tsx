@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 
 type FilesDialogProps = {
@@ -18,18 +19,19 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
             <div className='bg-white rounded-lg p-6 max-w-xl mx-3 w-full max-h-[90vh] flex flex-col'>
                 <div className='flex justify-between items-center mb-4'>
                     <h2 className='text-xl font-semibold'>Files</h2>
-                    <button className='text-gray-500 hover:text-gray-700' onClick={onClose}>✕</button>
+                    <button className='text-gray-500 hover:text-gray-700' onClick={onClose}>
+                        ✕
+                    </button>
                 </div>
 
                 <div className='overflow-auto space-y-6'>
-
                     <div>
                         <h3 className='text-lg font-semibold mb-2'>Original Files</h3>
                         {Object.entries(originalFilesByCategory).map(([key, files]) => (
                             <div key={key} className='mb-4'>
                                 <h4 className='font-medium'>{key}</h4>
                                 <ul className='list-disc pl-5 space-y-1'>
-                                    {files.map(file => (
+                                    {files.map((file) => (
                                         <li key={file.fileId}>
                                             <a
                                                 href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
@@ -52,7 +54,7 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                             <div key={key} className='mb-4'>
                                 <h4 className='font-medium'>{key}</h4>
                                 <ul className='list-disc pl-5 space-y-1'>
-                                    {files.map(file => (
+                                    {files.map((file) => (
                                         <li key={file.fileId}>
                                             <a
                                                 href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
@@ -68,7 +70,6 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                             </div>
                         ))}
                     </div>
-
                 </div>
             </div>
         </div>

@@ -213,10 +213,14 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         originalData: z.object({
             metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
-            files: z.record(z.array(z.object({
-                fileId: z.string(),
-                name: z.string()
-            }))),
+            files: z.record(
+                z.array(
+                    z.object({
+                        fileId: z.string(),
+                        name: z.string(),
+                    }),
+                ),
+            ),
         }),
         processedData: z.object({
             metadata: metadataRecord,
@@ -225,10 +229,14 @@ export const sequenceEntryToEdit = accessionVersion.merge(
             nucleotideInsertions: z.record(z.array(z.string())),
             alignedAminoAcidSequences: z.record(z.string().nullable()),
             aminoAcidInsertions: z.record(z.array(z.string())),
-            files: z.record(z.array(z.object({
-                fileId: z.string(),
-                name: z.string()
-            }))),
+            files: z.record(
+                z.array(
+                    z.object({
+                        fileId: z.string(),
+                        name: z.string(),
+                    }),
+                ),
+            ),
         }),
     }),
 );
