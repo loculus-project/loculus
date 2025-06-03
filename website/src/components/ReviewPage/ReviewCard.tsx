@@ -117,6 +117,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
             <FilesDialog
                 isOpen={isFilesDialogOpen}
                 onClose={() => setFilesDialogOpen(false)}
+                dataToView={data}
             />
         </div>
     );
