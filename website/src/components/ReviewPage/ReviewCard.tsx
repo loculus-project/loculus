@@ -28,8 +28,10 @@ import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import RiDna from '~icons/mdi/dna';
+import Files from '~icons/mdi/files';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
+import { FilesDialog } from './FilesDialog.tsx';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -53,6 +55,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     accessToken,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
+    const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
 
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
@@ -91,6 +94,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
                     viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
+                    viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
                 />
             </div>
 
@@ -110,6 +114,10 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
             />
+            <FilesDialog
+                isOpen={isFilesDialogOpen}
+                onClose={() => setFilesDialogOpen(false)}
+            />
         </div>
     );
 };
@@ -120,6 +128,7 @@ type ButtonBarProps = {
     deleteAccessionVersion: () => void;
     editAccessionVersion: () => void;
     viewSequences?: () => void;
+    viewFiles?: () => void;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -128,11 +137,12 @@ const ButtonBar: FC<ButtonBarProps> = ({
     deleteAccessionVersion,
     editAccessionVersion,
     viewSequences,
+    viewFiles
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
-        } pl-3 inline-block mr-2 mb-2 text-xl`;
+        } inline-block text-xl`;
     const approvable =
         sequenceEntryStatus.status === processedStatus &&
         !(sequenceEntryStatus.processingResult === errorsProcessingResult);
@@ -140,7 +150,25 @@ const ButtonBar: FC<ButtonBarProps> = ({
 
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
-            <div className='flex space-x-1'>
+            <div className='flex space-x-4'>
+                {viewFiles && (
+                    <>
+                        <button
+                            className={buttonBarClass(notProcessed)}
+                            onClick={viewFiles}
+                            data-tooltip-id={'view-files-tooltip' + sequenceEntryStatus.accession}
+                            data-testid={`view-files-${sequenceEntryStatus.accession}`}
+                            key={'view-files-button-' + sequenceEntryStatus.accession}
+                            disabled={notProcessed}
+                        >
+                            <Files />
+                        </button>
+                        <CustomTooltip
+                            id={'view-files-tooltip' + sequenceEntryStatus.accession}
+                            content={notProcessed ? 'Processing...' : 'View files for sequence'}
+                        />
+                    </>
+                )}
                 {viewSequences && (
                     <>
                         <button
