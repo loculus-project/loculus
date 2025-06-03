@@ -131,12 +131,9 @@ class SubmitModel(
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
         }
-        submissionParams.files?.let {
-            val fileSubmissionIds = it.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-        }
-
         submissionParams.files?.let { submittedFiles ->
+            val fileSubmissionIds = submittedFiles.keys
+            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
             // the check below reads the DB, so needs to be after 'insertDataIntoAux'
             validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
@@ -411,11 +408,6 @@ class SubmitModel(
             val submissionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
             submittedFiles.forEach {
                 val submissionGroup = submissionIdGroups[it.key]
-                if (submissionGroup == null) {
-                    throw BadRequestException(
-                        "",
-                    )
-                }
                 val associatedFileIds = it.value.values.flatten().map { it.fileId }
                 associatedFileIds.forEach { fileId ->
                     val fileGroup = fileGroups[fileId]
