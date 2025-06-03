@@ -1,7 +1,6 @@
 package org.loculus.backend.utils
 
 import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
@@ -12,10 +11,8 @@ import java.io.InputStreamReader
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val csvParser = CSVParser(
-        InputStreamReader(metadataInputStream),
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-    )
+    val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
+        .parse(InputStreamReader(metadataInputStream))
 
     if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
         throw UnprocessableEntityException(
@@ -55,10 +52,8 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
-    val csvParser = CSVParser(
-        InputStreamReader(metadataInputStream),
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-    )
+    val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
+        .parse(InputStreamReader(metadataInputStream))
 
     if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
         throw UnprocessableEntityException(
