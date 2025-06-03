@@ -46,44 +46,14 @@ spec:
               port: 8079
           ports:
             - containerPort: 8079
-          args:
-            - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
-            {{- if $.Values.seqSets.crossRef }}
-            - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
-            - "--crossref.endpoint=$(CROSSREF_ENDPOINT)"
-            - "--crossref.username=$(CROSSREF_USERNAME)"
-            - "--crossref.password=$(CROSSREF_PASSWORD)"
-            - "--crossref.database-name=$(CROSSREF_DATABASE_NAME)"
-            - "--crossref.email=$(CROSSREF_EMAIL)"
-            - "--crossref.organization=$(CROSSREF_ORGANIZATION)"
-            - "--crossref.host-url=$(CROSSREF_HOST_URL)"
-            {{- end }}
-            - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
-            - "--keycloak.realm=loculus"
-            - "--keycloak.client=backend-client"
-            - "--keycloak.url=http://loculus-keycloak-service:8083"
-            - "--keycloak.user=backend"
-            - "--spring.datasource.password=$(DB_PASSWORD)"
-            - "--spring.datasource.url=$(DB_URL)"
-            - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
-            - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
-            - "--loculus.s3.enabled=$(S3_ENABLED)"
-            {{- if $.Values.s3.enabled }}
-            - "--loculus.s3.bucket.endpoint=$(S3_BUCKET_ENDPOINT)"
-            - "--loculus.s3.bucket.internal-endpoint=$(S3_BUCKET_INTERNAL_ENDPOINT)"
-            - "--loculus.s3.bucket.region=$(S3_BUCKET_REGION)"
-            - "--loculus.s3.bucket.bucket=$(S3_BUCKET_BUCKET)"
-            - "--loculus.s3.bucket.access-key=$(S3_BUCKET_ACCESS_KEY)"
-            - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
-            {{- end }}
-            {{- if .Values.backendExtraArgs }}
-              {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
-            {{- end }}
           env:
-            - name: JVM_OPTS
-              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
-          {{- if $.Values.seqSets.crossRef }}
+            - name: LOCULUS_ENABLE_SEQSETS
+              value: {{ $.Values.seqSets.enabled | quote }}
+            {{- if $.Values.seqSets.crossRef }}
+            - name: CROSSREF_DOI_PREFIX
+              value: {{ $.Values.seqSets.crossRef.DOIPrefix | quote }}
+            - name: CROSSREF_ENDPOINT
+              value: {{ $.Values.seqSets.crossRef.endpoint | quote }}
             - name: CROSSREF_USERNAME
               valueFrom:
                secretKeyRef:
@@ -94,61 +64,71 @@ spec:
                secretKeyRef:
                  name: crossref
                  key: password
-            - name: CROSSREF_DOI_PREFIX
-              value: {{$.Values.seqSets.crossRef.DOIPrefix | quote }}
-            - name: CROSSREF_ENDPOINT
-              value: {{$.Values.seqSets.crossRef.endpoint | quote  }}
             - name: CROSSREF_DATABASE_NAME
-              value: {{$.Values.seqSets.crossRef.databaseName | quote }}
+              value: {{ $.Values.seqSets.crossRef.databaseName | quote }}
             - name: CROSSREF_EMAIL
-              value: {{$.Values.seqSets.crossRef.email | quote }}
+              value: {{ $.Values.seqSets.crossRef.email | quote }}
             - name: CROSSREF_ORGANIZATION
-              value: {{$.Values.seqSets.crossRef.organization | quote }}
+              value: {{ $.Values.seqSets.crossRef.organization | quote }}
             - name: CROSSREF_HOST_URL
-              value: {{$.Values.seqSets.crossRef.hostUrl | quote }}
+              value: {{ $.Values.seqSets.crossRef.hostUrl | quote }}
            {{- end }}
-            - name: BACKEND_KEYCLOAK_PASSWORD
+            - name: KEYCLOAK_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
                   key: backendUserPassword
-            - name: DB_URL
-              valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: url
-            - name: DB_USERNAME
-              valueFrom:
-               secretKeyRef:
-                 name: database
-                 key: username
-            - name: DB_PASSWORD
+            - name: KEYCLOAK_REALM
+              value: "loculus"
+            - name: KEYCLOAK_CLIENT
+              value: "backend-client"
+            - name: KEYCLOAK_URL
+              value: "http://loculus-keycloak-service:8083"
+            - name: KEYCLOAK_USER
+              value: "backend"
+            - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                secretKeyRef:
                  name: database
                  key: password
-            - name: S3_ENABLED
-              value: {{$.Values.s3.enabled | quote }}
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: database
+                 key: username
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              value: "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - name: LOCULUS_CLEANUP_TASK_RESET_STALE_IN_PROCESSING_AFTER_SECONDS
+              value: {{- .Values.preprocessingTimeout | default 120 | quote }}
+            - name: LOCULUS_S3_ENABLED
+              value: {{ $.Values.s3.enabled | quote }}
             {{- if $.Values.s3.enabled }}
-            - name: S3_BUCKET_ENDPOINT
+            - name: LOCULUS_S3_BUCKET_ENDPOINT
               value: {{ include "loculus.s3Url" . | quote }}
-            - name: S3_BUCKET_INTERNAL_ENDPOINT
+            - name: LOCULUS_S3_BUCKET_INTERNAL_ENDPOINT
               value: {{ include "loculus.s3UrlInternal" . | quote }}
-            - name: S3_BUCKET_REGION
-              value: {{$.Values.s3.bucket.region | quote }}
-            - name: S3_BUCKET_BUCKET
-              value: {{$.Values.s3.bucket.bucket | quote }}
-            - name: S3_BUCKET_ACCESS_KEY
+            - name: LOCULUS_S3_BUCKET_REGION
+              value: {{ $.Values.s3.bucket.region | quote }}
+            - name: LOCULUS_S3_BUCKET_BUCKET
+              value: {{ $.Values.s3.bucket.bucket | quote }}
+            - name: LOCULUS_S3_BUCKET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: s3-bucket
                   key: accessKey
-            - name: S3_BUCKET_SECRET_KEY
+            - name: LOCULUS_S3_BUCKET_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: s3-bucket
                   key: secretKey
             {{- end }}
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
