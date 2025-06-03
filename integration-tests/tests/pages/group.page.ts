@@ -70,4 +70,71 @@ export class GroupPage {
 
         await expect(this.page.getByRole('heading', { name: groupData.name })).toBeVisible();
     }
+
+    async goToGroupEditPage() {
+        const editButton = this.page.getByRole('link', { name: 'Edit group' });
+        await editButton.waitFor({ state: 'visible' });
+        await editButton.click();
+        await this.page.waitForURL(/\/group\/\d+\/edit/);
+    }
+
+    async editGroupName(name: string) {
+        await this.page.getByLabel('Group name').fill(name);
+    }
+
+    async editInstitution(institution: string) {
+        await this.page.getByLabel('Institution').fill(institution);
+    }
+
+    async editContactEmail(email: string) {
+        await this.page.getByLabel('Email address', { exact: false }).fill(email);
+    }
+
+    async editAddressLine1(line1: string) {
+        await this.page.getByLabel('Address Line 1').fill(line1);
+    }
+
+    async editAddressLine2(line2: string) {
+        await this.page.getByLabel('Address Line 2').fill(line2);
+    }
+
+    async editCity(city: string) {
+        await this.page.getByLabel('City').fill(city);
+    }
+
+    async editState(state: string) {
+        await this.page.getByLabel('State', { exact: false }).fill(state);
+    }
+
+    async editPostalCode(code: string) {
+        await this.page.getByLabel('Postal code', { exact: false }).fill(code);
+    }
+
+    async finishEditingGroup() {
+        await this.page.getByRole('button', { name: 'Update group' }).click();
+        await this.page.waitForURL(/\/group\/\d+/);
+    }
+
+    async verifyUserIsPresent(username: string) {
+        await expect(this.page.locator('ul').getByText(username, { exact: true })).toBeVisible();
+    }
+
+    async verifyUserIsNotPresent(username: string) {
+        await expect(this.page.locator('ul').getByText(username, { exact: true })).not.toBeVisible();
+    }
+
+    async addNewUserToGroup(username: string) {
+        const button = this.page.getByRole('button', { name: 'Add user' });
+        const field = this.page.getByRole('textbox', { name: 'new user name' });
+        await field.fill(username);
+        await button.click();
+        await this.verifyUserIsPresent(username);
+    }
+
+    async removeUserFromGroup(username: string) {
+        const button = this.page.getByLabel(`Remove User ${username}`, { exact: true });
+        await button.waitFor({ state: 'visible' });
+        await button.click();
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+    }
 }
