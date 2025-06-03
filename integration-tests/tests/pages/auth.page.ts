@@ -46,15 +46,6 @@ export class AuthPage {
         await this.page.waitForSelector('text=Welcome to Loculus', { state: 'attached' });
     }
 
-    async loginExpectFailure(username: string, password: string) {
-        await this.page.goto('/');
-        await this.page.getByRole('link', { name: 'Login' }).click();
-        await this.page.getByLabel('Username').fill(username);
-        await this.page.getByLabel('Password', { exact: true }).fill(password);
-        await this.page.getByRole('button', { name: 'Sign in' }).click();
-        await this.page.waitForSelector('text=Invalid username or password.', { state: 'visible' });
-    }
-
     async logout() {
         await this.page.waitForLoadState('networkidle');
         await this.page.goto('/');
