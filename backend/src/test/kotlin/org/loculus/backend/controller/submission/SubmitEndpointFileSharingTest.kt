@@ -193,7 +193,7 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN unknown file categories THEN the request is not valid`() {
-        val fileIds = filesClient.requestUploads(groupId, 2).andGetFileIds()
+        val fileIds = filesClient.requestUploads(groupId).andGetFileIds()
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -214,6 +214,32 @@ class SubmitEndpointFileSharingTest(
                 jsonPath(
                     "\$.detail",
                 ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+            )
+    }
+
+    @Test
+    fun `GIVEN file ID that doesn't have an uploaded file THEN the request is not valid`() {
+        val fileIds = filesClient.requestUploads(groupId).andGetFileIds()
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "myFileCategory" to
+                            listOf(FileIdAndName(fileIds[0], "foo.txt")),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The file ${fileIds[0]} doesn't exist."),
             )
     }
 }
