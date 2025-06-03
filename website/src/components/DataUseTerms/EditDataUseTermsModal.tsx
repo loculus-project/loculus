@@ -130,7 +130,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     if (sequenceCount !== undefined) {
         const formatted = formatNumberWithDefaultLocale(sequenceCount);
         const plural = sequenceCount === 1 ? '' : 's';
-        buttonText = `Edit data use terms for ${formatted} sequence${plural}`;
+        buttonText = `Edit data use terms (${formatted} sequence${plural})`;
     }
 
     return (
@@ -138,7 +138,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
             <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
                 {buttonText}
             </button>
-            <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
+            <BaseDialog title='Edit data use terms (all sequences)' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
                 {state.type === 'loaded' &&
