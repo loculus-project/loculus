@@ -110,7 +110,6 @@ class SubmitEndpointFileSharingTest(
 
     @Test
     fun `GIVEN a non-existing file ID is given in submit THEN the request is not valid`() {
-        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
         val randomId = UUID.randomUUID()
 
         submissionControllerClient.submit(
@@ -122,7 +121,6 @@ class SubmitEndpointFileSharingTest(
                 "custom0" to
                     mapOf(
                         "myFileCategory" to listOf(
-                            FileIdAndName(fileId, "foo.txt"),
                             FileIdAndName(randomId, "bar.txt"),
                         ),
                     ),

@@ -118,10 +118,6 @@ class SubmitModel(
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
 
-        submissionParams.files?.let { submittedFiles ->
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
-        }
-
         val usedFileIds = submissionParams.files?.getAllFileIds()
 
         if (usedFileIds != null) {
@@ -151,6 +147,11 @@ class SubmitModel(
         submissionParams.files?.let {
             val fileSubmissionIds = it.keys
             validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
+        }
+
+        submissionParams.files?.let { submittedFiles ->
+            // the check below reads the DB, so needs to be after 'insertDataIntoAux'
+            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -423,6 +424,11 @@ class SubmitModel(
             val submissionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
             submittedFiles.forEach {
                 val submissionGroup = submissionIdGroups[it.key]
+                if (submissionGroup == null) {
+                    throw BadRequestException(
+                        "",
+                    )
+                }
                 val associatedFileIds = it.value.values.flatten().map { it.fileId }
                 associatedFileIds.forEach { fileId ->
                     val fileGroup = fileGroups[fileId]

@@ -27,6 +27,8 @@ import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -48,6 +50,7 @@ class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired val filesClient: FilesClient,
 ) {
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -276,7 +279,7 @@ class ReviseEndpointTest(
             fileMapping = mapOf(
                 "foo" to
                     mapOf(
-                        "bar" to
+                        "myFileCategory" to
                             listOf(
                                 FileIdAndName(UUID.randomUUID(), "foo.txt"),
                                 FileIdAndName(UUID.randomUUID(), "foo.txt"),
@@ -289,7 +292,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The files in category bar contain duplicate file names: foo.txt"),
+                ).value("The files in category myFileCategory contain duplicate file names: foo.txt"),
             )
     }
 
@@ -319,6 +322,38 @@ class ReviseEndpointTest(
                 jsonPath(
                     "\$.detail",
                 ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+            )
+    }
+
+    @Test
+    fun `GIVEN file was not uploaded THEN returns unprocessable entity`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+            groupId = groupId,
+        )
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            fileMapping = mapOf(
+                "foo" to
+                    mapOf(
+                        "myFileCategory" to
+                            listOf(
+                                FileIdAndName(fileId, "foo.txt"),
+                            ),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The file $fileId doesn't exist."),
             )
     }
 
