@@ -33,6 +33,7 @@ from .submission_db_helper import (
     AssemblyTableEntry,
     Status,
     StatusAll,
+    TableName,
     add_to_assembly_table,
     db_init,
     find_conditions_in_db,
@@ -198,7 +199,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
     ready_to_submit = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     if len(ready_to_submit) > 0:
         logger.debug(
@@ -209,14 +210,14 @@ def submission_table_start(db_config: SimpleConnectionPool):
 
         # 1. check if there exists an entry in the assembly_table for seq_key
         corresponding_assembly = find_conditions_in_db(
-            db_config, table_name="assembly_table", conditions=seq_key
+            db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
         )
         if len(corresponding_assembly) == 1:
             if corresponding_assembly[0]["status"] == str(Status.SUBMITTED):
                 update_values = {"status_all": StatusAll.SUBMITTED_ALL}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -224,7 +225,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -236,7 +237,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -251,7 +252,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     """
     conditions = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
     submitting_assembly = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     if len(submitting_assembly) > 0:
         logger.debug(
@@ -262,7 +263,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
         corresponding_assembly = find_conditions_in_db(
-            db_config, table_name="assembly_table", conditions=seq_key
+            db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
         )
         if len(corresponding_assembly) == 1 and corresponding_assembly[0]["status"] == str(
             Status.SUBMITTED
@@ -270,7 +271,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             update_values = {"status_all": StatusAll.SUBMITTED_ALL}
             update_db_where_conditions(
                 db_config,
-                table_name="submission_table",
+                table_name=TableName.SUBMISSION_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -305,7 +306,7 @@ def update_assembly_error(
             )
         number_rows_updated = update_db_where_conditions(
             db_config,
-            table_name="assembly_table",
+            table_name=TableName.ASSEMBLY_TABLE,
             conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
             update_values=update_values,
         )
@@ -324,7 +325,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     version_to_revise = last_version(db_config, entry)
     last_version_data = find_conditions_in_db(
         db_config,
-        table_name="submission_table",
+        table_name=TableName.SUBMISSION_TABLE,
         conditions={"accession": entry["accession"], "version": version_to_revise},
     )
     if len(last_version_data) == 0:
@@ -379,14 +380,14 @@ def get_project_and_sample_results(
     seq_key = {"accession": entry["accession"], "version": entry["version"]}
 
     results_in_sample_table = find_conditions_in_db(
-        db_config, table_name="sample_table", conditions=seq_key
+        db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
     )
     if len(results_in_sample_table) == 0:
         error_msg = f"Entry {entry['accession']} not found in sample_table"
         raise RuntimeError(error_msg)
 
     results_in_project_table = find_conditions_in_db(
-        db_config, table_name="project_table", conditions={"project_id": entry["project_id"]}
+        db_config, table_name=TableName.PROJECT_TABLE, conditions={"project_id": entry["project_id"]}
     )
     if len(results_in_project_table) == 0:
         error_msg = f"Entry {entry['accession']} not found in project_table"
@@ -417,7 +418,7 @@ def assembly_table_create(
     )
     conditions = {"status": Status.READY}
     ready_to_submit_assembly = find_conditions_in_db(
-        db_config, table_name="assembly_table", conditions=conditions
+        db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions
     )
     if len(ready_to_submit_assembly) > 0:
         logger.debug(
@@ -426,7 +427,7 @@ def assembly_table_create(
     for row in ready_to_submit_assembly:
         seq_key = {"accession": row["accession"], "version": row["version"]}
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name="submission_table", conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
         if len(sample_data_in_submission_table) == 0:
             error_msg = f"Entry {row['accession']} not found in submitting_table"
@@ -460,7 +461,7 @@ def assembly_table_create(
         update_values = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
             db_config,
-            table_name="assembly_table",
+            table_name=TableName.ASSEMBLY_TABLE,
             conditions=seq_key,
             update_values=update_values,
         )
@@ -497,7 +498,7 @@ def assembly_table_create(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="assembly_table",
+                    table_name=TableName.ASSEMBLY_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -532,7 +533,7 @@ def assembly_table_update(
         config.ena_reports_service_url,
     )
     conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_config, table_name="assembly_table", conditions=conditions)
+    waiting = find_conditions_in_db(db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions)
     if len(waiting) > 0:
         logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
@@ -574,7 +575,7 @@ def assembly_table_update(
                         )
                     number_rows_updated = update_db_where_conditions(
                         db_config,
-                        table_name="assembly_table",
+                        table_name=TableName.ASSEMBLY_TABLE,
                         conditions=seq_key,
                         update_values=update_values,
                     )
@@ -598,7 +599,7 @@ def assembly_table_update(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="assembly_table",
+                    table_name=TableName.ASSEMBLY_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -625,7 +626,7 @@ def assembly_table_handle_errors(
     2. If time since last slack_notification is over slack_time_threshold send notification
     """
     entries_with_errors = find_errors_in_db(
-        db_config, "assembly_table", time_threshold=time_threshold
+        db_config, TableName.ASSEMBLY_TABLE, time_threshold=time_threshold
     )
     if len(entries_with_errors) > 0:
         error_msg = (
@@ -642,7 +643,7 @@ def assembly_table_handle_errors(
         # If created update assembly_table
         # If not retry 3 times, then raise for manual intervention
     entries_waiting = find_waiting_in_db(
-        db_config, "assembly_table", time_threshold=time_threshold_waiting
+        db_config, TableName.ASSEMBLY_TABLE, time_threshold=time_threshold_waiting
     )
     if len(entries_waiting) > 0:
         error_msg = (
