@@ -21,12 +21,6 @@ export class GroupPage {
         await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
 
-    public async goToGroupEditPage() {
-        const editButton = this.page.getByRole('link', { name: 'Edit group' });
-        await editButton.waitFor({ state: 'visible' });
-        await editButton.click();
-        await this.page.waitForURL(/\/group\/\d+\/edit/);
-    }
 
     public async editGroupName(groupName: string) {
         const newGroupField = this.page.getByLabel('Group name');
@@ -73,12 +67,6 @@ export class GroupPage {
         await newPostalCodeField.fill(postalCode);
     }
 
-    public async finishEditingGroup() {
-        const updateGroupButton = this.page.getByRole('button', { name: 'Update group' });
-        await updateGroupButton.click();
-
-        await this.page.waitForURL(/\/group\/\d+/);
-    }
 
     public async createGroup(uniqueGroupName: string) {
         await this.editGroupName(uniqueGroupName);
@@ -103,43 +91,6 @@ export class GroupPage {
         await expect(newGroupEntry).toBeVisible();
     }
 
-    public getLocatorForButtonToRemoveUser(userName: string) {
-        return this.page.getByLabel(`Remove User ${userName}`, { exact: true });
-    }
-
-    public async verifyUserIsPresent(userName: string) {
-        const userLocator = this.page.locator('ul').getByText(userName, { exact: true });
-        await expect(userLocator).toBeVisible();
-        return userLocator;
-    }
-
-    public async verifyUserIsNotPresent(userName: string) {
-        const userLocator = this.page.locator('ul').getByText(userName, { exact: true });
-        await expect(userLocator).not.toBeVisible();
-        return userLocator;
-    }
-
-    public async addNewUserToGroup(uniqueUserName: string) {
-        const buttonToAddUserToGroup = this.page.getByRole('button', { name: 'Add user' });
-        const fieldToAddUserToGroup = this.page.getByRole('textbox', { name: 'new user name' });
-        await expect(buttonToAddUserToGroup).toBeVisible();
-        await expect(fieldToAddUserToGroup).toBeVisible();
-        await fieldToAddUserToGroup.fill(uniqueUserName);
-        await expect(fieldToAddUserToGroup).toHaveValue(uniqueUserName);
-
-        await buttonToAddUserToGroup.click();
-
-        await this.verifyUserIsPresent(uniqueUserName);
-    }
-
-    public async removeUserFromGroup(uniqueUserName: string) {
-        const buttonToRemoveUserFromGroup = this.getLocatorForButtonToRemoveUser(uniqueUserName);
-        await buttonToRemoveUserFromGroup.waitFor({ state: 'visible' });
-        await buttonToRemoveUserFromGroup.click();
-
-        const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
-        await confirmButton.click();
-    }
 
     public async leaveGroup() {
         const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
