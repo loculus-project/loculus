@@ -46,7 +46,7 @@ class SequenceUpdateManager:
     blocked: dict[Status, dict[SubmissionId, LoculusAccession]]
     revoke: dict[
         SubmissionId, dict[LoculusAccession, JointInsdcAccession]
-    ]  # Map of new grouping joint insdc accessions to map of previous state
+    ]  # Map of current submissionId to map of previous state
     # i.e. loculus accessions (to be revoked) and their corresponding old joint insdc accessions
     sampled_out: list[JointInsdcAccession]
     hashes: list[float]
