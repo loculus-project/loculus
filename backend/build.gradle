@@ -34,10 +34,10 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
-    implementation "org.postgresql:postgresql:42.7.5"
+    implementation "org.postgresql:postgresql:42.7.6"
     implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8"
-    implementation "org.flywaydb:flyway-database-postgresql:11.8.2"
+    implementation "org.flywaydb:flyway-database-postgresql:11.9.0"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
@@ -64,8 +64,8 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.21.0"
-    testImplementation "org.testcontainers:minio:1.21.0"
+    testImplementation "org.testcontainers:postgresql:1.21.1"
+    testImplementation "org.testcontainers:minio:1.21.1"
     testImplementation "org.junit.platform:junit-platform-launcher:1.12.2"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.6.0") {
         attributes {
