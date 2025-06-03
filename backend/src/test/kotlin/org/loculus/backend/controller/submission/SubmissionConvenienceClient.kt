@@ -521,4 +521,19 @@ class SubmissionConvenienceClient(
                 .contentAsString
         return objectMapper.readValue(content)
     }
+
+    /**
+     * Upload a file (content) to a presigned write URL (S3).
+     */
+    fun uploadContent(presignedWriteUrl: String, content: String) {
+        val client = HttpClient.newBuilder().build()
+        val fileContent = content.toByteArray()
+
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(presignedWriteUrl))
+            .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+            .build()
+
+        client.send(request, HttpResponse.BodyHandlers.ofString())
+    }
 }

@@ -28,6 +28,7 @@ import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
@@ -465,7 +466,11 @@ class SubmitProcessedDataEndpointTest(
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
-        val fileId = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
+        val fileIdAndUrl = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(
@@ -473,7 +478,7 @@ class SubmitProcessedDataEndpointTest(
                 accession,
                 mapOf(
                     "myFileCategory" to listOf(
-                        FileIdAndName(fileId, "foo.txt"),
+                        FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
                     ),
                 ),
             ),

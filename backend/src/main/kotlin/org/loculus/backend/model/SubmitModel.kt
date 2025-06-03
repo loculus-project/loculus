@@ -117,20 +117,7 @@ class SubmitModel(
         submissionIdFilesMappingPreconditionValidator
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
-
-        val usedFileIds = submissionParams.files?.getAllFileIds()
-
-        if (usedFileIds != null) {
-            val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(usedFileIds)
-            uncheckedFileIds.forEach { fileId ->
-                val fileSize = s3Service.getFileSize(fileId)
-                if (fileSize == null) {
-                    throw UnprocessableEntityException("The file $fileId doesn't exist.")
-                } else {
-                    filesDatabaseService.setFileSize(fileId, fileSize)
-                }
-            }
-        }
+            .validateFilesExist(submissionParams.files)
 
         insertDataIntoAux(
             uploadId,

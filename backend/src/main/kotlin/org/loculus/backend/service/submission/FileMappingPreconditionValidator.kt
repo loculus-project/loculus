@@ -5,13 +5,21 @@ import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.categories
+import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.files.FileId
+import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.springframework.stereotype.Component
 
 @Component
-class FileMappingPreconditionValidator(private val backendConfig: BackendConfig) {
+class FileMappingPreconditionValidator(
+    private val backendConfig: BackendConfig,
+    private val s3Service: S3Service,
+    private val filesDatabaseService: FilesDatabaseService,
+) {
     fun validateFilenamesAreUnique(fileCategoriesFilesMap: FileCategoryFilesMap?): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
@@ -45,6 +53,19 @@ class FileMappingPreconditionValidator(private val backendConfig: BackendConfig)
         }
         return this
     }
+
+    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
+        uncheckedFileIds.forEach { fileId ->
+            val fileSize = s3Service.getFileSize(fileId)
+            if (fileSize == null) {
+                throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
+            } else {
+                filesDatabaseService.setFileSize(fileId, fileSize)
+            }
+        }
+        return this
+    }
 }
 
 @Component
@@ -66,6 +87,13 @@ class SubmissionIdFilesMappingPreconditionValidator(
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateCategoriesMatchSchema(it, organism)
+        }
+        return this
+    }
+
+    fun validateFilesExist(submissionIdFilesMap: SubmissionIdFilesMap?): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateFilesExist(it.fileIds)
         }
         return this
     }

@@ -66,6 +66,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
@@ -241,9 +242,14 @@ class SubmissionDatabaseService(
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
-            fileMappingPreconditionValidator
-                .validateFilenamesAreUnique(submittedProcessedData.data.files)
-                .validateCategoriesMatchSchema(submittedProcessedData.data.files, organism)
+            submittedProcessedData.data.files?.let { fileMapping ->
+                fileMappingPreconditionValidator
+                    .validateFilenamesAreUnique(fileMapping)
+                    .validateCategoriesMatchSchema(fileMapping, organism)
+                    .validateFilesExist(fileMapping.fileIds)
+            }
+
+            // TODO - check that submissionIDs exist
 
             val processingResult = submittedProcessedData.processingResult()
 
@@ -1004,9 +1010,14 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
-        fileMappingPreconditionValidator
-            .validateFilenamesAreUnique(editedSequenceEntryData.data.files)
-            .validateCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
+        editedSequenceEntryData.data.files?.let { fileMapping ->
+            fileMappingPreconditionValidator
+                .validateFilenamesAreUnique(fileMapping)
+                .validateCategoriesMatchSchema(fileMapping, organism)
+                .validateFilesExist(fileMapping.fileIds)
+        }
+
+        // TODO check that submission IDs exist
 
         SequenceEntriesTable.update(
             where = {

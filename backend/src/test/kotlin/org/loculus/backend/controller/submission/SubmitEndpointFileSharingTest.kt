@@ -22,10 +22,6 @@ import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.util.*
 
 @EndpointTest(
@@ -33,6 +29,7 @@ import java.util.*
 )
 class SubmitEndpointFileSharingTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val filesClient: FilesClient,
     @Autowired val backendConfig: BackendConfig,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
@@ -44,22 +41,10 @@ class SubmitEndpointFileSharingTest(
         groupId = groupManagementClient.createNewGroup().andGetGroupId()
     }
 
-    fun uploadContent(presignedWriteUrl: String, content: String) {
-        val client = HttpClient.newBuilder().build()
-        val fileContent = content.toByteArray()
-
-        val request = HttpRequest.newBuilder()
-            .uri(URI.create(presignedWriteUrl))
-            .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
-            .build()
-
-        client.send(request, HttpResponse.BodyHandlers.ofString())
-    }
-
     @Test
     fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -81,7 +66,7 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -142,7 +127,7 @@ class SubmitEndpointFileSharingTest(
             groupId = otherGroupId,
             jwt = jwtForAlternativeUser,
         ).andGetFileIdsAndUrls()[0]
-        uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -237,7 +222,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The file ${fileIds[0]} doesn't exist."),
+                ).value("No file uploaded for file ID ${fileIds[0]}."),
             )
     }
 }

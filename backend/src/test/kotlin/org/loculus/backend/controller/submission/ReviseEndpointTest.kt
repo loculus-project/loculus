@@ -353,7 +353,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The file $fileId doesn't exist."),
+                ).value("No file uploaded for file ID $fileId."),
             )
     }
 
