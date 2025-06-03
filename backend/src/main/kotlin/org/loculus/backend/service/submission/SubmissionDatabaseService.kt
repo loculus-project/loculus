@@ -249,8 +249,6 @@ class SubmissionDatabaseService(
                     .validateFilesExist(fileMapping.fileIds)
             }
 
-            // TODO - check that submissionIDs exist
-
             val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)
@@ -1016,8 +1014,6 @@ class SubmissionDatabaseService(
                 .validateCategoriesMatchSchema(fileMapping, organism)
                 .validateFilesExist(fileMapping.fileIds)
         }
-
-        // TODO check that submission IDs exist
 
         SequenceEntriesTable.update(
             where = {
