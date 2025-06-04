@@ -8,7 +8,6 @@ import { setupServer } from 'msw/node';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
-// eslint-disable-next-line  @typescript-eslint/no-unsafe-call
 mockAnimationsApi();
 
 import {
@@ -96,6 +95,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
         unalignedNucleotideSequences: {
             originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
         },
+        files: null,
     },
     processedData: {
         metadata: {
@@ -117,6 +117,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
         aminoAcidInsertions: {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
         },
+        files: null,
     },
     submissionId: 'defaultSubmitter',
 };
