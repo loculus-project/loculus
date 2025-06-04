@@ -216,6 +216,9 @@ organisms:
           definition: "Reason for revising sequences or other general comments concerning a specific version"
           example: "Fixed an issue in previous version where low-coverage nucleotides were erroneously filled with reference sequence"
           desired: true
+      {{ if .files }}
+      files: {{ .files | toYaml | nindent 8 }}
+      {{ end }}
       metadata:
         {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
