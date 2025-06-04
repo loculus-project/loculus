@@ -137,6 +137,7 @@ export const Table: FC<TableProps> = ({
         if (window.getSelection()?.toString()) {
             return;
         }
+        }
 
         const detectMob = () => {
             const toMatch = [/Android/i, /webOS/i, /iPhone/i, /iPod/i, /BlackBerry/i, /Windows Phone/i];
