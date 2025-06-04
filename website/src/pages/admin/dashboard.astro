@@ -1,8 +1,8 @@
 ---
-import { PipelineStatsTable } from '../components/DevDashboard/PipelineStatsTable';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { createBackendClient } from '../services/backendClientFactory';
-import { getAccessToken } from '../utils/getAccessToken';
+import { PipelineStatsTable } from '../../components/DevDashboard/PipelineStatsTable';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { createBackendClient } from '../../services/backendClientFactory';
+import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session);
 let statsResult;
