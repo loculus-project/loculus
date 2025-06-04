@@ -133,7 +133,7 @@ export const Table: FC<TableProps> = ({
         // Only treat as a row click if the user didn't change the selection
         const current = selection?.toString() ?? '';
         if (current && current !== mouseDownSelection.current) {
-        selection?.removeAllRanges();
+        //selection?.removeAllRanges();
         if (window.getSelection()?.toString()) {
             return;
         }
