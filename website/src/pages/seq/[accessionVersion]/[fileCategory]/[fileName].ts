@@ -32,9 +32,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
             headers: { Location: s3Url },
         });
     } else if (response.ok) {
-        return new Response(await response.text(), { status: response.status });
+        return new Response(response.body, { status: response.status });
     } else {
-        const text = await response.text();
-        return new Response(text, { status: response.status });
+        return new Response(response.body, { status: response.status });
     }
 };
