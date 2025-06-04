@@ -201,7 +201,7 @@ class DataUseTermsControllerTest(
                 newDataUseTerms = DataUseTerms.Open,
                 expectedStatus = status().isUnprocessableEntity,
                 expectedContentType = MediaType.APPLICATION_JSON_VALUE,
-                expectedDetailContains = "Data use terms are already OPEN.",
+                expectedDetailContains = "The data use terms have already been set to 'Open' - this should appear in the next several minutes.",
             ),
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
