@@ -5,6 +5,30 @@ import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/back
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
+function generateAndDownloadFastaFile(
+    accessionVersion: string,
+    sequenceData: string,
+    segmentKey?: string,
+    isSingleSegment: boolean = false,
+) {
+    const fileName =
+        isSingleSegment || !segmentKey ? `${accessionVersion}.fasta` : `${accessionVersion}_${segmentKey}.fasta`;
+
+    const header = isSingleSegment || !segmentKey ? accessionVersion : `${accessionVersion}_${segmentKey}`;
+
+    const fileContent = `>${header}\n${sequenceData}`;
+
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
 export class EditableSequences {
     private constructor(public readonly rows: Row[]) {}
 
@@ -137,20 +161,12 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                                 field.initialValue.length > 0 && dataToEdit
                                     ? () => {
                                           const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
-                                          const fileName = singleSegment
-                                              ? `${accessionVersion}.fasta`
-                                              : `${accessionVersion}_${field.key}.fasta`;
-                                          const fileContent = `>${singleSegment ? accessionVersion : `${accessionVersion}_${field.key}`}\n${field.initialValue}`;
-
-                                          const blob = new Blob([fileContent], { type: 'text/plain' });
-                                          const url = URL.createObjectURL(blob);
-
-                                          const a = document.createElement('a');
-                                          a.href = url;
-                                          a.download = fileName;
-                                          a.click();
-
-                                          URL.revokeObjectURL(url);
+                                          generateAndDownloadFastaFile(
+                                              accessionVersion,
+                                              field.initialValue,
+                                              field.key,
+                                              singleSegment,
+                                          );
                                       }
                                     : undefined
                             }
