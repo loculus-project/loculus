@@ -10,6 +10,14 @@ export type DataTableData = {
         rows: TableDataEntry[];
     }[];
 };
+
+function formatAuthorName(author: string): string {
+    const [last, first] = author.split(',').map((x) => x.trim());
+    if (first !== undefined && last !== undefined && first.length > 0 && last.length > 0) {
+        return `${first} ${last}`;
+    }
+    return author.trim();
+}
 function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
     const result: TableDataEntry[] = [];
     const groupedEntries = new Map<string, TableDataEntry[]>();
@@ -71,7 +79,9 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             result.topmatter.authors = entry.value
                 .toString()
                 .split(';')
-                .map((x) => x.trim());
+                .map((x) => x.trim())
+                .filter((x) => x.length > 0)
+                .map(formatAuthorName);
             continue;
         }
 
