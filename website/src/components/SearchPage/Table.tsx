@@ -123,6 +123,11 @@ export const Table: FC<TableProps> = ({
     };
 
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
+        // Don't treat the click as a row click if the user is selecting text
+        if (window.getSelection()?.toString()) {
+            return;
+        }
+
         const detectMob = () => {
             const toMatch = [/Android/i, /webOS/i, /iPhone/i, /iPod/i, /BlackBerry/i, /Windows Phone/i];
 
