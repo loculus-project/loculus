@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
-import type { FileMapping, Group } from '../../../types/backend';
+import type { SubmissionIdFileMapping, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
@@ -71,7 +71,7 @@ type FolderUploadComponentProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     group: Group;
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    setFileMapping: Dispatch<SetStateAction<SubmissionIdFileMapping | undefined>>;
     onError: (message: string) => void;
 };
 

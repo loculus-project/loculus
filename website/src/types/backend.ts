@@ -203,6 +203,19 @@ export const unprocessedData = accessionVersion.merge(
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
+// The struct to store the files per category for one submission
+const categoryFileMapping = z.record(
+    z.array(
+        z.object({
+            fileId: z.string(),
+            name: z.string(),
+        }),
+    ),
+);
+
+export const submissionIdFileMapping = z.record(categoryFileMapping);
+export type SubmissionIdFileMapping = z.infer<typeof submissionIdFileMapping>;
+
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
@@ -213,14 +226,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         originalData: z.object({
             metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
-            files: z.record(
-                z.array(
-                    z.object({
-                        fileId: z.string(),
-                        name: z.string(),
-                    }),
-                ),
-            ),
+            files: categoryFileMapping,
         }),
         processedData: z.object({
             metadata: metadataRecord,
@@ -229,14 +235,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
             nucleotideInsertions: z.record(z.array(z.string())),
             alignedAminoAcidSequences: z.record(z.string().nullable()),
             aminoAcidInsertions: z.record(z.array(z.string())),
-            files: z.record(
-                z.array(
-                    z.object({
-                        fileId: z.string(),
-                        name: z.string(),
-                    }),
-                ),
-            ),
+            files: categoryFileMapping,
         }),
     }),
 );
@@ -260,24 +259,10 @@ export const mapErrorsAndWarnings = (
         .map((warning) => warning.message),
 });
 
-export const fileMapping = z.record(
-    // submission ID
-    z.record(
-        // file field
-        z.array(
-            z.object({
-                fileId: z.string().uuid(),
-                name: z.string(),
-            }),
-        ),
-    ),
-);
-export type FileMapping = z.infer<typeof fileMapping>;
-
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File).optional(),
-    fileMapping: fileMapping.optional(),
+    fileMapping: submissionIdFileMapping.optional(),
 });
 
 export const submitFiles = uploadFiles.merge(
