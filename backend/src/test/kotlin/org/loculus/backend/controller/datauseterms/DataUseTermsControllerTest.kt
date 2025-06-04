@@ -146,7 +146,10 @@ class DataUseTermsControllerTest(
     @Test
     fun `WHEN superuser changes data use terms of an entry of other group THEN is successful`() {
         val accessions = submissionConvenienceClient
-            .submitDefaultFiles(username = DEFAULT_USER_NAME)
+            .submitDefaultFiles(
+                username = DEFAULT_USER_NAME,
+                dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+            )
             .submissionIdMappings
             .map { it.accession }
 
@@ -160,8 +163,8 @@ class DataUseTermsControllerTest(
             .andExpect(status().isNoContent)
 
         client.getDataUseTerms(accession = accessions.first())
-            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
-            .andExpect(jsonPath("\$[0].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
+            .andExpect(jsonPath("\$[1].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[1].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
     }
 
     companion object {
@@ -195,6 +198,13 @@ class DataUseTermsControllerTest(
         fun dataUseTermsTestCases(): List<DataUseTermsTestCase> = listOf(
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Open,
+                newDataUseTerms = DataUseTerms.Open,
+                expectedStatus = status().isUnprocessableEntity,
+                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedDetailContains = "Data use terms are already OPEN.",
+            ),
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                 newDataUseTerms = DataUseTerms.Open,
                 expectedStatus = status().isNoContent,
                 expectedContentType = null,

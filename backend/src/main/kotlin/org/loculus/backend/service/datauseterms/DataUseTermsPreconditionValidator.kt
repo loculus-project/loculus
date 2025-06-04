@@ -31,6 +31,15 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) 
                 "$accessions and new data use terms $newDataUseTerms. Found $dataUseTerms."
         }
 
+        if (newDataUseTerms is DataUseTerms.Open) {
+            if (dataUseTerms.any {
+                    DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]) == DataUseTermsType.OPEN
+                }
+            ) {
+                throw UnprocessableEntityException("Data use terms are already OPEN.")
+            }
+        }
+
         if (newDataUseTerms is DataUseTerms.Restricted) {
             dataUseTerms.forEach {
                 val dataUseTermsType = DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn])
