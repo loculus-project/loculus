@@ -87,7 +87,7 @@ export class BackendClient {
 
     public getPipelineStats(token: string) {
         return this.request(
-            '/dev/pipeline-stats',
+            '/admin/pipeline-stats',
             'GET',
             pipelineVersionStats,
             createAuthorizationHeader(token),

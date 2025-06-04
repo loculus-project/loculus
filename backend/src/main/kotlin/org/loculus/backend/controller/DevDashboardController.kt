@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/dev")
+@RequestMapping("/admin")
 @SecurityRequirement(name = "bearerAuth")
 class DevDashboardController(private val submissionDatabaseService: SubmissionDatabaseService) {
     @Operation(summary = "Get number of processed sequence entries per pipeline version and organism")
