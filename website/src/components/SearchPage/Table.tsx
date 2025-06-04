@@ -134,10 +134,9 @@ export const Table: FC<TableProps> = ({
         const sel = window.getSelection();
         const current = sel?.toString() ?? '';
         if (current && current !== mouseDownSelection.current) {
-        //selection?.removeAllRanges();
-        
+            //selection?.removeAllRanges();
+
             return;
-       
         }
 
         const detectMob = () => {
