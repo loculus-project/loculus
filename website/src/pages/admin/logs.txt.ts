@@ -7,6 +7,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const message = logToAppend.message;
 
+    // eslint-disable-next-line no-console
+    console.log('Endpoint /admin/logs.txt called with log:', logToAppend);
+
     if (message !== undefined) {
         switch (logToAppend.level) {
             case 'info':
