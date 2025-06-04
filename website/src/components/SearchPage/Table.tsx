@@ -123,7 +123,9 @@ export const Table: FC<TableProps> = ({
     };
 
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
-        // Don't treat the click as a row click if the user is just selecting text
+        const selection = window.getSelection();
+        if (selection?.toString()) {
+            selection.removeAllRanges();
         if (window.getSelection()?.toString()) {
             return;
         }
