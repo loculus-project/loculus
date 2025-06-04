@@ -68,12 +68,12 @@ def filter_for_submission(
         if other_versions_list and int(other_versions_list[-1]) >= int(version):
             # If the latest version in the db is greater or equal than the current version, ignore
             continue
-        if accession in data_dict and data_dict[accession]["version"] >= version:
+        if accession in data_dict and data_dict[accession]["metadata"]["version"] >= version:
             # If the accession is already in the dict and the version is greater or equal, ignore
             continue
         if (
             accession in data_dict_with_external_metadata
-            and data_dict_with_external_metadata[accession]["version"] >= version
+            and data_dict_with_external_metadata[accession]["metadata"]["version"] >= version
         ):
             continue
         entry["organism"] = organism
@@ -86,7 +86,7 @@ def filter_for_submission(
             continue
         data_dict[accession] = entry
     return SubmissionResults(
-        entries_to_submit={f"{key}.{data['version']}": data for key, data in data_dict.items()},
+        entries_to_submit={f"{key}.{data['metadata']['version']}": data for key, data in data_dict.items()},
         entries_with_ext_metadata_to_submit={
             f"{key}.{data['version']}": data
             for key, data in data_dict_with_external_metadata.items()
