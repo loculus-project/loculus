@@ -160,7 +160,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                         </button>
                         <CustomTooltip
                             id={'view-files-tooltip' + sequenceEntryStatus.accession}
-                            content={notProcessed ? 'Processing...' : 'View files for sequence'}
+                            content={notProcessed ? 'Processing...' : 'View files'}
                         />
                     </>
                 )}

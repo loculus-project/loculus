@@ -24,52 +24,26 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                     </button>
                 </div>
 
-                <div className='overflow-auto space-y-6'>
-                    <div>
-                        <h3 className='text-lg font-semibold mb-2'>Original Files</h3>
-                        {Object.entries(originalFilesByCategory).map(([key, files]) => (
-                            <div key={key} className='mb-4'>
-                                <h4 className='font-medium'>{key}</h4>
-                                <ul className='list-disc pl-5 space-y-1'>
-                                    {files.map((file) => (
-                                        <li key={file.fileId}>
-                                            <a
-                                                href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
-                                                className='text-blue-600 hover:underline'
-                                                target='_blank'
-                                                rel='noopener noreferrer'
-                                            >
-                                                {file.name}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div>
-                        <h3 className='text-lg font-semibold mb-2'>Processed Files</h3>
-                        {Object.entries(processedFilesByCategory).map(([key, files]) => (
-                            <div key={key} className='mb-4'>
-                                <h4 className='font-medium'>{key}</h4>
-                                <ul className='list-disc pl-5 space-y-1'>
-                                    {files.map((file) => (
-                                        <li key={file.fileId}>
-                                            <a
-                                                href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
-                                                className='text-blue-600 hover:underline'
-                                                target='_blank'
-                                                rel='noopener noreferrer'
-                                            >
-                                                {file.name}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
+                <div>
+                    {Object.entries(processedFilesByCategory).map(([key, files]) => (
+                        <div key={key} className='mb-4'>
+                            <h3 className='font-medium'>{key}</h3>
+                            <ul className='list-disc pl-5 space-y-1'>
+                                {files.map((file) => (
+                                    <li key={file.fileId}>
+                                        <a
+                                            href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
+                                            className='text-blue-600 hover:underline'
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                        >
+                                            {file.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
