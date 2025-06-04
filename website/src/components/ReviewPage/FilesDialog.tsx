@@ -30,7 +30,7 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                                     <li key={file.fileId}>
                                         <a
                                             href={`/seq/${dataToView.accession}.${dataToView.version}/${category}/${file.name}`}
-                                            className='text-blue-600 hover:underline'
+                                            className='text-primary-600 hover:underline'
                                             target='_blank'
                                             rel='noopener noreferrer'
                                         >
