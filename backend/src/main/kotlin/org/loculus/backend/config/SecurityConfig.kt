@@ -65,6 +65,10 @@ class SecurityConfig {
         "/debug/*",
     )
 
+    private val adminEndpoints = arrayOf(
+        "/admin/*",
+    )
+
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
@@ -86,6 +90,7 @@ class SecurityConfig {
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
+            auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
