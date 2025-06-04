@@ -11,9 +11,6 @@ type FilesDialogProps = {
 export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView }) => {
     if (!isOpen || !dataToView) return null;
 
-    const originalFilesByCategory = dataToView.originalData.files;
-    const processedFilesByCategory = dataToView.processedData.files;
-
     return (
         <div className='fixed inset-0 flex items-center justify-center z-50 overflow-auto bg-black bg-opacity-30'>
             <div className='bg-white rounded-lg p-6 max-w-xl mx-3 w-full max-h-[90vh] flex flex-col'>
@@ -25,14 +22,14 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                 </div>
 
                 <div>
-                    {Object.entries(processedFilesByCategory).map(([key, files]) => (
-                        <div key={key} className='mb-4'>
-                            <h3 className='font-medium'>{key}</h3>
+                    {Object.entries(dataToView.processedData.files).map(([category, files]) => (
+                        <div key={category} className='mb-4'>
+                            <h3 className='font-medium'>{category}</h3>
                             <ul className='list-disc pl-5 space-y-1'>
                                 {files.map((file) => (
                                     <li key={file.fileId}>
                                         <a
-                                            href={`/seq/${dataToView.accession}.${dataToView.version}/${key}/${file.name}`}
+                                            href={`/seq/${dataToView.accession}.${dataToView.version}/${category}/${file.name}`}
                                             className='text-blue-600 hover:underline'
                                             target='_blank'
                                             rel='noopener noreferrer'
