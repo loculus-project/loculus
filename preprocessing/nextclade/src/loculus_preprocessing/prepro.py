@@ -965,6 +965,9 @@ def run(config: Config) -> None:
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
+
+            # TODO in here, upload a dummy hello world file for now
+
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
             except RuntimeError as e:

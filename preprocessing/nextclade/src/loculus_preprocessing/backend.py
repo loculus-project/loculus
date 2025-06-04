@@ -173,6 +173,11 @@ def submit_processed_sequences(
     logger.info("Processed data submitted successfully")
 
 
+# TODO add a new function here to request presigned write URLs
+# use get_jwt like in submit_processed_sequences
+
+# TODO add a new function here to upload a file
+
 def download_minimizer(url, save_path):
     try:
         response = requests.get(url, timeout=10)
