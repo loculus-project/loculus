@@ -1718,7 +1718,7 @@ images:
     pullPolicy: IfNotPresent
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.1"
+    tag: "0.5.2"
     pullPolicy: IfNotPresent
   website:
     repository: "ghcr.io/loculus-project/website"
