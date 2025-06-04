@@ -37,7 +37,7 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) 
                 }
             ) {
                 throw UnprocessableEntityException(
-                    "The data use terms have already been set to 'Open':" +
+                    "The data use terms have already been set to 'Open'-" +
                         " this will take effect in the next several minutes.",
                 )
             }
