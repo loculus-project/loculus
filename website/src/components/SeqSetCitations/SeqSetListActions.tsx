@@ -23,7 +23,7 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                     onClick={() => setCreateModalVisible(true)}
                 >
                     <AddBoxIcon fontSize='large' />
-                    Add SeqSet
+                    Create SeqSet
                 </button>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
