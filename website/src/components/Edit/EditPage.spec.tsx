@@ -116,7 +116,7 @@ describe('EditPage', () => {
 const expectTextInSequenceData = {
     originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
+            expect(screen.getByText(sentenceCase(key))).toBeInTheDocument();
             expect(screen.getByDisplayValue(value)).toBeInTheDocument();
         }),
 };
