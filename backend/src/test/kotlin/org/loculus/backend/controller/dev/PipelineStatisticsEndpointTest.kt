@@ -20,13 +20,13 @@ class PipelineStatisticsEndpointTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `WHEN non superuser THEN forbidden`() {
-        mockMvc.perform(get("/admin/pipeline-stats").withAuth(jwtForDefaultUser))
+        mockMvc.perform(get("/admin/pipeline-statistics").withAuth(jwtForDefaultUser))
             .andExpect(status().isForbidden)
     }
 
     @Test
     fun `WHEN superuser THEN ok`() {
-        mockMvc.perform(get("/admin/pipeline-stats").withAuth(jwtForSuperUser))
+        mockMvc.perform(get("/admin/pipeline-statistics").withAuth(jwtForSuperUser))
             .andExpect(status().isOk)
     }
 }
