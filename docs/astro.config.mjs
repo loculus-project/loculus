@@ -23,6 +23,10 @@ export default defineConfig({
                         'src': 'https://plausible.io/js/script.js',
                     },
                 },
+                {
+                    tag: 'script',
+                    children: 'window.trackLoculusEvent=function(x){window.plausible&&window.plausible("linkout",{props:{link:x}});};',
+                },
             ],
             editLink: {
                 baseUrl: 'https://github.com/loculus-project/loculus/edit/main/docs/',

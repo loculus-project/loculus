@@ -89,6 +89,9 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     };
 
     const openUrl = (url: string) => {
+        if (typeof window !== 'undefined' && typeof window.trackLoculusEvent === 'function' && currentLinkOut.current) {
+            window.trackLoculusEvent(currentLinkOut.current.name);
+        }
         if (url.length > approxMaxAcceptableUrlLength) {
             alert(
                 `Warning: The generated URL for the tool is very long (${url.length} characters) and may not work in some browsers or servers. This may relate to your current search filter settings.`,

@@ -22,3 +22,7 @@ declare namespace App {
         session?: Session;
     }
 }
+
+interface Window {
+    trackLoculusEvent?: (x: string) => void;
+}
