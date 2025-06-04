@@ -86,7 +86,7 @@ const InnerDataUploadForm = ({
         const { metadataFile, sequenceFile, submissionId } = sequenceDataResult;
 
         if (submissionId === undefined && inputMode === 'form') {
-            onError('No sequence ID specified.');
+            onError('No ID specified.');
             return;
         }
 

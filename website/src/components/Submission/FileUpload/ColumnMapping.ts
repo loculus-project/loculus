@@ -39,6 +39,12 @@ export class ColumnMapping {
                 remainingSourceColumns = remainingSourceColumns.filter((f) => f !== sourceColumn);
             }
         });
+        // special case: automatically map 'submissionId' to 'id'
+        if (remainingSourceColumns.includes('submissionId') && availableFields.find(f => f.name === 'id')) {
+            mapping.set('submissionId', 'id');
+            availableFields = availableFields.filter((f) => f.name !== 'id');
+            remainingSourceColumns = remainingSourceColumns.filter((f) => f !== 'submissionId');
+        }
         // do best effort matching second
         remainingSourceColumns.forEach((sourceColumn) => {
             const bestMatch = this.getBestMatchingTargetColumn(sourceColumn, availableFields);
