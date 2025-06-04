@@ -36,7 +36,7 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) 
                     DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]) == DataUseTermsType.OPEN
                 }
             ) {
-                throw UnprocessableEntityException("Data use terms are already OPEN.")
+                throw UnprocessableEntityException("The data use terms have already been set to 'Open' - this should appear in the next several minutes.")
             }
         }
 
