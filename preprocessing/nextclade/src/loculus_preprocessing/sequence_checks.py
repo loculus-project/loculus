@@ -26,7 +26,7 @@ UNALIGNED_NUCLEOTIDE_SYMBOLS = {
 
 
 def errors_if_non_iupac(
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence],
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
 ) -> list[ProcessingAnnotation]:
     errors: list[ProcessingAnnotation] = []
     for segment, sequence in unaligned_nucleotide_sequences.items():

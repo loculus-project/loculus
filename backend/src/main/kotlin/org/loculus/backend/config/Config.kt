@@ -5,9 +5,12 @@ import org.apache.commons.lang3.StringUtils.lowerCase
 import org.loculus.backend.api.Organism
 
 data class BackendConfig(
+    val websiteUrl: String,
+    val backendUrl: String,
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
+    val fileSharing: FileSharing = FileSharing(),
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
@@ -17,6 +20,28 @@ data class BackendConfig(
 data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)
+
+data class FileSharing(val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE)
+
+/**
+ * The types URLs that can be output for a file.
+ * We can either link direclty to the file in S3, or link to the proxy endpoint on
+ * the website.
+ */
+enum class FileUrlType {
+    @JsonProperty("website")
+    WEBSITE,
+
+    @JsonProperty("backend")
+    BACKEND,
+
+    @JsonProperty("s3")
+    S3,
+
+    ;
+
+    override fun toString(): String = lowerCase(name)
+}
 
 data class InstanceConfig(val schema: Schema, val referenceGenomes: ReferenceGenome)
 

@@ -116,7 +116,10 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         leaveFrom='opacity-100'
                         leaveTo='opacity-0'
                     >
-                        <ComboboxOptions className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'>
+                        <ComboboxOptions
+                            modal={false}
+                            className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'
+                        >
                             {options.map((option, index) => (
                                 <ComboboxOption
                                     key={index}

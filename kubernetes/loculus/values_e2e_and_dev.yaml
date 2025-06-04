@@ -12,3 +12,4 @@ backendExtraArgs:
 disableEnaSubmission: true
 auth:
   verifyEmail: false
+host: localhost:3000

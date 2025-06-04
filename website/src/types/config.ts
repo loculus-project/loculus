@@ -48,7 +48,6 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
-    truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
@@ -85,7 +84,6 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    label?: string;
     fieldGroup?: string;
     grouped?: false;
     fieldGroupDisplayName?: string;
@@ -97,7 +95,6 @@ export type GroupedMetadataFilter = {
     groupedFields: MetadataFilter[];
     type: Metadata['type'];
     grouped: true;
-    label?: string;
     displayName?: string;
     isVisible?: boolean;
     notSearchable?: boolean;
@@ -108,6 +105,7 @@ export type GroupedMetadataFilter = {
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
+    maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
 });
 
 export type LinkOut = z.infer<typeof linkOut>;
@@ -170,6 +168,11 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
+const fieldToDisplay = z.object({
+    field: z.string(),
+    displayName: z.string(),
+});
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -181,6 +184,7 @@ export const websiteConfig = z.object({
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     enableSeqSets: z.boolean(),
+    seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),

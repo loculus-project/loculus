@@ -59,8 +59,7 @@ export const SearchForm = ({
         .filter((filter) => filter.name !== 'accession') // Exclude accession field
         .map((filter) => ({
             name: filter.name,
-            displayName: filter.displayName ?? filter.label ?? sentenceCase(filter.name),
-            label: filter.label,
+            displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
         }));
 
@@ -155,15 +154,13 @@ interface SearchFieldProps {
 }
 
 const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSearchParameters }: SearchFieldProps) => {
-    field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
-
     if (field.grouped === true) {
         if (field.groupedFields[0].rangeOverlapSearch) {
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
                 <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.label}</h3>
+                    <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.name}</h3>
 
                     {field.groupedFields.map((f) => (
                         <SearchField

@@ -14,7 +14,6 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
-import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -379,13 +378,29 @@ typealias FileCategory = String
  */
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
-fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndReadUrl>> =
-    this.entries.associate { entry ->
-        entry.key to
-            entry.value.map { fileIdAndName ->
-                FileIdAndNameAndReadUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
-            }
-    }
+val FileCategoryFilesMap.categories: Set<FileCategory>
+    get() = this.keys
+
+fun FileCategoryFilesMap.addUrls(
+    buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
+): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
+    entry.key to
+        entry.value.map { fileIdAndName ->
+            FileIdAndNameAndReadUrl(
+                fileIdAndName.fileId,
+                fileIdAndName.name,
+                buildUrl(entry.key, fileIdAndName.fileId, fileIdAndName.name),
+            )
+        }
+}
 
 fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
     this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
+
+fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<String> {
+    val nameCounts = this[category]!!
+        .groupingBy { it.name }
+        .eachCount()
+
+    return nameCounts.filterValues { it > 1 }.keys
+}

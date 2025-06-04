@@ -29,11 +29,16 @@ spec:
           image: "{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag | default $dockerTag }}"
           imagePullPolicy: "{{ $.Values.images.backend.pullPolicy }}"
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
+          startupProbe:
+            httpGet:
+              path: "/actuator/health/liveness"
+              port: 8079
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
               port: 8079
-            initialDelaySeconds: 90
             periodSeconds: 10
           readinessProbe:
             httpGet:

@@ -22,6 +22,7 @@ logging.basicConfig(
 
 @dataclass
 class Config:
+    organism: str
     segmented: str
     nucleotide_sequences: list[str]
     debug_hashes: bool = False
@@ -322,7 +323,8 @@ def main(
     potentially_suppressed = already_ingested_accessions - current_ingested_accessions
     if len(potentially_suppressed) > 0:
         warning = (
-            f"{len(potentially_suppressed)} previously ingested INSDC accessions not found in "
+            f"Organism: {config.organism}; {len(potentially_suppressed)} previously ingested "
+            "INSDC accessions not found in "
             f"re-ingested metadata - {', '.join(potentially_suppressed)}."
             " This might be due to these sequences being suppressed in the INSDC database."
             " Please check the INSDC database for these accessions."

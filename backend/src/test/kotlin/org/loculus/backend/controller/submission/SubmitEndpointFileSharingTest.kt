@@ -144,4 +144,56 @@ class SubmitEndpointFileSharingTest(
                 ).value("The File $fileId does not belong to group $groupId."),
             )
     }
+
+    @Test
+    fun `GIVEN files with duplicate file names THEN the request is not valid`() {
+        val fileIds = filesClient.requestUploads(groupId, 2).andGetFileIds()
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "myFileCategory" to
+                            listOf(FileIdAndName(fileIds[0], "foo.txt"), FileIdAndName(fileIds[1], "foo.txt")),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The files in category myFileCategory contain duplicate file names: foo.txt"),
+            )
+    }
+
+    @Test
+    fun `GIVEN unknown file categories THEN the request is not valid`() {
+        val fileIds = filesClient.requestUploads(groupId, 2).andGetFileIds()
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            organism = DEFAULT_ORGANISM,
+            groupId = groupId,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "unknownCategory" to
+                            listOf(FileIdAndName(fileIds[0], "foo.txt")),
+                    ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+            )
+    }
 }

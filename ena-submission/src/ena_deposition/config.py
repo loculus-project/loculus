@@ -7,7 +7,7 @@ import yaml
 @dataclass
 class Config:
     test: bool
-    organisms: dict[dict[str, str]]
+    organisms: dict[str, dict[str, str]]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -23,6 +23,7 @@ class Config:
     ena_submission_username: str
     ena_reports_service_url: str
     github_url: str
+    github_test_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -30,6 +31,8 @@ class Config:
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str]]
     ingest_pipeline_submission_group: str
+    ena_deposition_host: str
+    ena_deposition_port: int
     submit_to_ena_prod: bool = False
     is_broker: bool = False
     allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])
@@ -53,7 +56,10 @@ def secure_ena_connection(config: Config):
         config.test = True
         logging.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
-        config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+        if not config.github_test_url:
+            config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+        else:
+            config.github_url = config.github_test_url
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
     if submit_to_ena_prod:

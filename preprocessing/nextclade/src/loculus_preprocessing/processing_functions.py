@@ -41,10 +41,15 @@ def standardize_option(option):
     return " ".join(option.lower().split())
 
 
-def invalid_value_annotation(input_datum, output_field, input_fields, value_type) -> ProcessingAnnotation:
+def invalid_value_annotation(
+    input_datum, output_field, input_fields, value_type
+) -> ProcessingAnnotation:
     return ProcessingAnnotation(
         processedFields=[AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)],
-        unprocessedFields=[AnnotationSource(name=field, type=AnnotationSourceType.METADATA) for field in input_fields],
+        unprocessedFields=[
+            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+            for field in input_fields
+        ],
         message=f"Invalid {value_type} value: {input_datum} for field {output_field}.",
     )
 
@@ -62,7 +67,7 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)
 
 
-def format_authors(authors: str) -> bool:
+def format_authors(authors: str) -> str:
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
     for author in authors_list:
@@ -163,7 +168,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
+        args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -199,8 +204,7 @@ class ProcessingFunctions:
             return ProcessingResult(datum=date, warnings=warnings, errors=errors)
         except ValueError as e:
             error_message = (
-                f"Date is {date} which is not in the required format YYYY-MM-DD. "
-                f"Parsing error: {e}"
+                f"Date is {date} which is not in the required format YYYY-MM-DD. Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,
@@ -224,14 +228,14 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
+        args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range using upper bound (`input.releaseDate`)
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
         Default fieldType is "dateRangeString"
         """
-        if args is None:
+        if not args:
             args = {"fieldType": "dateRangeString"}
 
         logger.debug(f"input_data: {input_data}")
@@ -324,7 +328,7 @@ class ProcessingFunctions:
                     )
                 )
 
-            if datum.date_range_lower > datetime.now(tz=pytz.utc):
+            if datum.date_range_lower and datum.date_range_lower > datetime.now(tz=pytz.utc):
                 logger.debug(
                     f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
                 )
@@ -341,7 +345,7 @@ class ProcessingFunctions:
                     )
                 )
 
-            if release_date and (datum.date_range_lower > release_date):
+            if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
                 logger.debug(f"Lower range of date: {parsed_date} > release_date: {release_date}")
                 errors.append(
                     ProcessingAnnotation(
@@ -363,7 +367,10 @@ class ProcessingFunctions:
                 case "dateRangeString":
                     return_value = datum.date_range_string
                 case "dateRangeLower":
-                    return_value = datum.date_range_lower.strftime("%Y-%m-%d")
+                    if datum.date_range_lower is None:
+                        return_value = None
+                    else:
+                        return_value = datum.date_range_lower.strftime("%Y-%m-%d")
                     warnings = errors = []
                 case "dateRangeUpper":
                     return_value = datum.date_range_upper.strftime("%Y-%m-%d")
@@ -384,9 +391,9 @@ class ProcessingFunctions:
                         AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                     ],
                     unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
                     message=f"Metadata field {output_field}: Date {input_date_str} could not be parsed.",
                 )
             ],
@@ -397,7 +404,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field,
         input_fields: list[str],
-        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
+        args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
         input_data:
@@ -490,8 +497,7 @@ class ProcessingFunctions:
                                 for field in input_fields
                             ],
                             message=(
-                                f"Metadata field {output_field}:'{date_str}'"
-                                "is after release date."
+                                f"Metadata field {output_field}:'{date_str}'is after release date."
                             ),
                         )
                     )
@@ -523,7 +529,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        args: FunctionArgs = None,  # args is essential - even if Pylance says it's not used
+        args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -547,8 +553,7 @@ class ProcessingFunctions:
             )
         except ValueError as e:
             error_message = (
-                f"Timestamp is {timestamp} which is not in parseable YYYY-MM-DD. "
-                f"Parsing error: {e}"
+                f"Timestamp is {timestamp} which is not in parseable YYYY-MM-DD. Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,
@@ -572,7 +577,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        args: FunctionArgs = None,
+        args: FunctionArgs,
     ) -> ProcessingResult:
         """Concatenates input fields with accession_version using the "/" separator in the order
         specified by the order argument.
@@ -582,16 +587,33 @@ class ProcessingFunctions:
 
         number_fields = len(input_data.keys()) + 1
 
-        accession_version = args["accession_version"]
+        if not isinstance(args["accession_version"], str):
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=(
+                            f"Internal Error: Function concatenate did not receive accession_version "
+                            f"ProcessingResult with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        accession_version: str = args["accession_version"]
         order = args["order"]
         type = args["type"]
 
-        # Check accessionVersion only exists once in the list:
-        if number_fields != len(order):
-            logging.error(
-                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
-                f"This is probably a configuration error. (accession_version: {accession_version})"
-            )
+        def add_errors():
             errors.append(
                 ProcessingAnnotation(
                     processedFields=[
@@ -605,28 +627,61 @@ class ProcessingFunctions:
                     "This may be a configuration error, please contact the administrator.",
                 )
             )
+
+        if not isinstance(order, list):
+            logging.error(
+                f"Concatenate: Expected order field to be a list. "
+                f"This is probably a configuration error. (accession_version: {accession_version})"
+            )
+            add_errors()
+            return ProcessingResult(
+                datum=None,
+                warnings=warnings,
+                errors=errors,
+            )
+        elif number_fields != len(order):
+            logging.error(
+                f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
+                f"This is probably a configuration error. (accession_version: {accession_version})"
+            )
+            add_errors()
+            return ProcessingResult(
+                datum=None,
+                warnings=warnings,
+                errors=errors,
+            )
+        elif not isinstance(type, list):
+            logging.error(
+                f"Concatenate: Expected type field to be a list. "
+                f"This is probably a configuration error. (accession_version: {accession_version})"
+            )
+            add_errors()
             return ProcessingResult(
                 datum=None,
                 warnings=warnings,
                 errors=errors,
             )
 
-        formatted_input_data = []
+        formatted_input_data: list[str] = []
         try:
             for i in range(len(order)):
                 if type[i] == "date":
                     processed = ProcessingFunctions.parse_and_assert_past_date(
-                        {"date": input_data[order[i]]}, output_field, input_fields
+                        {"date": input_data[order[i]]}, output_field, input_fields, args
                     )
-                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    formatted_input_data.append(
+                        "" if processed.datum is None else str(processed.datum)
+                    )
                 elif type[i] == "timestamp":
                     processed = ProcessingFunctions.parse_timestamp(
-                        {"timestamp": input_data[order[i]]}, output_field, input_fields
+                        {"timestamp": input_data[order[i]]}, output_field, input_fields, args
                     )
-                    formatted_input_data.append("" if processed.datum is None else processed.datum)
+                    formatted_input_data.append(
+                        "" if processed.datum is None else str(processed.datum)
+                    )
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else input_data[order[i]]
+                        "" if input_data[order[i]] is None else str(input_data[order[i]])
                     )
                 else:
                     formatted_input_data.append(accession_version)
@@ -666,7 +721,7 @@ class ProcessingFunctions:
         input_data: InputMetadata,
         output_field: str,
         input_fields: list[str],
-        args: FunctionArgs = None,
+        args: FunctionArgs,
     ) -> ProcessingResult:
         authors = input_data["authors"]
 
@@ -763,7 +818,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(  # noqa: C901, PLR0912
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -796,13 +851,19 @@ class ProcessingFunctions:
                         output_datum = int(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(invalid_value_annotation(input_datum, output_field, input_fields, "int"))
+                        errors.append(
+                            invalid_value_annotation(input_datum, output_field, input_fields, "int")
+                        )
                 case "float":
                     try:
                         output_datum = float(input_datum)
                     except ValueError:
                         output_datum = None
-                        errors.append(invalid_value_annotation(input_datum, output_field, input_fields, "float"))
+                        errors.append(
+                            invalid_value_annotation(
+                                input_datum, output_field, input_fields, "float"
+                            )
+                        )
                 case "boolean":
                     if input_datum.lower() == "true":
                         output_datum = True
@@ -811,7 +872,9 @@ class ProcessingFunctions:
                     else:
                         output_datum = None
                         errors.append(
-                            invalid_value_annotation(input_datum, output_field, input_fields, "boolean")
+                            invalid_value_annotation(
+                                input_datum, output_field, input_fields, "boolean"
+                            )
                         )
                 case _:
                     output_datum = input_datum
@@ -821,10 +884,10 @@ class ProcessingFunctions:
 
     @staticmethod
     def process_options(
-        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
     ) -> ProcessingResult:
         """Checks that option is in options"""
-        if "options" not in args:
+        if "options" not in args or not isinstance(args["options"], list):
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -838,8 +901,8 @@ class ProcessingFunctions:
                             for field in input_fields
                         ],
                         message=(
-                            "Website configuration error: no options specified for field "
-                            f"{output_field}, please contact an administrator.",
+                            "Website configuration error: no options list specified for field "
+                            f"{output_field}, please contact an administrator."
                         ),
                     )
                 ],
@@ -897,7 +960,7 @@ class ProcessingFunctions:
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
 
-def format_frameshift(input: str) -> str:
+def format_frameshift(input: str | None) -> str | None:
     """
     In nextclade frameshifts have the json format:
     [{
@@ -936,6 +999,8 @@ def format_frameshift(input: str) -> str:
     * Makes the range [] have an inclusive start and inclusive end
     (the default in nextclade is exclusive end)
     """
+    if input is None:
+        return None
     if input == "[]":
         return ""
 
@@ -960,7 +1025,7 @@ def format_frameshift(input: str) -> str:
     return ",".join(frame_shift_strings)
 
 
-def format_stop_codon(result: str) -> str:
+def format_stop_codon(result: str | None) -> str | None:
     """
     In nextclade stop codons have the json format:
     [   {
@@ -973,13 +1038,15 @@ def format_stop_codon(result: str) -> str:
     * converts this to a comma-separated list of strings: cdsName:codon
     * Converts stop codon positions from index-0 to index-1 (this aligns with other metrics)
     """
+    if result is None:
+        return None
     if result == "[]":
         return ""
     result = result.replace("'", '"')
     stop_codons = json.loads(result)
     stop_codon_strings = []
     for stop_codon in stop_codons:
-        stop_codon_string = f"{stop_codon["cdsName"]}:{stop_codon["codon"] + 1}"
+        stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
 

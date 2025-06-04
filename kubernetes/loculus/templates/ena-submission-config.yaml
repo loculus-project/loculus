@@ -1,11 +1,13 @@
 {{- if not .Values.disableEnaSubmission }}
 {{- $testconfig := .Values.testconfig | default false }}
+{{- $enaDepositionHost := $testconfig | ternary "127.0.0.1" "0.0.0.0" }}
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
 {{- $keycloakHost := $testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083" }}
-{{- $submitToEnaProduction := .Values.submitToEnaProduction | default false }}
-{{- $enaDbName := .Values.enaDbName | default false }}
-{{- $enaUniqueSuffix := .Values.enaUniqueSuffix | default false }}
-{{- $enaIsBroker := .Values.enaIsBroker | default false }}
+{{- $submitToEnaProduction := .Values.enaDeposition.submitToEnaProduction | default false }}
+{{- $enaDbName := .Values.enaDeposition.enaDbName | default false }}
+{{- $enaUniqueSuffix := .Values.enaDeposition.enaUniqueSuffix | default false }}
+{{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
+{{- $enaGithubTestUrl := .Values.enaDeposition.enaGithubTestUrl | default "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -18,6 +20,8 @@ data:
     is_broker: {{ $enaIsBroker }}
     unique_project_suffix: {{ $enaUniqueSuffix }}
     backend_url: {{ $backendHost }}
+    ena_deposition_host: {{ $enaDepositionHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    github_test_url: {{ $enaGithubTestUrl }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}

@@ -20,7 +20,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
     const selectedVersion = sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
         <>
-            <div className='dropdown dropdown-hover hidden sm:inline-block'>
+            <div className='dropdown dropdown-hover hidden sm:inline-block mr-2'>
                 <label tabIndex={0} className='btn btn-sm btn-outline py-1'>
                     <span className='text-sm'>
                         {selectedVersion === undefined ? 'All versions' : `Version ${selectedVersion.version}`}
@@ -64,7 +64,7 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                     </li>
                 </ul>
             </div>
-            <div className='sm:hidden inline-block'>
+            <div className='sm:hidden inline-block mr-2'>
                 <a href={routes.versionPage(accessionVersion)} className='text-xl'>
                     <IcBaselineHistory />
                 </a>

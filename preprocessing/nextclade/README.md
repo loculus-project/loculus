@@ -65,6 +65,7 @@ docker run -it --platform=linux/amd64 --network host --rm nextclade_processing p
 ## Development
 
 - Install Ruff to lint/format
+- Enable type checking. In VSCode this can be done by opening the `User Settings` (Command+shift+P on mac), navigating to `python > analysis: type checking mode` and setting this to `basic`.
 
 When deployed on kubernetes the preprocessing pipeline reads in config files which are created by `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file using the command:
 
