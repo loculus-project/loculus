@@ -12,9 +12,9 @@ export type DataTableData = {
 };
 
 function formatAuthorName(author: string): string {
-    const [last, first] = author.split(',').map((x) => x.trim());
-    if (first !== undefined && last !== undefined && first.length > 0 && last.length > 0) {
-        return `${first} ${last}`;
+    const parts = author.split(',').map((x) => x.trim());
+    if (parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0) {
+        return `${parts[1]} ${parts[0]}`;
     }
     return author.trim();
 }

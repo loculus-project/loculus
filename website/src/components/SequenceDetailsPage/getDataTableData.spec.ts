@@ -15,11 +15,7 @@ describe('getDataTableData', () => {
 
     test('should move authors to topmatter', () => {
         const data = getDataTableData(testTableDataEntries);
-        expect(data.topmatter.authors).toStrictEqual([
-            'First1 Last1',
-            'First2 Last2',
-            'First3 Last3',
-        ]);
+        expect(data.topmatter.authors).toStrictEqual(['First1 Last1', 'First2 Last2', 'First3 Last3']);
         expect(
             data.table
                 .flatMap((x) => x.rows)
