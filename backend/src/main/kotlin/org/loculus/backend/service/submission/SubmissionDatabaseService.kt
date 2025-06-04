@@ -836,6 +836,29 @@ class SubmissionDatabaseService(
         return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }
 
+    fun getPipelineVersionStatistics(): Map<String, Map<Long, Int>> {
+        val result = mutableMapOf<String, MutableMap<Long, Int>>()
+        val sql = """
+            SELECT se.organism, sep.pipeline_version, COUNT(*) as count
+            FROM sequence_entries_preprocessed_data sep
+            JOIN sequence_entries se ON se.accession = sep.accession AND se.version = sep.version
+            WHERE sep.processing_status = 'PROCESSED'
+            GROUP BY se.organism, sep.pipeline_version
+        """.trimIndent()
+        transaction {
+            exec(sql) { rs ->
+                while (rs.next()) {
+                    val organism = rs.getString("organism")
+                    val version = rs.getLong("pipeline_version")
+                    val count = rs.getInt("count")
+                    result.getOrPut(organism) { mutableMapOf() }[version] = count
+                }
+            }
+        }
+
+        return result
+    }
+
     fun revoke(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
