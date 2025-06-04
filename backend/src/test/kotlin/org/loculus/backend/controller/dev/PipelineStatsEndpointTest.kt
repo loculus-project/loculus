@@ -14,19 +14,19 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 class PipelineStatsEndpointTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `GIVEN no auth THEN unauthorized`() {
-        mockMvc.perform(get("/dev/pipeline-stats"))
+        mockMvc.perform(get("/admin/pipeline-stats"))
             .andExpect(status().isUnauthorized)
     }
 
     @Test
     fun `WHEN non superuser THEN forbidden`() {
-        mockMvc.perform(get("/dev/pipeline-stats").withAuth(jwtForDefaultUser))
+        mockMvc.perform(get("/admin/pipeline-stats").withAuth(jwtForDefaultUser))
             .andExpect(status().isForbidden)
     }
 
     @Test
     fun `WHEN superuser THEN ok`() {
-        mockMvc.perform(get("/dev/pipeline-stats").withAuth(jwtForSuperUser))
+        mockMvc.perform(get("/admin/pipeline-stats").withAuth(jwtForSuperUser))
             .andExpect(status().isOk)
     }
 }
