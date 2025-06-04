@@ -16,13 +16,14 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
 
     return (
         <>
-            <div className='pl-2'>
+            <div className='pl-2 ml-auto'>
                 <button
                     data-testid='AddIcon'
-                    className='btn btn-sm btn-circle btn-ghost'
+                    className='btn btn-sm loculusColor text-white flex items-center gap-1'
                     onClick={() => setCreateModalVisible(true)}
                 >
                     <AddBoxIcon fontSize='large' />
+                    Add SeqSet
                 </button>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
