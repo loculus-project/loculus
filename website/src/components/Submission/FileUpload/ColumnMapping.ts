@@ -40,7 +40,7 @@ export class ColumnMapping {
             }
         });
         // special case: automatically map 'submissionId' to 'id'
-        if (remainingSourceColumns.includes('submissionId') && availableFields.find(f => f.name === 'id')) {
+        if (remainingSourceColumns.includes('submissionId') && availableFields.find((f) => f.name === 'id')) {
             mapping.set('submissionId', 'id');
             availableFields = availableFields.filter((f) => f.name !== 'id');
             remainingSourceColumns = remainingSourceColumns.filter((f) => f !== 'submissionId');
