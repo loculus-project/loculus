@@ -122,10 +122,18 @@ export const Table: FC<TableProps> = ({
         }
     };
 
+    const mouseDownSelection = useRef('');
+
+    const handleRowMouseDown = () => {
+        const sel = window.getSelection();
+        mouseDownSelection.current = sel?.toString() ?? '';
+    };
+
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
-        const selection = window.getSelection();
-        if (selection?.toString()) {
-            selection.removeAllRanges();
+        // Only treat as a row click if the user didn't change the selection
+        const current = selection?.toString() ?? '';
+        if (current && current !== mouseDownSelection.current) {
+        selection?.removeAllRanges();
         if (window.getSelection()?.toString()) {
             return;
         }
@@ -216,6 +224,7 @@ export const Table: FC<TableProps> = ({
                                     className={`hover:bg-primary-100 border-b border-gray-200 ${
                                         row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                     } cursor-pointer`}
+                                    onMouseDown={handleRowMouseDown}
                                     onClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                                     onAuxClick={(e) => handleRowClick(e, row[primaryKey] as string)}
                                     data-testid='sequence-row'
