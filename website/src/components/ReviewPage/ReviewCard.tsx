@@ -42,6 +42,7 @@ type ReviewCardProps = {
     clientConfig: ClientConfig;
     organism: string;
     accessToken: string;
+    filesEnabled: boolean;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -53,6 +54,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     clientConfig,
     organism,
     accessToken,
+    filesEnabled,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
@@ -95,6 +97,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     editAccessionVersion={editAccessionVersion}
                     viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
                     viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
+                    filesEnabled={filesEnabled}
                 />
             </div>
 
@@ -126,6 +129,7 @@ type ButtonBarProps = {
     editAccessionVersion: () => void;
     viewSequences?: () => void;
     viewFiles?: () => void;
+    filesEnabled: boolean;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -135,6 +139,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     editAccessionVersion,
     viewSequences,
     viewFiles,
+    filesEnabled,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
         `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
@@ -146,7 +151,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
             <div className='flex space-x-4'>
-                {viewFiles && (
+                {filesEnabled && viewFiles && (
                     <>
                         <button
                             className={buttonBarClass(notProcessed)}
