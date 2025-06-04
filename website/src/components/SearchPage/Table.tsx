@@ -131,12 +131,13 @@ export const Table: FC<TableProps> = ({
 
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>, seqId: string) => {
         // Only treat as a row click if the user didn't change the selection
-        const current = selection?.toString() ?? '';
+        const sel = window.getSelection();
+        const current = sel?.toString() ?? '';
         if (current && current !== mouseDownSelection.current) {
         //selection?.removeAllRanges();
-        if (window.getSelection()?.toString()) {
+        
             return;
-        }
+       
         }
 
         const detectMob = () => {
