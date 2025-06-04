@@ -2,19 +2,16 @@ import type { APIRoute } from 'astro';
 
 import { getRuntimeConfig } from '../../../../config';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 
-export const GET: APIRoute = async ({ params, cookies }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
     const runtimeConfig = getRuntimeConfig();
     const { accessionVersion, fileCategory, fileName } = params;
     const { accession, version } = parseAccessionVersionFromString(accessionVersion!);
 
     const backendUrl = `${runtimeConfig.public.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
 
-    const accessToken = cookies.get('access_token')?.value;
-
-    if (!accessToken) {
-        return new Response('Unauthorized: access_token cookie missing', { status: 401 });
-    }
+    const accessToken = getAccessToken(locals.session)!;
 
     const response = await fetch(backendUrl, {
         redirect: 'manual',
