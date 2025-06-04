@@ -30,8 +30,8 @@
                     "files": {
                         "enabled": true,
                         "categories": [
-                            {"name":  "foo"},
-                            {"name":  "bar"}
+                            {"name":  "myFileCategory"},
+                            {"name":  "myOtherFileCategory"}
                         ]
                     }
                 },

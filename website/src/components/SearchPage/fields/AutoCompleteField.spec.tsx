@@ -25,7 +25,7 @@ lapisClientHooks.mockReturnValue({
 describe('AutoCompleteField', () => {
     const field: MetadataFilter = {
         name: 'testField',
-        label: 'Test Field',
+        displayName: 'Test Field',
         type: 'string',
         autocomplete: true,
     };
@@ -223,7 +223,7 @@ describe('AutoCompleteField', () => {
         const input = screen.getByLabelText('Test Field');
         await userEvent.click(input);
 
-        const clearButton = screen.getByLabelText('Clear testField');
+        const clearButton = screen.getByLabelText('Clear Test Field');
         await userEvent.click(clearButton);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);

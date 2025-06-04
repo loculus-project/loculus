@@ -5,6 +5,13 @@ seqSets:
   crossRef:
     DOIPrefix: "placeholder"
     endpoint: "https://test.crossref.org"
+  fieldsToDisplay:
+    - field: "geoLocCountry"
+      displayName: "Country"
+    - field: "sampleCollectionDate"
+      displayName: "Collection Date"
+    - field: "authors"
+      displayName: "Authors"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -48,6 +55,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade"
+        maxNumberOfRecommendedEntries: 5
         url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
     earliestReleaseDate:
       enabled: true
@@ -198,7 +206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
           # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
           # If changed, ensure it's mirrored to Pathoplexus
-          # Last check: 2024-11-01
+          # Last check: 2025-05-28
           # Last update: 2024-09-18
           - name: Afghanistan
           - name: Albania
@@ -544,7 +552,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         enableSubstringSearch: true
         order: 40
         includeInDownloadsByDefault: true
-        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
           function: check_authors
@@ -555,7 +562,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Author affiliations
         desired: true
         enableSubstringSearch: true
-        truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
         includeInDownloadsByDefault: true
@@ -1712,7 +1718,7 @@ images:
     pullPolicy: IfNotPresent
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.4.5"
+    tag: "0.5.2"
     pullPolicy: IfNotPresent
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -1807,16 +1813,18 @@ resources:
   website:
     requests:
       memory: "200Mi"
+      cpu: "100m"
     limits:
       memory: "1Gi"
   docs:
     requests:
-      memory: "200Mi"
+      memory: "100Mi"
+      cpu: "10m"
     limits:
       memory: "1Gi"
   ena-submission:
     requests:
-      memory: "80Mi"
+      memory: "200Mi"
       cpu: "10m"
     limits:
       memory: "10Gi"
@@ -1828,48 +1836,51 @@ resources:
       memory: "10Gi"
   ingest:
     requests:
-      memory: "1Gi"
+      memory: "200Mi"
       cpu: "200m"
     limits:
-      cpu: "200m"
+      cpu: "1"
       memory: "10Gi"
   keycloak:
     requests:
-      memory: "500Mi"
-      cpu: "20m"
+      memory: "700Mi"
+      cpu: "40m"
     limits:
       memory: "3Gi"
   silo:
     requests:
-      memory: "100Mi"
-      cpu: "10m"
+      memory: "200Mi"
+      cpu: "20m"
     limits:
       memory: "10Gi"
   lapis:
     requests:
-      memory: "220Mi"
-      cpu: "30m"
+      memory: "500Mi"
+      cpu: "100m"
     limits:
       memory: "5Gi"
   silo-preprocessing:
     requests:
       memory: "20Mi"
+      cpu: "20m"
     limits:
       memory: "10Gi"
   backend:
     requests:
-      memory: "640Mi"
-      cpu: "250m"
+      memory: "700Mi"
+      cpu: "200m"
     limits:
-      memory: "3Gi" # Backend requires at least 635741K of memory
+      memory: "3Gi"
   preprocessing:
     requests:
-      memory: "20Mi"
+      memory: "300Mi"
+      cpu: "50m"
     limits:
       memory: "3Gi"
   minio:
     requests:
-      memory: "200Mi"
+      memory: "400Mi"
+      cpu: "10m"
     limits:
       memory: "1Gi"
 defaultResources:

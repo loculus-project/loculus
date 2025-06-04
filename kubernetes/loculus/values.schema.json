@@ -68,11 +68,6 @@
           "type": "number",
           "description": "The minimum column width for this field on the search table."
         },
-        "truncateColumnDisplayTo": {
-          "groups": ["metadata"],
-          "type": "number",
-          "description": "The number of characters to truncate the column content to."
-        },
         "order": {
           "groups": ["metadata"],
           "type": "number",
@@ -361,6 +356,10 @@
                   "url": {
                     "type": "string",
                     "description": "URL template with placeholders. Example: 'https://tool.example.com/?data={{[unalignedNucleotideSequences+rich|fasta]}}'"
+                  },
+                  "maxNumberOfRecommendedEntries": {
+                    "type": "integer",
+                    "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
                   }
                 },
                 "required": ["name", "url"]
@@ -827,6 +826,26 @@
               "type": "string",
               "description": "The host URL for CrossRef callbacks"
             }
+          }
+        },
+        "fieldsToDisplay": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Fields to display in the SeqSets table",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "The metadata field name to display"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the field"
+              }
+            },
+            "required": ["field", "displayName"]
           }
         }
       }

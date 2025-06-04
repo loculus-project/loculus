@@ -48,6 +48,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
             />,
@@ -67,6 +68,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
             />,
@@ -92,6 +94,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={true}
             />,
@@ -117,6 +120,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
                 linkOuts={[{ name: 'Basic', url: 'http://example.com/tool?data=[unalignedNucleotideSequences]' }]}
                 dataUseTermsEnabled={true}
             />,
@@ -137,6 +141,7 @@ describe('LinkOutMenu with disabled data use terms', () => {
             <LinkOutMenu
                 downloadUrlGenerator={realDownloadUrlGenerator}
                 sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
                 linkOuts={linkOuts}
                 dataUseTermsEnabled={false}
             />,

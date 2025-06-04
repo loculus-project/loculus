@@ -134,7 +134,21 @@ const getSequenceData = async (
     const organisms = getConfiguredOrganisms();
     const promises = organisms.map(({ key }) =>
         getSequenceDataWithOrganism(accessionVersion, key, fileSuffix, undefinedVersionRedirectUrl, getter).then(
-            (result) => (result.isOk() ? ok(result.value) : Promise.reject(new Error(result.error.detail))),
+            (result) => {
+                if (result.isOk()) {
+                    if (result.value.type === ResultType.REDIRECT) {
+                        return ok(result.value);
+                    } else {
+                        if (result.value.data.trim().split('\n').length > 1) {
+                            return ok(result.value);
+                        } else {
+                            return Promise.reject(new Error('Result is empty - expected data.'));
+                        }
+                    }
+                } else {
+                    return Promise.reject(new Error(result.error.detail));
+                }
+            },
         ),
     );
 

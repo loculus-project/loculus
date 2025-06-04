@@ -258,18 +258,18 @@ The following could be implement as post-MVP features:
    na	na	segmented
    ```
 
-3. Create fasta file (genome.fasta) containing all the sequences in fasta format:
+3. Create the assembly
 
-   ```fasta
-   >ha
-   ACGT
-   >na
-   ACGT
-   ```
+a. Create fasta file (genome.fasta) containing all the sequences in fasta format:
 
-Potentially a better option is to create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/. As we are submitting as a broker it is important that we add the AUTHORS to the assembly: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship. 
+```fasta
+>ha
+ACGT
+>na
+ACGT
+```
 
-https://github.com/NBISweden/EMBLmyGFF3 will generate an embl file given a gff3 file, however it needs a gff3 file for the specific sequence that is being submitted. NIH has gff3 for each reference sequence, but we need to create one for each sequence.
+b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/ (see section 4 for more details). As we are submitting as a broker it is important that we add the AUTHORS and ADDRESS to the assembly manifest file: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship.
 
 4. Submit the files using the webin-cli:
 
@@ -310,35 +310,207 @@ When processing is finished the response should look like:
 ]
 ```
 
-## 4. Submitting annotated assemblies to ENA
+## 4 Submitting annotated assemblies to ENA
 
-In order to submit annotated assemblies you must register a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) with your study. This can be done programmatically when registering a project - however it can only be registered in the production environment.
+ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitted annotated embl files without these tags.
 
-The prefix you register must follow the listed conventions or it will not be accepted:
-- Must begin with a letter
-- All letters must be upper case
-- Must from 3 to 12 characters in length
-- All characters must be alphanumeric with no diacritics and none such as -_*
-- Each prefix can only be registered to a **single** study; you cannot reuse a prefix from another study, or one which another user has registered.
-
-Once you have registered a locus_tag_prefix it can be used to annotate flatfiles, e.g. 
+Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or tab-separated feature tables (tbl) files, these must still be converted into the required embl-annotation format.
 
 ```
-FT      /locus_tag="BN5_00001"
+nextclade run {sequence.fasta}  --output-all annotations --server {server} --output-annotation-tbl annotations.embl --dataset-name {dataset}
 ```
 
-where the locus_tag must be of the form: `<locus_tag_prefix>_<id>`. 
+The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on using this annotation object to add annotations to the .embl flat files we submit:
+
+```json
+"annotation": {
+        "genes": [
+          {
+            "index": 0,
+            "id": "NS1",
+            "name": "NS1",
+            "range": {
+              "begin": 56,
+              "end": 476
+            },
+            "cdses": [
+              {
+                "id": "NS1",
+                "name": "NS1",
+                "product": "nonstructural protein 1",
+                "segments": [
+                  {
+                    "index": 1,
+                    "id": "NS1",
+                    "name": "NS1",
+                    "range": {
+                      "begin": 56,
+                      "end": 476
+                    },
+                    "rangeLocal": {
+                      "begin": 0,
+                      "end": 420
+                    },
+                    "landmark": null,
+                    "wrappingPart": "non-wrapping",
+                    "strand": "+",
+                    "frame": 2,
+                    "phase": 0,
+                    "truncation": "none",
+                    "exceptions": [],
+                    "attributes": {
+                      "locus_tag": [
+                        "NS1"
+                      ],
+                      "seq_index": [
+                        "0"
+                      ],
+                      "product": [
+                        "nonstructural protein 1"
+                      ],
+                      "protein_id": [
+                        "QPB74302.1"
+                      ],
+                      "Name": [
+                        "NS1"
+                      ],
+                      "ID": [
+                        "CDS-0-NS1"
+                      ],
+                      "Parent": [
+                        "Gene-0-NS1"
+                      ]
+                    },
+                    "compatIsGene": false,
+                    "color": null,
+                    "gffSeqid": "LOC_0011LRU.1",
+                    "gffSource": "feature",
+                    "gffFeatureType": "CDS"
+                  }
+                ],
+                "proteins": [],
+                "exceptions": [],
+                "attributes": {
+                  "locus_tag": [
+                    "NS1"
+                  ],
+                  "codon_start": [
+                    "1"
+                  ],
+                  "product": [
+                    "nonstructural protein 1"
+                  ],
+                  "protein_id": [
+                    "QPB74302.1"
+                  ],
+                  "Name": [
+                    "NS1"
+                  ],
+                  "seq_index": [
+                    "0"
+                  ]
+                },
+                "compatIsGene": false,
+                "color": null
+              }
+            ],
+            "exceptions": [],
+            "attributes": {
+              "seq_index": [
+                "0"
+              ],
+              "ID": [
+                "Gene-0-NS1"
+              ],
+              "Name": [
+                "NS1"
+              ],
+              "product": [
+                "NS1"
+              ]
+            },
+            "compatIsCds": true,
+            "color": null,
+            "gffSeqid": "LOC_0011LRU.1",
+            "gffSource": "feature",
+            "gffFeatureType": "CDS"
+          },
+          ...
+        ]
+      }
+```
+
+Another way to add annotations to the .embl flat file is to reformat the .tbl file produced by nextclade (using the python Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an .embl flat file given a sequence's gff3 file. However, when used on the GFF3 file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output .embl flat file) making the files un-submittable without further processing. This is due to the gff3 files containing non-standard annotations (e.g. `region` and `seq_index`). A work around would be removing them from the GFF3 file before using the package. The package also does not give an option to add additional `country` and `collection_date` qualifiers to the .embl flat files which we typically add when submitting to ENA. So I decided against using it.
+
+## Submitting raw reads to ENA
+
+In order to submit raw reads you must:
+
+1. Create a bioproject object (see above)
+2. Create a biosample object (see above)
+3. Create a run object. The run submission holds information about the raw read files generated in a run of sequencing as well as their location on an FTP server.
+4. Create an experiment object. The experiment submission holds metadata that describe the methods used to sequence the sample.
+
+Webin will report two unique accession numbers for each read submission. The first starts with ERR and is called the Run accession. The other starts with ERX and is called the Experiment accession.
+
+### Submission via webin-cli
+
+1. Create a [manifest.tsv](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file) file.
+
+You can see the permitted values of all permitted fields by following the links below or running
+
+```
+java -jar webin-cli.jar -context reads -fields
+```
+
+- STUDY: Study accession or unique name (alias)
+- SAMPLE: Sample accession or unique name (alias)
+- NAME: Unique experiment name
+- PLATFORM: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-platform). Not needed if INSTRUMENT is provided. e.g. ILLUMINA
+- INSTRUMENT: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-instrument) e.g. Illumina Genome Analyzer - can be set to `unspecified`
+- INSERT_SIZE: Insert size for paired reads
+- LIBRARY_NAME: Library name (optional)
+- LIBRARY_SOURCE: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-source) -> should always be `VIRAL RNA` for us
+- LIBRARY_SELECTION: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-selection) e.g. PCR - can be set to `unspecified`
+- LIBRARY_STRATEGY: See [permitted values](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#permitted-values-for-library-strategy) e.g. WGS or WGA - can be set to `OTHER`
+- DESCRIPTION: free text library description (optional)
+
+and then link (local location of raw reads file):
+
+- BAM: Single BAM file
+- CRAM: Single CRAM file
+- FASTQ: Single fastq file
+
+2. Get read files: 1 BAM file, 1 CRAM file, 1-2 Fastq files or multiple fastq files
+
+Note For CRAM files ENA will validate that the reference sequence exists
+
+3. submit using the webin-cli
+
+```bash
+   webin-cli -[validate|submit] \
+       -context reads \
+       -manifest manifest.tsv \
+       -username Webin-XXXXX \
+       -password YYYYYY
+```
+
+### Programmatic submission
+
+There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli.
 
 # Revising Submissions to ENA
 
 ## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
-Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated. 
+
+Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated.
 
 ## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
-It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added). 
+
+It appears that all fields that were explicitly set via the manifest must be updated via an email. This includes changes to any field that is in the `manifest_fields_mapping` field of the default.yaml. Additionally, study and sample reference must stay the same and chromosome names cannot be changed (but new ones can be added).
 However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
 
-Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest. 
+Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest.
 
 ## Promises made to ENA
 

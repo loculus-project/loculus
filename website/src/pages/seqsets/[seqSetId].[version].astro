@@ -3,18 +3,24 @@ import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { AuthorDetails } from '../../components/SeqSetCitations/AuthorDetails';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
-import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
+import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { SeqSet } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
+const websiteConfig = getWebsiteConfig();
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session)!;
 const seqSetId = Astro.params.seqSetId!;
 const version = Astro.params.version!;
 const username = session?.user?.username;
+
+// Create organism key to display name mapping
+const organismDisplayNames = Object.fromEntries(
+    Object.entries(websiteConfig.organisms).map(([key, config]) => [key, config.schema.organismName]),
+);
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
@@ -105,6 +111,8 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 citedByData={seqSetCitedByResponse.value}
                                 isAdminView={seqSet.createdBy === username}
+                                fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
+                                organismDisplayNames={organismDisplayNames}
                                 client:load
                             />
                         ) : (

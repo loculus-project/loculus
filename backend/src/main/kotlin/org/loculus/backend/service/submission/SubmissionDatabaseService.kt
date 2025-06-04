@@ -104,6 +104,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
     private val s3Service: S3Service,
@@ -240,6 +241,10 @@ class SubmissionDatabaseService(
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            fileMappingPreconditionValidator
+                .validateFilenamesAreUnique(submittedProcessedData.data.files)
+                .validateCategoriesMatchSchema(submittedProcessedData.data.files, organism)
+
             val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)
@@ -1025,6 +1030,10 @@ class SubmissionDatabaseService(
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
         }
+
+        fileMappingPreconditionValidator
+            .validateFilenamesAreUnique(editedSequenceEntryData.data.files)
+            .validateCategoriesMatchSchema(editedSequenceEntryData.data.files, organism)
 
         SequenceEntriesTable.update(
             where = {
