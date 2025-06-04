@@ -6,6 +6,7 @@ import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
@@ -62,5 +63,22 @@ class GetFilesEndpointTest(
 
         filesClient.getFile(data.accession, data.version, "myFileCategory", "hello.txt", jwt = jwtForDefaultUser)
             .andExpect(status().is3xxRedirection())
+    }
+
+    @Test
+    fun `GIVEN an unpublished file WHEN requesting with alternative user THEN access is forbidden`() {
+        submissionConvenienceClient.submitDefaultFiles(includeFileMapping = true)
+        val data = submissionConvenienceClient.extractUnprocessedData().first()
+        submissionConvenienceClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                data.accession,
+                data.data.files!!.map {
+                    Pair(it.key, it.value.map { FileIdAndName(it.fileId, it.name) })
+                }.toMap(),
+            ),
+        )
+
+        filesClient.getFile(data.accession, data.version, "myFileCategory", "hello.txt", jwt = jwtForAlternativeUser)
+            .andExpect(status().isForbidden())
     }
 }
