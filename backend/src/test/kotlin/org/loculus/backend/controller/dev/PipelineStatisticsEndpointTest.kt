@@ -11,10 +11,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class PipelineStatsEndpointTest(@Autowired val mockMvc: MockMvc) {
+class PipelineStatisticsEndpointTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `GIVEN no auth THEN unauthorized`() {
-        mockMvc.perform(get("/admin/pipeline-stats"))
+        mockMvc.perform(get("/admin/pipeline-statistics"))
             .andExpect(status().isUnauthorized)
     }
 

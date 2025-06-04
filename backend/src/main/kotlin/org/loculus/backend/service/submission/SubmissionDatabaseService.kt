@@ -836,11 +836,7 @@ class SubmissionDatabaseService(
         return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }
 
-    fun getPipelineVersionStats(): Map<String, Map<Long, Int>> {
-        val organismColumn = SequenceEntriesTable.organismColumn
-        val pipelineVersionColumn = SequenceEntriesPreprocessedDataTable.pipelineVersionColumn
-        val countColumn = Count(stringLiteral("*"))
-
+    fun getPipelineVersionStatistics(): Map<String, Map<Long, Int>> {
         val result = mutableMapOf<String, MutableMap<Long, Int>>()
         val sql = """
             SELECT se.organism, sep.pipeline_version, COUNT(*) as count

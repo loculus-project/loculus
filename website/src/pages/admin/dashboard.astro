@@ -1,13 +1,13 @@
 ---
-import { PipelineStatsTable } from '../../components/DevDashboard/PipelineStatsTable';
+import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../services/backendClientFactory';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session);
-let statsResult;
+let statisticsResult;
 if (accessToken !== undefined) {
-    statsResult = await createBackendClient().getPipelineStats(accessToken);
+    statisticsResult = await createBackendClient().getPipelineStatistics(accessToken);
 }
 ---
 
@@ -17,12 +17,12 @@ if (accessToken !== undefined) {
         accessToken === undefined ? (
             <p>You must be logged in.</p>
         ) : (
-            statsResult?.match(
-                (stats) => (
+            statisticsResult?.match(
+                (statistics) => (
                     <>
                         <p class='mb-4'>Processed sequence entries per pipeline version.</p>
                         <div class='overflow-x-auto'>
-                            <PipelineStatsTable stats={stats} />
+                            <PipelineStatisticsTable statistics={statistics} />
                         </div>
                     </>
                 ),

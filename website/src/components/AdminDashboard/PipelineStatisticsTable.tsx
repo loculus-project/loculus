@@ -1,14 +1,14 @@
 import type { FC } from 'react';
 
-import type { PipelineVersionStats } from '../../types/backend';
+import type { PipelineVersionStatistics } from '../../types/backend';
 
 interface Props {
-    stats: PipelineVersionStats;
+    statistics: PipelineVersionStatistics;
 }
 
-export const PipelineStatsTable: FC<Props> = ({ stats }) => {
+export const PipelineStatisticsTable: FC<Props> = ({ statistics }) => {
     const versions = Array.from(
-        new Set(Object.values(stats).flatMap((m) => Object.keys(m).map((v) => Number(v)))),
+        new Set(Object.values(statistics).flatMap((m) => Object.keys(m).map((v) => Number(v)))),
     ).sort((a, b) => a - b);
 
     return (
@@ -24,7 +24,7 @@ export const PipelineStatsTable: FC<Props> = ({ stats }) => {
                 </tr>
             </thead>
             <tbody>
-                {Object.entries(stats).map(([organism, versionMap]) => (
+                {Object.entries(statistics).map(([organism, versionMap]) => (
                     <tr key={organism}>
                         <td className='border px-2 py-1 font-semibold'>{organism}</td>
                         {versions.map((v) => (
