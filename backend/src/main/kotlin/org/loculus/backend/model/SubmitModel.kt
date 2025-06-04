@@ -109,7 +109,7 @@ class SubmitModel(
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> = try {
         log.info {
-            "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
+            "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
 
         submissionIdFilesMappingPreconditionValidator
