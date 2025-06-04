@@ -1,4 +1,4 @@
-package org.loculus.backend.controller.dev
+package org.loculus.backend.controller.admin
 
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
