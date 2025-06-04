@@ -31,6 +31,14 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     const reviewPage = await submissionPage.submitSequence();
     await reviewPage.waitForZeroProcessing();
 
+    // check that files can be seen after processing
+    const filesDialog = await reviewPage.viewFiles();
+    expect(filesDialog.getByText('hello.txt')).toBeVisible();
+    await checkFileContent(page, 'hello.txt', 'Hello');
+    expect(filesDialog.getByText('world.txt')).toBeVisible();
+    await checkFileContent(page, 'world.txt', 'World');
+    await reviewPage.closeFilesDialog();
+
     await reviewPage.releaseValidSequences();
 
     await page.getByRole('link', { name: 'released sequences' }).click();
