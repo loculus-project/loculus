@@ -22,7 +22,7 @@ export const FilesDialog: FC<FilesDialogProps> = ({ isOpen, onClose, dataToView 
                 </div>
 
                 <div>
-                    {Object.entries(dataToView.processedData.files).map(([category, files]) => (
+                    {Object.entries(dataToView.processedData.files ?? []).map(([category, files]) => (
                         <div key={category} className='mb-4'>
                             <h3 className='font-medium'>{category}</h3>
                             <ul className='list-disc pl-5 space-y-1'>
