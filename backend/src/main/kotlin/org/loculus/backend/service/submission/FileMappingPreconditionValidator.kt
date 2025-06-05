@@ -33,7 +33,7 @@ class FileMappingPreconditionValidator(
         return this
     }
 
-    fun validateCategoriesMatchSchema(
+    fun validateCategoriesMatchSubmissionSchema(
         fileCategoriesFilesMap: FileCategoryFilesMap?,
         organism: Organism,
     ): FileMappingPreconditionValidator {
@@ -47,7 +47,7 @@ class FileMappingPreconditionValidator(
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
-                    "The category $category is not part of the configured categories for ${organism.name}.",
+                    "The category $category is not part of the configured submission categories for ${organism.name}.",
                 )
             }
         }
@@ -61,14 +61,14 @@ class FileMappingPreconditionValidator(
         if (fileCategoriesFilesMap == null) return this
         val allowedCategories = backendConfig
             .getInstanceConfig(organism)
-            .schema.files.orElse(emptyList())
+            .schema.files
             .map { it.name }
             .toSet()
 
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
-                    "The category $category is not part of the configured categories for ${organism.name}.",
+                    "The category $category is not part of the configured output categories for ${organism.name}.",
                 )
             }
         }
@@ -104,7 +104,7 @@ class SubmissionIdFilesMappingPreconditionValidator(
         organism: Organism,
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateCategoriesMatchSchema(it, organism)
+            fileMappingValidator.validateCategoriesMatchSubmissionSchema(it, organism)
         }
         return this
     }
