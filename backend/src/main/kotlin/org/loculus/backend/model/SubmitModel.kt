@@ -16,6 +16,7 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -87,6 +88,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val s3Service: S3Service,
 ) {
 
     companion object AcceptedFileTypes {
@@ -115,6 +117,7 @@ class SubmitModel(
         submissionIdFilesMappingPreconditionValidator
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+            .validateFilesExist(submissionParams.files)
 
         insertDataIntoAux(
             uploadId,
@@ -128,9 +131,11 @@ class SubmitModel(
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
         }
-        submissionParams.files?.let {
-            val fileSubmissionIds = it.keys
+        submissionParams.files?.let { submittedFiles ->
+            val fileSubmissionIds = submittedFiles.keys
             validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
+            // the check below reads the DB, so needs to be after 'insertDataIntoAux'
+            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -140,10 +145,6 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
-        }
-
-        submissionParams.files?.let { submittedFiles ->
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
