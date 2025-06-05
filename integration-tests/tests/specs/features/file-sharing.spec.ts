@@ -118,17 +118,19 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    await Promise.all([
-        page.waitForResponse(
-        
-            async (resp) => {
-
-                console.log(resp.status(),"STATUS");
-                
-                return( resp.status() === 200 && (await resp.text()) === fileContent)}
-            
-            ,
-        ),
-        page.evaluate((url) => fetch(url), fileUrl),
-    ]);
+  await Promise.all([
+  page.waitForResponse(async (resp) => {
+    // Check if this is the final response after potential redirects
+    if (resp.status() !== 200) return false;
+    
+    try {
+      const text = await resp.text();
+      return text === fileContent;
+    } catch (e) {
+      // Response body might already be consumed
+      return false;
+    }
+  }),
+  page.evaluate((url) => fetch(url), fileUrl),
+]);
 }
