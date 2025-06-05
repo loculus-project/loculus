@@ -3,6 +3,7 @@ package org.loculus.backend.config
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.StringUtils.lowerCase
 import org.loculus.backend.api.Organism
+import java.util.Optional
 
 data class BackendConfig(
     val websiteUrl: String,
@@ -53,7 +54,7 @@ data class Schema(
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
-    val files: List<OutputFileCategory>
+    val files: Optional<List<OutputFileCategory>>
 )
 
 data class SubmissionDataTypes(

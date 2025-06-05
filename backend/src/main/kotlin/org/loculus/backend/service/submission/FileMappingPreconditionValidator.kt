@@ -61,7 +61,7 @@ class FileMappingPreconditionValidator(
         if (fileCategoriesFilesMap == null) return this
         val allowedCategories = backendConfig
             .getInstanceConfig(organism)
-            .schema.files
+            .schema.files.orElse(emptyList())
             .map { it.name }
             .toSet()
 
