@@ -100,28 +100,29 @@ def process_hashes(
     previously_submitted_entry = submitted[ingested_insdc_accession]
 
     corresponding_loculus_accession = previously_submitted_entry.loculus_accession
-    if previously_submitted_entry.hash != newly_ingested_hash:
-        status = previously_submitted_entry.status
-        if status == "APPROVED_FOR_RELEASE":
-            if previously_submitted_entry.curated:
-                # Sequence has been curated before - special case
-                notify(
-                    update_manager.config,
-                    (
-                        f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
-                        f"accession {ingested_insdc_accession} has been curated before "
-                        "- do not know how to proceed"
-                    ),
-                )
-                update_manager.blocked["CURATION_ISSUE"][metadata_id] = (
-                    corresponding_loculus_accession
-                )
-                return update_manager
-            update_manager.revise[metadata_id] = corresponding_loculus_accession
-        else:
-            update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
-    else:
+
+    if previously_submitted_entry.hash == newly_ingested_hash:
         update_manager.noop[metadata_id] = corresponding_loculus_accession
+        return update_manager
+
+    status = previously_submitted_entry.status
+    if status != "APPROVED_FOR_RELEASE":
+        update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
+
+    if previously_submitted_entry.curated:
+        # Sequence has been curated before - special case
+        notify(
+            update_manager.config,
+            (
+                f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
+                f"accession {ingested_insdc_accession} has been curated before "
+                "- do not know how to proceed"
+            ),
+        )
+        update_manager.blocked["CURATION_ISSUE"][metadata_id] = corresponding_loculus_accession
+        return update_manager
+
+    update_manager.revise[metadata_id] = corresponding_loculus_accession
     return update_manager
 
 
