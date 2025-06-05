@@ -599,7 +599,7 @@ rule prepare_files:
 
 
 rule sort_fasta:
-    """Sort FASTA sequences by submissionId using two-pass to avoid memory issues"""
+    """Sort FASTA sequences by id using two-pass to avoid memory issues"""
     input:
         sequences="results/{basename}.fasta",
     output:
@@ -611,14 +611,14 @@ rule sort_fasta:
 
 
 rule sort_metadata:
-    """Sort metadata by submissionId, keep header at top of file. If file is empty or submissionId column is missing, do nothing."""
+    """Sort metadata by id, keep header at top of file. If file is empty or id column is missing, do nothing."""
     input:
         metadata="results/{basename}.tsv",
     output:
         sorted="results/{basename}_sorted.tsv",
     shell:
         """
-        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="submissionId") print i}}' {input.metadata});
+        columnNumber=$(awk -F'\\t' '{{for(i=1;i<=NF;i++) if($i=="id") print i}}' {input.metadata});
         if [ ${{columnNumber}} ]; then
         (head -n 1 {input.metadata} && tail -n +2 {input.metadata} | sort -t$'\t' -k${{columnNumber}},${{columnNumber}}) > {output.sorted}
         else
