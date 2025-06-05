@@ -38,4 +38,4 @@ Dates like the collection date of a sequence can't always be exactly given as a 
 
 ![Comparison of strict and not strict range overlap.](/images/strict_not_strict.drawio.svg)
 
-The graphic above illustrates this, in Loculus these two modes are called "strict" and "not strict". Strict means, that the range of the date of the sequences must wholy be contained in the search range. Not strict means that a partial overlap is sufficient.
+The graphic above illustrates this, in Loculus these two modes are called "strict" and "not strict". Strict means, that the range of the date of the sequences must wholly be contained in the search range. Not strict means that a partial overlap is sufficient.

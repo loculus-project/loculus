@@ -24,8 +24,6 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         return id
     }
 
-    fun getGroupId(fileId: FileId): Int? = getGroupIds(setOf(fileId))[fileId]
-
     fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
         FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
             .where { FilesTable.idColumn inList fileIds }
@@ -49,4 +47,22 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         .map { it[FilesTable.releasedAtColumn] }
         .first()
         .let { it != null }
+
+    /**
+     * Return the subset of file IDs for which the file size hasn't been checked yet or
+     * no file has been uploaded yet (and therefore there's no file size).
+     */
+    fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = FilesTable
+        .select(FilesTable.idColumn)
+        .where { FilesTable.idColumn inList fileIds and (FilesTable.sizeColumn eq null) }
+        .map { it[FilesTable.idColumn] }
+        .toSet()
+
+    fun setFileSize(fileId: FileId, size: Long) {
+        FilesTable.update({
+            FilesTable.idColumn eq fileId
+        }) {
+            it[sizeColumn] = size
+        }
+    }
 }

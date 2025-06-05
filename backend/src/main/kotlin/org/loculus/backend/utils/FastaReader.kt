@@ -1,5 +1,6 @@
 package org.loculus.backend.utils
 
+import org.loculus.backend.controller.UnprocessableEntityException
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -50,6 +51,9 @@ class FastaReader(inputStream: InputStream) :
         nextEntry = if (sampleName == null) {
             null
         } else {
+            if (sequence.isEmpty()) {
+                throw UnprocessableEntityException("No sequence data given for sample $sampleName.")
+            }
             FastaEntry(sampleName, sequence.toString())
         }
     }

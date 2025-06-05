@@ -14,8 +14,6 @@ spec:
       component: keycloak
   template:
     metadata:
-      annotations:
-        timestamp: {{ now | quote }}
       labels:
         app: loculus
         component: keycloak

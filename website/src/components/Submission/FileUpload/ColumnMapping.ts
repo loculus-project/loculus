@@ -90,13 +90,13 @@ export class ColumnMapping {
         const inputRows: string[][] = parsed.data;
         const headersInFile = inputRows.splice(0, 1)[0];
         const headers: string[] = [];
-        const indicies: number[] = [];
+        const indices: number[] = [];
         this.entries().forEach(([sourceCol, targetCol]) => {
             if (targetCol === null) return;
             headers.push(targetCol);
-            indicies.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
+            indices.push(headersInFile.findIndex((sourceHeader) => sourceHeader === sourceCol));
         });
-        const newRows = inputRows.map((row) => indicies.map((i) => row[i]));
+        const newRows = inputRows.map((row) => indices.map((i) => row[i]));
         const newFileContent = Papa.unparse([headers, ...newRows], { delimiter: '\t', newline: '\n' });
         return new File([newFileContent], 'remapped.tsv');
     }

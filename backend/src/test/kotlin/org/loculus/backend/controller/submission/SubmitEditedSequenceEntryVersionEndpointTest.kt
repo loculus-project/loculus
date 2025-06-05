@@ -10,23 +10,33 @@ import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.files.andGetFileIds
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
+)
 class SubmitEditedSequenceEntryVersionEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired val filesClient: FilesClient,
 ) {
 
     @Test
@@ -206,7 +216,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 metadata = emptyMap(),
                 unalignedNucleotideSequences = emptyMap(),
                 files = mapOf(
-                    "foo" to
+                    "myFileCategory" to
                         listOf(
                             FileIdAndName(UUID.randomUUID(), "foo.txt"),
                             FileIdAndName(UUID.randomUUID(), "foo.txt"),
@@ -245,6 +255,34 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail", containsString("unknownCategory is not part of the configured categories")),
+            )
+    }
+
+    @Test
+    fun `WHEN submitting a file ID with no file uploaded THEN an error is returned`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+        val fileId = filesClient.requestUploads(groupId).andGetFileIds()[0]
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = OriginalData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "myFileCategory" to
+                        listOf(
+                            FileIdAndName(fileId, "foo.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail", containsString("No file uploaded for file ID")),
             )
     }
 

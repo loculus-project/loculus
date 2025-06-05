@@ -1,0 +1,33 @@
+---
+import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { createBackendClient } from '../../services/backendClientFactory';
+import { getAccessToken } from '../../utils/getAccessToken';
+
+const accessToken = getAccessToken(Astro.locals.session);
+let statisticsResult;
+if (accessToken !== undefined) {
+    statisticsResult = await createBackendClient().getPipelineStatistics(accessToken);
+}
+---
+
+<BaseLayout title='Admin Dashboard'>
+    <h1 class='title mb-4'>Admin Dashboard</h1>
+    {
+        accessToken === undefined ? (
+            <p>You must be logged in.</p>
+        ) : (
+            statisticsResult?.match(
+                (statistics) => (
+                    <>
+                        <p class='mb-4'>Processed sequence entries per pipeline version.</p>
+                        <div class='overflow-x-auto'>
+                            <PipelineStatisticsTable statistics={statistics} />
+                        </div>
+                    </>
+                ),
+                (_error) => <pre>Error: this may occur if you are not a superuser.</pre>,
+            )
+        )
+    }
+</BaseLayout>

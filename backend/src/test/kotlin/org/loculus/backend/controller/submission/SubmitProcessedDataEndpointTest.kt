@@ -28,6 +28,7 @@ import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
@@ -465,7 +466,11 @@ class SubmitProcessedDataEndpointTest(
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
-        val fileId = filesClient.requestUploads(groupId = groupId, jwt = jwtForDefaultUser).andGetFileIds()[0]
+        val fileIdAndUrl = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(
@@ -473,7 +478,7 @@ class SubmitProcessedDataEndpointTest(
                 accession,
                 mapOf(
                     "myFileCategory" to listOf(
-                        FileIdAndName(fileId, "foo.txt"),
+                        FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
                     ),
                 ),
             ),
@@ -551,7 +556,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit non-existing file THEN fails`() {
+    fun `WHEN I submit non-existing file ID THEN fails`() {
         val groupId = groupManagementClient
             .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andGetGroupId()
@@ -573,6 +578,36 @@ class SubmitProcessedDataEndpointTest(
                 jsonPath(
                     "$.detail",
                     containsString("The File IDs [caaf8c66-e1ba-4c47-99b1-8c368adb9850] do not exist."),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN I submit non-existing file THEN fails`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val fileIdAndUrl = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "myFileCategory" to listOf(
+                        FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString("No file uploaded for file ID ${fileIdAndUrl.fileId}."),
                 ),
             )
     }

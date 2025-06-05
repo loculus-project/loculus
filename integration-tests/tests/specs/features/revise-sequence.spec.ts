@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { ReviewPage } from '../../pages/review.page';
 
-test('revising sequence data works: segement can be deleted; segment can be edited', async ({
+test('revising sequence data works: segment can be deleted; segment can be edited', async ({
     pageWithReleasedSequence: page,
 }) => {
     test.setTimeout(60000);

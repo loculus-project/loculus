@@ -69,7 +69,7 @@ my-organism:
 
 The example above configures the `raw_reads` file category.
 
-If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as ouput files, or generate additional fields or process them in any other way.
+If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
 ## Configuring output files
 

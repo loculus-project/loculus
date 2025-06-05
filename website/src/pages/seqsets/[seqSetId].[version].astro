@@ -59,8 +59,8 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
     <div class='flex flex-col justify-center max-w-7xl'>
         {
             seqSet !== undefined ? (
-                <div class='flex flex-row items-left'>
-                    <div class='w-1/5 flex flex-col justify-start items-center'>
+                <div class='flex flex-col md:flex-row items-left'>
+                    <div class='w-full md:w-1/5 flex flex-col justify-start items-center'>
                         {authorResponse?.isOk() ? (
                             <AuthorDetails
                                 displayFullDetails={false}
@@ -77,7 +77,7 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
                             />
                         )}
                     </div>
-                    <div class='w-4/5 pl-6'>
+                    <div class='w-full md:w-4/5 md:pl-6 mt-6 md:mt-0'>
                         {seqSetRecordsResponse.isOk() ? (
                             <SeqSetItemActions
                                 clientConfig={clientConfig}

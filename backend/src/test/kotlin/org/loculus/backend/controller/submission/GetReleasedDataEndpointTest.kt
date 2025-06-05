@@ -376,7 +376,7 @@ class GetReleasedDataEndpointTest(
     }
 
     /**
-     * This test ist relevant for EarliestReleaseDateFinder which relies on this particular ordering to be returned.
+     * This test is relevant for EarliestReleaseDateFinder which relies on this particular ordering to be returned.
      */
     @Test
     fun `GIVEN multiple accessions with multiple versions THEN results are ordered by accession and version`() {
