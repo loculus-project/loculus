@@ -15,6 +15,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -173,10 +174,22 @@ def submit_processed_sequences(
     logger.info("Processed data submitted successfully")
 
 
-# TODO add a new function here to request presigned write URLs
-# use get_jwt like in submit_processed_sequences
+def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
+    url = config.backend_host.rstrip("/") + "/files/request-upload"
+    params = {"groupId": group_id, "numberFiles": number_of_files}
+    headers = {"Authorization": "Bearer " + get_jwt(config)}
+    response = requests.post(url, headers=headers, params=params, timeout=10)
+    if not response.ok:
+        raise RuntimeError(f"Upload request failed: {response.status_code}, {response.text}")
+    return [FileUploadInfo(**item) for item in response.json()]
 
-# TODO add a new function here to upload a file
+
+def upload_string_to_presigned_url(content: str, url: str) -> None:
+    headers = {"Content-Type": "application/octet-stream"}
+    response = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=10)
+    if not response.ok:
+        raise RuntimeError(f"Upload failed: {response.status_code}, {response.text}")
+
 
 def download_minimizer(url, save_path):
     try:
