@@ -71,3 +71,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: npm
+    directory: integration-tests/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
