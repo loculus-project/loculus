@@ -44,7 +44,7 @@ export class SearchPage {
     async enterMutation(mutation: string) {
         await this.page.getByPlaceholder('Mutations').click();
         await this.page.getByLabel('Mutations').fill(mutation);
-        await this.page.getByRole('option', { name: mutation }).click();
+        await this.page.getByLabel('Mutations').press('Enter');
     }
 
     async enterAccessions(accessions: string) {
