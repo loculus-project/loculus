@@ -124,3 +124,8 @@ class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+@dataclass
+class FileUploadInfo:
+    fileId: str
+    url: str
