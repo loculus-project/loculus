@@ -30,6 +30,7 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
     await reviewPage.waitForZeroProcessing();
+    await expect(page.getByTestId(/view-files/).first()).toBeEnabled({ timeout: 15000 });
 
     // check that files can be seen after processing
     const filesDialog = await reviewPage.viewFiles();
