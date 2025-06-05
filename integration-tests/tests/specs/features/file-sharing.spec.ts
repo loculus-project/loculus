@@ -34,9 +34,13 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     // check that files can be seen after processing
     const filesDialog = await reviewPage.viewFiles();
     await expect(filesDialog.getByText('hello.txt')).toBeVisible();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'hello.txt', 'Hello');
+    await page.waitForTimeout(5000);
     await expect(filesDialog.getByText('world.txt')).toBeVisible();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'world.txt', 'World');
+    await page.waitForTimeout(5000);
     await reviewPage.closeFilesDialog();
 
     await reviewPage.releaseValidSequences();
@@ -112,22 +116,12 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
 async function checkFileContent(page: Page, fileName: string, fileContent: string) {
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    
-    // Get the file URL
+    // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    
-    // Set up the response listener first, matching the specific URL
-    const responsePromise = page.waitForResponse(
-        async (resp) => {
-            return resp.url() === fileUrl && 
-                   resp.status() === 200 && 
-                   (await resp.text()) === fileContent;
-        }
-    );
-    
-    // Then initiate the fetch
-    await page.evaluate((url) => fetch(url), fileUrl);
-    
-    // Wait for the response to complete
-    await responsePromise;
+    await Promise.all([
+        page.waitForResponse(
+            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
+        ),
+        page.evaluate((url) => fetch(url), fileUrl),
+    ]);
 }
