@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
 
 import psycopg2
 import pytz
@@ -81,7 +81,7 @@ class Status(Enum):
         return self.name
 
 
-class TableName(Enum):
+class TableName(StrEnum):
     PROJECT_TABLE = "project_table"
     SAMPLE_TABLE = "sample_table"
     ASSEMBLY_TABLE = "assembly_table"
@@ -97,7 +97,7 @@ class TableName(Enum):
             raise ValueError(msg)
 
 
-def is_valid_column_name(table_name: TableName, column_name: str) -> bool:
+def validate_column_name(table_name: str, column_name: str):
     match table_name:
         case "project_table":
             field_names = ProjectTableEntry.__annotations__.keys()
@@ -189,7 +189,7 @@ def delete_records_in_db(
             # Validate table and column names to prevent SQL injection
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"DELETE FROM {table_name}"  # noqa: S608
 
@@ -222,7 +222,7 @@ def find_conditions_in_db(
             # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"SELECT * FROM {table_name}"  # noqa: S608
 
@@ -326,7 +326,7 @@ def update_db_where_conditions(
             # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"UPDATE {table_name} SET "  # noqa: S608
 
@@ -456,7 +456,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
     try:
         with con, con.cursor() as cur:
             for key in conditions:
-                is_valid_column_name("submission_table", key)
+                validate_column_name("submission_table", key)
 
             query = "SELECT * from submission_table"
 
@@ -517,7 +517,7 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
         return False
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
     all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
     return len(all_versions) > 1 and version == all_versions[-1]
@@ -528,7 +528,7 @@ def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> in
         return None
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
     all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
     return all_versions[-2]

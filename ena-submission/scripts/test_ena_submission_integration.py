@@ -45,6 +45,7 @@ from ena_deposition.create_sample import (
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
     StatusAll,
+    TableName,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -62,7 +63,7 @@ input_file = "./test/approved_ena_submission_list_test.json"
 
 
 def delete_all_records(db_config: SimpleConnectionPool):
-    for table_name in ["submission_table", "project_table", "sample_table", "assembly_table"]:
+    for table_name in [TableName.SUBMISSION_TABLE, TableName.PROJECT_TABLE, TableName.SAMPLE_TABLE, TableName.ASSEMBLY_TABLE]:
         delete_records_in_db(db_config, table_name, {})
 
 
@@ -84,7 +85,7 @@ def check_project_submission_started(
             len(
                 find_conditions_in_db(
                     db_config,
-                    "project_table",
+                    TableName.PROJECT_TABLE,
                     conditions={"group_id": group_id, "organism": organism, "status": "READY"},
                 )
             )
@@ -101,7 +102,7 @@ def check_sample_submission_started(
             len(
                 find_conditions_in_db(
                     db_config,
-                    "sample_table",
+                    TableName.SAMPLE_TABLE,
                     conditions={"accession": accession, "version": version, "status": "READY"},
                 )
             )
@@ -116,7 +117,7 @@ def check_sample_submission_submitted(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "sample_table",
+            TableName.SAMPLE_TABLE,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
@@ -138,7 +139,7 @@ def check_sample_submission_has_errors(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "sample_table",
+            TableName.SAMPLE_TABLE,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
@@ -156,7 +157,7 @@ def check_assembly_submission_waiting(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "assembly_table",
+            TableName.ASSEMBLY_TABLE,
             conditions={"accession": accession, "version": version, "status": "WAITING"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
@@ -171,7 +172,7 @@ def check_assembly_submission_has_errors(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "assembly_table",
+            TableName.ASSEMBLY_TABLE,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
@@ -184,7 +185,7 @@ def check_assembly_submission_started(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "assembly_table",
+            TableName.ASSEMBLY_TABLE,
             conditions={"accession": accession, "version": version, "status": "READY"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
@@ -197,7 +198,7 @@ def check_assembly_submission_submitted(
         accession, version = full_accession.split(".")
         rows = find_conditions_in_db(
             db_config,
-            "assembly_table",
+            TableName.ASSEMBLY_TABLE,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, f"Assembly for {full_accession} not found in assembly table."
@@ -233,7 +234,7 @@ def check_project_submission_submitted(
         organism = data["organism"]
         rows = find_conditions_in_db(
             db_config,
-            "project_table",
+            TableName.PROJECT_TABLE,
             conditions={"group_id": group_id, "organism": organism, "status": "SUBMITTED"},
         )
         assert len(rows) == 1, (
@@ -258,7 +259,7 @@ def check_project_submission_has_errors(
         organism = data["organism"]
         rows = find_conditions_in_db(
             db_config,
-            "project_table",
+            TableName.PROJECT_TABLE,
             conditions={"group_id": group_id, "organism": organism, "status": "HAS_ERRORS"},
         )
         assert len(rows) == 1, (
@@ -281,7 +282,7 @@ def set_db_to_known_erz_accession(
         if organism == "cchf":
             update_db_where_conditions(
                 db_config,
-                "assembly_table",
+                TableName.ASSEMBLY_TABLE,
                 {"accession": accession, "version": version},
                 {
                     "result": json.dumps(
@@ -292,7 +293,7 @@ def set_db_to_known_erz_accession(
         if organism == "west-nile":
             update_db_where_conditions(
                 db_config,
-                "assembly_table",
+                TableName.ASSEMBLY_TABLE,
                 {"accession": accession, "version": version},
                 {"result": json.dumps({"erz_accession": "ERZ24908522", "segment_order": ["main"]})},
             )
