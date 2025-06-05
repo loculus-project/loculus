@@ -342,6 +342,9 @@ organisms:
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       {{- include "loculus.submissionDataTypes" . | nindent 6 }}
+      {{ if .files }}
+      files: {{ .files | toYaml | nindent 6 }}
+      {{ end }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
