@@ -17,7 +17,7 @@ import dpath
 import pandas as pd
 from Bio import SeqIO
 
-from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
+from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences, request_upload, upload_string_to_presigned_url
 from .config import Config
 from .datatypes import (
     AccessionVersion,
@@ -966,7 +966,12 @@ def run(config: Config) -> None:
                 )
                 continue
 
-            # TODO in here, upload a dummy hello world file for now
+            for processed_entry in processed:
+                group_id = 1337
+                upload_info = request_upload(group_id, 1, config)[0]
+                file_id = upload_info.fileId
+                url = upload_info.url
+                upload_string_to_presigned_url("Hello World!", url)
 
             try:
                 submit_processed_sequences(processed, dataset_dir, config)

@@ -93,6 +93,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         }
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
+            group_id=json_object["groupId"],
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
@@ -180,7 +181,8 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, headers=headers, params=params, timeout=10)
     if not response.ok:
-        raise RuntimeError(f"Upload request failed: {response.status_code}, {response.text}")
+        msg = f"Upload request failed: {response.status_code}, {response.text}"
+        raise RuntimeError(msg)
     return [FileUploadInfo(**item) for item in response.json()]
 
 
@@ -188,7 +190,8 @@ def upload_string_to_presigned_url(content: str, url: str) -> None:
     headers = {"Content-Type": "application/octet-stream"}
     response = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=10)
     if not response.ok:
-        raise RuntimeError(f"Upload failed: {response.status_code}, {response.text}")
+        msg = f"Upload failed: {response.status_code}, {response.text}"
+        raise RuntimeError(msg)
 
 
 def download_minimizer(url, save_path):

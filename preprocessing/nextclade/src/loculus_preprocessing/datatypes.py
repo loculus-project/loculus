@@ -52,6 +52,7 @@ class ProcessingAnnotation:
 @dataclass
 class UnprocessedData:
     submitter: str
+    group_id: int
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
 
