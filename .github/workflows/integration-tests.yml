@@ -60,7 +60,7 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
-        run: cd integration-tests && npm i
+        run: cd integration-tests && npm ci
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
