@@ -94,20 +94,21 @@ def process_hashes(
     """
     Decide if metadata_id should be submitted, revised, or noop
     """
+    previously_submitted_entry = submitted[ingested_insdc_accession]
+    corresponding_loculus_accession = previously_submitted_entry.loculus_accession
+    status = previously_submitted_entry.status
+
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
         return update_manager
-    previously_submitted_entry = submitted[ingested_insdc_accession]
-
-    corresponding_loculus_accession = previously_submitted_entry.loculus_accession
 
     if previously_submitted_entry.hash == newly_ingested_hash:
         update_manager.noop[metadata_id] = corresponding_loculus_accession
         return update_manager
 
-    status = previously_submitted_entry.status
     if status != "APPROVED_FOR_RELEASE":
         update_manager.blocked[status][metadata_id] = corresponding_loculus_accession
+        return update_manager
 
     if previously_submitted_entry.curated:
         # Sequence has been curated before - special case
