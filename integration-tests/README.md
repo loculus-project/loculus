@@ -51,10 +51,8 @@ This server will be running the `main` branch images from the GitHub repository.
 
 ### Option 2: Run against the remote Loculus preview server
 
-Edit `playwright.config.ts` temporarily, replacing `baseURL: 'http://localhost:3000'` with  `baseURL: 'http://[branch_name].loculus.org'`
+Run the tests against the preview environment:
 
-### Run tests
+    NODE_TLS_REJECT_UNAUTHORIZED=0 BASE_URL=https://review-files.loculus.org npx playwright test --workers=2
 
-Run the tests:
-
-    npx playwright test
+You can optionally pass specific test files after the command above.
