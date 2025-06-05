@@ -974,6 +974,7 @@ def run(config: Config) -> None:
 
             for processed_entry in processed:
                 group_id = int(str(processed_entry.data.metadata["groupId"]))
+                del processed_entry.data.metadata["groupId"]  # Remove groupId after extraction
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
