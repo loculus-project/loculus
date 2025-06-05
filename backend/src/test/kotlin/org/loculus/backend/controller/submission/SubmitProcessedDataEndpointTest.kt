@@ -470,7 +470,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadContent(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(

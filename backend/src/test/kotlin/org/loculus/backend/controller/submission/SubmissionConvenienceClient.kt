@@ -523,9 +523,9 @@ class SubmissionConvenienceClient(
     }
 
     /**
-     * Upload a file (content) to a presigned write URL (S3).
+     * Upload a file to a presigned write URL (S3).
      */
-    fun uploadContent(presignedWriteUrl: String, content: String) {
+    fun uploadFile(presignedWriteUrl: String, content: String) {
         val client = HttpClient.newBuilder().build()
         val fileContent = content.toByteArray()
 
