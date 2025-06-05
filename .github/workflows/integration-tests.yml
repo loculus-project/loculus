@@ -6,6 +6,7 @@ on:
       - "backend/**"
       - "keycloak/**"
       - "kubernetes/**"
+      - "preprocessing/**"
       - "website/**"
       - "deploy.py"
       - "integration-tests/**"
