@@ -17,6 +17,8 @@ data class BackendConfig(
     )
 }
 
+data class OutputFileCategory(val name: String)
+
 data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)

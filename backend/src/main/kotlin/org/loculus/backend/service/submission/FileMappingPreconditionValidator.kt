@@ -82,6 +82,27 @@ class FileMappingPreconditionValidator(
         }
         return this
     }
+
+    fun validateCategoriesMatchOutputSchema(
+        fileCategoriesFilesMap: FileCategoryFilesMap?,
+        organism: Organism,
+    ): FileMappingPreconditionValidator {
+        if (fileCategoriesFilesMap == null) return this
+        val allowedCategories = backendConfig
+            .getInstanceConfig(organism)
+            .schema.files
+            .map { it.name }
+            .toSet()
+
+        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
+            if (!allowedCategories.contains(category)) {
+                throw UnprocessableEntityException(
+                    "The category $category is not part of the configured categories for ${organism.name}.",
+                )
+            }
+        }
+        return this
+    }
 }
 
 @Component
