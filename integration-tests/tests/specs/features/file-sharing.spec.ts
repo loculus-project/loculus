@@ -48,8 +48,12 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     }
 
     await page.getByLabel('SearchResult').click();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'hello.txt', 'Hello');
+    // sleep for 5 secs
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'world.txt', 'World');
+    await page.waitForTimeout(5000);
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
@@ -106,13 +110,14 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
     await checkFileContent(page, 'bar.txt', 'Bar');
 });
 
-export async function checkFileContent(page: Page, fileName: string, expected: string) {
+async function checkFileContent(page: Page, fileName: string, fileContent: string) {
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-  
-    const href = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    if (!href) throw new Error(`Link “${fileName}” has no href`);
-  
-    const resp = await page.request.get(href);
-    expect(resp.status()).toBe(200);
-    expect(await resp.text()).toBe(expected);
-  }
+    // check response instead of page content, because the file might also trigger a download in some cases.
+    const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
+    await Promise.all([
+        page.waitForResponse(
+            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
+        ),
+        page.evaluate((url) => fetch(url), fileUrl),
+    ]);
+}
