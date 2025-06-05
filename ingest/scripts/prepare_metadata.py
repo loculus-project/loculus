@@ -137,6 +137,9 @@ def main(
         # 2. field is in keys_to_keep but is "" or None
         filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
 
+        # rename "id" to "submissionId" for back-compatibility with old hashes
+        
+        filtered_record["submissionId"] = filtered_record.pop("id")
         
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
