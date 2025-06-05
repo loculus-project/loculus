@@ -97,7 +97,7 @@ A submission adds new [sequence entries](#sequence-entry). See also [revision](#
 
 ### ID
 
-When users upload [sequence entries](#sequence-entry), they have to provide an ID to link the entries in the [metadata](#metadata) file and the FASTA file. Each ID must be unique within the submission, but re-use across submissions is acceptable.
+When users upload [sequence entries](#sequence-entry), they have to provide an ID to link the entries in the [metadata](#metadata) file and the FASTA file. Each ID must be unique within the submission, but re-use across submissions is acceptable (though advised against).
 
 ### Submitter
 
