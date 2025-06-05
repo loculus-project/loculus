@@ -49,7 +49,8 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         .let { it != null }
 
     /**
-     * Return the subset of file IDs that either do not exist or have not been checked yet.
+     * Return the subset of file IDs for which the file size hasn't been checked yet or
+     * no file has been uploaded yet (and therefore there's no file size).
      */
     fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = FilesTable
         .select(FilesTable.idColumn)
