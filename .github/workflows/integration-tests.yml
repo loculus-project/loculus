@@ -22,6 +22,12 @@ jobs:
       checks: read
       actions: read # Required by workflow-telemetry-action
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chromium
+          - firefox
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -74,6 +80,8 @@ jobs:
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run Integration test
+        env:
+          BROWSER: ${{ matrix.browser }}
         run: |
           set -o pipefail
           cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
@@ -85,7 +93,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: integration-tests/playwright-report/
           retention-days: 30
       - name: List running pods
@@ -104,5 +112,5 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: kubernetes-logs
+          name: kubernetes-logs-${{ matrix.browser }}
           path: kubernetes_logs/

@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const browser = process.env.BROWSER;
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -11,7 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+const config = {
     testDir: './tests',
     /* Run tests in files in parallel */
     fullyParallel: true,
@@ -61,4 +63,10 @@ export default defineConfig({
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
     ],
-});
+};
+
+if (browser) {
+    config.projects = config.projects.filter((p) => p.name.startsWith(browser));
+}
+
+export default defineConfig(config);
