@@ -66,9 +66,9 @@ const config = {
 };
 
 if (browser) {
-  config.projects = config.projects.filter((p) => 
-    p.name.startsWith(browser) || p.name === 'readonly setup'
-  );
+    config.projects = config.projects.filter(
+        (p) => p.name.startsWith(browser) || p.name === 'readonly setup',
+    );
 }
 
 export default defineConfig(config);
