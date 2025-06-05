@@ -1,16 +1,33 @@
 ---
+import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getMetadataDisplayNames, getRuntimeConfig } from '../../../../config';
+import {
+    getMetadataDisplayNames,
+    getRuntimeConfig,
+    getGroupedInputFields,
+    getReferenceGenomesSequenceNames,
+    getSchema,
+} from '../../../../config';
 import { type ClientConfig } from '../../../../types/runtimeConfig';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 const clientConfig: ClientConfig = getRuntimeConfig().public;
 const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organism);
+const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
+const schema = getSchema(cleanedOrganism.key);
+const segmentNames = getReferenceGenomesSequenceNames(cleanedOrganism.key).nucleotideSequences;
 ---
 
 <SubmissionPageWrapper title='Review current submissions' groupsResult={groupsResult}>
@@ -23,6 +40,9 @@ const metadataDisplayNames: Map<string, string> = getMetadataDisplayNames(organi
                     group={group}
                     accessToken={getAccessToken(Astro.locals.session)!}
                     metadataDisplayNames={metadataDisplayNames}
+                    groupedInputFields={groupedInputFields}
+                    segmentNames={segmentNames}
+                    submissionDataTypes={schema.submissionDataTypes}
                     client:load
                 />
             ),

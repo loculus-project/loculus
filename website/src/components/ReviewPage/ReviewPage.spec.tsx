@@ -29,6 +29,9 @@ function renderReviewPage() {
             metadataDisplayNames={new Map()}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
+            groupedInputFields={new Map()}
+            segmentNames={[]}
+            submissionDataTypes={{ consensusSequences: true }}
         />,
     );
 }
