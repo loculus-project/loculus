@@ -10,7 +10,7 @@ The process of submitting revisions is very similar to original submission. The 
 
 The metadata file should include all the metadata fields that were originally included, **both** those that you wish to update and that should remain the same. (Not including a metadata column will set its value to 'empty'.)
 
-The metadata file should only have rows of data for the sequences in the FASTA file. It needs to include an `accession` column, which includes the Loculus accessions assigned at initial submission. You should also include the `id` column, which will match the sequence names in your FASTA file.
+The metadata file should only have rows of data for the sequences in the FASTA file. It needs to include an `accession` column, which includes the Loculus accessions assigned at initial submission. You should also include the `id` column, which will match the sequence ids in your FASTA file. (In the case of segmented organisms, the FASTA ids will additionally contain segment suffix, e.g. `_L`  for segment L)
 
 ## Preparing the FASTA file
 
