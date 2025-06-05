@@ -25,7 +25,7 @@ data class FileSharing(val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE)
 
 /**
  * The types URLs that can be output for a file.
- * We can either link direclty to the file in S3, or link to the proxy endpoint on
+ * We can either link directly to the file in S3, or link to the proxy endpoint on
  * the website.
  */
 enum class FileUrlType {
