@@ -106,14 +106,32 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
     await checkFileContent(page, 'bar.txt', 'Bar');
 });
 
-async function checkFileContent(page: Page, fileName: string, fileContent: string) {
-    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    // check response instead of page content, because the file might also trigger a download in some cases.
-    const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    await Promise.all([
-        page.waitForResponse(
-            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
-        ),
-        page.evaluate((url) => fetch(url), fileUrl),
+export async function checkFileContent(
+    page: Page,
+    fileName: string,
+    expectedContent: string,
+  ) {
+    // 1. Make sure we are on the Files view.
+    await expect(
+      page.getByRole('heading', { name: 'Files' }),
+    ).toBeVisible();
+  
+    // 2. Resolve the download URL from the link element.
+    const link = page.getByRole('link', { name: fileName });
+    const fileUrl = await link.getAttribute('href');
+    if (!fileUrl) {
+      throw new Error(`Link “${fileName}” has no href attribute`);
+    }
+  
+    // 3. Start the request inside the browser, then watch for its response.
+    const [response] = await Promise.all([
+      // Wait only for the response we care about. No body calls here.
+      page.waitForResponse((r) => r.url() === fileUrl && r.status() === 200),
+      // In-page fetch makes the request appear in the network recorder.
+      page.evaluate((url) => fetch(url, { cache: 'no-store' }), fileUrl),
     ]);
-}
+  
+    // 4. Now it is 100 % safe to read the body.
+    const body = await response.text();
+    expect(body).toBe(expectedContent);
+  }
