@@ -30,7 +30,7 @@ Loculus expects:
 
 ### Multi-segmented Pathogens
 
-Loculus expects multi-segmented pathogens to have one unique ID per **isolate** (pathogen sample containing all segments). However, `fasta` files should still have a separate entry/record per segment. Therefore, each record id should include the unique ID of the isolate and the segment name, for example: `ID + '_' + segmentName`. The metadata is uploaded per isolate, i.e. there will be only one row for each `ID` and segmented metadata parameters need to be uploaded individually, i.e. under `length_{segmentName}` etc.
+Loculus expects multi-segmented pathogens to have one unique ID per **isolate** (pathogen sample containing all segments). However, `fasta` files should still have a separate entry/record per segment. Therefore, each record's FASTA id should include the unique ID of the isolate and the segment name, for example: `ID + '_' + segmentName`. The metadata is uploaded per isolate, i.e. there will be only one row for each `ID` and segmented metadata parameters need to be uploaded individually, i.e. under `length_{segmentName}` etc.
 
 ### Website
 
