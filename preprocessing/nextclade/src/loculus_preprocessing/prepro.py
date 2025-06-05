@@ -270,6 +270,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
+        input_metadata[id]["groupId"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
@@ -728,10 +729,14 @@ def process_single(  # noqa: C901
             )
 
         submitter = unprocessed.inputMetadata["submitter"]
+        group_id = int(str(unprocessed.inputMetadata["groupId"]))
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
+        group_id = unprocessed.group_id
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+
+    output_metadata["groupId"] = group_id
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
@@ -968,7 +973,7 @@ def run(config: Config) -> None:
                 continue
 
             for processed_entry in processed:
-                group_id = 1337
+                group_id = int(str(processed_entry.data.metadata["groupId"]))
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
