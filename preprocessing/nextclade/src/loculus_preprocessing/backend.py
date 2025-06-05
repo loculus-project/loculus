@@ -8,6 +8,7 @@ import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
+from urllib.parse import urlparse
 
 import jwt
 import pytz
@@ -176,7 +177,9 @@ def submit_processed_sequences(
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
-    url = config.backend_host.rstrip("/") + "/files/request-upload"
+    parsed = urlparse(config.backend_host)  # we need to parse this here, because we don't want the organism in there.
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    url = base_url + "/files/request-upload"
     params = {"groupId": group_id, "numberFiles": number_of_files}
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, headers=headers, params=params, timeout=10)
