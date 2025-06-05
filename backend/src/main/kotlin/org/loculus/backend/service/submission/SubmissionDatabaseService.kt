@@ -243,7 +243,7 @@ class SubmissionDatabaseService(
             }
             fileMappingPreconditionValidator
                 .validateFilenamesAreUnique(submittedProcessedData.data.files)
-                .validateCategoriesMatchSchema(submittedProcessedData.data.files, organism)
+                .validateCategoriesMatchOutputSchema(submittedProcessedData.data.files, organism)
 
             val processingResult = submittedProcessedData.processingResult()
 
