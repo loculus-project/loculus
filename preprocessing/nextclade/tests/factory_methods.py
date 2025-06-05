@@ -36,6 +36,7 @@ class UnprocessedEntryFactory:
             accessionVersion=f"LOC_{accession_id}.1",
             data=UnprocessedData(
                 submitter="test_submitter",
+                group_id=1,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences={"main": ""},
             ),
