@@ -58,11 +58,8 @@ class FileMappingPreconditionValidator(
         val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
         uncheckedFileIds.forEach { fileId ->
             val fileSize = s3Service.getFileSize(fileId)
-            if (fileSize == null) {
-                throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
-            } else {
-                filesDatabaseService.setFileSize(fileId, fileSize)
-            }
+                ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
+            filesDatabaseService.setFileSize(fileId, fileSize)
         }
         return this
     }
