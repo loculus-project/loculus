@@ -91,6 +91,12 @@ class UnprocessedAfterNextclade:
 
 
 @dataclass
+class FileIdAndName:
+    fileId: str  # noqa: N815
+    name: str
+
+
+@dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
     unalignedNucleotideSequences: dict[str, Any]  # noqa: N815
@@ -98,6 +104,7 @@ class ProcessedData:
     nucleotideInsertions: dict[str, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
+    files: dict[str, list[FileIdAndName]] | None = None
 
 
 @dataclass
@@ -126,7 +133,8 @@ class ProcessingResult:
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
 
+
 @dataclass
 class FileUploadInfo:
-    fileId: str
+    fileId: str  # noqa: N815
     url: str

@@ -26,6 +26,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileIdAndName,
     GeneName,
     GenericSequence,
     InputMetadata,
@@ -972,6 +973,11 @@ def run(config: Config) -> None:
                 file_id = upload_info.fileId
                 url = upload_info.url
                 upload_string_to_presigned_url("Hello World!", url)
+                processed_entry.data.files = {
+                    "raw_reads": [
+                        FileIdAndName(fileId=file_id, name="hello.txt")
+                    ]
+                }
 
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
