@@ -5,6 +5,30 @@ import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/back
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
+function generateAndDownloadFastaFile(
+    accessionVersion: string,
+    sequenceData: string,
+    segmentKey?: string,
+    isSingleSegment: boolean = false,
+) {
+    const fileName =
+        isSingleSegment || !segmentKey ? `${accessionVersion}.fasta` : `${accessionVersion}_${segmentKey}.fasta`;
+
+    const header = isSingleSegment || !segmentKey ? accessionVersion : `${accessionVersion}_${segmentKey}`;
+
+    const fileContent = `>${header}\n${sequenceData}`;
+
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
 export class EditableSequences {
     private constructor(public readonly rows: Row[]) {}
 
@@ -94,8 +118,15 @@ export class EditableSequences {
 type SequenceFormProps = {
     editableSequences: EditableSequences;
     setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
+    dataToEdit?: SequenceEntryToEdit;
+    isLoading?: boolean;
 };
-export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEditableSequences }) => {
+export const SequencesForm: FC<SequenceFormProps> = ({
+    editableSequences,
+    setEditableSequences,
+    dataToEdit,
+    isLoading,
+}) => {
     const singleSegment = editableSequences.rows.length === 1;
     return (
         <>
@@ -126,6 +157,20 @@ export const SequencesForm: FC<SequenceFormProps> = ({ editableSequences, setEdi
                                     : undefined
                             }
                             showUndo={true}
+                            onDownload={
+                                field.initialValue.length > 0 && dataToEdit
+                                    ? () => {
+                                          const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
+                                          generateAndDownloadFastaFile(
+                                              accessionVersion,
+                                              field.initialValue,
+                                              field.key,
+                                              singleSegment,
+                                          );
+                                      }
+                                    : undefined
+                            }
+                            downloadDisabled={isLoading}
                         />
                     </div>
                 ))}
