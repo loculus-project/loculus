@@ -34,9 +34,13 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     // check that files can be seen after processing
     const filesDialog = await reviewPage.viewFiles();
     await expect(filesDialog.getByText('hello.txt')).toBeVisible();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'hello.txt', 'Hello');
+    await page.waitForTimeout(5000);
     await expect(filesDialog.getByText('world.txt')).toBeVisible();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'world.txt', 'World');
+    await page.waitForTimeout(5000);
     await reviewPage.closeFilesDialog();
 
     await reviewPage.releaseValidSequences();
@@ -48,8 +52,12 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     }
 
     await page.getByLabel('SearchResult').click();
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'hello.txt', 'Hello');
+    // sleep for 5 secs
+    await page.waitForTimeout(5000);
     await checkFileContent(page, 'world.txt', 'World');
+    await page.waitForTimeout(5000);
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
@@ -110,10 +118,19 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    await Promise.all([
-        page.waitForResponse(
-            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
-        ),
-        page.evaluate((url) => fetch(url), fileUrl),
-    ]);
+  await Promise.all([
+  page.waitForResponse(async (resp) => {
+    // Check if this is the final response after potential redirects
+    if (resp.status() !== 200) return false;
+    
+    try {
+      const text = await resp.text();
+      return text === fileContent;
+    } catch (e) {
+      // Response body might already be consumed
+      return false;
+    }
+  }),
+  page.evaluate((url) => fetch(url), fileUrl),
+]);
 }
