@@ -120,7 +120,14 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
     await Promise.all([
         page.waitForResponse(
-            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
+        
+            async (resp) => {
+
+                console.log(resp.status(),"STATUS");
+                
+                return( resp.status() === 200 && (await resp.text()) === fileContent)}
+            
+            ,
         ),
         page.evaluate((url) => fetch(url), fileUrl),
     ]);
