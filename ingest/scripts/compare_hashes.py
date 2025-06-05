@@ -87,7 +87,7 @@ def sample_out_hashed_records(
 def process_hashes(
     ingested_insdc_accession: InsdcAccession,
     metadata_id: SubmissionId,
-    ingested_hash: float | None,
+    newly_ingested_hash: float | None,
     submitted: dict[InsdcAccession, LatestLoculusVersion],
     update_manager: SequenceUpdateManager,
 ):
@@ -97,13 +97,13 @@ def process_hashes(
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
         return update_manager
-    entry = submitted[ingested_insdc_accession]
+    previously_submitted_entry = submitted[ingested_insdc_accession]
 
-    corresponding_loculus_accession = entry.loculus_accession
-    if entry.hash != ingested_hash:
-        status = entry.status
+    corresponding_loculus_accession = previously_submitted_entry.loculus_accession
+    if previously_submitted_entry.hash != newly_ingested_hash:
+        status = previously_submitted_entry.status
         if status == "APPROVED_FOR_RELEASE":
-            if entry.curated:
+            if previously_submitted_entry.curated:
                 # Sequence has been curated before - special case
                 notify(
                     update_manager.config,

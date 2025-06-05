@@ -353,7 +353,7 @@ rule prepare_metadata:
         python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
-            --sequence-hashes {input.sequence_hashes} \
+            --sequence-hashes-file {input.sequence_hashes} \
             {params.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
