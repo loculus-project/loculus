@@ -979,7 +979,7 @@ def run(config: Config) -> None:
                 url = upload_info.url
                 upload_string_to_presigned_url("Hello World!", url)
                 processed_entry.data.files = {
-                    "raw_reads": [
+                    "annotations": [
                         FileIdAndName(fileId=file_id, name="hello.txt")
                     ]
                 }
