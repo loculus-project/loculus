@@ -43,7 +43,11 @@ export const AuthorList: FC<AuthorsListProps> = ({ authors }) => {
                 {data.afterEllipsis.map((author, index) => (
                     <span key={index}>
                         {author}
-                        {index === data.afterEllipsis.length - 2 ? ' & ' : index !== data.afterEllipsis.length - 1 ? ', ' : ''}
+                        {index === data.afterEllipsis.length - 2
+                            ? ' & '
+                            : index !== data.afterEllipsis.length - 1
+                              ? ', '
+                              : ''}
                     </span>
                 ))}
             </>
