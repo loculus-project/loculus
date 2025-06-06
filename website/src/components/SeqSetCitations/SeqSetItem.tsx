@@ -4,62 +4,17 @@ import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { CitationPlot } from './CitationPlot';
+import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type CitedByResult, type SeqSet, type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
+import { type CitedByResult, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('SeqSetItem');
-
-type SeqSetRecordsTableProps = {
-    seqSetRecords: SeqSetRecord[];
-    sortByKey?: keyof SeqSetRecord;
-};
-
-const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortByKey = 'isFocal' }) => {
-    if (seqSetRecords.length === 0) {
-        return null;
-    }
-
-    const accessionOutlink = {
-        [SeqSetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
-    };
-
-    const sortedSeqRecords = seqSetRecords.sort((a: SeqSetRecord, b: SeqSetRecord) => {
-        const x = a[sortByKey];
-        const y = b[sortByKey];
-        return x > y ? -1 : x < y ? 1 : 0;
-    });
-
-    return (
-        <table className='table-auto w-full '>
-            <thead>
-                <tr>
-                    <th className='w-1/3 text-left font-medium'>Accession</th>
-                    <th className='w-1/3 text-left font-medium'>Context</th>
-                </tr>
-            </thead>
-            <tbody>
-                {sortedSeqRecords.map((seqSetRecord, index) => {
-                    return (
-                        <tr key={`accessionData-${index}`} className='hover:bg-primary-100 border-gray-100'>
-                            <td className='text-left'>
-                                <a href={accessionOutlink[seqSetRecord.type](seqSetRecord.accession)} target='_blank'>
-                                    {seqSetRecord.accession}
-                                </a>
-                            </td>
-                            <td className='text-left'>{seqSetRecord.isFocal ? 'Focal' : 'Background'}</td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </table>
-    );
-};
 
 type SeqSetItemProps = {
     clientConfig: ClientConfig;
@@ -68,6 +23,8 @@ type SeqSetItemProps = {
     seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
     isAdminView?: boolean;
+    fieldsToDisplay?: { field: string; displayName: string }[];
+    organismDisplayNames?: Record<string, string>;
 };
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
@@ -77,6 +34,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetRecords,
     citedByData,
     isAdminView = false,
+    fieldsToDisplay,
+    organismDisplayNames,
 }) => {
     const [page, setPage] = useState(1);
     const sequencesPerPage = 10;
@@ -187,9 +146,14 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col my-4 max-w-xl'>
+            <div className='flex flex-col my-4'>
                 <p className='text-xl my-4 font-semibold'>Sequences</p>
-                <SeqSetRecordsTable seqSetRecords={getPaginatedSeqSetRecords()} />
+                <SeqSetRecordsTableWithMetadata
+                    seqSetRecords={getPaginatedSeqSetRecords()}
+                    clientConfig={clientConfig}
+                    fieldsToDisplay={fieldsToDisplay}
+                    organismDisplayNames={organismDisplayNames}
+                />
                 {getMaxPages() > 1 ? (
                     <MUIPagination
                         className='my-4 w-full flex justify-center'

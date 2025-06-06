@@ -156,10 +156,10 @@ export class BulkSubmissionPage extends SubmissionPage {
     ): Promise<() => Promise<void>> {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         const submissionIds = Object.keys(fileContents);
-        void Promise.all(
+        await Promise.all(
             submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
         );
-        void Promise.all(
+        await Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
                 return Object.entries(files).map(([fileName, fileContent]) =>
                     fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),

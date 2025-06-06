@@ -170,6 +170,9 @@ enableLoginNavigationItem: {{ $.Values.website.websiteConfig.enableLoginNavigati
 enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissionNavigationItem }}
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
+{{- if $.Values.seqSets.fieldsToDisplay }}
+seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
+{{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
@@ -261,9 +264,6 @@ organisms:
   {{- end }}
   {{- if .hideOnSequenceDetailsPage }}
   hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
-  {{- end }}
-  {{- if .truncateColumnDisplayTo }}
-  truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
   {{- end }}
   {{- if .columnWidth }}
   columnWidth: {{ .columnWidth }}

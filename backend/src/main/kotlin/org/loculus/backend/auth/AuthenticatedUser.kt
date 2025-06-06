@@ -38,7 +38,7 @@ class AnonymousUser : User()
 @Component
 class UserConverter : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean =
-        AuthenticatedUser::class.java.isAssignableFrom(parameter.parameterType)
+        User::class.java.isAssignableFrom(parameter.parameterType)
 
     override fun resolveArgument(
         parameter: MethodParameter,

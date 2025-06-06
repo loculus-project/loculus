@@ -32,11 +32,9 @@ export const AuthorDetails: FC<Props> = ({
     };
 
     const renderPartialDetails = () => (
-        <div className='flex flex-col items-center justify-center'>
-            <AccountCircleIcon fontSize={60} />
-            <div className='flex flex-col items-left justify-center'>
-                <div className='text-60'>{renderName()}</div>
-            </div>
+        <div className='flex flex-row items-center text-sm text-gray-500'>
+            <AccountCircleIcon fontSize={20} className='mr-1' />
+            <span>{renderName()}</span>
         </div>
     );
 

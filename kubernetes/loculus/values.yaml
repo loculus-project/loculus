@@ -5,6 +5,13 @@ seqSets:
   crossRef:
     DOIPrefix: "placeholder"
     endpoint: "https://test.crossref.org"
+  fieldsToDisplay:
+    - field: "geoLocCountry"
+      displayName: "Country"
+    - field: "sampleCollectionDate"
+      displayName: "Collection Date"
+    - field: "authors"
+      displayName: "Authors"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -199,7 +206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
           # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
           # If changed, ensure it's mirrored to Pathoplexus
-          # Last check: 2024-11-01
+          # Last check: 2025-05-28
           # Last update: 2024-09-18
           - name: Afghanistan
           - name: Albania
@@ -545,7 +552,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         enableSubstringSearch: true
         order: 40
         includeInDownloadsByDefault: true
-        truncateColumnDisplayTo: 25
         ingest: ncbiSubmitterNames
         preprocessing:
           function: check_authors
@@ -556,7 +562,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Author affiliations
         desired: true
         enableSubstringSearch: true
-        truncateColumnDisplayTo: 15
         header: Authors
         ingest: ncbiSubmitterAffiliation
         includeInDownloadsByDefault: true
@@ -1713,7 +1718,7 @@ images:
     pullPolicy: IfNotPresent
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.1"
+    tag: "0.5.2"
     pullPolicy: IfNotPresent
   website:
     repository: "ghcr.io/loculus-project/website"

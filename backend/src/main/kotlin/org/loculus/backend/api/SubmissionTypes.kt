@@ -364,8 +364,8 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
 typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
 
 fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
-    it.values
-}.flatten().map { it.fileId }.toSet()
+    it.fileIds
+}.toSet()
 
 /**
  * A file category like 'raw_reads' or 'logs'.
@@ -380,6 +380,10 @@ typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
 val FileCategoryFilesMap.categories: Set<FileCategory>
     get() = this.keys
+
+/** All file IDs used in the map. */
+val FileCategoryFilesMap.fileIds: Set<FileId>
+    get() = this.values.flatMap { it.map { it.fileId } }.toSet()
 
 fun FileCategoryFilesMap.addUrls(
     buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,

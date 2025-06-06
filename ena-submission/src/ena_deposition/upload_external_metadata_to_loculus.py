@@ -15,6 +15,7 @@ from .config import Config
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     StatusAll,
+    TableName,
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
@@ -36,7 +37,7 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
 
     # Get corresponding entry in the project table for (group_id, organism)
     corresponding_project = find_conditions_in_db(
-        db_config, table_name="project_table", conditions=project_id
+        db_config, table_name=TableName.PROJECT_TABLE, conditions=project_id
     )
     if len(corresponding_project) == 1:
         data["externalMetadata"]["bioprojectAccession"] = corresponding_project[0]["result"][
@@ -46,7 +47,7 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         raise Exception
     # Check corresponding entry in the sample table for (accession, version)
     corresponding_sample = find_conditions_in_db(
-        db_config, table_name="sample_table", conditions=seq_key
+        db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
     )
     if len(corresponding_sample) == 1:
         data["externalMetadata"]["biosampleAccession"] = corresponding_sample[0]["result"][
@@ -56,7 +57,7 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         raise Exception
     # Check corresponding entry in the assembly table for (accession, version)
     corresponding_assembly = find_conditions_in_db(
-        db_config, table_name="assembly_table", conditions=seq_key
+        db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
     )
     if len(corresponding_assembly) == 1:
         # TODO(https://github.com/loculus-project/loculus/issues/2945):
@@ -88,7 +89,7 @@ def get_external_metadata_and_send_to_loculus(
     # Get external metadata
     conditions = {"status_all": StatusAll.SUBMITTED_ALL}
     submitted_all = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     for entry in submitted_all:
         accession = entry["accession"]
@@ -115,7 +116,7 @@ def get_external_metadata_and_send_to_loculus(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -138,7 +139,7 @@ def get_external_metadata_and_send_to_loculus(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )

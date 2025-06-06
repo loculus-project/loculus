@@ -5,6 +5,7 @@ from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     ProcessedData,
     ProcessedEntry,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
     UnprocessedData,
     UnprocessedEntry,
@@ -52,7 +53,7 @@ class ProcessedEntryFactory:
 
     def create_processed_entry(
         self,
-        metadata_dict: dict[str, str],
+        metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
         metadata_errors: list[ProcessingAnnotationTestCase] | None = None,
         metadata_warnings: list[ProcessingAnnotationTestCase] | None = None,

@@ -29,7 +29,7 @@ export const customDisplay = z.object({
 
 /**
  * RangeOverlapSearch to configure on two fields that together allow to query
- * For an overlap of a search range and a targer range
+ * For an overlap of a search range and a target range
  */
 export const rangeOverlapSearch = z.object({
     /**
@@ -48,7 +48,6 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
-    truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
@@ -169,6 +168,11 @@ const sequenceFlaggingConfig = z.object({
 });
 export type SequenceFlaggingConfig = z.infer<typeof sequenceFlaggingConfig>;
 
+const fieldToDisplay = z.object({
+    field: z.string(),
+    displayName: z.string(),
+});
+
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),
     organisms: z.record(instanceConfig),
@@ -180,6 +184,7 @@ export const websiteConfig = z.object({
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
     enableSeqSets: z.boolean(),
+    seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),
     enableSubmissionPages: z.boolean(),

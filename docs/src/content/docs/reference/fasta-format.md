@@ -27,3 +27,5 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 ```
 
 Here, three segments are given named `L`, `M` and `S`, and the ID for the whole sequence is `test_NIHPAK`.
+
+A segment cannot be empty.

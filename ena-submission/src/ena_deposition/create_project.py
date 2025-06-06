@@ -31,6 +31,7 @@ from .submission_db_helper import (
     ProjectTableEntry,
     Status,
     StatusAll,
+    TableName,
     add_to_project_table,
     db_init,
     find_conditions_in_db,
@@ -99,7 +100,7 @@ def set_project_table_entry(db_config, config, row):
     bioproject = row["metadata"]["bioprojectAccession"]
 
     corresponding_group = find_conditions_in_db(
-        db_config, table_name="project_table", conditions=group_key
+        db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
     )
     corresponding_project = [
         project
@@ -117,7 +118,7 @@ def set_project_table_entry(db_config, config, row):
         }
         update_db_where_conditions(
             db_config,
-            table_name="submission_table",
+            table_name=TableName.SUBMISSION_TABLE,
             conditions=seq_key,
             update_values=update_values,
         )
@@ -158,7 +159,7 @@ def set_project_table_entry(db_config, config, row):
         }
         update_db_where_conditions(
             db_config,
-            table_name="submission_table",
+            table_name=TableName.SUBMISSION_TABLE,
             conditions=seq_key,
             update_values=update_values,
         )
@@ -179,7 +180,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
     ready_to_submit = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
@@ -196,7 +197,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         # Create a default project entry for (group_id, organism)
         # Check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
-            db_config, table_name="project_table", conditions=group_key
+            db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
         )
         if len(corresponding_project) == 1:
             if corresponding_project[0]["status"] == str(Status.SUBMITTED):
@@ -207,7 +208,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                 }
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -215,7 +216,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                 update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -234,7 +235,7 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
             }
             update_db_where_conditions(
                 db_config,
-                table_name="submission_table",
+                table_name=TableName.SUBMISSION_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -249,7 +250,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     """
     conditions = {"status_all": StatusAll.SUBMITTING_PROJECT}
     submitting_project = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     logger.debug(
         f"Found {len(submitting_project)} entries in submission_table in status SUBMITTING_PROJECT"
@@ -260,7 +261,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
         # 1. check if there exists an entry in the project table for (group_id, organism)
         corresponding_project = find_conditions_in_db(
-            db_config, table_name="project_table", conditions=group_key
+            db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
         )
         if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
             Status.SUBMITTED
@@ -272,7 +273,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             }
             update_db_where_conditions(
                 db_config,
-                table_name="submission_table",
+                table_name=TableName.SUBMISSION_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -309,7 +310,7 @@ def project_table_create(
     )
     conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
-        db_config, table_name="project_table", conditions=conditions
+        db_config, table_name=TableName.PROJECT_TABLE, conditions=conditions
     )
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
@@ -330,7 +331,7 @@ def project_table_create(
         }
         number_rows_updated = update_db_where_conditions(
             db_config,
-            table_name="project_table",
+            table_name=TableName.PROJECT_TABLE,
             conditions=group_key,
             update_values=update_values,
         )
@@ -363,7 +364,7 @@ def project_table_create(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="project_table",
+                    table_name=TableName.PROJECT_TABLE,
                     conditions=group_key,
                     update_values=update_values,
                 )
@@ -388,7 +389,7 @@ def project_table_create(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="project_table",
+                    table_name=TableName.PROJECT_TABLE,
                     conditions=group_key,
                     update_values=update_values,
                 )
@@ -410,7 +411,7 @@ def project_table_handle_errors(
     2. If time since last slack_notification is over slack_time_threshold send notification
     """
     entries_with_errors = find_errors_in_db(
-        db_config, "project_table", time_threshold=time_threshold
+        db_config, TableName.PROJECT_TABLE, time_threshold=time_threshold
     )
     if len(entries_with_errors) > 0:
         error_msg = (
