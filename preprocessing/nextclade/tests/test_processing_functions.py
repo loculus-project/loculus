@@ -12,6 +12,7 @@ from factory_methods import (
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
     UnprocessedData,
     UnprocessedEntry,
@@ -33,7 +34,7 @@ test_config_file = "tests/test_config.yaml"
 class Case:
     name: str
     metadata: dict[str, str | None]
-    expected_metadata: dict[str, str | None]
+    expected_metadata: dict[str, ProcessedMetadataValue]
     expected_errors: list[ProcessingAnnotationTestCase]
     expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
