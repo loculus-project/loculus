@@ -147,7 +147,6 @@ def main(
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
-        found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
             write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path, columns_list)

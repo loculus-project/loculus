@@ -182,7 +182,7 @@ def write_grouped_metadata(
     # Map from original accession to the new concatenated accession
     fasta_id_map: dict[Accession, SubmissionId] = {}
     ungrouped_accessions = set()
-    different_values_log = {}
+    different_values_log: dict[str, int] = {}
     count_total = 0
     count_ungrouped = 0
     for record in orjsonl.stream(input_metadata_path):  # type: ignore
@@ -279,14 +279,14 @@ def get_groups_object(groups_json_path: str):
         for accession in metadata:
             accession_to_group[accession] = group
 
-    found_groups = {group: [] for group in override_groups}
+    found_groups: dict[GroupName, list[dict[str, Any]]] = {group: [] for group in override_groups}
 
     return Groups(accession_to_group, override_groups, found_groups)
 
 
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
-@click.option("--groups", required=True, type=click.Path(exists=True))
+@click.option("--groups-file", required=True, type=click.Path(exists=True))
 @click.option("--input-seq", required=True, type=click.Path(exists=True))
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
 @click.option("--output-seq", required=True, type=click.Path())
@@ -300,7 +300,7 @@ def get_groups_object(groups_json_path: str):
 )
 def main(  # noqa: PLR0913, PLR0917
     config_file: str,
-    groups: str,
+    groups_file: str,
     input_seq: str,
     input_metadata: str,
     output_seq: str,
@@ -321,7 +321,7 @@ def main(  # noqa: PLR0913, PLR0917
     if not config.segmented:
         raise ValueError({"ERROR: You are running a function that requires segmented data"})
 
-    groups: Groups = get_groups_object(groups)
+    groups: Groups = get_groups_object(groups_file)
 
     fasta_id_map, ungrouped_accessions = write_grouped_metadata(
         input_metadata,

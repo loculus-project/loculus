@@ -61,6 +61,13 @@ class Config:
     segmented: bool
 
 
+# Build equivalence classes based on shared fields
+# Use shared fields as the key to group the data
+SegmentName = str
+Accession = str
+EquivalenceClasses = dict[str, dict[SegmentName, list[Accession]]]
+
+
 # submissionId is actually NCBI accession
 INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
 
@@ -130,12 +137,6 @@ def main(
         set(all_fields) - insdc_segment_specific_fields - INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS
     )
     logger.debug(f"Shared metadata fields: {shared_fields}")
-
-    # Build equivalence classes based on shared fields
-    # Use shared fields as the key to group the data
-    type SegmentName = str
-    type Accession = str
-    type EquivalenceClasses = dict[tuple[str, str], dict[SegmentName, list[Accession]]]
 
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
