@@ -242,7 +242,7 @@ def construct_submitted_dict(
                 insdc_to_loculus_accession_map[insdc_accession] = latest
                 continue
             if latest.status == "REVOKED":
-                # If the new one is revoked, keep the old one
+                # If the next one is revoked, keep the current one
                 continue
             message = (
                 f"INSDC accession {insdc_accession} has multiple loculus accessions: "
