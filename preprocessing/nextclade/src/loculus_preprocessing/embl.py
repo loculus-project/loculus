@@ -154,7 +154,7 @@ def create_flatfile(
 ):
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
-    organism = organism_metadata.get("scientific_name", "Unknown")
+    organism: str = organism_metadata.get("scientific_name", "Unknown")
     description = get_description(accession, version, config.db_name)
     authors = get_authors(metadata.get("authors", ""))
     moleculetype = get_molecule_type(organism_metadata)
@@ -184,13 +184,12 @@ def create_flatfile(
         sequence = SeqRecord(
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
-            annotations={},  # TODO
-            # annotations={
-            #     "molecule_type": seqIO_moleculetype.get(str(moleculetype), "DNA"),
-            #     "organism": organism,
-            #     "topology": organism_metadata.get("topology", "linear"),
-            #     "references": [reference],
-            # },
+            annotations={
+                "molecule_type": seqIO_moleculetype.get(str(moleculetype), "DNA"),
+                "organism": organism,
+                "topology": organism_metadata.get("topology", "linear"),
+                "references": "foo",  # [reference],  -- TODO
+            },
             description=description,
         )
 
