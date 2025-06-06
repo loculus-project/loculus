@@ -951,11 +951,6 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
         logger.info("Nextclade dataset downloaded successfully")
 
 
-class DummyEmblConfig:
-    db_name = "test_db"
-    annotations = {}
-
-
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
@@ -988,23 +983,14 @@ def run(config: Config) -> None:
                 )
                 continue
 
-            dummy_config = DummyEmblConfig()  # TODO
-
-            organism_metadata = {  # TODO
-                "scientific_name": "foo",
-                "molecule_type": "GENOMIC_DNA"
-            }
-
             for processed_entry in processed:
                 group_id = int(str(processed_entry.data.metadata["groupId"]))
                 del processed_entry.data.metadata["groupId"]  # Remove groupId after extraction
-                file_content = str(processed_entry.data.annotations)
-                create_flatfile(
-                    dummy_config,
+                file_content = create_flatfile(
+                    config,
                     processed_entry.accession,
                     processed_entry.version,
                     processed_entry.data.metadata,
-                    organism_metadata,
                     processed_entry.data.unalignedNucleotideSequences,
                     None,
                     processed_entry.data.annotations,

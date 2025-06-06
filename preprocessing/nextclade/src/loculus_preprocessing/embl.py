@@ -9,6 +9,8 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 
+from .config import Config
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,23 +41,25 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
 def get_authors(authors: str) -> str:
     try:
         return reformat_authors_from_loculus_to_embl_style(authors)
-    except Exception:
+    except Exception as err:
         msg = f"Was unable to format authors: {authors} as ENA expects"
-        raise ValueError(msg)
+        raise ValueError(msg) from err
 
 
-def get_molecule_type(organism_metadata: dict[str, str]):
+def get_molecule_type(molecule_type: str | None):
     # Dummy enum for MoleculeType
     class MoleculeType:
         GENOMIC_DNA = "GENOMIC_DNA"
         GENOMIC_RNA = "GENOMIC_RNA"
         VIRAL_CRNA = "VIRAL_CRNA"
+
         def __init__(self, value): self.value = value
         def __str__(self): return self.value
     try:
-        return MoleculeType(organism_metadata.get("molecule_type"))
+        return MoleculeType(molecule_type)
     except Exception as err:
-        raise ValueError(f"Invalid molecule type: {organism_metadata.get('molecule_type')}") from err
+        msg = f"Invalid molecule type: {molecule_type}"
+        raise ValueError(msg) from err
 
 
 def get_seq_features(
@@ -120,6 +124,7 @@ def get_seq_features(
                 for r, s in zip(ranges, strands, strict=False)
             ]
             # compound_location = locations[0] if len(locations) == 1 else locations
+            # TODO - the list of locations caused a type error
             compound_location = locations[0]
             qualifiers = {
                 new_key: attributes_cds[old_key]
@@ -143,21 +148,21 @@ def get_seq_features(
 
 
 def create_flatfile(
-    config,
+    config: Config,
     accession,
     version,
     metadata,
-    organism_metadata,
     unaligned_nucleotide_sequences,
     dir,
     annotation_object: dict[str, Any] | None = None,
 ):
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
-    organism: str = organism_metadata.get("scientific_name", "Unknown")
-    description = get_description(accession, version, config.db_name)
+    description = get_description(accession, version, "Loculus")  # TODO - read the db name from the config too?
+    organism = config.scientific_name
     authors = get_authors(metadata.get("authors", ""))
-    moleculetype = get_molecule_type(organism_metadata)
+    molecule_type = get_molecule_type(config.molecule_type)
+    topology = "linear"  # TODO - read from the config as well?
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -185,9 +190,9 @@ def create_flatfile(
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype.get(str(moleculetype), "DNA"),
+                "molecule_type": seqIO_moleculetype.get(str(molecule_type), "DNA"),
                 "organism": organism,
-                "topology": organism_metadata.get("topology", "linear"),
+                "topology": topology,
                 "references": "foo",  # [reference],  -- TODO
             },
             description=description,
@@ -197,7 +202,7 @@ def create_flatfile(
             FeatureLocation(start=0, end=len(sequence.seq)),
             type="source",
             qualifiers={
-                "molecule_type": str(moleculetype),
+                "molecule_type": str(molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,
