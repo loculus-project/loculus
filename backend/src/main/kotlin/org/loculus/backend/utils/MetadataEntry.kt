@@ -12,13 +12,7 @@ import java.io.InputStreamReader
 
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
-fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val csvParser = CSVParser(
-        InputStreamReader(metadataInputStream),
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-    )
-
-    val headerNames = csvParser.headerNames
+fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     val submissionIdHeaders = listOf(
         HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
         HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
@@ -32,7 +26,17 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
             "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )
     }
-    val submissionIdHeader = submissionIdHeaders.first()
+    return submissionIdHeaders.first()
+}
+
+fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
+    val csvParser = CSVParser(
+        InputStreamReader(metadataInputStream),
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+    )
+
+    val headerNames = csvParser.headerNames
+    val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
 
     return csvParser.asSequence().map { record ->
         val submissionId = record[submissionIdHeader]
@@ -68,20 +72,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
     )
 
     val headerNames = csvParser.headerNames
-    val submissionIdHeaders = listOf(
-        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
-        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
-    ).filter { headerNames.contains(it) }
-
-    when {
-        submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
-            "The revised metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
-        )
-        submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
-            "The revised metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
-        )
-    }
-    val submissionIdHeader = submissionIdHeaders.first()
+    val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
 
     if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(
