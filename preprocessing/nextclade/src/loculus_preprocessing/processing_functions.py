@@ -860,7 +860,7 @@ class ProcessingFunctions:
                         output_datum = float(input_datum)
                         if math.isnan(output_datum):
                             output_datum = None
-                        if math.isinf(output_datum):
+                        elif math.isinf(output_datum):
                             raise ValueError()
                     except ValueError:
                         output_datum = None
