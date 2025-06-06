@@ -1,8 +1,6 @@
 import gzip
 import io
 import logging
-import os
-import tempfile
 from typing import Any
 
 from Bio import SeqIO
@@ -18,7 +16,7 @@ logger = logging.getLogger(__name__)
 def get_country(metadata: dict[str, str]) -> str:
     country = metadata.get("geoLocCountry", "Unknown")
     admin_levels = ["geoLocAdmin1", "geoLocAdmin2"]
-    admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)]) # type: ignore
+    admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])  # type: ignore
     return f"{country}: {admin}" if admin else country
 
 
@@ -63,7 +61,7 @@ def get_molecule_type(molecule_type: str | None):
         raise ValueError(msg) from err
 
 
-def get_seq_features(
+def get_seq_features(  # noqa: PLR0914
     annotation_object: dict[str, Any], sequence_str: str, config
 ) -> list[SeqFeature]:
     """
@@ -156,7 +154,7 @@ def gzip_string(content: str) -> bytes:
     return buffer.getvalue()
 
 
-def create_flatfile(
+def create_flatfile(  # noqa: PLR0913, PLR0917
     config: Config,
     accession,
     version,
@@ -166,7 +164,8 @@ def create_flatfile(
 ) -> str:
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
-    description = get_description(accession, version, "Loculus")  # TODO - read the db name from the config too?
+    # TODO - "Loculus" hardcoded; read the db name from the config too?
+    description = get_description(accession, version, "Loculus")
     organism = config.scientific_name
     authors = get_authors(metadata.get("authors", ""))
     molecule_type = get_molecule_type(config.molecule_type)
@@ -194,8 +193,8 @@ def create_flatfile(
                 "molecule_type": seqIO_moleculetype.get(str(molecule_type), "DNA"),
                 "organism": organism,
                 "topology": topology,
-                "references": "foo",  # [reference],  -- TODO
-            },
+                "references": [reference],
+            },  # type: ignore
             description=description,
         )
 
