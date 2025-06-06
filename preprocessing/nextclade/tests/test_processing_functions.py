@@ -380,6 +380,28 @@ test_case_definitions = [
         },
         expected_errors=[],
     ),
+    Case(
+        name="infinity_float",
+        metadata={
+            "submissionId": "infinity_float",
+            "percentage_float": "Infinity",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+        },
+        accession_id="15",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_15.1/2022-11-01",
+        },
+        expected_errors=[
+            ProcessingAnnotationTestCase(
+                ["percentage_float"],
+                ["percentage_float"],
+                "Invalid float value: Infinity for field percentage_float.",
+            ),
+        ],
+    ),
 ]
 
 accepted_authors = {
