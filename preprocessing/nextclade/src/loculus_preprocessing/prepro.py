@@ -415,7 +415,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
-            )
+            )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -825,6 +825,15 @@ def process_single(  # noqa: C901
                 message=("No segment aligned."),
             )
         )
+    annotations = {}
+    if unprocessed.nextcladeMetadata is not None:
+        for segment in config.nucleotideSequences:
+            if segment in unprocessed.nextcladeMetadata:
+                annotations[segment] = None
+                if unprocessed.nextcladeMetadata[segment]:
+                    annotations[segment] = unprocessed.nextcladeMetadata[segment].get(
+                        "annotation", None
+                    )
 
     return ProcessedEntry(
         accession=accession_from_str(id),
@@ -836,6 +845,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            annotations=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -975,10 +985,12 @@ def run(config: Config) -> None:
             for processed_entry in processed:
                 group_id = int(str(processed_entry.data.metadata["groupId"]))
                 del processed_entry.data.metadata["groupId"]  # Remove groupId after extraction
+                file_content = str(processed_entry.data.annotations)
+                processed_entry.data.annotations = None  # remove it so it's not submitted
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
-                upload_string_to_presigned_url("Hello World!", url)
+                upload_string_to_presigned_url(file_content, url)
                 processed_entry.data.files = {
                     "annotations": [
                         FileIdAndName(fileId=file_id, name="hello.txt")
