@@ -200,6 +200,7 @@ def construct_submitted_dict(
     loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
         get_loculus_accession_to_latest_version_map(old_hashes)
     )
+    logger.info(f"Constructed loculus accession to latest version map: {len(loculus_accession_to_latest_version_map)} entries")
 
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
