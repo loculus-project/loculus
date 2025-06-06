@@ -183,7 +183,7 @@ class BatchIterator:
     record_counter: int = 0
 
     metadata_header: str | None = None
-    submission_id_index: int | None = None  # index of submissionId in metadata header
+    submission_id_index: int = 0  # index of submissionId in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
@@ -276,6 +276,10 @@ def post_fasta_batches(
                 batch_it.record_counter > 1
                 and batch_it.record_counter % config.batch_chunk_size == 1
             ):
+                if not batch_it.metadata_header:
+                    msg = f"Metadata header not found before record: {batch_it.record_counter}"
+                    logger.error(msg)
+                    raise ValueError(msg)
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -401,7 +405,7 @@ def approve(config: Config):
     return response.json()
 
 
-def get_sequence_status(config: Config):
+def get_sequence_status(config: Config) -> dict[str, dict[int, str]]:
     """Get status of each sequence"""
     url = f"{organism_url(config)}/get-sequences"
 
@@ -412,7 +416,7 @@ def get_sequence_status(config: Config):
     response = make_request(HTTPMethod.GET, url, config, params=params)
 
     # Turn into dict with {accession: {version: status}}
-    result = defaultdict(dict)
+    result: dict[str, dict[int, str]] = defaultdict(dict)
     entries = []
     try:
         entries = response.json()["sequenceEntries"]

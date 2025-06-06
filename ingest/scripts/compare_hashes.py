@@ -396,7 +396,7 @@ def main(
         )
         update_manager.revoke[metadata_id] = old_accessions
 
-    outputs = [
+    outputs: list[tuple[Any, str, str]] = [
         (update_manager.submit, to_submit, "Sequences to submit"),
         (update_manager.revise, to_revise, "Sequences to revise"),
         (update_manager.noop, unchanged, "Unchanged sequences"),
