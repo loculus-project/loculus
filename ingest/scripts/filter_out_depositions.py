@@ -56,7 +56,7 @@ def filter_out_depositions(
     input_metadata_tsv,
     output_metadata_tsv,
     exclude_insdc_accessions,
-):
+) -> None:
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.INFO)
 
@@ -76,7 +76,7 @@ def filter_out_depositions(
     original_count = len(df)
     with open(exclude_insdc_accessions, encoding="utf-8") as file:
         data = json.load(file)
-        loculus_insdc_accessions: set = {
+        loculus_insdc_accessions: set[str] = {
             line.strip().split(".")[0] for line in data["insdcAccessions"]
         }  # Remove version
         loculus_biosample_accessions = data["biosampleAccessions"]
