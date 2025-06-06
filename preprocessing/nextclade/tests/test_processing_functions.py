@@ -362,6 +362,22 @@ test_case_definitions = [
             ),
         ],
     ),
+    Case(
+        name="nan_float",
+        metadata={
+            "submissionId": "nan_float",
+            "percentage_float": "NaN",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+        },
+        accession_id="14",
+        expected_metadata={
+            "percentage_float": None,
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_9.1/2022-11-01",
+        },
+    ),
 ]
 
 accepted_authors = {
