@@ -1,17 +1,26 @@
 ---
 import '../styles/base.scss';
+import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
 import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
-import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
 import { createBackendClient } from '../services/backendClientFactory';
+import { getBannerMessage } from '../services/bannerMessageService';
 
 const websiteConfig = getWebsiteConfig();
-const { name: websiteName, logo, bannerMessage, additionalHeadHTML, gitHubMainUrl } = websiteConfig;
+const {
+    name: websiteName,
+    logo,
+    bannerMessage: configBannerMessage,
+    additionalHeadHTML,
+    gitHubMainUrl,
+} = websiteConfig;
+const remoteBannerMessage = await getBannerMessage();
+const bannerMessage = remoteBannerMessage ?? configBannerMessage;
 
 interface Props {
     title: string;
