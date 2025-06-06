@@ -37,8 +37,8 @@ fileSharing:
 s3:
   enabled: true
   bucket:
-    region: us-east-1
-    bucket: loculus-preview-private
+    region: eu-central-1
+    bucket: sr2silo01
 name: "Loculus"
 logo:
   url: "/favicon.svg"
@@ -1787,8 +1787,8 @@ secrets:
   s3-bucket:
     type: raw
     data:
-      accessKey: "dummyAccessKey"
-      secretKey: "dummySecretKey"
+      accessKey: "QUtJQTZBQjVFRkszTjZLREpKNTI="
+      secretKey: "SDBGTnVLTG03dXVMYTVsczFJNjdjcmppRFJYdm1rd1BrQ1lGTTdhcw=="
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
