@@ -305,6 +305,7 @@ def main(
     submitted: dict[InsdcAccession, LatestLoculusVersion] = construct_submitted_dict(
         old_hashes, insdc_keys, config
     )
+    logger.info(f"Constructed submitted dict {submitted}")
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
 
