@@ -119,7 +119,8 @@ def get_seq_features(
                 FeatureLocation(start=r["begin"], end=r["end"], strand=s)
                 for r, s in zip(ranges, strands, strict=False)
             ]
-            compound_location = locations[0] if len(locations) == 1 else locations
+            # compound_location = locations[0] if len(locations) == 1 else locations
+            compound_location = locations[0]
             qualifiers = {
                 new_key: attributes_cds[old_key]
                 for old_key, new_key in cds_attributes_map.items()
@@ -133,8 +134,7 @@ def get_seq_features(
                 ]
             )
             feature = SeqFeature(
-                location=None,  # TODO - compound_location caused a type error
-                # location=compound_location,
+                location=compound_location,
                 type="CDS",
                 qualifiers=qualifiers,
             )
