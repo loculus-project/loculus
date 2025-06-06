@@ -23,5 +23,3 @@ dependencies:
   - snakefmt
   - snakemake
   - unzip
-  - pip:
-      - types-orjson
