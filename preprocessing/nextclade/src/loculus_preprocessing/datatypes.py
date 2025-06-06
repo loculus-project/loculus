@@ -105,6 +105,7 @@ class ProcessedData:
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
+    annotations: dict[str, Any] | None = None
 
 
 @dataclass
