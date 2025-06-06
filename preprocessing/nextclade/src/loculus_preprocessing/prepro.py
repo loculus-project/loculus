@@ -17,9 +17,14 @@ import dpath
 import pandas as pd
 from Bio import SeqIO
 
-from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences, request_upload, upload_string_to_presigned_url
+from .backend import (
+    download_minimizer,
+    fetch_unprocessed_sequences,
+    request_upload,
+    submit_processed_sequences,
+    upload_string_to_presigned_url_zipped,
+)
 from .config import Config
-from .embl import create_flatfile
 from .datatypes import (
     AccessionVersion,
     Alerts,
@@ -45,6 +50,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .embl import create_flatfile
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
 from .sequence_checks import errors_if_non_iupac
 
@@ -992,14 +998,13 @@ def run(config: Config) -> None:
                     processed_entry.version,
                     processed_entry.data.metadata,
                     processed_entry.data.unalignedNucleotideSequences,
-                    None,
                     processed_entry.data.annotations,
                 )
                 processed_entry.data.annotations = None  # remove it so it's not submitted
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
-                upload_string_to_presigned_url(file_content, url)
+                upload_string_to_presigned_url_zipped(file_content, url)
                 processed_entry.data.files = {
                     "annotations": [
                         FileIdAndName(fileId=file_id, name="hello.txt")

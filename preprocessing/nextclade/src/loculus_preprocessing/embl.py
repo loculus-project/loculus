@@ -1,4 +1,5 @@
 import gzip
+import io
 import logging
 import os
 import tempfile
@@ -147,15 +148,22 @@ def get_seq_features(
     return feature_list
 
 
+def gzip_string(content: str) -> bytes:
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode="w") as gz_file, \
+         io.TextIOWrapper(gz_file, encoding="utf-8") as wrapper:
+        wrapper.write(content)
+    return buffer.getvalue()
+
+
 def create_flatfile(
     config: Config,
     accession,
     version,
     metadata,
     unaligned_nucleotide_sequences,
-    dir,
     annotation_object: dict[str, Any] | None = None,
-):
+) -> str:
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
     description = get_description(accession, version, "Loculus")  # TODO - read the db name from the config too?
@@ -163,13 +171,6 @@ def create_flatfile(
     authors = get_authors(metadata.get("authors", ""))
     molecule_type = get_molecule_type(config.molecule_type)
     topology = "linear"  # TODO - read from the config as well?
-
-    if dir:
-        os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "sequences.embl")
-    else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
-            filename = temp.name
 
     seqIO_moleculetype = {  # noqa: N806
         "GENOMIC_DNA": "DNA",
@@ -214,17 +215,9 @@ def create_flatfile(
             for feature in seq_feature_list:
                 sequence.features.append(feature)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
-            SeqIO.write(sequence, temp_seq_file.name, "embl")
+        buffer = io.StringIO()
+        SeqIO.write(sequence, buffer, "embl")
+        buffer.seek(0)
+        embl_content.append(buffer.read())
 
-        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
-            embl_content.append(temp_seq_file.read())
-
-    final_content = "\n".join(embl_content)
-
-    gzip_filename = filename + ".gz"
-
-    with gzip.open(gzip_filename, "wt", encoding="utf-8") as file:
-        file.write(final_content)
-
-    return gzip_filename
+    return "\n".join(embl_content)
