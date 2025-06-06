@@ -992,7 +992,7 @@ def run(config: Config) -> None:
 
             organism_metadata = {  # TODO
                 "scientific_name": "foo",
-                "molecule_type": "bar"
+                "molecule_type": "GENOMIC_DNA"
             }
 
             for processed_entry in processed:
