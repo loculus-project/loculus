@@ -29,7 +29,7 @@ const config = {
         baseURL: 'http://localhost:3000',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: process.env.CI ? 'on-first-retry' : 'on',
+        trace: (process.env.CI ? 'on-first-retry' : 'on') as any,
     },
 
     /* Configure projects for major browsers */
@@ -51,6 +51,12 @@ const config = {
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
+        {
+            name: 'webkit-with-dep',
+            use: { ...devices['Desktop Safari'] },
+            dependencies: ['readonly setup'],
+            testMatch: /.*\.dependent\.spec\.ts/,
+        },
 
         {
             name: 'chromium-without-dep',
@@ -60,6 +66,11 @@ const config = {
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
+            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+        },
+        {
+            name: 'webkit-without-dep',
+            use: { ...devices['Desktop Safari'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
     ],
