@@ -143,6 +143,11 @@ organisms:
         - name: date
           type: string
           displayName: Date
+      website:
+        tableColumns:
+          - date
+        defaultOrder: ascending
+        defaultOrderBy: date
       submissionDataTypes:
         consensusSequences: false
         files:
