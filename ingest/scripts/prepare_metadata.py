@@ -40,7 +40,7 @@ class Config:
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--segments", required=False, type=click.Path())
-@click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
+@click.option("--sequence-hashes-file", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
     "--log-level",
@@ -51,7 +51,7 @@ def main(
     config_file: str,
     input: str,
     segments: str | None,
-    sequence_hashes: str,
+    sequence_hashes_file: str,
     output: str,
     log_level: str,
 ) -> None:
@@ -70,7 +70,7 @@ def main(
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
+        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes_file)
     }
 
     if segments:
