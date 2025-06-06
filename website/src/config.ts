@@ -121,6 +121,10 @@ function getConfig(organism: string): InstanceConfig {
     return websiteConfig.organisms[organism];
 }
 
+export function outputFilesEnabled(organism: string): boolean {
+    return (getConfig(organism).schema.files ?? []).length > 0;
+}
+
 export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }

@@ -95,6 +95,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
         unalignedNucleotideSequences: {
             originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
         },
+        files: null,
     },
     processedData: {
         metadata: {
@@ -116,6 +117,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
         aminoAcidInsertions: {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
         },
+        files: null,
     },
     submissionId: 'defaultSubmitter',
 };

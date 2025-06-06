@@ -29,6 +29,7 @@ function renderReviewPage() {
             metadataDisplayNames={new Map()}
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
+            filesEnabled={false}
         />,
     );
 }

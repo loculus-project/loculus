@@ -15,7 +15,7 @@ import {
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
-    type FileMapping,
+    type FilesBySubmissionId,
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
@@ -65,7 +65,7 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
-    const [fileMapping, setFileMapping] = useState<FileMapping | undefined>(undefined);
+    const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -274,7 +274,7 @@ const ExtraFilesUpload = ({
     inputMode: InputMode;
     group: Group;
     fileCategories: FileCategory[];
-    setFileMapping: Dispatch<SetStateAction<FileMapping | undefined>>;
+    setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
 }) => {
     return (
