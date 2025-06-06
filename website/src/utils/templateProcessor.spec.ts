@@ -14,6 +14,7 @@ describe('matchPlaceholders', () => {
             segment: undefined,
             richHeaders: false,
             dataFormat: undefined,
+            columns: undefined,
         });
     });
 
@@ -28,6 +29,7 @@ describe('matchPlaceholders', () => {
             segment: undefined,
             richHeaders: false,
             dataFormat: 'json',
+            columns: undefined,
         });
     });
 
@@ -42,6 +44,7 @@ describe('matchPlaceholders', () => {
             segment: 'S',
             richHeaders: false,
             dataFormat: undefined,
+            columns: undefined,
         });
     });
 
@@ -56,6 +59,7 @@ describe('matchPlaceholders', () => {
             segment: 'S',
             richHeaders: false,
             dataFormat: 'json',
+            columns: undefined,
         });
     });
 
@@ -70,6 +74,7 @@ describe('matchPlaceholders', () => {
             segment: undefined,
             richHeaders: true,
             dataFormat: undefined,
+            columns: undefined,
         });
     });
 
@@ -84,6 +89,7 @@ describe('matchPlaceholders', () => {
             segment: undefined,
             richHeaders: true,
             dataFormat: 'json',
+            columns: undefined,
         });
     });
 
@@ -98,6 +104,7 @@ describe('matchPlaceholders', () => {
             segment: 'S',
             richHeaders: true,
             dataFormat: undefined,
+            columns: undefined,
         });
     });
 
@@ -112,6 +119,7 @@ describe('matchPlaceholders', () => {
             segment: 'S',
             richHeaders: true,
             dataFormat: 'json',
+            columns: undefined,
         });
     });
 
@@ -133,6 +141,37 @@ describe('matchPlaceholders', () => {
             segment: undefined,
             richHeaders: false,
             dataFormat: 'json',
+            columns: undefined,
+        });
+    });
+
+    test('parses metadata columns', () => {
+        const template = 'http://example.com/tool?data=[metadata+col1,col2]';
+        const matches = matchPlaceholders(template);
+
+        expect(matches).toHaveLength(1);
+        expect(matches[0]).toEqual({
+            fullMatch: '[metadata+col1,col2]',
+            dataType: 'metadata',
+            segment: undefined,
+            richHeaders: false,
+            dataFormat: undefined,
+            columns: ['col1', 'col2'],
+        });
+    });
+
+    test('parses single metadata column', () => {
+        const template = 'http://example.com/tool?data=[metadata+field1]';
+        const matches = matchPlaceholders(template);
+
+        expect(matches).toHaveLength(1);
+        expect(matches[0]).toEqual({
+            fullMatch: '[metadata+field1]',
+            dataType: 'metadata',
+            segment: undefined,
+            richHeaders: false,
+            dataFormat: undefined,
+            columns: ['field1'],
         });
     });
 

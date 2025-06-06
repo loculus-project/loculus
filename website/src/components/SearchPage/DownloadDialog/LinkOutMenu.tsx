@@ -64,7 +64,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
         const urlMap: Record<string, string> = {};
         for (const match of placeholders) {
-            const { fullMatch, dataType, segment, richHeaders, dataFormat } = match;
+            const { fullMatch, dataType, segment, richHeaders, dataFormat, columns } = match;
 
             if (!DATA_TYPES.includes(dataType as DataType)) {
                 continue;
@@ -79,6 +79,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 },
                 compression: undefined,
                 dataFormat: dataFormat,
+                fields: columns,
             };
 
             const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);
