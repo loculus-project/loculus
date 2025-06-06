@@ -24,7 +24,7 @@ class Config:
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
-    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
+    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
     nextclade_dataset_name: str | None = None
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None

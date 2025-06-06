@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class JwtCache:
     def __init__(self) -> None:
         self.token: str = ""
-        self.expiration: dt.datetime = dt.datetime.min
+        self.expiration: dt.datetime = dt.datetime.min  # noqa: DTZ901
 
     def get_token(self) -> str | None:
         # Only use token if it's got more than 5 minutes left
@@ -124,7 +124,9 @@ def fetch_unprocessed_sequences(
     logger.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
     logger.info(
-        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}"
+        "Unprocessed data from backend: status code %s, request id: %s",
+        response.status_code,
+        response.headers.get("x-request-id")
     )
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
@@ -179,7 +181,8 @@ def submit_processed_sequences(
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
-    parsed = urlparse(config.backend_host)  # we need to parse this here, because we don't want the organism in there.
+    # we need to parse this here, because we don't want the organism in there.
+    parsed = urlparse(config.backend_host)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
     url = base_url + "/files/request-upload"
     params = {"groupId": group_id, "numberFiles": number_of_files}
@@ -229,4 +232,3 @@ def download_minimizer(url, save_path):
         msg = f"Failed to download minimizer: {e}"
         logger.error(msg)
         raise RuntimeError(msg) from e
-
