@@ -6,6 +6,7 @@ This makes it easy to test and reason about the code
 import calendar
 import json
 import logging
+import math
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -857,6 +858,10 @@ class ProcessingFunctions:
                 case "float":
                     try:
                         output_datum = float(input_datum)
+                        if math.isnan(output_datum):
+                            output_datum = None
+                        if output_datum == float("inf") or output_datum == float("-inf"):
+                            raise ValueError()
                     except ValueError:
                         output_datum = None
                         errors.append(
