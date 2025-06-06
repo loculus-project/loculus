@@ -33,7 +33,7 @@ test_config_file = "tests/test_config.yaml"
 class Case:
     name: str
     metadata: dict[str, str | None]
-    expected_metadata: dict[str, str]
+    expected_metadata: dict[str, str | None]
     expected_errors: list[ProcessingAnnotationTestCase]
     expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
