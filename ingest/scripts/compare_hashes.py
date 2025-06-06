@@ -94,13 +94,14 @@ def process_hashes(
     """
     Decide if metadata_id should be submitted, revised, or noop
     """
-    previously_submitted_entry = submitted[ingested_insdc_accession]
-    corresponding_loculus_accession = previously_submitted_entry.loculus_accession
-    status = previously_submitted_entry.status
 
     if ingested_insdc_accession not in submitted:
         update_manager.submit.append(metadata_id)
         return update_manager
+
+    previously_submitted_entry = submitted[ingested_insdc_accession]
+    corresponding_loculus_accession = previously_submitted_entry.loculus_accession
+    status = previously_submitted_entry.status
 
     if previously_submitted_entry.hash == newly_ingested_hash:
         update_manager.noop[metadata_id] = corresponding_loculus_accession
@@ -200,7 +201,6 @@ def construct_submitted_dict(
     loculus_accession_to_latest_version_map: dict[LoculusAccession, dict[str, Any]] = (
         get_loculus_accession_to_latest_version_map(old_hashes)
     )
-    logger.info(f"Constructed loculus accession to latest version map: {len(loculus_accession_to_latest_version_map)} entries")
 
     # Create a map from INSDC accession to latest loculus accession
     insdc_to_loculus_accession_map: dict[InsdcAccession, LatestLoculusVersion] = {}
@@ -306,7 +306,6 @@ def main(
     submitted: dict[InsdcAccession, LatestLoculusVersion] = construct_submitted_dict(
         old_hashes, insdc_keys, config
     )
-    logger.info(f"Constructed submitted dict {submitted}")
     already_ingested_accessions = get_approved_submitted_accessions(submitted)
     current_ingested_accessions: set[InsdcAccession] = set()
 
