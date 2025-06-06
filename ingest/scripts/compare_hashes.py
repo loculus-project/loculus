@@ -164,7 +164,7 @@ def get_loculus_accession_to_latest_version_map(
     """
     loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
 
-    for field in orjsonl.stream(old_hashes):  
+    for field in orjsonl.stream(old_hashes):
         if not isinstance(field, dict):
             error = f"Expected a dict, got {type(field)} in {old_hashes}"
             raise TypeError(error)
@@ -323,7 +323,7 @@ def main(
         config=config,
     )
 
-    for field in orjsonl.stream(metadata):  
+    for field in orjsonl.stream(metadata):
         if not isinstance(field, dict):
             error = f"Expected a dict, got {type(field)} in {metadata}"
             raise TypeError(error)

@@ -224,9 +224,7 @@ def add_seq_to_batch(
         if line.startswith(">"):
             batch_it.fasta_record_header = line
             if config.segmented:
-                fasta_submission_id = "_".join(
-                    line[1:].strip().split("_")[:-1]
-                )
+                fasta_submission_id = "_".join(line[1:].strip().split("_")[:-1])
             else:
                 fasta_submission_id = line[1:].strip()
             if fasta_submission_id == metadata_submission_id:
@@ -489,7 +487,7 @@ def get_submitted(config: Config, output: str):
         status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
         entry_with_status = entry.copy()
         entry_with_status["status"] = status
-        orjsonl.append(output, entry_with_status) # type: ignore
+        orjsonl.append(output, entry_with_status)  # type: ignore
 
     if len(entries) == 0:
         with open(output, "w", encoding="utf-8"):

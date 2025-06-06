@@ -127,7 +127,7 @@ def main(
 
     columns_list = None
     found_seq_to_revoke = False
-    for field in orjsonl.stream(metadata_path): 
+    for field in orjsonl.stream(metadata_path):
         if not isinstance(field, dict):
             error = f"Expected a dict, got {type(field)} in {metadata_path}"
             raise TypeError(error)
@@ -161,7 +161,7 @@ def main(
             Path(output_metadata).touch()
             return
         with open(output, "w", encoding="utf-8") as output_file:
-            for record in orjsonl.stream(input): 
+            for record in orjsonl.stream(input):
                 if not isinstance(record, dict):
                     error = f"Expected a dict, got {type(record)} in {input}"
                     raise TypeError(error)

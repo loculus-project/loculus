@@ -73,7 +73,7 @@ def main(
     ]
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"]  
+        record["id"]: record["hash"]
         for record in orjsonl.load(sequence_hashes_file)  # type: ignore
     }
 
