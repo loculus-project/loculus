@@ -25,14 +25,14 @@ logging.basicConfig(
 
 
 def stream_filter_to_fasta(input, output, keep, config: Config):
-    for record in orjsonl.stream(input): # type: ignore
+    for record in orjsonl.stream(input): 
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input}"
             raise TypeError(error)
         if (not config.segmented and record["id"] in keep) or (
             config.segmented and "_".join(record["id"].split("_")[:-1]) in keep
         ):
-            orjsonl.append(output, record) # type: ignore
+            orjsonl.append(output, record) 
 
 
 @click.command(help="Parse metadata and filter sequences based on config.filter values")
@@ -63,7 +63,7 @@ def main(
     logger.info(f"Filtering metadata with {config.metadata_filter}")
     submission_ids = set()
     count = 0
-    for record in orjsonl.stream(input_metadata): # type: ignore
+    for record in orjsonl.stream(input_metadata): 
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input_metadata}"
             raise TypeError(error)
@@ -71,7 +71,7 @@ def main(
         accession = record["id"]
         count += 1
         if all(row[key] == value for key, value in config.metadata_filter.items()):
-            orjsonl.append(output_metadata, record) # type: ignore
+            orjsonl.append(output_metadata, record) 
             submission_ids.add(accession)
 
     logger.info(f"Filtered out {count - len(submission_ids)} entries")

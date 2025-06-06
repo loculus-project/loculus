@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from typing import Any, Final
 
 import click
-import orjsonl  # type: ignore
+import orjsonl  
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ def get_metadata_of_group(
             if key in {"authors", "authorAffiliations"}:
                 grouped_metadata[key] = values[0]
                 continue
-            orjsonl.append(  # type: ignore
+            orjsonl.append(  
                 "results/warnings.ndjson",
                 {
                     "accessions": [record["id"] for record in record_list],
@@ -158,7 +158,7 @@ def group_records(
                 + ", ".join([record["id"] for record in record_list])
             )
             # write record list to a file
-            orjsonl.append("results/errors.ndjson", record_list)  # type: ignore
+            orjsonl.append("results/errors.ndjson", record_list)  
             return
     segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
 
@@ -169,7 +169,7 @@ def group_records(
         accession = segment_map[segment]["insdcAccessionFull"]
         fasta_id_map[accession] = f"{joint_key}_{segment}"
 
-    orjsonl.append(output_metadata_path, {"id": joint_key, "metadata": grouped_metadata})  # type: ignore
+    orjsonl.append(output_metadata_path, {"id": joint_key, "metadata": grouped_metadata})  
 
 
 def write_grouped_metadata(
@@ -185,7 +185,7 @@ def write_grouped_metadata(
     different_values_log: dict[str, int] = {}
     count_total = 0
     count_ungrouped = 0
-    for record in orjsonl.stream(input_metadata_path):  # type: ignore
+    for record in orjsonl.stream(input_metadata_path):  
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input_metadata_path}"
             raise TypeError(error)
@@ -193,7 +193,7 @@ def write_grouped_metadata(
         metadata = record["metadata"]
         if metadata["insdcAccessionFull"] not in groups.accession_to_group:
             count_ungrouped += 1
-            orjsonl.append(  # type: ignore
+            orjsonl.append(  
                 output_ungrouped_metadata_path, {"id": record["id"], "metadata": record["metadata"]}
             )
             ungrouped_accessions.add(record["id"])
@@ -244,20 +244,20 @@ def write_grouped_sequences(
     count_grouped = 0
     count_ungrouped = 0
     count_ignored = 0
-    for record in orjsonl.stream(input_seq_path):  # type: ignore
+    for record in orjsonl.stream(input_seq_path):  
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input_seq_path}"
             raise TypeError(error)
         accession = record["id"]
         raw_sequence = record["sequence"]
         if accession in ungrouped_accessions:
-            orjsonl.append(output_ungrouped_seq_path, {"id": accession, "sequence": raw_sequence})  # type: ignore
+            orjsonl.append(output_ungrouped_seq_path, {"id": accession, "sequence": raw_sequence})  
             count_ungrouped += 1
             continue
         if accession not in fasta_id_map:
             count_ignored += 1
             continue
-        orjsonl.append(  # type: ignore
+        orjsonl.append(  
             output_grouped_seq_path,
             {
                 "id": fasta_id_map[accession],

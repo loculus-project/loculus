@@ -73,7 +73,7 @@ def main(
     ]
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"]  # type: ignore
+        record["id"]: record["hash"]  
         for record in orjsonl.load(sequence_hashes_file)  # type: ignore
     }
 
@@ -148,7 +148,7 @@ def main(
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})  # type: ignore
+        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})
 
     logger.info(f"Saved metadata for {len(metadata)} sequences")
 

@@ -109,7 +109,7 @@ def main(
 
     number_of_segmented_records = 0
     segment_metadata: dict[str, dict[str, str]] = {}
-    for record in orjsonl.stream(input_metadata): # type: ignore
+    for record in orjsonl.stream(input_metadata): 
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input_metadata}"
             raise TypeError(error)
@@ -247,14 +247,14 @@ def main(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
 
-        orjsonl.append(output_metadata, {"id": joint_key, "metadata": row}) # type: ignore
+        orjsonl.append(output_metadata, {"id": joint_key, "metadata": row}) 
         count += 1
 
     logger.info(f"Wrote grouped metadata for {count} sequences")
 
     count = 0
     count_ignored = 0
-    for record in orjsonl.stream(input_seq): # type: ignore
+    for record in orjsonl.stream(input_seq): 
         if not isinstance(record, dict):
             error = f"Expected a dict, got {type(record)} in {input_seq}"
             raise TypeError(error)
@@ -264,7 +264,7 @@ def main(
             logger.warning(f"Accession {accession} not found in input sequence file, skipping")
             count_ignored += 1
             continue
-        orjsonl.append( # type: ignore
+        orjsonl.append( 
             output_seq,
             {
                 "id": fasta_id_map[accession],

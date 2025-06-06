@@ -37,8 +37,8 @@ def main(input: str, output_hashes: str, output_sequences: str, log_level: str) 
         for record in records:
             sequence = str(record.seq)
             hash = hashlib.md5(sequence.encode(), usedforsecurity=False).hexdigest()
-            orjsonl.append(output_hashes, {"id": record.id, "hash": hash}) # type: ignore
-            orjsonl.append(output_sequences, {"id": record.id, "sequence": sequence}) # type: ignore
+            orjsonl.append(output_hashes, {"id": record.id, "hash": hash})
+            orjsonl.append(output_sequences, {"id": record.id, "sequence": sequence}) 
             counter += 1
 
     logger.info(f"Calculated hashes for {counter} sequences")
