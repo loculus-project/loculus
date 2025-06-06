@@ -1007,7 +1007,7 @@ def run(config: Config) -> None:
                 upload_string_to_presigned_url_zipped(file_content, url)
                 processed_entry.data.files = {
                     "annotations": [
-                        FileIdAndName(fileId=file_id, name="hello.txt")
+                        FileIdAndName(fileId=file_id, name="sequences.embl.gz")
                     ]
                 }
 
