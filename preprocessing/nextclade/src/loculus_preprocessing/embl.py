@@ -5,7 +5,7 @@ from typing import Any
 
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
+from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from .config import Config
@@ -122,9 +122,7 @@ def get_seq_features(  # noqa: PLR0914
                 FeatureLocation(start=r["begin"], end=r["end"], strand=s)
                 for r, s in zip(ranges, strands, strict=False)
             ]
-            # compound_location = locations[0] if len(locations) == 1 else locations
-            # TODO - the list of locations caused a type error
-            compound_location = locations[0]
+            compound_location = locations[0] if len(locations) == 1 else CompoundLocation(locations)
             qualifiers = {
                 new_key: attributes_cds[old_key]
                 for old_key, new_key in cds_attributes_map.items()
@@ -164,12 +162,11 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
 ) -> str:
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
-    # TODO - "Loculus" hardcoded; read the db name from the config too?
-    description = get_description(accession, version, "Loculus")
+    description = get_description(accession, version, config.db_name)
     organism = config.scientific_name
     authors = get_authors(metadata.get("authors", ""))
     molecule_type = get_molecule_type(config.molecule_type)
-    topology = "linear"  # TODO - read from the config as well?
+    topology = config.topology
 
     seqIO_moleculetype = {  # noqa: N806
         "GENOMIC_DNA": "DNA",
