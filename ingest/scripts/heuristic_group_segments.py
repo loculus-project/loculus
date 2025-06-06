@@ -102,7 +102,10 @@ def main(
 
     number_of_segmented_records = 0
     segment_metadata: dict[str, dict[str, str]] = {}
-    for record in orjsonl.stream(input_metadata):
+    for record in orjsonl.stream(input_metadata): # type: ignore
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input_metadata}"
+            raise TypeError(error)
         segment_metadata[record["id"]] = record["metadata"]
         number_of_segmented_records += 1
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
@@ -243,21 +246,24 @@ def main(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
         ).hexdigest()
 
-        orjsonl.append(output_metadata, {"id": joint_key, "metadata": row})
+        orjsonl.append(output_metadata, {"id": joint_key, "metadata": row}) # type: ignore
         count += 1
 
     logger.info(f"Wrote grouped metadata for {count} sequences")
 
     count = 0
     count_ignored = 0
-    for record in orjsonl.stream(input_seq):
+    for record in orjsonl.stream(input_seq): # type: ignore
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input_seq}"
+            raise TypeError(error)
         accession = record["id"]
         raw_sequence = record["sequence"]
         if accession not in fasta_id_map:
             logger.warning(f"Accession {accession} not found in input sequence file, skipping")
             count_ignored += 1
             continue
-        orjsonl.append(
+        orjsonl.append( # type: ignore
             output_seq,
             {
                 "id": fasta_id_map[accession],
