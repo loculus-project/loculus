@@ -68,19 +68,23 @@ def main(
     df = pd.read_csv(
         input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\"
     )
-    metadata: list[dict[Hashable, Any]] = df.to_dict(orient="records")
+    metadata: list[dict[str, Any]] = [
+        {str(k): v for k, v in row.items()} for row in df.to_dict(orient="records")
+    ]
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"]
+        record["id"]: record["hash"]  # type: ignore
         for record in orjsonl.load(sequence_hashes_file)  # type: ignore
     }
 
     if segments:
-        segments_dict: dict[FastaIdField, dict[Hashable, str]] = {}
+        segments_dict: dict[FastaIdField, dict[str, str]] = {}
         segment_df = pd.read_csv(segments, sep="\t")
         segmented_fields = list(segment_df.columns)
 
-        rows_as_dicts = segment_df.to_dict(orient="records")
+        rows_as_dicts: list[dict[str, Any]] = [
+            {str(k): v for k, v in row.items()} for row in segment_df.to_dict(orient="records")
+        ]
 
         for row in rows_as_dicts:
             segments_dict[row["seqName"]] = row
@@ -144,7 +148,7 @@ def main(
 
         record["hash"] = hashlib.md5(prehash.encode(), usedforsecurity=False).hexdigest()
 
-        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})
+        orjsonl.append(output, {"id": record[fasta_id_field], "metadata": record})  # type: ignore
 
     logger.info(f"Saved metadata for {len(metadata)} sequences")
 

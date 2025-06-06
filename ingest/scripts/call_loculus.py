@@ -461,8 +461,10 @@ def get_submitted(config: Config, output: str):
         expected_record_count = int(response.headers["x-total-records"])
 
         entries: list[dict[str, Any]] = []
+
         try:
-            entries = list(jsonlines.Reader(response.iter_lines()).iter())
+            reader = jsonlines.Reader(response.iter_lines())
+            entries = [entry for entry in reader if isinstance(entry, dict)]
         except jsonlines.Error as err:
             response_summary = response.text
             max_error_length = 100
