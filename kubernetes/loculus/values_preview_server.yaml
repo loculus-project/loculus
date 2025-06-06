@@ -36,16 +36,7 @@ secrets:
       secretKey: AgAS8a/ldlEderUmlXih5P2EKDQiuPX0CW5nRMcxGhrHCslm3YVrOSdkdkz7y7yuPC/eJ34c9TcDPFINSYmx4TGkJ1FA6yRroIs0gWc2JYQlRlcT+AuvhWsgMAUHiRwFmydAqjTn9nGrPXuhg/r1EtFJM13uiwM9MXzM14EAXlFoijwqkAO1NZpVMhB4zWP2NwXAknCZtNWqTaZoasWOOr83vrHbKW+C7oQtFrzrUxP83U1qPrWiwJO90eHv6Rao30rXUjwCgOJwQHzrhgZaJg+ak5OMsxbpc3Tmc8H2j3RJMsUhbC11BC9OCk75V4YY2XZ/RmIcJWS6NwVMLJxK4+at/zImAEFobf0igVWeW8oaNnDtu6zhLPjuG/V0RGZ8mLPS4o3/IXNWcvuXUiG5nt0sxqh/YNOr+SFKoW9iU9fVjHK5k5++sT+rixkTqbSs8DNXU25z2oETzF0/s7AKh0N1vokOg3CHGdMlwqBH26rtSDzqf9q00vozq2DxwJWyfdq5fiImYlAoT0sHqV8gG8kfMnnYbnL+TPhkPqdL4x29vWIMZNJqcQuTJmtszkFhmF8/HJSB5Y6kmHN+xml2gm2TJ7BnVdqk0U01Dudbt1xCLY925K4D4cgoVpQYMkA+TZyhlGr6UaEnaZn2KQ7YJvh0q3sgnrwbxhXxgA04gCjXqc9Dcpc52/GUMBBsChM3Ywxph2Mfcx5ycO5DLU3/jsJfYs5YLQk/z576tQsXm89830k9helncrEb
 previewDocs: true
 robotsNoindexHeader: true
-disableEnaSubmission: false
 additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
-ingest:
-  ncbiGatewayUrl: "https://ncbi-temp-proxy.api.taxonium.org/datasets/v2"
-  mirrorBucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
-sequenceFlagging:
-  github:
-    organization: pathoplexus
-    repository: curation_reports
-    issueTemplate: sequence-metadata-issue.md
 auth:
   smtp:
     host: "in-v3.mailjet.com"
@@ -169,3 +160,8 @@ organisms:
     referenceGenomes:
       nucleotideSequences: []
       genes: []
+dataUseTerms:
+  enabled: false
+disableIngest: true
+disableEnaSubmission: true
+accessionPrefix: "WISE_"
