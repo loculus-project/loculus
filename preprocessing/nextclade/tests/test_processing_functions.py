@@ -377,6 +377,7 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_9.1/2022-11-01",
         },
+        expected_errors=[],
     ),
 ]
 
