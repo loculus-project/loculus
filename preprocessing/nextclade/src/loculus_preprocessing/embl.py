@@ -19,10 +19,10 @@ def get_country(metadata: dict[str, str]) -> str:
     return f"{country}: {admin}" if admin else country
 
 
-def get_description(config, metadata: dict[str, str]) -> str:
+def get_description(accession, version, db_name) -> str:
     return (
-        f"Original sequence submitted to {config.db_name} with accession: "
-        f"{metadata['accession']}, version: {metadata['version']}"
+        f"Original sequence submitted to {db_name} with accession: "
+        f"{accession}, version: {version}"
     )
 
 
@@ -144,6 +144,7 @@ def get_seq_features(
 def create_flatfile(
     config,
     accession,
+    version,
     metadata,
     organism_metadata,
     unaligned_nucleotide_sequences,
@@ -153,7 +154,7 @@ def create_flatfile(
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
     organism = organism_metadata.get("scientific_name", "Unknown")
-    description = get_description(config, metadata)
+    description = get_description(accession, version, config.db_name)
     authors = get_authors(metadata.get("authors", ""))
     moleculetype = get_molecule_type(organism_metadata)
 
