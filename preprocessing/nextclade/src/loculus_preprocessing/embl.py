@@ -133,7 +133,8 @@ def get_seq_features(
                 ]
             )
             feature = SeqFeature(
-                location=compound_location,
+                location=None,  # TODO - compound_location caused a type error
+                # location=compound_location,
                 type="CDS",
                 qualifiers=qualifiers,
             )
