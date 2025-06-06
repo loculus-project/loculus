@@ -141,3 +141,31 @@ defaultResources:
   limits:
     memory: "1Gi"
     cpu: "20m"
+
+
+name: 'WISE'
+organisms:
+  sc2:
+    schema:
+      organismName: 'SC2'
+      metadata:
+        - name: date
+          type: string
+          displayName: Date
+      submissionDataTypes:
+        consensusSequences: false
+        files:
+          enabled: true
+          categories:
+            - name: silo_reads
+      files:
+        - name: silo_reads
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-dummy
+        args:
+          - "--watch"
+          - "--disableConsensusSequences"
+    referenceGenomes:
+      nucleotideSequences: []
+      genes: []
