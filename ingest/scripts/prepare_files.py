@@ -126,6 +126,7 @@ def main(
             dict_writer.writerow(data)
 
     columns_list = None
+    found_seq_to_revoke = False
     for field in orjsonl.stream(metadata_path):
         fasta_id = field["id"]
         record = field["metadata"]
@@ -143,14 +144,13 @@ def main(
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
-        found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
             write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path, columns_list)
             found_seq_to_revoke = True
 
-        if found_seq_to_revoke:
-            revocation_notification(config, to_revoke)
+    if found_seq_to_revoke:
+        revocation_notification(config, to_revoke)
 
     def stream_filter_to_fasta(input, output, output_metadata, keep):
         if len(keep) == 0:
