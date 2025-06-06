@@ -47,7 +47,7 @@ logging.basicConfig(
 
 type Accession = str
 type InsdcAccession = str
-type id = str
+type Id = str
 type GroupName = str
 
 
