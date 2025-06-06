@@ -165,6 +165,9 @@ def get_loculus_accession_to_latest_version_map(
     loculus_accession_to_version_map: dict[LoculusAccession, list[dict[str, Any]]] = {}
 
     for field in orjsonl.stream(old_hashes):
+        if not isinstance(field, dict):
+            error = f"Expected a dict, got {type(field)} in {old_hashes}"
+            raise TypeError(error)
         accession: LoculusAccession = field["accession"]
         if accession not in loculus_accession_to_version_map:
             loculus_accession_to_version_map[accession] = []
@@ -321,6 +324,9 @@ def main(
     )
 
     for field in orjsonl.stream(metadata):
+        if not isinstance(field, dict):
+            error = f"Expected a dict, got {type(field)} in {metadata}"
+            raise TypeError(error)
         metadata_id: SubmissionId = field["id"]
         record: dict[str, Any] = field["metadata"]
         ingested_hash: float | None = record.get("hash")
@@ -390,7 +396,7 @@ def main(
         )
         update_manager.revoke[metadata_id] = old_accessions
 
-    outputs = [
+    outputs: list[tuple[Any, str, str]] = [
         (update_manager.submit, to_submit, "Sequences to submit"),
         (update_manager.revise, to_revise, "Sequences to revise"),
         (update_manager.noop, unchanged, "Unchanged sequences"),

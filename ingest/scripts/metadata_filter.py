@@ -26,6 +26,9 @@ logging.basicConfig(
 
 def stream_filter_to_fasta(input, output, keep, config: Config):
     for record in orjsonl.stream(input):
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input}"
+            raise TypeError(error)
         if (not config.segmented and record["id"] in keep) or (
             config.segmented and "_".join(record["id"].split("_")[:-1]) in keep
         ):
@@ -61,6 +64,9 @@ def main(
     submission_ids = set()
     count = 0
     for record in orjsonl.stream(input_metadata):
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input_metadata}"
+            raise TypeError(error)
         row = record["metadata"]
         accession = record["id"]
         count += 1

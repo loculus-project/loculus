@@ -126,7 +126,11 @@ def main(
             dict_writer.writerow(data)
 
     columns_list = None
+    found_seq_to_revoke = False
     for field in orjsonl.stream(metadata_path):
+        if not isinstance(field, dict):
+            error = f"Expected a dict, got {type(field)} in {metadata_path}"
+            raise TypeError(error)
         fasta_id = field["id"]
         record = field["metadata"]
         if not columns_list:
@@ -143,14 +147,13 @@ def main(
             revise_ids.update(ids_to_add(fasta_id, config))
             continue
 
-        found_seq_to_revoke = False
         if fasta_id in to_revoke:
             submit_prior_to_revoke_ids.update(ids_to_add(fasta_id, config))
             write_to_tsv_stream(record, metadata_submit_prior_to_revoke_path, columns_list)
             found_seq_to_revoke = True
 
-        if found_seq_to_revoke:
-            revocation_notification(config, to_revoke)
+    if found_seq_to_revoke:
+        revocation_notification(config, to_revoke)
 
     def stream_filter_to_fasta(input, output, output_metadata, keep):
         if len(keep) == 0:
@@ -159,6 +162,9 @@ def main(
             return
         with open(output, "w", encoding="utf-8") as output_file:
             for record in orjsonl.stream(input):
+                if not isinstance(record, dict):
+                    error = f"Expected a dict, got {type(record)} in {input}"
+                    raise TypeError(error)
                 if record["id"] in keep:
                     output_file.write(f">{record['id']}\n{record['sequence']}\n")
 

@@ -61,6 +61,13 @@ class Config:
     segmented: bool
 
 
+# Build equivalence classes based on shared fields
+# Use shared fields as the key to group the data
+SegmentName = str
+Accession = str
+EquivalenceClasses = dict[str, dict[SegmentName, list[Accession]]]
+
+
 # submissionId is actually NCBI accession
 INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
 
@@ -103,6 +110,9 @@ def main(
     number_of_segmented_records = 0
     segment_metadata: dict[str, dict[str, str]] = {}
     for record in orjsonl.stream(input_metadata):
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input_metadata}"
+            raise TypeError(error)
         segment_metadata[record["id"]] = record["metadata"]
         number_of_segmented_records += 1
     logger.info(f"Found {number_of_segmented_records} individual segments in metadata file")
@@ -127,12 +137,6 @@ def main(
         set(all_fields) - insdc_segment_specific_fields - INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS
     )
     logger.debug(f"Shared metadata fields: {shared_fields}")
-
-    # Build equivalence classes based on shared fields
-    # Use shared fields as the key to group the data
-    type SegmentName = str
-    type Accession = str
-    type EquivalenceClasses = dict[tuple[str, str], dict[SegmentName, list[Accession]]]
 
     equivalence_classes: EquivalenceClasses = defaultdict(lambda: defaultdict(list))
     for accession, values in segment_metadata.items():
@@ -251,6 +255,9 @@ def main(
     count = 0
     count_ignored = 0
     for record in orjsonl.stream(input_seq):
+        if not isinstance(record, dict):
+            error = f"Expected a dict, got {type(record)} in {input_seq}"
+            raise TypeError(error)
         accession = record["id"]
         raw_sequence = record["sequence"]
         if accession not in fasta_id_map:

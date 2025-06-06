@@ -183,7 +183,7 @@ class BatchIterator:
     record_counter: int = 0
 
     metadata_header: str | None = None
-    submission_id_index: int | None = None  # index of submissionId in metadata header
+    submission_id_index: int = 0  # index of submissionId in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
@@ -224,11 +224,9 @@ def add_seq_to_batch(
         if line.startswith(">"):
             batch_it.fasta_record_header = line
             if config.segmented:
-                fasta_submission_id = "_".join(
-                    batch_it.fasta_record_header[1:].strip().split("_")[:-1]
-                )
+                fasta_submission_id = "_".join(line[1:].strip().split("_")[:-1])
             else:
-                fasta_submission_id = batch_it.fasta_record_header[1:].strip()
+                fasta_submission_id = line[1:].strip()
             if fasta_submission_id == metadata_submission_id:
                 continue
             if fasta_submission_id < metadata_submission_id:
@@ -276,6 +274,10 @@ def post_fasta_batches(
                 batch_it.record_counter > 1
                 and batch_it.record_counter % config.batch_chunk_size == 1
             ):
+                if not batch_it.metadata_header:
+                    msg = f"Metadata header not found before record: {batch_it.record_counter}"
+                    logger.error(msg)
+                    raise ValueError(msg)
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
 
             batch_it.metadata_batch_output.append(record)
@@ -401,7 +403,7 @@ def approve(config: Config):
     return response.json()
 
 
-def get_sequence_status(config: Config):
+def get_sequence_status(config: Config) -> dict[str, dict[int, str]]:
     """Get status of each sequence"""
     url = f"{organism_url(config)}/get-sequences"
 
@@ -412,7 +414,7 @@ def get_sequence_status(config: Config):
     response = make_request(HTTPMethod.GET, url, config, params=params)
 
     # Turn into dict with {accession: {version: status}}
-    result = defaultdict(dict)
+    result: dict[str, dict[int, str]] = defaultdict(dict)
     entries = []
     try:
         entries = response.json()["sequenceEntries"]
@@ -457,8 +459,10 @@ def get_submitted(config: Config, output: str):
         expected_record_count = int(response.headers["x-total-records"])
 
         entries: list[dict[str, Any]] = []
+
         try:
-            entries = list(jsonlines.Reader(response.iter_lines()).iter())
+            reader = jsonlines.Reader(response.iter_lines())
+            entries = [entry for entry in reader if isinstance(entry, dict)]
         except jsonlines.Error as err:
             response_summary = response.text
             max_error_length = 100
@@ -483,7 +487,7 @@ def get_submitted(config: Config, output: str):
         status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
         entry_with_status = entry.copy()
         entry_with_status["status"] = status
-        orjsonl.append(output, entry_with_status)
+        orjsonl.append(output, entry_with_status)  # type: ignore
 
     if len(entries) == 0:
         with open(output, "w", encoding="utf-8"):

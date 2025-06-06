@@ -391,7 +391,7 @@ if GROUPS_OVERRIDE_JSON:
             """
             python {input.script} \
                 --config-file {input.config} \
-                --groups {input.groups} \
+                --groups-file {input.groups} \
                 --input-metadata {input.metadata} \
                 --input-seq {input.sequences} \
                 --output-metadata {output.metadata} \

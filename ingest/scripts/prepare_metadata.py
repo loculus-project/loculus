@@ -10,6 +10,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass
+from typing import Any, Hashable
 
 import click
 import orjsonl
@@ -67,10 +68,13 @@ def main(
     df = pd.read_csv(
         input, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE, escapechar="\\"
     )
-    metadata: list[dict[str, str]] = df.to_dict(orient="records")
+    metadata: list[dict[str, Any]] = [
+        {str(k): v for k, v in row.items()} for row in df.to_dict(orient="records")
+    ]
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes_file)
+        record["id"]: record["hash"]
+        for record in orjsonl.load(sequence_hashes_file)  # type: ignore
     }
 
     if segments:
@@ -78,7 +82,9 @@ def main(
         segment_df = pd.read_csv(segments, sep="\t")
         segmented_fields = list(segment_df.columns)
 
-        rows_as_dicts = segment_df.to_dict(orient="records")
+        rows_as_dicts: list[dict[str, Any]] = [
+            {str(k): v for k, v in row.items()} for row in segment_df.to_dict(orient="records")
+        ]
 
         for row in rows_as_dicts:
             segments_dict[row["seqName"]] = row

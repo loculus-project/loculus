@@ -54,7 +54,10 @@ def compare_json_files(file1, file2):
 def compare_ndjson_files(file1, file2):
     def create_dict_from_ndjson(file):
         records = {}
-        for record in orjsonl.stream(file):
+        for record in orjsonl.stream(file):  
+            if not isinstance(record, dict):
+                error = f"Expected a dict, got {type(record)} in {file}"
+                raise TypeError(error)
             records[record["id"]] = record["metadata"]
         return records
 
