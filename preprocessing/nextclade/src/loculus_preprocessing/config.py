@@ -18,6 +18,8 @@ CLI_TYPES = [str, int, float, bool]
 @dataclass
 class Config:
     organism: str = "mpox"
+    scientific_name: str = "Monkeypox virus"
+    molecule_type: str = "GENOMIC_DNA"  # TODO - is this default value correct?
     backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
