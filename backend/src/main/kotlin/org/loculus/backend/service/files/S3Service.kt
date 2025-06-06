@@ -1,52 +1,60 @@
 package org.loculus.backend.service.files
 
-import io.minio.GetPresignedObjectUrlArgs
-import io.minio.MinioClient
-import io.minio.SetObjectTagsArgs
-import io.minio.StatObjectArgs
-import io.minio.http.Method
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest
+import software.amazon.awssdk.services.s3.model.S3Exception
+import software.amazon.awssdk.services.s3.model.Tag
+import software.amazon.awssdk.services.s3.model.Tagging
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
+import java.net.URI
+import java.time.Duration
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
 
 @Service
 class S3Service(private val s3Config: S3Config) {
 
-    private val minioClient: MinioClient by lazy { createClient(getS3BucketConfig()) }
-
-    private val internalMinioClient: MinioClient by lazy { createClient(getS3BucketConfig(), true) }
+    private val s3Client: S3Client by lazy { createClient(getS3BucketConfig()) }
+    private val presigner: S3Presigner by lazy { createPresigner(getS3BucketConfig()) }
 
     fun createUrlToUploadPrivateFile(fileId: FileId): String {
         val config = getS3BucketConfig()
-        return getClient().getPresignedObjectUrl(
-            GetPresignedObjectUrlArgs.builder()
-                .method(Method.PUT)
-                .bucket(config.bucket)
-                .`object`(getFileIdPath(fileId))
-                .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
-                .build(),
-        )
+        val putObjectRequest = PutObjectRequest.builder()
+            .bucket(config.bucket)
+            .key(getFileIdPath(fileId))
+            .build()
+        val presignRequest = PutObjectPresignRequest.builder()
+            .putObjectRequest(putObjectRequest)
+            .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+            .build()
+        return presigner.presignPutObject(presignRequest).url().toString()
     }
 
     fun createUrlToReadPrivateFile(fileId: FileId, downloadFileName: String? = null): String {
         val config = getS3BucketConfig()
-        var args = GetPresignedObjectUrlArgs.builder()
-            .method(Method.GET)
+        val getReqBuilder = GetObjectRequest.builder()
             .bucket(config.bucket)
-            .`object`(getFileIdPath(fileId))
-            .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
+            .key(getFileIdPath(fileId))
         if (downloadFileName != null) {
-            args =
-                args.extraQueryParams(
-                    mapOf(
-                        "response-content-disposition" to "attachment; filename=\"$downloadFileName\"",
-                    ),
-                )
+            getReqBuilder.responseContentDisposition("attachment; filename=\"$downloadFileName\"")
         }
-        return minioClient.getPresignedObjectUrl(args.build())
+        val presignRequest = GetObjectPresignRequest.builder()
+            .getObjectRequest(getReqBuilder.build())
+            .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+            .build()
+        return presigner.presignGetObject(presignRequest).url().toString()
     }
 
     /**
@@ -64,11 +72,20 @@ class S3Service(private val s3Config: S3Config) {
      */
     fun setFileToPublic(fileId: FileId) {
         val config = getS3BucketConfig()
-        getInternalClient().setObjectTags(
-            SetObjectTagsArgs.builder()
+        s3Client.putObjectTagging(
+            PutObjectTaggingRequest.builder()
                 .bucket(config.bucket)
-                .`object`(getFileIdPath(fileId))
-                .tags(mapOf("public" to "true"))
+                .key(getFileIdPath(fileId))
+                .tagging(
+                    Tagging.builder()
+                        .tagSet(
+                            Tag.builder()
+                                .key("public")
+                                .value("true")
+                                .build(),
+                        )
+                        .build(),
+                )
                 .build(),
         )
     }
@@ -87,22 +104,35 @@ class S3Service(private val s3Config: S3Config) {
         return s3Config.bucket
     }
 
-    /**
-     * Use the client to generate URLs that are accessible from outside the cluster.
-     */
-    private fun getClient(): MinioClient = minioClient
+    private fun createClient(bucketConfig: S3BucketConfig): S3Client = S3Client.builder()
+        .endpointOverride(URI.create(bucketConfig.internalEndpoint ?: bucketConfig.endpoint))
+        .region(Region.of(bucketConfig.region))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
+            ),
+        )
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build(),
+        )
+        .build()
 
-    /**
-     * Use the internal client to make direct requests to S3.
-     */
-    private fun getInternalClient(): MinioClient = internalMinioClient
-
-    private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
-        MinioClient.builder()
-            .endpoint(if (internal) bucketConfig.internalEndpoint ?: bucketConfig.endpoint else bucketConfig.endpoint)
-            .region(bucketConfig.region)
-            .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
-            .build()
+    private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
+        .endpointOverride(URI.create(bucketConfig.endpoint))
+        .region(Region.of(bucketConfig.region))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
+            ),
+        )
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build(),
+        )
+        .build()
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 
@@ -112,14 +142,14 @@ class S3Service(private val s3Config: S3Config) {
     fun getFileSize(fileId: FileId): Long? {
         val config = getS3BucketConfig()
         return try {
-            getInternalClient().statObject(
-                StatObjectArgs.builder()
+            s3Client.headObject(
+                HeadObjectRequest.builder()
                     .bucket(config.bucket)
-                    .`object`(getFileIdPath(fileId))
+                    .key(getFileIdPath(fileId))
                     .build(),
-            ).size()
-        } catch (e: io.minio.errors.ErrorResponseException) {
-            if (e.errorResponse().code() == "NoSuchKey") null else throw e
+            ).contentLength()
+        } catch (e: S3Exception) {
+            if (e.statusCode() == 404 || e.awsErrorDetails().errorCode() == "NoSuchKey") null else throw e
         }
     }
 }
