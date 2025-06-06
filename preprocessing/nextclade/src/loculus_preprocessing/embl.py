@@ -143,6 +143,7 @@ def get_seq_features(
 
 def create_flatfile(
     config,
+    accession,
     metadata,
     organism_metadata,
     unaligned_nucleotide_sequences,
@@ -152,7 +153,6 @@ def create_flatfile(
     collection_date = metadata.get("sampleCollectionDate", "Unknown")
     country = get_country(metadata)
     organism = organism_metadata.get("scientific_name", "Unknown")
-    accession = metadata["accession"]
     description = get_description(config, metadata)
     authors = get_authors(metadata.get("authors", ""))
     moleculetype = get_molecule_type(organism_metadata)

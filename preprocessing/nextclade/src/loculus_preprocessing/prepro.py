@@ -1001,6 +1001,7 @@ def run(config: Config) -> None:
                 file_content = str(processed_entry.data.annotations)
                 create_flatfile(
                     dummy_config,
+                    processed_entry.accession,
                     processed_entry.data.metadata,
                     organism_metadata,
                     processed_entry.data.unalignedNucleotideSequences,
