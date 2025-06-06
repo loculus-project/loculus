@@ -60,17 +60,24 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
-    await submissionPage.uploadExternalFiles('raw_reads', {
-        sub1: {
-            'foo.txt': 'Foo',
-        },
-        sub2: {
-            'bar.txt': 'Bar',
-        },
-    });
+    let cleanup: () => Promise<void>;
+    try {
+        cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
+            sub1: {
+                'foo.txt': 'Foo',
+            },
+            sub2: {
+                'bar.txt': 'Bar',
+            },
+        });
 
-    await expect(page.getByText('✓').first()).toBeVisible();
-    await expect(page.getByText('✓').nth(1)).toBeVisible();
+        await expect(page.getByText('✓').first()).toBeVisible();
+        await expect(page.getByText('✓').nth(1)).toBeVisible();
+    } finally {
+        if (cleanup) {
+            await cleanup();
+        }
+    }
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();

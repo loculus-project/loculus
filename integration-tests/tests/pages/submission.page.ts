@@ -147,11 +147,12 @@ export class BulkSubmissionPage extends SubmissionPage {
      * for the given file ID.
      * @param fileId For which file ID to upload the files.
      * @param fileContents A struct: submissionID -> filename -> filecontent.
+     * @returns Returns a function to be called to delete the tmp dir again.
      */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-    ): Promise<void> {
+    ): Promise<() => Promise<void>> {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
@@ -166,5 +167,7 @@ export class BulkSubmissionPage extends SubmissionPage {
         );
 
         await this.page.getByTestId(fileId).setInputFiles(tmpDir);
+
+        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
     }
 }
