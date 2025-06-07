@@ -233,10 +233,17 @@ export const InnerSearchFullUI = ({
     };
 
     const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => ({
-            ...prev,
-            [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
-        }));
+        setState((prev: any) => {
+            const newState = { ...prev };
+            const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
+            const defaultVisible = schema.tableColumns.includes(fieldName);
+            if (visible === defaultVisible) {
+                delete newState[key];
+            } else {
+                newState[key] = visible ? 'true' : 'false';
+            }
+            return newState;
+        });
     };
 
     useEffect(() => {
