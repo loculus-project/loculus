@@ -29,9 +29,11 @@ import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -264,6 +266,35 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
+    }
+
+    @Test
+    fun `GIVEN valid file THEN is successful`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+            groupId = groupId,
+        )
+            .map { it.accession }
+        val fileIdAndUrl = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "myFileCategory" to listOf(
+                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                        ),
+                    ),
+            ),
+        )
+            .andExpect(status().isOk)
     }
 
     @Test
