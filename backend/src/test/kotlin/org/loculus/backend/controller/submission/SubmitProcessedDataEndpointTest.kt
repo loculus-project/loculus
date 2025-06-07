@@ -28,6 +28,7 @@ import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndMultipartUrls
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -610,6 +611,36 @@ class SubmitProcessedDataEndpointTest(
                     containsString("No file uploaded for file ID ${fileIdAndUrl.fileId}."),
                 ),
             )
+    }
+
+    @Test
+    fun `WHEN I submit valid file with multipart upload THEN is successful`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+            numberParts = 2,
+        ).andGetFileIdsAndMultipartUrls()[0]
+        val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], "A".repeat(5 * 1024 * 1024))
+            .headers().map()["etag"]!![0]
+        val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], "A".repeat(1 * 1024 * 1024))
+            .headers().map()["etag"]!![0]
+
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "myFileCategory" to listOf(
+                        FileIdAndName(fileIdAndUrls.fileId, "foo.txt", listOf(etag1, etag2)),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isNoContent)
     }
 
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =
