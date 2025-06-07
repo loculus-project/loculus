@@ -131,12 +131,6 @@ class SubmitModel(
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
         }
-        submissionParams.files?.let { submittedFiles ->
-            val fileSubmissionIds = submittedFiles.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            // the check below reads the DB, so needs to be after 'insertDataIntoAux'
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
-        }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
             log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
@@ -145,6 +139,12 @@ class SubmitModel(
                 submissionParams.organism,
                 submissionParams.authenticatedUser,
             )
+        }
+
+        submissionParams.files?.let { submittedFiles ->
+            val fileSubmissionIds = submittedFiles.keys
+            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
+            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
