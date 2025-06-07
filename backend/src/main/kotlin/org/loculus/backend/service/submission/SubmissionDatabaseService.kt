@@ -247,6 +247,7 @@ class SubmissionDatabaseService(
                 fileMappingPreconditionValidator
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
+                    .validateMultipartUploads(fileMapping.fileIds)
                     .validateFilesExist(fileMapping.fileIds)
                 val av = AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
                 processedFiles[av] = fileMapping.fileIds
