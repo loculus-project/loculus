@@ -449,6 +449,6 @@ const isFilesArrayValid = (files: File[], inputMode: InputMode): string | undefi
         .filter((pathSegments) => pathSegments.length < (inputMode === 'form' ? 2 : 3))
         .map((pathSegments) => pathSegments[pathSegments.length - 1]);
     if (toplevelFiles.length > 0) {
-        return `All files need to be inside a submission ID directory; these files are not: ${toplevelFiles.join(', ')}`;
+        return `All files need to be inside a directory named with a sequence ID; these files are not: ${toplevelFiles.join(', ')}`;
     }
 };

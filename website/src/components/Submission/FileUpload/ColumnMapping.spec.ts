@@ -49,6 +49,19 @@ describe('ColumnMapping', () => {
         ]);
     });
 
+    it('should automatically map submissionId to id', () => {
+        const sourceColumns = ['submissionId', 'location'];
+        const inputFields = [{ name: 'id' }, { name: 'location' }];
+
+        const mapping = ColumnMapping.fromColumns(sourceColumns, inputFields);
+        const entries = mapping.entries();
+
+        expect(entries).toEqual([
+            ['submissionId', 'id'],
+            ['location', 'location'],
+        ]);
+    });
+
     it('should update a specific mapping', () => {
         const sourceColumns = ['loc'];
         const inputFields = [

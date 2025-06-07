@@ -8,7 +8,7 @@ fasta_id_field: genbankAccession
 keep:
   - division
   - country
-  - submissionId
+  - id
   - insdcAccessionBase
   - insdcVersion
   - bioprojects

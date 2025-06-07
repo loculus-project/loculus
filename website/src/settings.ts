@@ -13,7 +13,7 @@ export const GROUP_ID_FIELD = 'groupId';
 export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 export const DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD = 'dataUseTermsRestrictedUntil';
 export const VERSION_COMMENT_FIELD = 'versionComment';
-export const SUBMISSION_ID_FIELD = 'submissionId';
+export const SUBMISSION_ID_INPUT_FIELD = 'id';
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
 export const sequenceDefaultDownloadDataFormat = 'fasta';

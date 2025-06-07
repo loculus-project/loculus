@@ -431,7 +431,7 @@ class SubmitEndpointTest(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             	someValueButNoHeader
                             someHeader2	someValue2
                         """.trimIndent(),
@@ -439,7 +439,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row in metadata file contains no submissionId",
+                    "A row in metadata file contains no id",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -454,7 +454,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "The metadata file headers do not contain the header 'submissionId': [firstColumn]",
+                    "The metadata file does not contain either header 'id' or 'submissionId'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -462,7 +462,7 @@ class SubmitEndpointTest(
                     "duplicate headers in metadata file",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             sameHeader	someValue
                             sameHeader	someValue2
                         """.trimIndent(),
@@ -509,7 +509,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
+                    "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -517,7 +517,7 @@ class SubmitEndpointTest(
                     "sequence file misses headers",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            submissionId	firstColumn
+                            id	firstColumn
                             commonHeader	someValue
                             notInSequences	someValue
                         """.trimIndent(),
@@ -530,7 +530,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
+                    "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -577,5 +577,67 @@ class SubmitEndpointTest(
                 ),
             )
         }
+    }
+
+    @Test
+    fun `GIVEN metadata file with old submissionId header THEN submission still works (BACKCOMPAT)`() {
+        val metadataWithSubmissionId = SubmitFiles.metadataFileWith(
+            content = """
+                submissionId	date	region	country	division	host
+                custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+                custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            """.trimIndent(),
+        )
+
+        val sequencesFile = SubmitFiles.sequenceFileWith(
+            content = """
+                >custom0
+                ACTG
+                >custom1
+                ACTG
+            """.trimIndent(),
+        )
+
+        submissionControllerClient.submit(
+            metadataWithSubmissionId,
+            sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[1].submissionId").value("custom1"))
+    }
+
+    @Test
+    fun `GIVEN metadata file with both id and submissionId headers THEN submission fails`() {
+        val metadataWithBothHeaders = SubmitFiles.metadataFileWith(
+            content = """
+                id	submissionId	date	region	country	division	host
+                custom0	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+                custom1	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            """.trimIndent(),
+        )
+
+        val sequencesFile = SubmitFiles.sequenceFileWith(
+            content = """
+                >custom0_main
+                ACTG
+                >custom1_main
+                ACTG
+            """.trimIndent(),
+        )
+
+        submissionControllerClient.submit(
+            metadataWithBothHeaders,
+            sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "The metadata file contains both 'id' and 'submissionId'. Only one is allowed.",
+                ),
+            )
     }
 }
