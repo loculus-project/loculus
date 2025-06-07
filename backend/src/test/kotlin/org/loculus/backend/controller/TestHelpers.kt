@@ -34,6 +34,12 @@ const val OTHER_ORGANISM = "otherOrganism"
 const val ORGANISM_WITHOUT_CONSENSUS_SEQUENCES = "dummyOrganismWithoutConsensusSequences"
 const val DEFAULT_PIPELINE_VERSION = 1L
 const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
+const val DEFAULT_SIMPLE_FILE_CONTENT = "Hello, world!"
+val DEFAULT_MULTIPART_FILE_PARTS = listOf(
+    "A".repeat(5 * 1024 * 1024),
+    "B".repeat(7),
+)
+val DEFAULT_MULTIPART_FILE_CONTENT = DEFAULT_MULTIPART_FILE_PARTS.joinToString("")
 
 fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(months, MONTH)
 

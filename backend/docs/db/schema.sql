@@ -276,7 +276,10 @@ CREATE TABLE public.files (
     uploader text NOT NULL,
     group_id integer NOT NULL,
     released_at timestamp without time zone,
-    size bigint
+    size bigint,
+    multipart_initiated boolean DEFAULT false NOT NULL,
+    multipart_completed boolean DEFAULT false NOT NULL,
+    multipart_upload_id text
 );
 
 
