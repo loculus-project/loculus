@@ -17,7 +17,13 @@ import dpath
 import pandas as pd
 from Bio import SeqIO
 
-from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
+from .backend import (
+    download_minimizer,
+    fetch_unprocessed_sequences,
+    request_upload,
+    submit_processed_sequences,
+    upload_string_to_presigned_url_zipped,
+)
 from .config import Config
 from .datatypes import (
     AccessionVersion,
@@ -26,6 +32,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileIdAndName,
     GeneName,
     GenericSequence,
     InputMetadata,
@@ -43,6 +50,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .embl import create_flatfile
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
 from .sequence_checks import errors_if_non_iupac
 
@@ -269,6 +277,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
+        input_metadata[id]["groupId"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
@@ -413,7 +422,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
-            )
+            )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -727,10 +736,14 @@ def process_single(  # noqa: C901
             )
 
         submitter = unprocessed.inputMetadata["submitter"]
+        group_id = int(str(unprocessed.inputMetadata["groupId"]))
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
+        group_id = unprocessed.group_id
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
+
+    output_metadata["groupId"] = group_id
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
@@ -819,6 +832,15 @@ def process_single(  # noqa: C901
                 message=("No segment aligned."),
             )
         )
+    annotations = {}
+    if unprocessed.nextcladeMetadata is not None:
+        for segment in config.nucleotideSequences:
+            if segment in unprocessed.nextcladeMetadata:
+                annotations[segment] = None
+                if unprocessed.nextcladeMetadata[segment]:
+                    annotations[segment] = unprocessed.nextcladeMetadata[segment].get(
+                        "annotation", None
+                    )
 
     return ProcessedEntry(
         accession=accession_from_str(id),
@@ -830,6 +852,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            annotations=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -965,6 +988,29 @@ def run(config: Config) -> None:
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
+
+            for processed_entry in processed:
+                group_id = int(str(processed_entry.data.metadata["groupId"]))
+                del processed_entry.data.metadata["groupId"]  # Remove groupId after extraction
+                file_content = create_flatfile(
+                    config,
+                    processed_entry.accession,
+                    processed_entry.version,
+                    processed_entry.data.metadata,
+                    processed_entry.data.unalignedNucleotideSequences,
+                    processed_entry.data.annotations,
+                )
+                processed_entry.data.annotations = None  # remove it so it's not submitted
+                upload_info = request_upload(group_id, 1, config)[0]
+                file_id = upload_info.fileId
+                url = upload_info.url
+                upload_string_to_presigned_url_zipped(file_content, url)
+                processed_entry.data.files = {
+                    "annotations": [
+                        FileIdAndName(fileId=file_id, name="sequences.embl.gz")
+                    ]
+                }
+
             try:
                 submit_processed_sequences(processed, dataset_dir, config)
             except RuntimeError as e:
