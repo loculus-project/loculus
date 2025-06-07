@@ -525,7 +525,7 @@ class SubmissionConvenienceClient(
     /**
      * Upload a file to a presigned write URL (S3).
      */
-    fun uploadFile(presignedWriteUrl: String, content: String) {
+    fun uploadFile(presignedWriteUrl: String, content: String): HttpResponse<String?> {
         val client = HttpClient.newBuilder().build()
         val fileContent = content.toByteArray()
 
@@ -534,6 +534,6 @@ class SubmissionConvenienceClient(
             .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
             .build()
 
-        client.send(request, HttpResponse.BodyHandlers.ofString())
+        return client.send(request, HttpResponse.BodyHandlers.ofString())
     }
 }

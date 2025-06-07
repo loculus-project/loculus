@@ -246,6 +246,11 @@ class SubmissionDatabaseService(
                 fileMappingPreconditionValidator
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchSchema(fileMapping, organism)
+                    .validateMultipartUploads(
+                        fileMapping.values.flatten().associate {
+                            it.fileId to it.multipartEtags
+                        },
+                    )
                     .validateFilesExist(fileMapping.fileIds)
             }
 

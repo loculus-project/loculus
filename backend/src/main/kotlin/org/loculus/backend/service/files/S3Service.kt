@@ -1,52 +1,129 @@
 package org.loculus.backend.service.files
 
-import io.minio.GetPresignedObjectUrlArgs
-import io.minio.MinioClient
-import io.minio.SetObjectTagsArgs
-import io.minio.StatObjectArgs
-import io.minio.http.Method
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
+import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload
+import software.amazon.awssdk.services.s3.model.CompletedPart
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest
+import software.amazon.awssdk.services.s3.model.S3Exception
+import software.amazon.awssdk.services.s3.model.Tag
+import software.amazon.awssdk.services.s3.model.Tagging
+import software.amazon.awssdk.services.s3.model.UploadPartRequest
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
+import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest
+import java.net.URI
+import java.time.Duration
 
 private const val PRESIGNED_URL_EXPIRY_SECONDS = 60 * 30
+
+data class MultipartUploadHandler(val uploadId: String, val presignedUrls: List<String>)
 
 @Service
 class S3Service(private val s3Config: S3Config) {
 
-    private val minioClient: MinioClient by lazy { createClient(getS3BucketConfig()) }
+    private val s3Client: S3Client by lazy { createClient(getS3BucketConfig()) }
+    private val presigner: S3Presigner by lazy { createPresigner(getS3BucketConfig()) }
 
-    private val internalMinioClient: MinioClient by lazy { createClient(getS3BucketConfig(), true) }
-
-    fun createUrlToUploadPrivateFile(fileId: FileId): String {
+    fun createUrlToUploadPrivateFile(fileId: FileId): String = s3ErrorMapping {
         val config = getS3BucketConfig()
-        return getClient().getPresignedObjectUrl(
-            GetPresignedObjectUrlArgs.builder()
-                .method(Method.PUT)
-                .bucket(config.bucket)
-                .`object`(getFileIdPath(fileId))
-                .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
-                .build(),
-        )
+        val putObjectRequest = PutObjectRequest.builder()
+            .bucket(config.bucket)
+            .key(getFileIdPath(fileId))
+            .build()
+        val presignRequest = PutObjectPresignRequest.builder()
+            .putObjectRequest(putObjectRequest)
+            .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+            .build()
+        presigner.presignPutObject(presignRequest).url().toString()
     }
 
-    fun createUrlToReadPrivateFile(fileId: FileId, downloadFileName: String? = null): String {
-        val config = getS3BucketConfig()
-        var args = GetPresignedObjectUrlArgs.builder()
-            .method(Method.GET)
-            .bucket(config.bucket)
-            .`object`(getFileIdPath(fileId))
-            .expiry(PRESIGNED_URL_EXPIRY_SECONDS, TimeUnit.SECONDS)
-        if (downloadFileName != null) {
-            args =
-                args.extraQueryParams(
-                    mapOf(
-                        "response-content-disposition" to "attachment; filename=\"$downloadFileName\"",
-                    ),
-                )
+    fun initiateMultipartUploadAndCreateUrlsToUpload(fileId: FileId, numberParts: Int): MultipartUploadHandler =
+        s3ErrorMapping {
+            if (numberParts <= 0 || numberParts > 10000) {
+                throw BadRequestException("The number of parts must between 1 and 10000.")
+            }
+
+            val config = getS3BucketConfig()
+
+            val uploadId = s3Client.createMultipartUpload(
+                CreateMultipartUploadRequest.builder()
+                    .bucket(config.bucket)
+                    .key(getFileIdPath(fileId))
+                    .build(),
+            ).uploadId()
+
+            val urls = (1..numberParts).map { part ->
+                val uploadPartRequest = UploadPartRequest.builder()
+                    .bucket(config.bucket)
+                    .key(getFileIdPath(fileId))
+                    .uploadId(uploadId)
+                    .partNumber(part)
+                    .build()
+
+                val presignRequest = UploadPartPresignRequest.builder()
+                    .uploadPartRequest(uploadPartRequest)
+                    .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+                    .build()
+
+                presigner.presignUploadPart(presignRequest).url().toString()
+            }
+
+            MultipartUploadHandler(uploadId, urls)
         }
-        return minioClient.getPresignedObjectUrl(args.build())
+
+    fun completeMultipartUpload(fileId: FileId, uploadId: String, etags: List<String>) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+
+        val completedParts = etags.mapIndexed { index, etag ->
+            CompletedPart.builder()
+                .partNumber(index + 1)
+                .eTag(etag)
+                .build()
+        }
+
+        s3Client.completeMultipartUpload(
+            CompleteMultipartUploadRequest.builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .uploadId(uploadId)
+                .multipartUpload(
+                    CompletedMultipartUpload.builder()
+                        .parts(completedParts)
+                        .build(),
+                )
+                .build(),
+        )
+        Unit
+    }
+
+    fun createUrlToReadPrivateFile(fileId: FileId, downloadFileName: String? = null): String = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        val getReqBuilder = GetObjectRequest.builder()
+            .bucket(config.bucket)
+            .key(getFileIdPath(fileId))
+        if (downloadFileName != null) {
+            getReqBuilder.responseContentDisposition("attachment; filename=\"$downloadFileName\"")
+        }
+        val presignRequest = GetObjectPresignRequest.builder()
+            .getObjectRequest(getReqBuilder.build())
+            .signatureDuration(Duration.ofSeconds(PRESIGNED_URL_EXPIRY_SECONDS.toLong()))
+            .build()
+        presigner.presignGetObject(presignRequest).url().toString()
     }
 
     /**
@@ -62,15 +139,25 @@ class S3Service(private val s3Config: S3Config) {
      * Sets the 'public=true' tag on the given file ID.
      * The bucket should have a policy that files with this tag are publicly accessible.
      */
-    fun setFileToPublic(fileId: FileId) {
+    fun setFileToPublic(fileId: FileId) = s3ErrorMapping {
         val config = getS3BucketConfig()
-        getInternalClient().setObjectTags(
-            SetObjectTagsArgs.builder()
+        s3Client.putObjectTagging(
+            PutObjectTaggingRequest.builder()
                 .bucket(config.bucket)
-                .`object`(getFileIdPath(fileId))
-                .tags(mapOf("public" to "true"))
+                .key(getFileIdPath(fileId))
+                .tagging(
+                    Tagging.builder()
+                        .tagSet(
+                            Tag.builder()
+                                .key("public")
+                                .value("true")
+                                .build(),
+                        )
+                        .build(),
+                )
                 .build(),
         )
+        Unit
     }
 
     private fun assertIsEnabled() {
@@ -87,39 +174,80 @@ class S3Service(private val s3Config: S3Config) {
         return s3Config.bucket
     }
 
-    /**
-     * Use the client to generate URLs that are accessible from outside the cluster.
-     */
-    private fun getClient(): MinioClient = minioClient
+    private fun createClient(bucketConfig: S3BucketConfig): S3Client = S3Client.builder()
+        .endpointOverride(URI.create(bucketConfig.internalEndpoint ?: bucketConfig.endpoint))
+        .region(Region.of(bucketConfig.region))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
+            ),
+        )
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build(),
+        )
+        .build()
 
-    /**
-     * Use the internal client to make direct requests to S3.
-     */
-    private fun getInternalClient(): MinioClient = internalMinioClient
-
-    private fun createClient(bucketConfig: S3BucketConfig, internal: Boolean = false): MinioClient =
-        MinioClient.builder()
-            .endpoint(if (internal) bucketConfig.internalEndpoint ?: bucketConfig.endpoint else bucketConfig.endpoint)
-            .region(bucketConfig.region)
-            .credentials(bucketConfig.accessKey, bucketConfig.secretKey)
-            .build()
+    private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
+        .endpointOverride(URI.create(bucketConfig.endpoint))
+        .region(Region.of(bucketConfig.region))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
+            ),
+        )
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build(),
+        )
+        .build()
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
 
     /**
      * Returns the file size in bytes, or `null` if the file doesn't exist.
      */
-    fun getFileSize(fileId: FileId): Long? {
+    fun getFileSize(fileId: FileId): Long? = s3ErrorMapping {
         val config = getS3BucketConfig()
-        return try {
-            getInternalClient().statObject(
-                StatObjectArgs.builder()
+        try {
+            s3Client.headObject(
+                HeadObjectRequest.builder()
                     .bucket(config.bucket)
-                    .`object`(getFileIdPath(fileId))
+                    .key(getFileIdPath(fileId))
                     .build(),
-            ).size()
-        } catch (e: io.minio.errors.ErrorResponseException) {
-            if (e.errorResponse().code() == "NoSuchKey") null else throw e
+            ).contentLength()
+        } catch (e: S3Exception) {
+            if (e.statusCode() == 404 || e.awsErrorDetails().errorCode() == "NoSuchKey") null else throw e
+        }
+    }
+}
+
+/**
+ * This function maps S3Exceptions to our exceptions. It separates client and server errors and maps the error messages
+ * from S3 to be more suitable for Loculus users. It also ensures that potentially sensitive information, that may be
+ * contained in a S3 error message, are not sent to the client.
+ */
+fun <T> s3ErrorMapping(block: () -> T): T {
+    // List of S3 error codes can be found at https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
+    try {
+        return block()
+    } catch (e: S3Exception) {
+        throw when (e.awsErrorDetails().errorCode()) {
+            "EntityTooSmall" -> UnprocessableEntityException(
+                "EntityTooSmall: Your proposed upload is smaller than the minimum allowed object size. " +
+                    "Each part, except the last one, must be at least 5 MB.",
+            )
+            "InvalidPart" -> UnprocessableEntityException(
+                "InvalidPart: One or more of the specified parts could not be found. The part may not have been " +
+                    "uploaded, or the specified etag may not match the part's etag.",
+            )
+            "InvalidPartOrder" -> UnprocessableEntityException(
+                "The list of parts was not in ascending order. The parts list must be specified in order " +
+                    "by part number.",
+            )
+            else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")
         }
     }
 }
