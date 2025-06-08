@@ -1,5 +1,6 @@
 import { type FC, useState, useRef, useEffect } from 'react';
 
+import { FilesDialog } from './FilesDialog.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -27,6 +28,7 @@ import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
+import Files from '~icons/lucide/files';
 import RiDna from '~icons/mdi/dna';
 import TickOutline from '~icons/mdi/tick-outline';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
@@ -40,6 +42,7 @@ type ReviewCardProps = {
     clientConfig: ClientConfig;
     organism: string;
     accessToken: string;
+    filesEnabled: boolean;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -51,9 +54,12 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     clientConfig,
     organism,
     accessToken,
+    filesEnabled,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
+    const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
+    const hasFiles = Object.entries(data?.processedData.files ?? {}).length > 0;
 
     const notProcessed = sequenceEntryStatus.status !== processedStatus;
 
@@ -91,6 +97,9 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     deleteAccessionVersion={deleteAccessionVersion}
                     editAccessionVersion={editAccessionVersion}
                     viewSequences={data && !notProcessed ? () => setSequencesDialogOpen(true) : undefined}
+                    viewFiles={data && !notProcessed ? () => setFilesDialogOpen(true) : undefined}
+                    filesEnabled={filesEnabled}
+                    hasFiles={hasFiles}
                 />
             </div>
 
@@ -110,6 +119,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
             />
+            <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
         </div>
     );
 };
@@ -120,6 +130,9 @@ type ButtonBarProps = {
     deleteAccessionVersion: () => void;
     editAccessionVersion: () => void;
     viewSequences?: () => void;
+    viewFiles?: () => void;
+    filesEnabled: boolean;
+    hasFiles: boolean;
 };
 
 const ButtonBar: FC<ButtonBarProps> = ({
@@ -128,11 +141,12 @@ const ButtonBar: FC<ButtonBarProps> = ({
     deleteAccessionVersion,
     editAccessionVersion,
     viewSequences,
+    viewFiles,
+    filesEnabled,
+    hasFiles,
 }) => {
     const buttonBarClass = (disabled: boolean) =>
-        `${
-            disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
-        } pl-3 inline-block mr-2 mb-2 text-xl`;
+        `${disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'} inline-block text-xl`;
     const approvable =
         sequenceEntryStatus.status === processedStatus &&
         !(sequenceEntryStatus.processingResult === errorsProcessingResult);
@@ -140,22 +154,39 @@ const ButtonBar: FC<ButtonBarProps> = ({
 
     return (
         <div className='flex mb-auto pt-3.5 items-center'>
-            <div className='flex space-x-1'>
+            <div className='flex space-x-4'>
+                {filesEnabled && viewFiles && (
+                    <>
+                        <button
+                            className={buttonBarClass(!hasFiles)}
+                            onClick={viewFiles}
+                            data-tooltip-id={'view-files-tooltip' + sequenceEntryStatus.accession}
+                            data-testid={`view-files-${sequenceEntryStatus.accession}`}
+                            key={'view-files-button-' + sequenceEntryStatus.accession}
+                            disabled={!hasFiles}
+                        >
+                            <Files />
+                        </button>
+                        <CustomTooltip
+                            id={'view-files-tooltip' + sequenceEntryStatus.accession}
+                            content={hasFiles ? 'View files' : 'No files for this entry'}
+                        />
+                    </>
+                )}
                 {viewSequences && (
                     <>
                         <button
-                            className={buttonBarClass(notProcessed)}
+                            className={buttonBarClass(false)}
                             onClick={viewSequences}
                             data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
                             data-testid={`view-sequences-${sequenceEntryStatus.accession}`}
                             key={'view-sequences-button-' + sequenceEntryStatus.accession}
-                            disabled={notProcessed}
                         >
                             <RiDna />
                         </button>
                         <CustomTooltip
                             id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
-                            content={notProcessed ? 'Processing...' : 'View processed sequences'}
+                            content={'View processed sequences'}
                         />
                     </>
                 )}
