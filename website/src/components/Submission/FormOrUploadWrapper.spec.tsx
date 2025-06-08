@@ -92,7 +92,7 @@ describe('FormOrUploadWrapper', () => {
         }
 
         async function enterInputValue(label: string, value: string) {
-            const input = screen.getByLabelText(`${label}:`);
+            const input = screen.getByLabelText(label);
             await userEvent.type(input, value);
             expect(input).toHaveValue(value);
         }
