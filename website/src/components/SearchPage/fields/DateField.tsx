@@ -53,7 +53,7 @@ export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConv
             valueToDateConverter={(value) => {
                 const timestamp = Math.max(parseInt(value, 10));
                 if (isNaN(timestamp)) return undefined;
-                const tzOffset = new Date().getTimezoneOffset() * 60;
+                const tzOffset = new Date(timestamp * 1000).getTimezoneOffset() * 60;
                 const date = new Date((timestamp + tzOffset) * 1000);
                 return date;
             }}
