@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import MaterialSymbolsLightDownload from '~icons/material-symbols-light/download';
 
 import { type SequenceFilter } from './SequenceFilters';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
@@ -26,7 +27,8 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
         buttonWidthClass = 'w-[15rem]'; // this width is fine for up to two digit numbers
     }
     return (
-        <button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
+        <button className={buttonWidthClass + ' outlineButton flex items-center justify-center'} onClick={onClick}>
+            <MaterialSymbolsLightDownload className='inline-block mr-1' aria-hidden='true' />
             {buttonText}
         </button>
     );

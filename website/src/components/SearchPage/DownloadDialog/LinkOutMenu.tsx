@@ -8,6 +8,7 @@ import { processTemplate, matchPlaceholders } from '../../../utils/templateProce
 import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
+import MaterialSymbolsLightHandymanOutline from '~icons/material-symbols-light/handyman-outline';
 
 const DATA_TYPES = ['unalignedNucleotideSequences', 'metadata', 'alignedNucleotideSequences'] as const;
 type DataType = (typeof DATA_TYPES)[number];
@@ -120,7 +121,10 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                     className='outlineButton flex items-center min-w-[100px] justify-between h-full'
                     onClick={() => setIsOpen(!isOpen)}
                 >
-                    <span>Tools</span>
+                    <span className='flex items-center'>
+                        <MaterialSymbolsLightHandymanOutline className='h-5 w-5 mr-1' aria-hidden='true' />
+                        Tools
+                    </span>
                     <IwwaArrowDown className='ml-2 h-5 w-5' aria-hidden='true' />
                 </MenuButton>
 
