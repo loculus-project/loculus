@@ -73,7 +73,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         <span>
                             <strong>
                                 For revisions, your metadata file must contain an "accession" column, containing the
-                                accessions already in the database for each sequence entry. <br />
+                                accessions already in the database for each sequence entry.<br />
                             </strong>
                         </span>
                     )}
