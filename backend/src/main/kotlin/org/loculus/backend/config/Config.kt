@@ -17,6 +17,8 @@ data class BackendConfig(
     )
 }
 
+data class OutputFileCategory(val name: String)
+
 data class DataUseTerms(val enabled: Boolean, val urls: DataUseTermsUrls?)
 
 data class DataUseTermsUrls(val open: String, val restricted: String)
@@ -51,6 +53,7 @@ data class Schema(
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
+    val files: List<OutputFileCategory> = emptyList(),
 )
 
 data class SubmissionDataTypes(

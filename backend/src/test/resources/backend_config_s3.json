@@ -35,6 +35,10 @@
                         ]
                     }
                 },
+                "files": [
+                    {"name":  "myFileCategory"},
+                    {"name":  "myOtherFileCategory"}
+                ],
                 "metadata": [
                     {
                         "name": "date",

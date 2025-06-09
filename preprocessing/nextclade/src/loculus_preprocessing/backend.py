@@ -2,12 +2,15 @@
 
 import dataclasses
 import datetime as dt
+import gzip
+import io
 import json
 import logging
 import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
+from urllib.parse import urlparse
 
 import jwt
 import pytz
@@ -15,6 +18,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -27,7 +31,7 @@ logger = logging.getLogger(__name__)
 class JwtCache:
     def __init__(self) -> None:
         self.token: str = ""
-        self.expiration: dt.datetime = dt.datetime.min
+        self.expiration: dt.datetime = dt.datetime.min  # noqa: DTZ901
 
     def get_token(self) -> str | None:
         # Only use token if it's got more than 5 minutes left
@@ -92,6 +96,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         }
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
+            group_id=json_object["groupId"],
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
             if unaligned_nucleotide_sequences
@@ -119,7 +124,9 @@ def fetch_unprocessed_sequences(
     logger.debug(f"Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=10)
     logger.info(
-        f"Unprocessed data from backend: status code {response.status_code}, request id: {response.headers.get('x-request-id')}"
+        "Unprocessed data from backend: status code %s, request id: %s",
+        response.status_code,
+        response.headers.get("x-request-id")
     )
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
@@ -173,6 +180,44 @@ def submit_processed_sequences(
     logger.info("Processed data submitted successfully")
 
 
+def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
+    # we need to parse this here, because we don't want the organism in there.
+    parsed = urlparse(config.backend_host)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    url = base_url + "/files/request-upload"
+    params = {"groupId": group_id, "numberFiles": number_of_files}
+    headers = {"Authorization": "Bearer " + get_jwt(config)}
+    response = requests.post(url, headers=headers, params=params, timeout=10)
+    if not response.ok:
+        msg = f"Upload request failed: {response.status_code}, {response.text}"
+        raise RuntimeError(msg)
+    return [FileUploadInfo(**item) for item in response.json()]
+
+
+def _gzip_string(content: str) -> bytes:
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode="w") as gz_file, \
+        io.TextIOWrapper(gz_file, encoding="utf-8") as wrapper:
+        wrapper.write(content)
+    return buffer.getvalue()
+
+
+def _upload_bytes(data: bytes, url: str) -> None:
+    headers = {"Content-Type": "application/octet-stream"}
+    r = requests.put(url, data=data, headers=headers, timeout=10)
+    if not r.ok:
+        msg = f"Upload failed: {r.status_code}, {r.text}"
+        raise RuntimeError(msg)
+
+
+def upload_string_to_presigned_url(content: str, url: str) -> None:
+    _upload_bytes(content.encode("utf-8"), url)
+
+
+def upload_string_to_presigned_url_zipped(content: str, url: str) -> None:
+    _upload_bytes(_gzip_string(content), url)
+
+
 def download_minimizer(url, save_path):
     try:
         response = requests.get(url, timeout=10)
@@ -187,4 +232,3 @@ def download_minimizer(url, save_path):
         msg = f"Failed to download minimizer: {e}"
         logger.error(msg)
         raise RuntimeError(msg) from e
-
