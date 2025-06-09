@@ -7,7 +7,7 @@ const logger = getInstanceLogger('bannerMessageService');
 let cachedMessage: string | null = null;
 let lastFetch = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-const REQUEST_TIMEOUT_MS = 1000; // 1 second
+const REQUEST_TIMEOUT_MS = 3000; // 3 seconds
 
 export async function getBannerMessage(): Promise<string | null> {
   const { bannerMessageURL } = getWebsiteConfig();
