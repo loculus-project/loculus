@@ -107,31 +107,23 @@ class S3Service(private val s3Config: S3Config) {
     private fun createClient(bucketConfig: S3BucketConfig): S3Client = S3Client.builder()
         .endpointOverride(URI.create(bucketConfig.internalEndpoint ?: bucketConfig.endpoint))
         .region(Region.of(bucketConfig.region))
-        .credentialsProvider(
-            StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
-            ),
-        )
-        .serviceConfiguration(
-            S3Configuration.builder()
-                .pathStyleAccessEnabled(true)
-                .build(),
-        )
+        .credentialsProvider(createCredentialProvider(bucketConfig))
+        .serviceConfiguration(createServiceConfiguration())
         .build()
 
     private fun createPresigner(bucketConfig: S3BucketConfig): S3Presigner = S3Presigner.builder()
         .endpointOverride(URI.create(bucketConfig.endpoint))
         .region(Region.of(bucketConfig.region))
-        .credentialsProvider(
-            StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
-            ),
-        )
-        .serviceConfiguration(
-            S3Configuration.builder()
-                .pathStyleAccessEnabled(true)
-                .build(),
-        )
+        .credentialsProvider(createCredentialProvider(bucketConfig))
+        .serviceConfiguration(createServiceConfiguration())
+        .build()
+
+    private fun createCredentialProvider(bucketConfig: S3BucketConfig) = StaticCredentialsProvider.create(
+        AwsBasicCredentials.create(bucketConfig.accessKey, bucketConfig.secretKey),
+    )
+
+    private fun createServiceConfiguration() = S3Configuration.builder()
+        .pathStyleAccessEnabled(true)
         .build()
 
     private fun getFileIdPath(fileId: FileId): String = "files/$fileId"
