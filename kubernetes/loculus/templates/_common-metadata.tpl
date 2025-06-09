@@ -79,7 +79,6 @@ fields:
     autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
-    includeInDownloadsByDefault: true
   {{- if $.Values.dataUseTerms.enabled }}
   - name: dataUseTerms
     type: string
