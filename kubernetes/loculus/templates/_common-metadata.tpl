@@ -26,6 +26,7 @@ fields:
     type: string
     header: Submission details
     enableSubstringSearch: true
+    includeInDownloadsByDefault: true
   - name: isRevocation
     displayName: Is revocation
     type: boolean
@@ -43,6 +44,7 @@ fields:
     autocomplete: true
     header: Submission details
     displayName: Submitting group
+    includeInDownloadsByDefault: true
     customDisplay:
       type: submittingGroup
       displayGroup: group
