@@ -72,5 +72,5 @@ test('Download metadata with POST and check number of cols', async ({ page }) =>
     const firstLine = lines[0];
     const fields = firstLine.split('\t');
 
-    expect(fields).toHaveLength(9);
+    expect(fields).toHaveLength(11);
 });
