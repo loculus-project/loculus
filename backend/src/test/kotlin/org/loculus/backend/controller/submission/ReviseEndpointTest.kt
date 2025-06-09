@@ -352,7 +352,11 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The category unknownCategory is not part of the configured categories for dummyOrganism."),
+                ).value(
+                    containsString(
+                        "The category unknownCategory is not part of the configured categories for dummyOrganism.",
+                    ),
+                ),
             )
     }
 

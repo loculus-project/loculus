@@ -30,11 +30,16 @@
                     "files": {
                         "enabled": true,
                         "categories": [
-                            {"name":  "myFileCategory"},
-                            {"name":  "myOtherFileCategory"}
+                            {"name": "myFileCategory"},
+                            {"name": "myOtherFileCategory"}
                         ]
                     }
                 },
+                "files": [
+                    {"name": "myFileCategory"},
+                    {"name": "myOtherFileCategory"},
+                    {"name": "myProcessedOnlyFileCategory"}
+                ],
                 "metadata": [
                     {
                         "name": "date",

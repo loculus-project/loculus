@@ -480,6 +480,9 @@ class SubmitProcessedDataEndpointTest(
                     "myFileCategory" to listOf(
                         FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
                     ),
+                    "myProcessedOnlyFileCategory" to listOf(
+                        FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                    ),
                 ),
             ),
         )
