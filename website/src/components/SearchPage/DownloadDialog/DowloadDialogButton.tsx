@@ -1,8 +1,8 @@
 import type { FC } from 'react';
-import MaterialSymbolsLightDownload from '~icons/material-symbols-light/download';
 
 import { type SequenceFilter } from './SequenceFilters';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
+import MaterialSymbolsLightDownload from '~icons/material-symbols-light/download';
 
 type DownloadDialogButtonProps = {
     onClick: () => void;
@@ -19,16 +19,16 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
     const sequenceCount = sequenceFilter.sequenceCount();
     if (sequenceCount === undefined) {
         buttonText = 'Download all entries';
-        buttonWidthClass = 'w-44';
+        buttonWidthClass = 'w-48';
     } else {
         const formattedCount = formatNumberWithDefaultLocale(sequenceCount);
         const entries = sequenceCount === 1 ? 'entry' : 'entries';
         buttonText = `Download ${formattedCount} selected ${entries}`;
-        buttonWidthClass = 'w-[15rem]'; // this width is fine for up to two digit numbers
+        buttonWidthClass = 'w-[16rem]'; // expanded width to accommodate icon
     }
     return (
         <button className={buttonWidthClass + ' outlineButton flex items-center justify-center'} onClick={onClick}>
-            <MaterialSymbolsLightDownload className='inline-block mr-1' aria-hidden='true' />
+            <MaterialSymbolsLightDownload className='h-5 w-5 mr-1' aria-hidden='true' />
             {buttonText}
         </button>
     );
