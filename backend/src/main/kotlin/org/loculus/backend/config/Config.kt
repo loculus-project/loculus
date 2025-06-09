@@ -51,6 +51,7 @@ data class Schema(
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
+    val files: List<FileCategory> = emptyList(),
 )
 
 data class SubmissionDataTypes(

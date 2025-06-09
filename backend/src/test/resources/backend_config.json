@@ -196,6 +196,7 @@
                 "submissionDataTypes": {
                     "consensusSequences": false
                 },
+                "files": [],
                 "metadata": [
                     {
                         "name": "date",

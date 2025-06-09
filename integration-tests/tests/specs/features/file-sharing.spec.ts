@@ -58,6 +58,8 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
         ],
     );
 
+    await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
+
     let cleanup: () => Promise<void>;
     try {
         cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
