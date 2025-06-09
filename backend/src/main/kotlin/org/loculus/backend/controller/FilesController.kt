@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.FileIdAndMultipartWriteUrl
 import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
+import java.util.UUID
 
 @RestController
 @RequestMapping("/files")
@@ -86,16 +88,57 @@ class FilesController(
         )
         @RequestParam
         groupId: Int,
-        @Parameter(description = "Number of URLs, default is 1.")
+        @Parameter(description = "Number of files, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
         filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         val response = mutableListOf<FileIdAndWriteUrl>()
         repeat(numberFiles) {
-            val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
+            val fileId = UUID.randomUUID()
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
+            filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
             response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
+        }
+        return response
+    }
+
+    @Operation(
+        description =
+        "Requests S3 pre-signed URLs to upload files using multipart upload. The endpoint returns a list of " +
+            "file IDs and, for each file ID, a list of URLs. " +
+            "The URLs should be used to upload the parts. Afterwards, the file IDs can be used in the " +
+            "`fileMapping` in the /submit endpoint.",
+    )
+    @PostMapping("/request-multipart-upload")
+    fun requestMultipartUploads(
+        @HiddenParam
+        authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = "The Group ID of the group which will be owning the files. " +
+                "The requesting user must be a member of the group.",
+        )
+        @RequestParam
+        groupId: Int,
+        @Parameter(description = "Number of files, default is 1.")
+        @RequestParam
+        numberFiles: Int = 1,
+        @Parameter(description = "Number of parts, default is 1.")
+        @RequestParam
+        numberParts: Int = 1,
+    ): List<FileIdAndMultipartWriteUrl> {
+        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        val response = mutableListOf<FileIdAndMultipartWriteUrl>()
+        repeat(numberFiles) {
+            val fileId = UUID.randomUUID()
+            val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
+            filesDatabaseService.createFileEntry(
+                fileId,
+                authenticatedUser.username,
+                groupId,
+                multipartUploadHandler.uploadId,
+            )
+            response.add(FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls))
         }
         return response
     }

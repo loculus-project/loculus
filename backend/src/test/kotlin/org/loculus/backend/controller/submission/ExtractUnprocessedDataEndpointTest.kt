@@ -25,6 +25,7 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -276,6 +277,6 @@ class ExtractUnprocessedDataEndpointTest(
 
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
         assertThat(response.statusCode(), `is`(200))
-        assertThat(response.body(), `is`("Hello, world!"))
+        assertThat(response.body(), `is`(DEFAULT_SIMPLE_FILE_CONTENT))
     }
 }

@@ -54,6 +54,22 @@ class FileMappingPreconditionValidator(
         return this
     }
 
+    fun validateMultipartUploads(fileIdsAndEtags: Map<FileId, List<String>?>): FileMappingPreconditionValidator {
+        val multipartUploadIds = filesDatabaseService.getUncompletedMultipartUploadIds(fileIdsAndEtags.keys)
+        multipartUploadIds.forEach { (fileId, uploadId) ->
+            val etags = fileIdsAndEtags[fileId]
+            if (etags == null || etags.isEmpty()) {
+                throw UnprocessableEntityException(
+                    "No etags provided for file ID $fileId although " +
+                        "multipart upload has been requested.",
+                )
+            }
+            s3Service.completeMultipartUpload(fileId, uploadId, etags)
+            filesDatabaseService.completeMultipartUpload(fileId)
+        }
+        return this
+    }
+
     fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
         uncheckedFileIds.forEach { fileId ->
@@ -84,6 +100,23 @@ class SubmissionIdFilesMappingPreconditionValidator(
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateCategoriesMatchSchema(it, organism)
+        }
+        return this
+    }
+
+    /**
+     * For files that have been newly uploaded through the multipart upload protocol, complete the uploads: this
+     * validates that the upload has been successful and all etags are valid.
+     */
+    fun validateMultipartUploads(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateMultipartUploads(
+                it.values.flatten().associate {
+                    it.fileId to it.multipartEtags
+                },
+            )
         }
         return this
     }
