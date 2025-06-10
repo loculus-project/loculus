@@ -759,6 +759,12 @@
       "default": "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.",
       "description": "Banner message (as HTML) to display at the very top of the page"
     },
+    "bannerMessageURL": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "URL to fetch banner message HTML from - if set will be polled regularly for banner text, e.g. notice of temporary downtime, and overwrite the 'bannerMessage'-config"
+    },
     "welcomeMessageHTML": {
       "groups": ["general"],
       "type": ["string", "null"],

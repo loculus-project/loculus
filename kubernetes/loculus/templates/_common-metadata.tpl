@@ -153,6 +153,9 @@ sequenceFlagging: {{ $.Values.sequenceFlagging | toYaml | nindent 6 }}
 {{ if $.Values.gitHubMainUrl }}
 gitHubMainUrl: {{ quote $.Values.gitHubMainUrl }}
 {{ end }}
+{{ if $.Values.bannerMessageURL }}
+bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
+{{ end }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
