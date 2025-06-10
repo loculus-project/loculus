@@ -1,4 +1,6 @@
-{{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
+{{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host -}}
+{{- $organisms := .Values.organisms | default .Values.defaultOrganisms -}}
+{{- $organismKeys := keys $organisms -}}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -21,13 +23,13 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key, $_ := $organisms }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
+      {{- range $key, $_ := $organisms }}
       - path: /{{ $key }}/
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
@@ -42,7 +44,7 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
-{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- range $key, $_ := $organisms }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -52,43 +54,50 @@ spec:
   stripPrefix:
     prefixes:
       - /{{ $key }}/
+{{- end }}
+{{- if $organismKeys }}
+---
+# A SINGLE middleware to add a trailing slash to ANY organism path
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-slash
+spec:
+  redirectRegex:
+    # This regex joins all your organism keys with a "|" (OR)
+    # e.g., ^/((human|mouse|rat))$
+    regex: "^/({{ join "|" $organismKeys }})$"
+    replacement: "/${1}/"
+    permanent: true
 ---
 {{- $redirectMiddlewareList := list -}}
 {{- if $.Values.enforceHTTPS -}}
   {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
-{{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-%s-slash@kubernetescrd" $.Release.Namespace $key) }}
+{{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-slash@kubernetescrd" $.Release.Namespace) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: lapis-redirect-{{ $key }}-ingress
+  name: lapis-redirect-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $redirectMiddlewareList }}"
-    # Traefik's default priority is the length of the Ingress rule.
-    # The main lapis-ingress rule is long, so its priority could be ~50 or more.
-    # We set an explicit, high priority here to ensure this redirect
-    # rule is always evaluated first.
-    traefik.ingress.kubernetes.io/router.priority: "100"
+    # High priority to ensure this rule is evaluated first
+    traefik.ingress.kubernetes.io/router.priority: "500"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
+      {{- range $key := $organismKeys }}
       - path: /{{ $key }}
         pathType: Exact
         backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
           service:
-            name: {{ template "loculus.lapisServiceName" $key }}
+            name: {{ template "loculus.lapisServiceName" (first $organismKeys) }}
             port:
               number: 8080
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: redirect-{{ $key }}-slash
-spec:
-  redirectRegex:
-    regex: "^/({{ $key }})$"
-    replacement: "/${1}/"
-    permanent: true
+      {{- end }}
 {{- end }}
