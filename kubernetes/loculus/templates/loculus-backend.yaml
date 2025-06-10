@@ -7,8 +7,13 @@ metadata:
   name: loculus-backend
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
+{{- $replicas := $.Values.replicas.backend }}
+{{- $min := $replicas.min | default 1 }}
+{{- $max := $replicas.max | default $min }}
 spec:
-  replicas: {{$.Values.replicas.backend}}
+  {{- if eq $min $max }}
+  replicas: {{ $min }}
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
@@ -154,4 +159,25 @@ spec:
               mountPath: /config
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+{{- if ne $min $max }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loculus-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loculus-backend
+  minReplicas: {{ $min }}
+  maxReplicas: {{ $max }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+{{- end }}
 {{- end }}
