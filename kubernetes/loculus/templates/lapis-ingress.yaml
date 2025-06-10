@@ -78,9 +78,9 @@ spec:
         pathType: Exact
         backend:
           service:
-            name: traefik
+            name: {{ template "loculus.lapisServiceName" $key }}
             port:
-              name: web
+              number: 8080
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
