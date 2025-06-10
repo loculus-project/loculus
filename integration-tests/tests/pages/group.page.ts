@@ -1,5 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { TestAccount } from '../types/auth.types';
 
 interface GroupData {
     name: string;
@@ -16,10 +15,86 @@ interface GroupData {
 export class GroupPage {
     constructor(private page: Page) {}
 
+    async navigateToUserPage() {
+        await this.page.goto('/');
+        await this.page.getByRole('link', { name: 'My account' }).click();
+    }
+
     async navigateToCreateGroupPage() {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: 'My account' }).click();
         await this.page.getByRole('link', { name: 'Create a new submitting group' }).click();
+    }
+
+    async verifyGroupIsPresent(groupName: string) {
+        const groupEntry = this.page.locator('ul').getByText(groupName);
+        await expect(groupEntry).toBeVisible();
+    }
+
+    async verifyGroupIsNotPresent(groupName: string) {
+        const groupEntry = this.page.locator('ul').getByText(groupName);
+        await expect(groupEntry).not.toBeVisible();
+    }
+
+    async goToGroupEditPage() {
+        const editButton = this.page.getByRole('link', { name: 'Edit group' });
+        await editButton.waitFor({ state: 'visible' });
+        await editButton.click();
+        await this.page.waitForURL(/\/group\/\d+\/edit/);
+    }
+
+    async leaveGroup() {
+        const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
+        await leaveButton.waitFor({ state: 'visible' });
+        await leaveButton.click();
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+    }
+
+    async addUserToGroup(userName: string) {
+        const addButton = this.page.getByRole('button', { name: 'Add user' });
+        const inputField = this.page.getByRole('textbox', { name: 'new user name' });
+        await inputField.fill(userName);
+        await addButton.click();
+        await this.verifyUserIsPresent(userName);
+    }
+
+    async removeUserFromGroup(userName: string) {
+        const removeButton = this.page.getByLabel(`Remove User ${userName}`, { exact: true });
+        await removeButton.waitFor({ state: 'visible' });
+        await removeButton.click();
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+    }
+
+    async verifyUserIsPresent(userName: string) {
+        const locator = this.page.locator('ul').getByText(userName, { exact: true });
+        await expect(locator).toBeVisible();
+    }
+
+    async verifyUserIsNotPresent(userName: string) {
+        const locator = this.page.locator('ul').getByText(userName, { exact: true });
+        await expect(locator).not.toBeVisible();
+    }
+
+    async fillGroupForm(groupData: GroupData) {
+        await this.page.getByLabel('Group name', { exact: false }).fill(groupData.name);
+        await this.page.getByLabel('Email address', { exact: false }).fill(groupData.email);
+        await this.page.getByLabel('Institution', { exact: false }).fill(groupData.institution);
+        await this.page.getByLabel('Address Line 1').fill(groupData.addressLine1);
+        if (groupData.addressLine2) {
+            await this.page.getByLabel('Address Line 2').fill(groupData.addressLine2);
+        }
+        await this.page.getByLabel('City').fill(groupData.city);
+        if (groupData.state) {
+            await this.page.getByLabel('State', { exact: false }).fill(groupData.state);
+        }
+        await this.page.getByLabel('Postal code', { exact: false }).fill(groupData.zipCode);
+        await this.page.getByLabel('Country').selectOption(groupData.country);
+    }
+
+    async updateGroup(groupData: GroupData) {
+        await this.fillGroupForm(groupData);
+        await this.page.getByRole('button', { name: 'Update group' }).click();
+        await this.page.waitForURL(/\/group\/\d+/);
     }
 
     async createGroup(groupData: GroupData) {
