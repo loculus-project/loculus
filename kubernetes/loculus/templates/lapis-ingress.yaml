@@ -23,13 +23,13 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key, $_ := $organisms }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- range $key, $_ := $organisms }}
+      {{- range $key := $organismKeys }}
       - path: /{{ $key }}/
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
@@ -44,7 +44,7 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
-{{- range $key, $_ := $organisms }}
+{{- range $key := $organismKeys }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
