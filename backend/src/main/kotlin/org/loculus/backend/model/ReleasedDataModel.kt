@@ -135,7 +135,7 @@ open class ReleasedDataModel(
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
                 ("version" to LongNode(rawProcessedData.version)),
-                (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)),
+                ("submissionId" to TextNode(rawProcessedData.submissionId)),
                 ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())),
                 ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)),
                 ("submitter" to TextNode(rawProcessedData.submitter)),

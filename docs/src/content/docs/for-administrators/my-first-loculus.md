@@ -198,7 +198,7 @@ Then our metadata file, which we might name `metadata.tsv`:
 
 <div class="font-mono">
 <pre>
-submissionId	city	country
+id	city	country
 sample1	Paris	France
 sample2	Bogota	Colombia
 </pre>
