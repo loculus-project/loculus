@@ -55,9 +55,9 @@ spec:
 ---
 {{- $redirectMiddlewareList := list -}}
 {{- if $.Values.enforceHTTPS -}}
-  {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) -}}
-{{- end -}}
-{{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-%s-slash@kubernetescrd" $.Release.Namespace $key) -}}
+  {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- end }}
+{{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-%s-slash@kubernetescrd" $.Release.Namespace $key) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
