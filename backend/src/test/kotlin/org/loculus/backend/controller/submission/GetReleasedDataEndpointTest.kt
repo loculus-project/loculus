@@ -25,8 +25,10 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.everyItem
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`in`
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
@@ -38,8 +40,7 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
@@ -85,13 +86,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
-private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
-    "releasedAtTimestamp",
-    "submissionId",
-    "submittedAtTimestamp",
-    "groupId",
-)
-
 @EndpointTest
 class GetReleasedDataEndpointTest(
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
@@ -114,11 +108,32 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN no sequence entries in database THEN returns empty response & etag in header`() {
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBody, `is`(emptyList()))
         response.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
             .andExpect(header().string("x-total-records", `is`("0")))
+    }
+
+    @Test
+    fun `Given released data THEN does not have unknown top-level fields`() {
+        val allowedKeys = setOf(
+            "metadata",
+            "unalignedNucleotideSequences",
+            "alignedNucleotideSequences",
+            "nucleotideInsertions",
+            "alignedAminoAcidSequences",
+            "aminoAcidInsertions",
+        )
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val response = submissionControllerClient.getReleasedData()
+        val responseBody = response.expectNdjsonAndGetContent<Map<String, Any>>()
+
+        assertThat(responseBody.size, greaterThan(0))
+        responseBody.forEach {
+            assertThat(it.keys, everyItem(`is`(`in`(allowedKeys))))
+        }
     }
 
     @Test
@@ -137,7 +152,7 @@ class GetReleasedDataEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
 
         assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
 
@@ -185,7 +200,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val response = submissionControllerClient.getReleasedData()
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
 
         val mvcResult: MvcResult = response.andReturn()
 
@@ -209,7 +224,7 @@ class GetReleasedDataEndpointTest(
             .andExpect(header().string(ETAG, greaterThan(initialEtag)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
-            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+            .expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBodyMoreData.size, greaterThan(NUMBER_OF_SEQUENCES))
     }
 
@@ -225,7 +240,7 @@ class GetReleasedDataEndpointTest(
         ) = prepareRevokedAndRevocationAndRevisedVersions()
 
         val response =
-            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ReleasedData>()
 
         assertThat(
             response.findAccessionVersionStatus(accession, revokedVersion1),
@@ -266,7 +281,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessVersions)
 
         val firstSequenceEntry =
-            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()[0]
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ReleasedData>()[0]
 
         for (absentField in absentFields) {
             assertThat(firstSequenceEntry.metadata[absentField], `is`(NullNode.instance))
@@ -285,7 +300,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         val response = submissionControllerClient.getReleasedData()
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBody.size, `is`(accessionVersions.size))
         responseBody.forEach {
             assertThat(it.metadata["pipelineVersion"]!!.intValue(), `is`(2))
@@ -297,7 +312,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.prepareRevokedSequenceEntries()
 
         val revocationEntry = submissionControllerClient.getReleasedData()
-            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+            .expectNdjsonAndGetContent<ReleasedData>()
             .find { it.metadata["isRevocation"]!!.asBoolean() }!!
 
         for ((key, value) in revocationEntry.metadata) {
@@ -369,7 +384,7 @@ class GetReleasedDataEndpointTest(
 
         val data = decompressedContent.lines()
             .filter { it.isNotBlank() }
-            .map { jacksonObjectMapper.readValue<ProcessedData<GeneticSequence>>(it) }
+            .map { jacksonObjectMapper.readValue<ReleasedData>(it) }
 
         assertThat(data, hasSize(NUMBER_OF_SEQUENCES))
         assertThat(data[0].metadata, `is`(not(emptyMap())))
@@ -546,7 +561,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
         dataUseTermsUrl: String,
     ) {
         val releasedData = submissionControllerClient.getReleasedData()
-            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+            .expectNdjsonAndGetContent<ReleasedData>()
             .find { it.metadata["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
 
         assertThat(releasedData.metadata["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
@@ -590,10 +605,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 }
 
-private fun List<ProcessedData<GeneticSequence>>.findAccessionVersionStatus(
-    accession: Accession,
-    version: Version,
-): String {
+private fun List<ReleasedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
     val processedData =
         find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")

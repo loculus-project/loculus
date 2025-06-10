@@ -33,25 +33,26 @@ class FileMappingPreconditionValidator(
         return this
     }
 
-    fun validateCategoriesMatchSchema(
+    fun validateCategoriesMatchSubmissionSchema(
         fileCategoriesFilesMap: FileCategoryFilesMap?,
         organism: Organism,
     ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
-        val allowedCategories = backendConfig
+        val allowedFileCategories = backendConfig
             .getInstanceConfig(organism)
             .schema.submissionDataTypes.files.categories
-            .map { it.name }
-            .toSet()
+        return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedFileCategories, organism)
+    }
 
-        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
-            if (!allowedCategories.contains(category)) {
-                throw UnprocessableEntityException(
-                    "The category $category is not part of the configured categories for ${organism.name}.",
-                )
-            }
-        }
-        return this
+    fun validateCategoriesMatchProcessedSchema(
+        fileCategoriesFilesMap: FileCategoryFilesMap?,
+        organism: Organism,
+    ): FileMappingPreconditionValidator {
+        if (fileCategoriesFilesMap == null) return this
+        val allowedFileCategories = backendConfig
+            .getInstanceConfig(organism)
+            .schema.files
+        return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedFileCategories, organism)
     }
 
     fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
@@ -60,6 +61,24 @@ class FileMappingPreconditionValidator(
             val fileSize = s3Service.getFileSize(fileId)
                 ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
             filesDatabaseService.setFileSize(fileId, fileSize)
+        }
+        return this
+    }
+
+    private fun validateCategoriesMatchSchema(
+        fileCategoriesFilesMap: FileCategoryFilesMap,
+        allowedFileCategories: List<org.loculus.backend.config.FileCategory>,
+        organism: Organism,
+    ): FileMappingPreconditionValidator {
+        val allowedCategoriesName = allowedFileCategories.map { it.name }.toSet()
+
+        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
+            if (!allowedCategoriesName.contains(category)) {
+                throw UnprocessableEntityException(
+                    "The category $category is not part of the configured categories for ${organism.name}. " +
+                        "Allowed categories are: ${allowedCategoriesName.joinToString(", ")}.",
+                )
+            }
         }
         return this
     }
@@ -83,7 +102,7 @@ class SubmissionIdFilesMappingPreconditionValidator(
         organism: Organism,
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
-            fileMappingValidator.validateCategoriesMatchSchema(it, organism)
+            fileMappingValidator.validateCategoriesMatchSubmissionSchema(it, organism)
         }
         return this
     }
