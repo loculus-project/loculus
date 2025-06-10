@@ -24,7 +24,7 @@ export async function getRemoteBannerMessage(): Promise<string | null> {
                 responseType: 'text',
                 timeout: REQUEST_TIMEOUT_MS,
             });
-            cachedMessage = typeof response.data === 'string' ? response.data : '';
+            cachedMessage = typeof response.data === 'string' ? response.data.trim() : '';
         } catch (e) {
             logger.error(`Failed to fetch banner message from ${bannerMessageURL}: ${(e as Error).message}`);
             cachedMessage = '';
