@@ -57,17 +57,14 @@ spec:
 {{- end }}
 {{- if $organismKeys }}
 ---
-# A SINGLE middleware to add a trailing slash to ANY organism path
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-slash
 spec:
   redirectRegex:
-    # This regex joins all your organism keys with a "|" (OR)
-    # e.g., ^/((human|mouse|rat))$
-    regex: "^/({{ join "|" $organismKeys }})$"
-    replacement: "/${1}/"
+    regex: ".*"
+    replacement: "$0/"
     permanent: true
 ---
 {{- $redirectMiddlewareList := list -}}
