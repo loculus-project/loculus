@@ -78,6 +78,7 @@ class SecurityConfig {
             auth.requestMatchers(
                 "/",
                 "favicon.ico",
+                "/robots.txt", // Added this line
                 "/error/**",
                 "/actuator/**",
                 "/api-docs**",
