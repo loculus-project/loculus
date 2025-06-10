@@ -65,6 +65,8 @@ spec:
     replacement: "$0/"
     permanent: true
 ---
+# This ingress is only used to redirect from $LAPIS_URL/$ORGANISM_NAME to $LAPIS_URL/$ORGANISM_NAME/
+# We need to do this so we can strip the /$ORGANISM_NAME/ prefix in the main lapis ingress (see #3360)
 {{- $redirectMiddlewareList := list -}}
 {{- if $.Values.enforceHTTPS -}}
   {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
