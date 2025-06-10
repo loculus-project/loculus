@@ -10,7 +10,7 @@ spec:
       - "OPTIONS"
       - "POST"
       - "HEAD"
-    accessControlAllowOriginList: 
+    accessControlAllowOriginList:
       - "*"
     accessControlMaxAge: 100
     accessControlAllowHeaders:
@@ -42,7 +42,6 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
-
 {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -53,4 +52,43 @@ spec:
   stripPrefix:
     prefixes:
       - /{{ $key }}/
+---
+{{- $redirectMiddlewareList := list -}}
+{{- if $.Values.enforceHTTPS -}}
+  {{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) -}}
+{{- end -}}
+{{- $redirectMiddlewareList = append $redirectMiddlewareList (printf "%s-redirect-%s-slash@kubernetescrd" $.Release.Namespace $key) -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lapis-redirect-{{ $key }}-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $redirectMiddlewareList }}"
+    # Traefik's default priority is the length of the Ingress rule.
+    # The main lapis-ingress rule is long, so its priority could be ~50 or more.
+    # We set an explicit, high priority here to ensure this redirect
+    # rule is always evaluated first.
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  rules:
+  - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
+    http:
+      paths:
+      - path: /{{ $key }}
+        pathType: Exact
+        backend:
+          service:
+            name: traefik
+            port:
+              name: web
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-{{ $key }}-slash
+spec:
+  redirectRegex:
+    regex: "^/({{ $key }})$"
+    replacement: "/${1}/"
+    permanent: true
 {{- end }}
