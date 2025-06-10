@@ -180,7 +180,7 @@ def write_grouped_metadata(
     groups: Groups,
 ) -> tuple[dict, set]:
     # Map from original accession to the new concatenated accession
-    fasta_id_map: dict[Accession, id] = {}
+    fasta_id_map: dict[Accession, Id] = {}
     ungrouped_accessions = set()
     different_values_log = {}
     count_total = 0
