@@ -10,7 +10,7 @@ let lastFetch = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 3000;
 
-export async function getBannerMessage(): Promise<string | null> {
+export async function getRemoteBannerMessage(): Promise<string | null> {
     const { bannerMessageURL } = getWebsiteConfig();
 
     if (!bannerMessageURL) {

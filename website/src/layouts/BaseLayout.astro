@@ -9,7 +9,7 @@ import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import { navigationItems } from '../routes/navigationItems';
 import { createBackendClient } from '../services/backendClientFactory';
-import { getBannerMessage } from '../services/bannerMessageService';
+import { getRemoteBannerMessage } from '../services/bannerMessageService';
 
 const websiteConfig = getWebsiteConfig();
 const {
@@ -19,7 +19,7 @@ const {
     additionalHeadHTML,
     gitHubMainUrl,
 } = websiteConfig;
-const remoteBannerMessage = await getBannerMessage();
+const remoteBannerMessage = await getRemoteBannerMessage();
 const bannerMessage = remoteBannerMessage ?? configBannerMessage;
 
 interface Props {
