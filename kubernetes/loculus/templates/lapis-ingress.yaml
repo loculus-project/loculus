@@ -35,6 +35,13 @@ spec:
             name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
+      - path: /{{ $key }} # Fallback for bare LAPIS url to avoid 404 (#3360)
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ template "loculus.lapisServiceName" $key }}
+            port:
+              number: 8080
       {{- end }}
   {{- if eq $.Values.environment "server" }}
   tls:
