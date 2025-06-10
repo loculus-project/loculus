@@ -26,6 +26,7 @@ fields:
     type: string
     header: Submission details
     enableSubstringSearch: true
+    includeInDownloadsByDefault: true
   - name: isRevocation
     displayName: Is revocation
     type: boolean
@@ -43,6 +44,7 @@ fields:
     autocomplete: true
     header: Submission details
     displayName: Submitting group
+    includeInDownloadsByDefault: true
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -342,6 +344,10 @@ organisms:
       {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       {{- include "loculus.submissionDataTypes" . | nindent 6 }}
+      {{- if .files }}
+      files:
+        {{ .files | toYaml | nindent 8 }}
+      {{- end }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}

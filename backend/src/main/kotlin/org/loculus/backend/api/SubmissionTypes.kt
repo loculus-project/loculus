@@ -173,6 +173,39 @@ data class ProcessedData<SequenceType>(
     val files: FileCategoryFilesMap?,
 )
 
+data class ReleasedData(
+    @Schema(
+        example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
+        description = "Key value pairs of metadata, correctly typed",
+    )
+    val metadata: MetadataMap,
+    @Schema(
+        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        description = "The key is the segment name, the value is the nucleotide sequence",
+    )
+    val unalignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
+    @Schema(
+        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        description = "The key is the segment name, the value is the aligned nucleotide sequence",
+    )
+    val alignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
+    @Schema(
+        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
+        description = "The key is the segment name, the value is a list of nucleotide insertions",
+    )
+    val nucleotideInsertions: Map<SegmentName, List<Insertion>>,
+    @Schema(
+        example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
+        description = "The key is the gene name, the value is the amino acid sequence",
+    )
+    val alignedAminoAcidSequences: Map<GeneName, GeneticSequence?>,
+    @Schema(
+        example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
+        description = "The key is the gene name, the value is a list of amino acid insertions",
+    )
+    val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
+)
+
 data class ExternalSubmittedData(
     override val accession: Accession,
     override val version: Version,
@@ -364,8 +397,8 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
 typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
 
 fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
-    it.values
-}.flatten().map { it.fileId }.toSet()
+    it.fileIds
+}.toSet()
 
 /**
  * A file category like 'raw_reads' or 'logs'.
@@ -380,6 +413,10 @@ typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
 val FileCategoryFilesMap.categories: Set<FileCategory>
     get() = this.keys
+
+/** All file IDs used in the map. */
+val FileCategoryFilesMap.fileIds: Set<FileId>
+    get() = this.values.flatMap { it.map { it.fileId } }.toSet()
 
 fun FileCategoryFilesMap.addUrls(
     buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,

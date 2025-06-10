@@ -32,6 +32,7 @@ from .submission_db_helper import (
     SampleTableEntry,
     Status,
     StatusAll,
+    TableName,
     add_to_sample_table,
     db_init,
     find_conditions_in_db,
@@ -200,7 +201,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
     # Check submission_table for newly added sequences
     conditions = {"status_all": StatusAll.SUBMITTED_PROJECT}
     ready_to_submit = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
@@ -210,14 +211,14 @@ def submission_table_start(db_config: SimpleConnectionPool):
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, table_name="sample_table", conditions=seq_key
+            db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
         if len(corresponding_sample) == 1:
             if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
                 update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -225,7 +226,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
                 update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
                 update_db_where_conditions(
                     db_config,
-                    table_name="submission_table",
+                    table_name=TableName.SUBMISSION_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -241,7 +242,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
             update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
             update_db_where_conditions(
                 db_config,
-                table_name="submission_table",
+                table_name=TableName.SUBMISSION_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -256,7 +257,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     """
     conditions = {"status_all": StatusAll.SUBMITTING_SAMPLE}
     submitting_sample = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=conditions
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
     )
     logger.debug(
         f"Found {len(submitting_sample)} entries in submission_table in status SUBMITTING_SAMPLE"
@@ -266,7 +267,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
         # 1. check if there exists an entry in the sample table for seq_key
         corresponding_sample = find_conditions_in_db(
-            db_config, table_name="sample_table", conditions=seq_key
+            db_config, table_name=TableName.SAMPLE_TABLE, conditions=seq_key
         )
         if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
             Status.SUBMITTED
@@ -274,7 +275,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
             update_db_where_conditions(
                 db_config,
-                table_name="submission_table",
+                table_name=TableName.SUBMISSION_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -291,7 +292,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
     version = seq_key["version"]
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
     all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
 
@@ -311,7 +312,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
                 )
             number_rows_updated = update_db_where_conditions(
                 db_config,
-                table_name="sample_table",
+                table_name=TableName.SAMPLE_TABLE,
                 conditions=seq_key,
                 update_values=update_values,
             )
@@ -342,13 +343,13 @@ def sample_table_create(
     )
     conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
-        db_config, table_name="sample_table", conditions=conditions
+        db_config, table_name=TableName.SAMPLE_TABLE, conditions=conditions
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = {"accession": row["accession"], "version": row["version"]}
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name="submission_table", conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
 
         if is_old_version(db_config, seq_key, retry_number=3):
@@ -363,7 +364,7 @@ def sample_table_create(
         }
         number_rows_updated = update_db_where_conditions(
             db_config,
-            table_name="sample_table",
+            table_name=TableName.SAMPLE_TABLE,
             conditions=seq_key,
             update_values=update_values,
         )
@@ -394,7 +395,7 @@ def sample_table_create(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="sample_table",
+                    table_name=TableName.SAMPLE_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -417,7 +418,7 @@ def sample_table_create(
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
-                    table_name="sample_table",
+                    table_name=TableName.SAMPLE_TABLE,
                     conditions=seq_key,
                     update_values=update_values,
                 )
@@ -438,7 +439,7 @@ def sample_table_handle_errors(
     2. If time since last slack_notification is over slack_time_threshold send notification
     """
     entries_with_errors = find_errors_in_db(
-        db_config, "sample_table", time_threshold=time_threshold
+        db_config, TableName.SAMPLE_TABLE, time_threshold=time_threshold
     )
     if len(entries_with_errors) > 0:
         error_msg = (

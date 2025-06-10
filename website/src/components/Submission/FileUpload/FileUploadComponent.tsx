@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
+import IcBaselineDownload from '~icons/ic/baseline-download';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export const FileUploadComponent = ({
@@ -13,6 +14,8 @@ export const FileUploadComponent = ({
     small = false,
     initialValue = undefined,
     showUndo = false,
+    onDownload = undefined,
+    downloadDisabled = false,
 }: {
     setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
     name: string;
@@ -21,6 +24,8 @@ export const FileUploadComponent = ({
     small?: boolean;
     initialValue?: ProcessedFile;
     showUndo?: boolean;
+    onDownload?: () => void;
+    downloadDisabled?: boolean;
 }) => {
     const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -180,6 +185,23 @@ export const FileUploadComponent = ({
                     >
                         <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
                             <UndoTwoToneIcon color='action' />
+                        </div>
+                    </button>
+                </div>
+            )}
+            {onDownload && myFile && (
+                <div className={`absolute top-1 ${showUndo && isEdited ? 'right-10' : 'right-2'}`}>
+                    <button
+                        className='bg-transparent'
+                        onClick={onDownload}
+                        disabled={downloadDisabled}
+                        aria-label={`Download ${name}`}
+                        data-testid={`download_${name}`}
+                    >
+                        <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Download sequence'>
+                            <IcBaselineDownload
+                                className={`${downloadDisabled ? 'text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
+                            />
                         </div>
                     </button>
                 </div>

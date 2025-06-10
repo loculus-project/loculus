@@ -29,7 +29,7 @@ export const customDisplay = z.object({
 
 /**
  * RangeOverlapSearch to configure on two fields that together allow to query
- * For an overlap of a search range and a targer range
+ * For an overlap of a search range and a target range
  */
 export const rangeOverlapSearch = z.object({
     /**

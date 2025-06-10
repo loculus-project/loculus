@@ -10,10 +10,9 @@ import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
-import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
@@ -64,7 +63,7 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
+    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -113,7 +112,7 @@ open class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
         earliestReleaseDateFinder: EarliestReleaseDateFinder?,
-    ): ProcessedData<GeneticSequence> {
+    ): ReleasedData {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
@@ -195,14 +194,13 @@ open class ReleasedDataModel(
                 },
             )
 
-        return ProcessedData(
+        return ReleasedData(
             metadata = metadata,
             unalignedNucleotideSequences = rawProcessedData.processedData.unalignedNucleotideSequences,
             alignedNucleotideSequences = rawProcessedData.processedData.alignedNucleotideSequences,
             nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
             aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
             alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
-            files = rawProcessedData.processedData.files,
         )
     }
 

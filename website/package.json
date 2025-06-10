@@ -33,7 +33,7 @@
         "@types/sanitize-html": "^2.16.0",
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
-        "astro": "^5.8.1",
+        "astro": "^5.9.0",
         "axios": "^1.9.0",
         "change-case": "~5.3.0",
         "chart.js": "^4.4.9",
@@ -60,7 +60,7 @@
         "sanitize-html": "^2.17.0",
         "unplugin-icons": "^22.1.0",
         "winston": "^3.17.0",
-        "zod": "^3.25.48"
+        "zod": "^3.25.55"
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.4",
@@ -68,7 +68,7 @@
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.28.0",
-        "@iconify/json": "^2.2.345",
+        "@iconify/json": "^2.2.346",
         "@playwright/test": "^1.52.0",
         "@tailwindcss/forms": "^0.5.9",
         "@tanstack/eslint-plugin-query": "^5.78.0",
@@ -79,14 +79,14 @@
         "@types/jsonwebtoken": "^9.0.9",
         "@types/lodash": "^4.17.17",
         "@types/luxon": "^3.6.2",
-        "@types/node": "^22.15.29",
+        "@types/node": "^22.15.30",
         "@types/papaparse": "^5.3.16",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.33.1",
         "@typescript-eslint/parser": "^8.33.1",
-        "@vitejs/plugin-react": "^4.5.0",
+        "@vitejs/plugin-react": "^4.5.1",
         "astro-eslint-parser": "^1.2.2",
         "cross-env": "^7.0.3",
         "daisyui": "^4.12.23",
@@ -96,7 +96,7 @@
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^6.0.0",
-        "happy-dom": "^17.6.1",
+        "happy-dom": "^17.6.3",
         "jsdom-testing-mocks": "^1.13.1",
         "msw": "^2.9.0",
         "prettier": "3.5.3",
@@ -108,6 +108,6 @@
         "typescript-eslint": "^8.33.1",
         "uuid": "^11.1.0",
         "vite": "^6.3.5",
-        "vitest": "3.2.0"
+        "vitest": "3.2.2"
     }
 }

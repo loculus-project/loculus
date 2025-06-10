@@ -12,7 +12,7 @@ import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 export type InputMode = 'form' | 'bulk';
 
 /**
- * A wrapper type for a metadata file (TSV) and sequenc file (FASTA) which together
+ * A wrapper type for a metadata file (TSV) and sequence file (FASTA) which together
  * make up the sequence data.
  * The sequenceFile is optional, because Loculus also can be configured to not require
  * submission of consensus sequences. If consensus sequences are enabled, the file should be
