@@ -55,7 +55,6 @@ spec:
     prefixes:
       - /{{ $key }}/
 {{- end }}
-{{- if $organismKeys }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -97,4 +96,3 @@ spec:
             port:
               number: 8080
       {{- end }}
-{{- end }}
