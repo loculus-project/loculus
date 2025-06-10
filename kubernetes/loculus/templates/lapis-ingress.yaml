@@ -1,6 +1,5 @@
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $organisms := .Values.organisms | default .Values.defaultOrganisms }}
-{{- $organismKeys := keys $organisms }}
+{{- $organismKeys := keys ( .Values.organisms | default .Values.defaultOrganisms ) }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
