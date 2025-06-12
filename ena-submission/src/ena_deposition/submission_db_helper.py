@@ -169,6 +169,68 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+class TableRepository[T]:
+    """
+    A generic repository to handle database operations for a specific table.
+    """
+
+    def __init__(
+        self,
+        db_conn_pool: SimpleConnectionPool,
+        table_name: TableName,
+        dataclass_type: type[T],
+    ):
+        self._db_conn_pool = db_conn_pool
+        self._table_name = table_name
+        self._dataclass_type = dataclass_type
+
+    def select_all_where(self, conditions: dict[str, str] | None = None) -> list[T]:
+        """
+        Return all records from the repository's table that match the conditions.
+        """
+        con = self._db_conn_pool.getconn()
+        try:
+            with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+                query = f"SELECT * FROM {self._table_name.value}"  # noqa: S608
+
+                if conditions:
+                    for key in conditions:
+                        validate_column_name(self._table_name.value, key)
+
+                    where_clause = " AND ".join([f"{key}=%s" for key in conditions])
+                    query += f" WHERE {where_clause}"
+
+                    cur.execute(query, tuple(conditions.values()))
+                else:
+                    cur.execute(query)
+
+                results_as_dicts = cur.fetchall()
+        finally:
+            self._db_conn_pool.putconn(con)
+
+        return [self._dataclass_type(**row) for row in results_as_dicts]
+
+
+class SubmissionRepository(TableRepository[SubmissionTableEntry]):
+    def __init__(self, db_conn_pool: SimpleConnectionPool):
+        super().__init__(db_conn_pool, TableName.SUBMISSION_TABLE, SubmissionTableEntry)
+
+
+class ProjectRepository(TableRepository[ProjectTableEntry]):
+    def __init__(self, db_conn_pool: SimpleConnectionPool):
+        super().__init__(db_conn_pool, TableName.PROJECT_TABLE, ProjectTableEntry)
+
+
+class SampleRepository(TableRepository[SampleTableEntry]):
+    def __init__(self, db_conn_pool: SimpleConnectionPool):
+        super().__init__(db_conn_pool, TableName.SAMPLE_TABLE, SampleTableEntry)
+
+
+class AssemblyRepository(TableRepository[AssemblyTableEntry]):
+    def __init__(self, db_conn_pool: SimpleConnectionPool):
+        super().__init__(db_conn_pool, TableName.ASSEMBLY_TABLE, AssemblyTableEntry)
+
+
 def delete_records_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> int:
@@ -200,7 +262,7 @@ def delete_records_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if isinstance(value, (Status, StatusAll)) else value  # noqa: UP038
+                    str(value) if isinstance(value, (Status, StatusAll)) else value
                     for value in conditions.values()
                 ),
             )
@@ -216,6 +278,16 @@ def delete_records_in_db(
 def find_conditions_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> list[dict[str, str]]:
+    """
+    Return all records from the specified table that match all the conditions
+    Args:
+        db_conn_pool (SimpleConnectionPool): Connection pool for PostgreSQL.
+        table_name (TableName): The table to search in.
+        conditions (dict[str, str]): A dictionary of column names and values for filtering.
+    Returns:
+        list[dict[str, str]]: A list of dictionaries representing the records that match the conditions.
+        Each dictionary contains column names as keys and their corresponding values.
+    """
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -232,7 +304,7 @@ def find_conditions_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )
