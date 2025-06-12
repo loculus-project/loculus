@@ -56,7 +56,7 @@ def filter_for_submission(
         (users can add these fields, nothing prohibits them from doing so)
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
-    entries_with_external_metadata: list[Accession] = []
+    entries_with_external_metadata: set[Accession] = set()
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
         accession, version_str = accession_version.split(".")
@@ -87,6 +87,7 @@ def filter_for_submission(
             continue
 
         entry["organism"] = organism
+
         ena_specific_metadata = [
             f"{field}:{entry['metadata'][field]}"
             for field in ena_specific_metadata
@@ -98,19 +99,21 @@ def filter_for_submission(
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
                 + str(ena_specific_metadata)
             )
-            entries_with_external_metadata.append(accession)
-            continue
+            entries_with_external_metadata.add(accession)
+        else:
+            entries_with_external_metadata.discard(accession)
         entries_to_submit[accession] = entry
+
     return SubmissionResults(
         entries_to_submit={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
-            if entry["metadata"]["accessionVersion"] not in entries_with_external_metadata
+            if entry["metadata"]["accession"] not in entries_with_external_metadata
         },
         entries_with_ext_metadata_to_submit={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
-            if entry["metadata"]["accessionVersion"] in entries_with_external_metadata
+            if entry["metadata"]["accession"] in entries_with_external_metadata
         },
     )
 
