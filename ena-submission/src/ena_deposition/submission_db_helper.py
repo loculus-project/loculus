@@ -169,6 +169,34 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+type Accession = str
+type AccessionVersion = str
+type Version = int
+
+
+def highest_version_in_submission_table(
+    db_conn_pool: SimpleConnectionPool, organism: str
+) -> dict[Accession, Version]:
+    """
+    Returns the highest version for a given accession in the submission table.
+    Does group by, so that only the highest version for each accession is returned.
+    """
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+            query = """
+                SELECT accession, MAX(version) AS version
+                FROM submission_table
+                WHERE organism = %s
+                GROUP BY accession
+            """
+            cur.execute(query, (organism,))
+            results = cur.fetchall()
+    finally:
+        db_conn_pool.putconn(con)
+    return {row["accession"]: int(row["version"]) for row in results}
+
+
 class TableRepository[T]:
     """
     A generic repository to handle database operations for a specific table.

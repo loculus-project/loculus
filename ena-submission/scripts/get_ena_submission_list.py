@@ -15,8 +15,10 @@ from ena_deposition.notifications import (
     upload_file_with_comment,
 )
 from ena_deposition.submission_db_helper import (
-    SubmissionRepository,
+    Accession,
+    AccessionVersion,
     db_init,
+    highest_version_in_submission_table,
 )
 from psycopg2.pool import SimpleConnectionPool
 
@@ -27,9 +29,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
-
-Accession = str
-AccessionVersion = str
 
 
 @dataclass
@@ -57,6 +56,9 @@ def filter_for_submission(
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
+    highest_submitted_version = highest_version_in_submission_table(
+        db_conn_pool=db_pool, organism=organism
+    )
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
         accession, version_str = accession_version.split(".")
@@ -66,17 +68,7 @@ def filter_for_submission(
         if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
 
-        # Ignore if this version isn't higher than the highest version that's already been submitted
-        submission_repo = SubmissionRepository(db_pool)
-        previously_submitted_entries = submission_repo.select_all_where(
-            conditions={
-                "accession": accession,
-            }
-        )
-        highest_submitted_version = max(
-            (int(e.version) for e in previously_submitted_entries), default=-1
-        )
-        if highest_submitted_version >= version:
+        if highest_submitted_version.get(accession, -1) >= version:
             continue
 
         # Ignore if a higher version of this entry is already to be submitted
@@ -179,6 +171,7 @@ def get_ena_submission_list(config_file):
         logger.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)
+        logger.info("Starting to stream released entries. Filtering for submission...")
         submission_results = filter_for_submission(
             config, db_pool, released_entries, organism, ena_specific_metadata
         )
