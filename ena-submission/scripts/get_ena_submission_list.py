@@ -42,7 +42,7 @@ def filter_for_submission(
     db_pool: SimpleConnectionPool,
     entries_iterator: Iterator[dict[str, Any]],
     organism: str,
-    ena_specific_metadata: list[str],
+    ena_specific_metadata_fields: list[str],
 ) -> SubmissionResults:
     """
     Filter data in state APPROVED_FOR_RELEASE:
@@ -82,14 +82,14 @@ def filter_for_submission(
 
         ena_specific_metadata = [
             f"{field}:{entry['metadata'][field]}"
-            for field in ena_specific_metadata
+            for field in ena_specific_metadata_fields
             if entry["metadata"].get(field)
         ]
         if ena_specific_metadata:
             logger.warning(
                 f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
-                + str(ena_specific_metadata)
+                f"{ena_specific_metadata}"
             )
             entries_with_external_metadata.add(accession)
         else:
