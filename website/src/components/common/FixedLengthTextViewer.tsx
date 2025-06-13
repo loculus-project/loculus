@@ -45,7 +45,7 @@ export const FixedLengthTextViewer: FC<FixedLengthTextViewerProps> = ({ text, ma
             <textarea
                 readOnly
                 value={lineNumbers}
-                className={`flex-none w-18 h-full text-right text-gray-500 border-none  resize-none select-none  border-r border-gray-100  ${lineSpacing} p-0 font-mono `}
+                className={`flex-none w-20 h-full text-right text-gray-500 border-none  resize-none select-none  border-r border-gray-100  ${lineSpacing} p-0 font-mono `}
                 style={{ pointerEvents: 'none' }}
                 ref={lineNumbersArea}
             />
