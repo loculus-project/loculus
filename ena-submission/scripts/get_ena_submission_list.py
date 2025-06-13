@@ -139,7 +139,7 @@ def send_slack_notification_with_file(
     required=True,
     type=click.Path(exists=True),
 )
-def get_ena_submission_list(config_file):
+def get_ena_submission_list(config_file) -> None:
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.

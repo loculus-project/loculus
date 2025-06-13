@@ -184,79 +184,17 @@ def highest_version_in_submission_table(
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            query = """
+            query = f"""
                 SELECT accession, MAX(version) AS version
-                FROM submission_table
+                FROM {TableName.SUBMISSION_TABLE}
                 WHERE organism = %s
                 GROUP BY accession
-            """
+            """  # noqa: S608
             cur.execute(query, (organism,))
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
     return {row["accession"]: int(row["version"]) for row in results}
-
-
-class TableRepository[T]:
-    """
-    A generic repository to handle database operations for a specific table.
-    """
-
-    def __init__(
-        self,
-        db_conn_pool: SimpleConnectionPool,
-        table_name: TableName,
-        dataclass_type: type[T],
-    ):
-        self._db_conn_pool = db_conn_pool
-        self._table_name = table_name
-        self._dataclass_type = dataclass_type
-
-    def select_all_where(self, conditions: dict[str, str] | None = None) -> list[T]:
-        """
-        Return all records from the repository's table that match the conditions.
-        """
-        con = self._db_conn_pool.getconn()
-        try:
-            with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-                query = f"SELECT * FROM {self._table_name.value}"  # noqa: S608
-
-                if conditions:
-                    for key in conditions:
-                        validate_column_name(self._table_name.value, key)
-
-                    where_clause = " AND ".join([f"{key}=%s" for key in conditions])
-                    query += f" WHERE {where_clause}"
-
-                    cur.execute(query, tuple(conditions.values()))
-                else:
-                    cur.execute(query)
-
-                results_as_dicts = cur.fetchall()
-        finally:
-            self._db_conn_pool.putconn(con)
-
-        return [self._dataclass_type(**row) for row in results_as_dicts]
-
-
-class SubmissionRepository(TableRepository[SubmissionTableEntry]):
-    def __init__(self, db_conn_pool: SimpleConnectionPool):
-        super().__init__(db_conn_pool, TableName.SUBMISSION_TABLE, SubmissionTableEntry)
-
-
-class ProjectRepository(TableRepository[ProjectTableEntry]):
-    def __init__(self, db_conn_pool: SimpleConnectionPool):
-        super().__init__(db_conn_pool, TableName.PROJECT_TABLE, ProjectTableEntry)
-
-
-class SampleRepository(TableRepository[SampleTableEntry]):
-    def __init__(self, db_conn_pool: SimpleConnectionPool):
-        super().__init__(db_conn_pool, TableName.SAMPLE_TABLE, SampleTableEntry)
-
-
-class AssemblyRepository(TableRepository[AssemblyTableEntry]):
-    def __init__(self, db_conn_pool: SimpleConnectionPool):
-        super().__init__(db_conn_pool, TableName.ASSEMBLY_TABLE, AssemblyTableEntry)
 
 
 def delete_records_in_db(
@@ -436,10 +374,10 @@ def update_db_where_conditions(
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
             parameters = tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in update_values.values()
             ) + tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in conditions.values()
             )
 
@@ -565,7 +503,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )
