@@ -36,14 +36,15 @@ export function matchPlaceholders(template: string): PlaceholderMatch[] {
         let columns: string[] | undefined;
         let rich = false;
         if (plusOption) {
-            if (plusOption === 'rich') {
-                rich = true;
-            } else if (dataType === 'metadata') {
+            if (dataType === 'metadata') {
                 columns = plusOption
                     .split(',')
                     .map((c) => c.trim())
                     .filter((c) => c.length > 0);
             }
+            else if (plusOption === 'rich') {
+                rich = true;
+            } else 
         }
 
         if (optionString) {
