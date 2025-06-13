@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 import yaml
 
@@ -7,7 +8,7 @@ import yaml
 @dataclass
 class Config:
     test: bool
-    organisms: dict[str, dict[str, str]]
+    organisms: dict[str, dict[str, Any]]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str

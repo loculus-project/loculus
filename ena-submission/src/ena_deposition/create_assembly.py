@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 def create_chromosome_list_object(
     unaligned_sequences: dict[str, str], seq_key: dict[str, str], organism_metadata: dict[str, str]
-) -> str:
+) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
 
@@ -134,6 +134,19 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
+def get_assembly_name(accession: str, version: str, test: bool = False) -> str:
+    """
+    Create a unique assembly name based on accession and version.
+    If test=True, add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing.
+
+    Unlike biosample revisions, assembly revisions require a new assemblyName.
+    """
+    if test:
+        return f"{accession}.{version}_{datetime.now(tz=pytz.utc).strftime('%Y%m%d_%H%M%S')}"
+    return f"{accession}.{version}"
+
+
 def create_manifest_object(
     config: Config,
     sample_accession: str,
@@ -155,13 +168,10 @@ def create_manifest_object(
     """
     metadata = submission_table_entry["metadata"]
 
-    accession_version = submission_table_entry["accession"] + "." + submission_table_entry["version"]
-
-    assembly_name = (
-        accession_version
-        + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
-        if test  # This is the alias that needs to be unique
-        else accession_version
+    assembly_name = get_assembly_name(
+        submission_table_entry["accession"],
+        submission_table_entry["version"],
+        test=test,
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -392,7 +402,9 @@ def get_project_and_sample_results(
         raise RuntimeError(error_msg)
 
     results_in_project_table = find_conditions_in_db(
-        db_config, table_name=TableName.PROJECT_TABLE, conditions={"project_id": entry["project_id"]}
+        db_config,
+        table_name=TableName.PROJECT_TABLE,
+        conditions={"project_id": entry["project_id"]},
     )
     if len(results_in_project_table) == 0:
         error_msg = f"Entry {entry['accession']} not found in project_table"
@@ -444,12 +456,8 @@ def assembly_table_create(
         )
 
         if is_revision(db_config, seq_key):
-            logger.debug(
-                f"Entry {row['accession']} is a revision, checking if it can be revised"
-            )
-            if not can_be_revised(
-                config, db_config, sample_data_in_submission_table[0]
-            ):
+            logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
+            if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
                 continue
 
         try:
@@ -542,7 +550,9 @@ def assembly_table_update(
         config.ena_reports_service_url,
     )
     conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions)
+    waiting = find_conditions_in_db(
+        db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions
+    )
     if len(waiting) > 0:
         logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently
