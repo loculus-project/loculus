@@ -168,7 +168,7 @@ def create_manifest_object(
     """
     metadata = submission_table_entry["metadata"]
 
-    assembly_name = get_assembly_name(
+    assembly_name = make_assembly_name(
         submission_table_entry["accession"],
         submission_table_entry["version"],
         test=test,
