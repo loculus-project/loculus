@@ -44,7 +44,7 @@ export function matchPlaceholders(template: string): PlaceholderMatch[] {
             }
             else if (plusOption === 'rich') {
                 rich = true;
-            } else 
+            } 
         }
 
         if (optionString) {
