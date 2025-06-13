@@ -165,7 +165,7 @@ def get_ena_submission_list(config_file) -> None:
 
     all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
-        ena_specific_metadata = [
+        ena_specific_metadata_fields = [
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logger.info(f"Getting released sequences for organism: {organism}")
@@ -173,7 +173,7 @@ def get_ena_submission_list(config_file) -> None:
         released_entries = fetch_released_entries(config, organism)
         logger.info("Starting to stream released entries. Filtering for submission...")
         submission_results = filter_for_submission(
-            config, db_pool, released_entries, organism, ena_specific_metadata
+            config, db_pool, released_entries, organism, ena_specific_metadata_fields
         )
         if submission_results.entries_to_submit:
             logger.info(
