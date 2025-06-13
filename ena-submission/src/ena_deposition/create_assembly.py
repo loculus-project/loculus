@@ -134,7 +134,7 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
-def get_assembly_name(accession: str, version: str, test: bool = False) -> str:
+def make_assembly_name(accession: str, version: str, test: bool = False) -> str:
     """
     Create a unique assembly name based on accession and version.
     If test=True, add a timestamp to the alias suffix to allow for multiple submissions of the same
