@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -138,7 +138,7 @@ def create_manifest_object(
     config: Config,
     sample_accession: str,
     study_accession: str,
-    submission_table_entry: dict[str, str],
+    submission_table_entry: dict[str, Any],
     test=False,
     dir: str | None = None,
 ) -> AssemblyManifest:
@@ -155,11 +155,13 @@ def create_manifest_object(
     """
     metadata = submission_table_entry["metadata"]
 
+    accession_version = submission_table_entry["accession"] + "." + submission_table_entry["version"]
+
     assembly_name = (
-        submission_table_entry["accession"]
+        accession_version
         + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
         if test  # This is the alias that needs to be unique
-        else submission_table_entry["accession"]
+        else accession_version
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -345,6 +347,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 "Assembly cannot be revised because biosampleAccession in new version: "
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
+            logger.error(error)
             update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
             return False
     if entry["metadata"].get("bioprojectAccession"):
@@ -354,6 +357,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 "Assembly cannot be revised because bioprojectAccession in new version: "
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
+            logger.error(error)
             update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
             return False
 
@@ -369,6 +373,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
             "Assembly cannot be revised because metadata fields "
             f"{', '.join(differing_fields)} in manifest differs from last version"
         )
+        logger.error(error)
         update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
         return False
     return True
@@ -438,10 +443,14 @@ def assembly_table_create(
             db_config, sample_data_in_submission_table[0]
         )
 
-        if is_revision(db_config, seq_key) and not can_be_revised(
-            config, db_config, sample_data_in_submission_table[0]
-        ):
-            continue
+        if is_revision(db_config, seq_key):
+            logger.debug(
+                f"Entry {row['accession']} is a revision, checking if it can be revised"
+            )
+            if not can_be_revised(
+                config, db_config, sample_data_in_submission_table[0]
+            ):
+                continue
 
         try:
             manifest_object = create_manifest_object(
