@@ -356,8 +356,9 @@ def get_authors(authors: str) -> str:
 
 def get_country(metadata: dict[str, str]) -> str:
     country = metadata.get("geoLocCountry", "Unknown")
-    admin_levels = ["geoLocAdmin1", "geoLocAdmin2"]
-    admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])
+    admin_levels = ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    admin_values = [val for level in admin_levels if (val := metadata.get(level))]
+    admin = ", ".join(admin_values)
     return f"{country}: {admin}" if admin else country
 
 
