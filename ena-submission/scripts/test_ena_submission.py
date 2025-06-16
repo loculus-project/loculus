@@ -263,7 +263,12 @@ class AssemblyCreationTests(unittest.TestCase):
             b">LOC_0001TLY\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
-    def test_create_manifest(self):
+    @mock.patch("requests.get")
+    def test_create_manifest(self, mock_get):
+        mock_response = mock.Mock()
+        mock_response.raise_for_status = lambda: None
+        mock_response.content = "lorem ipsum"
+        mock_get.return_value = mock_response
         config = mock_config()
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
