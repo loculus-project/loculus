@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def get_country(metadata: dict[str, str]) -> str:
     country = metadata.get("geoLocCountry", "Unknown")
-    admin_levels = ["geoLocAdmin1", "geoLocAdmin2"]
+    admin_levels = ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
     admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])  # type: ignore
     return f"{country}: {admin}" if admin else country
 
