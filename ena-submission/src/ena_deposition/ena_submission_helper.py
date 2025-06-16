@@ -340,7 +340,7 @@ def download_flatfile(
     base_url = config.backend_url.rstrip("/")
     url = f"{base_url}/files/get/{accession}/{version}/{category}/{filename}"
 
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=60)
     response.raise_for_status()  # raise error if the request failed
 
     if dir:
