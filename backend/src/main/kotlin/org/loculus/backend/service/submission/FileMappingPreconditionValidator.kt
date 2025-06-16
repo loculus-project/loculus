@@ -64,8 +64,8 @@ class FileMappingPreconditionValidator(
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             if (!allowedCategoriesName.contains(category)) {
                 throw UnprocessableEntityException(
-                    "The category $category is not part of the configured submission categories for ${organism.name}. " +
-                        "Allowed categories are: ${allowedFileCategories.joinToString(", ")}.",
+                    "The category $category is not part of the configured submission categories for ${organism.name}." +
+                        " Allowed categories are: ${allowedFileCategories.joinToString(", ")}.",
                 )
             }
         }
