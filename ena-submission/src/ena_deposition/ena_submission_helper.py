@@ -27,6 +27,7 @@ from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyManifest,
     Hold,
+    MoleculeType,
     ProjectSet,
     SampleSetType,
     Submission,
@@ -321,6 +322,34 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
             )
 
     return filename
+
+
+def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
+    try:
+        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+    except ValueError as err:
+        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    return moleculetype
+
+
+def get_description(config: Config, metadata: dict[str, str]) -> str:
+    return (
+        f"Original sequence submitted to {config.db_name} with accession: "
+        f"{metadata['accession']}, version: {metadata['version']}"
+    )
+
+
+def get_authors(authors: str) -> str:
+    try:
+        authors = reformat_authors_from_loculus_to_embl_style(authors)
+        logger.debug("Reformatted authors")
+    except Exception as err:
+        msg = f"Was unable to format authors: {authors} as ENA expects"
+        logger.error(msg)
+        raise ValueError(msg) from err
+    return authors
 
 
 def _gzip_string(content: str) -> bytes:
