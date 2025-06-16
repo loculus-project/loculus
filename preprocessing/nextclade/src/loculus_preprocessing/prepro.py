@@ -834,7 +834,7 @@ def process_single(  # noqa: C901
                 message=("No segment aligned."),
             )
         )
-    annotations = {}
+    annotations: dict[str, Any] = {}
     if unprocessed.nextcladeMetadata is not None:
         for segment in config.nucleotideSequences:
             if segment in unprocessed.nextcladeMetadata:

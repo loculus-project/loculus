@@ -451,7 +451,7 @@ def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[Processing
 def process_single_entry(test_case: ProcessingTestCase, config: Config) -> ProcessedEntry:
     dataset_dir = "temp"  # This is not used as we do not align sequences
     result = process_all([test_case.input], dataset_dir, config)
-    return result[0]
+    return result[0].processed_entry
 
 
 def verify_processed_entry(
@@ -516,7 +516,7 @@ def test_preprocessing_without_consensus_sequences():
     config.nucleotideSequences = []
 
     result = process_all([sequence_entery_data], "temp_dataset_dir", config)
-    processed_entry = result[0]
+    processed_entry = result[0].processed_entry
 
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
