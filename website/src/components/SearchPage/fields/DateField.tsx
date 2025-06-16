@@ -50,17 +50,23 @@ export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConv
                 return String(utcSeconds);
             }}
             valueToDateConverter={(value) => {
-                const timestamp = Math.max(parseInt(value, 10));
+                const timestamp = parseInt(value, 10);
                 if (isNaN(timestamp)) return undefined;
-                const tzOffset = new Date().getTimezoneOffset() * 60;
-                const date = new Date((timestamp + tzOffset) * 1000);
-                return date;
+                // The timestamp represents a UTC time. We need to display the UTC date.
+                // Create a date from the timestamp
+                const utcDate = new Date(timestamp * 1000);
+                // Extract UTC components
+                const year = utcDate.getUTCFullYear();
+                const month = utcDate.getUTCMonth();
+                const day = utcDate.getUTCDate();
+                // Create a local date with the same year/month/day as the UTC date
+                const localDate = new Date(year, month, day);
+                return localDate;
             }}
         />
     );
 };
 
-// Test helper types
 export type DateSegment = {
     length: number;
     placeholder: string;
@@ -74,7 +80,6 @@ export type KeyDownResult = {
     preventDefault: boolean;
 };
 
-// Extracted keydown handler for testing - handles ALL keyboard input
 export const handleDateKeyDown = (
     key: string,
     currentValue: string,
@@ -85,7 +90,6 @@ export const handleDateKeyDown = (
     const isDigit = /^\d$/.test(key);
     const isBackspace = key === 'Backspace';
 
-    // Default response - no change
     const defaultResult: KeyDownResult = {
         value: currentValue,
         selectionStart,
@@ -93,19 +97,17 @@ export const handleDateKeyDown = (
         preventDefault: false,
     };
 
-    // Only handle digit and backspace keys
     if (!isDigit && !isBackspace) {
         return defaultResult;
     }
 
-    // Parse current value into segments (preserving exact characters including placeholders)
     const parseValueIntoSegments = (value: string): string[] => {
         const segmentValues: string[] = [];
         let pos = 0;
 
         for (const segment of segments) {
             if (pos > 0) {
-                pos += segment.separator.length; // Skip separator
+                pos += segment.separator.length;
             }
 
             let segmentValue = '';
@@ -118,7 +120,6 @@ export const handleDateKeyDown = (
         return segmentValues;
     };
 
-    // Rebuild value from segments
     const buildValueFromSegments = (segmentValues: string[]): string => {
         let result = '';
 
@@ -129,7 +130,6 @@ export const handleDateKeyDown = (
 
             const segmentValue = segmentValues[i] || '';
 
-            // Pad segment to correct length if needed
             let paddedSegment = segmentValue;
             if (paddedSegment.length < segments[i].length) {
                 paddedSegment += segments[i].placeholder.repeat(segments[i].length - paddedSegment.length);
@@ -141,7 +141,6 @@ export const handleDateKeyDown = (
         return result;
     };
 
-    // Find which segment contains a position
     const findSegmentForPosition = (position: number): { segmentIndex: number; positionInSegment: number } => {
         let pos = 0;
 
@@ -159,15 +158,12 @@ export const handleDateKeyDown = (
             pos = segmentEnd;
         }
 
-        // Default to last segment
         return { segmentIndex: segments.length - 1, positionInSegment: segments[segments.length - 1].length };
     };
 
     const segmentValues = parseValueIntoSegments(currentValue);
 
-    // Handle backspace
     if (isBackspace) {
-        // If at the very start, do nothing
         if (selectionStart === 0 && selectionEnd === 0) {
             return {
                 ...defaultResult,
@@ -176,13 +172,11 @@ export const handleDateKeyDown = (
         }
 
         const hasSelection = selectionStart !== selectionEnd;
-        
-        // Check if we have a full segment selected
+
         if (hasSelection) {
             const { segmentIndex: startSegmentIndex } = findSegmentForPosition(selectionStart);
             const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1);
-            
-            // Calculate segment boundaries
+
             let segmentBoundaryStart = 0;
             for (let i = 0; i < startSegmentIndex; i++) {
                 segmentBoundaryStart += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
@@ -191,15 +185,15 @@ export const handleDateKeyDown = (
                 segmentBoundaryStart += segments[startSegmentIndex].separator.length;
             }
             const segmentBoundaryEnd = segmentBoundaryStart + segments[startSegmentIndex].length;
-            
-            // Check if selection exactly matches a segment
-            if (startSegmentIndex === endSegmentIndex && 
-                selectionStart === segmentBoundaryStart && 
-                selectionEnd === segmentBoundaryEnd) {
-                // Clear the entire segment
+
+            if (
+                startSegmentIndex === endSegmentIndex &&
+                selectionStart === segmentBoundaryStart &&
+                selectionEnd === segmentBoundaryEnd
+            ) {
                 segmentValues[startSegmentIndex] = '';
                 const newValue = buildValueFromSegments(segmentValues);
-                
+
                 return {
                     value: newValue,
                     selectionStart: segmentBoundaryStart,
@@ -209,11 +203,9 @@ export const handleDateKeyDown = (
             }
         }
 
-        // Normal backspace behavior (no selection or partial selection)
         const deletePos = selectionStart > 0 ? selectionStart - 1 : 0;
         const { segmentIndex, positionInSegment } = findSegmentForPosition(deletePos);
 
-        // Check if we're trying to delete a separator
         if (deletePos < currentValue.length && !/[\dYMD]/.test(currentValue[deletePos])) {
             return {
                 ...defaultResult,
@@ -221,41 +213,32 @@ export const handleDateKeyDown = (
             };
         }
 
-        // Remove the character from the appropriate segment
         const segmentValue = segmentValues[segmentIndex];
         const digitsOnly = segmentValue.replace(/\D/g, '');
 
         if (positionInSegment < digitsOnly.length) {
-            // We're deleting an actual digit
-            // Keep only the digits before the deletion point
             const newDigits = digitsOnly.slice(0, positionInSegment);
             segmentValues[segmentIndex] = newDigits;
         }
 
         const newValue = buildValueFromSegments(segmentValues);
 
-        // Calculate new selection
         let newSelectionStart = deletePos;
         let newSelectionEnd = deletePos;
 
-        // Calculate segment boundaries
         const segmentStart =
             segments
                 .slice(0, segmentIndex)
                 .reduce((sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0), 0) +
             (segmentIndex > 0 ? segments[segmentIndex].separator.length : 0);
 
-        // Special case: if we deleted the first digit of the first segment (year)
         if (segmentIndex === 0 && deletePos === 0) {
-            // Select the entire year segment
             newSelectionStart = 0;
             newSelectionEnd = segments[0].length;
         } else if (deletePos === segmentStart + 1 && positionInSegment === 0) {
-            // If we deleted the first digit of any other segment, select the whole segment
             newSelectionStart = segmentStart;
             newSelectionEnd = segmentStart + segments[segmentIndex].length;
         } else {
-            // Normal case - position cursor at delete position and select to end of segment
             newSelectionStart = deletePos;
             newSelectionEnd = segmentStart + segments[segmentIndex].length;
         }
@@ -268,64 +251,50 @@ export const handleDateKeyDown = (
         };
     }
 
-    // Handle digit key
     if (isDigit) {
         const hasSelection = selectionStart !== selectionEnd;
         const { segmentIndex: startSegmentIndex, positionInSegment: startPosInSegment } =
             findSegmentForPosition(selectionStart);
 
-        // If we have a selection, we need to handle it specially
         if (hasSelection) {
             const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1);
 
-            // Clear selected digits
             for (let i = startSegmentIndex; i <= endSegmentIndex; i++) {
                 if (i === startSegmentIndex && i === endSegmentIndex) {
-                    // Selection within single segment
                     const segmentValue = segmentValues[i];
                     const digitsOnly = segmentValue.replace(/\D/g, '');
-                    // Keep only the digits before the selection start
                     const newDigits = digitsOnly.slice(0, startPosInSegment);
                     segmentValues[i] = newDigits;
                 } else if (i === startSegmentIndex) {
-                    // Start of selection
                     const segmentValue = segmentValues[i];
                     const digitsOnly = segmentValue.replace(/\D/g, '');
                     segmentValues[i] = digitsOnly.slice(0, startPosInSegment);
                 } else if (i === endSegmentIndex) {
-                    // End of selection
                     const segmentValue = segmentValues[i];
                     const digitsOnly = segmentValue.replace(/\D/g, '');
                     const endPosInSegment = findSegmentForPosition(selectionEnd - 1).positionInSegment + 1;
                     segmentValues[i] = digitsOnly.slice(endPosInSegment);
                 } else {
-                    // Middle segments - clear completely
                     segmentValues[i] = '';
                 }
             }
         }
 
-        // Insert the new digit
         const currentSegmentValue = segmentValues[startSegmentIndex] || '';
         const digitsOnly = currentSegmentValue.replace(/\D/g, '');
 
-        // For partial selections, we want to replace the selected portion
         let newDigits;
         if (hasSelection) {
-            // We already cleared the selection above, now just insert at the position
             newDigits = digitsOnly + key;
         } else {
-            // No selection - insert at cursor position
             const insertPos = Math.min(startPosInSegment, digitsOnly.length);
             newDigits = digitsOnly.slice(0, insertPos) + key + digitsOnly.slice(insertPos);
         }
 
-        // Don't exceed segment length
         segmentValues[startSegmentIndex] = newDigits.slice(0, segments[startSegmentIndex].length);
 
         const newValue = buildValueFromSegments(segmentValues);
 
-        // Calculate new cursor position
         let newSelectionStart: number;
         let newSelectionEnd: number;
 
@@ -335,17 +304,14 @@ export const handleDateKeyDown = (
                 .reduce((sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0), 0) +
             (startSegmentIndex > 0 ? segments[startSegmentIndex].separator.length : 0);
 
-        // Get the updated segment value
         const updatedSegmentValue = segmentValues[startSegmentIndex];
         const segmentLength = updatedSegmentValue.length;
 
-        // Check if current segment is complete (all positions filled with digits)
         const isSegmentComplete =
             segmentLength === segments[startSegmentIndex].length &&
             updatedSegmentValue.split('').every((char) => /\d/.test(char));
 
         if (isSegmentComplete) {
-            // Auto-advance to next segment
             if (startSegmentIndex < segments.length - 1) {
                 const nextSegmentStart =
                     segments
@@ -356,7 +322,6 @@ export const handleDateKeyDown = (
                 newSelectionStart = nextSegmentStart;
                 newSelectionEnd = nextSegmentStart + segments[startSegmentIndex + 1].length;
             } else {
-                // Last segment - position at end
                 const totalLength = segments.reduce(
                     (sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0),
                     0,
@@ -365,7 +330,6 @@ export const handleDateKeyDown = (
                 newSelectionEnd = totalLength;
             }
         } else {
-            // Position cursor after the inserted digit and select rest of segment
             newSelectionStart = segmentStart + segmentLength;
             newSelectionEnd = segmentStart + segments[startSegmentIndex].length;
         }
@@ -415,7 +379,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
 
     const [inputValue, setInputValue] = useState(initialValue);
     const [isValidDate, setIsValidDate] = useState(true);
-    
+
     // Track if user is actively editing
     const isUserEditingRef = useRef(false);
 
@@ -425,7 +389,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
         if (isUserEditingRef.current) {
             return;
         }
-        
+
         if (fieldValue === '') {
             if (inputValue !== mask) {
                 setInputValue(mask);
@@ -442,13 +406,12 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                 }
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fieldValue]); // Only depend on fieldValue to avoid loops
 
     const handleFocus = () => {
         // Mark that user is editing
         isUserEditingRef.current = true;
-        
+
         // Set selection based on current value
         if (inputRef.current) {
             const digits = inputValue.replace(/\D/g, '').length;
@@ -541,16 +504,16 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
             setInputValue(mask);
             setSomeFieldValues([field.name, '']);
             setIsValidDate(true);
-            
+
             // Set cursor to beginning of field
             setTimeout(() => {
                 if (inputRef.current) {
                     inputRef.current.setSelectionRange(0, 4);
                 }
             }, 0);
-            
+
             // Reset the flag after all effects have run
-            Promise.resolve().then(() => {
+            void Promise.resolve().then(() => {
                 isUserEditingRef.current = false;
             });
         } else {
@@ -599,7 +562,9 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         onFocus={handleFocus}
-                        onBlur={() => { isUserEditingRef.current = false; }}
+                        onBlur={() => {
+                            isUserEditingRef.current = false;
+                        }}
                         onClick={handleClick}
                         disabled={!isClient}
                         className={`input input-sm w-32 ${!isValidDate ? 'input-error' : ''}`}
