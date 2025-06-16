@@ -42,22 +42,22 @@ test.describe('Search', () => {
 
         // Find the date input by looking for the "From" label
         const fromInput = page.getByText('From').locator('..').locator('input[type="text"]');
-        
+
         // Type a date directly into the input
         await fromInput.click();
         await fromInput.clear();
-        await fromInput.fill('20240115');  // Fill date as YYYYMMDD
-        
+        await fromInput.fill('20240115'); // Fill date as YYYYMMDD
+
         // Verify the date was entered and the filter is applied
         await expect(fromInput).toHaveValue('2024-01-15');
         await expect(page.getByText('Collection date - From:')).toBeVisible();
 
         // Click the clear button (X) on the date field itself
         await page.getByLabel('Clear collectionDateRangeLowerFrom').click();
-        
+
         // Verify the field is cleared
         await expect(fromInput).toHaveValue('YYYY-MM-DD');
-        
+
         // The active filter should also be removed
         await expect(page.getByText('Collection date - From:')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
