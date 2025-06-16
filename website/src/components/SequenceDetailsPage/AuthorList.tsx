@@ -27,7 +27,7 @@ export const AuthorList: FC<AuthorsListProps> = ({ authors }) => {
         authorsElements = authors.map((author, index) => (
             <span key={index}>
                 {author}
-                {index !== authors.length - 1 ? ', ' : ''}
+                {index !== authors.length - 1 ? '; ' : ''}
             </span>
         ));
     } else {
@@ -36,14 +36,14 @@ export const AuthorList: FC<AuthorsListProps> = ({ authors }) => {
                 {data.beforeEllipsis.map((author, index) => (
                     <span key={index}>
                         {author}
-                        {', '}
+                        {'; '}
                     </span>
                 ))}
-                <span>..., </span>
+                <span>...; </span>
                 {data.afterEllipsis.map((author, index) => (
                     <span key={index}>
                         {author}
-                        {index !== data.afterEllipsis.length - 1 ? ', ' : ''}
+                        {index !== data.afterEllipsis.length - 1 ? '; ' : ''}
                     </span>
                 ))}
             </>

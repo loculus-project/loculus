@@ -338,3 +338,6 @@ export const requestUploadResponse = z.array(
     }),
 );
 export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;
+
+export const pipelineVersionStatistics = z.record(z.record(z.number()));
+export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;

@@ -4,9 +4,6 @@
   {{- if .generateIndex }}
   generateIndex: {{ .generateIndex }}
   {{- end }}
-  {{- if .enableSubstringSearch }}
-  lapisAllowsRegexSearch: true
-  {{- end }}
   {{- if .lineageSystem }}
   generateIndex: true
   generateLineageIndex: true
@@ -42,4 +39,6 @@ schema:
   {{- end }}
   {{- end }}
   primaryKey: accessionVersion
+  features:
+    - name: generalizedAdvancedQuery
 {{- end }}

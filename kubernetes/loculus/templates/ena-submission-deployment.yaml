@@ -131,6 +131,7 @@ spec:
           annotations:
             argocd.argoproj.io/sync-options: Replace=true
         spec:
+          {{- include "possiblePriorityClassName" . | nindent 10 }}
           restartPolicy: Never
           containers:
             - name: ena-submission

@@ -15,6 +15,7 @@ import {
 import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
@@ -124,10 +125,18 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
         }
     }, [detailsHook.data, detailsHook.error, detailsHook.isLoading]);
 
+    const sequenceCount = sequenceFilter.sequenceCount();
+    let buttonText = 'Edit data use terms (all sequences)';
+    if (sequenceCount !== undefined) {
+        const formatted = formatNumberWithDefaultLocale(sequenceCount);
+        const plural = sequenceCount === 1 ? '' : 's';
+        buttonText = `Edit data use terms (${formatted} sequence${plural})`;
+    }
+
     return (
         <>
             <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
-                Edit data use terms
+                {buttonText}
             </button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}

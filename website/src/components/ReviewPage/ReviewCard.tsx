@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useState, useRef, useEffect } from 'react';
 
 import { SequencesDialog } from './SequencesDialog.tsx';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -403,19 +403,31 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     const textTooltipId = 'text-tooltip-' + keyName + accessionVersion;
     const noteTooltipId = 'note-tooltip-' + keyName + accessionVersion;
 
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [isTruncated, setIsTruncated] = useState(false);
+
+    useEffect(() => {
+        if (textRef.current) {
+            setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        }
+    }, [value]);
+
+    const showTooltip = primaryMessages !== undefined || isTruncated;
+    const tooltipContent =
+        primaryMessages !== undefined ? primaryMessages.map((annotation) => annotation.message).join(', ') : value;
+
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle ?? 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                <span className={textColor} data-tooltip-id={textTooltipId}>
+                <span
+                    ref={textRef}
+                    className={`${textColor} truncate max-w-xs inline-block`}
+                    data-tooltip-id={showTooltip ? textTooltipId : undefined}
+                >
                     {value}
                 </span>
-                {primaryMessages !== undefined && (
-                    <CustomTooltip
-                        id={textTooltipId}
-                        content={primaryMessages.map((annotation) => annotation.message).join(', ')}
-                    />
-                )}
+                {showTooltip && <CustomTooltip id={textTooltipId} content={tooltipContent} />}
                 {secondaryMessages !== undefined && (
                     <>
                         <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />

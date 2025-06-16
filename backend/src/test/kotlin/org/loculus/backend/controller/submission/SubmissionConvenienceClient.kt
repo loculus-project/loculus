@@ -48,7 +48,11 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
+data class SubmissionResult(
+    val submissionIdMappings: List<SubmissionIdMapping>,
+    val groupId: Int,
+    val submissionIdFilesMap: SubmissionIdFilesMap?,
+)
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
@@ -127,6 +131,7 @@ class SubmissionConvenienceClient(
         return SubmissionResult(
             submissionIdMappings = deserializeJsonResponse(submit),
             groupId = groupIdToSubmitFor,
+            submissionIdFilesMap = fileMapping,
         )
     }
 
@@ -483,8 +488,6 @@ class SubmissionConvenienceClient(
             groupId = groupId,
             dataUseTerms = dataUseTerms,
         )
-
-        else -> throw Exception("Test issue: No data preparation defined for status $status")
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
@@ -517,5 +520,20 @@ class SubmissionConvenienceClient(
                 .response
                 .contentAsString
         return objectMapper.readValue(content)
+    }
+
+    /**
+     * Upload a file to a presigned write URL (S3).
+     */
+    fun uploadFile(presignedWriteUrl: String, content: String) {
+        val client = HttpClient.newBuilder().build()
+        val fileContent = content.toByteArray()
+
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(presignedWriteUrl))
+            .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
+            .build()
+
+        client.send(request, HttpResponse.BodyHandlers.ofString())
     }
 }

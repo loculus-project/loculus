@@ -14,7 +14,6 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
-import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -172,6 +171,39 @@ data class ProcessedData<SequenceType>(
         description = "The key is the file category name, the value is a list of files, with ID and name.",
     )
     val files: FileCategoryFilesMap?,
+)
+
+data class ReleasedData(
+    @Schema(
+        example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
+        description = "Key value pairs of metadata, correctly typed",
+    )
+    val metadata: MetadataMap,
+    @Schema(
+        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        description = "The key is the segment name, the value is the nucleotide sequence",
+    )
+    val unalignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
+    @Schema(
+        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        description = "The key is the segment name, the value is the aligned nucleotide sequence",
+    )
+    val alignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
+    @Schema(
+        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
+        description = "The key is the segment name, the value is a list of nucleotide insertions",
+    )
+    val nucleotideInsertions: Map<SegmentName, List<Insertion>>,
+    @Schema(
+        example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
+        description = "The key is the gene name, the value is the amino acid sequence",
+    )
+    val alignedAminoAcidSequences: Map<GeneName, GeneticSequence?>,
+    @Schema(
+        example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
+        description = "The key is the gene name, the value is a list of amino acid insertions",
+    )
+    val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
 
 data class ExternalSubmittedData(
@@ -365,8 +397,8 @@ class CompressionFormatConverter : Converter<String, CompressionFormat> {
 typealias SubmissionIdFilesMap = Map<SubmissionId, FileCategoryFilesMap>
 
 fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
-    it.values
-}.flatten().map { it.fileId }.toSet()
+    it.fileIds
+}.toSet()
 
 /**
  * A file category like 'raw_reads' or 'logs'.
@@ -379,13 +411,33 @@ typealias FileCategory = String
  */
 typealias FileCategoryFilesMap = Map<FileCategory, List<FileIdAndName>>
 
-fun FileCategoryFilesMap.addUrls(buildUrl: (fileId: UUID) -> String): Map<String, List<FileIdAndNameAndReadUrl>> =
-    this.entries.associate { entry ->
-        entry.key to
-            entry.value.map { fileIdAndName ->
-                FileIdAndNameAndReadUrl(fileIdAndName.fileId, fileIdAndName.name, buildUrl(fileIdAndName.fileId))
-            }
-    }
+val FileCategoryFilesMap.categories: Set<FileCategory>
+    get() = this.keys
+
+/** All file IDs used in the map. */
+val FileCategoryFilesMap.fileIds: Set<FileId>
+    get() = this.values.flatMap { it.map { it.fileId } }.toSet()
+
+fun FileCategoryFilesMap.addUrls(
+    buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
+): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
+    entry.key to
+        entry.value.map { fileIdAndName ->
+            FileIdAndNameAndReadUrl(
+                fileIdAndName.fileId,
+                fileIdAndName.name,
+                buildUrl(entry.key, fileIdAndName.fileId, fileIdAndName.name),
+            )
+        }
+}
 
 fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
     this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
+
+fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<String> {
+    val nameCounts = this[category]!!
+        .groupingBy { it.name }
+        .eachCount()
+
+    return nameCounts.filterValues { it > 1 }.keys
+}

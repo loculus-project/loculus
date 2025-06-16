@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
 
 import psycopg2
 import pytz
@@ -81,7 +81,7 @@ class Status(Enum):
         return self.name
 
 
-class TableName(Enum):
+class TableName(StrEnum):
     PROJECT_TABLE = "project_table"
     SAMPLE_TABLE = "sample_table"
     ASSEMBLY_TABLE = "assembly_table"
@@ -97,7 +97,7 @@ class TableName(Enum):
             raise ValueError(msg)
 
 
-def is_valid_column_name(table_name: TableName, column_name: str) -> bool:
+def validate_column_name(table_name: str, column_name: str):
     match table_name:
         case "project_table":
             field_names = ProjectTableEntry.__annotations__.keys()
@@ -169,6 +169,34 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+type Accession = str
+type AccessionVersion = str
+type Version = int
+
+
+def highest_version_in_submission_table(
+    db_conn_pool: SimpleConnectionPool, organism: str
+) -> dict[Accession, Version]:
+    """
+    Returns the highest version for a given accession in the submission table.
+    Does group by, so that only the highest version for each accession is returned.
+    """
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+            query = f"""
+                SELECT accession, MAX(version) AS version
+                FROM {TableName.SUBMISSION_TABLE}
+                WHERE organism = %s
+                GROUP BY accession
+            """  # noqa: S608
+            cur.execute(query, (organism,))
+            results = cur.fetchall()
+    finally:
+        db_conn_pool.putconn(con)
+    return {row["accession"]: int(row["version"]) for row in results}
+
+
 def delete_records_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> int:
@@ -189,7 +217,7 @@ def delete_records_in_db(
             # Validate table and column names to prevent SQL injection
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"DELETE FROM {table_name}"  # noqa: S608
 
@@ -200,7 +228,7 @@ def delete_records_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if isinstance(value, (Status, StatusAll)) else value  # noqa: UP038
+                    str(value) if isinstance(value, (Status, StatusAll)) else value
                     for value in conditions.values()
                 ),
             )
@@ -216,13 +244,23 @@ def delete_records_in_db(
 def find_conditions_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> list[dict[str, str]]:
+    """
+    Return all records from the specified table that match all the conditions
+    Args:
+        db_conn_pool (SimpleConnectionPool): Connection pool for PostgreSQL.
+        table_name (TableName): The table to search in.
+        conditions (dict[str, str]): A dictionary of column names and values for filtering.
+    Returns:
+        list[dict[str, str]]: A list of dictionaries representing the records that match the conditions.
+        Each dictionary contains column names as keys and their corresponding values.
+    """
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"SELECT * FROM {table_name}"  # noqa: S608
 
@@ -232,7 +270,7 @@ def find_conditions_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )
@@ -326,7 +364,7 @@ def update_db_where_conditions(
             # Prevent sql-injection with table_name and column_name validation
             TableName.validate(table_name)
             for key in conditions:
-                is_valid_column_name(table_name, key)
+                validate_column_name(table_name, key)
 
             query = f"UPDATE {table_name} SET "  # noqa: S608
 
@@ -336,10 +374,10 @@ def update_db_where_conditions(
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
             parameters = tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in update_values.values()
             ) + tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in conditions.values()
             )
 
@@ -456,7 +494,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
     try:
         with con, con.cursor() as cur:
             for key in conditions:
-                is_valid_column_name("submission_table", key)
+                validate_column_name("submission_table", key)
 
             query = "SELECT * from submission_table"
 
@@ -465,7 +503,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )
@@ -517,7 +555,7 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
         return False
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
     all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
     return len(all_versions) > 1 and version == all_versions[-1]
@@ -528,7 +566,7 @@ def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> in
         return None
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
-        db_config, table_name="submission_table", conditions=accession
+        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
     all_versions = sorted([int(entry["version"]) for entry in sample_data_in_submission_table])
     return all_versions[-2]

@@ -68,11 +68,6 @@
           "type": "number",
           "description": "The minimum column width for this field on the search table."
         },
-        "truncateColumnDisplayTo": {
-          "groups": ["metadata"],
-          "type": "number",
-          "description": "The number of characters to truncate the column content to."
-        },
         "order": {
           "groups": ["metadata"],
           "type": "number",
@@ -167,7 +162,7 @@
         "customDisplay": {
           "groups": ["metadata"],
           "type": "object",
-          "description": "Custom display settings for the field on the sequence details page.",
+          "description": "Custom display settings for the field on the sequence details page (see [here](#custom-display))",
           "properties": {
             "type": {
               "groups": ["metadata"],
@@ -361,6 +356,10 @@
                   "url": {
                     "type": "string",
                     "description": "URL template with placeholders. Example: 'https://tool.example.com/?data={{[unalignedNucleotideSequences+rich|fasta]}}'"
+                  },
+                  "maxNumberOfRecommendedEntries": {
+                    "type": "integer",
+                    "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
                   }
                 },
                 "required": ["name", "url"]
@@ -485,6 +484,24 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if sequences should be aligned"
+                    },
+                    "require_nextclade_sort_match": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "boolean",
+                      "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
+                    },
+                    "minimizer_url": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
+                    },
+                    "accepted_dataset_matches": {
+                      "groups": ["nextcladePipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "array",
+                      "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
                     }
                   }
               }
@@ -742,6 +759,12 @@
       "default": "This is a demonstration environment. It may contain non-accurate test data and should not be used for real-world applications. Data will be deleted regularly.",
       "description": "Banner message (as HTML) to display at the very top of the page"
     },
+    "bannerMessageURL": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "URL to fetch banner message HTML from - if set will be polled regularly for banner text, e.g. notice of temporary downtime, and overwrite the 'bannerMessage'-config"
+    },
     "welcomeMessageHTML": {
       "groups": ["general"],
       "type": ["string", "null"],
@@ -810,6 +833,26 @@
               "description": "The host URL for CrossRef callbacks"
             }
           }
+        },
+        "fieldsToDisplay": {
+          "groups": ["general"],
+          "type": "array",
+          "description": "Fields to display in the SeqSets table",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "The metadata field name to display"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "The display name for the field"
+              }
+            },
+            "required": ["field", "displayName"]
+          }
         }
       }
     },
@@ -849,6 +892,35 @@
       },
       "required": ["github"],
       "additionalProperties": false
+    },
+    "public": {
+      "group": ["website"],
+      "type": "object",
+      "description": "TODO",
+      "properties": {
+        "properties": {
+          "backendUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the Loculus backend is publicly available."
+          },
+          "websiteUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where the website is publicly available."
+          },
+          "keycloakUrl": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URL where Keycloak is publicly available."
+          },
+          "lapisUrlTemplate": {
+            "groups": ["website"],
+            "type": "string",
+            "description": "Overwrite the URLs where the LAPIS instances are publicly available. Must contain `%organism%` as a placeholder."
+          }
+        }
+      }
     },
     "website": {
       "groups": ["website"],
@@ -890,21 +962,6 @@
               "type": "object",
               "description": "Settings for the `public` section of the `runtime_config.json`",
               "properties": {
-                "backendUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Loculus backend"
-                },
-                "keycloakUrl": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URL where the client-side website code expects the Keycloak"
-                },
-                "lapisUrlTemplate": {
-                  "groups": ["website"],
-                  "type": "string",
-                  "description": "Overwrite the URLs where the client-side website code expects the LAPIS instances. Must contain `%organism%` as a placeholder."
-                }
               }
             }
           }
@@ -1028,7 +1085,7 @@
     "runDevelopmentS3": {
       "groups": ["db"],
       "type": "boolean",
-      "default": false,
+      "default": true,
       "description": "If true, runs a development MinIO S3 instance within the cluster."
     },
     "disableWebsite": {
@@ -1100,11 +1157,6 @@
         }
       }
     },
-    "enaDbName": {
-      "type": "string",
-      "default": "Loculus",
-      "description": "TODO"
-    },
     "enforceHTTPS": {
       "type": "boolean",
       "default": true,
@@ -1144,6 +1196,21 @@
       "required": ["enabled", "urls"],
       "additionalProperties": false
     },
+    "fileSharing": {
+      "type": "object",
+      "groups": ["general"],
+      "description": "Settings related to the file sharing feature.",
+      "properties": {
+        "outputFileUrlType": {
+          "type": "string",
+          "groups": ["general"],
+          "enum": ["website", "backend", "s3"],
+          "description": "Whether the backend should supply file URLs as links using the website, or directly to the S3 objects."
+        }
+      },
+      "required": ["outputFileUrlType"],
+      "additionalProperties": false
+    },    
     "s3": {
       "type": "object",
       "properties": {
@@ -1231,21 +1298,36 @@
       "description": "TODO",
       "default": 600
     },
-    "enaUniqueSuffix": {
-      "type": "string",
+    "enaDeposition": {
+      "type": "object",
       "description": "TODO",
-      "default": "Loculus"
-    },
-    "enaIsBroker": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
-    "submitToEnaProduction": {
-      "type": "boolean",
-      "description": "TODO",
-      "default": false
-    },
+      "properties":{
+        "enaUniqueSuffix": {
+          "type": "string",
+          "description": "Suffix to add to ENA project alias",
+          "default": "Loculus"
+        },
+        "enaIsBroker": {
+          "type": "boolean",
+          "description": "If ENA broker account is used",
+          "default": false
+        },
+        "submitToEnaProduction": {
+          "type": "boolean",
+          "description": "If true, the ENA submission will be sent to the production ENA server. If false, it will be sent to the test ENA server.",
+          "default": false
+        },
+        "enaDbName": {
+          "type": "string",
+          "description": "Name of Loculus instance in ENA",
+          "default": "Loculus"
+        },
+        "enaGithubTestUrl": {
+          "type": "string",
+          "description": "URL to the test ENA github repository"
+      }
+    }
+  },
     "images": {
       "groups": ["general"],
       "type": "object",
@@ -1344,9 +1426,6 @@
       }
     },
     "previewDocs": {
-      "description": "TODO"
-    },
-    "reduceResourceRequest": {
       "description": "TODO"
     },
     "ingest": {

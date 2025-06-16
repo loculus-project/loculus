@@ -12,6 +12,7 @@ from factory_methods import (
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
     UnprocessedData,
     UnprocessedEntry,
@@ -32,10 +33,10 @@ test_config_file = "tests/test_config.yaml"
 @dataclass
 class Case:
     name: str
-    metadata: dict[str, str]
-    expected_metadata: dict[str, str]
+    metadata: dict[str, str | None]
+    expected_metadata: dict[str, ProcessedMetadataValue]
     expected_errors: list[ProcessingAnnotationTestCase]
-    expected_warnings: list[ProcessingAnnotationTestCase] = None
+    expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
@@ -359,6 +360,45 @@ test_case_definitions = [
                 ["authors"],
                 ["authors"],
                 "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
+            ),
+        ],
+    ),
+    Case(
+        name="nan_float",
+        metadata={
+            "submissionId": "nan_float",
+            "percentage_float": "NaN",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+        },
+        accession_id="14",
+        expected_metadata={
+            "percentage_float": None,
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_14.1/2022-11-01",
+        },
+        expected_errors=[],
+    ),
+    Case(
+        name="infinity_float",
+        metadata={
+            "submissionId": "infinity_float",
+            "percentage_float": "Infinity",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+        },
+        accession_id="15",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_15.1/2022-11-01",
+        },
+        expected_errors=[
+            ProcessingAnnotationTestCase(
+                ["percentage_float"],
+                ["percentage_float"],
+                "Invalid float value: Infinity for field percentage_float.",
             ),
         ],
     ),

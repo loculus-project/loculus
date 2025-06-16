@@ -275,7 +275,8 @@ CREATE TABLE public.files (
     upload_requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
     group_id integer NOT NULL,
-    released_at timestamp without time zone
+    released_at timestamp without time zone,
+    size bigint
 );
 
 
@@ -753,6 +754,13 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: sequence_entries_organism_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_idx ON public.sequence_entries USING btree (organism);
 
 
 --

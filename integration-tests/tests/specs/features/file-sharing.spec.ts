@@ -58,6 +58,8 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
         ],
     );
 
+    await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
+
     let cleanup: () => Promise<void>;
     try {
         cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
@@ -102,9 +104,10 @@ async function checkFileContent(page: Page, fileName: string, fileContent: strin
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
     // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    const [response] = await Promise.all([
-        page.waitForResponse((resp) => resp.url().includes(fileUrl) && resp.status() === 200),
+    await Promise.all([
+        page.waitForResponse(
+            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
+        ),
         page.evaluate((url) => fetch(url), fileUrl),
     ]);
-    expect(await response.text()).toBe(fileContent);
 }

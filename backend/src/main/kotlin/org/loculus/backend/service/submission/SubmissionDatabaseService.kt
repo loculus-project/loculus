@@ -66,6 +66,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.fileIds
 import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
@@ -104,6 +105,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val fileMappingPreconditionValidator: FileMappingPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
     private val s3Service: S3Service,
@@ -240,6 +242,13 @@ class SubmissionDatabaseService(
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            submittedProcessedData.data.files?.let { fileMapping ->
+                fileMappingPreconditionValidator
+                    .validateFilenamesAreUnique(fileMapping)
+                    .validateCategoriesMatchProcessedSchema(fileMapping, organism)
+                    .validateFilesExist(fileMapping.fileIds)
+            }
+
             val processingResult = submittedProcessedData.processingResult()
 
             insertProcessedData(submittedProcessedData, organism, pipelineVersion)
@@ -831,6 +840,29 @@ class SubmissionDatabaseService(
         return ProcessingResult.entries.associateWith { processingResultCounts[it] ?: 0 }
     }
 
+    fun getPipelineVersionStatistics(): Map<String, Map<Long, Int>> {
+        val result = mutableMapOf<String, MutableMap<Long, Int>>()
+        val sql = """
+            SELECT se.organism, sep.pipeline_version, COUNT(*) as count
+            FROM sequence_entries_preprocessed_data sep
+            JOIN sequence_entries se ON se.accession = sep.accession AND se.version = sep.version
+            WHERE sep.processing_status = 'PROCESSED'
+            GROUP BY se.organism, sep.pipeline_version
+        """.trimIndent()
+        transaction {
+            exec(sql) { rs ->
+                while (rs.next()) {
+                    val organism = rs.getString("organism")
+                    val version = rs.getLong("pipeline_version")
+                    val count = rs.getInt("count")
+                    result.getOrPut(organism) { mutableMapOf() }[version] = count
+                }
+            }
+        }
+
+        return result
+    }
+
     fun revoke(
         accessions: List<Accession>,
         authenticatedUser: AuthenticatedUser,
@@ -997,6 +1029,13 @@ class SubmissionDatabaseService(
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
+        }
+
+        editedSequenceEntryData.data.files?.let { fileMapping ->
+            fileMappingPreconditionValidator
+                .validateFilenamesAreUnique(fileMapping)
+                .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
+                .validateFilesExist(fileMapping.fileIds)
         }
 
         SequenceEntriesTable.update(

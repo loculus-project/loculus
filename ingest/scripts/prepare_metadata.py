@@ -40,7 +40,7 @@ class Config:
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--segments", required=False, type=click.Path())
-@click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
+@click.option("--sequence-hashes-file", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
     "--log-level",
@@ -51,7 +51,7 @@ def main(
     config_file: str,
     input: str,
     segments: str | None,
-    sequence_hashes: str,
+    sequence_hashes_file: str,
     output: str,
     log_level: str,
 ) -> None:
@@ -70,7 +70,7 @@ def main(
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
     sequence_hashes: dict[FastaIdField, str] = {
-        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes)
+        record["id"]: record["hash"] for record in orjsonl.load(sequence_hashes_file)
     }
 
     if segments:
@@ -90,7 +90,7 @@ def main(
         except IndexError:
             record["division"] = ""
         record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
-        record["submissionId"] = record[config.fasta_id_field]
+        record["id"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
         if segments:
@@ -136,6 +136,11 @@ def main(
         # 1. field is not in keys_to_keep and
         # 2. field is in keys_to_keep but is "" or None
         filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
+
+        # rename "id" to "submissionId" for back-compatibility with old hashes
+        
+        filtered_record["submissionId"] = filtered_record.pop("id")
+        
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash

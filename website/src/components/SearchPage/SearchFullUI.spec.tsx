@@ -44,13 +44,13 @@ const defaultSearchFormFilters: MetadataFilter[] = [
         name: 'field1',
         type: 'string',
         autocomplete: false,
-        label: 'Field 1',
+        displayName: 'Field 1',
         initiallyVisible: true,
     },
     {
         name: 'field3',
         type: 'string',
-        label: 'Field 3',
+        displayName: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
     },
@@ -58,7 +58,6 @@ const defaultSearchFormFilters: MetadataFilter[] = [
         name: 'field4',
         type: 'string',
         autocomplete: false,
-        label: 'Field 4',
         displayName: 'Field 4',
         notSearchable: true,
     },
@@ -163,7 +162,7 @@ describe('SearchFullUI', () => {
         renderSearchFullUI();
 
         expect(screen.getByLabelText('Accession')).toBeInTheDocument();
-        expect(screen.getByText('Field 1')).toBeInTheDocument();
+        expect(screen.getByLabelText('Field 1')).toBeInTheDocument();
         expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
     });
 
@@ -172,7 +171,7 @@ describe('SearchFullUI', () => {
             searchFormFilters: [
                 {
                     name: 'NotSearchable',
-                    label: 'Not searchable',
+                    displayName: 'Not searchable',
                     type: 'string',
                     autocomplete: false,
                     notSearchable: true,
@@ -192,16 +191,14 @@ describe('SearchFullUI', () => {
                 {
                     name: timestampFieldName,
                     type: 'timestamp',
+                    displayName: 'Timestamp field',
                     initiallyVisible: true,
                 },
             ],
         });
 
-        const timestampLabel = screen.getByText('Timestamp field');
-        const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
-        if (!timestampField) {
-            throw new Error('Timestamp field not found');
-        }
+        const timestampField = screen.getByLabelText('Timestamp field');
+        expect(timestampField).toBeInTheDocument();
     });
 
     it('should display date field', () => {

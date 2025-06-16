@@ -12,6 +12,10 @@ a {
     }
 }
 
+.alert a {
+    @apply font-bold underline;
+}
+
 .fillColor {
     background-color: theme('colors.main');
 }

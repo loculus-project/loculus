@@ -28,6 +28,9 @@ class Config:
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     nextclade_dataset_server_map: dict[str, str] | None = None
+    require_nextclade_sort_match: bool = False
+    minimizer_url: str | None = None
+    accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
@@ -37,7 +40,7 @@ class Config:
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
-    multi_segment = False
+    multi_segment: bool = False
     alignment_requirement: str = "ALL"
 
 
@@ -52,7 +55,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     return config
 
 
-def base_type(field_type: type) -> type:
+def base_type(field_type: Any) -> type:
     """Pull the non-None type from a Union, e.g. `str | None` -> `str`"""
     if type(field_type) is UnionType:
         return next(t for t in get_args(field_type) if t is not type(None))
@@ -71,11 +74,8 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
         field_type = base_type(field.type)
         if field_type not in CLI_TYPES:
             continue
-        if field_type is bool:  # Special case for boolean flags
-            parser.add_argument(f"--{field_name}", action="store_true")
-            parser.add_argument(
-                f"--no-{field_name}", dest=field_name.replace("-", "_"), action="store_false"
-            )
+        if field_type is bool:
+            parser.add_argument(f"--{field_name}", action=argparse.BooleanOptionalAction)
         else:
             parser.add_argument(f"--{field_name}", type=field_type)
     return parser

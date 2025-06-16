@@ -1,5 +1,7 @@
 {
     "accessionPrefix": "LOC_",
+    "websiteUrl": "https://example.com",
+    "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
@@ -194,6 +196,7 @@
                 "submissionDataTypes": {
                     "consensusSequences": false
                 },
+                "files": [],
                 "metadata": [
                     {
                         "name": "date",

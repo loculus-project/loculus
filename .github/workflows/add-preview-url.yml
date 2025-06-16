@@ -1,12 +1,15 @@
 name: Update PR with Preview URL
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 jobs:
   update-pr-description:
     runs-on: ubuntu-latest
+    # This workflow uses pull_request_target to access repo secrets in PRs from forks
+    # SECURITY: This workflow only uses PR metadata (labels, title, etc.) 
+    # and does not check out any code from the fork, making it safe
     steps:
       - name: Update PR Description with Preview URL
         uses: actions/github-script@v7

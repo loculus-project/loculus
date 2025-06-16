@@ -1,5 +1,7 @@
 {
     "accessionPrefix": "LOC_",
+    "websiteUrl": "https://example.com",
+    "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
@@ -28,11 +30,16 @@
                     "files": {
                         "enabled": true,
                         "categories": [
-                            {"name":  "foo"},
-                            {"name":  "bar"}
+                            {"name": "myFileCategory"},
+                            {"name": "myOtherFileCategory"}
                         ]
                     }
                 },
+                "files": [
+                    {"name": "myFileCategory"},
+                    {"name": "myOtherFileCategory"},
+                    {"name": "myProcessedOnlyFileCategory"}
+                ],
                 "metadata": [
                     {
                         "name": "date",
@@ -238,6 +245,9 @@
     },
     "dataUseTerms": {
         "enabled": true
+    },
+    "fileSharing": {
+        "outputFileUrlType": "s3"
     },
     "s3": {
         "enabled": true,

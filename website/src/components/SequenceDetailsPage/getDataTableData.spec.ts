@@ -49,7 +49,7 @@ const testTableDataEntries: TableDataEntry[] = [
     {
         label: 'Authors',
         name: 'authors',
-        value: 'author 1, author 2, author 3',
+        value: 'author 1; author 2; author 3',
         header: 'Header 2',
         type: { kind: 'metadata', metadataType: 'authors' },
     },

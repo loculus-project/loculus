@@ -28,6 +28,7 @@ type AutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
+    maxDisplayedOptions?: number;
 };
 
 export const AutoCompleteField = ({
@@ -35,6 +36,7 @@ export const AutoCompleteField = ({
     optionsProvider,
     setSomeFieldValues,
     fieldValue,
+    maxDisplayedOptions = 1000,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isClient = useClientFlag();
@@ -49,13 +51,13 @@ export const AutoCompleteField = ({
         }
     }, [error]);
 
-    const filteredOptions = useMemo(
-        () =>
+    const filteredOptions = useMemo(() => {
+        const allMatchedOptions =
             query === ''
                 ? options
-                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase())),
-        [options, query],
-    );
+                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
+        return allMatchedOptions.slice(0, maxDisplayedOptions);
+    }, [options, query]);
 
     return (
         <Combobox
@@ -69,7 +71,7 @@ export const AutoCompleteField = ({
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={load}
-                    placeholder={field.label}
+                    placeholder={field.displayName ?? field.name}
                     as={CustomInput}
                     disabled={!isClient}
                 />
@@ -101,6 +103,7 @@ export const AutoCompleteField = ({
                 </ComboboxButton>
 
                 <ComboboxOptions
+                    modal={false}
                     className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm
           min-h-32
           '

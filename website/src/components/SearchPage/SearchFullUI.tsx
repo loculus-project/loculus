@@ -233,10 +233,17 @@ export const InnerSearchFullUI = ({
     };
 
     const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => ({
-            ...prev,
-            [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
-        }));
+        setState((prev: any) => {
+            const newState = { ...prev };
+            const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
+            const defaultVisible = schema.tableColumns.includes(fieldName);
+            if (visible === defaultVisible) {
+                delete newState[key];
+            } else {
+                newState[key] = visible ? 'true' : 'false';
+            }
+            return newState;
+        });
     };
 
     useEffect(() => {
@@ -296,6 +303,7 @@ export const InnerSearchFullUI = ({
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -333,6 +341,7 @@ export const InnerSearchFullUI = ({
                 setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal
+                key={previewedSeqId ?? 'seq-modal'}
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
@@ -458,6 +467,7 @@ export const InnerSearchFullUI = ({
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}
                                     sequenceFilter={downloadFilter}
+                                    sequenceCount={linkOutSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
                                 />

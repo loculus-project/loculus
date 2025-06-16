@@ -8,13 +8,15 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.FileCategoryFilesMap
+import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -35,6 +37,8 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private val log = KotlinLogging.logger { }
 
@@ -59,7 +63,7 @@ open class ReleasedDataModel(
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
+    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
         log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -108,7 +112,7 @@ open class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
         earliestReleaseDateFinder: EarliestReleaseDateFinder?,
-    ): ProcessedData<GeneticSequence> {
+    ): ReleasedData {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
@@ -131,7 +135,7 @@ open class ReleasedDataModel(
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
                 ("version" to LongNode(rawProcessedData.version)),
-                (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)),
+                ("submissionId" to TextNode(rawProcessedData.submissionId)),
                 ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())),
                 ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)),
                 ("submitter" to TextNode(rawProcessedData.submitter)),
@@ -180,23 +184,45 @@ open class ReleasedDataModel(
             conditionalMetadata(
                 rawProcessedData.processedData.files != null,
                 {
-                    rawProcessedData.processedData.files!!.addUrls { fileId ->
-                        s3Service.getPublicUrl(fileId)
-                    }
+                    filesMapWithUrls(
+                        rawProcessedData.accession,
+                        rawProcessedData.version,
+                        rawProcessedData.processedData.files!!,
+                    )
                         .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                         .toMap()
                 },
             )
 
-        return ProcessedData(
+        return ReleasedData(
             metadata = metadata,
             unalignedNucleotideSequences = rawProcessedData.processedData.unalignedNucleotideSequences,
             alignedNucleotideSequences = rawProcessedData.processedData.alignedNucleotideSequences,
             nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
             aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
             alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
-            files = rawProcessedData.processedData.files,
         )
+    }
+
+    private fun filesMapWithUrls(
+        accession: Accession,
+        version: Version,
+        filesMap: FileCategoryFilesMap,
+    ): Map<String, List<FileIdAndNameAndReadUrl>> = filesMap.addUrls {
+            fileCategory,
+            fileId,
+            fileName,
+        ->
+        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+        when (backendConfig.fileSharing.outputFileUrlType) {
+            FileUrlType.WEBSITE -> {
+                "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
+            }
+            FileUrlType.BACKEND -> {
+                "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"
+            }
+            FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
+        }
     }
 
     private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
