@@ -536,7 +536,22 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                     <input 
                         type='date' 
                         ref={pickerRef} 
-                        onChange={handleDateChange} 
+                        onChange={handleDateChange}
+                        value={(() => {
+                            // Convert current input value to date picker format
+                            const digits = inputValue.replace(/\D/g, '');
+                            if (digits.length === 8) {
+                                const year = digits.slice(0, 4);
+                                const month = digits.slice(4, 6);
+                                const day = digits.slice(6, 8);
+                                const iso = `${year}-${month}-${day}`;
+                                const dt = DateTime.fromISO(iso);
+                                if (dt.isValid) {
+                                    return iso;
+                                }
+                            }
+                            return '';
+                        })()}
                         className='absolute opacity-0 pointer-events-none'
                         style={{ 
                             top: '100%', 
