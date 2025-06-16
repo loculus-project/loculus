@@ -2,8 +2,6 @@
 
 import dataclasses
 import datetime as dt
-import gzip
-import io
 import json
 import logging
 import time
@@ -194,28 +192,12 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
     return [FileUploadInfo(**item) for item in response.json()]
 
 
-def _gzip_string(content: str) -> bytes:
-    buffer = io.BytesIO()
-    with gzip.GzipFile(fileobj=buffer, mode="w") as gz_file, \
-        io.TextIOWrapper(gz_file, encoding="utf-8") as wrapper:
-        wrapper.write(content)
-    return buffer.getvalue()
-
-
-def _upload_bytes(data: bytes, url: str) -> None:
-    headers = {"Content-Type": "application/octet-stream"}
-    r = requests.put(url, data=data, headers=headers, timeout=10)
+def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
+    headers = {"Content-Type": "chemical/x-embl"}
+    r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
         raise RuntimeError(msg)
-
-
-def upload_string_to_presigned_url(content: str, url: str) -> None:
-    _upload_bytes(content.encode("utf-8"), url)
-
-
-def upload_string_to_presigned_url_zipped(content: str, url: str) -> None:
-    _upload_bytes(_gzip_string(content), url)
 
 
 def download_minimizer(url, save_path):

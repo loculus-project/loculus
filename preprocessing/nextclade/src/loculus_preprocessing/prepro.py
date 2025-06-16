@@ -22,7 +22,7 @@ from .backend import (
     fetch_unprocessed_sequences,
     request_upload,
     submit_processed_sequences,
-    upload_string_to_presigned_url_zipped,
+    upload_embl_file_to_presigned_url,
 )
 from .config import Config
 from .datatypes import (
@@ -1005,7 +1005,7 @@ def run(config: Config) -> None:
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
-                upload_string_to_presigned_url_zipped(file_content, url)
+                upload_embl_file_to_presigned_url(file_content, url)
                 processed_entry.data.files = {
                     "annotations": [
                         FileIdAndName(fileId=file_id, name=file_name)

@@ -1,6 +1,7 @@
 import datetime
 import glob
 import gzip
+import io
 import json
 import logging
 import os
@@ -15,10 +16,6 @@ from typing import Any, Literal
 import pytz
 import requests
 import xmltodict
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
-from Bio.SeqRecord import SeqRecord
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 
@@ -30,7 +27,6 @@ from .ena_types import (
     AssemblyChromosomeListFile,
     AssemblyManifest,
     Hold,
-    MoleculeType,
     ProjectSet,
     SampleSetType,
     Submission,
@@ -327,6 +323,14 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
+def _gzip_string(content: str) -> bytes:
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode="w") as gz_file, \
+        io.TextIOWrapper(gz_file, encoding="utf-8") as wrapper:
+        wrapper.write(content)
+    return buffer.getvalue()
+
+
 def download_flatfile(
     config: Config,
     metadata,
@@ -352,7 +356,7 @@ def download_flatfile(
 
     gzip_filename = filename + ".gz"
 
-    Path(gzip_filename).write_bytes(response.content)
+    Path(gzip_filename).write_bytes(_gzip_string(response.content))
 
     return gzip_filename
 
