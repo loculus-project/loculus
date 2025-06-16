@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest';
+
 import { handleDateKeyDown, type DateSegment } from './DateField';
 
 const segments: DateSegment[] = [
-    { length: 4, placeholder: 'Y', separator: '' },  // Year
+    { length: 4, placeholder: 'Y', separator: '' }, // Year
     { length: 2, placeholder: 'M', separator: '-' }, // Month
     { length: 2, placeholder: 'D', separator: '-' }, // Day
 ];
@@ -155,10 +156,6 @@ describe('handleDateKeyDown', () => {
     });
 
     describe('Edge cases', () => {
-        
-
-  
-
         test('type digit when full year is selected in complete date', () => {
             const result = handleDateKeyDown('1', '2020-05-05', 0, 4, segments);
             expect(result).toEqual({
