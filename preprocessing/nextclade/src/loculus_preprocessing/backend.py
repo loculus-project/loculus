@@ -181,7 +181,7 @@ def submit_processed_sequences(
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
-    # we need to parse this here, because we don't want the organism in there.
+    # we need to parse the backend URL, to extract the API without the organism component
     parsed = urlparse(config.backend_host)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
     url = base_url + "/files/request-upload"
