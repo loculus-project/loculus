@@ -36,5 +36,4 @@ test.describe('Search', () => {
         await page.getByLabel('remove filter').click();
         await expect(page.getByLabel('Author affiliations')).toBeEmpty();
     });
-
 });
