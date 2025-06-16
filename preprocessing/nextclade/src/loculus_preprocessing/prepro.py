@@ -278,7 +278,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
-        input_metadata[id]["groupId"] = entry.data.group_id
+        input_metadata[id]["group_id"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
@@ -740,7 +740,7 @@ def process_single(  # noqa: C901
             )
 
         submitter = unprocessed.inputMetadata["submitter"]
-        group_id = int(str(unprocessed.inputMetadata["groupId"]))
+        group_id = int(str(unprocessed.inputMetadata["group_id"]))
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
