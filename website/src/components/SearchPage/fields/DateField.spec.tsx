@@ -82,4 +82,26 @@ describe('TimestampField', () => {
         expect(input).toHaveValue('2025-03-17');
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
     });
+
+    test('Clear button clears the date field', async () => {
+        render(
+            <TimestampField
+                field={{
+                    name: 'releasedAtTimestampFrom',
+                    type: 'timestamp',
+                }}
+                fieldValue={'1742169600'}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByRole('textbox');
+        expect(input).toHaveValue('2025-03-17');
+
+        const clearButton = screen.getByLabelText('Clear releasedAtTimestampFrom');
+        await userEvent.click(clearButton);
+
+        expect(input).toHaveValue('YYYY-MM-DD');
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['releasedAtTimestampFrom', '']);
+    });
 });
