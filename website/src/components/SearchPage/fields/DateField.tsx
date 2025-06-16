@@ -354,11 +354,10 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
 }) => {
     const isClient = useClientFlag();
 
-    // Define date segments configuration
     const segments = [
-        { length: 4, placeholder: 'Y', separator: '' }, // Year
-        { length: 2, placeholder: 'M', separator: '-' }, // Month
-        { length: 2, placeholder: 'D', separator: '-' }, // Day
+        { length: 4, placeholder: 'Y', separator: '' },
+        { length: 2, placeholder: 'M', separator: '-' },
+        { length: 2, placeholder: 'D', separator: '-' },
     ];
 
     const mask = segments.map((seg, i) => (i > 0 ? seg.separator : '') + seg.placeholder.repeat(seg.length)).join('');
@@ -366,7 +365,6 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     const inputRef = useRef<HTMLInputElement>(null);
     const pickerRef = useRef<HTMLInputElement>(null);
 
-    // Initialize local state based on field value
     const initialValue = (() => {
         if (fieldValue !== '') {
             const dateValue = valueToDateConverter(fieldValue.toString());
@@ -380,12 +378,9 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     const [inputValue, setInputValue] = useState(initialValue);
     const [isValidDate, setIsValidDate] = useState(true);
 
-    // Track if user is actively editing
     const isUserEditingRef = useRef(false);
 
-    // Update input value when fieldValue changes from outside
     useEffect(() => {
-        // Don't sync if user is actively editing
         if (isUserEditingRef.current) {
             return;
         }
@@ -396,7 +391,6 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                 setIsValidDate(true);
             }
         } else {
-            // Field value was updated externally
             const dateValue = valueToDateConverter(fieldValue.toString());
             if (dateValue) {
                 const newValue = DateTime.fromJSDate(dateValue).toISODate();
@@ -406,19 +400,15 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                 }
             }
         }
-    }, [fieldValue]); // Only depend on fieldValue to avoid loops
+    }, [fieldValue]);
 
     const handleFocus = () => {
-        // Mark that user is editing
         isUserEditingRef.current = true;
-
-        // Set selection based on current value
         if (inputRef.current) {
             const digits = inputValue.replace(/\D/g, '').length;
             if (digits === 0) {
                 inputRef.current.setSelectionRange(0, 4);
             } else {
-                // Find the appropriate position
                 let segmentStart = 0;
                 let digitsSoFar = 0;
 
@@ -462,10 +452,8 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
             e.preventDefault();
             setInputValue(result.value);
 
-            // Check if we have a complete valid date or if the field was cleared
             const digits = result.value.replace(/\D/g, '');
             if (digits.length === 8) {
-                // YYYYMMDD
                 const year = digits.slice(0, 4);
                 const month = digits.slice(4, 6);
                 const day = digits.slice(6, 8);
@@ -475,19 +463,15 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                     setSomeFieldValues([field.name, dateToValueConverter(dt.toJSDate())]);
                     setIsValidDate(true);
                 } else {
-                    // Invalid date with 8 digits
                     setIsValidDate(false);
                 }
             } else if (digits.length === 0 && result.value === mask) {
-                // User has cleared the date back to all placeholders
                 setSomeFieldValues([field.name, '']);
                 setIsValidDate(true);
             } else {
-                // For incomplete dates (1-7 digits), consider them valid (in progress)
                 setIsValidDate(true);
             }
 
-            // Apply the selection after React updates
             setTimeout(() => {
                 if (inputRef.current) {
                     inputRef.current.setSelectionRange(result.selectionStart, result.selectionEnd);
@@ -497,27 +481,22 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Check if the field was cleared (empty value)
         if (e.target.value === '') {
-            // Mark that we're clearing the field due to user action
             isUserEditingRef.current = true;
             setInputValue(mask);
             setSomeFieldValues([field.name, '']);
             setIsValidDate(true);
 
-            // Set cursor to beginning of field
             setTimeout(() => {
                 if (inputRef.current) {
                     inputRef.current.setSelectionRange(0, 4);
                 }
             }, 0);
 
-            // Reset the flag after all effects have run
             void Promise.resolve().then(() => {
                 isUserEditingRef.current = false;
             });
         } else {
-            // Prevent any other changes that weren't handled by keydown
             e.preventDefault();
         }
     };
@@ -583,7 +562,6 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         ref={pickerRef}
                         onChange={handleDateChange}
                         value={(() => {
-                            // Convert current input value to date picker format
                             const digits = inputValue.replace(/\D/g, '');
                             if (digits.length === 8) {
                                 const year = digits.slice(0, 4);

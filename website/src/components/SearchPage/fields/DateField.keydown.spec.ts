@@ -3,9 +3,9 @@ import { describe, expect, test } from 'vitest';
 import { handleDateKeyDown, type DateSegment } from './DateField';
 
 const segments: DateSegment[] = [
-    { length: 4, placeholder: 'Y', separator: '' }, // Year
-    { length: 2, placeholder: 'M', separator: '-' }, // Month
-    { length: 2, placeholder: 'D', separator: '-' }, // Day
+    { length: 4, placeholder: 'Y', separator: '' },
+    { length: 2, placeholder: 'M', separator: '-' },
+    { length: 2, placeholder: 'D', separator: '-' },
 ];
 
 describe('handleDateKeyDown', () => {
