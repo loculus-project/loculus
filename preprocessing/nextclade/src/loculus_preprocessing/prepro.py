@@ -33,6 +33,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FileIdAndName,
+    SubmissionData,
     GeneName,
     GenericSequence,
     InputMetadata,
@@ -669,7 +670,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-) -> ProcessedEntry:
+) -> SubmissionData:
     """Process a single sequence without alignment"""
 
     aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
@@ -685,25 +686,28 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
         amino_acid_insertions[gene] = []
         aligned_aminoacid_sequences[gene] = None
 
-    return ProcessedEntry(
-        accession=accession_from_str(id),
-        version=version_from_str(id),
-        data=ProcessedData(
-            metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
-            alignedNucleotideSequences=aligned_nucleotide_sequences,
-            nucleotideInsertions=nucleotide_insertions,
-            alignedAminoAcidSequences=aligned_aminoacid_sequences,
-            aminoAcidInsertions=amino_acid_insertions,
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+                alignedNucleotideSequences=aligned_nucleotide_sequences,
+                nucleotideInsertions=nucleotide_insertions,
+                alignedAminoAcidSequences=aligned_aminoacid_sequences,
+                aminoAcidInsertions=amino_acid_insertions,
+            ),
+            errors=errors,
+            warnings=warnings,
         ),
-        errors=errors,
-        warnings=warnings,
+        group_id=-1,
     )
 
 
 def process_single(  # noqa: C901
     id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
-) -> ProcessedEntry:
+) -> SubmissionData:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
@@ -742,8 +746,6 @@ def process_single(  # noqa: C901
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
-
-    output_metadata["groupId"] = group_id
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
@@ -842,7 +844,7 @@ def process_single(  # noqa: C901
                         "annotation", None
                     )
 
-    return ProcessedEntry(
+    processed_entry = ProcessedEntry(
         accession=accession_from_str(id),
         version=version_from_str(id),
         data=ProcessedData(
@@ -852,46 +854,55 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
-            annotations=annotations,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
     )
 
+    return SubmissionData(
+        processed_entry=processed_entry,
+        annotations=annotations,
+        group_id=group_id
+    )
 
-def processed_entry_with_errors(id):
-    return ProcessedEntry(
-        accession=accession_from_str(id),
-        version=version_from_str(id),
-        data=ProcessedData(
-            metadata=dict[str, ProcessedMetadataValue](),
-            unalignedNucleotideSequences=defaultdict(dict[str, Any]),
-            alignedNucleotideSequences=defaultdict(dict[str, Any]),
-            nucleotideInsertions=defaultdict(dict[str, Any]),
-            alignedAminoAcidSequences=defaultdict(dict[str, Any]),
-            aminoAcidInsertions=defaultdict(dict[str, Any]),
+
+def processed_entry_with_errors(id) -> SubmissionData:
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=dict[str, ProcessedMetadataValue](),
+                unalignedNucleotideSequences=defaultdict(dict[str, Any]),
+                alignedNucleotideSequences=defaultdict(dict[str, Any]),
+                nucleotideInsertions=defaultdict(dict[str, Any]),
+                alignedAminoAcidSequences=defaultdict(dict[str, Any]),
+                aminoAcidInsertions=defaultdict(dict[str, Any]),
+            ),
+            errors=[
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
+                    ],
+                    processedFields=[
+                        AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
+                    ],
+                    message=(
+                        f"Failed to process submission with id: {id} - please review your submission "
+                        "or reach out to an administrator if this error persists."
+                    ),
+                )
+            ],
+            warnings=[],
         ),
-        errors=[
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
-                ],
-                processedFields=[
-                    AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
-                ],
-                message=(
-                    f"Failed to process submission with id: {id} - please review your submission "
-                    "or reach out to an administrator if this error persists."
-                ),
-            )
-        ],
-        warnings=[],
+        group_id=-1,
+        annotations=defaultdict(dict[str, Any])
     )
 
 
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
-) -> Sequence[ProcessedEntry]:
+) -> Sequence[SubmissionData]:
     processed_results = []
     if config.nextclade_dataset_name:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
@@ -989,31 +1000,30 @@ def run(config: Config) -> None:
                 )
                 continue
 
-            for processed_entry in processed:
-                group_id = int(str(processed_entry.data.metadata["groupId"]))
-                del processed_entry.data.metadata["groupId"]  # Remove groupId after extraction
+            for submission_data in processed:
                 file_content = create_flatfile(
                     config,
-                    processed_entry.accession,
-                    processed_entry.version,
-                    processed_entry.data.metadata,
-                    processed_entry.data.unalignedNucleotideSequences,
-                    processed_entry.data.annotations,
+                    submission_data.processed_entry.accession,
+                    submission_data.processed_entry.version,
+                    submission_data.processed_entry.data.metadata,
+                    submission_data.processed_entry.data.unalignedNucleotideSequences,
+                    submission_data.annotations,
                 )
-                file_name = f"{processed_entry.accession}.embl"
-                processed_entry.data.annotations = None  # remove it so it's not submitted
-                upload_info = request_upload(group_id, 1, config)[0]
+                file_name = f"{submission_data.processed_entry.accession}.embl"
+                upload_info = request_upload(submission_data.group_id, 1, config)[0]
                 file_id = upload_info.fileId
                 url = upload_info.url
                 upload_embl_file_to_presigned_url(file_content, url)
-                processed_entry.data.files = {
+                submission_data.processed_entry.data.files = {
                     "annotations": [
                         FileIdAndName(fileId=file_id, name=file_name)
                     ]
                 }
 
             try:
-                submit_processed_sequences(processed, dataset_dir, config)
+                processed_entries = [submission_data.processed_entry
+                                     for submission_data in processed]
+                submit_processed_sequences(processed_entries, dataset_dir, config)
             except RuntimeError as e:
                 logger.exception("Submitting processed data failed. Traceback : %s", e)
                 continue

@@ -105,7 +105,6 @@ class ProcessedData:
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
-    annotations: dict[str, Any] | None = None
 
 
 @dataclass
@@ -126,6 +125,13 @@ class ProcessedEntry:
     data: ProcessedData
     errors: list[ProcessingAnnotation] = field(default_factory=list)
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@dataclass
+class SubmissionData:
+    processed_entry: ProcessedEntry
+    group_id: int
+    annotations: dict[str, Any] | None = None
 
 
 @dataclass
