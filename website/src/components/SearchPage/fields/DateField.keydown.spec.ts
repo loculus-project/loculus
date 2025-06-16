@@ -170,7 +170,7 @@ describe('handleDateKeyDown', () => {
                 value: '2024-03-17',
                 selectionStart: 5,
                 selectionEnd: 5,
-                preventDefault: false,
+                preventDefault: true,
             });
         });
     });

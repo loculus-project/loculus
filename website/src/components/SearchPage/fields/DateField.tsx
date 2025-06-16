@@ -97,8 +97,18 @@ export const handleDateKeyDown = (
         preventDefault: false,
     };
 
-    if (!isDigit && !isBackspace) {
+    const noChangeResult: KeyDownResult = {
+        ...defaultResult,
+        preventDefault: true,
+    };
+
+    // if arrow keys don't prevent default, we don't handle them
+    if (key.startsWith('Arrow')) {
         return defaultResult;
+    }
+
+    if (!isDigit && !isBackspace) {
+        return noChangeResult;
     }
 
     const parseValueIntoSegments = (value: string): string[] => {
