@@ -175,7 +175,41 @@ export const handleDateKeyDown = (
             };
         }
 
-        // If there's a selection, we delete from the position before selection start
+        const hasSelection = selectionStart !== selectionEnd;
+        
+        // Check if we have a full segment selected
+        if (hasSelection) {
+            const { segmentIndex: startSegmentIndex } = findSegmentForPosition(selectionStart);
+            const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1);
+            
+            // Calculate segment boundaries
+            let segmentBoundaryStart = 0;
+            for (let i = 0; i < startSegmentIndex; i++) {
+                segmentBoundaryStart += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
+            }
+            if (startSegmentIndex > 0) {
+                segmentBoundaryStart += segments[startSegmentIndex].separator.length;
+            }
+            const segmentBoundaryEnd = segmentBoundaryStart + segments[startSegmentIndex].length;
+            
+            // Check if selection exactly matches a segment
+            if (startSegmentIndex === endSegmentIndex && 
+                selectionStart === segmentBoundaryStart && 
+                selectionEnd === segmentBoundaryEnd) {
+                // Clear the entire segment
+                segmentValues[startSegmentIndex] = '';
+                const newValue = buildValueFromSegments(segmentValues);
+                
+                return {
+                    value: newValue,
+                    selectionStart: segmentBoundaryStart,
+                    selectionEnd: segmentBoundaryEnd,
+                    preventDefault: true,
+                };
+            }
+        }
+
+        // Normal backspace behavior (no selection or partial selection)
         const deletePos = selectionStart > 0 ? selectionStart - 1 : 0;
         const { segmentIndex, positionInSegment } = findSegmentForPosition(deletePos);
 

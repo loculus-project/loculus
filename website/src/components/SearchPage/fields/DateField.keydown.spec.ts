@@ -59,6 +59,26 @@ describe('handleDateKeyDown', () => {
                 preventDefault: true,
             });
         });
+
+        test('backspace with full month selected clears month and keeps selection', () => {
+            const result = handleDateKeyDown('Backspace', 'YYYY-12-05', 5, 7, segments);
+            expect(result).toEqual({
+                value: 'YYYY-MM-05',
+                selectionStart: 5,
+                selectionEnd: 7,
+                preventDefault: true,
+            });
+        });
+
+        test('backspace with full day selected clears day and keeps selection', () => {
+            const result = handleDateKeyDown('Backspace', '2020-12-DD', 8, 10, segments);
+            expect(result).toEqual({
+                value: '2020-12-DD',
+                selectionStart: 8,
+                selectionEnd: 10,
+                preventDefault: true,
+            });
+        });
     });
 
     describe('Digit key with selection', () => {
