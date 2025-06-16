@@ -335,7 +335,7 @@ def download_flatfile(
     accession = metadata["accession"]
     version = metadata["version"]
     category = "annotations"
-    filename = "sequences.embl.gz"
+    filename = f"{accession}.embl"
 
     base_url = config.backend_url.rstrip("/")
     url = f"{base_url}/files/get/{accession}/{version}/{category}/{filename}"

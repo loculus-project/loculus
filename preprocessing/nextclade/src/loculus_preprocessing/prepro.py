@@ -1000,6 +1000,7 @@ def run(config: Config) -> None:
                     processed_entry.data.unalignedNucleotideSequences,
                     processed_entry.data.annotations,
                 )
+                file_name = f"{processed_entry.accession}.embl"
                 processed_entry.data.annotations = None  # remove it so it's not submitted
                 upload_info = request_upload(group_id, 1, config)[0]
                 file_id = upload_info.fileId
@@ -1007,7 +1008,7 @@ def run(config: Config) -> None:
                 upload_string_to_presigned_url_zipped(file_content, url)
                 processed_entry.data.files = {
                     "annotations": [
-                        FileIdAndName(fileId=file_id, name="sequences.embl.gz")
+                        FileIdAndName(fileId=file_id, name=file_name)
                     ]
                 }
 
