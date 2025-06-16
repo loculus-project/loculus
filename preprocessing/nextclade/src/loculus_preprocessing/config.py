@@ -22,6 +22,7 @@ class Config:
     molecule_type: str = "genomic DNA"
     topology: str = "linear"
     db_name: str = "Loculus"
+    # The backend host is the base API URL including the organism
     backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
