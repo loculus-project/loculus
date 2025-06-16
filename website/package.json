@@ -96,7 +96,7 @@
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^6.0.0",
-        "happy-dom": "^17.6.3",
+        "happy-dom": "^18.0.1",
         "jsdom-testing-mocks": "^1.13.1",
         "msw": "^2.10.2",
         "prettier": "3.5.3",
