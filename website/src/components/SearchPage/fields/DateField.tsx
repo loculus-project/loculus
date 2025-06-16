@@ -415,17 +415,40 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
 
     const [inputValue, setInputValue] = useState(initialValue);
     const [isValidDate, setIsValidDate] = useState(true);
+    
+    // Track if user is actively editing
+    const isUserEditingRef = useRef(false);
 
-    // Only reset input value if fieldValue is explicitly cleared from outside
+    // Update input value when fieldValue changes from outside
     useEffect(() => {
-        if (fieldValue === '' && inputValue !== mask) {
-            // Field was cleared externally
-            setInputValue(mask);
-            setIsValidDate(true);
+        // Don't sync if user is actively editing
+        if (isUserEditingRef.current) {
+            return;
         }
-    }, [fieldValue, mask]);
+        
+        if (fieldValue === '') {
+            if (inputValue !== mask) {
+                setInputValue(mask);
+                setIsValidDate(true);
+            }
+        } else {
+            // Field value was updated externally
+            const dateValue = valueToDateConverter(fieldValue.toString());
+            if (dateValue) {
+                const newValue = DateTime.fromJSDate(dateValue).toISODate();
+                if (newValue && newValue !== inputValue) {
+                    setInputValue(newValue);
+                    setIsValidDate(true);
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fieldValue]); // Only depend on fieldValue to avoid loops
 
     const handleFocus = () => {
+        // Mark that user is editing
+        isUserEditingRef.current = true;
+        
         // Set selection based on current value
         if (inputRef.current) {
             const digits = inputValue.replace(/\D/g, '').length;
@@ -511,8 +534,29 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Prevent any changes that weren't handled by keydown
-        e.preventDefault();
+        // Check if the field was cleared (empty value)
+        if (e.target.value === '') {
+            // Mark that we're clearing the field due to user action
+            isUserEditingRef.current = true;
+            setInputValue(mask);
+            setSomeFieldValues([field.name, '']);
+            setIsValidDate(true);
+            
+            // Set cursor to beginning of field
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.setSelectionRange(0, 4);
+                }
+            }, 0);
+            
+            // Reset the flag after all effects have run
+            Promise.resolve().then(() => {
+                isUserEditingRef.current = false;
+            });
+        } else {
+            // Prevent any other changes that weren't handled by keydown
+            e.preventDefault();
+        }
     };
 
     const openPicker = () => {
@@ -555,6 +599,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         onFocus={handleFocus}
+                        onBlur={() => { isUserEditingRef.current = false; }}
                         onClick={handleClick}
                         disabled={!isClient}
                         className={`input input-sm w-32 ${!isValidDate ? 'input-error' : ''}`}
