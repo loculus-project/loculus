@@ -152,9 +152,9 @@ describe('DateRangeField', () => {
         expect(toInput).not.toBeNull();
 
         await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(fromInput!, '20020202');
         await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '03032003');
+        await userEvent.type(toInput!, '20030303');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
             ['collectionDateRangeLowerFrom', '2002-02-02'],
@@ -202,12 +202,12 @@ describe('DateRangeField', () => {
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
         const button = screen.getByText('Update Dates');
 
-        expect(fromInput).toHaveValue('01/01/2024');
-        expect(toInput).toHaveValue('31/12/2024');
+        expect(fromInput).toHaveValue('2024-01-01');
+        expect(toInput).toHaveValue('2024-12-31');
 
         await userEvent.click(button);
 
-        expect(fromInput).toHaveValue('05/05/2005');
-        expect(toInput).toHaveValue('10/10/2010');
+        expect(fromInput).toHaveValue('2005-05-05');
+        expect(toInput).toHaveValue('2010-10-10');
     }, 3000);
 });
