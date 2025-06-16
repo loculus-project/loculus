@@ -84,15 +84,29 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
         }
     }, [fieldValue, dateValue]);
 
-    const setCursor = (digits: number) => {
+    const setCursor = (digits: number, selectRemaining: boolean = true) => {
         const el = inputRef.current;
         if (!el) return;
         if (digits < 4) {
-            el.setSelectionRange(digits, 4);
+            if (selectRemaining) {
+                el.setSelectionRange(digits, 4);
+            } else {
+                el.setSelectionRange(digits, digits);
+            }
         } else if (digits < 6) {
-            el.setSelectionRange(5 + digits - 4, 7);
+            const pos = 5 + digits - 4;
+            if (selectRemaining) {
+                el.setSelectionRange(pos, 7);
+            } else {
+                el.setSelectionRange(pos, pos);
+            }
         } else if (digits < 8) {
-            el.setSelectionRange(8 + digits - 6, 10);
+            const pos = 8 + digits - 6;
+            if (selectRemaining) {
+                el.setSelectionRange(pos, 10);
+            } else {
+                el.setSelectionRange(pos, pos);
+            }
         } else {
             el.setSelectionRange(10, 10);
         }
@@ -107,6 +121,22 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
         }
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+        const el = e.currentTarget;
+        const clickPosition = el.selectionStart ?? 0;
+        
+        if (clickPosition <= 4) {
+            // Year clicked
+            el.setSelectionRange(0, 4);
+        } else if (clickPosition >= 5 && clickPosition <= 7) {
+            // Month clicked
+            el.setSelectionRange(5, 7);
+        } else if (clickPosition >= 8) {
+            // Day clicked
+            el.setSelectionRange(8, 10);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
         const year = digits.slice(0, 4).padEnd(4, 'Y');
@@ -114,7 +144,11 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
         const day = digits.slice(6, 8).padEnd(2, 'D');
         const formatted = `${year}-${month}-${day}`;
         setInputValue(formatted);
-        setCursor(digits.length);
+        
+        // Use setTimeout to ensure the selection happens after React updates the input
+        setTimeout(() => {
+            setCursor(digits.length, true);
+        }, 0);
 
         if (digits.length === 8) {
             const iso = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
@@ -166,6 +200,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         value={inputValue}
                         onChange={handleChange}
                         onFocus={handleFocus}
+                        onClick={handleClick}
                         disabled={!isClient}
                         className='input input-sm w-32'
                     />
