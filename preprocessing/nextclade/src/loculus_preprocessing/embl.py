@@ -202,8 +202,8 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
     unaligned_nucleotide_sequences,
     annotation_object: dict[str, Any] | None = None,
 ) -> str:
-    collection_date = metadata.get(config.collection_date_property, "Unknown")
-    authors = get_authors(metadata.get(config.authors_property, ""))
+    collection_date = metadata.get(config.collection_date_property) or "Unknown"
+    authors = get_authors(metadata.get(config.authors_property) or "")
     country = get_country(metadata, config)
     description = get_description(accession, version, config.db_name)
     organism = config.scientific_name
