@@ -20,19 +20,30 @@ FT                   /organism="West Nile virus"
 FT                   /country="Netherlands"
 FT                   /collection_date="2024-10-09"
 FT   gene            78..10379
+FT                   /gene="POLY"
+FT                   /product="anchored capsid protein ancC"
 FT                   /codon_start=1
 FT   CDS             78..446
+FT                   /gene="capsid"
+FT                   /product="anchored capsid protein ancC"
+FT                   /protein_id="YP_005097850.1"
 FT                   /codon_start=1
 FT                   /translation="MSKKPGGPGKNRAVNMLKRGMPRGLSLIGLKRAMLSLIDGKGPIR
 FT                   FVLALLAFFRFTAIAPTRAVLDRWRGVNKQTAMKHLLSFKKELGTLTSAINRRSTKQKK
 FT                   RGGTAGFTILLGLIACAGA"
 FT   CDS             447..947
+FT                   /gene="prM"
+FT                   /product="protein pr"
+FT                   /protein_id="YP_009164953.1"
 FT                   /codon_start=1
 FT                   /translation="VTLSNFQGKVMMTVNATDVTDVITIPTAAGKNLCIVRAMDVGYLC
 FT                   EDTITYECPVLAAGNDPEDIDCWCTKSSVYVRYGRCTKTRHSRRSRRSLTVQTHGESTL
 FT                   ANKKGAWLDSTKATRYLVKTESWILRNPGYALVAAVIGWMLGSNTMQRVVFAILLLLVA
 FT                   PAYS"
 FT   CDS             948..2450
+FT                   /gene="env"
+FT                   /product="envelope protein E"
+FT                   /protein_id="YP_001527880.1"
 FT                   /codon_start=1
 FT                   /translation="FNCLGMSNRDFLEGVSGATWVDLVLEGDSCVTIMSKDKPTIDVKM
 FT                   TNMEAANLADVRSYCYLASVSDLSTRAACPTMGEAHNEKRADPAFVCKQGVVDRGWGNG
@@ -44,6 +55,9 @@ FT                   SSVASLNDLTPVGRLVTVNPFVSVATANSKVLIELEPPFGDSYIVVGRGEQQINHHWHR
 FT                   SGSSIGKAFTTTLRGAQRLAALGDTAWDFGSVGGVFTSVGKAIHQVFGGAFRSLFGGMS
 FT                   WITQGLLGALLLWMGINARDRSIAMTFLAVGGVLLFLSVNVHA"
 FT   CDS             2451..3506
+FT                   /gene="NS1"
+FT                   /product="nonstructural protein NS1"
+FT                   /protein_id="YP_001527881.1"
 FT                   /codon_start=1
 FT                   /translation="DTGCAIDIGRQELRCGSGVFIHNDVEAWMDRYKFYPETPQGLARI
 FT                   IQKAHAEGVCGLRSVSRLEHQMWEAIKDELNTLLKENGVDLSVVVEKQNGMYKAAPKRL
@@ -53,6 +67,9 @@ FT                   CTWPETHTLWGDGVLESDLIIPVTLAGPRSNHNRRPGYKTQNQGPWDEGRVEIDFDYCP
 FT                   GTTVTISDSCGHRGPAARTTTESGKLITDWCCRSCTLPPLRFQTENGCWYGMEIRPTRH
 FT                   DEKTLVQSRVNA"
 FT   CDS             3507..4199
+FT                   /gene="NS2A"
+FT                   /product="nonstructural protein NS2A"
+FT                   /protein_id="YP_001527882.1"
 FT                   /codon_start=1
 FT                   /translation="YNADMIDPFQLGLLVVFLATQEVLRKRWTAKISIPAIMLALLVLV
 FT                   FGGITYTDVLRYVILVGAAFAEANSGGDVVHLALMATFKIQPVFLVASFLKARWTNQES
@@ -60,11 +77,17 @@ FT                   ILLMLAAAFFQMAYYDAKNVLSWEVPDVLNSLSVAWMILRAISFTNTSNVVVPLLALLT
 FT                   PGLKCLNLDVYRILLLMVGVGSLIKEKRSSAAKKKGACLICLALASTGVFNPMILAAGL
 FT                   MACDPNRKR"
 FT   CDS             4200..4592
+FT                   /gene="NS2B"
+FT                   /product="nonstructural protein NS2B"
+FT                   /protein_id="YP_001527883.1"
 FT                   /codon_start=1
 FT                   /translation="GWPATEVMTAVGLMFAIVGGLAELDIDSMAIPMTIAGLMFVAFVI
 FT                   SGKSTDMWIERTADITWESDAEITGSSERVDVRLDDDGNFQLINDPGAPWKIWMLRMAC
 FT                   LAISAYTPWAILPSIIGFWITLQYTKR"
 FT   CDS             4593..6449
+FT                   /gene="NS3"
+FT                   /product="nonstructural protein NS3"
+FT                   /protein_id="YP_001527884.1"
 FT                   /codon_start=1
 FT                   /translation="GGVLWDTPSPREYKKGDTTTGVYRIMTRGLLGSYQAGAGVMVEGV
 FT                   FHTLWHTTKGAALMSGEGRLDPYWGSVKEDRLCYGGPWKLQHKWNGHDEVQMIVVEPGK
@@ -78,14 +101,23 @@ FT                   RGRIGRNPSQVGDEYCYGGHTNEDDSNFAHWTEARIMLDNINMPNGLVAQLYQPEREKV
 FT                   YTMDGEYRLRGEERKNFLEFLRTADLPVWLAYKVAAAGISYHDRKWCFDGPRTNTILED
 FT                   NNEVEVITKLGERKILRPRWADARVYSDHQALKSFKDFASGKR"
 FT   CDS             6450..6827
+FT                   /gene="NS4A"
+FT                   /product="nonstructural protein NS4A"
+FT                   /protein_id="YP_001527885.1"
 FT                   /codon_start=1
 FT                   /translation="SQIGLVEVLGRMPEHFMGKTWEALDTMYVVATAEKGGRAHRMALE
 FT                   ELPDALQTIALIALLSVMSLGVFFLLMQRKGIGKIGLGGVILGAATFFCWMAEVPGTKI
 FT                   AGMLLLSLLLMIVLIPEPEKQR"
 FT   CDS             6828..6896
+FT                   /gene="2K"
+FT                   /product="protein 2K"
+FT                   /protein_id="YP_001527885.1"
 FT                   /codon_start=1
 FT                   /translation="SQTDNQLAVFLICVLTLVSAVAA"
 FT   CDS             6897..7664
+FT                   /gene="NS4B"
+FT                   /product="nonstructural protein NS4B"
+FT                   /protein_id="YP_001527886.1"
 FT                   /codon_start=1
 FT                   /translation="NEMGWLDKTKNDIGSLLGHKPETRETTLGVENFLLDLRPATAWSL
 FT                   YAVATAVLTPLLKHLITSDYINTSLTSINVQASALFTLARGFPFVDVGVSALLLAAGCW
@@ -93,6 +125,9 @@ FT                   GQVTLTVTVTAAALLFCHYAYMVPGWQAEAMRSAQRRTAAGIMKNAVVDGIVATDVPEL
 FT                   ERTTPVMQKKVGQIMLILVSMAAVVVNPSVRTVREAGILTTAAAVTLWENGASSVWNAT
 FT                   TAIGLCHIMRGGWLSCLSITWTLIKNMEKPGLKR"
 FT   CDS             7665..10379
+FT                   /gene="NS5"
+FT                   /product="RNA-dependent RNA polymerase NS5"
+FT                   /protein_id="YP_001527887.1"
 FT                   /codon_start=1
 FT                   /translation="GGAKGRTLGEVWKERLNHMTKEEFTRYRKEAITEVDRSAAKHARR
 FT                   EGNITGGHPVSRGTAKLRWLVERRFLEPVGKVVDLGCGRGGWCYYMATQKRVQEVKGYT
