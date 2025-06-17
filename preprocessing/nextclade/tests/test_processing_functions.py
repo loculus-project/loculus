@@ -667,8 +667,13 @@ def test_parse_date_into_range() -> None:
     ), "dateRangeLower: empty date should be returned as None."
 
 
-def test_create_flatfile(config: Config):
-    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", "cchf_1")
+@pytest.mark.parametrize(
+    "case_dir",
+    ["cchf_1", "west_nile_1"],
+    ids=["cchf_1", "west_nile_1"],
+)
+def test_create_flatfile(config: Config, case_dir):
+    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
 
     # Read metadata from metadata.tsv
     metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
