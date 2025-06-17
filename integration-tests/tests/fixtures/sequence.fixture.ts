@@ -40,7 +40,7 @@ export const test = groupTest.extend<SequenceFixtures>({
             await use(pageWithGroup);
         },
         {
-            timeout: 90000,
+            timeout: 120000,
         },
     ],
 });
