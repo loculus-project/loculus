@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import useClientFlag from '../../../hooks/isClient';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
+import Calendar from '~icons/ic/baseline-calendar-today';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
@@ -541,7 +542,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                 <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
                     {field.displayName ?? field.name}
                 </label>
-                <div className='flex items-center relative'>
+                <div className='flex items-center border border-gray-300 rounded overflow-hidden relative my-1'>
                     <input
                         ref={inputRef}
                         type='text'
@@ -556,43 +557,48 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         }}
                         onClick={handleClick}
                         disabled={!isClient}
-                        className={`input input-sm w-32 ${!isValidDate ? 'input-error' : ''}`}
+                        className={`input input-sm w-48 border-0 focus:outline-none pr-16
+                            my-0.5 
+                            
+                            ${!isValidDate ? 'text-red-500' : ''} ${inputValue === mask ? 'text-gray-400' : ''}`}
                     />
-                    {inputValue !== mask && (
+                    <div className='absolute right-0 flex items-center'>
+                        {inputValue !== mask && (
+                            <button
+                                type='button'
+                                onClick={() => {
+                                    setInputValue(mask);
+                                    setSomeFieldValues([field.name, '']);
+                                    setIsValidDate(true);
+                                    setTimeout(() => {
+                                        if (inputRef.current) {
+                                            inputRef.current.setSelectionRange(0, 4);
+                                        }
+                                    }, 0);
+                                }}
+                                disabled={!isClient}
+                                className='p-1 text-gray-400 hover:text-gray-600'
+                                aria-label={`Clear ${field.displayName ?? field.name}`}
+                            >
+                                <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
+                                    <path
+                                        fillRule='evenodd'
+                                        d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
+                                        clipRule='evenodd'
+                                    />
+                                </svg>
+                            </button>
+                        )}
                         <button
                             type='button'
-                            onClick={() => {
-                                setInputValue(mask);
-                                setSomeFieldValues([field.name, '']);
-                                setIsValidDate(true);
-                                setTimeout(() => {
-                                    if (inputRef.current) {
-                                        inputRef.current.setSelectionRange(0, 4);
-                                    }
-                                }, 0);
-                            }}
+                            onClick={openPicker}
                             disabled={!isClient}
-                            className='absolute right-8 top-1/2 -translate-y-1/2 p-1'
-                            aria-label={`Clear ${field.displayName ?? field.name}`}
+                            className='px-2 py-1 text-gray-600 hover:text-gray-800'
+                            aria-label={`Open ${field.displayName ?? field.name} picker`}
                         >
-                            <svg className='w-4 h-4 mr-2 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
-                                <path
-                                    fillRule='evenodd'
-                                    d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
-                                    clipRule='evenodd'
-                                />
-                            </svg>
+                            <Calendar className='w-4 h-4' />
                         </button>
-                    )}
-                    <button
-                        type='button'
-                        onClick={openPicker}
-                        disabled={!isClient}
-                        className='ml-2 border rounded px-2'
-                        aria-label={`Open ${field.displayName ?? field.name} picker`}
-                    >
-                        📅
-                    </button>
+                    </div>
                     <input
                         type='date'
                         ref={pickerRef}
