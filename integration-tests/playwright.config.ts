@@ -26,7 +26,8 @@ const config = {
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'https://pipeline-file-submission.loculus.org',
+        baseURL:
+            process.env.PLAYWRIGHT_TEST_BASE_URL || 'https://pipeline-file-submission.loculus.org',
         /* Ignore HTTPS errors when requested via environment variable. */
         ignoreHTTPSErrors: process.env.PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS === 'true',
 
