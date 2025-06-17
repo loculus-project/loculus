@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { handleDateKeyDown, type DateSegment } from './DateField';
+import { handleDateKeyDown, type DateSegment } from './DateInput';
 
 const segments: DateSegment[] = [
     { length: 4, placeholder: 'Y', separator: '' },
