@@ -81,6 +81,333 @@ export type KeyDownResult = {
     preventDefault: boolean;
 };
 
+// Helper functions
+const extractDigits = (value: string): string => value.replace(/\D/g, '');
+
+const calculateSegmentPosition = (segmentIndex: number, segments: DateSegment[]): { start: number; end: number } => {
+    let start = 0;
+    for (let i = 0; i < segmentIndex; i++) {
+        start += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
+    }
+    if (segmentIndex > 0) {
+        start += segments[segmentIndex].separator.length;
+    }
+    const end = start + segments[segmentIndex].length;
+    return { start, end };
+};
+
+const buildISODateFromDigits = (digits: string): string | null => {
+    if (digits.length !== 8) return null;
+    const year = digits.slice(0, 4);
+    const month = digits.slice(4, 6);
+    const day = digits.slice(6, 8);
+    return `${year}-${month}-${day}`;
+};
+
+const parseValueIntoSegments = (value: string, segments: DateSegment[]): string[] => {
+    const segmentValues: string[] = [];
+    let pos = 0;
+
+    for (const segment of segments) {
+        if (pos > 0) {
+            pos += segment.separator.length;
+        }
+
+        let segmentValue = '';
+        for (let i = 0; i < segment.length && pos < value.length; i++) {
+            segmentValue += value[pos++];
+        }
+        segmentValues.push(segmentValue);
+    }
+
+    return segmentValues;
+};
+
+const buildValueFromSegments = (segmentValues: string[], segments: DateSegment[]): string => {
+    let result = '';
+
+    for (let i = 0; i < segments.length; i++) {
+        if (i > 0) {
+            result += segments[i].separator;
+        }
+
+        const segmentValue = segmentValues[i] || '';
+
+        let paddedSegment = segmentValue;
+        if (paddedSegment.length < segments[i].length) {
+            paddedSegment += segments[i].placeholder.repeat(segments[i].length - paddedSegment.length);
+        }
+
+        result += paddedSegment;
+    }
+
+    return result;
+};
+
+const findSegmentForPosition = (
+    position: number,
+    segments: DateSegment[],
+): { segmentIndex: number; positionInSegment: number } => {
+    let pos = 0;
+
+    for (let i = 0; i < segments.length; i++) {
+        const segmentStart = pos + (i > 0 ? segments[i].separator.length : 0);
+        const segmentEnd = segmentStart + segments[i].length;
+
+        if (position >= segmentStart && position <= segmentEnd) {
+            return {
+                segmentIndex: i,
+                positionInSegment: position - segmentStart,
+            };
+        }
+
+        pos = segmentEnd;
+    }
+
+    return { segmentIndex: segments.length - 1, positionInSegment: segments[segments.length - 1].length };
+};
+
+const handleBackspaceWithSelection = (
+    segmentValues: string[],
+    startSegmentIndex: number,
+    endSegmentIndex: number,
+    selectionStart: number,
+    selectionEnd: number,
+    segments: DateSegment[],
+): KeyDownResult | null => {
+    const { start: segmentBoundaryStart, end: segmentBoundaryEnd } = calculateSegmentPosition(
+        startSegmentIndex,
+        segments,
+    );
+
+    if (
+        startSegmentIndex === endSegmentIndex &&
+        selectionStart === segmentBoundaryStart &&
+        selectionEnd === segmentBoundaryEnd
+    ) {
+        // Check if the current segment is empty (only placeholders)
+        const currentSegmentValue = segmentValues[startSegmentIndex];
+        const hasDigits = /\d/.test(currentSegmentValue);
+
+        if (!hasDigits && startSegmentIndex > 0) {
+            // If segment is empty and not the first segment, delete last character of previous segment
+            const prevSegmentIndex = startSegmentIndex - 1;
+            const prevSegmentValue = segmentValues[prevSegmentIndex];
+            const prevDigitsOnly = extractDigits(prevSegmentValue);
+
+            if (prevDigitsOnly.length > 0) {
+                segmentValues[prevSegmentIndex] = prevDigitsOnly.slice(0, -1);
+                const newValue = buildValueFromSegments(segmentValues, segments);
+
+                // Calculate position for the last character of the previous segment
+                const { start: prevSegmentStart, end: prevSegmentEnd } = calculateSegmentPosition(
+                    prevSegmentIndex,
+                    segments,
+                );
+
+                const newSelectionStart = prevSegmentStart + prevDigitsOnly.length - 1;
+                const newSelectionEnd = prevSegmentEnd;
+
+                return {
+                    value: newValue,
+                    selectionStart: newSelectionStart,
+                    selectionEnd: newSelectionEnd,
+                    preventDefault: true,
+                };
+            }
+        }
+
+        // Original behavior: clear the selected segment
+        segmentValues[startSegmentIndex] = '';
+        const newValue = buildValueFromSegments(segmentValues, segments);
+
+        return {
+            value: newValue,
+            selectionStart: segmentBoundaryStart,
+            selectionEnd: segmentBoundaryEnd,
+            preventDefault: true,
+        };
+    }
+
+    return null;
+};
+
+const handleBackspaceKey = (
+    currentValue: string,
+    selectionStart: number,
+    selectionEnd: number,
+    segments: DateSegment[],
+    segmentValues: string[],
+): KeyDownResult => {
+    const defaultResult: KeyDownResult = {
+        value: currentValue,
+        selectionStart,
+        selectionEnd,
+        preventDefault: false,
+    };
+
+    if (selectionStart === 0 && selectionEnd === 0) {
+        return {
+            ...defaultResult,
+            preventDefault: true,
+        };
+    }
+
+    const hasSelection = selectionStart !== selectionEnd;
+
+    if (hasSelection) {
+        const { segmentIndex: startSegmentIndex } = findSegmentForPosition(selectionStart, segments);
+        const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1, segments);
+
+        const result = handleBackspaceWithSelection(
+            segmentValues,
+            startSegmentIndex,
+            endSegmentIndex,
+            selectionStart,
+            selectionEnd,
+            segments,
+        );
+
+        if (result) {
+            return result;
+        }
+    }
+
+    const deletePos = selectionStart > 0 ? selectionStart - 1 : 0;
+    const { segmentIndex, positionInSegment } = findSegmentForPosition(deletePos, segments);
+
+    if (deletePos < currentValue.length && !/[\dYMD]/.test(currentValue[deletePos])) {
+        return {
+            ...defaultResult,
+            preventDefault: true,
+        };
+    }
+
+    const segmentValue = segmentValues[segmentIndex];
+    const digitsOnly = extractDigits(segmentValue);
+
+    if (positionInSegment < digitsOnly.length) {
+        const newDigits = digitsOnly.slice(0, positionInSegment);
+        segmentValues[segmentIndex] = newDigits;
+    }
+
+    const newValue = buildValueFromSegments(segmentValues, segments);
+
+    let newSelectionStart = deletePos;
+    let newSelectionEnd = deletePos;
+
+    const { start: segmentStart, end: segmentEnd } = calculateSegmentPosition(segmentIndex, segments);
+
+    if (segmentIndex === 0 && deletePos === 0) {
+        newSelectionStart = 0;
+        newSelectionEnd = segments[0].length;
+    } else if (deletePos === segmentStart + 1 && positionInSegment === 0) {
+        newSelectionStart = segmentStart;
+        newSelectionEnd = segmentEnd;
+    } else {
+        newSelectionStart = deletePos;
+        newSelectionEnd = segmentEnd;
+    }
+
+    return {
+        value: newValue,
+        selectionStart: newSelectionStart,
+        selectionEnd: newSelectionEnd,
+        preventDefault: true,
+    };
+};
+
+const handleDigitKey = (
+    key: string,
+    selectionStart: number,
+    selectionEnd: number,
+    segments: DateSegment[],
+    segmentValues: string[],
+): KeyDownResult => {
+    const hasSelection = selectionStart !== selectionEnd;
+    const { segmentIndex: startSegmentIndex, positionInSegment: startPosInSegment } = findSegmentForPosition(
+        selectionStart,
+        segments,
+    );
+
+    if (hasSelection) {
+        const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1, segments);
+
+        for (let i = startSegmentIndex; i <= endSegmentIndex; i++) {
+            if (i === startSegmentIndex && i === endSegmentIndex) {
+                const segmentValue = segmentValues[i];
+                const digitsOnly = extractDigits(segmentValue);
+                const newDigits = digitsOnly.slice(0, startPosInSegment);
+                segmentValues[i] = newDigits;
+            } else if (i === startSegmentIndex) {
+                const segmentValue = segmentValues[i];
+                const digitsOnly = extractDigits(segmentValue);
+                segmentValues[i] = digitsOnly.slice(0, startPosInSegment);
+            } else if (i === endSegmentIndex) {
+                const segmentValue = segmentValues[i];
+                const digitsOnly = extractDigits(segmentValue);
+                const endPosInSegment = findSegmentForPosition(selectionEnd - 1, segments).positionInSegment + 1;
+                segmentValues[i] = digitsOnly.slice(endPosInSegment);
+            } else {
+                segmentValues[i] = '';
+            }
+        }
+    }
+
+    const currentSegmentValue = segmentValues[startSegmentIndex] || '';
+    const digitsOnly = extractDigits(currentSegmentValue);
+
+    let newDigits;
+    if (hasSelection) {
+        newDigits = digitsOnly + key;
+    } else {
+        const insertPos = Math.min(startPosInSegment, digitsOnly.length);
+        newDigits = digitsOnly.slice(0, insertPos) + key + digitsOnly.slice(insertPos);
+    }
+
+    segmentValues[startSegmentIndex] = newDigits.slice(0, segments[startSegmentIndex].length);
+
+    const newValue = buildValueFromSegments(segmentValues, segments);
+
+    let newSelectionStart: number;
+    let newSelectionEnd: number;
+
+    const { start: segmentStart } = calculateSegmentPosition(startSegmentIndex, segments);
+
+    const updatedSegmentValue = segmentValues[startSegmentIndex];
+    const segmentLength = updatedSegmentValue.length;
+
+    const isSegmentComplete =
+        segmentLength === segments[startSegmentIndex].length &&
+        updatedSegmentValue.split('').every((char) => /\d/.test(char));
+
+    if (isSegmentComplete) {
+        if (startSegmentIndex < segments.length - 1) {
+            const { start: nextSegmentStart } = calculateSegmentPosition(startSegmentIndex + 1, segments);
+
+            newSelectionStart = nextSegmentStart;
+            newSelectionEnd = nextSegmentStart + segments[startSegmentIndex + 1].length;
+        } else {
+            const totalLength = segments.reduce(
+                (sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0),
+                0,
+            );
+            newSelectionStart = totalLength;
+            newSelectionEnd = totalLength;
+        }
+    } else {
+        newSelectionStart = segmentStart + segmentLength;
+        newSelectionEnd = segmentStart + segments[startSegmentIndex].length;
+    }
+
+    return {
+        value: newValue,
+        selectionStart: newSelectionStart,
+        selectionEnd: newSelectionEnd,
+        preventDefault: true,
+    };
+};
+
 export const handleDateKeyDown = (
     key: string,
     currentValue: string,
@@ -112,284 +439,35 @@ export const handleDateKeyDown = (
         return noChangeResult;
     }
 
-    const parseValueIntoSegments = (value: string): string[] => {
-        const segmentValues: string[] = [];
-        let pos = 0;
-
-        for (const segment of segments) {
-            if (pos > 0) {
-                pos += segment.separator.length;
-            }
-
-            let segmentValue = '';
-            for (let i = 0; i < segment.length && pos < value.length; i++) {
-                segmentValue += value[pos++];
-            }
-            segmentValues.push(segmentValue);
-        }
-
-        return segmentValues;
-    };
-
-    const buildValueFromSegments = (segmentValues: string[]): string => {
-        let result = '';
-
-        for (let i = 0; i < segments.length; i++) {
-            if (i > 0) {
-                result += segments[i].separator;
-            }
-
-            const segmentValue = segmentValues[i] || '';
-
-            let paddedSegment = segmentValue;
-            if (paddedSegment.length < segments[i].length) {
-                paddedSegment += segments[i].placeholder.repeat(segments[i].length - paddedSegment.length);
-            }
-
-            result += paddedSegment;
-        }
-
-        return result;
-    };
-
-    const findSegmentForPosition = (position: number): { segmentIndex: number; positionInSegment: number } => {
-        let pos = 0;
-
-        for (let i = 0; i < segments.length; i++) {
-            const segmentStart = pos + (i > 0 ? segments[i].separator.length : 0);
-            const segmentEnd = segmentStart + segments[i].length;
-
-            if (position >= segmentStart && position <= segmentEnd) {
-                return {
-                    segmentIndex: i,
-                    positionInSegment: position - segmentStart,
-                };
-            }
-
-            pos = segmentEnd;
-        }
-
-        return { segmentIndex: segments.length - 1, positionInSegment: segments[segments.length - 1].length };
-    };
-
-    const segmentValues = parseValueIntoSegments(currentValue);
+    const segmentValues = parseValueIntoSegments(currentValue, segments);
 
     if (isBackspace) {
-        if (selectionStart === 0 && selectionEnd === 0) {
-            return {
-                ...defaultResult,
-                preventDefault: true,
-            };
-        }
-
-        const hasSelection = selectionStart !== selectionEnd;
-
-        if (hasSelection) {
-            const { segmentIndex: startSegmentIndex } = findSegmentForPosition(selectionStart);
-            const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1);
-
-            let segmentBoundaryStart = 0;
-            for (let i = 0; i < startSegmentIndex; i++) {
-                segmentBoundaryStart += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
-            }
-            if (startSegmentIndex > 0) {
-                segmentBoundaryStart += segments[startSegmentIndex].separator.length;
-            }
-            const segmentBoundaryEnd = segmentBoundaryStart + segments[startSegmentIndex].length;
-
-            if (
-                startSegmentIndex === endSegmentIndex &&
-                selectionStart === segmentBoundaryStart &&
-                selectionEnd === segmentBoundaryEnd
-            ) {
-                // Check if the current segment is empty (only placeholders)
-                const currentSegmentValue = segmentValues[startSegmentIndex];
-                const hasDigits = /\d/.test(currentSegmentValue);
-                
-                if (!hasDigits && startSegmentIndex > 0) {
-                    // If segment is empty and not the first segment, delete last character of previous segment
-                    const prevSegmentIndex = startSegmentIndex - 1;
-                    const prevSegmentValue = segmentValues[prevSegmentIndex];
-                    const prevDigitsOnly = prevSegmentValue.replace(/\D/g, '');
-                    
-                    if (prevDigitsOnly.length > 0) {
-                        segmentValues[prevSegmentIndex] = prevDigitsOnly.slice(0, -1);
-                        const newValue = buildValueFromSegments(segmentValues);
-                        
-                        // Calculate position for the last character of the previous segment
-                        let prevSegmentStart = 0;
-                        for (let i = 0; i < prevSegmentIndex; i++) {
-                            prevSegmentStart += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
-                        }
-                        if (prevSegmentIndex > 0) {
-                            prevSegmentStart += segments[prevSegmentIndex].separator.length;
-                        }
-                        
-                        const newSelectionStart = prevSegmentStart + prevDigitsOnly.length - 1;
-                        const newSelectionEnd = prevSegmentStart + segments[prevSegmentIndex].length;
-                        
-                        return {
-                            value: newValue,
-                            selectionStart: newSelectionStart,
-                            selectionEnd: newSelectionEnd,
-                            preventDefault: true,
-                        };
-                    }
-                }
-                
-                // Original behavior: clear the selected segment
-                segmentValues[startSegmentIndex] = '';
-                const newValue = buildValueFromSegments(segmentValues);
-
-                return {
-                    value: newValue,
-                    selectionStart: segmentBoundaryStart,
-                    selectionEnd: segmentBoundaryEnd,
-                    preventDefault: true,
-                };
-            }
-        }
-
-        const deletePos = selectionStart > 0 ? selectionStart - 1 : 0;
-        const { segmentIndex, positionInSegment } = findSegmentForPosition(deletePos);
-
-        if (deletePos < currentValue.length && !/[\dYMD]/.test(currentValue[deletePos])) {
-            return {
-                ...defaultResult,
-                preventDefault: true,
-            };
-        }
-
-        const segmentValue = segmentValues[segmentIndex];
-        const digitsOnly = segmentValue.replace(/\D/g, '');
-
-        if (positionInSegment < digitsOnly.length) {
-            const newDigits = digitsOnly.slice(0, positionInSegment);
-            segmentValues[segmentIndex] = newDigits;
-        }
-
-        const newValue = buildValueFromSegments(segmentValues);
-
-        let newSelectionStart = deletePos;
-        let newSelectionEnd = deletePos;
-
-        const segmentStart =
-            segments
-                .slice(0, segmentIndex)
-                .reduce((sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0), 0) +
-            (segmentIndex > 0 ? segments[segmentIndex].separator.length : 0);
-
-        if (segmentIndex === 0 && deletePos === 0) {
-            newSelectionStart = 0;
-            newSelectionEnd = segments[0].length;
-        } else if (deletePos === segmentStart + 1 && positionInSegment === 0) {
-            newSelectionStart = segmentStart;
-            newSelectionEnd = segmentStart + segments[segmentIndex].length;
-        } else {
-            newSelectionStart = deletePos;
-            newSelectionEnd = segmentStart + segments[segmentIndex].length;
-        }
-
-        return {
-            value: newValue,
-            selectionStart: newSelectionStart,
-            selectionEnd: newSelectionEnd,
-            preventDefault: true,
-        };
+        return handleBackspaceKey(currentValue, selectionStart, selectionEnd, segments, segmentValues);
     }
 
     if (isDigit) {
-        const hasSelection = selectionStart !== selectionEnd;
-        const { segmentIndex: startSegmentIndex, positionInSegment: startPosInSegment } =
-            findSegmentForPosition(selectionStart);
-
-        if (hasSelection) {
-            const { segmentIndex: endSegmentIndex } = findSegmentForPosition(selectionEnd - 1);
-
-            for (let i = startSegmentIndex; i <= endSegmentIndex; i++) {
-                if (i === startSegmentIndex && i === endSegmentIndex) {
-                    const segmentValue = segmentValues[i];
-                    const digitsOnly = segmentValue.replace(/\D/g, '');
-                    const newDigits = digitsOnly.slice(0, startPosInSegment);
-                    segmentValues[i] = newDigits;
-                } else if (i === startSegmentIndex) {
-                    const segmentValue = segmentValues[i];
-                    const digitsOnly = segmentValue.replace(/\D/g, '');
-                    segmentValues[i] = digitsOnly.slice(0, startPosInSegment);
-                } else if (i === endSegmentIndex) {
-                    const segmentValue = segmentValues[i];
-                    const digitsOnly = segmentValue.replace(/\D/g, '');
-                    const endPosInSegment = findSegmentForPosition(selectionEnd - 1).positionInSegment + 1;
-                    segmentValues[i] = digitsOnly.slice(endPosInSegment);
-                } else {
-                    segmentValues[i] = '';
-                }
-            }
-        }
-
-        const currentSegmentValue = segmentValues[startSegmentIndex] || '';
-        const digitsOnly = currentSegmentValue.replace(/\D/g, '');
-
-        let newDigits;
-        if (hasSelection) {
-            newDigits = digitsOnly + key;
-        } else {
-            const insertPos = Math.min(startPosInSegment, digitsOnly.length);
-            newDigits = digitsOnly.slice(0, insertPos) + key + digitsOnly.slice(insertPos);
-        }
-
-        segmentValues[startSegmentIndex] = newDigits.slice(0, segments[startSegmentIndex].length);
-
-        const newValue = buildValueFromSegments(segmentValues);
-
-        let newSelectionStart: number;
-        let newSelectionEnd: number;
-
-        const segmentStart =
-            segments
-                .slice(0, startSegmentIndex)
-                .reduce((sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0), 0) +
-            (startSegmentIndex > 0 ? segments[startSegmentIndex].separator.length : 0);
-
-        const updatedSegmentValue = segmentValues[startSegmentIndex];
-        const segmentLength = updatedSegmentValue.length;
-
-        const isSegmentComplete =
-            segmentLength === segments[startSegmentIndex].length &&
-            updatedSegmentValue.split('').every((char) => /\d/.test(char));
-
-        if (isSegmentComplete) {
-            if (startSegmentIndex < segments.length - 1) {
-                const nextSegmentStart =
-                    segments
-                        .slice(0, startSegmentIndex + 1)
-                        .reduce((sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0), 0) +
-                    segments[startSegmentIndex + 1].separator.length;
-
-                newSelectionStart = nextSegmentStart;
-                newSelectionEnd = nextSegmentStart + segments[startSegmentIndex + 1].length;
-            } else {
-                const totalLength = segments.reduce(
-                    (sum, seg, idx) => sum + seg.length + (idx > 0 ? seg.separator.length : 0),
-                    0,
-                );
-                newSelectionStart = totalLength;
-                newSelectionEnd = totalLength;
-            }
-        } else {
-            newSelectionStart = segmentStart + segmentLength;
-            newSelectionEnd = segmentStart + segments[startSegmentIndex].length;
-        }
-
-        return {
-            value: newValue,
-            selectionStart: newSelectionStart,
-            selectionEnd: newSelectionEnd,
-            preventDefault: true,
-        };
+        return handleDigitKey(key, selectionStart, selectionEnd, segments, segmentValues);
     }
 
     return defaultResult;
+};
+
+const clearDateField = (
+    setInputValue: (value: string) => void,
+    setSomeFieldValues: SetSomeFieldValues,
+    fieldName: string,
+    mask: string,
+    inputRef: React.RefObject<HTMLInputElement>,
+    setIsValidDate: (valid: boolean) => void,
+) => {
+    setInputValue(mask);
+    setSomeFieldValues([fieldName, '']);
+    setIsValidDate(true);
+    setTimeout(() => {
+        if (inputRef.current) {
+            inputRef.current.setSelectionRange(0, 4);
+        }
+    }, 0);
 };
 
 const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
@@ -452,7 +530,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     const handleFocus = () => {
         isUserEditingRef.current = true;
         if (inputRef.current) {
-            const digits = inputValue.replace(/\D/g, '').length;
+            const digits = extractDigits(inputValue).length;
             if (digits === 0) {
                 inputRef.current.setSelectionRange(0, 4);
             } else {
@@ -499,16 +577,17 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
             e.preventDefault();
             setInputValue(result.value);
 
-            const digits = result.value.replace(/\D/g, '');
+            const digits = extractDigits(result.value);
             if (digits.length === 8) {
-                const year = digits.slice(0, 4);
-                const month = digits.slice(4, 6);
-                const day = digits.slice(6, 8);
-                const iso = `${year}-${month}-${day}`;
-                const dt = DateTime.fromISO(iso);
-                if (dt.isValid) {
-                    setSomeFieldValues([field.name, dateToValueConverter(dt.toJSDate())]);
-                    setIsValidDate(true);
+                const iso = buildISODateFromDigits(digits);
+                if (iso) {
+                    const dt = DateTime.fromISO(iso);
+                    if (dt.isValid) {
+                        setSomeFieldValues([field.name, dateToValueConverter(dt.toJSDate())]);
+                        setIsValidDate(true);
+                    } else {
+                        setIsValidDate(false);
+                    }
                 } else {
                     setIsValidDate(false);
                 }
@@ -530,16 +609,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value === '') {
             isUserEditingRef.current = true;
-            setInputValue(mask);
-            setSomeFieldValues([field.name, '']);
-            setIsValidDate(true);
-
-            setTimeout(() => {
-                if (inputRef.current) {
-                    inputRef.current.setSelectionRange(0, 4);
-                }
-            }, 0);
-
+            clearDateField(setInputValue, setSomeFieldValues, field.name, mask, inputRef, setIsValidDate);
             void Promise.resolve().then(() => {
                 isUserEditingRef.current = false;
             });
@@ -566,9 +636,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
             setSomeFieldValues([field.name, dateToValueConverter(new Date(value))]);
             setIsValidDate(true);
         } else {
-            setInputValue(mask);
-            setSomeFieldValues([field.name, '']);
-            setIsValidDate(true);
+            clearDateField(setInputValue, setSomeFieldValues, field.name, mask, inputRef, setIsValidDate);
         }
     };
 
@@ -602,16 +670,16 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         {inputValue !== mask && (
                             <button
                                 type='button'
-                                onClick={() => {
-                                    setInputValue(mask);
-                                    setSomeFieldValues([field.name, '']);
-                                    setIsValidDate(true);
-                                    setTimeout(() => {
-                                        if (inputRef.current) {
-                                            inputRef.current.setSelectionRange(0, 4);
-                                        }
-                                    }, 0);
-                                }}
+                                onClick={() =>
+                                    clearDateField(
+                                        setInputValue,
+                                        setSomeFieldValues,
+                                        field.name,
+                                        mask,
+                                        inputRef,
+                                        setIsValidDate,
+                                    )
+                                }
                                 disabled={!isClient}
                                 className='p-1 text-gray-400 hover:text-gray-600'
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
@@ -640,7 +708,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         ref={pickerRef}
                         onChange={handleDateChange}
                         value={(() => {
-                            const digits = inputValue.replace(/\D/g, '');
+                            const digits = extractDigits(inputValue);
                             if (digits.length === 8) {
                                 const year = digits.slice(0, 4);
                                 const month = digits.slice(4, 6);
