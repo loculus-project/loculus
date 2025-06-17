@@ -586,15 +586,19 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                         setSomeFieldValues([field.name, dateToValueConverter(dt.toJSDate())]);
                         setIsValidDate(true);
                     } else {
+                        setSomeFieldValues([field.name, '']);
                         setIsValidDate(false);
                     }
                 } else {
+                    setSomeFieldValues([field.name, '']);
                     setIsValidDate(false);
                 }
             } else if (digits.length === 0 && result.value === mask) {
                 setSomeFieldValues([field.name, '']);
                 setIsValidDate(true);
             } else {
+                // Incomplete date - set field value to empty
+                setSomeFieldValues([field.name, '']);
                 setIsValidDate(true);
             }
 
