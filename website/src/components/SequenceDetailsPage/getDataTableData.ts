@@ -79,8 +79,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
             result.topmatter.authors = entry.value
                 .toString()
                 .split(';')
-                .map((x) => x.trim())
-                .filter((x) => x.length > 0)
+                .filter((x) => x.trim().length > 0)
                 .map(formatAuthorName);
             continue;
         }
