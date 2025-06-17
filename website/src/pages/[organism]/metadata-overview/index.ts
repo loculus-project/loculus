@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
 import { getSchema } from '../../../config.ts';
-import { SUBMISSION_ID_FIELD } from '../../../settings.ts';
+import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings.ts';
 
 export const GET: APIRoute = ({ params }) => {
     const rawOrganism = params.organism!;
@@ -13,7 +13,7 @@ export const GET: APIRoute = ({ params }) => {
         });
     }
 
-    const extraFields = [SUBMISSION_ID_FIELD];
+    const extraFields = [SUBMISSION_ID_INPUT_FIELD];
 
     const tableHeader = 'Field Name\tRequired\tDefinition\tGuidance\tExample';
 

@@ -34,7 +34,9 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "submissionId"
+const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
+const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
@@ -354,13 +356,13 @@ class SubmitModel(
 
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
+                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
                     "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} submissionIds that are not present " +
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
                     "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""

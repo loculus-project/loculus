@@ -169,6 +169,34 @@ class AssemblyTableEntry:
     result: str | None = None
 
 
+type Accession = str
+type AccessionVersion = str
+type Version = int
+
+
+def highest_version_in_submission_table(
+    db_conn_pool: SimpleConnectionPool, organism: str
+) -> dict[Accession, Version]:
+    """
+    Returns the highest version for a given accession in the submission table.
+    Does group by, so that only the highest version for each accession is returned.
+    """
+    con = db_conn_pool.getconn()
+    try:
+        with con, con.cursor(cursor_factory=RealDictCursor) as cur:
+            query = f"""
+                SELECT accession, MAX(version) AS version
+                FROM {TableName.SUBMISSION_TABLE}
+                WHERE organism = %s
+                GROUP BY accession
+            """  # noqa: S608
+            cur.execute(query, (organism,))
+            results = cur.fetchall()
+    finally:
+        db_conn_pool.putconn(con)
+    return {row["accession"]: int(row["version"]) for row in results}
+
+
 def delete_records_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> int:
@@ -200,7 +228,7 @@ def delete_records_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if isinstance(value, (Status, StatusAll)) else value  # noqa: UP038
+                    str(value) if isinstance(value, (Status, StatusAll)) else value
                     for value in conditions.values()
                 ),
             )
@@ -216,6 +244,16 @@ def delete_records_in_db(
 def find_conditions_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
 ) -> list[dict[str, str]]:
+    """
+    Return all records from the specified table that match all the conditions
+    Args:
+        db_conn_pool (SimpleConnectionPool): Connection pool for PostgreSQL.
+        table_name (TableName): The table to search in.
+        conditions (dict[str, str]): A dictionary of column names and values for filtering.
+    Returns:
+        list[dict[str, str]]: A list of dictionaries representing the records that match the conditions.
+        Each dictionary contains column names as keys and their corresponding values.
+    """
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
@@ -232,7 +270,7 @@ def find_conditions_in_db(
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )
@@ -336,10 +374,10 @@ def update_db_where_conditions(
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             query += f" WHERE {where_clause}"
             parameters = tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in update_values.values()
             ) + tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                str(value) if (isinstance(value, (Status, StatusAll))) else value
                 for value in conditions.values()
             )
 
@@ -465,7 +503,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
             cur.execute(
                 query,
                 tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value  # noqa: UP038
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
                     for value in conditions.values()
                 ),
             )

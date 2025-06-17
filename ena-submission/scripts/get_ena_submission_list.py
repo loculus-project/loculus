@@ -14,7 +14,12 @@ from ena_deposition.notifications import (
     slack_conn_init,
     upload_file_with_comment,
 )
-from ena_deposition.submission_db_helper import TableName, db_init, find_conditions_in_db
+from ena_deposition.submission_db_helper import (
+    Accession,
+    AccessionVersion,
+    db_init,
+    highest_version_in_submission_table,
+)
 from psycopg2.pool import SimpleConnectionPool
 
 logger = logging.getLogger(__name__)
@@ -25,9 +30,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-Accession = str
-AccessionVersion = str
-
 
 @dataclass
 class SubmissionResults:
@@ -37,10 +39,10 @@ class SubmissionResults:
 
 def filter_for_submission(
     config: Config,
-    db_config: SimpleConnectionPool,
+    db_pool: SimpleConnectionPool,
     entries_iterator: Iterator[dict[str, Any]],
     organism: str,
-    ena_specific_metadata: list[str],
+    ena_specific_metadata_fields: list[str],
 ) -> SubmissionResults:
     """
     Filter data in state APPROVED_FOR_RELEASE:
@@ -49,50 +51,61 @@ def filter_for_submission(
     To prevent this we need to make sure:
         - data was not submitted by the config.ingest_pipeline_submission_group
         - data is not in submission_table
-        - as an extra check we discard all sequences with ena-specific-metadata fields
-        (if users uploaded correctly this should not be needed)
+        - as an extra check we send a notification if there are sequences with ena-specific-metadata fields
+        (users can add these fields, nothing prohibits them from doing so)
     """
-    data_dict: dict[Accession, dict[str, Any]] = {}
-    data_dict_with_external_metadata: dict[Accession, dict[str, Any]] = {}
+    entries_to_submit: dict[Accession, dict[str, Any]] = {}
+    entries_with_external_metadata: set[Accession] = set()
+    highest_submitted_version = highest_version_in_submission_table(
+        db_conn_pool=db_pool, organism=organism
+    )
     for entry in entries_iterator:
-        accession_version = entry["metadata"]["accessionVersion"]
-        accession, version = entry["metadata"]["accessionVersion"].split(".")
+        accession_version: str = entry["metadata"]["accessionVersion"]
+        accession, version_str = accession_version.split(".")
+        version = int(version_str)
         if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
         if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
-        other_versions_in_db = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions={"accession": accession}
+
+        if highest_submitted_version.get(accession, -1) >= version:
+            continue
+
+        # Ignore if a higher version of this entry is already to be submitted
+        version_already_to_submit = int(
+            entries_to_submit.get(accession, {}).get("metadata", {}).get("version", -1)
         )
-        other_versions_list = sorted([entry["version"] for entry in other_versions_in_db])
-        if other_versions_list and int(other_versions_list[-1]) >= int(version):
-            # If the latest version in the db is greater or equal than the current version, ignore
+        if version_already_to_submit >= version:
             continue
-        if accession in data_dict and int(data_dict[accession]["metadata"]["version"]) >= int(
-            version
-        ):
-            # If the accession is already in the dict and the version is greater or equal, ignore
-            continue
-        if accession in data_dict_with_external_metadata and int(
-            data_dict_with_external_metadata[accession]["metadata"]["version"]
-        ) >= int(version):
-            continue
+
         entry["organism"] = organism
-        if any(entry["metadata"].get(field, False) for field in ena_specific_metadata):
+
+        ena_specific_metadata = [
+            f"{field}:{entry['metadata'][field]}"
+            for field in ena_specific_metadata_fields
+            if entry["metadata"].get(field)
+        ]
+        if ena_specific_metadata:
             logger.warning(
                 f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
-                f"submitted by us or {config.ingest_pipeline_submission_group}."
+                f"submitted by us or {config.ingest_pipeline_submission_group}: "
+                f"{ena_specific_metadata}"
             )
-            data_dict_with_external_metadata[accession] = entry
-            continue
-        data_dict[accession] = entry
+            entries_with_external_metadata.add(accession)
+        else:
+            entries_with_external_metadata.discard(accession)
+        entries_to_submit[accession] = entry
+
     return SubmissionResults(
         entries_to_submit={
-            f"{key}.{data['metadata']['version']}": data for key, data in data_dict.items()
+            entry["metadata"]["accessionVersion"]: entry
+            for entry in entries_to_submit.values()
+            if entry["metadata"]["accession"] not in entries_with_external_metadata
         },
         entries_with_ext_metadata_to_submit={
-            f"{key}.{data['version']}": data
-            for key, data in data_dict_with_external_metadata.items()
+            entry["metadata"]["accessionVersion"]: entry
+            for entry in entries_to_submit.values()
+            if entry["metadata"]["accession"] in entries_with_external_metadata
         },
     )
 
@@ -126,7 +139,7 @@ def send_slack_notification_with_file(
     required=True,
     type=click.Path(exists=True),
 )
-def get_ena_submission_list(config_file):
+def get_ena_submission_list(config_file) -> None:
     """
     Get a list of all sequences in state APPROVED_FOR_RELEASE without insdc-specific
     metadata fields and not already in the ena_submission.submission_table.
@@ -139,7 +152,7 @@ def get_ena_submission_list(config_file):
 
     output_file_suffix = "ena_submission_list.json"
 
-    db_config = db_init(
+    db_pool = db_init(
         db_password_default=config.db_password,
         db_username_default=config.db_username,
         db_url_default=config.db_url,
@@ -152,14 +165,15 @@ def get_ena_submission_list(config_file):
 
     all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
-        ena_specific_metadata = [
+        ena_specific_metadata_fields = [
             value["name"] for value in config.organisms[organism]["externalMetadata"]
         ]
         logger.info(f"Getting released sequences for organism: {organism}")
 
         released_entries = fetch_released_entries(config, organism)
+        logger.info("Starting to stream released entries. Filtering for submission...")
         submission_results = filter_for_submission(
-            config, db_config, released_entries, organism, ena_specific_metadata
+            config, db_pool, released_entries, organism, ena_specific_metadata_fields
         )
         if submission_results.entries_to_submit:
             logger.info(

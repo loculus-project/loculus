@@ -183,7 +183,7 @@ class BatchIterator:
     record_counter: int = 0
 
     metadata_header: str | None = None
-    submission_id_index: int | None = None  # index of submissionId in metadata header
+    submission_id_index: int | None = None  # index of id in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
@@ -217,7 +217,7 @@ def add_seq_to_batch(
     batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
 ):
     while True:
-        # get all fasta sequences for the current metadata submissionId
+        # get all fasta sequences for the current metadata id
         line = fasta_file_stream.readline()
         if not line:  # EOF
             return batch_it
@@ -232,7 +232,7 @@ def add_seq_to_batch(
             if fasta_submission_id == metadata_submission_id:
                 continue
             if fasta_submission_id < metadata_submission_id:
-                msg = "Fasta file is not sorted by submissionId"
+                msg = "Fasta file is not sorted by id"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -266,7 +266,7 @@ def post_fasta_batches(
 
             # process metadata header
             if batch_it.record_counter == 1:
-                batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
+                batch_it.submission_id_index = record.strip().split("\t").index("id")
                 batch_it.metadata_header = record
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
@@ -285,7 +285,7 @@ def post_fasta_batches(
                 batch_it.current_fasta_submission_id
                 and metadata_submission_id != batch_it.current_fasta_submission_id
             ):
-                msg = f"Fasta SubmissionId {batch_it.current_fasta_submission_id} not in correct order in metadata"
+                msg = f"Fasta id {batch_it.current_fasta_submission_id} not in correct order in metadata"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -314,7 +314,7 @@ def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
 ):
     """
-    Submit/revise data to Loculus -requires metadata and sequences sorted by submissionId.
+    Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
     logging_strings: dict[str, str]
     endpoint: str
@@ -356,9 +356,9 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
+    submission_id_to_new_accessions = {}  # Map from id to new loculus accession
     for item in response:
-        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
+        submission_id_to_new_accessions[item["id"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 

@@ -90,7 +90,7 @@ def main(
         except IndexError:
             record["division"] = ""
         record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
-        record["submissionId"] = record[config.fasta_id_field]
+        record["id"] = record[config.fasta_id_field]
         record["insdcAccessionBase"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdcVersion"] = record[config.fasta_id_field].split(".", 1)[1]
         if segments:
@@ -136,6 +136,11 @@ def main(
         # 1. field is not in keys_to_keep and
         # 2. field is in keys_to_keep but is "" or None
         filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
+
+        # rename "id" to "submissionId" for back-compatibility with old hashes
+        
+        filtered_record["submissionId"] = filtered_record.pop("id")
+        
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
