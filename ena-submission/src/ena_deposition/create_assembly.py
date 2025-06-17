@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 def create_chromosome_list_object(
     unaligned_sequences: dict[str, str], seq_key: dict[str, str], organism_metadata: dict[str, str]
-) -> str:
+) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
 
@@ -134,11 +134,24 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
     return assembly_values
 
 
+def make_assembly_name(accession: str, version: str, test: bool = False) -> str:
+    """
+    Create a unique assembly name based on accession and version.
+    If test=True, add a timestamp to the alias suffix to allow for multiple submissions of the same
+    manifest for testing.
+
+    Unlike biosample revisions, assembly revisions require a new assemblyName.
+    """
+    if test:
+        return f"{accession}.{version}_{datetime.now(tz=pytz.utc).strftime('%Y%m%d_%H%M%S')}"
+    return f"{accession}.{version}"
+
+
 def create_manifest_object(
     config: Config,
     sample_accession: str,
     study_accession: str,
-    submission_table_entry: dict[str, str],
+    submission_table_entry: dict[str, Any],
     test=False,
     dir: str | None = None,
 ) -> AssemblyManifest:
@@ -155,11 +168,10 @@ def create_manifest_object(
     """
     metadata = submission_table_entry["metadata"]
 
-    assembly_name = (
-        submission_table_entry["accession"]
-        + f"{datetime.now(tz=pytz.utc)}".replace(" ", "_").replace("+", "_").replace(":", "_")
-        if test  # This is the alias that needs to be unique
-        else submission_table_entry["accession"]
+    assembly_name = make_assembly_name(
+        submission_table_entry["accession"],
+        submission_table_entry["version"],
+        test=test,
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
@@ -345,6 +357,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 "Assembly cannot be revised because biosampleAccession in new version: "
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
+            logger.error(error)
             update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
             return False
     if entry["metadata"].get("bioprojectAccession"):
@@ -354,6 +367,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 "Assembly cannot be revised because bioprojectAccession in new version: "
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
+            logger.error(error)
             update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
             return False
 
@@ -369,6 +383,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
             "Assembly cannot be revised because metadata fields "
             f"{', '.join(differing_fields)} in manifest differs from last version"
         )
+        logger.error(error)
         update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
         return False
     return True
@@ -387,7 +402,9 @@ def get_project_and_sample_results(
         raise RuntimeError(error_msg)
 
     results_in_project_table = find_conditions_in_db(
-        db_config, table_name=TableName.PROJECT_TABLE, conditions={"project_id": entry["project_id"]}
+        db_config,
+        table_name=TableName.PROJECT_TABLE,
+        conditions={"project_id": entry["project_id"]},
     )
     if len(results_in_project_table) == 0:
         error_msg = f"Entry {entry['accession']} not found in project_table"
@@ -438,10 +455,10 @@ def assembly_table_create(
             db_config, sample_data_in_submission_table[0]
         )
 
-        if is_revision(db_config, seq_key) and not can_be_revised(
-            config, db_config, sample_data_in_submission_table[0]
-        ):
-            continue
+        if is_revision(db_config, seq_key):
+            logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
+            if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
+                continue
 
         try:
             manifest_object = create_manifest_object(
@@ -533,7 +550,9 @@ def assembly_table_update(
         config.ena_reports_service_url,
     )
     conditions = {"status": Status.WAITING}
-    waiting = find_conditions_in_db(db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions)
+    waiting = find_conditions_in_db(
+        db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions
+    )
     if len(waiting) > 0:
         logger.debug(f"Found {len(waiting)} entries in assembly_table in status WAITING")
     # Check if ENA has assigned an accession, don't do this too frequently

@@ -288,7 +288,7 @@ class AssemblyCreationTests(unittest.TestCase):
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
-            "ASSEMBLYNAME": "LOC_0001TLY",
+            "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
             "COVERAGE": "1",
             "PROGRAM": "Ivar",

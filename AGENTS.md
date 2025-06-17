@@ -1,4 +1,4 @@
-The `backend` and `website` directory each contain their own AGENTS files.
+The `backend` and `website` directory each contain their own `AGENTS.md` files.
 
 Use conventional commits as titles for PRs, e.g. feat(deployment):xx, fix!(website):xx, chore(backend):xx.
 Components include: website, backend, deployment, preprocessing, ingest, deposition.
