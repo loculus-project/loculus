@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from Bio import SeqIO
 from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
@@ -679,12 +680,9 @@ def test_create_flatfile(config: Config):
 
     # Load unaligned nucleotide sequences
     with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
-        # Read FASTA file, ignore header lines, and join sequence lines
-        sequence = ""
-        for line in f:
-            if not line.startswith(">"):
-                sequence += line.strip()
-        unaligned_nucleotide_sequences = {"main": sequence}
+        records = list(SeqIO.parse(f, "fasta"))
+        # Assuming you want the first record and key "main"
+        unaligned_nucleotide_sequences = {"main": str(records[0].seq)}
 
     # Load annotation object
     annotation_object_path = os.path.join(test_data_dir, "annotations.json")
