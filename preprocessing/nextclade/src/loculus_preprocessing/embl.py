@@ -1,4 +1,3 @@
-import gzip
 import io
 import logging
 from typing import Any
@@ -142,14 +141,6 @@ def get_seq_features(  # noqa: PLR0914
             )
             feature_list.append(feature)
     return feature_list
-
-
-def gzip_string(content: str) -> bytes:
-    buffer = io.BytesIO()
-    with gzip.GzipFile(fileobj=buffer, mode="w") as gz_file, \
-         io.TextIOWrapper(gz_file, encoding="utf-8") as wrapper:
-        wrapper.write(content)
-    return buffer.getvalue()
 
 
 def create_flatfile(  # noqa: PLR0913, PLR0917
