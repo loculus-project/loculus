@@ -45,9 +45,9 @@ test.describe('Search', () => {
         await expect(fromInput).toBeEnabled({ timeout: 10000 });
 
         await fromInput.click({
-            position: { x: 0, y: 0 }
+            position: { x: 0, y: 0 },
         });
-        
+
         await fromInput.fill('');
         await fromInput.pressSequentially('20240115', { delay: 100 });
 
