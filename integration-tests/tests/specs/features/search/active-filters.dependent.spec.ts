@@ -29,7 +29,6 @@ test.describe('Search', () => {
     });
 
     test('test that substring-search filter can be removed by clicking the X', async ({ page }) => {
-
         await searchPage.ebolaSudan();
         await searchPage.enableSearchFields('Author affiliations');
         await searchPage.fill('Author affiliations', 'foo');
