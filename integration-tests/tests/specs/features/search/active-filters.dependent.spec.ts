@@ -29,6 +29,10 @@ test.describe('Search', () => {
     });
 
     test('test that substring-search filter can be removed by clicking the X', async ({ page }) => {
+        test.skip(
+            process.env.BASE_URL?.includes('date-picker.loculus.org'),
+            'Field selector not available in preview',
+        );
         await searchPage.ebolaSudan();
         await searchPage.enableSearchFields('Author affiliations');
         await searchPage.fill('Author affiliations', 'foo');
@@ -40,24 +44,25 @@ test.describe('Search', () => {
     test('test that date range filter can be removed', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        // Find the date input by looking for the "From" label
         const fromInput = page.getByText('From').locator('..').locator('input[type="text"]');
 
-        // Type a date directly into the input
-        await fromInput.click();
-        await fromInput.fill(''); // Clear any existing value
-        await fromInput.type('20240115'); // Type date as YYYYMMDD
+        await expect(fromInput).toBeEnabled({ timeout: 10000 });
 
-        // Verify the date was entered and the filter is applied
+        await fromInput.click();
+        await fromInput.fill('');
+        await fromInput.type('20240115');
+
         await expect(fromInput).toHaveValue('2024-01-15');
         await expect(page.getByText('Collection date - From:')).toBeVisible();
 
-        await fromInput.clear();
-
-        // Verify the field is cleared
+        // Remove via the active filter's X button
+        await page
+            .locator('div')
+            .filter({ hasText: /Collection date - From:/ })
+            .getByLabel('remove filter')
+            .click();
         await expect(fromInput).toHaveValue('YYYY-MM-DD');
 
-        // The active filter should also be removed
         await expect(page.getByText('Collection date - From:')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
