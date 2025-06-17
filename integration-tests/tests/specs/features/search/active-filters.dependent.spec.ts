@@ -46,7 +46,7 @@ test.describe('Search', () => {
 
         await fromInput.click();
         await fromInput.fill('');
-        await fromInput.type('20240115');
+        await fromInput.pressSequentially('20240115', { delay: 100 });
 
         await expect(fromInput).toHaveValue('2024-01-15');
         await expect(page.getByText('Collection date - From:')).toBeVisible();
