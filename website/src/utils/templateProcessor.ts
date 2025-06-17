@@ -41,10 +41,9 @@ export function matchPlaceholders(template: string): PlaceholderMatch[] {
                     .split(',')
                     .map((c) => c.trim())
                     .filter((c) => c.length > 0);
-            }
-            else if (plusOption === 'rich') {
+            } else if (plusOption === 'rich') {
                 rich = true;
-            } 
+            }
         }
 
         if (optionString) {
