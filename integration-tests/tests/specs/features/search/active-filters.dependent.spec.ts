@@ -45,7 +45,8 @@ test.describe('Search', () => {
         await expect(fromInput).toBeEnabled({ timeout: 10000 });
 
         await fromInput.click({
-            position: { x: 0, y: 0 },
+            position: { x: 3, y: 3 },
+            force: true,
         });
 
         await fromInput.fill('');
