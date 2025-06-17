@@ -17,6 +17,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from loculus_preprocessing.embl import create_flatfile
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     ProcessingFunctions,
@@ -660,6 +661,15 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
+
+
+def test_create_flatfile(config: Config):
+    # TODO: Implement tests for create_flatfile function
+    # test_config.yaml needs some things added in
+    # create_flatfile ...
+    # ... I'm not sure where to get the test input data from.
+    # maybe I just make up some data?  Doesn't need to be realisitic.
+    print("foo")
 
 
 if __name__ == "__main__":

@@ -17,9 +17,9 @@ CLI_TYPES = [str, int, float, bool]
 
 @dataclass
 class Config:
-    organism: str = "mpox"
-    scientific_name: str = "Monkeypox virus"
-    molecule_type: str = "genomic DNA"
+    organism: str = "cchf"
+    scientific_name: str = "Orthonairovirus haemorrhagiae"
+    molecule_type: str = "genomic RNA"
     topology: str = "linear"
     db_name: str = "Loculus"
     # The backend host is the base API URL including the organism

@@ -904,6 +904,7 @@ def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
     processed_results = []
+    logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.nextclade_dataset_name:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
@@ -1001,6 +1002,9 @@ def run(config: Config) -> None:
                 continue
 
             for submission_data in processed:
+                print("##########")
+                print(json.dumps(submission_data.annotations, indent=2))
+                print("##########")
                 file_content = create_flatfile(
                     config,
                     submission_data.processed_entry.accession,

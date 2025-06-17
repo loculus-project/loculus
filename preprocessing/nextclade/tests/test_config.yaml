@@ -2,6 +2,10 @@ batch_size: 100
 genes: []
 log_level: DEBUG
 organism: test-not-aligned-organism
+scientific_name: str = "Foo Bar Virus"
+molecule_type: str = "genomic DNA"
+topology: str = "linear"
+db_name: str = "Loculus"
 processing_spec:
   continent:
     args:
