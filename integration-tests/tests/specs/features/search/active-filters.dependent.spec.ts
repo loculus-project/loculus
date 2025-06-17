@@ -37,19 +37,22 @@ test.describe('Search', () => {
         await expect(page.getByLabel('Author affiliations')).toBeEmpty();
     });
 
-    test('test that date range filter can be removed by clicking the X', async ({ page }) => {
+    test('test that date range filter can be removed', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        await page.getByPlaceholder('dd/MM/yyyy').first().click();
-        await page.getByTestId('calendar').getByText('20', { exact: true }).click();
-        await expect(page.getByText('Collection date - From:')).toBeVisible();
+        await searchPage.enterCollectionDateFrom('20240115');
 
+        const fromInput = page.getByText('From').locator('..').locator('input[type="text"]');
+
+        // Remove via the active filter's X button
         await page
             .locator('div')
             .filter({ hasText: /Collection date - From:/ })
             .getByLabel('remove filter')
             .click();
-        await expect(page.getByPlaceholder('dd/MM/yyyy').first()).toBeEmpty();
+        await expect(fromInput).toHaveValue('YYYY-MM-DD');
+
+        await expect(page.getByText('Collection date - From:')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 });
