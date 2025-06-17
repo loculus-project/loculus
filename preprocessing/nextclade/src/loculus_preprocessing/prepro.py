@@ -1002,9 +1002,6 @@ def run(config: Config) -> None:
                 continue
 
             for submission_data in processed:
-                print("##########")
-                print(json.dumps(submission_data.annotations, indent=2))
-                print("##########")
                 file_content = create_flatfile(
                     config,
                     submission_data.processed_entry.accession,

@@ -47,55 +47,6 @@ class Config:
     pipeline_version: int = 1
     multi_segment: bool = False
     alignment_requirement: str = "ALL"
-    annotations: dict[str, list[str]] = dataclasses.field(default_factory=lambda: {
-        "cds_qualifiers": [
-            "allele",
-            "artificial_location",
-            "circular_RNA",
-            "codon_start",
-            # "db_xref",  # protein accession of reference
-            "EC_number",
-            "exception",
-            "experiment",
-            "function",
-            "gene",
-            "gene_synonym",
-            "inference",
-            # "locus_tag",  # must be pre-registered with ENA
-            # "old_locus_tag",
-            "map",
-            "note",
-            "number",
-            "operon",
-            "product",
-            "protein_id",
-            "pseudo",
-            "pseudogene",
-            "ribosomal_slippage",
-            "standard_name",
-            "translation",
-        ],
-        "gene_qualifiers": [
-            "allele",
-            # "db_xref",
-            "experiment",
-            "function",
-            "gene",
-            "gene_synonym",
-            "inference",
-            # "locus_tag",
-            # "old_locus_tag",
-            "map",
-            "note",
-            "operon",
-            "product",
-            "pseudo",
-            "pseudogene",
-            "pseudotype",
-            "standard_name",
-            "trans_splicing",
-        ],
-    })
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
