@@ -529,23 +529,35 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
 
     const handleFocus = () => {
         isUserEditingRef.current = true;
-        if (inputRef.current) {
-            const digits = extractDigits(inputValue).length;
-            if (digits === 0) {
-                inputRef.current.setSelectionRange(0, 4);
-            } else {
-                let segmentStart = 0;
-                let digitsSoFar = 0;
+        
+        // Check if device is mobile/touch device
+        const isMobile = window.matchMedia('(max-width: 768px)').matches || 
+                        ('ontouchstart' in window) || 
+                        (navigator.maxTouchPoints > 0);
+        
+        if (isMobile) {
+            // On mobile, immediately open the date picker
+            openPicker();
+        } else {
+            // Original desktop behavior
+            if (inputRef.current) {
+                const digits = extractDigits(inputValue).length;
+                if (digits === 0) {
+                    inputRef.current.setSelectionRange(0, 4);
+                } else {
+                    let segmentStart = 0;
+                    let digitsSoFar = 0;
 
-                for (const segment of segments) {
-                    if (digits <= digitsSoFar + segment.length) {
-                        const pos = segmentStart + segment.separator.length + (digits - digitsSoFar);
-                        const endPos = segmentStart + segment.separator.length + segment.length;
-                        inputRef.current.setSelectionRange(pos, endPos);
-                        break;
+                    for (const segment of segments) {
+                        if (digits <= digitsSoFar + segment.length) {
+                            const pos = segmentStart + segment.separator.length + (digits - digitsSoFar);
+                            const endPos = segmentStart + segment.separator.length + segment.length;
+                            inputRef.current.setSelectionRange(pos, endPos);
+                            break;
+                        }
+                        digitsSoFar += segment.length;
+                        segmentStart += segment.separator.length + segment.length;
                     }
-                    digitsSoFar += segment.length;
-                    segmentStart += segment.separator.length + segment.length;
                 }
             }
         }
