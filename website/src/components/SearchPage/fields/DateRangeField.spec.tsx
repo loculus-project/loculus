@@ -219,4 +219,37 @@ describe('DateRangeField', () => {
         expect(fromInput).toHaveValue('2005-05-05');
         expect(toInput).toHaveValue('2010-10-10');
     }, 3000);
+
+    it('calls setSomeFieldValues appropriately when typing a date', async () => {
+        const user = userEvent.setup();
+
+        render(
+            <DateRangeField
+                field={field}
+                fieldValues={{}}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input[type="text"]');
+        expect(fromInput).not.toBeNull();
+
+        // Clear any previous calls
+        setSomeFieldValues.mockClear();
+
+        // Type a complete date
+        await user.type(fromInput!, '20240315');
+
+        // The input should display the formatted date
+        expect(fromInput).toHaveValue('2024-03-15');
+
+        // setSomeFieldValues should be called with the date value
+        expect(setSomeFieldValues).toHaveBeenCalledWith(
+            ['collectionDateRangeLowerFrom', '2024-03-15'],
+            ['collectionDateRangeUpperTo', ''],
+            ['collectionDateRangeUpperFrom', null],
+            ['collectionDateRangeLowerTo', null],
+        );
+    });
+
 });
