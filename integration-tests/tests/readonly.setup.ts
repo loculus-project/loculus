@@ -5,7 +5,7 @@ import { createTestGroup } from './fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
-setup.only('Initialize a single ebola sequence as base data', async ({ page }) => {
+setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     setup.setTimeout(90000);
     const authPage = new AuthPage(page);
     const username = uuidv4().substring(0, 8);
