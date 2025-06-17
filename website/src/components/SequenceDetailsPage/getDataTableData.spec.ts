@@ -15,7 +15,7 @@ describe('getDataTableData', () => {
 
     test('should move authors to topmatter', () => {
         const data = getDataTableData(testTableDataEntries);
-        expect(data.topmatter.authors).toStrictEqual(['author 1', 'author 2', 'author 3']);
+        expect(data.topmatter.authors).toStrictEqual(['First1 Last1', 'First2 Last2', 'First3 Last3']);
         expect(
             data.table
                 .flatMap((x) => x.rows)
@@ -49,7 +49,7 @@ const testTableDataEntries: TableDataEntry[] = [
     {
         label: 'Authors',
         name: 'authors',
-        value: 'author 1; author 2; author 3',
+        value: 'Last1, First1; Last2, First2; Last3, First3',
         header: 'Header 2',
         type: { kind: 'metadata', metadataType: 'authors' },
     },
