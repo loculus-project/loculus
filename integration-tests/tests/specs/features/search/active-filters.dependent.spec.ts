@@ -29,10 +29,7 @@ test.describe('Search', () => {
     });
 
     test('test that substring-search filter can be removed by clicking the X', async ({ page }) => {
-        test.skip(
-            process.env.BASE_URL?.includes('date-picker.loculus.org'),
-            'Field selector not available in preview',
-        );
+
         await searchPage.ebolaSudan();
         await searchPage.enableSearchFields('Author affiliations');
         await searchPage.fill('Author affiliations', 'foo');
