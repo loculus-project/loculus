@@ -2,7 +2,7 @@ import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test('submit a single sequence', async ({ pageWithGroup, page }) => {
-    test.setTimeout(45000)
+    test.setTimeout(45000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage();

@@ -16,7 +16,9 @@ test.describe('Sequence Preview Annotations', () => {
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
         await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-        await expect(page.getByTestId('sequence-preview-modal').getByText('Annotations')).toBeVisible();
-        await expect(page.getByRole('link', { name: /LOC_\w{6,9}\.embl/})).toBeVisible();
+        await expect(
+            page.getByTestId('sequence-preview-modal').getByText('Annotations'),
+        ).toBeVisible();
+        await expect(page.getByRole('link', { name: /LOC_\w{6,9}\.embl/ })).toBeVisible();
     });
 });
