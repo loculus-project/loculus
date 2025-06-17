@@ -202,6 +202,42 @@ export const handleDateKeyDown = (
                 selectionStart === segmentBoundaryStart &&
                 selectionEnd === segmentBoundaryEnd
             ) {
+                // Check if the current segment is empty (only placeholders)
+                const currentSegmentValue = segmentValues[startSegmentIndex];
+                const hasDigits = /\d/.test(currentSegmentValue);
+                
+                if (!hasDigits && startSegmentIndex > 0) {
+                    // If segment is empty and not the first segment, delete last character of previous segment
+                    const prevSegmentIndex = startSegmentIndex - 1;
+                    const prevSegmentValue = segmentValues[prevSegmentIndex];
+                    const prevDigitsOnly = prevSegmentValue.replace(/\D/g, '');
+                    
+                    if (prevDigitsOnly.length > 0) {
+                        segmentValues[prevSegmentIndex] = prevDigitsOnly.slice(0, -1);
+                        const newValue = buildValueFromSegments(segmentValues);
+                        
+                        // Calculate position for the last character of the previous segment
+                        let prevSegmentStart = 0;
+                        for (let i = 0; i < prevSegmentIndex; i++) {
+                            prevSegmentStart += segments[i].length + (i > 0 ? segments[i].separator.length : 0);
+                        }
+                        if (prevSegmentIndex > 0) {
+                            prevSegmentStart += segments[prevSegmentIndex].separator.length;
+                        }
+                        
+                        const newSelectionStart = prevSegmentStart + prevDigitsOnly.length - 1;
+                        const newSelectionEnd = prevSegmentStart + segments[prevSegmentIndex].length;
+                        
+                        return {
+                            value: newValue,
+                            selectionStart: newSelectionStart,
+                            selectionEnd: newSelectionEnd,
+                            preventDefault: true,
+                        };
+                    }
+                }
+                
+                // Original behavior: clear the selected segment
                 segmentValues[startSegmentIndex] = '';
                 const newValue = buildValueFromSegments(segmentValues);
 

@@ -70,12 +70,22 @@ describe('handleDateKeyDown', () => {
             });
         });
 
-        test('backspace with full day selected clears day and keeps selection', () => {
+        test('backspace with full day selected clears day deletes char', () => {
             const result = handleDateKeyDown('Backspace', '2020-12-DD', 8, 10, segments);
             expect(result).toEqual({
-                value: '2020-12-DD',
-                selectionStart: 8,
-                selectionEnd: 10,
+                value: '2020-1M-DD',
+                selectionStart: 6,
+                selectionEnd: 7,
+                preventDefault: true,
+            });
+        });
+
+        test('backspace with month selected in partial date removes last year digit', () => {
+            const result = handleDateKeyDown('Backspace', '2022-MM-DD', 5, 7, segments);
+            expect(result).toEqual({
+                value: '202Y-MM-DD',
+                selectionStart: 3,
+                selectionEnd: 4,
                 preventDefault: true,
             });
         });
