@@ -19,6 +19,7 @@ jobs:
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     permissions:
+      # DO NOT EXTEND PERMISSIONS WITHOUT VERY CAREFUL CONSIDERATION
       contents: read
       pull-requests: read
       issues: read
@@ -34,4 +35,4 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
+          allowed_tools: Bash:*
