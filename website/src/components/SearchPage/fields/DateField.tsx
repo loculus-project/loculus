@@ -529,12 +529,11 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
 
     const handleFocus = () => {
         isUserEditingRef.current = true;
-        
+
         // Check if device is mobile/touch device
-        const isMobile = window.matchMedia('(max-width: 768px)').matches || 
-                        ('ontouchstart' in window) || 
-                        (navigator.maxTouchPoints > 0);
-        
+        const isMobile =
+            window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
         if (isMobile) {
             // On mobile, immediately open the date picker
             openPicker();
