@@ -223,13 +223,7 @@ describe('DateRangeField', () => {
     it('calls setSomeFieldValues appropriately when typing a date', async () => {
         const user = userEvent.setup();
 
-        render(
-            <DateRangeField
-                field={field}
-                fieldValues={{}}
-                setSomeFieldValues={setSomeFieldValues}
-            />,
-        );
+        render(<DateRangeField field={field} fieldValues={{}} setSomeFieldValues={setSomeFieldValues} />);
 
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input[type="text"]');
         expect(fromInput).not.toBeNull();
@@ -251,5 +245,4 @@ describe('DateRangeField', () => {
             ['collectionDateRangeLowerTo', null],
         );
     });
-
 });
