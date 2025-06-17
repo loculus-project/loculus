@@ -47,6 +47,12 @@ class Config:
     pipeline_version: int = 1
     multi_segment: bool = False
     alignment_requirement: str = "ALL"
+    country_property: str = "geoLocCountry"
+    admin_level_properties: list[str] = dataclasses.field(
+        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    )
+    collection_date_property: str = "sampleCollectionDate"
+    authors_property: str = "authors"
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
