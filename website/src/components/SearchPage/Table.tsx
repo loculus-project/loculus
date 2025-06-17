@@ -19,7 +19,7 @@ export type TableSequenceData = {
 
 function formatField(value: unknown, type: string): string {
     if (value === null) {
-        return '-';
+        return '—';
     }
     if (typeof value === 'number' && Number.isInteger(value)) {
         if (type === 'timestamp') {
@@ -29,7 +29,7 @@ function formatField(value: unknown, type: string): string {
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
     } else if (typeof value === 'string') {
-        return value === '' ? '-' : value;
+        return value === '' ? '—' : value;
     } else {
         // @ts-expect-error: TODO(#3451) add proper types
         return value;
