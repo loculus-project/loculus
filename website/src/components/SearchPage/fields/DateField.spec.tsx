@@ -105,7 +105,7 @@ describe('TimestampField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['releasedAtTimestampFrom', '']);
     });
 
-    test('Invalid date input clears the field's output value', async () => {
+    test("Invalid date input clears the field's output value", async () => {
         render(
             <TimestampField
                 field={{
