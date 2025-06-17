@@ -668,7 +668,7 @@ def test_parse_date_into_range() -> None:
 
 
 def test_create_flatfile(config: Config):
-    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", "west_nile_1")
+    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", "cchf_1")
 
     # Read metadata from metadata.tsv
     metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
@@ -681,8 +681,14 @@ def test_create_flatfile(config: Config):
     # Load unaligned nucleotide sequences
     with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
         records = list(SeqIO.parse(f, "fasta"))
-        # Assuming you want the first record and key "main"
-        unaligned_nucleotide_sequences = {"main": str(records[0].seq)}
+        if len(records) == 1:
+            unaligned_nucleotide_sequences = {"main": str(records[0].seq)}
+        else:
+            unaligned_nucleotide_sequences = {}
+            for record in records:
+                # Use the part after the last underscore as the key
+                key = record.id.split("_")[-1]
+                unaligned_nucleotide_sequences[key] = str(record.seq)
 
     # Load annotation object
     annotation_object_path = os.path.join(test_data_dir, "annotations.json")
