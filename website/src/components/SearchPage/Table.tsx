@@ -25,6 +25,8 @@ function formatField(value: unknown, type: string): string {
         return formatNumberWithDefaultLocale(value);
     } else if (typeof value === 'boolean') {
         return value ? 'True' : 'False';
+    } else if (typeof value === 'string') {
+        return value === '' ? '-' : value;
     } else {
         // @ts-expect-error: TODO(#3451) add proper types
         return value;
