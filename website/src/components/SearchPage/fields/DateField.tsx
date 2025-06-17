@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 import type { FC } from 'react';
 
-import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 import DateInput from './DateInput';
+import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
 type DateFieldProps = {
     field: MetadataFilter;
@@ -10,9 +10,7 @@ type DateFieldProps = {
     fieldValue: string | number;
 };
 
-export const DateField: FC<DateFieldProps> = (
-    props,
-) => (
+export const DateField: FC<DateFieldProps> = (props) => (
     <DateInput
         {...props}
         dateToValueConverter={(date) => {
@@ -24,9 +22,7 @@ export const DateField: FC<DateFieldProps> = (
     />
 );
 
-export const TimestampField: FC<DateFieldProps> = (
-    props,
-) => {
+export const TimestampField: FC<DateFieldProps> = (props) => {
     const isUpperBound = props.field.name.endsWith('To');
 
     return (
