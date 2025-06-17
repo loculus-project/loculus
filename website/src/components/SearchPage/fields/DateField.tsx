@@ -697,7 +697,7 @@ const CustomizedDateInput: FC<CustomizedDatePickerProps> = ({
                             type='button'
                             onClick={openPicker}
                             disabled={!isClient}
-                            className='px-2 py-1 text-gray-600 hover:text-gray-800'
+                            className='px-2 py-1 text-gray-400 hover:text-gray-600'
                             aria-label={`Open ${field.displayName ?? field.name} picker`}
                         >
                             <Calendar className='w-4 h-4' />
