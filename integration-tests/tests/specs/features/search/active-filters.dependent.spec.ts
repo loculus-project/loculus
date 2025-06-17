@@ -40,20 +40,9 @@ test.describe('Search', () => {
     test('test that date range filter can be removed', async ({ page }) => {
         await searchPage.ebolaSudan();
 
+        await searchPage.enterCollectionDateFrom('20240115');
+
         const fromInput = page.getByText('From').locator('..').locator('input[type="text"]');
-
-        await expect(fromInput).toBeEnabled({ timeout: 10000 });
-
-        await fromInput.click({
-            position: { x: 3, y: 3 },
-            force: true,
-        });
-
-        await fromInput.fill('');
-        await fromInput.pressSequentially('20240115', { delay: 100 });
-
-        await expect(fromInput).toHaveValue('2024-01-15');
-        await expect(page.getByText('Collection date - From:')).toBeVisible();
 
         // Remove via the active filter's X button
         await page
