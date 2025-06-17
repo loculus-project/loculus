@@ -1,5 +1,8 @@
 # ruff: noqa: S101
+import json
+import os
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 from factory_methods import (
@@ -664,12 +667,43 @@ def test_parse_date_into_range() -> None:
 
 
 def test_create_flatfile(config: Config):
-    # TODO: Implement tests for create_flatfile function
-    # test_config.yaml needs some things added in
-    # create_flatfile ...
-    # ... I'm not sure where to get the test input data from.
-    # maybe I just make up some data?  Doesn't need to be realisitic.
-    print("foo")
+    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", "west_nile_1")
+
+    # Read metadata from metadata.tsv
+    metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
+    metadata = {}
+    with open(metadata_tsv_path, encoding="utf-8") as f:
+        header = f.readline().strip().split("\t")
+        values = f.readline().strip().split("\t")
+        metadata = dict(zip(header, values, strict=False))
+
+    # Load unaligned nucleotide sequences
+    with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
+        # Read FASTA file, ignore header lines, and join sequence lines
+        sequence = ""
+        for line in f:
+            if not line.startswith(">"):
+                sequence += line.strip()
+        unaligned_nucleotide_sequences = {"main": sequence}
+
+    # Load annotation object
+    annotation_object_path = os.path.join(test_data_dir, "annotations.json")
+    with open(annotation_object_path, encoding="utf-8") as f:
+        annotation_object = json.load(f)
+
+    # Call create_flatfile
+    embl_str = create_flatfile(
+        config,
+        metadata["accession"],
+        metadata.get("version", 1),
+        metadata,
+        unaligned_nucleotide_sequences,
+        annotation_object,
+    )
+
+    assert isinstance(embl_str, str)
+    expected_embl = Path(os.path.join(test_data_dir, "result.embl")).read_text(encoding="utf-8")
+    assert embl_str == expected_embl
 
 
 if __name__ == "__main__":
