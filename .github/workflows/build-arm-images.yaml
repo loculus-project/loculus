@@ -1,45 +1,77 @@
-# Trigger a build of all docker images including ARM images
-
+name: build-arm-images
 on:
   workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
 permissions:
   contents: read
   packages: write
   checks: read
 jobs:
+  should-build:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || \
+             [[ "${{ github.event_name }}" == "pull_request" && "${{ contains(github.event.pull_request.labels.*.name, 'arm-images') }}" == "true" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
   trigger-backend:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/backend-image.yml
     with:
       build_arm: true
   trigger-config-preprocessor:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/config-preprocessor-image.yml
     with:
       build_arm: true
   trigger-dummy-preprocessing:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/preprocessing-dummy-image.yml
     with:
       build_arm: true
   trigger-ingest:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/ingest-image.yml
     with:
       build_arm: true
   trigger-ena-submission:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/ena-submission-image.yaml
     with:
       build_arm: true
   trigger-ena-submission-flyway:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/ena-submission-flyway-image.yaml
     with:
       build_arm: true
   trigger-keycloakify:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/keycloakify-image.yml
     with:
       build_arm: true
   trigger-preprocessing-nextclade:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/preprocessing-nextclade-image.yml
     with:
       build_arm: true
   trigger-website:
+    needs: should-build
+    if: needs.should-build.outputs.should_run == 'true'
     uses: ./.github/workflows/website-image.yml
     with:
       build_arm: true
