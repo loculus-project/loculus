@@ -54,7 +54,8 @@ jobs:
         run: hostname -I
       - name: Deploy with helm
         run: |
-          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --enablePreprocessing --set s3.bucket.endpoint=$(curl https://api.ipify.org)
+          IP=$(curl https://api.ipify.org)
+          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --enablePreprocessing --set s3.bucket.endpoint=http://$IP:8084
       - uses: actions/setup-node@v4
         with:
           node-version-file: ./website/.nvmrc
