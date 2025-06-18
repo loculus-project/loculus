@@ -34,12 +34,12 @@ HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
 HELM_VALUES_FILE = HELM_CHART_DIR / "values.yaml"
 
-WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
-BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
-LAPIS_PORT_MAPPING = "-p 127.0.0.1:8080:80@loadbalancer"
-DATABASE_PORT_MAPPING = "-p 127.0.0.1:5432:30432@agent:0"
-KEYCLOAK_PORT_MAPPING = "-p 127.0.0.1:8083:30083@agent:0"
-S3_PORT_MAPPING = "-p 127.0.0.1:8084:30084@agent:0"
+WEBSITE_PORT_MAPPING = "-p 0.0.0.0:3000:30081@agent:0"
+BACKEND_PORT_MAPPING = "-p 0.0.0.0:8079:30082@agent:0"
+LAPIS_PORT_MAPPING = "-p 0.0.0.0:8080:80@loadbalancer"
+DATABASE_PORT_MAPPING = "-p 0.0.0.0:5432:30432@agent:0"
+KEYCLOAK_PORT_MAPPING = "-p 0.0.0.0:8083:30083@agent:0"
+S3_PORT_MAPPING = "-p 0.0.0.0:8084:30084@agent:0"
 
 PORTS = [
     WEBSITE_PORT_MAPPING,
@@ -94,6 +94,11 @@ helm_parser.add_argument(
     action="store_true",
 )
 helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument(
+    "--set",
+    action="append",
+    help="Set arbitrary Helm values (e.g. --set foo.bar=baz). Can be specified multiple times.",
+)
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -235,8 +240,10 @@ def handle_helm():
     if args.enableEnaSubmission:
         parameters += ["--set", "disableEnaSubmission=false"]
 
-    if get_codespace_name():
-        parameters += get_codespace_params(get_codespace_name())
+    # Add arbitrary --set values
+    if args.set:
+        for set_arg in args.set:
+            parameters += ["--set", set_arg]
 
     output = run_command(parameters)
     if args.template:
