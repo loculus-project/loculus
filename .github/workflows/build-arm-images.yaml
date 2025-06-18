@@ -9,7 +9,6 @@ permissions:
   checks: read
 jobs:
   check-arm-label:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       build_arm: ${{ steps.check_label.outputs.result }}
@@ -19,8 +18,11 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const labels = github.event.pull_request.labels.map(label => label.name);
-            return labels.includes('arm-images');
+            if (github.event.pull_request && github.event.pull_request.labels) {
+              const labels = github.event.pull_request.labels.map(label => label.name);
+              return labels.includes('arm-images');
+            }
+            return false;
   build-images:
     needs: [check-arm-label]
     runs-on: ubuntu-latest
