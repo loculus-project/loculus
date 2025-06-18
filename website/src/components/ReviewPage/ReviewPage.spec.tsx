@@ -214,4 +214,24 @@ describe('ReviewPage', () => {
             expect(getByText((text) => text.includes('2 of 4 sequences processed'))).toBeDefined();
         });
     });
+
+    test('should disable "View processed sequence" button for sequences with processing errors', async () => {
+        mockRequest.backend.getSequences(
+            200,
+            generateGetSequencesResponse([erroneousTestData, awaitingApprovalTestData]),
+        );
+        mockRequest.backend.getDataToEdit();
+
+        const { getByTestId } = renderReviewPage();
+
+        await waitFor(() => {
+            // Check that the button for the erroneous sequence is disabled
+            const erroneousSequenceButton = getByTestId(`view-sequences-${erroneousTestData.accession}`);
+            expect(erroneousSequenceButton).toBeDisabled();
+
+            // Check that the button for the valid sequence is enabled
+            const validSequenceButton = getByTestId(`view-sequences-${awaitingApprovalTestData.accession}`);
+            expect(validSequenceButton).toBeEnabled();
+        });
+    });
 });
