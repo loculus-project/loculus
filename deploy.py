@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+import socket
 
 # Minimum version of Python required is 3.9 due to type hint usage
 if sys.version_info < (3, 9):
@@ -214,6 +215,8 @@ def handle_helm():
         "environment=local",
         "--set",
         f"branch={branch}",
+        "--set",
+        f"localHost={get_local_ip()}",
     ]
 
     if args.for_e2e or args.dev:
@@ -255,6 +258,16 @@ def handle_helm_upgrade():
 
 def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
+
+
+def get_local_ip() -> str:
+    """Determine the IP address of the current host."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
 
 
 def generate_configs(from_live, live_host, enable_ena):
@@ -386,6 +399,7 @@ def generate_config(
     else:
         helm_template_cmd.extend(["--set", "environment=local"])
         helm_template_cmd.extend(["--set", "testconfig=true"])
+        helm_template_cmd.extend(["--set", f"localHost={get_local_ip()}"])
     helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
     if args.dry_run:
         return

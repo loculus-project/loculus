@@ -259,7 +259,7 @@ data:
           "redirectUris": [
             "https://{{$.Values.host}}/*",
             "http://{{$.Values.host}}/*",
-            "http://localhost:3000/*"
+            "http://{{ $.Values.localHost }}:3000/*"
           ]
         },
         {
