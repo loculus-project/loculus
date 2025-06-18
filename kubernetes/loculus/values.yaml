@@ -1,4 +1,5 @@
 environment: server
+localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true

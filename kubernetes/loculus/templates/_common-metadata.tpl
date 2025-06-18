@@ -463,7 +463,7 @@ fields:
 {{- else if eq $.Values.environment "server" }}
   {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
 {{- else }}
-  {{- $lapisUrlTemplate = "http://localhost:8080/%organism%" }}
+  {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
 {{- end }}
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
