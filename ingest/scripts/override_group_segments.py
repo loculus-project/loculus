@@ -23,7 +23,7 @@ Example output for a single isolate with 3 segments:
     "hash_M": "f64777883ba9f5293257698255767f2c",
     "hash_S": "f716ed13dca9c8a033d46da2f3dc2ff1",
     "hash": "ce7056d0bd7e3d6d3eca38f56b9d10f8",
-    "submissionId": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
+    "id": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
 }}"""
 
 import hashlib
@@ -47,7 +47,7 @@ logging.basicConfig(
 
 type Accession = str
 type InsdcAccession = str
-type SubmissionId = str
+type Id = str
 type GroupName = str
 
 
@@ -67,8 +67,8 @@ class Groups:
     found_groups: dict[GroupName, list[dict[str, Any]]]
 
 
-# submissionId is actually NCBI accession
-INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "submissionId"}
+# id is actually NCBI accession
+INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "id"}
 
 
 def sort_authors(authors: str) -> str:
@@ -128,7 +128,7 @@ def get_metadata_of_group(
             if segment in segment_map
         ]
     )
-    grouped_metadata["submissionId"] = joint_key
+    grouped_metadata["id"] = joint_key
 
     # Hash of all metadata fields should be the same if
     # 1. field is not in keys_to_keep and
@@ -163,7 +163,7 @@ def group_records(
     segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
 
     grouped_metadata = get_metadata_of_group(record_list, config, different_values_log, segment_map)
-    joint_key = grouped_metadata["submissionId"]
+    joint_key = grouped_metadata["id"]
 
     for segment in segment_map:
         accession = segment_map[segment]["insdcAccessionFull"]
@@ -180,7 +180,7 @@ def write_grouped_metadata(
     groups: Groups,
 ) -> tuple[dict, set]:
     # Map from original accession to the new concatenated accession
-    fasta_id_map: dict[Accession, SubmissionId] = {}
+    fasta_id_map: dict[Accession, Id] = {}
     ungrouped_accessions = set()
     different_values_log = {}
     count_total = 0

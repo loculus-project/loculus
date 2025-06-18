@@ -47,7 +47,8 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionDate: string;
         authorAffiliations: string;
     }) {
-        await this.page.getByLabel('Submission ID:').fill(submissionId);
+        // exactly match "ID:"
+        await this.page.getByLabel(/^ID:$/).fill(submissionId);
         await this.page.getByLabel('Collection country:').fill(collectionCountry);
         await this.page.getByLabel('Collection country:').blur();
         await this.page.getByLabel('Collection date:').fill(collectionDate);
@@ -63,7 +64,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         country: string;
         date: string;
     }) {
-        await this.page.getByLabel('Submission ID:').fill(submissionId);
+        await this.page.getByLabel(/^ID:$/).fill(submissionId);
         await this.page.getByLabel('Country:').fill(country);
         await this.page.getByLabel('Country:').blur();
         await this.page.getByLabel('Date:').fill(date);
@@ -155,10 +156,10 @@ export class BulkSubmissionPage extends SubmissionPage {
     ): Promise<() => Promise<void>> {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
         const submissionIds = Object.keys(fileContents);
-        void Promise.all(
+        await Promise.all(
             submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
         );
-        void Promise.all(
+        await Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
                 return Object.entries(files).map(([fileName, fileContent]) =>
                     fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),

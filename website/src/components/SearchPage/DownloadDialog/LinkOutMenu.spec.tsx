@@ -39,6 +39,8 @@ const linkOuts = [
         name: 'Multiple',
         url: 'http://example.com/tool?data1=[unalignedNucleotideSequences]&data2=[metadata|json]',
     },
+    { name: 'MetadataFields', url: 'http://example.com/tool?data=[metadata+fieldA,fieldB]' },
+    { name: 'MetadataSingle', url: 'http://example.com/tool?data=[metadata+fieldA]' },
     { name: 'Invalid', url: 'http://example.com/tool?data=[invalidType]&valid=[metadata]' },
 ];
 
@@ -132,6 +134,54 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         expect(window.open).toHaveBeenCalled();
         expect(vi.mocked(window.open).mock.calls[0][0]).not.toBeUndefined();
+    });
+
+    test('passes metadata fields to URL generator', () => {
+        vi.clearAllMocks();
+        const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
+
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[{ name: 'MetadataFields', url: 'http://example.com/tool?data=[metadata+fieldA,fieldB]' }]}
+                dataUseTermsEnabled={true}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('MetadataFields'));
+        fireEvent.click(screen.getByText('Include Restricted-Use'));
+
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
+            mockSequenceFilter,
+            expect.objectContaining({ fields: ['fieldA', 'fieldB'] }),
+        );
+    });
+
+    test('passes single metadata field to URL generator', () => {
+        vi.clearAllMocks();
+        const generateDownloadUrlSpy = vi.spyOn(realDownloadUrlGenerator, 'generateDownloadUrl');
+
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[{ name: 'MetadataSingle', url: 'http://example.com/tool?data=[metadata+fieldA]' }]}
+                dataUseTermsEnabled={true}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('MetadataSingle'));
+        fireEvent.click(screen.getByText('Include Restricted-Use'));
+
+        expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
+            mockSequenceFilter,
+            expect.objectContaining({ fields: ['fieldA'] }),
+        );
     });
 });
 

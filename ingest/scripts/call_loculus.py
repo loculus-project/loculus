@@ -13,6 +13,7 @@ from typing import Any, Literal
 
 import click
 import jsonlines
+import orjsonl
 import pytz
 import requests
 import yaml
@@ -182,7 +183,7 @@ class BatchIterator:
     record_counter: int = 0
 
     metadata_header: str | None = None
-    submission_id_index: int | None = None  # index of submissionId in metadata header
+    submission_id_index: int | None = None  # index of id in metadata header
 
     sequences_batch_output: list[str] = dataclasses.field(default_factory=list)
     metadata_batch_output: list[str] = dataclasses.field(default_factory=list)
@@ -216,7 +217,7 @@ def add_seq_to_batch(
     batch_it: BatchIterator, fasta_file_stream, metadata_submission_id: str, config: Config
 ):
     while True:
-        # get all fasta sequences for the current metadata submissionId
+        # get all fasta sequences for the current metadata id
         line = fasta_file_stream.readline()
         if not line:  # EOF
             return batch_it
@@ -231,7 +232,7 @@ def add_seq_to_batch(
             if fasta_submission_id == metadata_submission_id:
                 continue
             if fasta_submission_id < metadata_submission_id:
-                msg = "Fasta file is not sorted by submissionId"
+                msg = "Fasta file is not sorted by id"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -265,7 +266,7 @@ def post_fasta_batches(
 
             # process metadata header
             if batch_it.record_counter == 1:
-                batch_it.submission_id_index = record.strip().split("\t").index("submissionId")
+                batch_it.submission_id_index = record.strip().split("\t").index("id")
                 batch_it.metadata_header = record
                 batch_it.metadata_batch_output.append(batch_it.metadata_header)
                 continue
@@ -284,7 +285,7 @@ def post_fasta_batches(
                 batch_it.current_fasta_submission_id
                 and metadata_submission_id != batch_it.current_fasta_submission_id
             ):
-                msg = f"Fasta SubmissionId {batch_it.current_fasta_submission_id} not in correct order in metadata"
+                msg = f"Fasta id {batch_it.current_fasta_submission_id} not in correct order in metadata"
                 logger.error(msg)
                 raise ValueError(msg)
 
@@ -313,7 +314,7 @@ def submit_or_revise(
     metadata, sequences, config: Config, group_id, mode=Literal["submit", "revise"]
 ):
     """
-    Submit/revise data to Loculus -requires metadata and sequences sorted by submissionId.
+    Submit/revise data to Loculus -requires metadata and sequences sorted by id.
     """
     logging_strings: dict[str, str]
     endpoint: str
@@ -355,9 +356,9 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
+    submission_id_to_new_accessions = {}  # Map from id to new loculus accession
     for item in response:
-        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
+        submission_id_to_new_accessions[item["id"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
@@ -426,24 +427,10 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(config: Config):
-    """Get previously submitted sequences
+def get_submitted(config: Config, output: str):
+    """Get previously submitted sequences as ndjson
     This way we can avoid submitting the same sequences again
-    Output is a dictionary with INSDC accession as key
-    concrete_insdc_accession:
-        loculus_accession: abcd
-        versions:
-        - version: 1
-          hash: abcd
-          status: APPROVED_FOR_RELEASE
-          jointAccession: abcd
-          submitter: insdc_ingest_user
-        - version: 2
-          hash: efg
-          status: HAS_ERRORS
-          jointAccession: abcd
-          submitter: curator
-    ...
+    Adds status to the output (as this is not returned by get-original-metadata)
     """
 
     url = f"{organism_url(config)}/get-original-metadata"
@@ -489,93 +476,18 @@ def get_submitted(config: Config):
         )
         sleep(60)
 
-    # Initialize the dictionary to store results
-    submitted_dict: dict[str, dict[str, str | list]] = {}
-    loculus_to_insdc_accession_map: dict[str, list[str]] = {}
-    revocation_dict: dict[
-        str, list[str]
-    ] = {}  # revocations do not have original data or INSDC accession
-
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
-
-    logger.info(f"Backend has status of: {len(statuses)} sequence entries from ingest")
-    logger.info(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
+    logger.info(f"Got info on {len(statuses.keys())} previously submitted sequences/accessions")
 
     for entry in entries:
-        loculus_accession = entry["accession"]
-        loculus_version = int(entry["version"])
-        submitter = entry["submitter"]
-        if entry["isRevocation"]:
-            if loculus_accession not in revocation_dict:
-                revocation_dict[loculus_accession] = []
-            revocation_dict[loculus_accession].append(loculus_version)
-            continue
-        original_metadata: dict[str, str] = entry["originalMetadata"]
-        hash_value = original_metadata.get("hash", "")
-        if config.segmented:
-            insdc_accessions = [
-                original_metadata[key] for key in insdc_key if original_metadata[key]
-            ]
-            joint_accession = "/".join(
-                [
-                    f"{original_metadata[key]}.{segment}"
-                    for key, segment in zip(insdc_key, config.nucleotide_sequences)  # noqa: B905
-                    if original_metadata[key]
-                ]
-            )
-        else:
-            insdc_accessions = [original_metadata.get("insdcAccessionBase", "")]
-            joint_accession = original_metadata.get("insdcAccessionBase", "")
+        status = statuses.get(entry["accession"], {}).get(entry["version"], "UNKNOWN")
+        entry_with_status = entry.copy()
+        entry_with_status["status"] = status
+        orjsonl.append(output, entry_with_status)
 
-        loculus_to_insdc_accession_map[loculus_accession] = insdc_accessions
-        for insdc_accession in insdc_accessions:
-            if insdc_accession not in submitted_dict:
-                submitted_dict[insdc_accession] = {
-                    "loculus_accession": loculus_accession,
-                    "versions": [],
-                }
-            elif loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
-                message = (
-                    f"INSDC accession {insdc_accession} has multiple loculus accessions: "
-                    f"{loculus_accession} and "
-                    f"{submitted_dict[insdc_accession]['loculus_accession']}!"
-                )
-                logger.error(message)
-                raise ValueError(message)
-
-            submitted_dict[insdc_accession]["versions"].append(
-                {
-                    "version": loculus_version,
-                    "hash": hash_value,
-                    "status": statuses[loculus_accession][loculus_version],
-                    "jointAccession": joint_accession,
-                    "submitter": submitter,
-                }
-            )
-    # Ensure revocations added to correct INSDC accession
-    for loculus_accession, insdc_accessions in loculus_to_insdc_accession_map.items():
-        if loculus_accession in revocation_dict:
-            for insdc_accession in insdc_accessions:
-                for version in revocation_dict[loculus_accession]:
-                    submitted_dict[insdc_accession]["versions"].append(
-                        {
-                            "version": version,
-                            "hash": "",
-                            "status": "REVOKED",
-                            "jointAccession": "",
-                            "submitter": "",
-                        }
-                    )
-            revocation_dict.pop(loculus_accession)
-
-    if revocation_dict.keys():
-        logger.error(
-            f"Revocation entries found in Loculus but not in original metadata: {revocation_dict}"
-        )
-
-    logger.info(f"Got info on {len(submitted_dict)} previously submitted sequences/accessions")
-
-    return submitted_dict
+    if len(entries) == 0:
+        with open(output, "w", encoding="utf-8"):
+            pass
 
 
 @click.command()
@@ -684,8 +596,7 @@ def submit_to_loculus(
 
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
-        response = get_submitted(config)
-        Path(output).write_text(json.dumps(response, indent=4, sort_keys=False), encoding="utf-8")
+        get_submitted(config, output)
 
 
 if __name__ == "__main__":

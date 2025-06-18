@@ -16,6 +16,7 @@ import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
+import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -33,7 +34,9 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "submissionId"
+const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
+const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
@@ -87,6 +90,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val s3Service: S3Service,
 ) {
 
     companion object AcceptedFileTypes {
@@ -109,12 +113,13 @@ class SubmitModel(
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> = try {
         log.info {
-            "Processing submission (type: ${submissionParams.uploadType.name})  with uploadId $uploadId"
+            "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
 
         submissionIdFilesMappingPreconditionValidator
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+            .validateFilesExist(submissionParams.files)
 
         insertDataIntoAux(
             uploadId,
@@ -128,10 +133,6 @@ class SubmitModel(
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
         }
-        submissionParams.files?.let {
-            val fileSubmissionIds = it.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-        }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
             log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
@@ -143,6 +144,8 @@ class SubmitModel(
         }
 
         submissionParams.files?.let { submittedFiles ->
+            val fileSubmissionIds = submittedFiles.keys
+            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
             validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
@@ -353,13 +356,13 @@ class SubmitModel(
 
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
+                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
                     "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} submissionIds that are not present " +
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
                     "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""

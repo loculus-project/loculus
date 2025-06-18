@@ -26,7 +26,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue('2025-03-17');
     });
 
     test('"From" field sets date correctly', async () => {
@@ -42,8 +42,8 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
+        await userEvent.type(input, '20250317');
+        expect(input).toHaveValue('2025-03-17');
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
     });
 
@@ -62,7 +62,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue('2025-03-17');
     });
 
     test('"To" field sets date correctly', async () => {
@@ -78,8 +78,60 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
+        await userEvent.type(input, '20250317');
+        expect(input).toHaveValue('2025-03-17');
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
+    });
+
+    test('Clear button clears the date field', async () => {
+        render(
+            <TimestampField
+                field={{
+                    name: 'releasedAtTimestampFrom',
+                    type: 'timestamp',
+                }}
+                fieldValue={'1742169600'}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByRole('textbox');
+        expect(input).toHaveValue('2025-03-17');
+
+        const clearButton = screen.getByLabelText('Clear releasedAtTimestampFrom');
+        await userEvent.click(clearButton);
+
+        expect(input).toHaveValue('YYYY-MM-DD');
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['releasedAtTimestampFrom', '']);
+    });
+
+    test("Invalid date input clears the field's output value", async () => {
+        render(
+            <TimestampField
+                field={{
+                    name: 'releasedAtTimestampFrom',
+                    type: 'timestamp',
+                }}
+                fieldValue={''}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByRole('textbox');
+
+        // Test incomplete date
+        await userEvent.type(input, '202503');
+        expect(input).toHaveValue('2025-03-DD');
+        await userEvent.tab();
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['releasedAtTimestampFrom', '']);
+
+        // Test invalid date with all 5s
+        const clearButton = screen.getByLabelText('Clear releasedAtTimestampFrom');
+        await userEvent.click(clearButton);
+        expect(input).toHaveValue('YYYY-MM-DD');
+        await userEvent.type(input, '55555555');
+        expect(input).toHaveValue('5555-55-55');
+        await userEvent.tab();
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['releasedAtTimestampFrom', '']);
     });
 });

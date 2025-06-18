@@ -9,6 +9,7 @@ export type PlaceholderMatch = {
     segment?: string;
     richHeaders?: boolean;
     dataFormat?: string;
+    columns?: string[];
 };
 
 /**
@@ -16,6 +17,7 @@ export type PlaceholderMatch = {
  * Finds placeholders in the format:
  * [type] or [type|format] or [type:segment] or [type:segment|format]
  * or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
+ * For metadata columns, use [metadata+col1,col2].
  * @param template The template string containing placeholders
  * @returns Map of placeholder keys to match information
  */
@@ -23,17 +25,38 @@ export function matchPlaceholders(template: string): PlaceholderMatch[] {
     // Regex to find placeholders in format:
     // [type] or [type|format] or [type:segment] or [type:segment|format]
     // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
-    const placeholderRegex = /\[([\w]+)(?::([\w]+))?(?:\+(rich))?(?:\|([\w]+))?\]/g;
+    // or [metadata+col1,col2]
+    const placeholderRegex = /\[([\w]+)(?::([\w]+))?(?:\+([^\]|]+))?(?:\|([^\]]+))?\]/g;
     const matches = Array.from(template.matchAll(placeholderRegex));
 
     return matches.map((match) => {
-        const [fullMatch, dataType, segment, richHeaders, dataFormat] = match;
+        const [fullMatch, dataType, segment, plusOption, optionString] = match;
+
+        let dataFormat: string | undefined;
+        let columns: string[] | undefined;
+        let rich = false;
+        if (plusOption) {
+            if (dataType === 'metadata') {
+                columns = plusOption
+                    .split(',')
+                    .map((c) => c.trim())
+                    .filter((c) => c.length > 0);
+            } else if (plusOption === 'rich') {
+                rich = true;
+            }
+        }
+
+        if (optionString) {
+            dataFormat = optionString;
+        }
+
         return {
             fullMatch: fullMatch,
             dataType: dataType,
             segment: segment,
-            richHeaders: richHeaders === 'rich',
+            richHeaders: rich,
             dataFormat: dataFormat,
+            columns: columns,
         };
     });
 }

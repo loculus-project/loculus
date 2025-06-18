@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Settings } from 'luxon';
 import { useCallback, useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -130,12 +129,8 @@ describe('DateRangeField', () => {
         );
     });
 
-    it('updates query params if user types in new dates', async () => {
-        // this line fixes the test for me locally, but it makes no sense to me at all.
-        // I have asked about this here: https://github.com/moment/luxon/issues/1691
-        // The tests run fine in the CI and there are also no issues in the browser.
-        // I suspect it is nothing to worry about.
-        Settings.defaultZone = Settings.defaultZone.name;
+    it('clears date fields when user clears input', async () => {
+        const user = userEvent.setup();
 
         render(
             <DateRangeField
@@ -151,14 +146,28 @@ describe('DateRangeField', () => {
         expect(fromInput).not.toBeNull();
         expect(toInput).not.toBeNull();
 
-        await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '02022002');
-        await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '03032003');
+        // Initial values should be displayed
+        expect(fromInput).toHaveValue('2024-01-01');
+        expect(toInput).toHaveValue('2024-12-31');
 
-        expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '2002-02-02'],
-            ['collectionDateRangeUpperTo', '2003-03-03'],
+        // Clear the from input
+        await user.clear(fromInput!);
+
+        // Check that setSomeFieldValues was called with empty string for from field
+        expect(setSomeFieldValues).toHaveBeenCalledWith(
+            ['collectionDateRangeLowerFrom', ''],
+            ['collectionDateRangeUpperTo', '2024-12-31'],
+            ['collectionDateRangeUpperFrom', null],
+            ['collectionDateRangeLowerTo', null],
+        );
+
+        // Clear the to input
+        await user.clear(toInput!);
+
+        // Check that setSomeFieldValues was called with empty string for both fields
+        expect(setSomeFieldValues).toHaveBeenCalledWith(
+            ['collectionDateRangeLowerFrom', ''],
+            ['collectionDateRangeUpperTo', ''],
             ['collectionDateRangeUpperFrom', null],
             ['collectionDateRangeLowerTo', null],
         );
@@ -202,12 +211,38 @@ describe('DateRangeField', () => {
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
         const button = screen.getByText('Update Dates');
 
-        expect(fromInput).toHaveValue('01/01/2024');
-        expect(toInput).toHaveValue('31/12/2024');
+        expect(fromInput).toHaveValue('2024-01-01');
+        expect(toInput).toHaveValue('2024-12-31');
 
         await userEvent.click(button);
 
-        expect(fromInput).toHaveValue('05/05/2005');
-        expect(toInput).toHaveValue('10/10/2010');
+        expect(fromInput).toHaveValue('2005-05-05');
+        expect(toInput).toHaveValue('2010-10-10');
     }, 3000);
+
+    it('calls setSomeFieldValues appropriately when typing a date', async () => {
+        const user = userEvent.setup();
+
+        render(<DateRangeField field={field} fieldValues={{}} setSomeFieldValues={setSomeFieldValues} />);
+
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input[type="text"]');
+        expect(fromInput).not.toBeNull();
+
+        // Clear any previous calls
+        setSomeFieldValues.mockClear();
+
+        // Type a complete date
+        await user.type(fromInput!, '20240315');
+
+        // The input should display the formatted date
+        expect(fromInput).toHaveValue('2024-03-15');
+
+        // setSomeFieldValues should be called with the date value
+        expect(setSomeFieldValues).toHaveBeenCalledWith(
+            ['collectionDateRangeLowerFrom', '2024-03-15'],
+            ['collectionDateRangeUpperTo', ''],
+            ['collectionDateRangeUpperFrom', null],
+            ['collectionDateRangeLowerTo', null],
+        );
+    });
 });
