@@ -2,44 +2,70 @@
 
 on:
   workflow_dispatch:
+  pull_request:
 permissions:
   contents: read
   packages: write
   checks: read
 jobs:
-  trigger-backend:
-    uses: ./.github/workflows/backend-image.yml
-    with:
-      build_arm: true
-  trigger-config-preprocessor:
-    uses: ./.github/workflows/config-preprocessor-image.yml
-    with:
-      build_arm: true
-  trigger-dummy-preprocessing:
-    uses: ./.github/workflows/preprocessing-dummy-image.yml
-    with:
-      build_arm: true
-  trigger-ingest:
-    uses: ./.github/workflows/ingest-image.yml
-    with:
-      build_arm: true
-  trigger-ena-submission:
-    uses: ./.github/workflows/ena-submission-image.yaml
-    with:
-      build_arm: true
-  trigger-ena-submission-flyway:
-    uses: ./.github/workflows/ena-submission-flyway-image.yaml
-    with:
-      build_arm: true
-  trigger-keycloakify:
-    uses: ./.github/workflows/keycloakify-image.yml
-    with:
-      build_arm: true
-  trigger-preprocessing-nextclade:
-    uses: ./.github/workflows/preprocessing-nextclade-image.yml
-    with:
-      build_arm: true
-  trigger-website:
-    uses: ./.github/workflows/website-image.yml
-    with:
-      build_arm: true
+  check-arm-label:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      build_arm: ${{ steps.check_label.outputs.result }}
+    steps:
+      - name: Check if PR has arm-images label
+        id: check_label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = github.event.pull_request.labels.map(label => label.name);
+            return labels.includes('arm-images');
+  build-images:
+    needs: [check-arm-label]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build backend image
+        uses: ./.github/workflows/backend-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build config-preprocessor image
+        uses: ./.github/workflows/config-preprocessor-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build preprocessing-dummy image
+        uses: ./.github/workflows/preprocessing-dummy-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build ingest image
+        uses: ./.github/workflows/ingest-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build ena-submission image
+        uses: ./.github/workflows/ena-submission-image.yaml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build ena-submission-flyway image
+        uses: ./.github/workflows/ena-submission-flyway-image.yaml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build keycloakify image
+        uses: ./.github/workflows/keycloakify-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build preprocessing-nextclade image
+        uses: ./.github/workflows/preprocessing-nextclade-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
+
+      - name: Build website image
+        uses: ./.github/workflows/website-image.yml
+        with:
+          build_arm: ${{ needs.check-arm-label.outputs.build_arm == 'true' || github.event_name == 'workflow_dispatch' }}
