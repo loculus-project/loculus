@@ -261,15 +261,27 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def get_local_ip() -> str:
-    """Determine the IP address of the current host."""
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(("8.8.8.8", 80))
-            return s.getsockname()[0]
-    except OSError:
-        return "127.0.0.1"
+import subprocess
 
+def get_local_ip() -> str:
+    """Determine the IP address of the current host using hostname -I."""
+    try:
+        # Run hostname -I command
+        result = subprocess.run(['hostname', '-I'], 
+                              capture_output=True, 
+                              text=True, 
+                              check=True)
+        
+        # Get the first IP address (equivalent to awk '{print $1}')
+        ip_addresses = result.stdout.strip().split()
+        if ip_addresses:
+            return ip_addresses[0]
+        else:
+            return "127.0.0.1"
+            
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
+        # Fallback if hostname command fails or is not available
+        return "127.0.0.1"
 
 def generate_configs(from_live, live_host, enable_ena):
     temp_dir_path = Path(tempfile.mkdtemp())
