@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 import socket
 
+
 # Minimum version of Python required is 3.9 due to type hint usage
 if sys.version_info < (3, 9):
     msg = f"Python 3.9 or higher is required to run the ./deploy.py script\nYou are using version {sys.version} from {sys.executable}"
