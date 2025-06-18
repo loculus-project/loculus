@@ -69,7 +69,7 @@ spec:
                   - |
                     (
                       sleep 10
-                      mc alias set local http://{{ .Values.localHost }}:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+                      mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
                       mc mb -p local/{{ .Values.s3.bucket.bucket }}
                       echo "Bucket {{ .Values.s3.bucket.bucket }} ensured."
                       mc anonymous set-json /policy/policy.json local/{{ .Values.s3.bucket.bucket }}
