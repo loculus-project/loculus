@@ -54,7 +54,7 @@ jobs:
         run: hostname -I
       - name: Deploy with helm
         run: |
-          IP=$(curl https://api.ipify.org)
+          IP=$(hostname -I | awk '{print $1}')
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --enablePreprocessing --set s3.bucket.endpoint=http://$IP:8084
       - uses: actions/setup-node@v4
         with:
