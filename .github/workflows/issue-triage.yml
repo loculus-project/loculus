@@ -11,8 +11,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-    
-    # Only run if the issue was just opened OR if it was labeled with "triage"
+
     if: |
       (github.event.action == 'labeled' && github.event.label.name == 'triage')
 
