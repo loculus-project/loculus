@@ -16,7 +16,7 @@
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
-    {{- printf "http://%s:3000" $.Values.localHost -}}
+    {{- "http://localhost:3000" -}}
   {{- end -}}
 {{- end -}}
 
