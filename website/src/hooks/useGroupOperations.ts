@@ -113,7 +113,17 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
         try {
             const groupResult = await zodios.createGroup(group, {
                 headers: createAuthorizationHeader(accessToken),
+                timeout: 30000, // 30 second timeout for group creation
             });
+
+            // Validate that we actually received a valid group response
+            if (typeof groupResult.groupId !== 'number') {
+                return {
+                    succeeded: false,
+                    errorMessage: 'Failed to create group: Invalid response from server',
+                } as CreateGroupError;
+            }
+
             return {
                 succeeded: true,
                 group: groupResult,

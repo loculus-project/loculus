@@ -50,9 +50,15 @@ export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
 export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const internalOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        // Prevent duplicate submissions
+        if (isSubmitting) {
+            return;
+        }
 
         const formData = new FormData(e.currentTarget);
 
@@ -63,12 +69,23 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
             return false;
         }
 
-        const result = await onSubmit(group);
+        setIsSubmitting(true);
+        setErrorMessage(undefined);
 
-        if (result.succeeded) {
-            window.location.href = result.nextPageHref;
-        } else {
-            setErrorMessage(result.errorMessage);
+        try {
+            const result = await onSubmit(group);
+
+            if (result.succeeded) {
+                // Successfully created group, redirect to the group page
+                window.location.href = result.nextPageHref;
+            } else {
+                setErrorMessage(result.errorMessage);
+                setIsSubmitting(false);
+            }
+        } catch (_error) {
+            // Handle unexpected errors that might not be caught by onSubmit
+            setErrorMessage('An unexpected error occurred. Please try again.');
+            setIsSubmitting(false);
         }
     };
 
@@ -104,9 +121,9 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                         <button
                             type='submit'
                             className='btn btn-primary px-4 py-2 loculusColor text-white rounded'
-                            disabled={!isClient}
+                            disabled={!isClient || isSubmitting}
                         >
-                            {buttonText}
+                            {isSubmitting ? 'Creating...' : buttonText}
                         </button>
                     </div>
                 </div>
