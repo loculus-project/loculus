@@ -699,7 +699,6 @@ def test_create_flatfile(config: Config, case_dir):
     with open(annotation_object_path, encoding="utf-8") as f:
         annotation_object = json.load(f)
 
-    # Call create_flatfile
     embl_str = create_flatfile(
         config,
         metadata["accession"],
