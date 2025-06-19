@@ -1012,7 +1012,7 @@ def run(config: Config) -> None:
                             submission_data.processed_entry.data.unalignedNucleotideSequences,
                             submission_data.annotations,
                         )
-                        file_name = f"{submission_data.processed_entry.accession}.embl"
+                        file_name = f"{submission_data.processed_entry.accession}.{submission_data.processed_entry.version}.embl"
                         upload_info = request_upload(submission_data.group_id, 1, config)[0]
                         file_id = upload_info.fileId
                         url = upload_info.url
