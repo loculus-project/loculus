@@ -748,6 +748,12 @@
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
     },
+    "localHost": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "localhost",
+      "description": "Host string used for local development"
+    },
     "host": {
       "groups": ["general"],
       "type": "string",

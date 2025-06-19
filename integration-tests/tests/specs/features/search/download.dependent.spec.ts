@@ -35,7 +35,11 @@ test('Download metadata and check number of cols', async ({ page }) => {
     expect(fields).toHaveLength(11);
 });
 
-test('Download metadata with POST and check number of cols', async ({ page }) => {
+test('Download metadata with POST and check number of cols', async ({ page, browserName }) => {
+    test.skip(
+        browserName === 'firefox',
+        'Firefox raises a native warning that blocks the download',
+    );
     await page.goto('/');
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();

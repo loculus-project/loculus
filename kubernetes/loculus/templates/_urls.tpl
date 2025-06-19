@@ -5,7 +5,7 @@
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://backend%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
-    {{- "http://localhost:8079" -}}
+    {{- printf "http://%s:8079" $.Values.localHost -}}
   {{- end -}}
 {{- end -}}
 
@@ -16,7 +16,7 @@
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://%s" $.Values.host) -}}
   {{- else -}}
-    {{- "http://localhost:3000" -}}
+    {{- printf "http://%s:3000" $.Values.localHost -}}
   {{- end -}}
 {{- end -}}
 
@@ -25,10 +25,10 @@
     {{- if eq $.Values.environment "server" -}}
         {{- (printf "https://s3%s%s" $.Values.subdomainSeparator $.Values.host) -}}
     {{- else -}}
-        {{- "http://localhost:8084" -}}
+        {{- printf "http://%s:8084" $.Values.localHost -}}
     {{- end -}}
   {{- else -}}
-    {{- $.Values.s3.bucket.endpoint }}
+    {{- printf "http://%s:8084" $.Values.localHost -}}
   {{- end -}}
 {{- end -}}
 
@@ -47,14 +47,14 @@
   {{- else if eq $.Values.environment "server" -}}
     {{- (printf "https://authentication%s%s" $.Values.subdomainSeparator $.Values.host) -}}
   {{- else -}}
-    {{- "http://localhost:8083" -}}
+    {{- printf "http://%s:8083" $.Values.localHost -}}
   {{- end -}}
 {{- end -}}
 
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
   {{ range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
-    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://localhost:8080/{{ $key }}{{ end }}"
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
   {{ end }}
 {{ end }}
 
