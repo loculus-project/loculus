@@ -21,11 +21,14 @@ test.describe('Sequence Preview Annotations', () => {
         ).toBeVisible();
         await expect(page.getByRole('link', { name: /LOC_\w{6,9}\.embl/ })).toBeVisible();
 
-        const fileUrl = await page.getByRole('link', { name: /LOC_\w{6,9}\.embl/ }).getAttribute('href');
+        const fileUrl = await page
+            .getByRole('link', { name: /LOC_\w{6,9}\.embl/ })
+            .getAttribute('href');
 
         await Promise.all([
             page.waitForResponse(
-                async (resp) => resp.status() === 200 && (await resp.text()).startsWith('ID   LOC_'),
+                async (resp) =>
+                    resp.status() === 200 && (await resp.text()).startsWith('ID   LOC_'),
             ),
             page.evaluate((url) => fetch(url), fileUrl),
         ]);
