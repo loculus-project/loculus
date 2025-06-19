@@ -68,6 +68,7 @@ cluster_parser.add_argument(
     help="Set up a development environment for running the website and the backend locally, skip schema validation",
 )
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
+cluster_parser.add_argument("--bind-all", action="store_true", help="Bind to all interfaces")
 
 helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
 helm_parser.add_argument(
@@ -142,19 +143,23 @@ def main():
 
 
 def handle_cluster():
-    if args.dev:
-        remove_port(WEBSITE_PORT_MAPPING)
-        remove_port(BACKEND_PORT_MAPPING)
     if args.delete:
         print(f"Deleting cluster '{CLUSTER_NAME}'.")
         run_command(["k3d", "cluster", "delete", CLUSTER_NAME])
         return
 
+    port_bindings = PORTS.copy()
+    if args.dev:
+        port_bindings = [port for port in port_bindings if port != WEBSITE_PORT_MAPPING]
+        port_bindings = [port for port in port_bindings if port != BACKEND_PORT_MAPPING]
+    if args.bind_all:
+        port_bindings = [port.replace("127.0.0.1", "0.0.0.0") for port in port_bindings]  # noqa: S104
+
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
         run_command(
-            f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 1",
+            f"k3d cluster create {CLUSTER_NAME} {' '.join(port_bindings)} --agents 1",
             shell=True,
         )
     install_secret_generator()
@@ -180,11 +185,6 @@ def is_traefik_running(namespace="kube-system", label="app.kubernetes.io/name=tr
     except subprocess.SubprocessError as e:
         print(f"Error checking Traefik status: {e}")
     return False
-
-
-def remove_port(port_mapping):
-    global PORTS
-    PORTS = [port for port in PORTS if port != port_mapping]
 
 
 def cluster_exists(cluster_name):
