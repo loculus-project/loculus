@@ -47,7 +47,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionDate: string;
         authorAffiliations: string;
     }) {
-        await this.page.getByLabel('ID').fill(submissionId);
+        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
         await this.page.getByLabel('Collection country').fill(collectionCountry);
         await this.page.getByLabel('Collection country').blur();
         await this.page.getByLabel('Collection date').fill(collectionDate);
@@ -63,7 +63,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         country: string;
         date: string;
     }) {
-        await this.page.getByLabel('ID').fill(submissionId);
+        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
         await this.page.getByLabel('Country').fill(country);
         await this.page.getByLabel('Country').blur();
         await this.page.getByLabel('Date').fill(date);
