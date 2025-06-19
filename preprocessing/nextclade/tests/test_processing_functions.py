@@ -675,7 +675,6 @@ def test_parse_date_into_range() -> None:
 def test_create_flatfile(config: Config, case_dir):
     test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
 
-    # Read metadata from metadata.tsv
     metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
     metadata = {}
     with open(metadata_tsv_path, encoding="utf-8") as f:
