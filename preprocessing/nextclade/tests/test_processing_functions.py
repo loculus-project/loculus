@@ -693,7 +693,6 @@ def test_create_flatfile(config: Config, case_dir):
                 key = record.id.split("_")[-1]
                 unaligned_nucleotide_sequences[key] = str(record.seq)
 
-    # Load annotation object
     annotation_object_path = os.path.join(test_data_dir, "annotations.json")
     with open(annotation_object_path, encoding="utf-8") as f:
         annotation_object = json.load(f)
