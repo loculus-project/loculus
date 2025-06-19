@@ -1001,38 +1001,41 @@ def run(config: Config) -> None:
                 )
                 continue
 
-            for submission_data in processed:
-                try:
-                    file_content = create_flatfile(
-                        config,
-                        submission_data.processed_entry.accession,
-                        submission_data.processed_entry.version,
-                        submission_data.processed_entry.data.metadata,
-                        submission_data.processed_entry.data.unalignedNucleotideSequences,
-                        submission_data.annotations,
-                    )
-                    file_name = f"{submission_data.processed_entry.accession}.embl"
-                    upload_info = request_upload(submission_data.group_id, 1, config)[0]
-                    file_id = upload_info.fileId
-                    url = upload_info.url
-                    upload_embl_file_to_presigned_url(file_content, url)
-                    submission_data.processed_entry.data.files = {
-                        "annotations": [
-                            FileIdAndName(fileId=file_id, name=file_name)
-                        ]
-                    }
-                except Exception as e:
-                    submission_data.processed_entry.errors.append(
-                        ProcessingAnnotation(
-                            unprocessedFields=[
-                                AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
-                            ],
-                            processedFields=[
-                                AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
-                            ],
-                            message=f"Failed to create or upload EMBL file: {e}"
+            if config.embl_file:
+                for submission_data in processed:
+                    try:
+                        file_content = create_flatfile(
+                            config,
+                            submission_data.processed_entry.accession,
+                            submission_data.processed_entry.version,
+                            submission_data.processed_entry.data.metadata,
+                            submission_data.processed_entry.data.unalignedNucleotideSequences,
+                            submission_data.annotations,
                         )
-                    )
+                        file_name = f"{submission_data.processed_entry.accession}.embl"
+                        upload_info = request_upload(submission_data.group_id, 1, config)[0]
+                        file_id = upload_info.fileId
+                        url = upload_info.url
+                        upload_embl_file_to_presigned_url(file_content, url)
+                        submission_data.processed_entry.data.files = {
+                            "annotations": [
+                                FileIdAndName(fileId=file_id, name=file_name)
+                            ]
+                        }
+                    except Exception as e:
+                        submission_data.processed_entry.errors.append(
+                            ProcessingAnnotation(
+                                unprocessedFields=[
+                                    AnnotationSource(name="embl_upload",
+                                                     type=AnnotationSourceType.METADATA)
+                                ],
+                                processedFields=[
+                                    AnnotationSource(name="embl_upload",
+                                                     type=AnnotationSourceType.METADATA)
+                                ],
+                                message=f"Failed to create or upload EMBL file: {e}"
+                            )
+                        )
 
             try:
                 processed_entries = [submission_data.processed_entry
