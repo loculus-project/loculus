@@ -49,7 +49,12 @@ const config = {
         },
         {
             name: 'firefox-with-dep',
-            use: { ...devices['Desktop Firefox'] },
+            use: {
+                ...devices['Desktop Firefox'],
+                firefoxUserPrefs: {
+                   'security.warn_submit_insecure': false,
+                },
+            },
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
