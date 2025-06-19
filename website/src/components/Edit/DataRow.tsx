@@ -1,39 +1,53 @@
+import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
-import { Tooltip } from 'react-tooltip';
 
-import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
-import type { InputFieldOption } from '../../types/config.ts';
+import { InputField as InputFieldComponent, type KeyValuePair, type Row } from './InputField.tsx';
+import type { InputField } from '../../types/config.ts';
+import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 
 type EditableRowProps = {
-    label?: string;
-    inputField: string;
+    inputField: InputField;
     row: Row;
-    /**
-     * Options for this row.
-     * If given, the input field will have a dropdown to choose an option from.
-     */
-    options: InputFieldOption[] | undefined;
     onChange: (editedRow: Row) => void;
 };
 
-export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, onChange, options }) => {
+export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChange }) => {
     const colorClassName = row.errors.length > 0 ? 'text-red-600' : row.warnings.length > 0 ? 'text-yellow-600' : '';
 
-    const content = `input metadata name: ${inputField}`;
+    const hasDescription = [inputField.definition, inputField.guidance, inputField.example].some(
+        (value) => value !== undefined,
+    );
+
+    const label = inputField.displayName ?? sentenceCase(inputField.name);
+
+    // split label to attach icon later on to prevent the icon wrapping alone
+    // (https://www.codemzy.com/blog/prevent-icon-wrap-javascript)
+    const labelArr = label.trim().split(' ');
+    const lastWord = labelArr.pop();
+    const startOfLabel = labelArr.join(' ');
 
     return (
         <>
             <tr className='table-fixed w-full'>
-                <td className={`w-1/4 relative ${colorClassName}`} data-tooltip-id={'field-tooltip' + row.key}>
-                    <label htmlFor={row.key}>{`${label ?? row.key}:`}</label>
-                    <Tooltip
-                        id={'field-tooltip' + row.key}
-                        place='bottom-start'
-                        content={content}
-                        className='absolute z-50 top-full left-0 mt-1'
-                    />
+                <td className={`w-1/4 relative ${colorClassName}`}>
+                    <label htmlFor={row.key}>
+                        {startOfLabel.length > 0 && <span>{startOfLabel} </span>}
+                        <span className='whitespace-nowrap'>
+                            {lastWord}
+                            {hasDescription && (
+                                <>
+                                    <MaterialSymbolsInfoOutline
+                                        className='inline-block h-4 w-4 text-gray-500 shrink-0 ml-1'
+                                        data-tooltip-id={'field-tooltip' + row.key}
+                                    />
+                                    <InputFieldTooltip id={'field-tooltip' + row.key} field={inputField} />
+                                </>
+                            )}
+                        </span>
+                    </label>
                 </td>
                 <td className='text-right'>
                     <div className='pr-2 flex flex-row items-center'>
@@ -41,7 +55,12 @@ export const EditableDataRow: FC<EditableRowProps> = ({ label, inputField, row, 
                     </div>
                 </td>
                 <td className='w-3/4'>
-                    <InputField row={row} onChange={onChange} colorClassName={colorClassName} options={options} />
+                    <InputFieldComponent
+                        row={row}
+                        onChange={onChange}
+                        colorClassName={colorClassName}
+                        options={inputField.options}
+                    />
                 </td>
             </tr>
             {row.warnings.length + row.errors.length > 0 ? (
