@@ -196,7 +196,7 @@ def cluster_exists(cluster_name):
     return cluster_name in result.stdout
 
 
-def handle_helm():
+def handle_helm():  # noqa: C901
     if args.uninstall:
         run_command(["helm", "uninstall", HELM_RELEASE_NAME])
         return
@@ -259,19 +259,21 @@ def handle_helm_upgrade():
 def get_local_ip() -> str:
     """Determine the IP address of the current host using hostname -I."""
     try:
-        result = subprocess.run(['hostname', '-I'],
-                              capture_output=True,
-                              text=True,
-                              check=True)
+        result = subprocess.run(["hostname", "-I"],  # noqa: S607
+                                capture_output=True,
+                                text=True,
+                                check=True)
 
         ip_addresses = result.stdout.strip().split()
         if ip_addresses:
             return ip_addresses[0]
-        return "127.0.0.1"
+        msg = "Could not determine local IP address (no addresses found)."
+        raise RuntimeError(msg)
 
-    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError) as e:
         # Fallback if hostname command fails or is not available
-        return "127.0.0.1"
+        msg = "Could not determine local IP address (hostname -I failed)."
+        raise RuntimeError(msg) from e
 
 
 def get_codespace_name():
@@ -428,7 +430,7 @@ def generate_config(
 
 
 def get_codespace_params(codespace_name):
-    publicRuntimeConfig = {
+    public_runtime_config = {
         "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
         "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
         "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
@@ -436,7 +438,7 @@ def get_codespace_params(codespace_name):
     }
     return [
         "--set-json",
-        f"public={json.dumps(publicRuntimeConfig)}",
+        f"public={json.dumps(public_runtime_config)}",
     ]
 
 
@@ -455,7 +457,7 @@ def install_secret_generator():
     run_command(update_helm_repo_command)
     print("Helm repositories updated.")
 
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"
+    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
