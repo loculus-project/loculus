@@ -103,7 +103,7 @@ describe('EditPage', () => {
         await userEvent.type(screen.getByDisplayValue(editableEntry), someTextToAdd);
 
         expectTextInSequenceData.originalMetadata({
-            [metadataDisplayName]: editableEntry + someTextToAdd,
+            [metadataKey]: editableEntry + someTextToAdd,
         });
         const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
@@ -116,7 +116,8 @@ describe('EditPage', () => {
 const expectTextInSequenceData = {
     originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
+            const label = document.querySelector(`label[for="${key}"]`);
+            expect(label).toBeTruthy();
             expect(screen.getByDisplayValue(value)).toBeInTheDocument();
         }),
 };
