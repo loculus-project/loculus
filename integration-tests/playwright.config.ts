@@ -52,7 +52,7 @@ const config = {
             use: {
                 ...devices['Desktop Firefox'],
                 firefoxUserPrefs: {
-                   'security.warn_submit_insecure': false,
+                    'security.warn_submit_insecure': false,
                 },
             },
             dependencies: ['readonly setup'],
