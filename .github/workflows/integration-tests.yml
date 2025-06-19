@@ -90,6 +90,7 @@ jobs:
           BROWSER: ${{ matrix.browser }}
         run: |
           set -o pipefail
+          [ "$BROWSER" = "firefox" ] && export PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS=true
           cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
