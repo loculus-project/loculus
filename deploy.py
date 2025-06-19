@@ -271,7 +271,6 @@ def get_local_ip() -> str:
         raise RuntimeError(msg)
 
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError) as e:
-        # Fallback if hostname command fails or is not available
         msg = "Could not determine local IP address (hostname -I failed)."
         raise RuntimeError(msg) from e
 
