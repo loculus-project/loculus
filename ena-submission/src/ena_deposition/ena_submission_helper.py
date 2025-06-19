@@ -368,7 +368,7 @@ def download_flatfile(
     accession = metadata["accession"]
     version = metadata["version"]
     category = "annotations"
-    filename = f"{accession}.embl"
+    filename = f"{accession}.{version}.embl"
 
     base_url = config.backend_url.rstrip("/")
     url = f"{base_url}/files/get/{accession}/{version}/{category}/{filename}"
