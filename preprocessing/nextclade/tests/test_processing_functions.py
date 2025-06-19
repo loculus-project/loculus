@@ -682,7 +682,6 @@ def test_create_flatfile(config: Config, case_dir):
         values = f.readline().strip().split("\t")
         metadata = dict(zip(header, values, strict=False))
 
-    # Load unaligned nucleotide sequences
     with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
         records = list(SeqIO.parse(f, "fasta"))
         if len(records) == 1:
