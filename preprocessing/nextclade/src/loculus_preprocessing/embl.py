@@ -84,7 +84,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return ", ".join(ena_authors) + ";"
+    return ", ".join(ena_authors)
 
 
 def get_authors(authors: str) -> str:
