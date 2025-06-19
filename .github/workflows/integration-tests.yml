@@ -47,10 +47,15 @@ jobs:
       - uses: azure/setup-helm@v4
       - name: Create k3d cluster
         run: |
-          ./deploy.py --verbose cluster
-      - name: Deploy with helm
+          ./deploy.py --verbose cluster --bind-all
+      - name: Deploy with Helm
         run: |
-          ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --enablePreprocessing
+          ./deploy.py --verbose helm \
+            --branch ${{ github.ref_name }} \
+            --sha ${{ env.sha }} \
+            --for-e2e \
+            --enablePreprocessing \
+            --use-localhost-ip
       - uses: actions/setup-node@v4
         with:
           node-version-file: ./website/.nvmrc

@@ -3,14 +3,14 @@
 import argparse
 import json
 import os
-import subprocess
+import subprocess  # noqa: S404
 import sys
 import tempfile
 import time
 from pathlib import Path
 
 # Minimum version of Python required is 3.9 due to type hint usage
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 9):  # noqa: UP036
     msg = f"Python 3.9 or higher is required to run the ./deploy.py script\nYou are using version {sys.version} from {sys.executable}"
     raise RuntimeError(msg)
 
@@ -68,6 +68,7 @@ cluster_parser.add_argument(
     help="Set up a development environment for running the website and the backend locally, skip schema validation",
 )
 cluster_parser.add_argument("--delete", action="store_true", help="Delete the cluster")
+cluster_parser.add_argument("--bind-all", action="store_true", help="Bind to all interfaces")
 
 helm_parser = subparsers.add_parser("helm", help="Install the Helm chart to the k3d cluster")
 helm_parser.add_argument(
@@ -93,7 +94,10 @@ helm_parser.add_argument(
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument("--for-e2e", action="store_true",
+                         help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument("--use-localhost-ip", action="store_true",
+                         help="Use the local IP address instead of 'localhost' in the config files")
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -102,7 +106,8 @@ config_parser = subparsers.add_parser("config", help="Generate config files")
 config_parser.add_argument(
     "--from-live",
     action="store_true",
-    help="Generate config files to point to the live cluster so we don`t need to run the cluster locally, only the website",
+    help="Generate config files to point to the live cluster "
+         "so we don't need to run the cluster locally, only the website",
 )
 
 config_parser.add_argument(
@@ -142,19 +147,23 @@ def main():
 
 
 def handle_cluster():
-    if args.dev:
-        remove_port(WEBSITE_PORT_MAPPING)
-        remove_port(BACKEND_PORT_MAPPING)
     if args.delete:
         print(f"Deleting cluster '{CLUSTER_NAME}'.")
         run_command(["k3d", "cluster", "delete", CLUSTER_NAME])
         return
 
+    port_bindings = PORTS.copy()
+    if args.dev:
+        port_bindings = [port for port in port_bindings if port != WEBSITE_PORT_MAPPING]
+        port_bindings = [port for port in port_bindings if port != BACKEND_PORT_MAPPING]
+    if args.bind_all:
+        port_bindings = [port.replace("127.0.0.1", "0.0.0.0") for port in port_bindings]  # noqa: S104
+
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
         run_command(
-            f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 1",
+            f"k3d cluster create {CLUSTER_NAME} {' '.join(port_bindings)} --agents 1",
             shell=True,
         )
     install_secret_generator()
@@ -182,26 +191,17 @@ def is_traefik_running(namespace="kube-system", label="app.kubernetes.io/name=tr
     return False
 
 
-def remove_port(port_mapping):
-    global PORTS
-    PORTS = [port for port in PORTS if port != port_mapping]
-
-
 def cluster_exists(cluster_name):
     result = run_command(["k3d", "cluster", "list"], capture_output=True, text=True)
     return cluster_name in result.stdout
 
 
-def handle_helm():
+def handle_helm():  # noqa: C901
     if args.uninstall:
         run_command(["helm", "uninstall", HELM_RELEASE_NAME])
-
         return
 
-    if args.branch:
-        branch = args.branch
-    else:
-        branch = "latest"
+    branch = args.branch or "latest"
 
     parameters = [
         "helm",
@@ -235,6 +235,9 @@ def handle_helm():
     if args.enableEnaSubmission:
         parameters += ["--set", "disableEnaSubmission=false"]
 
+    if args.use_localhost_ip:
+        parameters += ["--set", f"localHost={get_local_ip()}"]
+
     if get_codespace_name():
         parameters += get_codespace_params(get_codespace_name())
 
@@ -251,6 +254,25 @@ def handle_helm_upgrade():
         HELM_CHART_DIR,
     ]
     run_command(parameters)
+
+
+def get_local_ip() -> str:
+    """Determine the IP address of the current host using hostname -I."""
+    try:
+        result = subprocess.run(["hostname", "-I"],  # noqa: S607
+                                capture_output=True,
+                                text=True,
+                                check=True)
+
+        ip_addresses = result.stdout.strip().split()
+        if ip_addresses:
+            return ip_addresses[0]
+        msg = "Could not determine local IP address (no addresses found)."
+        raise RuntimeError(msg)
+
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError) as e:
+        msg = "Could not determine local IP address (hostname -I failed)."
+        raise RuntimeError(msg) from e
 
 
 def get_codespace_name():
@@ -407,7 +429,7 @@ def generate_config(
 
 
 def get_codespace_params(codespace_name):
-    publicRuntimeConfig = {
+    public_runtime_config = {
         "websiteUrl": f"https://{codespace_name}-3000.app.github.dev",
         "backendUrl": f"https://{codespace_name}-8079.app.github.dev",
         "lapisUrlTemplate": f"https://{codespace_name}-8080.app.github.dev/%organism%",
@@ -415,7 +437,7 @@ def get_codespace_params(codespace_name):
     }
     return [
         "--set-json",
-        f"public={json.dumps(publicRuntimeConfig)}",
+        f"public={json.dumps(public_runtime_config)}",
     ]
 
 
@@ -434,7 +456,7 @@ def install_secret_generator():
     run_command(update_helm_repo_command)
     print("Helm repositories updated.")
 
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"
+    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
