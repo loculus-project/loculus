@@ -3,14 +3,14 @@
 import argparse
 import json
 import os
-import subprocess
+import subprocess  # noqa: S404
 import sys
 import tempfile
 import time
 from pathlib import Path
 
 # Minimum version of Python required is 3.9 due to type hint usage
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 9):  # noqa: UP036
     msg = f"Python 3.9 or higher is required to run the ./deploy.py script\nYou are using version {sys.version} from {sys.executable}"
     raise RuntimeError(msg)
 
@@ -94,7 +94,10 @@ helm_parser.add_argument(
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument("--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument("--for-e2e", action="store_true",
+                         help="Use the E2E values file, skip schema validation")
+helm_parser.add_argument("--use-localhost-ip", action="store_true",
+                         help="Use the local IP address instead of 'localhost' in the config files")
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -103,7 +106,8 @@ config_parser = subparsers.add_parser("config", help="Generate config files")
 config_parser.add_argument(
     "--from-live",
     action="store_true",
-    help="Generate config files to point to the live cluster so we don`t need to run the cluster locally, only the website",
+    help="Generate config files to point to the live cluster "
+         "so we don't need to run the cluster locally, only the website",
 )
 
 config_parser.add_argument(
@@ -195,13 +199,9 @@ def cluster_exists(cluster_name):
 def handle_helm():
     if args.uninstall:
         run_command(["helm", "uninstall", HELM_RELEASE_NAME])
-
         return
 
-    if args.branch:
-        branch = args.branch
-    else:
-        branch = "latest"
+    branch = args.branch or "latest"
 
     parameters = [
         "helm",
@@ -235,6 +235,9 @@ def handle_helm():
     if args.enableEnaSubmission:
         parameters += ["--set", "disableEnaSubmission=false"]
 
+    if args.use_localhost_ip:
+        parameters += ["--set", f"localHost={get_local_ip()}"]
+
     if get_codespace_name():
         parameters += get_codespace_params(get_codespace_name())
 
@@ -251,6 +254,24 @@ def handle_helm_upgrade():
         HELM_CHART_DIR,
     ]
     run_command(parameters)
+
+
+def get_local_ip() -> str:
+    """Determine the IP address of the current host using hostname -I."""
+    try:
+        result = subprocess.run(['hostname', '-I'],
+                              capture_output=True,
+                              text=True,
+                              check=True)
+
+        ip_addresses = result.stdout.strip().split()
+        if ip_addresses:
+            return ip_addresses[0]
+        return "127.0.0.1"
+
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
+        # Fallback if hostname command fails or is not available
+        return "127.0.0.1"
 
 
 def get_codespace_name():
