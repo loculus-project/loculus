@@ -16,6 +16,16 @@ CLI_TYPES = [str, int, float, bool]
 
 
 @dataclass
+class EmblInfo:
+    country_property: str = "geoLocCountry"
+    admin_level_properties: list[str] = dataclasses.field(
+        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    )
+    collection_date_property: str = "sampleCollectionDate"
+    authors_property: str = "authors"
+
+
+@dataclass
 class Config:
     organism: str = "cchf"
     scientific_name: str = "Orthonairovirus haemorrhagiae"
@@ -47,12 +57,7 @@ class Config:
     pipeline_version: int = 1
     multi_segment: bool = False
     alignment_requirement: str = "ALL"
-    country_property: str = "geoLocCountry"
-    admin_level_properties: list[str] = dataclasses.field(
-        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
-    )
-    collection_date_property: str = "sampleCollectionDate"
-    authors_property: str = "authors"
+    embl_info: EmblInfo = dataclasses.field(default_factory=EmblInfo)
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -62,7 +67,12 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
-            setattr(config, key, value)
+            if key == "embl_info" and isinstance(value, dict):
+                for embl_key, embl_value in value.items():
+                    if hasattr(config.embl_info, embl_key) and embl_value is not None:
+                        setattr(config.embl_info, embl_key, embl_value)
+            else:
+                setattr(config, key, value)
     return config
 
 

@@ -64,8 +64,8 @@ EMBL_ANNOTATIONS: dict[str, list[str]] = {
 
 
 def get_country(metadata: dict[str, str], config: Config) -> str:
-    country = metadata.get(config.country_property, "Unknown")
-    admin_levels = config.admin_level_properties
+    country = metadata.get(config.embl_info.country_property, "Unknown")
+    admin_levels = config.embl_info.admin_level_properties
     admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])  # type: ignore
     return f"{country}: {admin}" if admin else country
 
@@ -202,8 +202,8 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
     unaligned_nucleotide_sequences,
     annotation_object: dict[str, Any] | None = None,
 ) -> str:
-    collection_date = metadata.get(config.collection_date_property) or "Unknown"
-    authors = get_authors(metadata.get(config.authors_property) or "")
+    collection_date = metadata.get(config.embl_info.collection_date_property) or "Unknown"
+    authors = get_authors(metadata.get(config.embl_info.authors_property) or "")
     country = get_country(metadata, config)
     description = get_description(accession, version, config.db_name)
     organism = config.scientific_name
