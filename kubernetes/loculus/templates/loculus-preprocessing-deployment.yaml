@@ -31,8 +31,6 @@ spec:
         app: loculus
         component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
         - name: preprocessing-{{ $organism }}
