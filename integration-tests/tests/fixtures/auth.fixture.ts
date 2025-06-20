@@ -30,19 +30,19 @@ export const test = base.extend<TestFixtures>({
         await authPage.logout();
     },
 
-    consoleWarnings: async ({ page }, use) => {
-        const warnings: string[] = [];
-        const handleConsole = (msg: ConsoleMessage) => {
-            if (msg.type() === 'warning') {
-                warnings.push(msg.text());
-            }
-        };
-        page.on('console', handleConsole);
-        await use(warnings);
-        page.off('console', handleConsole);
-    },
-});
-
-test.afterEach(async ({ consoleWarnings }) => {
-    expect(consoleWarnings).toEqual([]);
+    consoleWarnings: [
+        async ({ page }, use) => {
+            const warnings: string[] = [];
+            const handleConsole = (msg: ConsoleMessage) => {
+                if (msg.type() === 'warning') {
+                    warnings.push(msg.text());
+                }
+            };
+            page.on('console', handleConsole);
+            await use(warnings);
+            page.off('console', handleConsole);
+            expect(warnings).toEqual([]);
+        },
+        { auto: true },
+    ],
 });
