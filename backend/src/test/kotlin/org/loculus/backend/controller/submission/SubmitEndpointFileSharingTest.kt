@@ -198,7 +198,7 @@ class SubmitEndpointFileSharingTest(
                     "\$.detail",
                 ).value(
                     containsString(
-                        "The category unknownCategory is not part of the configured categories for dummyOrganism.",
+                        "The category unknownCategory is not part of the configured submission categories for dummyOrganism.",
                     ),
                 ),
             )

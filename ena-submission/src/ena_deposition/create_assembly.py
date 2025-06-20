@@ -14,8 +14,8 @@ from .ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
     create_ena_assembly,
-    create_flatfile,
     create_manifest,
+    download_flatfile,
     get_authors,
     get_description,
     get_ena_analysis_process,
@@ -182,9 +182,7 @@ def create_manifest_object(
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     logger.debug("Created chromosome list file")
 
-    flat_file = create_flatfile(
-        config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
-    )
+    flat_file = download_flatfile(config, metadata, dir)
 
     assembly_values = get_assembly_values_in_metadata(config, metadata)
 

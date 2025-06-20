@@ -1,7 +1,11 @@
 # ruff: noqa: S101
+import json
+import os
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
+from Bio import SeqIO
 from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
@@ -17,6 +21,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from loculus_preprocessing.embl import create_flatfile
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     ProcessingFunctions,
@@ -451,7 +456,7 @@ def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[Processing
 def process_single_entry(test_case: ProcessingTestCase, config: Config) -> ProcessedEntry:
     dataset_dir = "temp"  # This is not used as we do not align sequences
     result = process_all([test_case.input], dataset_dir, config)
-    return result[0]
+    return result[0].processed_entry
 
 
 def verify_processed_entry(
@@ -503,6 +508,7 @@ def test_preprocessing_without_consensus_sequences():
         accessionVersion=f"LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
+            group_id=2,
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name
@@ -515,7 +521,7 @@ def test_preprocessing_without_consensus_sequences():
     config.nucleotideSequences = []
 
     result = process_all([sequence_entery_data], "temp_dataset_dir", config)
-    processed_entry = result[0]
+    processed_entry = result[0].processed_entry
 
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
@@ -659,6 +665,50 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
+
+
+@pytest.mark.parametrize(
+    "case_dir",
+    ["cchf_1", "west_nile_1"],
+    ids=["cchf_1", "west_nile_1"],
+)
+def test_create_flatfile(config: Config, case_dir):
+    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
+
+    metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
+    metadata = {}
+    with open(metadata_tsv_path, encoding="utf-8") as f:
+        header = f.readline().strip().split("\t")
+        values = f.readline().strip().split("\t")
+        metadata = dict(zip(header, values, strict=False))
+
+    with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
+        records = list(SeqIO.parse(f, "fasta"))
+        if len(records) == 1:
+            unaligned_nucleotide_sequences = {"main": str(records[0].seq)}
+        else:
+            unaligned_nucleotide_sequences = {}
+            for record in records:
+                # Use the part after the last underscore as the key
+                key = record.id.split("_")[-1]
+                unaligned_nucleotide_sequences[key] = str(record.seq)
+
+    annotation_object_path = os.path.join(test_data_dir, "annotations.json")
+    with open(annotation_object_path, encoding="utf-8") as f:
+        annotation_object = json.load(f)
+
+    embl_str = create_flatfile(
+        config,
+        metadata["accession"],
+        metadata.get("version", 1),
+        metadata,
+        unaligned_nucleotide_sequences,
+        annotation_object,
+    )
+
+    assert isinstance(embl_str, str)
+    expected_embl = Path(os.path.join(test_data_dir, "result.embl")).read_text(encoding="utf-8")
+    assert embl_str == expected_embl
 
 
 if __name__ == "__main__":

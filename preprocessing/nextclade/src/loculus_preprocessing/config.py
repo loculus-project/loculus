@@ -16,13 +16,28 @@ CLI_TYPES = [str, int, float, bool]
 
 
 @dataclass
+class EmblInfo:
+    country_property: str = "geoLocCountry"
+    admin_level_properties: list[str] = dataclasses.field(
+        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    )
+    collection_date_property: str = "sampleCollectionDate"
+    authors_property: str = "authors"
+
+
+@dataclass
 class Config:
-    organism: str = "mpox"
+    organism: str = "cchf"
+    scientific_name: str = "Orthonairovirus haemorrhagiae"
+    molecule_type: str = "genomic RNA"
+    topology: str = "linear"
+    db_name: str = "Loculus"
+    # The backend host is the base API URL including the organism
     backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
-    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
+    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
     nextclade_dataset_name: str | None = None
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
@@ -42,6 +57,8 @@ class Config:
     pipeline_version: int = 1
     multi_segment: bool = False
     alignment_requirement: str = "ALL"
+    embl_file: bool = False
+    embl_info: EmblInfo = dataclasses.field(default_factory=EmblInfo)
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -51,7 +68,12 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
-            setattr(config, key, value)
+            if key == "embl_info" and isinstance(value, dict):
+                for embl_key, embl_value in value.items():
+                    if hasattr(config.embl_info, embl_key) and embl_value is not None:
+                        setattr(config.embl_info, embl_key, embl_value)
+            else:
+                setattr(config, key, value)
     return config
 
 

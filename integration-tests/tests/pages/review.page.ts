@@ -20,9 +20,10 @@ export class ReviewPage {
     }
 
     async waitForZeroProcessing() {
-        await expect(this.page.locator('body')).toContainText('0 awaiting processing', {
-            timeout: 33000,
-        });
+        await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
+            '0 awaiting processing',
+            { timeout: 33000 },
+        );
     }
 
     async navigateToReviewPage() {

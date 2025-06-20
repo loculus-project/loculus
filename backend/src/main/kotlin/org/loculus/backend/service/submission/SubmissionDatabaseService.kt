@@ -245,7 +245,7 @@ class SubmissionDatabaseService(
             submittedProcessedData.data.files?.let { fileMapping ->
                 fileMappingPreconditionValidator
                     .validateFilenamesAreUnique(fileMapping)
-                    .validateCategoriesMatchProcessedSchema(fileMapping, organism)
+                    .validateCategoriesMatchOutputSchema(fileMapping, organism)
                     .validateFilesExist(fileMapping.fileIds)
             }
 
