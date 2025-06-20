@@ -1,4 +1,4 @@
-import { sentenceCase, snakeCase } from 'change-case';
+import { snakeCase } from 'change-case';
 import Papa from 'papaparse';
 import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
@@ -147,14 +147,12 @@ export const MetadataForm: FC<MetadataFormProps> = ({
 
                         return (
                             <EditableDataRow
-                                label={inputField.displayName ?? sentenceCase(inputField.name)}
-                                inputField={inputField.name}
+                                inputField={inputField}
                                 key={'raw_metadata' + inputField.name}
                                 row={field}
                                 onChange={(editedRow: Row) =>
                                     setEditableMetadata((prevMetadata) => prevMetadata.updateWith(editedRow))
                                 }
-                                options={inputField.options}
                             />
                         );
                     })}

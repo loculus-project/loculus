@@ -92,7 +92,7 @@ describe('FormOrUploadWrapper', () => {
         }
 
         async function enterInputValue(label: string, value: string) {
-            const input = screen.getByLabelText(`${label}:`);
+            const input = screen.getByLabelText(label);
             await userEvent.type(input, value);
             expect(input).toHaveValue(value);
         }
@@ -105,8 +105,10 @@ describe('FormOrUploadWrapper', () => {
         test('renders all metadata fields and sequence segments', () => {
             renderForm(true);
             expect(screen.getByText(/ID/)).toBeTruthy();
-            expect(screen.getByText(/Collection date/)).toBeTruthy();
-            expect(screen.getByText(/Collection country/)).toBeTruthy();
+            const collectionDateLabel = document.querySelector('label[for="collectionDate"]');
+            expect(collectionDateLabel).toHaveTextContent('Collection date');
+            const collectionCountryLabel = document.querySelector('label[for="collectionCountry"]');
+            expect(collectionCountryLabel).toHaveTextContent('Collection country');
             expect(screen.getByText(/Host/)).toBeTruthy();
             expect(screen.getByText(/foo/)).toBeTruthy();
             expect(screen.getByText(/bar/)).toBeTruthy();
@@ -170,8 +172,10 @@ describe('FormOrUploadWrapper', () => {
         test('does not render sequence section when consensus sequences are disabled', () => {
             renderForm(false);
             expect(screen.getByText(/ID/)).toBeTruthy();
-            expect(screen.getByText(/Collection date/)).toBeTruthy();
-            expect(screen.getByText(/Collection country/)).toBeTruthy();
+            const collectionDateLabel = document.querySelector('label[for="collectionDate"]');
+            expect(collectionDateLabel).toHaveTextContent('Collection date');
+            const collectionCountryLabel = document.querySelector('label[for="collectionCountry"]');
+            expect(collectionCountryLabel).toHaveTextContent('Collection country');
             expect(screen.getByText(/Host/)).toBeTruthy();
             expect(screen.queryByText(/foo/)).toBeFalsy();
             expect(screen.queryByText(/bar/)).toBeFalsy();
