@@ -1,4 +1,4 @@
-import { test as base, Page } from '@playwright/test';
+import { test as base, expect, Page, ConsoleMessage } from '@playwright/test';
 
 import { v4 as uuidv4 } from 'uuid';
 import { AuthPage } from '../pages/auth.page';
@@ -7,6 +7,7 @@ import { TestAccount } from '../types/auth.types';
 type TestFixtures = {
     pageWithACreatedUser: Page;
     testAccount: TestAccount;
+    consoleWarnings: string[];
 };
 
 export const test = base.extend<TestFixtures>({
@@ -28,4 +29,20 @@ export const test = base.extend<TestFixtures>({
         await use(page);
         await authPage.logout();
     },
+
+    consoleWarnings: async ({ page }, use) => {
+        const warnings: string[] = [];
+        const handleConsole = (msg: ConsoleMessage) => {
+            if (msg.type() === 'warning') {
+                warnings.push(msg.text());
+            }
+        };
+        page.on('console', handleConsole);
+        await use(warnings);
+        page.off('console', handleConsole);
+    },
+});
+
+test.afterEach(async ({ consoleWarnings }) => {
+    expect(consoleWarnings).toEqual([]);
 });
