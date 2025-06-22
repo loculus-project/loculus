@@ -10,7 +10,7 @@ type CustomizedDatePickerProps = {
     field: MetadataFilter;
     setSomeFieldValues: SetSomeFieldValues;
     dateToValueConverter: (date: Date | null) => string;
-    valueToDateConverter: (value: string) => Date | undefined;
+    valueToDateConverter: (value: string) => Date | null;
     fieldValue: string | number;
 };
 
@@ -42,11 +42,11 @@ export function jsDateToISOString(date: Date | null): string {
  * Luxon to create dates with slight time offsets (e.g., 8 seconds).
  * Setting to midnight ensures we get back exactly what rsuite gave us.
  */
-export function isoStringToJsDate(value: string): Date | undefined {
-    if (!value) return undefined;
+export function isoStringToJsDate(value: string): Date | null {
+    if (!value) return null;
 
     const dt = DateTime.fromFormat(value, 'yyyy-MM-dd');
-    if (!dt.isValid) return undefined;
+    if (!dt.isValid) return null;
 
     const jsDate = dt.toJSDate();
     // Force to midnight local time to ensure round-trip consistency
