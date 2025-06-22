@@ -1,17 +1,23 @@
 import { DateTime } from 'luxon';
 import type { FC } from 'react';
+import { DatePicker } from 'rsuite';
 
-import DateInput from './DateInput';
+import 'rsuite/DatePicker/styles/index.css';
+import useClientFlag from '../../../hooks/isClient';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
 
-type DateFieldProps = {
+type CustomizedDatePickerProps = {
     field: MetadataFilter;
     setSomeFieldValues: SetSomeFieldValues;
+    dateToValueConverter: (date: Date | null) => string;
+    valueToDateConverter: (value: string) => Date | undefined;
     fieldValue: string | number;
 };
 
-export const DateField: FC<DateFieldProps> = (props) => (
-    <DateInput
+export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
+    props,
+) => (
+    <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => {
             if (!date) return '';
@@ -22,11 +28,13 @@ export const DateField: FC<DateFieldProps> = (props) => (
     />
 );
 
-export const TimestampField: FC<DateFieldProps> = (props) => {
+export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
+    props,
+) => {
     const isUpperBound = props.field.name.endsWith('To');
 
     return (
-        <DateInput
+        <CustomizedDatePicker
             {...props}
             dateToValueConverter={(date) => {
                 if (date === null) {
@@ -43,19 +51,51 @@ export const TimestampField: FC<DateFieldProps> = (props) => {
                 return String(utcSeconds);
             }}
             valueToDateConverter={(value) => {
-                const timestamp = parseInt(value, 10);
+                const timestamp = Math.max(parseInt(value, 10));
                 if (isNaN(timestamp)) return undefined;
-                // The timestamp represents a UTC time. We need to display the UTC date.
-                // Create a date from the timestamp
-                const utcDate = new Date(timestamp * 1000);
-                // Extract UTC components
-                const year = utcDate.getUTCFullYear();
-                const month = utcDate.getUTCMonth();
-                const day = utcDate.getUTCDate();
-                // Create a local date with the same year/month/day as the UTC date
-                const localDate = new Date(year, month, day);
-                return localDate;
+                const tzOffset = new Date().getTimezoneOffset() * 60;
+                const date = new Date((timestamp + tzOffset) * 1000);
+                return date;
             }}
         />
+    );
+};
+
+const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
+    field,
+    setSomeFieldValues,
+    dateToValueConverter,
+    valueToDateConverter,
+    fieldValue,
+}) => {
+    const isClient = useClientFlag();
+    const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : null;
+    return (
+        <div>
+            <div className='flex justify-between items-center'>
+                <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
+                    {field.displayName ?? field.name}
+                </label>
+                <DatePicker
+                    value={dateValue}
+                    id={field.name}
+                    name={field.name}
+                    key={field.name}
+                    isoWeek={true}
+                    oneTap={true}
+                    onChange={(date) => {
+                        if (date) {
+                            setSomeFieldValues([field.name, dateToValueConverter(date)]);
+                        } else {
+                            setSomeFieldValues([field.name, '']);
+                        }
+                    }}
+                    onClean={() => {
+                        setSomeFieldValues([field.name, '']);
+                    }}
+                    disabled={!isClient}
+                />
+            </div>
+        </div>
     );
 };
