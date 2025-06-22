@@ -182,11 +182,11 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     {field.displayName ?? field.name}
                 </label>
                 <DatePicker
+                    format='dd/MM/yyyy'
                     defaultValue={defaultDate}
                     id={field.name}
                     name={field.name}
                     key={resetKey}
-                    format='dd/MM/yyyy'
                     isoWeek
                     oneTap
                     onChange={handleChange}
