@@ -6,6 +6,12 @@ import { TimestampField } from './DateField';
 
 const setSomeFieldValues = vi.fn();
 
+const date = new Date(Date.UTC(2025, 2, 17, 0, 0, 0)); // March 17, 2025, at midnight UTC
+const dateDisplayString = date.toISOString().split('T')[0];
+const dateDisplayStringWithoutDelims = dateDisplayString.replace(/\D/g, '');
+const timestampDayStart = Math.floor(date.getTime() / 1000);
+const timestampDayEnd = timestampDayStart + 24 * 60 * 60 - 1; // End of the day in UTC (23:59:59)
+
 describe('TimestampField', () => {
     beforeEach(() => {
         setSomeFieldValues.mockReset();
@@ -18,7 +24,7 @@ describe('TimestampField', () => {
                     name: 'releasedAtTimestampFrom',
                     type: 'timestamp',
                 }}
-                fieldValue={'1742169600'}
+                fieldValue={timestampDayStart.toString()}
                 setSomeFieldValues={setSomeFieldValues}
             />,
         );
@@ -26,7 +32,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue(dateDisplayString);
     });
 
     test('"From" field sets date correctly', async () => {
@@ -42,9 +48,9 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
+        await userEvent.type(input, dateDisplayStringWithoutDelims);
+        expect(input).toHaveValue(dateDisplayString);
+        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', timestampDayStart.toString()]);
     });
 
     test('"To" field renders date correctly', () => {
@@ -54,7 +60,7 @@ describe('TimestampField', () => {
                     name: 'releasedAtTimestampTo',
                     type: 'timestamp',
                 }}
-                fieldValue={'1742255999'}
+                fieldValue={timestampDayEnd}
                 setSomeFieldValues={setSomeFieldValues}
             />,
         );
@@ -62,7 +68,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue(dateDisplayString);
     });
 
     test('"To" field sets date correctly', async () => {
@@ -78,8 +84,8 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
+        await userEvent.type(input, dateDisplayStringWithoutDelims);
+        expect(input).toHaveValue(dateDisplayString);
+        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', timestampDayEnd.toString()]);
     });
 });

@@ -148,7 +148,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     id={field.name}
                     name={field.name}
                     key={field.name}
-                    format={'dd/MM/yyyy'}
+                    format={'yyyy-MM-dd'}
                     isoWeek={true}
                     oneTap={true}
                     onChange={(date) => {

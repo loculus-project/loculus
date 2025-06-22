@@ -143,14 +143,17 @@ describe('DateRangeField', () => {
         expect(fromInput).not.toBeNull();
         expect(toInput).not.toBeNull();
 
+        const lowerString = '2002-02-02';
+        const upperString = '2003-03-03';
+
         await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(fromInput!, lowerString.replace(/-/g, ''));
         await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '03032003');
+        await userEvent.type(toInput!, upperString.replace(/-/g, ''));
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '2002-02-02'],
-            ['collectionDateRangeUpperTo', '2003-03-03'],
+            ['collectionDateRangeLowerFrom', lowerString],
+            ['collectionDateRangeUpperTo', upperString],
             ['collectionDateRangeUpperFrom', null],
             ['collectionDateRangeLowerTo', null],
         );
