@@ -4,11 +4,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { TimestampField } from './DateField';
 
-const setSomeFieldValues = vi.fn();
+const setValue = vi.fn();
 
 describe('TimestampField', () => {
     beforeEach(() => {
-        setSomeFieldValues.mockReset();
+        setValue.mockReset();
     });
 
     test('"From" field renders date correctly', () => {
@@ -19,7 +19,7 @@ describe('TimestampField', () => {
                     type: 'timestamp',
                 }}
                 fieldValue={'1742169600'}
-                setSomeFieldValues={setSomeFieldValues}
+                setValue={setValue}
             />,
         );
 
@@ -37,14 +37,14 @@ describe('TimestampField', () => {
                     type: 'timestamp',
                 }}
                 fieldValue={''}
-                setSomeFieldValues={setSomeFieldValues}
+                setValue={setValue}
             />,
         );
 
         const input = screen.getByRole('textbox');
         await userEvent.type(input, '17032025');
         expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
+        expect(setValue).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
     });
 
     test('"To" field renders date correctly', () => {
@@ -55,7 +55,7 @@ describe('TimestampField', () => {
                     type: 'timestamp',
                 }}
                 fieldValue={'1742255999'}
-                setSomeFieldValues={setSomeFieldValues}
+                setValue={setValue}
             />,
         );
 
@@ -73,13 +73,13 @@ describe('TimestampField', () => {
                     type: 'timestamp',
                 }}
                 fieldValue={''}
-                setSomeFieldValues={setSomeFieldValues}
+                setValue={setValue}
             />,
         );
 
         const input = screen.getByRole('textbox');
         await userEvent.type(input, '17032025');
         expect(input).toHaveValue('17/03/2025');
-        expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
+        expect(setValue).lastCalledWith('1742255999');
     });
 });

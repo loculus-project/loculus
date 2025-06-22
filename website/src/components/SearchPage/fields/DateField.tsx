@@ -4,13 +4,13 @@ import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
 import useClientFlag from '../../../hooks/isClient';
-import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
+import { type MetadataFilter } from '../../../types/config';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
-    setSomeFieldValues: SetSomeFieldValues;
+    setValue: (value: string | number | null) => void;
     dateToValueConverter: (date: Date | null) => string;
-    valueToDateConverter: (value: string) => Date | undefined;
+    valueToDateConverter: (value: string) => Date | null;
     fieldValue: string | number;
 };
 
@@ -42,11 +42,11 @@ export function jsDateToISOString(date: Date | null): string {
  * Luxon to create dates with slight time offsets (e.g., 8 seconds).
  * Setting to midnight ensures we get back exactly what rsuite gave us.
  */
-export function isoStringToJsDate(value: string): Date | undefined {
-    if (!value) return undefined;
+export function isoStringToJsDate(value: string): Date | null {
+    if (!value) return null;
 
     const dt = DateTime.fromFormat(value, 'yyyy-MM-dd');
-    if (!dt.isValid) return undefined;
+    if (!dt.isValid) return null;
 
     const jsDate = dt.toJSDate();
     // Force to midnight local time to ensure round-trip consistency
@@ -82,14 +82,14 @@ export function jsDateToTimestamp(date: Date | null, isUpperBound: boolean): str
  * Converts UTC timestamp back to Date with UTC components as local components.
  * Reverses the "local as UTC" conversion for round-trip consistency.
  */
-export function timestampToJsDate(value: string): Date | undefined {
-    if (!value) return undefined;
+export function timestampToJsDate(value: string): Date | null {
+    if (!value) return null;
 
     const timestamp = parseInt(value, 10);
-    if (isNaN(timestamp)) return undefined;
+    if (isNaN(timestamp)) return null;
 
     const utcDate = new Date(timestamp * 1000);
-    if (isNaN(utcDate.getTime())) return undefined;
+    if (isNaN(utcDate.getTime())) return null;
 
     // Use UTC components as local components
     const localDate = new Date(
@@ -102,7 +102,7 @@ export function timestampToJsDate(value: string): Date | undefined {
         utcDate.getUTCMilliseconds(),
     );
 
-    return isNaN(localDate.getTime()) ? undefined : localDate;
+    return isNaN(localDate.getTime()) ? null : localDate;
 }
 
 export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
@@ -131,12 +131,13 @@ export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConv
 
 const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     field,
-    setSomeFieldValues,
+    setValue,
     dateToValueConverter,
     valueToDateConverter,
     fieldValue,
 }) => {
     const isClient = useClientFlag();
+    const dateForPicker = valueToDateConverter(fieldValue.toString());
     return (
         <div>
             <div className='flex justify-between items-center'>
@@ -144,7 +145,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     {field.displayName ?? field.name}
                 </label>
                 <DatePicker
-                    defaultValue={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
+                    value={dateForPicker}
                     id={field.name}
                     name={field.name}
                     key={field.name}
@@ -152,10 +153,10 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     isoWeek={true}
                     oneTap={true}
                     onChange={(date) => {
-                        setSomeFieldValues([field.name, dateToValueConverter(date)]);
+                        setValue(dateToValueConverter(date));
                     }}
                     onClean={() => {
-                        setSomeFieldValues([field.name, '']);
+                        setValue('');
                     }}
                     disabled={!isClient}
                 />

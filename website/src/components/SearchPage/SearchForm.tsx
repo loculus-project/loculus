@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
@@ -177,23 +177,18 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
         }
     }
 
+    const setValue = useCallback(
+        (value: string | number | null) => {
+            setSomeFieldValues([field.name, value]);
+        },
+        [field.name, setSomeFieldValues],
+    );
+
     switch (field.type) {
         case 'date':
-            return (
-                <DateField
-                    field={field}
-                    fieldValue={fieldValues[field.name] ?? ''}
-                    setSomeFieldValues={setSomeFieldValues}
-                />
-            );
+            return <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setValue={setValue} />;
         case 'timestamp':
-            return (
-                <TimestampField
-                    field={field}
-                    fieldValue={fieldValues[field.name] ?? ''}
-                    setSomeFieldValues={setSomeFieldValues}
-                />
-            );
+            return <TimestampField field={field} fieldValue={fieldValues[field.name] ?? ''} setValue={setValue} />;
         default:
             if (field.lineageSearch) {
                 return (
