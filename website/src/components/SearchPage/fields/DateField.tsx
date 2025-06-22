@@ -182,7 +182,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     {field.displayName ?? field.name}
                 </label>
                 <DatePicker
-                    format='dd/MM/yyyy'
+                    format='yyyy-MM-dd'
                     defaultValue={defaultDate}
                     id={field.name}
                     name={field.name}
