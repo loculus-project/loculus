@@ -138,20 +138,20 @@ describe('DateRangeField', () => {
             />,
         );
 
-        const fromInput = () => screen.getByText('From').closest('div')?.querySelector('input');
-        const toInput = () => screen.getByText('To').closest('div')?.querySelector('input');
+        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
 
-        expect(fromInput()).not.toBeNull();
-        expect(toInput()).not.toBeNull();
+        expect(fromInput).toHaveValue('01/01/2024');
+        expect(toInput).toHaveValue('31/12/2024');
 
-        await userEvent.type(fromInput()!, '{backspace}');
-        await userEvent.type(fromInput()!, '02022002');
-        await userEvent.type(toInput()!, '{backspace}');
-        await userEvent.type(toInput()!, '03032003');
+        await userEvent.type(fromInput!, '{backspace}');
+        await userEvent.type(fromInput!, '23041987');
+        await userEvent.type(toInput!, '{backspace}');
+        await userEvent.type(toInput!, '13102014');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '2002-02-02'],
-            ['collectionDateRangeUpperTo', '2003-03-03'],
+            ['collectionDateRangeLowerFrom', '1987-04-23'],
+            ['collectionDateRangeUpperTo', '2014-10-13'],
             ['collectionDateRangeUpperFrom', null],
             ['collectionDateRangeLowerTo', null],
         );

@@ -139,26 +139,41 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     const isClient = useClientFlag();
 
     /**
-     * Internal key that forces a remount when `fieldValue` transitions
-     * from non‑empty → empty. This leaves the picker stable in all
-     * other situations and avoids unnecessary flicker.
      * Using DatePicker with controlled value causes issues:
      * - it misbehaves on typing when LAPIS errors, e.g. on out-of-range integers
      * - it can get stuck when pressing keyup/down for a few seconds
-     */
+     * Hence, we're using it as an uncontrolled component with a key that forces remounts
+     * when the fieldValue changes from non-emtpy to empty - but only when the change
+     * is not triggered by interaction with the DatePicker itself.
+     **/
     const [resetKey, setResetKey] = useState(0);
-    const lastWasEmpty = useRef<boolean>(true);
+    const lastWasEmpty = useRef(true);
+    const internalClear = useRef(false);
 
     useEffect(() => {
         const isEmpty = fieldValue === '';
-        if (isEmpty && !lastWasEmpty.current) {
-            // Only bump the key on non-empty → empty transitions
+
+        // Remount only on non‑empty → empty *and* when not internally cleared
+        if (isEmpty && !lastWasEmpty.current && !internalClear.current) {
             setResetKey((k) => k + 1);
         }
+
         lastWasEmpty.current = isEmpty;
+        internalClear.current = false;
     }, [fieldValue]);
 
     const defaultDate = fieldValue !== '' ? valueToDateConverter(String(fieldValue)) : null;
+
+    const handleChange = (date: Date | null) => {
+        const converted = dateToValueConverter(date);
+        if (converted === '') internalClear.current = true;
+        setSomeFieldValues([field.name, converted]);
+    };
+
+    const handleClean = () => {
+        internalClear.current = true;
+        setSomeFieldValues([field.name, '']);
+    };
 
     return (
         <div>
@@ -166,21 +181,16 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                 <label htmlFor={field.name} className='block w-16 my-3 mr-2 text-sm text-right text-gray-400'>
                     {field.displayName ?? field.name}
                 </label>
-
                 <DatePicker
                     key={resetKey}
                     id={field.name}
                     name={field.name}
-                    defaultValue={defaultDate} // defaultValue means it's an uncontrolled component
+                    defaultValue={defaultDate}
                     format='dd/MM/yyyy'
                     isoWeek
                     oneTap
-                    onChange={(date) => {
-                        setSomeFieldValues([field.name, dateToValueConverter(date)]);
-                    }}
-                    onClean={() => {
-                        setSomeFieldValues([field.name, '']);
-                    }}
+                    onChange={handleChange}
+                    onClean={handleClean}
                     disabled={!isClient}
                 />
             </div>
