@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import type { FC } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
@@ -137,20 +137,44 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     fieldValue,
 }) => {
     const isClient = useClientFlag();
+
+    /**
+     * Internal key that forces a remount when `fieldValue` transitions
+     * from non‑empty → empty. This leaves the picker stable in all
+     * other situations and avoids unnecessary flicker.
+     * Using DatePicker with controlled value causes issues:
+     * - it misbehaves on typing when LAPIS errors, e.g. on out-of-range integers
+     * - it can get stuck when pressing keyup/down for a few seconds
+     */
+    const [resetKey, setResetKey] = useState(0);
+    const lastWasEmpty = useRef<boolean>(true);
+
+    useEffect(() => {
+        const isEmpty = fieldValue === '';
+        if (isEmpty && !lastWasEmpty.current) {
+            // Only bump the key on non-empty → empty transitions
+            setResetKey((k) => k + 1);
+        }
+        lastWasEmpty.current = isEmpty;
+    }, [fieldValue]);
+
+    const defaultDate = fieldValue !== '' ? valueToDateConverter(String(fieldValue)) : null;
+
     return (
         <div>
-            <div className='flex justify-between items-center'>
-                <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
+            <div className='flex items-center justify-between'>
+                <label htmlFor={field.name} className='block w-16 my-3 mr-2 text-sm text-right text-gray-400'>
                     {field.displayName ?? field.name}
                 </label>
+
                 <DatePicker
-                    defaultValue={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
+                    key={resetKey}
                     id={field.name}
                     name={field.name}
-                    key={field.name}
-                    format={'dd/MM/yyyy'}
-                    isoWeek={true}
-                    oneTap={true}
+                    defaultValue={defaultDate} // defaultValue means it's an uncontrolled component
+                    format='dd/MM/yyyy'
+                    isoWeek
+                    oneTap
                     onChange={(date) => {
                         setSomeFieldValues([field.name, dateToValueConverter(date)]);
                     }}
