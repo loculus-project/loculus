@@ -567,6 +567,57 @@ const DateInput: FC<DateInputProps> = ({
         }
     };
 
+    const handleBeforeInput = (e: React.FormEvent<HTMLInputElement>) => {
+        const native = e.nativeEvent as InputEvent;
+        let key: string | null = null;
+        if (native.inputType === 'deleteContentBackward') {
+            key = 'Backspace';
+        } else if (native.data && /^\d$/.test(native.data)) {
+            key = native.data;
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const el = e.currentTarget;
+        const result = handleDateKeyDown(key, inputValue, el.selectionStart ?? 0, el.selectionEnd ?? 0, segments);
+        if (result.preventDefault) {
+            e.preventDefault();
+            setInputValue(result.value);
+
+            const digits = extractDigits(result.value);
+            if (digits.length === 8) {
+                const iso = buildISODateFromDigits(digits);
+                if (iso) {
+                    const dt = DateTime.fromISO(iso);
+                    if (dt.isValid) {
+                        setSomeFieldValues([field.name, dateToValueConverter(dt.toJSDate())]);
+                        setIsValidDate(true);
+                    } else {
+                        setSomeFieldValues([field.name, '']);
+                        setIsValidDate(false);
+                    }
+                } else {
+                    setSomeFieldValues([field.name, '']);
+                    setIsValidDate(false);
+                }
+            } else if (digits.length === 0 && result.value === mask) {
+                setSomeFieldValues([field.name, '']);
+                setIsValidDate(true);
+            } else {
+                setSomeFieldValues([field.name, '']);
+                setIsValidDate(true);
+            }
+
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.setSelectionRange(result.selectionStart, result.selectionEnd);
+                }
+            }, 0);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value === '') {
             isUserEditingRef.current = true;
@@ -615,6 +666,7 @@ const DateInput: FC<DateInputProps> = ({
                         name={field.name}
                         value={inputValue}
                         onChange={handleChange}
+                        onBeforeInput={handleBeforeInput}
                         onKeyDown={handleKeyDown}
                         onFocus={handleFocus}
                         onBlur={() => {
