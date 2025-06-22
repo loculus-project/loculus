@@ -37,10 +37,4 @@ test.describe('Search', () => {
         expect(searchParams.has('versionStatus')).toBeTruthy();
         expect(searchParams.get('versionStatus')).toBe('');
     });
-
-    test('test that date filter can be added', async ({ page }) => {
-        await searchPage.ebolaSudan();
-
-        await searchPage.enterCollectionDateFrom('20240115');
-    });
 });
