@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState, useCallback } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
@@ -137,16 +138,16 @@ describe('DateRangeField', () => {
             />,
         );
 
-        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
-        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
+        const fromInput = () => screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = () => screen.getByText('To').closest('div')?.querySelector('input');
 
-        expect(fromInput).not.toBeNull();
-        expect(toInput).not.toBeNull();
+        expect(fromInput()).not.toBeNull();
+        expect(toInput()).not.toBeNull();
 
-        await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '02022002');
-        await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '03032003');
+        await userEvent.type(fromInput()!, '{backspace}');
+        await userEvent.type(fromInput()!, '02022002');
+        await userEvent.type(toInput()!, '{backspace}');
+        await userEvent.type(toInput()!, '03032003');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
             ['collectionDateRangeLowerFrom', '2002-02-02'],
@@ -155,4 +156,50 @@ describe('DateRangeField', () => {
             ['collectionDateRangeLowerTo', null],
         );
     });
+
+    it('setting fieldValue to empty string clears date field', async () => {
+        function Wrapper() {
+            const [values, _setValues] = useState<FieldValues>({
+                collectionDateRangeLowerFrom: '2024-01-01',
+                collectionDateRangeUpperTo: '2024-12-31',
+            });
+
+            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null][]) => {
+                _setValues((state) => {
+                    const newState = { ...state };
+                    fieldValuesToSet.forEach(([k, v]) => (newState[k] = v));
+                    return newState;
+                });
+            }, []);
+
+            return (
+                <div>
+                    <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
+                    <button
+                        onClick={() =>
+                            setValues(['collectionDateRangeLowerFrom', null], ['collectionDateRangeUpperTo', null])
+                        }
+                    >
+                        Update Dates
+                    </button>
+                </div>
+            );
+        }
+
+        const user = userEvent.setup();
+
+        render(<Wrapper />);
+
+        const fromInput = () => screen.getByText('From').closest('div')?.querySelector('input');
+        const toInput = () => screen.getByText('To').closest('div')?.querySelector('input');
+        const button = screen.getByText('Update Dates');
+
+        expect(fromInput()).toHaveValue('01/01/2024');
+        expect(toInput()).toHaveValue('31/12/2024');
+
+        await user.click(button);
+
+        expect(fromInput()).toHaveValue('');
+        expect(toInput()).toHaveValue('');
+    }, 3000);
 });
