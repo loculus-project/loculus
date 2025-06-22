@@ -667,6 +667,7 @@ const DateInput: FC<DateInputProps> = ({
                     <input
                         type='date'
                         ref={pickerRef}
+                        readOnly={true}
                         onChange={handleDateChange}
                         value={(() => {
                             const digits = extractDigits(inputValue);
