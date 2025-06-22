@@ -99,7 +99,6 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     fieldValue,
 }) => {
     const isClient = useClientFlag();
-    const dateValue = fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : null;
     return (
         <div>
             <div className='flex justify-between items-center'>
@@ -107,10 +106,11 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     {field.displayName ?? field.name}
                 </label>
                 <DatePicker
-                    value={dateValue}
+                    defaultValue={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
                     id={field.name}
                     name={field.name}
                     key={field.name}
+                    format={'dd/MM/yyyy'}
                     isoWeek={true}
                     oneTap={true}
                     onChange={(date) => {
