@@ -52,6 +52,29 @@ export class SearchPage {
         await this.page.getByLabel('Accession').fill(accessions);
     }
 
+    async enterCollectionDateFrom(date: string) {
+        const fromInputFn = () =>
+            this.page.getByText('From').locator('..').locator('input[type="text"]');
+
+        const fromInput = fromInputFn();
+
+        await expect(fromInput).toBeEnabled({ timeout: 10000 });
+
+        await fromInput.click({
+            position: { x: 3, y: 3 },
+            force: true,
+        });
+
+        await fromInput.fill('');
+        await fromInput.pressSequentially(date, { delay: 100 });
+
+        const formattedDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6)}`;
+        await expect(fromInput).toHaveValue(formattedDate);
+        await expect(this.page.getByText('Collection date - From:')).toBeVisible();
+
+        return fromInputFn;
+    }
+
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
     }
