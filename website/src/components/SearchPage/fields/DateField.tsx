@@ -177,14 +177,14 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
 
     return (
         <div>
-            <div className='flex items-center justify-between'>
-                <label htmlFor={field.name} className='block w-16 my-3 mr-2 text-sm text-right text-gray-400'>
+            <div className='flex justify-between items-center'>
+                <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
                     {field.displayName ?? field.name}
                 </label>
                 <DatePicker
-                    key={resetKey}
                     id={field.name}
                     name={field.name}
+                    key={resetKey}
                     defaultValue={defaultDate}
                     format='dd/MM/yyyy'
                     isoWeek
