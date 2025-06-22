@@ -21,7 +21,7 @@ type CustomizedDatePickerProps = {
  * which converts to UTC and can shift dates (e.g., May 7 0010 becomes May 6 0010).
  * Native getFullYear/getMonth/getDate preserve the exact calendar date displayed.
  */
-export function dateToISOString(date: Date | null): string {
+export function jsDateToISOString(date: Date | null): string {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
         return '';
     }
@@ -42,7 +42,7 @@ export function dateToISOString(date: Date | null): string {
  * Luxon to create dates with slight time offsets (e.g., 8 seconds).
  * Setting to midnight ensures we get back exactly what rsuite gave us.
  */
-export function isoStringToDate(value: string): Date | undefined {
+export function isoStringToJsDate(value: string): Date | undefined {
     if (!value) return undefined;
 
     const dt = DateTime.fromFormat(value, 'yyyy-MM-dd');
@@ -54,9 +54,66 @@ export function isoStringToDate(value: string): Date | undefined {
     return jsDate;
 }
 
+/**
+ * Converts Date to UTC timestamp treating local calendar components as UTC.
+ * E.g., local "2023-03-04 14:30" becomes timestamp for "2023-03-04 14:30 UTC".
+ * This ignores actual timezone info to ensure consistent round-trip behavior.
+ * Note: Years < 100 not supported (would be misinterpreted by Date constructor).
+ */
+export function jsDateToTimestamp(date: Date | null, isUpperBound: boolean): string {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        return '';
+    }
+
+    // Extract displayed calendar components
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    const [hours, minutes, seconds, ms] = isUpperBound ? [23, 59, 59, 999] : [0, 0, 0, 0];
+
+    const utcDate = new Date(Date.UTC(year, month, day, hours, minutes, seconds, ms));
+    if (isNaN(utcDate.getTime())) return '';
+
+    return String(Math.floor(utcDate.getTime() / 1000));
+}
+
+/**
+ * Converts UTC timestamp back to Date with UTC components as local components.
+ * Reverses the "local as UTC" conversion for round-trip consistency.
+ */
+export function timestampToJsDate(value: string): Date | undefined {
+    if (!value) return undefined;
+
+    const timestamp = parseInt(value, 10);
+    if (isNaN(timestamp)) return undefined;
+
+    const utcDate = new Date(timestamp * 1000);
+    if (isNaN(utcDate.getTime())) return undefined;
+
+    // Use UTC components as local components
+    const localDate = new Date(
+        utcDate.getUTCFullYear(),
+        utcDate.getUTCMonth(),
+        utcDate.getUTCDate(),
+        utcDate.getUTCHours(),
+        utcDate.getUTCMinutes(),
+        utcDate.getUTCSeconds(),
+        utcDate.getUTCMilliseconds(),
+    );
+
+    return isNaN(localDate.getTime()) ? undefined : localDate;
+}
+
 export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
     props,
-) => <CustomizedDatePicker {...props} dateToValueConverter={dateToISOString} valueToDateConverter={isoStringToDate} />;
+) => (
+    <CustomizedDatePicker
+        {...props}
+        dateToValueConverter={jsDateToISOString}
+        valueToDateConverter={isoStringToJsDate}
+    />
+);
 
 export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
     props,
@@ -66,27 +123,8 @@ export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConv
     return (
         <CustomizedDatePicker
             {...props}
-            dateToValueConverter={(date) => {
-                if (date === null) {
-                    return '';
-                }
-                if (isUpperBound) {
-                    date.setHours(23, 59, 59, 999);
-                } else {
-                    date.setHours(0, 0, 0, 0);
-                }
-                const localSecondsInUtc = Math.floor(date.getTime() / 1000);
-                const utcSeconds = localSecondsInUtc - date.getTimezoneOffset() * 60;
-                if (isNaN(utcSeconds)) return '';
-                return String(utcSeconds);
-            }}
-            valueToDateConverter={(value) => {
-                const timestamp = Math.max(parseInt(value, 10));
-                if (isNaN(timestamp)) return undefined;
-                const tzOffset = new Date().getTimezoneOffset() * 60;
-                const date = new Date((timestamp + tzOffset) * 1000);
-                return date;
-            }}
+            dateToValueConverter={(date) => jsDateToTimestamp(date, isUpperBound)}
+            valueToDateConverter={(timestamp) => timestampToJsDate(timestamp)}
         />
     );
 };
@@ -114,11 +152,7 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                     isoWeek={true}
                     oneTap={true}
                     onChange={(date) => {
-                        if (date) {
-                            setSomeFieldValues([field.name, dateToValueConverter(date)]);
-                        } else {
-                            setSomeFieldValues([field.name, '']);
-                        }
+                        setSomeFieldValues([field.name, dateToValueConverter(date)]);
                     }}
                     onClean={() => {
                         setSomeFieldValues([field.name, '']);
