@@ -14,19 +14,49 @@ type CustomizedDatePickerProps = {
     fieldValue: string | number;
 };
 
+/**
+ * Converts a Date object to YYYY-MM-DD string format.
+ * Uses native Date methods to extract calendar date components directly.
+ * This avoids timezone conversion issues that occur with Luxon's toISODate(),
+ * which converts to UTC and can shift dates (e.g., May 7 0010 becomes May 6 0010).
+ * Native getFullYear/getMonth/getDate preserve the exact calendar date displayed.
+ */
+export function dateToISOString(date: Date | null): string {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        return '';
+    }
+
+    const year = date.getFullYear().toString().padStart(4, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Converts a YYYY-MM-DD string to a Date object.
+ * Uses Luxon's robust validation via fromFormat instead of fromISO
+ * to avoid timezone interpretation issues. fromFormat treats the
+ * input as a local date without timezone conversion.
+ * Forces result to midnight local time to ensure round-trip consistency.
+ * Historical timezones (like GMT+0034 in year 0010) can cause
+ * Luxon to create dates with slight time offsets (e.g., 8 seconds).
+ * Setting to midnight ensures we get back exactly what rsuite gave us.
+ */
+export function isoStringToDate(value: string): Date | undefined {
+    if (!value) return undefined;
+
+    const dt = DateTime.fromFormat(value, 'yyyy-MM-dd');
+    if (!dt.isValid) return undefined;
+
+    const jsDate = dt.toJSDate();
+    // Force to midnight local time to ensure round-trip consistency
+    jsDate.setHours(0, 0, 0, 0);
+    return jsDate;
+}
+
 export const DateField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
     props,
-) => (
-    <CustomizedDatePicker
-        {...props}
-        dateToValueConverter={(date) => {
-            if (!date) return '';
-            const isoDate = DateTime.fromJSDate(date).toISODate();
-            return isoDate ?? '';
-        }}
-        valueToDateConverter={(value) => (value ? DateTime.fromISO(value).toJSDate() : undefined)}
-    />
-);
+) => <CustomizedDatePicker {...props} dateToValueConverter={dateToISOString} valueToDateConverter={isoStringToDate} />;
 
 export const TimestampField: FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
     props,
