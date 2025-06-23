@@ -43,16 +43,8 @@ class FileMappingPreconditionValidator(
     ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
         val allowedCategories = backendConfig
-            .getInstanceConfig(organism).schema.submissionDataTypes.files.categories.map { it.name }.toSet()
-        fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
-            if (!allowedCategories.contains(category)) {
-                throw UnprocessableEntityException(
-                    "The category $category is not part of the configured submission categories for ${organism.name}." +
-                        " Allowed categories are: ${allowedCategories.joinToString(", ")}.",
-                )
-            }
-        }
-        return this
+            .getInstanceConfig(organism).schema.submissionDataTypes.files.categories
+        return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "submission")
     }
 
     /**
@@ -64,12 +56,23 @@ class FileMappingPreconditionValidator(
         organism: Organism,
     ): FileMappingPreconditionValidator {
         if (fileCategoriesFilesMap == null) return this
-        val allowedCategories = backendConfig.getInstanceConfig(organism).schema.files.map { it.name }.toSet()
+        val allowedCategories = backendConfig.getInstanceConfig(organism).schema.files
+        return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
+    }
+
+    private fun validateCategoriesMatchSchema(
+        fileCategoriesFilesMap: FileCategoryFilesMap,
+        allowedFileCategories: List<org.loculus.backend.config.FileCategory>,
+        organism: Organism,
+        categoriesType: String,
+    ): FileMappingPreconditionValidator {
+        val allowedCategories = allowedFileCategories.map { it.name }.toSet()
+
         fileCategoriesFilesMap.categories.forEach { category: FileCategory ->
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
-                    "The category $category is not part of the configured output categories for ${organism.name}." +
-                        " Allowed categories are: ${allowedCategories.joinToString(", ")}.",
+                    "The category $category is not part of the configured $categoriesType categories for " +
+                        "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
                 )
             }
         }
