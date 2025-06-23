@@ -60,6 +60,16 @@ class FileMappingPreconditionValidator(
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
     }
 
+    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
+        uncheckedFileIds.forEach { fileId ->
+            val fileSize = s3Service.getFileSize(fileId)
+                ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
+            filesDatabaseService.setFileSize(fileId, fileSize)
+        }
+        return this
+    }
+
     private fun validateCategoriesMatchSchema(
         fileCategoriesFilesMap: FileCategoryFilesMap,
         allowedFileCategories: List<org.loculus.backend.config.FileCategory>,
@@ -72,19 +82,9 @@ class FileMappingPreconditionValidator(
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
                     "The category $category is not part of the configured $categoriesType categories for " +
-                        "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
+                            "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
                 )
             }
-        }
-        return this
-    }
-
-    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
-        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
-        uncheckedFileIds.forEach { fileId ->
-            val fileSize = s3Service.getFileSize(fileId)
-                ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
-            filesDatabaseService.setFileSize(fileId, fileSize)
         }
         return this
     }
