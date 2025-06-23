@@ -49,7 +49,7 @@ test.describe('Search', () => {
             .getByLabel('remove filter')
             .click();
 
-        await expect(fromInputFn()).toHaveValue(/'YYYY-MM-DD'/i);
+        await expect(fromInputFn()).toHaveValue('');
 
         await expect(page.getByText('Collection date - From:')).not.toBeVisible();
         expect(new URL(page.url()).searchParams.size).toBe(0);
