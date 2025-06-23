@@ -79,9 +79,14 @@ export class SearchPage {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
-    async clickOnSequence(rowIndex = 0) {
+    async clickOnSequence(rowIndex = 0): Promise<string | null> {
         const rows = this.getSequenceRows();
-        await rows.nth(rowIndex).click();
+        const row = rows.nth(rowIndex);
+        const rowText = await row.innerText();
+        const loculusIdMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+        await row.click();
+        return loculusId;
     }
 
     getSequencePreviewModal() {
