@@ -52,6 +52,7 @@ class ProcessingAnnotation:
 @dataclass
 class UnprocessedData:
     submitter: str
+    group_id: int
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
 
@@ -90,6 +91,12 @@ class UnprocessedAfterNextclade:
 
 
 @dataclass
+class FileIdAndName:
+    fileId: str  # noqa: N815
+    name: str
+
+
+@dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
     unalignedNucleotideSequences: dict[str, Any]  # noqa: N815
@@ -97,6 +104,7 @@ class ProcessedData:
     nucleotideInsertions: dict[str, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
     aminoAcidInsertions: dict[str, Any]  # noqa: N815
+    files: dict[str, list[FileIdAndName]] | None = None
 
 
 @dataclass
@@ -120,7 +128,24 @@ class ProcessedEntry:
 
 
 @dataclass
+class SubmissionData:
+    """Wraps a processed entry together with group ID and annotation information.
+    The processed entry is submitted as usual,
+    but the annotations need to be uploaded separately."""
+    processed_entry: ProcessedEntry
+    group_id: int | None = None
+    annotations: dict[str, Any] | None = None
+
+
+@dataclass
 class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@dataclass
+class FileUploadInfo:
+    """Objects of this type are returned by the /files/request-upload endpoint."""
+    fileId: str  # noqa: N815
+    url: str
