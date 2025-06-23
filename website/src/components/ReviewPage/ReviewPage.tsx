@@ -184,7 +184,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
 
     const controlPanel = (
         <div className='flex flex-col'>
-            <div className='text-gray-600 mr-3'>
+            <div className='text-gray-600 mr-3' data-testid='review-page-control-panel'>
                 {unprocessedCount > 0 && (
                     <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
                 )}
