@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from Bio import SeqIO
 from factory_methods import (
@@ -675,12 +676,12 @@ def test_parse_date_into_range() -> None:
 def test_create_flatfile(config: Config, case_dir):
     test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
 
-    metadata_tsv_path = os.path.join(test_data_dir, "metadata.tsv")
-    metadata = {}
-    with open(metadata_tsv_path, encoding="utf-8") as f:
-        header = f.readline().strip().split("\t")
-        values = f.readline().strip().split("\t")
-        metadata = dict(zip(header, values, strict=False))
+    metadata = (
+        pd.read_csv(Path(test_data_dir) / "metadata.tsv", sep="\t", nrows=1, dtype=str)
+        .fillna("")
+        .iloc[0]
+        .to_dict()
+    )
 
     with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
         records = list(SeqIO.parse(f, "fasta"))
