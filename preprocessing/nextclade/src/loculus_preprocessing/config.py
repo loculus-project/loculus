@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 CLI_TYPES = [str, int, float, bool]
 
 
+@dataclass
+class EmblInfoMetadataPropertyNames:
+    country_property: str = "geoLocCountry"
+    admin_level_properties: list[str] = dataclasses.field(
+        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    )
+    collection_date_property: str = "sampleCollectionDate"
+    authors_property: str = "authors"
+
+
 class AlignmentRequirement(Enum):
     # Determines whether ALL or ANY segments that a user provides must align.
     # ANY: warn if some segments fail and some segments align
@@ -32,7 +42,7 @@ class Config:
     batch_size: int = 5
     pipeline_version: int = 1
 
-    backend_host: str = ""  # populated in get_config if left empty, so we can use organism
+    backend_host: str = ""  # base API URL and organism - populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
@@ -54,6 +64,15 @@ class Config:
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
     accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
+    create_embl_file: bool = False
+    scientific_name: str = "Orthonairovirus haemorrhagiae"
+    molecule_type: str = "genomic RNA"
+    topology: str = "linear"
+    db_name: str = "Loculus"
+    # The 'embl' section of the config contains metadata property names for the EMBL file
+    embl: EmblInfoMetadataPropertyNames = dataclasses.field(
+        default_factory=EmblInfoMetadataPropertyNames
+    )
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -64,6 +83,12 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
+            if key == "embl_info" and isinstance(value, dict):
+                for embl_key, embl_value in value.items():
+                    if hasattr(config.embl, embl_key) and embl_value is not None:
+                        setattr(config.embl, embl_key, embl_value)
+            else:
+                setattr(config, key, value)
     return config
 
 
