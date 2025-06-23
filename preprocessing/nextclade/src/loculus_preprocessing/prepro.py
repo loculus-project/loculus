@@ -767,9 +767,11 @@ def process_single(  # noqa: C901
         )
         output_metadata[output_field] = processing_result.datum
         if not isinstance(spec.args["some_segment_aligned"], bool):
-            raise ValueError(
-                f"Internal Error: Expected some_segment_aligned to be a boolean, got {type(spec.args['some_segment_aligned'])}"
+            msg = (
+                "Internal Error: Expected some_segment_aligned to be a boolean, "
+                f"got {type(spec.args['some_segment_aligned'])}"
             )
+            raise ValueError(msg)
         some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
