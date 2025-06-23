@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Settings } from 'luxon';
 import { useCallback, useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -131,12 +130,6 @@ describe('DateRangeField', () => {
     });
 
     it('updates query params if user types in new dates', async () => {
-        // this line fixes the test for me locally, but it makes no sense to me at all.
-        // I have asked about this here: https://github.com/moment/luxon/issues/1691
-        // The tests run fine in the CI and there are also no issues in the browser.
-        // I suspect it is nothing to worry about.
-        Settings.defaultZone = Settings.defaultZone.name;
-
         render(
             <DateRangeField
                 field={field}
@@ -148,23 +141,23 @@ describe('DateRangeField', () => {
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
 
-        expect(fromInput).not.toBeNull();
-        expect(toInput).not.toBeNull();
+        expect(fromInput).toHaveValue('01/01/2024');
+        expect(toInput).toHaveValue('31/12/2024');
 
         await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '02022002');
+        await userEvent.type(fromInput!, '23041987');
         await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '03032003');
+        await userEvent.type(toInput!, '13102014');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
-            ['collectionDateRangeLowerFrom', '2002-02-02'],
-            ['collectionDateRangeUpperTo', '2003-03-03'],
+            ['collectionDateRangeLowerFrom', '1987-04-23'],
+            ['collectionDateRangeUpperTo', '2014-10-13'],
             ['collectionDateRangeUpperFrom', null],
             ['collectionDateRangeLowerTo', null],
         );
     });
 
-    it('updates input values when fieldValues change', async () => {
+    it('setting fieldValue to empty string clears date field', async () => {
         function Wrapper() {
             const [values, _setValues] = useState<FieldValues>({
                 collectionDateRangeLowerFrom: '2024-01-01',
@@ -184,10 +177,7 @@ describe('DateRangeField', () => {
                     <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
                     <button
                         onClick={() =>
-                            setValues(
-                                ['collectionDateRangeLowerFrom', '2005-05-05'],
-                                ['collectionDateRangeUpperTo', '2010-10-10'],
-                            )
+                            setValues(['collectionDateRangeLowerFrom', null], ['collectionDateRangeUpperTo', null])
                         }
                     >
                         Update Dates
@@ -196,18 +186,20 @@ describe('DateRangeField', () => {
             );
         }
 
+        const user = userEvent.setup();
+
         render(<Wrapper />);
 
-        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
-        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
+        const getFromInput = () => screen.getByText('From').closest('div')?.querySelector('input');
+        const getToInput = () => screen.getByText('To').closest('div')?.querySelector('input');
         const button = screen.getByText('Update Dates');
 
-        expect(fromInput).toHaveValue('01/01/2024');
-        expect(toInput).toHaveValue('31/12/2024');
+        expect(getFromInput()).toHaveValue('01/01/2024');
+        expect(getToInput()).toHaveValue('31/12/2024');
 
-        await userEvent.click(button);
+        await user.click(button);
 
-        expect(fromInput).toHaveValue('05/05/2005');
-        expect(toInput).toHaveValue('10/10/2010');
+        expect(getFromInput()).toHaveValue('');
+        expect(getToInput()).toHaveValue('');
     }, 3000);
 });
