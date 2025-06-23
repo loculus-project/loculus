@@ -48,7 +48,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
-        logging.debug(f"Loaded config from {config_file}: {yaml_config}")
+        logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
