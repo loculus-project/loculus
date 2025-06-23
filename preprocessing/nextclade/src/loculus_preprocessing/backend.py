@@ -193,7 +193,7 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
 
 
 def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
-    headers = {"Content-Type": "chemical/x-embl"}
+    headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
     r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
     if not r.ok:
         msg = f"Upload failed: {r.status_code}, {r.text}"
