@@ -1,3 +1,4 @@
+from enum import Enum
 import io
 import logging
 from typing import Any
@@ -95,15 +96,17 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-def get_molecule_type(molecule_type: str | None):
-    # Dummy enum for MoleculeType
-    class MoleculeType:
-        GENOMIC_DNA = "GENOMIC_DNA"
-        GENOMIC_RNA = "GENOMIC_RNA"
-        VIRAL_CRNA = "VIRAL_CRNA"
+class MoleculeType(Enum):
+    GENOMIC_DNA = "genomic DNA"
+    GENOMIC_RNA = "genomic RNA"
+    VIRAL_CRNA = "viral cRNA"
 
-        def __init__(self, value): self.value = value
-        def __str__(self): return self.value
+    def __str__(self):
+        return self.value
+
+
+def get_molecule_type(molecule_type: str) -> MoleculeType:
+    # Dummy enum for MoleculeType
     try:
         return MoleculeType(molecule_type)
     except Exception as err:
@@ -210,10 +213,10 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
     molecule_type = get_molecule_type(config.molecule_type)
     topology = config.topology
 
-    seqIO_moleculetype = {  # noqa: N806
-        "GENOMIC_DNA": "DNA",
-        "GENOMIC_RNA": "RNA",
-        "VIRAL_CRNA": "cRNA",
+    seqIO_moleculetype = {
+        MoleculeType.GENOMIC_DNA: "DNA",
+        MoleculeType.GENOMIC_RNA: "RNA",
+        MoleculeType.VIRAL_CRNA: "cRNA",
     }
 
     embl_content = []
@@ -229,7 +232,7 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype.get(str(molecule_type), "DNA"),
+                "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
                 "topology": topology,
                 "references": [reference],
