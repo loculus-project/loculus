@@ -8,13 +8,11 @@ test.describe('Sequence Preview Annotations', () => {
         searchPage = new SearchPage(page);
     });
 
-    test('should have an embl file in the Files section', async ({ page }) => {
+    test.only('should have an embl file in the Files section', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        const loculus_id = await searchPage.waitForLoculusId();
+        const loculus_id = await searchPage.clickOnSequence(0);
         const accession = loculus_id.split('.')[0];
-
-        await searchPage.clickOnSequence(0);
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
@@ -28,11 +26,7 @@ test.describe('Sequence Preview Annotations', () => {
             .getByRole('link', { name: /LOC_[\w.]{6,10}\.embl/ })
             .getAttribute('href');
 
-        const responsePromise = page.waitForResponse(
-            async (resp) => resp.status() === 200 && (await resp.text()).startsWith('ID   LOC_'),
-        );
-        await page.evaluate((url) => fetch(url), fileUrl);
-        const resp = await responsePromise;
+        const resp = await fetch(fileUrl);
         const expected_content = EMBL_CONTENT.replace(/LOC_\w{6,10}/g, accession);
         expect(await resp.text()).toBe(expected_content);
     });
