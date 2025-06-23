@@ -970,7 +970,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
 
 
 def run(config: Config) -> None:
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:  # noqa: PLR1702
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
@@ -1004,6 +1004,9 @@ def run(config: Config) -> None:
             if config.create_embl_file:
                 for submission_data in processed:
                     try:
+                        if submission_data.group_id is None:
+                            msg = "Group ID is required for EMBL file upload"
+                            raise ValueError(msg)
                         file_content = create_flatfile(
                             config,
                             submission_data.processed_entry.accession,
@@ -1012,7 +1015,7 @@ def run(config: Config) -> None:
                             submission_data.processed_entry.data.unalignedNucleotideSequences,
                             submission_data.annotations,
                         )
-                        file_name = f"{submission_data.processed_entry.accession}.{submission_data.processed_entry.version}.embl"
+                        file_name = f"{submission_data.processed_entry.accession}.{submission_data.processed_entry.version}.embl"  # noqa: E501
                         upload_info = request_upload(submission_data.group_id, 1, config)[0]
                         file_id = upload_info.fileId
                         url = upload_info.url
