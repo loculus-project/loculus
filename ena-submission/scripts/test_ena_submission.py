@@ -267,7 +267,7 @@ class AssemblyCreationTests(unittest.TestCase):
     def test_create_manifest(self, mock_get):
         mock_response = mock.Mock()
         mock_response.raise_for_status = lambda: None
-        mock_response.content = "lorem ipsum"
+        mock_response.text = "lorem ipsum"
         mock_get.return_value = mock_response
         config = mock_config()
         study_accession = "Test Study Accession"
