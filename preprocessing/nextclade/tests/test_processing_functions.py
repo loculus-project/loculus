@@ -674,6 +674,8 @@ def test_parse_date_into_range() -> None:
     ids=["cchf_1", "west_nile_1"],
 )
 def test_create_flatfile(config: Config, case_dir):
+    """Test the creation of an EMBL flatfile from test data.
+    Only one sample can be given (but can be multi-segmented)."""
     test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
 
     metadata = (
