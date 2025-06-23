@@ -82,7 +82,7 @@ class FileMappingPreconditionValidator(
             if (!allowedCategories.contains(category)) {
                 throw UnprocessableEntityException(
                     "The category $category is not part of the configured $categoriesType categories for " +
-                            "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
+                        "${organism.name}. Allowed categories are: ${allowedCategories.joinToString(", ")}.",
                 )
             }
         }
