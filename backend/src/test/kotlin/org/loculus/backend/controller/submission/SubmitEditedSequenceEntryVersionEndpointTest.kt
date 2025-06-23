@@ -254,7 +254,10 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
-                jsonPath("\$.detail", containsString("unknownCategory is not part of the configured categories")),
+                jsonPath(
+                    "\$.detail",
+                    containsString("unknownCategory is not part of the configured submission categories"),
+                ),
             )
     }
 

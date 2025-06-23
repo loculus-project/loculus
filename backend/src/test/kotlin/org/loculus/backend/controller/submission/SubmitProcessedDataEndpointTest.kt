@@ -532,7 +532,7 @@ class SubmitProcessedDataEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(jsonPath("$.detail", containsString("not part of the configured categories")))
+            .andExpect(jsonPath("$.detail", containsString("not part of the configured output categories")))
     }
 
     @Test
