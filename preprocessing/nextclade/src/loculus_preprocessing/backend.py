@@ -8,6 +8,7 @@ import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
+from urllib.parse import urlparse
 
 import jwt
 import pytz
@@ -15,6 +16,7 @@ import requests
 
 from .config import Config
 from .datatypes import (
+    FileUploadInfo,
     ProcessedEntry,
     UnprocessedData,
     UnprocessedEntry,
@@ -92,6 +94,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         }
         unprocessed_data = UnprocessedData(
             submitter=json_object["submitter"],
+            group_id=json_object["groupId"],
             submittedAt=json_object["submittedAt"],
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
@@ -173,6 +176,29 @@ def submit_processed_sequences(
         )
         raise RuntimeError(msg)
     logger.info("Processed data submitted successfully")
+
+
+def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
+    # we need to parse the backend URL, to extract the API path without the organism component
+    parsed = urlparse(config.backend_host)
+
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    url = base_url + "/files/request-upload"
+    params = {"groupId": group_id, "numberFiles": number_of_files}
+    headers = {"Authorization": "Bearer " + get_jwt(config)}
+    response = requests.post(url, headers=headers, params=params, timeout=10)
+    if not response.ok:
+        msg = f"Upload request failed: {response.status_code}, {response.text}"
+        raise RuntimeError(msg)
+    return [FileUploadInfo(**item) for item in response.json()]
+
+
+def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
+    headers = {"Content-Type": "chemical/x-embl-dl-nucleotide"}
+    r = requests.put(url, data=content.encode("utf-8"), headers=headers, timeout=60)
+    if not r.ok:
+        msg = f"Upload failed: {r.status_code}, {r.text}"
+        raise RuntimeError(msg)
 
 
 def download_minimizer(url, save_path):
