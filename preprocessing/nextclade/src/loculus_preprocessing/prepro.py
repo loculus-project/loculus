@@ -896,7 +896,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
             warnings=[],
         ),
         group_id=-1,
-        annotations=defaultdict(dict[str, Any])
+        annotations=None
     )
 
 
