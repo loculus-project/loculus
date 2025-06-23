@@ -19,10 +19,10 @@ test.describe('Sequence Preview Annotations', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
-        await expect(page.getByRole('link', { name: /LOC_\w{6,9}\.embl/ })).toBeVisible();
+        await expect(page.getByRole('link', { name: /LOC_[\w.]{6,10}\.embl/ })).toBeVisible();
 
         const fileUrl = await page
-            .getByRole('link', { name: /LOC_\w{6,9}\.embl/ })
+            .getByRole('link', { name: /LOC_[\w.]{6,10}\.embl/ })
             .getAttribute('href');
 
         await Promise.all([
