@@ -700,8 +700,7 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             ),
             errors=errors,
             warnings=warnings,
-        ),
-        group_id=-1,
+        )
     )
 
 
@@ -891,15 +890,13 @@ def processed_entry_with_errors(id) -> SubmissionData:
                         AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
                     ],
                     message=(
-                        f"Failed to process submission with id: {id} - please review your submission "
-                        "or reach out to an administrator if this error persists."
+                        f"Failed to process submission with id: {id} - please review your "
+                        "submission or reach out to an administrator if this error persists."
                     ),
                 )
             ],
             warnings=[],
-        ),
-        group_id=-1,
-        annotations=None
+        )
     )
 
 

@@ -130,7 +130,7 @@ class ProcessedEntry:
 @dataclass
 class SubmissionData:
     processed_entry: ProcessedEntry
-    group_id: int
+    group_id: int | None = None
     annotations: dict[str, Any] | None = None
 
 
