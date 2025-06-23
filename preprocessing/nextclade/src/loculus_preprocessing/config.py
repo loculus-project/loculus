@@ -57,7 +57,7 @@ class Config:
     pipeline_version: int = 1
     multi_segment: bool = False
     alignment_requirement: str = "ALL"
-    embl_file: bool = False
+    create_embl_file: bool = False
     embl_info: EmblInfo = dataclasses.field(default_factory=EmblInfo)
 
 

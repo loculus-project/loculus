@@ -1206,7 +1206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         genes: []
         batch_size: 100
-        embl_file: true
+        create_embl_file: true
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile

@@ -1001,7 +1001,7 @@ def run(config: Config) -> None:
                 )
                 continue
 
-            if config.embl_file:
+            if config.create_embl_file:
                 for submission_data in processed:
                     try:
                         file_content = create_flatfile(

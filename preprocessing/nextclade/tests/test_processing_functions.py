@@ -689,7 +689,6 @@ def test_create_flatfile(config: Config, case_dir):
         else:
             unaligned_nucleotide_sequences = {}
             for record in records:
-                # Use the part after the last underscore as the key
                 key = record.id.split("_")[-1]
                 unaligned_nucleotide_sequences[key] = str(record.seq)
 
