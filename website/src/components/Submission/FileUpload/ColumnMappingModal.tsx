@@ -9,6 +9,7 @@ import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
+import { InputFieldTooltip } from '../InputFieldTooltip';
 
 interface ColumnMappingModalProps {
     inputFile: ProcessedFile;
@@ -208,19 +209,7 @@ export const ColumnSelectorRow: FC<ColumnSelectorRowProps> = ({
             <span className={usedOptions.includes(field.name) ? 'text-gray-400' : ''}>
                 {field.displayName ?? field.name}
             </span>
-            <Tooltip
-                id={`${header}-${field.name}-tooltip`}
-                place='right'
-                positionStrategy='fixed'
-                className='z-20 max-w-80 space-y-2'
-                delayShow={200}
-            >
-                <p>
-                    <span className='font-mono font-semibold text-gray-300'>{field.name}</span>
-                </p>
-                {field.definition && <p>{field.definition}</p>}
-                {field.guidance && <p>{field.guidance}</p>}
-            </Tooltip>
+            <InputFieldTooltip id={`${header}-${field.name}-tooltip`} field={field} />
         </ListboxOption>
     );
 
