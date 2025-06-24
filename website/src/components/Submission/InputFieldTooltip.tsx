@@ -9,6 +9,7 @@ interface InputFieldTooltipProps {
     positionStrategy?: 'absolute' | 'fixed';
     className?: string;
     delayShow?: number;
+    includeExample?: boolean;
 }
 
 export const InputFieldTooltip = ({
@@ -18,6 +19,7 @@ export const InputFieldTooltip = ({
     positionStrategy = 'fixed',
     className = 'z-20 max-w-80 space-y-2 whitespace-normal',
     delayShow = 200,
+    includeExample = false,
 }: InputFieldTooltipProps) => (
     <Tooltip id={id} place={place} positionStrategy={positionStrategy} className={className} delayShow={delayShow}>
         <p>
@@ -25,5 +27,6 @@ export const InputFieldTooltip = ({
         </p>
         {field.definition && <p>{field.definition}</p>}
         {field.guidance && <p>{field.guidance}</p>}
+        {includeExample && field.example !== undefined && <p className='italic'>Example: {field.example}</p>}
     </Tooltip>
 );

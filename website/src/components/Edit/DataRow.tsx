@@ -43,7 +43,11 @@ export const EditableDataRow: FC<EditableRowProps> = ({ inputField, row, onChang
                                         className='inline-block h-4 w-4 text-gray-500 shrink-0 ml-1 mb-0.5'
                                         data-tooltip-id={'field-tooltip' + row.key}
                                     />
-                                    <InputFieldTooltip id={'field-tooltip' + row.key} field={inputField} />
+                                    <InputFieldTooltip
+                                        id={'field-tooltip' + row.key}
+                                        field={inputField}
+                                        includeExample={true}
+                                    />
                                 </>
                             )}
                         </span>
