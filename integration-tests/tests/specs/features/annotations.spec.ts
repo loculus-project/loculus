@@ -1,7 +1,6 @@
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { test } from '../../fixtures/group.fixture';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Sequence Preview Annotations', () => {
     let searchPage: SearchPage;
@@ -10,43 +9,11 @@ test.describe('Sequence Preview Annotations', () => {
         searchPage = new SearchPage(page);
     });
 
-    test('should have an embl file in the Files section', async ({ page, pageWithGroup }) => {
-        test.setTimeout(90000);
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
-        await submissionPage.navigateToSubmissionPage('Ebola Sudan');
-        const reviewPage = await submissionPage.completeSubmission(
-            {
-                submissionId: 'foobar',
-                collectionCountry: 'France',
-                collectionDate: '2021-05-12',
-                authorAffiliations: 'Annotation Institute, Lyon',
-            },
-            {
-                main:
-                    'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
-                    'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
-                    'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
-                    'TGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCT' +
-                    'GACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTG' +
-                    'ATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCT' +
-                    'GGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAG' +
-                    'GAGACAACAGAAGCTAATGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTG' +
-                    'GGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATA' +
-                    'TCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATC' +
-                    'AAGTTCCTACTAATACATCAGGGGATGCACATGGTCGCAGGCCATGATGCGAATGACACAGTAATATCTA' +
-                    'ATTCTGTTGCCCAAGCAAGGTTCTCTGGTCTTCTGATTGTAAAGACTGTTCTGGACCACATCCTACAAAA' +
-                    'AACAGATCTTGGAGTACGACTTCATCCACTGGCCAGGACAGCAAAAGTCAAGAATGAGGTCAGTTCATTC' +
-                    'AAGGCAGCTCTTGGCTCACTTGCCAAGCATGGAGAATATGCTCCATTTGCACGTCTCCTCAATCTTTCTG',
-            },
-        );
+    test('should have an embl file in the Files section', async ({ page }) => {
+        await searchPage.ebolaSudan();
 
-        await reviewPage.waitForZeroProcessing();
-        await reviewPage.releaseValidSequences();
-        await page.getByRole('link', { name: 'released sequences' }).click();
-        while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
-            await page.reload();
-            await page.waitForTimeout(2000);
-        }
+        await searchPage.select('submission ID', 'foobar');
+        await searchPage.select('Author affiliations', 'Patho Institute, Paris');
 
         const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
         const accession = accessionVersion.split('.')[0];
