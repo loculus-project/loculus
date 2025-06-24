@@ -106,7 +106,6 @@ class MoleculeType(Enum):
 
 
 def get_molecule_type(molecule_type: str) -> MoleculeType:
-    # Dummy enum for MoleculeType
     try:
         return MoleculeType(molecule_type)
     except Exception as err:
@@ -155,7 +154,6 @@ def get_seq_features(  # noqa: PLR0914
             for old_key, new_key in gene_attributes_map.items()
             if old_key in attributes
         }
-        qualifiers["codon_start"] = 1
         # In FeatureLocation start and end are zero based, exclusive end.
         # thus an embl entry of 123..150 (one based counting) becomes a location of [122:150]
         feature = SeqFeature(
@@ -182,7 +180,11 @@ def get_seq_features(  # noqa: PLR0914
                 for old_key, new_key in cds_attributes_map.items()
                 if old_key in attributes_cds
             }
-            qualifiers["codon_start"] = 1
+            # codon_start and phase define the offset at which the first 
+# complete codon of a coding feature can be found, relative 
+# to the first base of that feature. 
+# Phase is 0-indexed, codon_start is 1 indexed
+              qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
             qualifiers["translation"] = "".join(
                 [
                     str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())

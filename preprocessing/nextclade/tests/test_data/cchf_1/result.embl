@@ -21,7 +21,6 @@ FT                   /country="China"
 FT                   /collection_date="1970"
 FT   gene            72..11909
 FT                   /product="RdRp"
-FT                   /codon_start=1
 FT   CDS             72..11909
 FT                   /gene="RdRp"
 FT                   /product="putative polyprotein"
@@ -329,7 +328,6 @@ FT                   /country="China"
 FT                   /collection_date="1970"
 FT   gene            64..5118
 FT                   /product="GPC"
-FT                   /codon_start=1
 FT   CDS             64..5118
 FT                   /product="glycoprotein precursor"
 FT                   /protein_id="NP_950235.1"
@@ -479,7 +477,6 @@ FT                   /country="China"
 FT                   /collection_date="1970"
 FT   gene            237..1685
 FT                   /product="NP"
-FT                   /codon_start=1
 FT   CDS             237..1685
 FT                   /product="nucleoprotein"
 FT                   /protein_id="NP_950237.1"
