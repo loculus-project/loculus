@@ -87,8 +87,6 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
                 for embl_key, embl_value in value.items():
                     if hasattr(config.embl, embl_key) and embl_value is not None:
                         setattr(config.embl, embl_key, embl_value)
-            else:
-                setattr(config, key, value)
     return config
 
 

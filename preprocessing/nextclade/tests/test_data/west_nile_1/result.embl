@@ -22,7 +22,6 @@ FT                   /collection_date="2024-10-09"
 FT   gene            78..10379
 FT                   /gene="POLY"
 FT                   /product="anchored capsid protein ancC"
-FT                   /codon_start=1
 FT   CDS             78..446
 FT                   /gene="capsid"
 FT                   /product="anchored capsid protein ancC"
