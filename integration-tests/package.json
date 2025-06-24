@@ -1,16 +1,12 @@
 {
-    "name": "integration_tests",
-    "version": "1.0.0",
+    "name": "loculus_integration_tests",
+    "version": "0.0.1",
     "main": "index.js",
     "scripts": {
         "format": "eslint --cache \"./**/*.{ts,tsx,astro}\" --fix && prettier --write \"**/*.{ts,js,json}\"",
         "format:check": "eslint --cache \"./**/*.{ts,tsx,astro}\" && prettier --check \"**/*.{ts,js,json}\"",
         "test": "npx playwright test"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "description": "",
     "devDependencies": {
         "@eslint/js": "^9.29.0",
         "@playwright/test": "^1.53.1",
