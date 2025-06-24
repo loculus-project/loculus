@@ -42,6 +42,7 @@ type ReviewPageProps = {
     group: Group;
     accessToken: string;
     metadataDisplayNames: Map<string, string>;
+    filesEnabled: boolean;
 };
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
@@ -73,7 +74,14 @@ const NumberAndVisibility = ({
     );
 };
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken, metadataDisplayNames }) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({
+    clientConfig,
+    organism,
+    group,
+    accessToken,
+    metadataDisplayNames,
+    filesEnabled,
+}) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
     const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
@@ -175,7 +183,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     const sequences: SequenceEntryStatus[] = sequencesData.sequenceEntries;
 
     const controlPanel = (
-        <div className='flex flex-col'>
+        <div className='flex flex-col' data-testid='review-page-control-panel'>
             <div className='text-gray-600 mr-3'>
                 {unprocessedCount > 0 && (
                     <span className='loading loading-spinner loading-sm mr-2 relative top-1'> </span>
@@ -372,6 +380,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                             clientConfig={clientConfig}
                             organism={organism}
                             accessToken={accessToken}
+                            filesEnabled={filesEnabled}
                         />
                     </div>
                 );

@@ -47,7 +47,8 @@ def errors_if_non_iupac(
                         ],
                         message=(
                             f"Found non-IUPAC symbols in the {segment} sequence: "
-                            + ", ".join(non_iupac_symbols) + (". Gap characters (-) are not allowed in raw sequences." if "-" in non_iupac_symbols else "")
+                            + ", ".join(non_iupac_symbols) + (". Gap characters (-) are not "
+                            "allowed in raw sequences." if "-" in non_iupac_symbols else "")
                         ),
                     )
                 )

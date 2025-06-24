@@ -3,6 +3,10 @@ import { Page, expect } from '@playwright/test';
 export class ReviewPage {
     private page: Page;
 
+    private viewFilesButton = () => this.page.getByTestId(/view-files/).first();
+    private filesDialog = () => this.page.locator('div:has(> div > h2:text("Files"))').first();
+    private filesDialogCloseButton = () => this.filesDialog().getByRole('button', { name: '✕' });
+
     private viewSequencesButton = () => this.page.getByTestId(/view-sequences-/).first();
     private sequencesDialog = () =>
         this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
@@ -16,9 +20,10 @@ export class ReviewPage {
     }
 
     async waitForZeroProcessing() {
-        await expect(this.page.locator('body')).toContainText('0 awaiting processing', {
-            timeout: 33000,
-        });
+        await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
+            '0 awaiting processing',
+            { timeout: 33000 },
+        );
     }
 
     async navigateToReviewPage() {
@@ -40,9 +45,22 @@ export class ReviewPage {
         return this.sequencesDialog();
     }
 
+    async viewFiles() {
+        const button = this.viewFilesButton();
+        await expect(button).toBeVisible({ timeout: 15000 });
+        await button.click();
+        await expect(this.filesDialog()).toBeVisible();
+        return this.filesDialog();
+    }
+
     async closeSequencesDialog() {
         await this.sequencesDialogCloseButton().click();
         await expect(this.sequencesDialog()).not.toBeVisible();
+    }
+
+    async closeFilesDialog() {
+        await this.filesDialogCloseButton().click();
+        await expect(this.filesDialog()).not.toBeVisible();
     }
 
     async switchSequenceTab(tabName: string) {

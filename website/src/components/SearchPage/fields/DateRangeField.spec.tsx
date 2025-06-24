@@ -129,9 +129,7 @@ describe('DateRangeField', () => {
         );
     });
 
-    it('clears date fields when user clears input', async () => {
-        const user = userEvent.setup();
-
+    it('updates query params if user types in new dates', async () => {
         render(
             <DateRangeField
                 field={field}
@@ -143,37 +141,23 @@ describe('DateRangeField', () => {
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
 
-        expect(fromInput).not.toBeNull();
-        expect(toInput).not.toBeNull();
-
-        // Initial values should be displayed
         expect(fromInput).toHaveValue('2024-01-01');
         expect(toInput).toHaveValue('2024-12-31');
 
-        // Clear the from input
-        await user.clear(fromInput!);
+        await userEvent.type(fromInput!, '{backspace}');
+        await userEvent.type(fromInput!, '19870423');
+        await userEvent.type(toInput!, '{backspace}');
+        await userEvent.type(toInput!, '20141013');
 
-        // Check that setSomeFieldValues was called with empty string for from field
-        expect(setSomeFieldValues).toHaveBeenCalledWith(
-            ['collectionDateRangeLowerFrom', ''],
-            ['collectionDateRangeUpperTo', '2024-12-31'],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
-        );
-
-        // Clear the to input
-        await user.clear(toInput!);
-
-        // Check that setSomeFieldValues was called with empty string for both fields
-        expect(setSomeFieldValues).toHaveBeenCalledWith(
-            ['collectionDateRangeLowerFrom', ''],
-            ['collectionDateRangeUpperTo', ''],
+        expect(setSomeFieldValues).toHaveBeenLastCalledWith(
+            ['collectionDateRangeLowerFrom', '1987-04-23'],
+            ['collectionDateRangeUpperTo', '2014-10-13'],
             ['collectionDateRangeUpperFrom', null],
             ['collectionDateRangeLowerTo', null],
         );
     });
 
-    it('updates input values when fieldValues change', async () => {
+    it('setting fieldValue to empty string clears date field', async () => {
         function Wrapper() {
             const [values, _setValues] = useState<FieldValues>({
                 collectionDateRangeLowerFrom: '2024-01-01',
@@ -193,10 +177,7 @@ describe('DateRangeField', () => {
                     <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
                     <button
                         onClick={() =>
-                            setValues(
-                                ['collectionDateRangeLowerFrom', '2005-05-05'],
-                                ['collectionDateRangeUpperTo', '2010-10-10'],
-                            )
+                            setValues(['collectionDateRangeLowerFrom', null], ['collectionDateRangeUpperTo', null])
                         }
                     >
                         Update Dates
@@ -205,44 +186,20 @@ describe('DateRangeField', () => {
             );
         }
 
-        render(<Wrapper />);
-
-        const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
-        const toInput = screen.getByText('To').closest('div')?.querySelector('input');
-        const button = screen.getByText('Update Dates');
-
-        expect(fromInput).toHaveValue('2024-01-01');
-        expect(toInput).toHaveValue('2024-12-31');
-
-        await userEvent.click(button);
-
-        expect(fromInput).toHaveValue('2005-05-05');
-        expect(toInput).toHaveValue('2010-10-10');
-    }, 3000);
-
-    it('calls setSomeFieldValues appropriately when typing a date', async () => {
         const user = userEvent.setup();
 
-        render(<DateRangeField field={field} fieldValues={{}} setSomeFieldValues={setSomeFieldValues} />);
+        render(<Wrapper />);
 
-        const fromInput = screen.getByText('From').closest('div')?.querySelector('input[type="text"]');
-        expect(fromInput).not.toBeNull();
+        const getFromInput = () => screen.getByText('From').closest('div')?.querySelector('input');
+        const getToInput = () => screen.getByText('To').closest('div')?.querySelector('input');
+        const button = screen.getByText('Update Dates');
 
-        // Clear any previous calls
-        setSomeFieldValues.mockClear();
+        expect(getFromInput()).toHaveValue('2024-01-01');
+        expect(getToInput()).toHaveValue('2024-12-31');
 
-        // Type a complete date
-        await user.type(fromInput!, '20240315');
+        await user.click(button);
 
-        // The input should display the formatted date
-        expect(fromInput).toHaveValue('2024-03-15');
-
-        // setSomeFieldValues should be called with the date value
-        expect(setSomeFieldValues).toHaveBeenCalledWith(
-            ['collectionDateRangeLowerFrom', '2024-03-15'],
-            ['collectionDateRangeUpperTo', ''],
-            ['collectionDateRangeUpperFrom', null],
-            ['collectionDateRangeLowerTo', null],
-        );
-    });
+        expect(getFromInput()).toHaveValue('');
+        expect(getToInput()).toHaveValue('');
+    }, 3000);
 });

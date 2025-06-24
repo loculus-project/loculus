@@ -65,7 +65,7 @@ def valid_authors(authors: str) -> bool:
 
 def warn_potentially_invalid_authors(authors: str) -> bool:
     authors_split = re.split(r"[,\s]+", authors)
-    return bool(";" not in authors and len(authors_split) > 3)
+    return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
 
 
 def format_authors(authors: str) -> str:
@@ -82,7 +82,7 @@ def format_authors(authors: str) -> str:
         for name in first_name.split():
             if len(name) == 1:
                 first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":
+            elif len(name) == 2 and name[1] == ".":  # noqa: PLR2004
                 first_names.append(f"{name.upper()}")
             else:
                 first_names.append(name)
@@ -231,7 +231,8 @@ class ProcessingFunctions:
         input_fields: list[str],
         args: FunctionArgs,  # args is essential - even if Pylance says it's not used
     ) -> ProcessingResult:
-        """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into a range using upper bound (`input.releaseDate`)
+        """Parse date string (`input.date`) formatted as one of YYYY | YYYY-MM | YYYY-MM-DD into
+        a range using upper bound (`input.releaseDate`)
         Return value determined FunctionArgs:
         fieldType: "dateRangeString" | "dateRangeLower" | "dateRangeUpper"
         Default fieldType is "dateRangeString"
@@ -342,7 +343,8 @@ class ProcessingFunctions:
                             AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
                             for field in input_fields
                         ],
-                        message=f"Metadata field {output_field}:'{input_date_str}' is in the future.",
+                        message=f"Metadata field {output_field}:"
+                        f"'{input_date_str}' is in the future.",
                     )
                 )
 
@@ -395,7 +397,8 @@ class ProcessingFunctions:
                         AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
                         for field in input_fields
                     ],
-                    message=f"Metadata field {output_field}: Date {input_date_str} could not be parsed.",
+                    message=f"Metadata field {output_field}: "
+                    f"Date {input_date_str} could not be parsed.",
                 )
             ],
         )
@@ -630,7 +633,7 @@ class ProcessingFunctions:
             )
 
         if not isinstance(order, list):
-            logging.error(
+            logger.error(
                 f"Concatenate: Expected order field to be a list. "
                 f"This is probably a configuration error. (accession_version: {accession_version})"
             )
@@ -640,8 +643,8 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        elif number_fields != len(order):
-            logging.error(
+        if number_fields != len(order):
+            logger.error(
                 f"Concatenate: Expected {len(order)} fields, got {number_fields}. "
                 f"This is probably a configuration error. (accession_version: {accession_version})"
             )
@@ -651,8 +654,8 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        elif not isinstance(type, list):
-            logging.error(
+        if not isinstance(type, list):
+            logger.error(
                 f"Concatenate: Expected type field to be a list. "
                 f"This is probably a configuration error. (accession_version: {accession_version})"
             )
@@ -686,7 +689,7 @@ class ProcessingFunctions:
                     )
                 else:
                     formatted_input_data.append(accession_version)
-            logging.debug(f"formatted input data:{formatted_input_data}")
+            logger.debug(f"formatted input data:{formatted_input_data}")
 
             result = "/".join(formatted_input_data)
             # To avoid downstream issues do not let the result start or end in a "/"
@@ -695,7 +698,7 @@ class ProcessingFunctions:
 
             return ProcessingResult(datum=result, warnings=warnings, errors=errors)
         except ValueError as e:
-            logging.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
+            logger.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
             errors.append(
                 ProcessingAnnotation(
                     processedFields=[
@@ -861,7 +864,7 @@ class ProcessingFunctions:
                         if math.isnan(output_datum):
                             output_datum = None
                         elif math.isinf(output_datum):
-                            raise ValueError()
+                            raise ValueError
                     except ValueError:
                         output_datum = None
                         errors.append(

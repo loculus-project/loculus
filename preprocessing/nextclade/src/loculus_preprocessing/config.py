@@ -21,8 +21,8 @@ class Config:
     backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
-    keycloak_password: str = "preprocessing_pipeline"
-    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
+    keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
+    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
     nextclade_dataset_name: str | None = None
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
@@ -48,7 +48,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
-        logging.debug(f"Loaded config from {config_file}: {yaml_config}")
+        logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             setattr(config, key, value)
