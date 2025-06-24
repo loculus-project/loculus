@@ -32,6 +32,9 @@ export class SearchPage {
 
     async enableSearchFields(...fieldLabels: string[]) {
         await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        await this.page
+            .getByRole('checkbox', { name: fieldLabels[0] })
+            .waitFor({ state: 'visible' });
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label }).check();
         }
