@@ -73,8 +73,7 @@ def get_country(metadata: dict[str, str], config: Config) -> str:
 
 def get_description(accession, version, db_name) -> str:
     return (
-        f"Original sequence submitted to {db_name} with accession: "
-        f"{accession}, version: {version}"
+        f"Original sequence submitted to {db_name} with accession: {accession}, version: {version}"
     )
 
 
@@ -180,11 +179,10 @@ def get_seq_features(  # noqa: PLR0914
                 for old_key, new_key in cds_attributes_map.items()
                 if old_key in attributes_cds
             }
-            # codon_start and phase define the offset at which the first 
-# complete codon of a coding feature can be found, relative 
-# to the first base of that feature. 
-# Phase is 0-indexed, codon_start is 1 indexed
-              qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
+            # codon_start and phase define the offset at which the first complete codon of a coding
+            # feature can be found, relative to the first base of that feature.
+            # Phase is 0-indexed, codon_start is 1 indexed
+            qualifiers["codon_start"] = qualifiers.get("codon_start", 0) + 1
             qualifiers["translation"] = "".join(
                 [
                     str(Seq(sequence_str[(range["begin"]) : (range["end"])]).translate())
