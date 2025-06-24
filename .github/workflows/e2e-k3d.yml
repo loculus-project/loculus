@@ -47,6 +47,8 @@ jobs:
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
           k3d version
       - uses: azure/setup-helm@v4
+        with:
+          version: v3.18.3
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster

@@ -256,22 +256,44 @@ def handle_helm_upgrade():
     run_command(parameters)
 
 
+def get_local_ip_mac() -> str:
+    """Determine the IP address of the current host on macOS using ipconfig."""
+    result = subprocess.run(
+        ["ipconfig", "getifaddr", "en0"],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    ip_address = result.stdout.strip()
+    if ip_address:
+        return ip_address
+    msg = "Could not determine local IP address (no address found)."
+    raise RuntimeError(msg)
+
+
+def get_local_ip_linux() -> str:
+    """Determine the IP address of the current host on Linux using hostname -I."""
+    result = subprocess.run(
+        ["hostname", "-I"],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    ip_addresses = result.stdout.strip().split()
+    if ip_addresses:
+        return ip_addresses[0]
+    msg = "Could not determine local IP address (no addresses found)."
+    raise RuntimeError(msg)
+
+
 def get_local_ip() -> str:
-    """Determine the IP address of the current host using hostname -I."""
+    """Determine the IP address of the current host."""
     try:
-        result = subprocess.run(["hostname", "-I"],  # noqa: S607
-                                capture_output=True,
-                                text=True,
-                                check=True)
-
-        ip_addresses = result.stdout.strip().split()
-        if ip_addresses:
-            return ip_addresses[0]
-        msg = "Could not determine local IP address (no addresses found)."
-        raise RuntimeError(msg)
-
+        if sys.platform == "darwin":
+            return get_local_ip_mac()
+        return get_local_ip_linux()
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError) as e:
-        msg = "Could not determine local IP address (hostname -I failed)."
+        msg = "Could not determine local IP address (system command failed)."
         raise RuntimeError(msg) from e
 
 
