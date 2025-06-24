@@ -92,7 +92,6 @@ FT                   /collection_date="2021-05-12"
 FT   gene            1..945
 FT                   /gene="NP"
 FT                   /product="NP"
-FT                   /codon_start=1
 FT   CDS             36..945
 FT                   /gene="NP"
 FT                   /product="nucleoprotein"
