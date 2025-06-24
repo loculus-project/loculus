@@ -31,12 +31,12 @@ export class SearchPage {
     }
 
     async enableSearchFields(...fieldLabels: string[]) {
-        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        await this.page.getByRole('button', { name: 'Add Search Fields' }).click({ force: true });
         await this.page
-            .getByRole('checkbox', { name: fieldLabels[0] })
+            .getByRole('checkbox', { name: fieldLabels[0], exact: true })
             .waitFor({ state: 'visible' });
         for (const label of fieldLabels) {
-            await this.page.getByRole('checkbox', { name: label }).check();
+            await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
         await this.page.getByTestId('field-selector-close-button').click();
     }
