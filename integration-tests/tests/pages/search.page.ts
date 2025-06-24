@@ -42,9 +42,12 @@ export class SearchPage {
     }
 
     async enterMutation(mutation: string) {
-        await this.page.getByPlaceholder('Mutations').click();
-        await this.page.getByLabel('Mutations').fill(mutation);
-        await this.page.getByRole('option', { name: mutation }).click();
+        const input = await this.page.getByPlaceholder('Mutations');
+        await input.click();
+        await this.page.waitForTimeout(200);
+        await input.pressSequentially(mutation, { delay: 200 });
+        await this.page.waitForSelector('[role="listbox"]', { state: 'visible' });
+        await input.press('Enter');
     }
 
     async enterAccessions(accessions: string) {
