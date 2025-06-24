@@ -2,7 +2,6 @@
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
 {{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
 {{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
-{{- $enaDepositionConfig := ($organismConfig.enaDeposition.configFile) }}
 {{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
