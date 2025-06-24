@@ -7,8 +7,8 @@
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
 {{- /* Use the enaDepositionConfig as the base config for scientific_name and molecule_type */}}
-{{- $enaDepositionConfig := $organismConfig.enaDeposition.configFile | default dict -}}
-{{- $mergedConfigFile := merge $processingConfig.configFile $enaDepositionConfig -}}
+{{- $enaDepositionConfig := dig "enaDeposition" "configFile" dict $organismConfig }}
+{{- $mergedConfigFile := merge $processingConfig.configFile $enaDepositionConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
