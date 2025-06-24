@@ -194,8 +194,8 @@ describe('DateRangeField', () => {
         const getToInput = () => screen.getByText('To').closest('div')?.querySelector('input');
         const button = screen.getByText('Update Dates');
 
-        expect(fromInput()).toHaveValue('2024-01-01');
-        expect(toInput()).toHaveValue('2024-12-31');
+        expect(getFromInput()).toHaveValue('2024-01-01');
+        expect(getToInput()).toHaveValue('2024-12-31');
 
         await user.click(button);
 
