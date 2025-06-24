@@ -13,7 +13,7 @@ test.describe('Sequence Preview Annotations', () => {
     test('should have an embl file in the Files section', async ({ page, pageWithGroup }) => {
         test.setTimeout(90000);
         const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
-        submissionPage.navigateToSubmissionPage('Ebola Sudan');
+        await submissionPage.navigateToSubmissionPage('Ebola Sudan');
         const reviewPage = await submissionPage.completeSubmission(
             {
                 submissionId: 'foobar',
