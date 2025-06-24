@@ -1,3 +1,1275 @@
+name: 'Enterovirus DB'
+defaultOrganismConfig: &defaultOrganismConfig
+  schema: &schema
+    loadSequencesAutomatically: true
+    organismName: "Ebola Sudan"
+    image: "/images/organisms/ebolasudan_small.jpg"
+    linkOuts:
+      - name: "Nextclade"
+        maxNumberOfRecommendedEntries: 5
+        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
+    earliestReleaseDate:
+      enabled: true
+      externalFields:
+        - ncbiReleaseDate
+    richFastaHeaderFields: ["displayName"]
+    ### Field list
+    ## General fields
+    # name: Key used across app to refer to this field (required)
+    # displayName: Name displayed to users (optional) | used by website (for input and details)
+    # type: Type of field (default: "string")
+    # required: Whether the field is required by backend (default false) | used by input, backend, preprocessing
+    ## Input related
+    # noInput: Whether the field should not be input by the user)
+    # definition
+    # guidance
+    # example
+    # ontology_id
+    ## Sequence details UI related
+    # header: Grouping of fields in sequence details UI (default: "Other")
+    # hideOnSequenceDetailsPage: Whether the field should be hidden on the sequence details page (default false)
+    # customDisplay: Custom display dict for the field
+    #     type: Enum with values "link"
+    #     url: URL to link to with template __value__ for the field value: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+    ## SearchUI related
+    # initiallyVisible: Whether it appear in searchUI by default (default false)
+    # generateIndex: Whether the field should be indexed for search (default false, only allowed for string fields)
+    # autocomplete: Whether the field should be used for search autocomplete (default false, only allowed for string fields and probably generateIndex should be true)
+    ## Download related
+    # includeInDownloadsByDefault: Whether this field should be selected by default in download options (default false)
+    ## Ingest related
+    # ingest: Which NCBI field to map to this field (optional)
+    ## Preprocessing related
+    # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
+    metadata:
+      - name: sampleCollectionDate
+        displayName: Collection date
+        header: Sample details
+        ingest: ncbiCollectionDate
+        order: 10
+        includeInDownloadsByDefault: true
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeString
+        required: true
+        notSearchable: true
+        columnWidth: 100
+      - name: sampleCollectionDateRangeLower
+        displayName: Collection date (lower bound)
+        type: date
+        initiallyVisible: true
+        hideInSearchResultsTable: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeLower
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: lower
+        noInput: true
+      - name: sampleCollectionDateRangeUpper
+        displayName: Collection date (upper bound)
+        type: date
+        initiallyVisible: true
+        hideInSearchResultsTable: true
+        header: Sample details
+        preprocessing:
+          function: parse_date_into_range
+          inputs:
+            date: sampleCollectionDate
+            releaseDate: ncbiReleaseDate
+          args:
+            fieldType: dateRangeUpper
+        rangeOverlapSearch:
+          rangeName: sampleCollectionDateRange
+          rangeDisplayName: Collection date
+          bound: upper
+        noInput: true
+      - name: displayName
+        preprocessing:
+          function: concatenate
+          inputs:
+            geoLocCountry: geoLocCountry
+            sampleCollectionDate: sampleCollectionDate
+          args:
+            order: [geoLocCountry, accession_version, sampleCollectionDate]
+            type: [string, string, string]
+        noInput: true
+      - name: ncbiReleaseDate
+        displayName: NCBI release date
+        type: date
+        header: "INSDC"
+        preprocessing:
+          function: parse_timestamp
+          inputs:
+            timestamp: ncbiReleaseDate
+        noInput: true
+        columnWidth: 100
+      - name: earliestReleaseDate
+        displayName: Earliest release date
+        header: Sample details
+        type: date
+        rangeSearch: true
+        noInput: true
+        includeInDownloadsByDefault: true
+      - name: ncbiUpdateDate
+        type: date
+        displayName: NCBI update date
+        header: "INSDC"
+        preprocessing:
+          function: parse_timestamp
+          inputs:
+            timestamp: ncbiUpdateDate
+        noInput: true
+        perSegment: true
+        oneHeader: true
+        columnWidth: 100
+      - name: geoLocLatitude
+        displayName: Latitude
+        header: Sample details
+        type: float
+        guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
+      - name: geoLocLongitude
+        displayName: Longitude
+        header: Sample details
+        type: float
+        guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
+      - name: geoLocCountry
+        displayName: Collection country
+        generateIndex: true
+        autocomplete: true
+        initiallyVisible: true
+        includeInDownloadsByDefault: true
+        header: Sample details
+        order: 20
+        ingest: country
+        required: true
+        options:
+          # Taken from https://www.ncbi.nlm.nih.gov/genbank/collab/country/
+          # Alternative, historically not always up-to-date at https://www.insdc.org/submitting-standards/geo_loc_name-qualifier-vocabulary/
+          # If changed, ensure it's mirrored to Pathoplexus
+          # Last check: 2025-05-28
+          # Last update: 2024-09-18
+          - name: Afghanistan
+          - name: Albania
+          - name: Algeria
+          - name: American Samoa
+          - name: Andorra
+          - name: Angola
+          - name: Anguilla
+          - name: Antarctica
+          - name: Antigua and Barbuda
+          - name: Arctic Ocean
+          - name: Argentina
+          - name: Armenia
+          - name: Aruba
+          - name: Ashmore and Cartier Islands
+          - name: Atlantic Ocean
+          - name: Australia
+          - name: Austria
+          - name: Azerbaijan
+          - name: Bahamas
+          - name: Bahrain
+          - name: Baltic Sea
+          - name: Baker Island
+          - name: Bangladesh
+          - name: Barbados
+          - name: Bassas da India
+          - name: Belarus
+          - name: Belgium
+          - name: Belize
+          - name: Benin
+          - name: Bermuda
+          - name: Bhutan
+          - name: Bolivia
+          - name: Borneo
+          - name: Bosnia and Herzegovina
+          - name: Botswana
+          - name: Bouvet Island
+          - name: Brazil
+          - name: British Virgin Islands
+          - name: Brunei
+          - name: Bulgaria
+          - name: Burkina Faso
+          - name: Burundi
+          - name: Cambodia
+          - name: Cameroon
+          - name: Canada
+          - name: Cape Verde
+          - name: Cayman Islands
+          - name: Central African Republic
+          - name: Chad
+          - name: Chile
+          - name: China
+          - name: Christmas Island
+          - name: Clipperton Island
+          - name: Cocos Islands
+          - name: Colombia
+          - name: Comoros
+          - name: Cook Islands
+          - name: Coral Sea Islands
+          - name: Costa Rica
+          - name: Cote d'Ivoire
+          - name: Croatia
+          - name: Cuba
+          - name: Curacao
+          - name: Cyprus
+          - name: Czechia
+          - name: Democratic Republic of the Congo
+          - name: Denmark
+          - name: Djibouti
+          - name: Dominica
+          - name: Dominican Republic
+          - name: Ecuador
+          - name: Egypt
+          - name: El Salvador
+          - name: Equatorial Guinea
+          - name: Eritrea
+          - name: Estonia
+          - name: Eswatini
+          - name: Ethiopia
+          - name: Europa Island
+          - name: Falkland Islands (Islas Malvinas)
+          - name: Faroe Islands
+          - name: Fiji
+          - name: Finland
+          - name: France
+          - name: French Guiana
+          - name: French Polynesia
+          - name: French Southern and Antarctic Lands
+          - name: Gabon
+          - name: Gambia
+          - name: Gaza Strip
+          - name: Georgia
+          - name: Germany
+          - name: Ghana
+          - name: Gibraltar
+          - name: Glorioso Islands
+          - name: Greece
+          - name: Greenland
+          - name: Grenada
+          - name: Guadeloupe
+          - name: Guam
+          - name: Guatemala
+          - name: Guernsey
+          - name: Guinea
+          - name: Guinea-Bissau
+          - name: Guyana
+          - name: Haiti
+          - name: Heard Island and McDonald Islands
+          - name: Honduras
+          - name: Hong Kong
+          - name: Howland Island
+          - name: Hungary
+          - name: Iceland
+          - name: India
+          - name: Indian Ocean
+          - name: Indonesia
+          - name: Iran
+          - name: Iraq
+          - name: Ireland
+          - name: Isle of Man
+          - name: Israel
+          - name: Italy
+          - name: Jamaica
+          - name: Jan Mayen
+          - name: Japan
+          - name: Jarvis Island
+          - name: Jersey
+          - name: Johnston Atoll
+          - name: Jordan
+          - name: Juan de Nova Island
+          - name: Kazakhstan
+          - name: Kenya
+          - name: Kerguelen Archipelago
+          - name: Kingman Reef
+          - name: Kiribati
+          - name: Kosovo
+          - name: Kuwait
+          - name: Kyrgyzstan
+          - name: Laos
+          - name: Latvia
+          - name: Lebanon
+          - name: Lesotho
+          - name: Liberia
+          - name: Libya
+          - name: Liechtenstein
+          - name: Line Islands
+          - name: Lithuania
+          - name: Luxembourg
+          - name: Macau
+          - name: Madagascar
+          - name: Malawi
+          - name: Malaysia
+          - name: Maldives
+          - name: Mali
+          - name: Malta
+          - name: Marshall Islands
+          - name: Martinique
+          - name: Mauritania
+          - name: Mauritius
+          - name: Mayotte
+          - name: Mediterranean Sea
+          - name: Mexico
+          - name: Micronesia, Federated States of
+          - name: Midway Islands
+          - name: Moldova
+          - name: Monaco
+          - name: Mongolia
+          - name: Montenegro
+          - name: Montserrat
+          - name: Morocco
+          - name: Mozambique
+          - name: Myanmar
+          - name: Namibia
+          - name: Nauru
+          - name: Navassa Island
+          - name: Nepal
+          - name: Netherlands
+          - name: New Caledonia
+          - name: New Zealand
+          - name: Nicaragua
+          - name: Niger
+          - name: Nigeria
+          - name: Niue
+          - name: Norfolk Island
+          - name: North Korea
+          - name: North Macedonia
+          - name: North Sea
+          - name: Northern Mariana Islands
+          - name: Norway
+          - name: Oman
+          - name: Pacific Ocean
+          - name: Pakistan
+          - name: Palau
+          - name: Palmyra Atoll
+          - name: Panama
+          - name: Papua New Guinea
+          - name: Paracel Islands
+          - name: Paraguay
+          - name: Peru
+          - name: Philippines
+          - name: Pitcairn Islands
+          - name: Poland
+          - name: Portugal
+          - name: Puerto Rico
+          - name: Qatar
+          - name: Republic of the Congo
+          - name: Reunion
+          - name: Romania
+          - name: Ross Sea
+          - name: Russia
+          - name: Rwanda
+          - name: Saint Barthelemy
+          - name: Saint Helena
+          - name: Saint Kitts and Nevis
+          - name: Saint Lucia
+          - name: Saint Martin
+          - name: Saint Pierre and Miquelon
+          - name: Saint Vincent and the Grenadines
+          - name: Samoa
+          - name: San Marino
+          - name: Sao Tome and Principe
+          - name: Saudi Arabia
+          - name: Senegal
+          - name: Serbia
+          - name: Seychelles
+          - name: Sierra Leone
+          - name: Singapore
+          - name: Sint Maarten
+          - name: Slovakia
+          - name: Slovenia
+          - name: Solomon Islands
+          - name: Somalia
+          - name: South Africa
+          - name: South Georgia and the South Sandwich Islands
+          - name: South Korea
+          - name: South Sudan
+          - name: Southern Ocean
+          - name: Spain
+          - name: Spratly Islands
+          - name: Sri Lanka
+          - name: State of Palestine
+          - name: Sudan
+          - name: Suriname
+          - name: Svalbard
+          - name: Sweden
+          - name: Switzerland
+          - name: Syria
+          - name: Taiwan
+          - name: Tajikistan
+          - name: Tanzania
+          - name: Tasman Sea
+          - name: Thailand
+          - name: Timor-Leste
+          - name: Togo
+          - name: Tokelau
+          - name: Tonga
+          - name: Trinidad and Tobago
+          - name: Tromelin Island
+          - name: Tunisia
+          - name: Turkey
+          - name: Turkmenistan
+          - name: Turks and Caicos Islands
+          - name: Tuvalu
+          - name: Uganda
+          - name: Ukraine
+          - name: United Arab Emirates
+          - name: United Kingdom
+          - name: Uruguay
+          - name: USA
+          - name: Uzbekistan
+          - name: Vanuatu
+          - name: Venezuela
+          - name: Viet Nam
+          - name: Virgin Islands
+          - name: Wake Island
+          - name: Wallis and Futuna
+          - name: West Bank
+          - name: Western Sahara
+          - name: Yemen
+          - name: Zambia
+          - name: Zimbabwe
+          # Historical Countries in NIH
+          - name: Belgian Congo
+          - name: British Guiana
+          - name: Burma
+          - name: Czechoslovakia
+          - name: Czech Republic
+          - name: East Timor
+          - name: Korea
+          - name: Macedonia
+          - name: Micronesia
+          - name: Netherlands Antilles
+          - name: Serbia and Montenegro
+          - name: Siam
+          - name: Swaziland
+          - name: The former Yugoslav Republic of Macedonia
+          - name: USSR
+          - name: Yugoslavia
+          - name: Zaire
+        preprocessing:
+          function: process_options
+          inputs:
+            input: geoLocCountry
+      - name: geoLocAdmin1
+        displayName: Collection subdivision level 1
+        desired: true
+        generateIndex: true
+        autocomplete: true
+        initiallyVisible: true
+        header: Sample details
+        order: 30
+        ingest: division
+      - name: geoLocAdmin2
+        displayName: Collection subdivision level 2
+        desired: true
+        generateIndex: true
+        autocomplete: true
+        header: Sample details
+      - name: geoLocCity
+        displayName: Collection city
+        desired: true
+        generateIndex: true
+        autocomplete: true
+        header: Sample details
+      - name: geoLocSite
+        ontology_id: GENEPIO:0100436
+        definition: The name of a specific geographical location e.g. Credit River (rather than river).
+        guidance: Provide the name of the specific geographical site using a specific noun (a word that names a certain place, thing).
+        example: Credit River
+        displayName: Collection site
+        header: Sample details
+      - name: specimenCollectorSampleId
+        displayName: Isolate name
+        desired: true
+        header: Sample details
+        ingest: ncbiIsolateName
+        enableSubstringSearch: true
+      - name: authors
+        displayName: Authors
+        type: authors
+        header: Authors
+        desired: true
+        enableSubstringSearch: true
+        order: 40
+        includeInDownloadsByDefault: true
+        ingest: ncbiSubmitterNames
+        preprocessing:
+          function: check_authors
+          inputs:
+            authors: authors
+        columnWidth: 140
+      - name: authorAffiliations
+        displayName: Author affiliations
+        desired: true
+        enableSubstringSearch: true
+        header: Authors
+        ingest: ncbiSubmitterAffiliation
+        includeInDownloadsByDefault: true
+      - name: ncbiSubmitterCountry
+        displayName: NCBI submitter country
+        generateIndex: true
+        autocomplete: true
+        hideOnSequenceDetailsPage: true
+        noInput: true
+        header: "INSDC"
+      - name: insdcAccessionBase
+        header: "INSDC"
+        hideOnSequenceDetailsPage: true
+        noInput: true
+        perSegment: true
+        oneHeader: true
+      - name: insdcVersion
+        type: int
+        header: "INSDC"
+        hideOnSequenceDetailsPage: true
+        noInput: true
+        perSegment: true
+        oneHeader: true
+      - name: insdcAccessionFull
+        displayName: INSDC accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+        header: "INSDC"
+        ingest: genbankAccession
+        noInput: true
+        perSegment: true
+        oneHeader: true
+      - name: bioprojectAccession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
+        header: "INSDC"
+        ingest: bioprojects
+        guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
+        definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
+        example: "PRJNA123456"
+      - name: gcaAccession
+        displayName: GCA accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
+        header: "INSDC"
+        noInput: true
+        oneHeader: true
+      - name: biosampleAccession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
+        header: "INSDC"
+        guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
+        definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
+        example: "SAMN12345678"
+        oneHeader: true
+      - name: cultureId
+        displayName: Culture ID
+        desired: true
+        header: Sample details
+      - name: sampleReceivedDate
+        ontology_id: GENEPIO:0001177
+        definition: The date on which the sample was received by the laboratory.
+        guidance: Alternative if "sampleCollectionDate" is not available. Record the date the sample was received by the laboratory. Required granularity includes year, month and day. Before sharing this data, ensure this date is not considered identifiable information. If this date is considered identifiable, it is acceptable to add "jitter" to the received date by adding or subtracting calendar days. Do not change the received date in your original records. Alternatively, collection_date may be used as a substitute in the data you share. The date should be provided in ISO 8601 standard format "YYYY-MM-DD".
+        example: '2020-03-20'
+        displayName: Sample received date
+        desired: true
+        type: date
+        preprocessing:
+          function: parse_and_assert_past_date
+          inputs:
+            date: sampleReceivedDate
+        header: Sample details
+      - name: sampleType
+        displayName: Sample type
+        header: Sampling
+      - name: purposeOfSampling
+        ontology_id: GENEPIO:0001198
+        definition: The reason that the sample was collected.
+        guidance: Select a value from the pick list in the template
+        example: Diagnostic testing
+        header: Sampling
+        ingest: ncbiPurposeOfSampling
+      - name: presamplingActivity
+        ontology_id: GENEPIO:0100433
+        definition: The activities or variables introduced upstream of sample collection that may affect the sample collected.
+        guidance: If there was presampling activity that would affect the sample prior to collection (this is different than sample processing which happens after the sample is collected), provide the experimental activities by selecting one or more values from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: Antimicrobial pre-treatment [GENEPIO:0100537]
+        displayName: Presampling activity
+        header: Sampling
+      - name: anatomicalMaterial
+        ontology_id: GENEPIO:0001211
+        definition: A substance obtained from an anatomical part of an organism e.g. tissue, blood.
+        guidance: 'Provide a descriptor if an anatomical material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        example: Blood [UBERON:0000178]
+        displayName: Anatomical material
+        header: Sampling
+      - name: anatomicalPart
+        ontology_id: GENEPIO:0001214
+        definition: An anatomical part of an organism e.g. oropharynx.
+        guidance: 'Provide a descriptor if an anatomical part was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        example: Nasopharynx (NP) [UBERON:0001728]
+        displayName: Anatomical part
+        header: Sampling
+      - name: bodyProduct
+        ontology_id: GENEPIO:0001216
+        definition: A substance excreted/secreted from an organism e.g. feces, urine, sweat.
+        guidance: 'Provide a descriptor if a body product was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/uberon. If not applicable, leave blank.'
+        example: Feces [UBERON:0001988]
+        displayName: Body product
+        header: Sampling
+      - name: environmentalMaterial
+        ontology_id: GENEPIO:0001223
+        definition: A substance obtained from the natural or man-made environment e.g. soil, water, sewage, door handle, bed handrail, face mask.
+        guidance: 'Provide a descriptor if an environmental material was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
+        example: Face mask [OBI:0002787]
+        displayName: Environmental material
+        header: Sampling
+      - name: environmentalSite
+        ontology_id: GENEPIO:0001232
+        definition: An environmental location may describe a site in the natural or built environment e.g. hospital, wet market, bat cave.
+        guidance: 'Provide a descriptor if an environmental site was sampled. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/envo. If not applicable, leave blank.'
+        example: Hospital [ENVO:00002173]
+        displayName: Environmental site
+        header: Sampling
+      - name: collectionDevice
+        ontology_id: GENEPIO:0001234
+        definition: The instrument or container used to collect the sample e.g. swab.
+        guidance: 'Provide a descriptor if a collection device was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
+        example: Swab [GENEPIO:0100027]
+        displayName: Collection device
+        header: Sampling
+        desired: true
+      - name: collectionMethod
+        ontology_id: GENEPIO:0001241
+        definition: The process used to collect the sample e.g. phlebotomy, necropsy.
+        guidance: 'Provide a descriptor if a collection method was used for sampling. Use the pick list provided in the template. If a desired term is missing from the pick list, use this look-up service to identify a standardized term: https://www.ebi.ac.uk/ols/ontologies/obi. If not applicable, leave blank.'
+        example: Bronchoalveolar lavage (BAL) [GENEPIO:0100032]
+        displayName: Collection method
+        header: Sampling
+        desired: true
+      - name: foodProduct
+        ontology_id: GENEPIO:0100444
+        definition: A material consumed and digested for nutritional value or enjoyment.
+        guidance: This field includes animal feed. If applicable, select the standardized term and ontology ID for the anatomical material from the picklist provided. Multiple values can be provided, separated by a semi-colon.
+        example: Feather meal [FOODON:00003927]; Bone meal [ENVO:02000054]; Chicken breast [FOODON:00002703]
+        displayName: Food product
+        header: Sampling
+      - name: foodProductProperties
+        ontology_id: GENEPIO:0100445
+        definition: Any characteristic of the food product pertaining to its state, processing, a label claim, or implications for consumers.
+        guidance: Provide any characteristics of the food product including whether it has been cooked, processed, preserved, any known information about its state (e.g. raw, ready-to-eat), any known information about its containment (e.g. canned), and any information about a label claim (e.g. organic, fat-free).
+        example: Food (chopped) [FOODON:00002777]; Ready-to-eat (RTE) [FOODON:03316636]
+        displayName: Food product properties
+        header: Sampling
+      - name: specimenProcessing
+        ontology_id: GENEPIO:0100435
+        definition: The processing applied to samples post-collection, prior to further testing, characterization, or isolation procedures.
+        guidance: Provide the sample processing information by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: Samples pooled [OBI:0600016]
+        displayName: Specimen processing
+        header: Specimen processing
+      - name: specimenProcessingDetails
+        ontology_id: GENEPIO:0100311
+        definition: Detailed information regarding the processing applied to a sample during or after receiving the sample.
+        guidance: Provide a free text description of any processing details applied to a sample.
+        example: 25 swabs were pooled and further prepared as a single sample during library prep.
+        displayName: Specimen processing details
+        header: Specimen processing
+      - name: experimentalSpecimenRoleType
+        ontology_id: GENEPIO:0100921
+        definition: The type of role that the sample represents in the experiment.
+        guidance: Samples can play different types of roles in experiments. A sample under study in one experiment may act as a control or be a replicate of another sample in another experiment. This field is used to distinguish samples under study from controls, replicates, etc.  If the sample acted as an experimental control or a replicate, select a role type from the picklist. If the sample was not a control, leave blank or select "Not Applicable".
+        example: Positive experimental control [GENEPIO:0101018]
+        displayName: Experimental specimen role type
+        header: Specimen processing
+      - name: hostAge
+        ontology_id: GENEPIO:0001392
+        definition: Age of host at the time of sampling.
+        guidance: If known, provide age. Age-binning is also acceptable.
+        example: "79"
+        displayName: Host age
+        type: int
+        header: Host
+        rangeSearch: true
+      - name: hostAgeBin
+        ontology_id: GENEPIO:0001394
+        definition: The age category of the host at the time of sampling.
+        guidance: Age bins in 10 year intervals have been provided. If a host's age cannot be specified due to provacy concerns, an age bin can be used as an alternative.
+        example: 50 - 59 [GENEPIO:0100054]
+        displayName: Host age bin
+        header: Host
+      - name: hostGender
+        ontology_id: GENEPIO:0001395
+        definition: The gender of the host at the time of sample collection.
+        guidance: If known, select a value from the pick list.
+        example: Male [NCIT:C46109]
+        displayName: Host gender
+        header: Host
+        ingest: ncbiHostSex
+      - name: hostOriginCountry
+        ontology_id: GENEPIO:0100438
+        definition: The country of origin of the host.
+        guidance: If a sample is from a human or animal host that originated from outside of Canada, provide the the name of the country where the host originated by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: South Africa [GAZ:00001094]
+        displayName: Host origin country
+        header: Host
+      - name: hostDisease
+        ontology_id: GENEPIO:0001391
+        definition: The name of the disease experienced by the host.
+        guidance: "This field is only required if the Pathogen.cl package was selected. If the host was sick, provide the name of the disease.The standardized term can be sourced from this look-up service: https://www.ebi.ac.uk/ols/ontologies/doid If the disease is not known, put “missing”."
+        example: mastitis, gastroenteritis
+        displayName: Host disease
+        header: Host
+      - name: signsAndSymptoms
+        ontology_id: GENEPIO:0001400
+        definition: A perceived change in function or sensation, (loss, disturbance or appearance) indicative of a disease, reported by a patient.
+        guidance: Select all of the symptoms experienced by the host from the pick list.
+        example: Cough [HP:0012735], Fever [HP:0001945],  Rigors (fever shakes) [HP:0025145]
+        displayName: Signs and symptoms
+        header: Host
+      - name: hostHealthState
+        ontology_id: GENEPIO:0001388
+        definition: Health status of the host at the time of sample collection.
+        guidance: If known, select a value from the pick list.
+        example: Asymptomatic [NCIT:C3833]
+        displayName: Host health state
+        header: Host
+      - name: hostHealthOutcome
+        ontology_id: GENEPIO:0001390
+        definition: Disease outcome in the host.
+        guidance: If known, select a value from the pick list.
+        example: Recovered [NCIT:C49498]
+        displayName: Host health outcome
+        header: Host
+      - name: travelHistory
+        ontology_id: GENEPIO:0001416
+        definition: Travel history in last six months.
+        guidance: Specify the countries (and more granular locations if known) travelled in the last six months; can include multiple travels. Separate multiple travel events with a semicolon. Provide as free text.
+        example: Canada, Vancouver; USA, Seattle; Italy, Milan
+        displayName: Travel history
+        header: Host
+      - name: exposureEvent
+        ontology_id: GENEPIO:0001417
+        definition: Event leading to exposure.
+        guidance: If known, select the exposure event from the pick list.
+        example: Mass Gathering [GENEPIO:0100237]
+        displayName: Exposure event
+        header: Host
+      - name: hostRole
+        ontology_id: GENEPIO:0001419
+        definition: The role of the host in relation to the exposure setting.
+        guidance: Select the host's personal role(s) from the pick list provided in the template. If the desired term is missing, contact the curation team.
+        example: Patient [OMRSE:00000030]
+        displayName: Host role
+        header: Host
+      - name: exposureSetting
+        ontology_id: GENEPIO:0001428
+        definition: The setting leading to exposure.
+        guidance: Select the host exposure setting(s) from the pick list provided in the template. If a desired term is missing, contact the curation team.
+        example: Healthcare Setting [GENEPIO:0100201]
+        displayName: Exposure setting
+        header: Host
+      - name: exposureDetails
+        ontology_id: GENEPIO:0001431
+        definition: Additional host exposure information.
+        guidance: Free text description of the exposure.
+        example: "Host role - Other: Bus Driver"
+        displayName: Exposure details
+        header: Host
+      - name: previousInfectionDisease
+        definition: The name of the disease previously experienced by the host.
+        guidance: Provide the name(s) of the previous of ongoing disease(s). Multiple diseases can be separated by a semi-colon.
+        example: COVID-19
+        displayName: Previous infection (disease)
+        header: Host
+      - name: previousInfectionOrganism
+        definition: The name of the pathogen causing the disease previously experienced by the host.
+        guidance: Provide the name(s) of the pathogen(s) causing the previous or ongoing infections. Multiple pathogen names can be separated using a semi-colon.
+        example: Sudden Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2)
+        displayName: Previous infection (organism)
+        header: Host
+      - name: hostVaccinationStatus
+        ontology_id: GENEPIO:0001404
+        definition: The vaccination status of the host (fully vaccinated, partially vaccinated, or not vaccinated).
+        guidance: Select the vaccination status of the host from the pick list.
+        example: Fully Vaccinated [GENEPIO:0100100]
+        displayName: Host vaccination status
+        header: Host
+      - name: purposeOfSequencing
+        ontology_id: GENEPIO:0001445
+        definition: The reason that the sample was sequenced.
+        guidance: The reason why a sample was originally collected may differ from the reason why it was selected for sequencing. The reason a sample was sequenced may provide information about potential biases in sequencing strategy. Provide the purpose of sequencing from the picklist in the template. The reason for sample collection should be indicated in the "purpose of sampling" field.
+        example: Baseline surveillance (random sampling) [GENEPIO:0100005]
+        displayName: Purpose of sequencing
+        header: Sequencing
+      - name: sequencingDate
+        ontology_id: GENEPIO:0001447
+        definition: The date the sample was sequenced.
+        guidance: Provide the sequencing date in ISO 8601 standard format "YYYY-MM-DD".
+        example: "2021-04-26"
+        displayName: Sequencing date
+        type: date
+        preprocessing:
+          function: parse_and_assert_past_date
+          inputs:
+            date: sequencingDate
+        header: Sequencing
+        desired: true
+      - name: ampliconPcrPrimerScheme
+        ontology_id: GENEPIO:0001456
+        definition: The specifications of the primers (primer sequences, binding positions, fragment size generated etc) used to generate the amplicons to be sequenced.
+        guidance: Provide the name and version of the primer scheme used to generate the amplicons for sequencing.
+        example: https://github.com/joshquick/artic-ncov2019/blob/master/primer_schemes/nCoV-2019/V3/nCoV-2019.tsv
+        displayName: Amplicon PCR primer scheme
+        header: Sequencing
+      - name: ampliconSize
+        ontology_id: GENEPIO:0001449
+        definition: The length of the amplicon generated by PCR amplification.
+        guidance: Provide the amplicon size, including the units.
+        example: 300bp
+        displayName: Amplicon size
+        header: Sequencing
+      - name: sequencingInstrument
+        ontology_id: GENEPIO:0001452
+        definition: The model of the sequencing instrument used.
+        guidance: Select the sequencing instrument from the pick list.
+        example: Oxford Nanopore MinION [GENEPIO:0100142]
+        displayName: Sequencing instrument
+        header: Sequencing
+        desired: true
+      - name: sequencingProtocol
+        ontology_id: GENEPIO:0001454
+        definition: The protocol used to generate the sequence.
+        guidance: 'Provide a free text description of the methods and materials used to generate the sequence. Suggested text, fill in information where indicated.: "Viral sequencing was performed following a tiling amplicon strategy using the <fill in> primer scheme. Sequencing was performed using a <fill in> sequencing instrument. Libraries were prepared using <fill in> library kit. "'
+        example: Genomes were generated through amplicon sequencing of 1200 bp amplicons with Freed schema primers. Libraries were created using Illumina DNA Prep kits, and sequence data was produced using Miseq Micro v2 (500 cycles) sequencing kits.
+        displayName: Sequencing protocol
+        header: Sequencing
+        desired: true
+      - name: sequencingAssayType
+        ontology_id: GENEPIO:0100997
+        definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
+        guidance: 'Example Guidance: Provide the name of the DNA or RNA sequencing technology used in your study. If unsure refer to the protocol documentation, or provide a null value.'
+        example: whole genome sequencing assay [OBI:0002117]
+        displayName: Sequencing assay type
+        header: Sequencing
+      - name: sequencedByOrganization
+        ontology_id: GENEPIO:0100416
+        definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
+        guidance: Provide the name of the agency, organization or institution that performed the sequencing in full (avoid abbreviations). If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: Public Health Agency of Canada (PHAC) [GENEPIO:0100551]
+        displayName: Sequenced by
+        header: Sequencing
+      - name: sequencedByContactName
+        ontology_id: GENEPIO:0100471
+        definition: The name or title of the contact responsible for follow-up regarding the sequence.
+        guidance: Provide the name of an individual or their job title. As personnel turnover may render the contact's name obsolete, it is more preferable to provide a job title for ensuring accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: Enterics Lab Manager
+        displayName: Sequenced by - contact name
+        header: Sequencing
+      - name: sequencedByContactEmail
+        ontology_id: GENEPIO:0100422
+        definition: The email address of the contact responsible for follow-up regarding the sequence.
+        guidance: Provide the email associated with the listed contact. As personnel turnover may render an individual's email obsolete, it is more preferable to provide an address for a position or lab, to ensure accuracy of information and institutional memory. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        example: enterics@lab.ca
+        displayName: Sequenced by - contact email
+        header: Sequencing
+      - name: rawSequenceDataProcessingMethod
+        ontology_id: GENEPIO:0001458
+        definition: The method used for raw data processing such as removing barcodes, adapter trimming, filtering etc.
+        guidance: Provide the name and version numbers of the software used to process the raw data.
+        example: Porechop 0.2.3
+        displayName: Raw sequence data processing method
+        header: Sequencing
+      - name: dehostingMethod
+        ontology_id: GENEPIO:0001459
+        definition: The method used to remove host reads from the pathogen sequence.
+        guidance: Provide the name and version number of the software used to remove host reads.
+        example: Nanostripper 1.2.3
+        displayName: Dehosting method
+        header: Sequencing
+      - name: referenceGenomeAccession
+        ontology_id: GENEPIO:0001485
+        definition: A persistent, unique identifier of a genome database entry.
+        guidance: Provide the accession number of the reference genome used for mapping/assembly.
+        example: NC_045512.2
+        displayName: Reference genome accession
+        header: Sequencing
+      - name: consensusSequenceSoftwareName
+        ontology_id: GENEPIO:0001463
+        definition: The name of software used to generate the consensus sequence.
+        guidance: Provide the name of the software used to generate the consensus sequence.
+        example: Ivar
+        displayName: Consensus sequence software name
+        header: Sequencing
+      - name: consensusSequenceSoftwareVersion
+        ontology_id: GENEPIO:0001469
+        definition: The version of the software used to generate the consensus sequence.
+        guidance: Provide the version of the software used to generate the consensus sequence.
+        example: "1.3"
+        displayName: Consensus sequence software version
+        header: Sequencing
+      - name: depthOfCoverage
+        ontology_id: GENEPIO:0001474
+        definition: The average number of reads representing a given nucleotide in the reconstructed sequence.
+        guidance: Provide value as a fold of coverage (as a number).
+        example: "400"
+        displayName: Depth of coverage
+        type: int
+        header: Sequencing
+        desired: true
+      - name: breadthOfCoverage
+        ontology_id: GENEPIO:0001475
+        definition: The threshold used as a cut-off for the depth of coverage.
+        guidance: Provide the threshold fold coverage (as a number)
+        example: "100"
+        displayName: Breadth of coverage
+        type: int
+        header: Sequencing
+      - name: qualityControlMethodName
+        ontology_id: GENEPIO:0100557
+        definition: The name of the method used to assess whether a sequence passed a predetermined quality control threshold.
+        guidance: Providing the name of the method used for quality control is very important for interpreting the rest of the QC information. Method names can be provided as the name of a pipeline or a link to a GitHub repository. Multiple methods should be listed and separated by a semi-colon. Do not include QC tags in other fields if no method name is provided.
+        example: ncov-tools
+        displayName: Quality control method name
+        header: Sequencing
+      - name: qualityControlMethodVersion
+        ontology_id: GENEPIO:0100558
+        definition: The version number of the method used to assess whether a sequence passed a predetermined quality control threshold.
+        guidance: Methods updates can make big differences to their outputs. Provide the version of the method used for quality control. The version can be expressed using whatever convention the developer implements (e.g. date, semantic versioning). If multiple methods were used, record the version numbers in the same order as the method names. Separate the version numbers using a semi-colon.
+        example: "1.2.3"
+        displayName: Quality control method version
+        header: Sequencing
+      - name: qualityControlDetermination
+        ontology_id: GENEPIO:0100559
+        definition: The determination of a quality control assessment.
+        guidance: Select a value from the pick list provided. If a desired value is missing, submit a new term request to the PHA4GE QC Tag GitHub issuetracker using the New Term Request form.
+        example: sequence failed quality control
+        displayName: Quality control determination
+        header: Sequencing
+      - name: qualityControlIssues
+        ontology_id: GENEPIO:0100560
+        definition: The reason contributing to, or causing, a low quality determination in a quality control assessment.
+        guidance: Select a value from the pick list provided. If a desired value is missing, submit a new term request to the PHA4GE QC Tag GitHub issuetracker using the New Term Request form.
+        example: low average genome coverage
+        displayName: Quality control issues
+        header: Sequencing
+      - name: qualityControlDetails
+        ontology_id: GENEPIO:0100561
+        definition: The details surrounding a low quality determination in a quality control assessment.
+        guidance: Provide notes or details regarding QC results using free text.
+        example: CT value of 39. Low viral load. Low DNA concentration after amplification.
+        displayName: Quality control details
+        header: Diagnostics
+      - name: diagnosticMeasurementMethod
+        displayName: Diagnostic measurement method
+        header: Diagnostics
+      - name: diagnosticTargetPresence
+        displayName: Diagnostic target presence
+        header: Diagnostics
+      - name: diagnosticTargetGeneName
+        displayName: Gene name
+        header: Diagnostics
+      - name: diagnosticMeasurementValue
+        displayName: Diagnostic measurement value
+        header: Diagnostics
+      - name: diagnosticMeasurementUnit
+        displayName: Diagnostic measurement unit
+        header: Diagnostics
+      - name: length
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        initiallyVisible: true
+        perSegment: true
+        displayName: Length
+      - name: hostNameScientific
+        generateIndex: true
+        autocomplete: true
+        header: "Host"
+        ingest: ncbiHostName
+        desired: true
+      - name: hostNameCommon
+        generateIndex: true
+        autocomplete: true
+        header: "Host"
+        ingest: ncbiHostCommonName
+      - name: hostTaxonId
+        type: int
+        autocomplete: true
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id=__value__"
+        header: "Host"
+        ingest: ncbiHostTaxId
+        desired: true
+      - name: isLabHost
+        type: boolean
+        autocomplete: true
+        header: "Host"
+        ingest: ncbiIsLabHost
+      - name: cellLine
+        generateIndex: true
+        autocomplete: true
+        header: "Host"
+      - name: passageNumber
+        type: int
+        header: "Host"
+      - name: passageMethod
+        generateIndex: true
+        autocomplete: true
+        header: "Host"
+      - name: ncbiSourceDb
+        generateIndex: true
+        autocomplete: true
+        header: "INSDC"
+        hideOnSequenceDetailsPage: true
+        noInput: true
+      - name: ncbiVirusName
+        generateIndex: true
+        autocomplete: true
+        hideOnSequenceDetailsPage: true
+        noInput: true
+        header: "INSDC"
+      - name: ncbiVirusTaxId
+        type: int
+        autocomplete: true
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:__value__"
+        hideOnSequenceDetailsPage: true
+        noInput: true
+        header: "INSDC"
+      - name: insdcRawReadsAccession
+        displayName: Raw reads accession
+        customDisplay:
+          type: link
+          url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
+        header: "INSDC"
+        ingest: ncbiSraAccessions
+      - name: totalSnps
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        perSegment: true
+        displayName: Total SNPs
+        preprocessing:
+          inputs: {input: nextclade.totalSubstitutions}
+      - name: totalInsertedNucs
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        perSegment: true
+        displayName: Total inserted nucs
+        preprocessing:
+          inputs: {input: nextclade.totalInsertions}
+      - name: totalDeletedNucs
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        perSegment: true
+        preprocessing:
+          inputs: {input: nextclade.totalDeletions}
+        displayName: Total deleted nucs
+      - name: totalAmbiguousNucs
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        perSegment: true
+        displayName: Total ambiguous nucs
+        preprocessing:
+          inputs: {input: "nextclade.totalNonACGTNs"}
+      - name: totalUnknownNucs
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        rangeSearch: true
+        perSegment: true
+        displayName: Total unknown nucs
+        preprocessing:
+          inputs: {input: nextclade.totalMissing}
+      - name: totalFrameShifts
+        type: int
+        rangeSearch: true
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: Total frame shifts
+        preprocessing:
+          inputs: {input: nextclade.totalFrameShifts}
+      - name: frameShifts
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: Frame shifts
+        preprocessing:
+          inputs: {input: nextclade.frameShifts}
+      - name: completeness
+        type: float
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: Completeness
+        rangeSearch: true
+        customDisplay:
+          type: percentage
+        preprocessing:
+          inputs: {input: nextclade.coverage}
+    website: &website
+      tableColumns:
+        - sampleCollectionDate
+        - ncbiReleaseDate
+        - authors
+        - authorAffiliations
+        - geoLocCountry
+        - geoLocAdmin1
+        - length
+      defaultOrderBy: sampleCollectionDate
+      defaultOrder: descending
+    extraInputFields: []
+  preprocessing:
+    - &preprocessing
+      version: 1
+      image: ghcr.io/loculus-project/preprocessing-nextclade
+      args:
+        - "prepro"
+      replicas: 2
+      configFile: &preprocessingConfigFile
+        log_level: DEBUG
+        genes: []
+        batch_size: 100
+  ingest: &ingest
+    image: ghcr.io/loculus-project/ingest
+    configFile: &ingestConfigFile
+      taxon_id: 3052460
+  enaDeposition:
+    configFile:
+      taxon_id: 186540
+      scientific_name: "Sudan ebolavirus"
+      molecule_type: "genomic RNA"
+  referenceGenomes:
+    nucleotideSequences:
+      - name: "main"
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
+        insdcAccessionFull: NC_002549.1
+    genes:
+      - name: NP
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
+      - name: VP35
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
+      - name: VP40
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
+      - name: GP
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
+      - name: ssGP
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
+      - name: sGP
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
+      - name: VP30
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
+      - name: VP24
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
+      - name: L
+        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
+organisms:
+  cva16:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "CV-A16"
+      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      metadataAdd:
+        - name: subgenotype
+          displayName: Subgenotype
+          noInput: true
+          header: "Subgenotype"
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            inputs: { input: nextclade.clade }
+          columnWidth: 80
+          order: 5
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - earliestReleaseDate
+          - authors
+          - authorAffiliations
+          - geoLocCountry
+          - geoLocAdmin1
+          - length
+          - lineage
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_name: "community/hodcroftlab/enterovirus/cva16"
+          require_nextclade_sort_match: true
+          minimizer_url: "https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          accepted_dataset_matches: 
+            - CV-A16
+          genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
+        minimizer_index: "https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+        minimizer_parser: # Name of each '_' - separated entry in the minimizer index
+          - dataset
+        metadata_filter: 
+          dataset: CV-A16
+    enaDeposition:
+      configFile:
+        taxon_id: 31704
+        scientific_name: "Coxsackievirus A16"
+        molecule_type: "genomic RNA"
+    referenceGenomes:
+      nucleotideSequences:
+        - name: "main"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/reference.fasta]]"
+          insdcAccessionFull: U05876.1
+      genes:
+        - name: "VP4"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP4.fasta]]"
+        - name: "VP2"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP2.fasta]]"
+        - name: "VP3"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP3.fasta]]"
+        - name: "VP1"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP1.fasta]]"
+        - name: "2A"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2A.fasta]]"
+        - name: "2B"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2B.fasta]]"
+        - name: "2C"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2C.fasta]]"
+        - name: "3A"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3A.fasta]]"
+        - name: "3B"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3B.fasta]]"
+        - name: "3C"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3C.fasta]]"
+        - name: "3D"
+          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3D.fasta]]"
 createTestAccounts: true
 secrets:
   smtp-password:
