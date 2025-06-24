@@ -12,8 +12,14 @@ test.describe('Sequence Preview Annotations', () => {
     test('should have an embl file in the Files section', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        await searchPage.select('submission ID', 'foobar');
-        await searchPage.select('Author affiliations', 'Patho Institute, Paris');
+        await searchPage.enableSearchFields(
+            'Author affiliations',
+            'Submitting group',
+            'Submission ID',
+        );
+
+        await searchPage.fill('Submission ID', 'foobar');
+        await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
         const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
         const accession = accessionVersion.split('.')[0];
