@@ -8,11 +8,14 @@ test.describe('Sequence Preview Annotations', () => {
         searchPage = new SearchPage(page);
     });
 
-    test.only('should have an embl file in the Files section', async ({ page }) => {
+    test('should have an embl file in the Files section', async ({ page }) => {
         await searchPage.ebolaSudan();
+        await searchPage.enableSearchFields('Author affiliations');
+        await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
+        await searchPage.fill('Collection country', 'France');
 
-        const loculus_id = await searchPage.clickOnSequence(0);
-        const accession = loculus_id.split('.')[0];
+        const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
+        const accession = accessionVersion.split('.')[0];
 
         await expect(page.getByTestId('sequence-preview-modal')).toBeVisible();
 
@@ -20,10 +23,10 @@ test.describe('Sequence Preview Annotations', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
-        await expect(page.getByRole('link', { name: /LOC_[\w.]{6,10}\.embl/ })).toBeVisible();
+        await expect(page.getByRole('link', { name: `${accessionVersion}.embl` })).toBeVisible();
 
         const fileUrl = await page
-            .getByRole('link', { name: /LOC_[\w.]{6,10}\.embl/ })
+            .getByRole('link', { name: `${accessionVersion}.embl` })
             .getAttribute('href');
 
         const resp = await fetch(fileUrl);
