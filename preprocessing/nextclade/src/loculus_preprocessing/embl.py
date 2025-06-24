@@ -141,6 +141,7 @@ def get_seq_features(  # noqa: PLR0914
     attribute_map = {
         # "Dbxref": "db_xref", - # protein accession of reference
         "Note": "note",
+        "phase": "codon_start",
     }
     feature_list = []
     for gene in annotation_object.get("genes", []):
