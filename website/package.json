@@ -60,7 +60,7 @@
         "sanitize-html": "^2.17.0",
         "unplugin-icons": "^22.1.0",
         "winston": "^3.17.0",
-        "zod": "^3.25.56"
+        "zod": "^3.25.67"
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.4",
@@ -68,7 +68,7 @@
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.29.0",
-        "@iconify/json": "^2.2.347",
+        "@iconify/json": "^2.2.352",
         "@playwright/test": "^1.53.1",
         "@tailwindcss/forms": "^0.5.9",
         "@tanstack/eslint-plugin-query": "^5.81.2",
@@ -76,10 +76,10 @@
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.3.0",
         "@testing-library/user-event": "^14.6.1",
-        "@types/jsonwebtoken": "^9.0.9",
-        "@types/lodash": "^4.17.17",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/lodash": "^4.17.18",
         "@types/luxon": "^3.6.2",
-        "@types/node": "^22.15.30",
+        "@types/node": "^22.15.32",
         "@types/papaparse": "^5.3.16",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
@@ -102,12 +102,12 @@
         "prettier": "3.6.0",
         "prettier-plugin-astro": "^0.14.1",
         "resize-observer-polyfill": "^1.5.1",
-        "sass": "^1.89.1",
+        "sass": "^1.89.2",
         "tailwindcss": "^3.4.17",
         "typescript": "^5.8.3",
         "typescript-eslint": "^8.35.0",
         "uuid": "^11.1.0",
         "vite": "^6.3.5",
-        "vitest": "3.2.3"
+        "vitest": "3.2.4"
     }
 }
