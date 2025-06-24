@@ -32,7 +32,7 @@ class SubmissionPage {
 
 export class SingleSequenceSubmissionPage extends SubmissionPage {
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
-        super.navigateToSubmissionPage(organism);
+        await super.navigateToSubmissionPage(organism);
         await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
     }
 
