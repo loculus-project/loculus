@@ -17,7 +17,7 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     const loculusId = await searchPage.waitForLoculusId();
     expect(loculusId).toBeTruthy();
 
-    await searchPage.clickOnSequence(0);
+    await searchPage.clickOnSequenceAndGetAccession(0);
 
     await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
     await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();

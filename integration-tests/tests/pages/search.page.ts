@@ -79,14 +79,14 @@ export class SearchPage {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
-    async clickOnSequence(rowIndex = 0): Promise<string | null> {
-        const rows = this.getSequenceRows();
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
+        const rows = await this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
-        const loculusIdMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
-        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
+        const accessionVersionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
         await row.click();
-        return loculusId;
+        return accessionVersion;
     }
 
     getSequencePreviewModal() {
