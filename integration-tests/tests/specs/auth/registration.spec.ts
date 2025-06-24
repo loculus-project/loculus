@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test';
 import { test } from '../../fixtures/auth.fixture';
 import { AuthPage } from '../../pages/auth.page';
 
@@ -9,7 +8,7 @@ test.describe('Registration Flow', () => {
         authPage = new AuthPage(page);
     });
 
-    test('should successfully register a new user', async ({ page, testAccount }) => {
+    test('should successfully register a new user', async ({ testAccount }) => {
         await authPage.createAccount(testAccount);
     });
 });

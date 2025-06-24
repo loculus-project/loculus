@@ -36,11 +36,11 @@ test.describe('Sequence N trimming functionality', () => {
 
         await reviewPage.viewSequences();
 
-        const sequenceContent = await reviewPage.getSequenceContent();
+        await reviewPage.getSequenceContent();
 
         const tabs = await reviewPage.getAvailableSequenceTabs();
 
-        const LunalignedTab = tabs.find((tab) => tab.toLowerCase().includes('L (unaligned)'));
+        const lUnalignedTab = tabs.find((tab) => tab.toLowerCase().includes('L (unaligned)'));
 
         const lSegmentTrimmed =
             'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
@@ -50,7 +50,7 @@ test.describe('Sequence N trimming functionality', () => {
             const content = await reviewPage.getSequenceContent();
             expect(content.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));
         };
-        await checkTab(LunalignedTab, lSegmentTrimmed);
+        await checkTab(lUnalignedTab, lSegmentTrimmed);
 
         await reviewPage.closeSequencesDialog();
 

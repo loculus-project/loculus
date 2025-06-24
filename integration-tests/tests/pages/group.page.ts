@@ -1,5 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { TestAccount } from '../types/auth.types';
 
 interface GroupData {
     name: string;

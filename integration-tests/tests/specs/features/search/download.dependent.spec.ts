@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../../pages/search.page';
-const fs = require('fs');
+import fs from 'fs';
 
 test('Download metadata and check number of cols', async ({ page }) => {
     const searchPage = new SearchPage(page);

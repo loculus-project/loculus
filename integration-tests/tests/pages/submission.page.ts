@@ -25,7 +25,7 @@ class SubmissionPage {
 
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        await this.page.waitForURL('**\/review');
+        await this.page.waitForURL('**/review');
         return new ReviewPage(this.page);
     }
 }

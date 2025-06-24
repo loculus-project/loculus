@@ -13,8 +13,8 @@ export default tseslint.config(
       },
     },
     rules: {
-      // This rule requires the type information from above
       '@typescript-eslint/no-floating-promises': 'error',
+      'no-empty-pattern': 'off', // Playwright requires object destructuring
     },
   },
 );
