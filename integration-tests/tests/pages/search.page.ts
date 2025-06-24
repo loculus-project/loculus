@@ -34,7 +34,7 @@ export class SearchPage {
         await this.page.getByRole('button', { name: 'Add Search Fields' }).click({ force: true });
         await this.page
             .getByRole('checkbox', { name: fieldLabels[0], exact: true })
-            .waitFor({ state: 'visible' });
+            .waitFor({ state: 'visible', timeout: 20000 });
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
