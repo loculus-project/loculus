@@ -26,7 +26,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue('2025-03-17');
     });
 
     test('"From" field sets date correctly', async () => {
@@ -42,8 +42,8 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
+        await userEvent.type(input, '20250317');
+        expect(input).toHaveValue('2025-03-17');
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampFrom', '1742169600']);
     });
 
@@ -62,7 +62,7 @@ describe('TimestampField', () => {
         const input = screen.getByRole('textbox');
         expect(input).toBeInTheDocument();
 
-        expect(input).toHaveValue('17/03/2025');
+        expect(input).toHaveValue('2025-03-17');
     });
 
     test('"To" field sets date correctly', async () => {
@@ -78,8 +78,8 @@ describe('TimestampField', () => {
         );
 
         const input = screen.getByRole('textbox');
-        await userEvent.type(input, '17032025');
-        expect(input).toHaveValue('17/03/2025');
+        await userEvent.type(input, '20250317');
+        expect(input).toHaveValue('2025-03-17');
         expect(setSomeFieldValues).lastCalledWith(['releasedAtTimestampTo', '1742255999']);
     });
 });

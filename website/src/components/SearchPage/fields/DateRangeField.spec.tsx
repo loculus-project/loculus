@@ -141,13 +141,13 @@ describe('DateRangeField', () => {
         const fromInput = screen.getByText('From').closest('div')?.querySelector('input');
         const toInput = screen.getByText('To').closest('div')?.querySelector('input');
 
-        expect(fromInput).toHaveValue('01/01/2024');
-        expect(toInput).toHaveValue('31/12/2024');
+        expect(fromInput).toHaveValue('2024-01-01');
+        expect(toInput).toHaveValue('2024-12-31');
 
         await userEvent.type(fromInput!, '{backspace}');
-        await userEvent.type(fromInput!, '23041987');
+        await userEvent.type(fromInput!, '19870423');
         await userEvent.type(toInput!, '{backspace}');
-        await userEvent.type(toInput!, '13102014');
+        await userEvent.type(toInput!, '20141013');
 
         expect(setSomeFieldValues).toHaveBeenLastCalledWith(
             ['collectionDateRangeLowerFrom', '1987-04-23'],
@@ -194,8 +194,8 @@ describe('DateRangeField', () => {
         const getToInput = () => screen.getByText('To').closest('div')?.querySelector('input');
         const button = screen.getByText('Update Dates');
 
-        expect(getFromInput()).toHaveValue('01/01/2024');
-        expect(getToInput()).toHaveValue('31/12/2024');
+        expect(fromInput()).toHaveValue('2024-01-01');
+        expect(toInput()).toHaveValue('2024-12-31');
 
         await user.click(button);
 
