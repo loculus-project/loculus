@@ -9,15 +9,12 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal
 
 import pytz
 import requests
 import xmltodict
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
-from Bio.SeqRecord import SeqRecord
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 
@@ -354,24 +351,21 @@ def get_authors(authors: str) -> str:
     return authors
 
 
-def get_country(metadata: dict[str, str]) -> str:
-    country = metadata.get("geoLocCountry", "Unknown")
-    admin_levels = ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
-    admin_values = [val for level in admin_levels if (val := metadata.get(level))]
-    admin = ", ".join(admin_values)
-    return f"{country}: {admin}" if admin else country
-
-
-def create_flatfile(
-    config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+def download_flatfile(
+    config: Config,
+    metadata,
+    dir
 ):
-    collection_date = metadata.get("sampleCollectionDate", "Unknown")
-    country = get_country(metadata)
-    organism = organism_metadata.get("scientific_name", "Unknown")
     accession = metadata["accession"]
-    description = get_description(config, metadata)
-    authors = get_authors(metadata.get("authors", ""))
-    moleculetype = get_molecule_type(organism_metadata)
+    version = metadata["version"]
+    category = "annotations"
+    filename = f"{accession}.{version}.embl"
+
+    base_url = config.backend_url.rstrip("/")
+    url = f"{base_url}/files/get/{accession}/{version}/{category}/{filename}"
+
+    response = requests.get(url, timeout=60)
+    response.raise_for_status()  # raise error if the request failed
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -380,57 +374,9 @@ def create_flatfile(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
             filename = temp.name
 
-    seqIO_moleculetype = {
-        MoleculeType.GENOMIC_DNA: "DNA",
-        MoleculeType.GENOMIC_RNA: "RNA",
-        MoleculeType.VIRAL_CRNA: "cRNA",
-    }
-
-    embl_content = []
-
-    multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
-
-    for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
-        if not sequence_str:
-            continue
-        reference = Reference()
-        reference.authors = authors
-        sequence = SeqRecord(
-            Seq(sequence_str),
-            id=f"{accession}_{seq_name}" if multi_segment else accession,
-            annotations={
-                "molecule_type": seqIO_moleculetype[moleculetype],
-                "organism": organism,
-                "topology": organism_metadata.get("topology", "linear"),
-                "references": [reference],
-            },
-            description=description,
-        )
-
-        source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
-            type="source",
-            qualifiers={
-                "molecule_type": str(moleculetype),
-                "organism": organism,
-                "country": country,
-                "collection_date": collection_date,
-            },
-        )
-        sequence.features.append(source_feature)
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
-            SeqIO.write(sequence, temp_seq_file.name, "embl")
-
-        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
-            embl_content.append(temp_seq_file.read())
-
-    final_content = "\n".join(embl_content)
-
     gzip_filename = filename + ".gz"
 
-    with gzip.open(gzip_filename, "wt", encoding="utf-8") as file:
-        file.write(final_content)
+    Path(gzip_filename).write_bytes(gzip.compress(response.text.encode("utf-8")))
 
     return gzip_filename
 
