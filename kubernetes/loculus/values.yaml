@@ -1461,6 +1461,14 @@ defaultOrganisms:
             inputs: { input: nextclade.clade }
           columnWidth: 80
           order: 5
+        - name: Genotype
+          displayName: Genotype
+          noInput: true
+          header: "Genotype"
+          ingest: ev
+          hideOnSequenceDetailsPage: true
+          hideInSearchResultsTable: true
+          notSearchable: true
       website:
         <<: *website
         tableColumns:
