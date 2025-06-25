@@ -7,7 +7,7 @@ test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
         pageWithACreatedUser,
     }) => {
-        test.setTimeout(30000);
+        test.setTimeout(10000);
         const page = pageWithACreatedUser;
         await page.getByRole('link', { name: 'Loculus' }).click();
         await page.getByRole('link', { name: 'Submit' }).click();
