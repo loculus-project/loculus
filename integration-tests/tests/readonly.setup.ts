@@ -1,4 +1,4 @@
-import { test as setup } from '@playwright/test';
+import { expect, test as setup } from '@playwright/test';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { createTestGroup } from './fixtures/group.fixture';
@@ -52,8 +52,16 @@ setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseValidSequences();
     await page.getByRole('link', { name: 'released sequences' }).click();
-    while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
-        await page.reload();
-        await page.waitForTimeout(2000);
-    }
+    await expect
+        .poll(
+            async () => {
+                await page.reload();
+                return page.getByRole('link', { name: /LOC_/ }).isVisible();
+            },
+            {
+                message: 'Link with name /LOC_/ never became visible.',
+                timeout: 60000,
+            },
+        )
+        .toBe(true);
 });

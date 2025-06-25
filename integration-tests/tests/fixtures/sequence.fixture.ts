@@ -1,5 +1,5 @@
 import { test as groupTest } from './group.fixture';
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
 import { SingleSequenceSubmissionPage } from '../pages/submission.page';
 
@@ -32,10 +32,18 @@ export const test = groupTest.extend<SequenceFixtures>({
 
             await reviewPage.releaseValidSequences();
             await pageWithGroup.getByRole('link', { name: 'Released Sequences' }).click();
-            while (!(await pageWithGroup.getByRole('link', { name: /LOC_/ }).isVisible())) {
-                await pageWithGroup.reload();
-                await pageWithGroup.waitForTimeout(2000);
-            }
+            await expect
+                .poll(
+                    async () => {
+                        await pageWithGroup.reload();
+                        return pageWithGroup.getByRole('link', { name: /LOC_/ }).isVisible();
+                    },
+                    {
+                        message: 'Link with name /LOC_/ never became visible.',
+                        timeout: 60000,
+                    },
+                )
+                .toBe(true);
 
             await use(pageWithGroup);
         },
