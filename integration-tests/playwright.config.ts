@@ -31,7 +31,11 @@ const config = {
         ignoreHTTPSErrors: process.env.PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS === 'true',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: process.env.CI ? 'on-first-retry' : 'on',
+        trace: (process.env.CI ? 'on-first-retry' : 'on') as
+            | 'on'
+            | 'off'
+            | 'retain-on-failure'
+            | 'on-first-retry',
     },
 
     /* Configure projects for major browsers */
