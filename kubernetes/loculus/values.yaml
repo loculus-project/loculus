@@ -1461,11 +1461,11 @@ defaultOrganisms:
             inputs: { input: nextclade.clade }
           columnWidth: 80
           order: 5
-        - name: Genotype
+        - name: genotype
           displayName: Genotype
           noInput: true
           header: "Genotype"
-          ingest: ev
+          ingest: genotype
           hideOnSequenceDetailsPage: true
           hideInSearchResultsTable: true
           notSearchable: true
@@ -1499,9 +1499,9 @@ defaultOrganisms:
         taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
         minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
-          - ev
+          - genotype
         metadata_filter: 
-          ev: CV-A16
+          genotype: CV-A16
     enaDeposition:
       configFile:
         taxon_id: 31704
