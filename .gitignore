@@ -25,3 +25,5 @@ temp/
 
 logs/
 __pycache__/
+
+.astro/
