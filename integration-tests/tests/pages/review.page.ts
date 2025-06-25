@@ -65,7 +65,7 @@ export class ReviewPage {
 
     async switchSequenceTab(tabName: string) {
         const tabs = this.sequenceTabs();
-        const tab = await tabs.filter({ hasText: tabName }).first();
+        const tab = tabs.filter({ hasText: tabName }).first();
         await expect(tab).toBeVisible();
         await tab.click();
     }
@@ -76,10 +76,10 @@ export class ReviewPage {
         return content.textContent();
     }
 
-    async getAvailableSequenceTabs() {
+    async getAvailableSequenceTabs(): Promise<string[]> {
         const tabs = this.sequenceTabs();
         const count = await tabs.count();
-        const tabNames = [];
+        const tabNames: string[] = [];
 
         for (let i = 0; i < count; i++) {
             const tabText = await tabs.nth(i).textContent();

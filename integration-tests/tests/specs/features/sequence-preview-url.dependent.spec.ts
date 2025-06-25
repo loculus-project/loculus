@@ -4,28 +4,28 @@ import { SearchPage } from '../../pages/search.page';
 test.describe('Sequence Preview URL Parameters', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         searchPage = new SearchPage(page);
     });
 
     test('should store the previewed sequence ID in the URL', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        let urlParams = await searchPage.getUrlParams();
+        let urlParams = searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(false);
 
         await searchPage.clickOnSequence(0);
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        urlParams = await searchPage.getUrlParams();
+        urlParams = searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(true);
         expect(urlParams.get('selectedSeq')).not.toBeNull();
         const selectedSeqId = urlParams.get('selectedSeq');
 
-        await (await searchPage.closePreviewButton()).click();
+        await searchPage.closePreviewButton().click();
 
-        urlParams = await searchPage.getUrlParams();
+        urlParams = searchPage.getUrlParams();
         expect(urlParams.has('selectedSeq')).toBe(false);
 
         const currentUrl = new URL(page.url());
@@ -42,17 +42,17 @@ test.describe('Sequence Preview URL Parameters', () => {
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        await (await searchPage.toggleHalfScreenButton()).click();
+        await searchPage.toggleHalfScreenButton().click();
 
-        let urlParams = await searchPage.getUrlParams();
+        let urlParams = searchPage.getUrlParams();
         expect(urlParams.has('halfScreen')).toBe(true);
         expect(urlParams.get('halfScreen')).toBe('true');
 
         await expect(page.locator('[data-testid="half-screen-preview"]')).toBeVisible();
 
-        await (await searchPage.toggleHalfScreenButton()).click();
+        await searchPage.toggleHalfScreenButton().click();
 
-        urlParams = await searchPage.getUrlParams();
+        urlParams = searchPage.getUrlParams();
         expect(urlParams.has('halfScreen')).toBe(false);
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
@@ -64,12 +64,12 @@ test.describe('Sequence Preview URL Parameters', () => {
         await searchPage.clickOnSequence(0);
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        const urlParams = await searchPage.getUrlParams();
+        const urlParams = searchPage.getUrlParams();
         const selectedSeqId = urlParams.get('selectedSeq');
 
-        await (await searchPage.toggleHalfScreenButton()).click();
+        await searchPage.toggleHalfScreenButton().click();
 
-        await (await searchPage.closePreviewButton()).click();
+        await searchPage.closePreviewButton().click();
 
         const currentUrl = new URL(page.url());
         currentUrl.searchParams.set('selectedSeq', selectedSeqId);

@@ -4,7 +4,7 @@ import { AuthPage } from '../../pages/auth.page';
 test.describe('Login Flow', () => {
     let authPage: AuthPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         authPage = new AuthPage(page);
     });
 

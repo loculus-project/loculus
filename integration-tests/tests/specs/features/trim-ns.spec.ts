@@ -45,7 +45,7 @@ test.describe('Sequence N trimming functionality', () => {
         const lSegmentTrimmed =
             'TTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATA';
 
-        const checkTab = async (tab, expectedData) => {
+        const checkTab = async (tab: string, expectedData: string) => {
             await reviewPage.switchSequenceTab(tab);
             const content = await reviewPage.getSequenceContent();
             expect(content.replace(/\s+/g, '')).toEqual(expectedData.replace(/\s+/g, ''));

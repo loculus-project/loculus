@@ -3,8 +3,8 @@
     "version": "0.0.1",
     "main": "index.js",
     "scripts": {
-        "format": "eslint --cache \"./**/*.{ts,tsx,astro}\" --fix && prettier --write \"**/*.{ts,js,json}\"",
-        "format:check": "eslint --cache \"./**/*.{ts,tsx,astro}\" && prettier --check \"**/*.{ts,js,json}\"",
+        "format": "eslint --cache --fix && prettier --write \"**/*.{ts,js,mjs,json}\"",
+        "format:check": "eslint --cache && prettier --check \"**/*.{ts,js,mjs,json}\"",
         "test": "npx playwright test"
     },
     "devDependencies": {
@@ -14,7 +14,9 @@
         "@types/papaparse": "^5.3.16",
         "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.35.0",
+        "@typescript-eslint/parser": "^8.35.0",
         "eslint": "^9.29.0",
+        "eslint-plugin-unicorn": "^59.0.1",
         "papaparse": "^5.5.3",
         "prettier": "^3.6.0",
         "typescript-eslint": "^8.35.0",

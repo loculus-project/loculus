@@ -4,7 +4,7 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Column Visibility', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         searchPage = new SearchPage(page);
     });
 
