@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
-const fs = require('fs');
+import fs from 'fs';
 
 test('Download metadata TSV for a single sequence', async ({ page }) => {
     const searchPage = new SearchPage(page);

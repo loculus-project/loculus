@@ -1,11 +1,10 @@
-import { expect } from '@playwright/test';
 import { test } from '../../fixtures/auth.fixture';
 import { AuthPage } from '../../pages/auth.page';
 
 test.describe('Login Flow', () => {
     let authPage: AuthPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         authPage = new AuthPage(page);
     });
 

@@ -25,7 +25,7 @@ class SubmissionPage {
 
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        await this.page.waitForURL('**\/review');
+        await this.page.waitForURL('**/review');
         return new ReviewPage(this.page);
     }
 }
@@ -70,13 +70,13 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     }
 
     async fillSequenceData(sequenceData: Record<string, string>) {
-        Object.entries(sequenceData).forEach(async ([key, value]) => {
+        for (const [key, value] of Object.entries(sequenceData)) {
             await this.page.getByLabel(`${key} segment file`).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
                 buffer: Buffer.from(value),
             });
-        });
+        }
     }
 
     async uploadExternalFiles(

@@ -1,5 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { TestAccount } from '../types/auth.types';
 
 interface GroupData {
     name: string;
@@ -120,9 +119,7 @@ export class GroupPage {
     }
 
     async verifyUserIsNotPresent(username: string) {
-        await expect(
-            this.page.locator('ul').getByText(username, { exact: true }),
-        ).not.toBeVisible();
+        await expect(this.page.locator('ul').getByText(username, { exact: true })).toBeHidden();
     }
 
     async addNewUserToGroup(username: string) {

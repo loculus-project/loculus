@@ -71,32 +71,32 @@ export class SearchPage {
         return loculusId;
     }
 
-    async getSequenceRows() {
+    getSequenceRows() {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
     async clickOnSequence(rowIndex = 0) {
-        const rows = await this.getSequenceRows();
+        const rows = this.getSequenceRows();
         await rows.nth(rowIndex).click();
     }
 
-    async getSequencePreviewModal() {
+    getSequencePreviewModal() {
         return this.page.locator('[data-testid="sequence-preview-modal"]');
     }
 
-    async getHalfScreenPreview() {
+    getHalfScreenPreview() {
         return this.page.locator('[data-testid="half-screen-preview"]');
     }
 
-    async toggleHalfScreenButton() {
+    toggleHalfScreenButton() {
         return this.page.locator('[data-testid="toggle-half-screen-button"]');
     }
 
-    async closePreviewButton() {
+    closePreviewButton() {
         return this.page.locator('[data-testid="close-preview-button"]');
     }
 
-    async getUrlParams() {
+    getUrlParams() {
         return new URL(this.page.url()).searchParams;
     }
 

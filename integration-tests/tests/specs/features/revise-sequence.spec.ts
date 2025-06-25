@@ -38,7 +38,7 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     await reviewPage.waitForZeroProcessing();
 
     await reviewPage.viewSequences();
-    await expect(reviewPage.sequenceViewerContent()).not.toBeVisible(); // L was deleted
+    await expect(reviewPage.sequenceViewerContent()).toBeHidden(); // L was deleted
 
     const tabs = await reviewPage.getAvailableSequenceTabs();
     await reviewPage.switchSequenceTab(tabs[2]); // S tab

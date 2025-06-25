@@ -5,30 +5,30 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         searchPage = new SearchPage(page);
     });
 
-    test('test that country filter can be removed by clicking the X', async ({ page }) => {
+    test('country filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
         await searchPage.select('Collection country', 'France');
         await expect(page.getByText('Collection country:France')).toBeVisible();
         await page.getByLabel('remove filter').click();
-        await expect(page.getByText('Collection country:France')).not.toBeVisible();
+        await expect(page.getByText('Collection country:France')).toBeHidden();
         await expect(page.getByLabel('Collection country')).toBeEmpty();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('test that mutation filter can be removed by clicking the X', async ({ page }) => {
+    test('mutation filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
         await searchPage.enterMutation('A23T');
         await expect(page.getByText('mutation:A23T')).toBeVisible();
         await page.getByLabel('remove filter').click();
-        await expect(page.getByText('mutation:A23T')).not.toBeVisible();
+        await expect(page.getByText('mutation:A23T')).toBeHidden();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('test that substring-search filter can be removed by clicking the X', async ({ page }) => {
+    test('substring-search filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
         await searchPage.enableSearchFields('Author affiliations');
         await searchPage.fill('Author affiliations', 'foo');
@@ -37,7 +37,7 @@ test.describe('Search', () => {
         await expect(page.getByLabel('Author affiliations')).toBeEmpty();
     });
 
-    test('test that date range filter can be removed by clicking the X', async ({ page }) => {
+    test('date range filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         await page.getByPlaceholder('yyyy-mm-dd').first().click();

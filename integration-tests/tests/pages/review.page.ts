@@ -55,17 +55,17 @@ export class ReviewPage {
 
     async closeSequencesDialog() {
         await this.sequencesDialogCloseButton().click();
-        await expect(this.sequencesDialog()).not.toBeVisible();
+        await expect(this.sequencesDialog()).toBeHidden();
     }
 
     async closeFilesDialog() {
         await this.filesDialogCloseButton().click();
-        await expect(this.filesDialog()).not.toBeVisible();
+        await expect(this.filesDialog()).toBeHidden();
     }
 
     async switchSequenceTab(tabName: string) {
         const tabs = this.sequenceTabs();
-        const tab = await tabs.filter({ hasText: tabName }).first();
+        const tab = tabs.filter({ hasText: tabName }).first();
         await expect(tab).toBeVisible();
         await tab.click();
     }
@@ -76,10 +76,10 @@ export class ReviewPage {
         return content.textContent();
     }
 
-    async getAvailableSequenceTabs() {
+    async getAvailableSequenceTabs(): Promise<string[]> {
         const tabs = this.sequenceTabs();
         const count = await tabs.count();
-        const tabNames = [];
+        const tabNames: string[] = [];
 
         for (let i = 0; i < count; i++) {
             const tabText = await tabs.nth(i).textContent();
