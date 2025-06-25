@@ -3,6 +3,7 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import mu.KotlinLogging
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndWriteUrl
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 
+private val log = KotlinLogging.logger { }
+
 @RestController
 @RequestMapping("/files")
 @Validated
@@ -45,6 +48,13 @@ class FilesController(
         @PathVariable fileCategory: String,
         @PathVariable fileName: String,
     ): ResponseEntity<Void> {
+        val debugText = """
+            Debug information:
+                Accession: $accession.$version
+                Current pipeline versions: ${submissionDatabaseService.getCurrentPipelines()}
+                Released at: ${submissionDatabaseService.getReleasedAt(accession, version)}
+        """.trimIndent()
+        log.info { debugText }
         val accessionVersion = AccessionVersion(accession, version)
         val fileId = submissionDatabaseService.getFileId(accessionVersion, fileCategory, fileName)
         if (fileId == null) {
