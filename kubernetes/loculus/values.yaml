@@ -1441,7 +1441,7 @@ defaultOrganisms:
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
-    cva16:
+  cva16:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
