@@ -3,6 +3,7 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.selects.select
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
@@ -879,6 +880,43 @@ class SubmissionDatabaseService(
         }
 
         return result
+    }
+
+    fun getCurrentPipelines(): List<String> {
+        // TODO DEBUG function, do not merge
+        val result = mutableListOf<String>()
+        val sql = """
+            SELECT version, started_using_at, organism
+            FROM current_processing_pipeline
+        """.trimIndent()
+        transaction {
+            exec(sql) { rs ->
+                while (rs.next()) {
+                    val organism = rs.getString("organism")
+                    val version = rs.getLong("version")
+                    val timestamp = rs.getTimestamp("started_using_at")
+                    result.add("$organism | $version | $timestamp")
+                }
+            }
+        }
+
+        return result
+    }
+
+    fun getReleasedAt(accession: Accession, version: Version): LocalDateTime? {
+        // TODO DEBUG function, do not merge
+        return SequenceEntriesView
+            .select(
+                SequenceEntriesView.releasedAtTimestampColumn,
+            )
+            .where {
+                (SequenceEntriesView.accessionColumn eq accession) and
+                    (SequenceEntriesView.versionColumn eq version)
+            }
+            .map {
+                it[SequenceEntriesView.releasedAtTimestampColumn]
+            }
+            .first()
     }
 
     fun revoke(
