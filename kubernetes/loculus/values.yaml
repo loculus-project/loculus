@@ -1242,7 +1242,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile      
+          <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1264,7 +1264,6 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
-
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1457,7 +1456,7 @@ defaultOrganisms:
           initiallyVisible: true
           includeInDownloadsByDefault: true
           preprocessing:
-            inputs: { input: nextclade.clade }
+            inputs: {input: nextclade.clade}
           columnWidth: 80
           order: 5
         - name: genotype
@@ -1481,6 +1480,10 @@ defaultOrganisms:
           - lineage
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+      linkOuts:
+        - name: "Nextclade"
+          maxNumberOfRecommendedEntries: 3000
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/cva16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1489,7 +1492,7 @@ defaultOrganisms:
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output
           require_nextclade_sort_match: true
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          accepted_dataset_matches: 
+          accepted_dataset_matches:
             - CV-A16
           genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
     ingest:
@@ -1499,7 +1502,7 @@ defaultOrganisms:
         minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - genotype
-        metadata_filter: 
+        metadata_filter:
           genotype: CV-A16
     enaDeposition:
       configFile:
@@ -1832,7 +1835,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition: 
+enaDeposition:
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
