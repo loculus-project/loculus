@@ -31,7 +31,12 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
     return (
         <>
             {options !== undefined ? (
-                <Combobox immediate value={row.value} onChange={(value) => onChange({ ...row, value: value ?? '' })}>
+                <Combobox
+                    immediate
+                    value={row.value}
+                    onChange={(value) => onChange({ ...row, value: value ?? '' })}
+                    disabled={!isClient}
+                >
                     <div className='relative inline'>
                         <ComboboxInput
                             id={row.key}
