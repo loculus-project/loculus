@@ -43,10 +43,18 @@ test.describe('Submission flow', () => {
         await page.getByRole('button', { name: 'Release', exact: true }).click();
         await page.getByRole('link', { name: 'Released Sequences' }).click();
 
-        while (!(await page.getByRole('cell', { name: 'Pakistan' }).isVisible())) {
-            await page.reload();
-            await page.waitForTimeout(2000);
-        }
+        await expect
+            .poll(
+                async () => {
+                    await page.reload();
+                    return page.getByRole('cell', { name: 'Pakistan' }).isVisible();
+                },
+                {
+                    message: 'Cell with name Pakistan never became visible.',
+                    timeout: 60000,
+                },
+            )
+            .toBe(true);
 
         await page.getByRole('cell', { name: 'Pakistan' }).click();
         await page.waitForSelector('text="test_NIHPAK-19"');
