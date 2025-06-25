@@ -1480,7 +1480,7 @@ defaultOrganisms:
           nextclade_dataset_name: "community/hodcroftlab/enterovirus/cva16"
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output
           require_nextclade_sort_match: true
-          minimizer_url: "https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           accepted_dataset_matches: 
             - CV-A16
           genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
@@ -1488,7 +1488,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
-        minimizer_index: "https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+        minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - dataset
         metadata_filter: 
@@ -1501,31 +1501,31 @@ defaultOrganisms:
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/reference.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/reference.fasta]]"
           insdcAccessionFull: U05876.1
       genes:
         - name: "VP4"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP4.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP4.fasta]]"
         - name: "VP2"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP2.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP2.fasta]]"
         - name: "VP3"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP3.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP3.fasta]]"
         - name: "VP1"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP1.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/VP1.fasta]]"
         - name: "2A"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2A.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2A.fasta]]"
         - name: "2B"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2B.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2B.fasta]]"
         - name: "2C"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2C.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/2C.fasta]]"
         - name: "3A"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3A.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3A.fasta]]"
         - name: "3B"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3B.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3B.fasta]]"
         - name: "3C"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3C.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3C.fasta]]"
         - name: "3D"
-          sequence: "[[URL:https://github.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3D.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3D.fasta]]"
   dummy-organism-without-seqs:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
