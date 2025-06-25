@@ -31,7 +31,10 @@ export class SearchPage {
     }
 
     async enableSearchFields(...fieldLabels: string[]) {
-        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        const addButton = this.page.getByRole('button', { name: 'Add Search Fields' });
+        // wait for button to be hydrated and visible
+        await expect(addButton).toBeVisible({ timeout: 10000 });
+        await addButton.click();
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
