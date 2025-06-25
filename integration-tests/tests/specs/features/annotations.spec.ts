@@ -44,7 +44,7 @@ test.describe('Sequence Preview Annotations', () => {
 });
 
 const EMBL_CONTENT = `
-ID   LOC_000002W; ; linear; RNA; ; UNC; 945 BP.
+ID   LOC_000002W; ; linear; RNA; ; UNC; 910 BP.
 XX
 AC   LOC_000002W;
 XX
@@ -58,15 +58,15 @@ RN   [1]
 XX
 FH   Key             Location/Qualifiers
 FH
-FT   source          1..945
+FT   source          1..910
 FT                   /molecule_type="genomic RNA"
 FT                   /organism="Sudan ebolavirus"
 FT                   /country="France"
 FT                   /collection_date="2021-05-12"
-FT   gene            1..945
+FT   gene            1..910
 FT                   /gene="NP"
 FT                   /product="NP"
-FT   CDS             36..945
+FT   CDS             36..910
 FT                   /gene="NP"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
@@ -80,21 +80,21 @@ FT                   AGHDANDTVISNSVAQARFSGLLIVKTVLDHILQKTDLGVRLHPLARTAKVKNEVSSFK
 FT                   AALGSLAKHGEYAPFARLLNLS"
 XX
 SQ   
-     nnnnnnnnnn nnnnnnnnnn nnnnnnnnnn nnnnnatgga taaacgggtg agaggttcat        60
-     gggccctggg aggacaatct gaagttgatc ttgactacca caaaatatta acagccgggc       120
-     tttcggtcca acaagggatt gtgcgacaaa gagtcatccc ggtatatgtt gtgagtgatc       180
-     ttgagggtat ttgtcaacat atcattcagg cctttgaagc aggcgtagat ttccaagata       240
-     atgctgacag cttcctttta cttttatgtt tacatcatgc ttaccaagga gatcataggc       300
-     tcttcctcaa aagtgatgca gttcaatact tagagggcca tggtttcagg tttgaggtcc       360
-     gagaaaagga gaatgtgcac cgtctggatg aattgttgcc caatgtcacc ggtggaaaaa       420
-     atcttaggag aacattggct gcaatgcctg aagaggagac aacagaagct aatgctggtc       480
-     agtttttatc ctttgccagt ttgtttctac ccaaacttgt cgttggggag aaagcgtgtc       540
-     tggaaaaagt acaaaggcag attcaggtcc atgcagaaca agggctcatt caatatccaa       600
-     cttcctggca atcagttgga cacatgatgg tgatcttccg tttgatgaga acaaactttt       660
-     taatcaagtt cctactaata catcagggga tgcacatggt cgcaggccat gatgcgaatg       720
-     acacagtaat atctaattct gttgcccaag caaggttctc tggtcttctg attgtaaaga       780
-     ctgttctgga ccacatccta caaaaaacag atcttggagt acgacttcat ccactggcca       840
-     ggacagcaaa agtcaagaat gaggtcagtt cattcaaggc agctcttggc tcacttgcca       900
-     agcatggaga atatgctcca tttgcacgtc tcctcaatct ttctg                       945
+     atggataaac gggtgagagg ttcatgggcc ctgggaggac aatctgaagt tgatcttgac        60
+     taccacaaaa tattaacagc cgggctttcg gtccaacaag ggattgtgcg acaaagagtc       120
+     atcccggtat atgttgtgag tgatcttgag ggtatttgtc aacatatcat tcaggccttt       180
+     gaagcaggcg tagatttcca agataatgct gacagcttcc ttttactttt atgtttacat       240
+     catgcttacc aaggagatca taggctcttc ctcaaaagtg atgcagttca atacttagag       300
+     ggccatggtt tcaggtttga ggtccgagaa aaggagaatg tgcaccgtct ggatgaattg       360
+     ttgcccaatg tcaccggtgg aaaaaatctt aggagaacat tggctgcaat gcctgaagag       420
+     gagacaacag aagctaatgc tggtcagttt ttatcctttg ccagtttgtt tctacccaaa       480
+     cttgtcgttg gggagaaagc gtgtctggaa aaagtacaaa ggcagattca ggtccatgca       540
+     gaacaagggc tcattcaata tccaacttcc tggcaatcag ttggacacat gatggtgatc       600
+     ttccgtttga tgagaacaaa ctttttaatc aagttcctac taatacatca ggggatgcac       660
+     atggtcgcag gccatgatgc gaatgacaca gtaatatcta attctgttgc ccaagcaagg       720
+     ttctctggtc ttctgattgt aaagactgtt ctggaccaca tcctacaaaa aacagatctt       780
+     ggagtacgac ttcatccact ggccaggaca gcaaaagtca agaatgaggt cagttcattc       840
+     aaggcagctc ttggctcact tgccaagcat ggagaatatg ctccatttgc acgtctcctc       900
+     aatctttctg                                                              910
 //
 `.trimStart();
