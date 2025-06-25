@@ -4,7 +4,12 @@ import unicorn from 'eslint-plugin-unicorn';
 
 export default tseslint.config(
     {
-        ignores: ['**/.playwright/**', '**/playwright-report/**', '**/test-results/**'],
+        ignores: [
+            '**/.playwright/**',
+            '**/playwright-report/**',
+            '**/test-results/**',
+            'eslint.config.mjs',
+        ],
     },
     eslint.configs.recommended,
     tseslint.configs.recommendedTypeChecked,
