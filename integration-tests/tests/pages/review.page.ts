@@ -55,12 +55,12 @@ export class ReviewPage {
 
     async closeSequencesDialog() {
         await this.sequencesDialogCloseButton().click();
-        await expect(this.sequencesDialog()).not.toBeVisible();
+        await expect(this.sequencesDialog()).toBeHidden();
     }
 
     async closeFilesDialog() {
         await this.filesDialogCloseButton().click();
-        await expect(this.filesDialog()).not.toBeVisible();
+        await expect(this.filesDialog()).toBeHidden();
     }
 
     async switchSequenceTab(tabName: string) {

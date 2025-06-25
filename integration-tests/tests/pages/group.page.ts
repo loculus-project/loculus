@@ -121,7 +121,7 @@ export class GroupPage {
     async verifyUserIsNotPresent(username: string) {
         await expect(
             this.page.locator('ul').getByText(username, { exact: true }),
-        ).not.toBeVisible();
+        ).toBeHidden();
     }
 
     async addNewUserToGroup(username: string) {
