@@ -13,7 +13,7 @@ class SubmissionPage {
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
-        await this.page.getByRole('link', { name: 'Submit' }).click();
+        await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
         await this.page.getByRole('link', { name: organism }).click();
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }

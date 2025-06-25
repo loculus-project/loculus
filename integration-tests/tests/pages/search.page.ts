@@ -27,9 +27,12 @@ export class SearchPage {
     }
 
     async enableSearchFields(...fieldLabels: string[]) {
-        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        const addButton = this.page.getByRole('button', { name: 'Add Search Fields' });
+        // wait for button to be hydrated and visible
+        await expect(addButton).toBeVisible({ timeout: 10000 });
+        await addButton.click();
         for (const label of fieldLabels) {
-            await this.page.getByRole('checkbox', { name: label }).check();
+            await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
         await this.page.getByTestId('field-selector-close-button').click();
     }
@@ -75,9 +78,14 @@ export class SearchPage {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
-    async clickOnSequence(rowIndex = 0) {
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
         const rows = await this.getSequenceRows();
-        await rows.nth(rowIndex).click();
+        const row = rows.nth(rowIndex);
+        const rowText = await row.innerText();
+        const accessionVersionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
+        await row.click();
+        return accessionVersion;
     }
 
     async getSequencePreviewModal() {
