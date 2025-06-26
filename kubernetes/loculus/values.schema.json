@@ -449,8 +449,13 @@
               "replicas": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
-                "type": "number",
-                "description": "How many replicas of the prepreprocessing pipeline to run."
+                "type": "object",
+                "description": "Scaling settings for the preprocessing pipeline.",
+                "properties": {
+                  "min": {"type": "integer", "default": 1},
+                  "max": {"type": "integer", "default": 1}
+                },
+                "additionalProperties": false
               },
               "args": {
                 "groups": ["preprocessing"],
@@ -1282,19 +1287,31 @@
       "type": "object",
       "properties": {
         "website": {
-          "type": "integer",
-          "description": "Number of replicas for the website deployment",
-          "default": 1
+          "type": "object",
+          "description": "Scaling settings for the website deployment",
+          "properties": {
+            "min": {"type": "integer", "default": 1},
+            "max": {"type": "integer", "default": 1}
+          },
+          "additionalProperties": false
         },
         "backend": {
-          "type": "integer",
-          "description": "Number of replicas for the backend deployment",
-          "default": 1
+          "type": "object",
+          "description": "Scaling settings for the backend deployment",
+          "properties": {
+            "min": {"type": "integer", "default": 1},
+            "max": {"type": "integer", "default": 1}
+          },
+          "additionalProperties": false
         },
         "lapis": {
-          "type": "integer",
-          "description": "Number of replicas for the LAPIS deployment",
-          "default": 1
+          "type": "object",
+          "description": "Scaling settings for the LAPIS deployment",
+          "properties": {
+            "min": {"type": "integer", "default": 1},
+            "max": {"type": "integer", "default": 1}
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
