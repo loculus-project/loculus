@@ -1498,7 +1498,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
+        taxon_id: 31704 # taxid for Enterovirus A 138948 (not set to all EVs)
         minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - genotype
@@ -1595,7 +1595,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
+        taxon_id: 42769 # taxid for Enterovirus A 138948 (not set to all EVs)
         minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - genotype
