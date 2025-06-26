@@ -70,6 +70,31 @@ export class GroupPage {
         await expect(this.page.getByRole('heading', { name: groupData.name })).toBeVisible();
     }
 
+    async getOrCreateGroup(groupData: GroupData): Promise<string> {
+        await this.page.goto('/');
+        await this.page.getByRole('link', { name: 'My account' }).click();
+        const groupLink = this.page
+            .locator('li')
+            .filter({ hasText: groupData.name })
+            .getByRole('link');
+
+        let groupId: string | null | undefined;
+
+        if (await groupLink.isVisible()) {
+            const href = await groupLink.getAttribute('href');
+            groupId = href?.split('/').pop();
+        } else {
+            await this.createGroup(groupData);
+            const url = this.page.url();
+            groupId = url.split('/').pop();
+        }
+
+        if (!groupId) {
+            throw new Error(`Could not determine group ID for group: ${groupData.name}`);
+        }
+        return groupId;
+    }
+
     async goToGroupEditPage() {
         const editButton = this.page.getByRole('link', { name: 'Edit group' });
         await editButton.waitFor({ state: 'visible' });
