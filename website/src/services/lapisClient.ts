@@ -106,7 +106,6 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public async getAllSequenceEntryHistoryForAccession(
         accession: string,
     ): Promise<Result<SequenceEntryHistory, ProblemDetail>> {
-        // @ts-expect-error Bug in Zod: https://github.com/colinhacks/zod/issues/3136
         const request: LapisBaseRequest = {
             accession,
             fields: [
