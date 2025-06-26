@@ -1446,7 +1446,7 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      organismName: "CV-A16"
+      organismName: "Coxsackievirus A16"
       image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
@@ -1543,7 +1543,7 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      organismName: "CV-A10"
+      organismName: "Coxsackievirus A10"
       image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
