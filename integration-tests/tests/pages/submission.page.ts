@@ -15,7 +15,7 @@ class SubmissionPage {
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
 
-        // Dependign on current state (organism selected or not), we need to switch
+        // Depending on current state (organism selected or not), we need to switch
         const organismSwitchLink = this.page.getByRole('link', { name: organism });
         const organismLocator = this.page.locator('label').filter({ hasText: organism });
 
@@ -121,7 +121,6 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         sequenceData: Record<string, string>,
     ): Promise<ReviewPage> {
         await this.navigateToSubmissionPage();
-        // Switch to group the url if a groupId is provided
         if (groupId) {
             const currentUrl = this.page.url();
             const newUrl = currentUrl.replace(/submission\/\d+/, `submission/${groupId}`);
