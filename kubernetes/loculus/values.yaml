@@ -1445,7 +1445,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "CV-A16"
-      image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/blob/master/images/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
           displayName: Subgenotype
@@ -1477,7 +1477,7 @@ defaultOrganisms:
           - geoLocCountry
           - geoLocAdmin1
           - length
-          - lineage
+          - subgenotype
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
       linkOuts:
@@ -1537,6 +1537,103 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3C.fasta]]"
         - name: "3D"
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva16/3D.fasta]]"
+  cva10:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "CV-A10"
+      image: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/blob/master/images/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      metadataAdd:
+        - name: subgenotype
+          displayName: Subgenotype
+          noInput: true
+          header: "Subgenotype"
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            inputs: {input: nextclade.clade}
+          columnWidth: 80
+          order: 5
+        - name: genotype
+          displayName: Genotype
+          noInput: true
+          header: "Genotype"
+          ingest: genotype
+          hideOnSequenceDetailsPage: true
+          hideInSearchResultsTable: true
+          notSearchable: true
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - earliestReleaseDate
+          - authors
+          - authorAffiliations
+          - geoLocCountry
+          - geoLocAdmin1
+          - length
+          - subgenotype
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+      linkOuts:
+        - name: "Nextclade"
+          maxNumberOfRecommendedEntries: 3000
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/cva10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_name: "community/hodcroftlab/enterovirus/cva10"
+          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output
+          require_nextclade_sort_match: true
+          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          accepted_dataset_matches:
+            - CV-A10
+          genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 138948 # taxid for Enterovirus A (not set to all EVs)
+        minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+        minimizer_parser: # Name of each '_' - separated entry in the minimizer index
+          - genotype
+        metadata_filter:
+          genotype: CV-A10
+    enaDeposition:
+      configFile:
+        taxon_id: 42769
+        scientific_name: "Coxsackievirus A10"
+        molecule_type: "genomic RNA"
+    referenceGenomes:
+      nucleotideSequences:
+        - name: "main"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/reference.fasta]]"
+          insdcAccessionFull: AY421767.1
+      genes:
+        - name: "VP4"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/VP4.fasta]]"
+        - name: "VP2"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/VP2.fasta]]"
+        - name: "VP3"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/VP3.fasta]]"
+        - name: "VP1"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/VP1.fasta]]"
+        - name: "2A"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/2A.fasta]]"
+        - name: "2B"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/2B.fasta]]"
+        - name: "2C"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/2C.fasta]]"
+        - name: "3A"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/3A.fasta]]"
+        - name: "3B"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/3B.fasta]]"
+        - name: "3C"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/3C.fasta]]"
+        - name: "3D"
+          sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/cva10/3D.fasta]]"
   dummy-organism-without-seqs:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
