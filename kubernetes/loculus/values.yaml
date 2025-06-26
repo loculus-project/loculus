@@ -1447,7 +1447,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "CV-A16"
-      image: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/blob/master/images/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
           displayName: Subgenotype
@@ -1544,7 +1544,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "CV-A10"
-      image: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/blob/master/images/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
           displayName: Subgenotype
