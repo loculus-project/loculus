@@ -630,7 +630,7 @@ def get_ena_analysis_process(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
     if not response.ok:
         error_message = (
             f"ENA check failed with status:{response.status_code}. "
