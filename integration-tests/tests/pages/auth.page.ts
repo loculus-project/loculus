@@ -37,13 +37,33 @@ export class AuthPage {
         await this.page.getByRole('button', { name: 'Register' }).click();
     }
 
-    async login(username: string, password: string) {
+    async login(username: string, password: string): Promise<boolean> {
         await this.page.goto('/');
         await this.page.getByRole('link', { name: 'Login' }).click();
         await this.page.getByLabel('Username').fill(username);
         await this.page.getByLabel('Password', { exact: true }).fill(password);
         await this.page.getByRole('button', { name: 'Sign in' }).click();
-        await this.page.waitForSelector('text=Welcome to Loculus', { state: 'attached' });
+
+        const successSelector = this.page.waitForSelector('text=Welcome to Loculus', {
+            state: 'attached',
+        });
+        const failureSelector = this.page.waitForSelector('text=Invalid username or password', {
+            state: 'attached',
+        });
+
+        const result = await Promise.race([
+            successSelector.then(() => true),
+            failureSelector.then(() => false),
+        ]);
+
+        return result;
+    }
+
+    async tryLoginOrRegister(account: TestAccount) {
+        const loggedIn = await this.login(account.username, account.password);
+        if (!loggedIn) {
+            await this.createAccount(account);
+        }
     }
 
     async logout() {

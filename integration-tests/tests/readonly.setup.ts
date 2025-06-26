@@ -3,22 +3,14 @@ import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { createTestGroup } from './fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
-import { v4 as uuidv4 } from 'uuid';
+import { readonlyUser } from './fixtures/user.fixture';
 
-setup('Initialize a single ebola sequence as base data', async ({ page }) => {
+setup('Initialize a single ebola sequence as base data', async ({ page, baseURL }) => {
     setup.setTimeout(90000);
     const authPage = new AuthPage(page);
-    const username = uuidv4().substring(0, 8);
-    const password = uuidv4().substring(0, 8);
-    await authPage.createAccount({
-        firstName: 'Foo',
-        lastName: 'Bar',
-        email: `${username}@foo.org`,
-        organization: 'Foo University',
-        password,
-        username,
-    });
+    await authPage.tryLoginOrRegister(readonlyUser);
 
+    // If we've reached here, it means we're logged in but the data is missing.
     const groupPage = new GroupPage(page);
     await groupPage.createGroup(createTestGroup());
 
