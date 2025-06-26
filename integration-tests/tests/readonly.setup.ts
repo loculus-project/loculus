@@ -1,18 +1,18 @@
 import { expect, test as setup } from '@playwright/test';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
-import { createTestGroup } from './fixtures/group.fixture';
+import { readonlyGroup } from './fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { readonlyUser } from './fixtures/user.fixture';
 
-setup('Initialize a single ebola sequence as base data', async ({ page, baseURL }) => {
+setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     setup.setTimeout(90000);
     const authPage = new AuthPage(page);
     await authPage.tryLoginOrRegister(readonlyUser);
 
-    // If we've reached here, it means we're logged in but the data is missing.
     const groupPage = new GroupPage(page);
-    await groupPage.createGroup(createTestGroup());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const groupId = await groupPage.getOrCreateGroup(readonlyGroup);
 
     const submissionPage = new SingleSequenceSubmissionPage(page);
     const reviewPage = await submissionPage.completeSubmission(
@@ -48,7 +48,7 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
         .poll(
             async () => {
                 await page.reload();
-                return page.getByRole('link', { name: /LOC_/ }).isVisible();
+                return page.getByRole('link', { name: /LOC_/ }).first().isVisible();
             },
             {
                 message: 'Link with name /LOC_/ never became visible.',
