@@ -19,10 +19,8 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
         baseURL,
     ).toString();
     await page.goto(releasedSequencesUrl);
-    // Wait for page to load by asserting on presence of group name
-    await expect(page.getByRole('button', { name: readonlyGroup.name })).toBeVisible({
-        timeout: 5000,
-    });
+    // Wait for page to load by asserting on presence of the group name
+    await expect(page.getByText(readonlyGroup.name).first()).toBeVisible();
 
     const sequenceCount = await page.getByRole('link', { name: /LOC_/ }).count();
 
