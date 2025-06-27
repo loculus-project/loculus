@@ -93,7 +93,20 @@ download_data() {
     exit 0
   fi
   if [ $exit_code -ne 0 ]; then
-    echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
+    case $exit_code in
+      6)
+        echo "Curl command failed with exit code $exit_code: Couldn't resolve host. Backend service may not be available."
+        ;;
+      7)
+        echo "Curl command failed with exit code $exit_code: Failed to connect to server. Backend service may be temporarily down."
+        ;;
+      28)
+        echo "Curl command failed with exit code $exit_code: Operation timeout. Backend service may be overloaded or slow to respond."
+        ;;
+      *)
+        echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
+        ;;
+    esac
     rm -rf "$new_input_data_dir"
     exit $exit_code
   fi
