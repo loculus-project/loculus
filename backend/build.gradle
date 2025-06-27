@@ -6,6 +6,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
+    // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
+    // Then commit the changes
     id 'org.jetbrains.kotlin.jvm' version '2.2.0'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.2.0'
     id 'org.jlleitschuh.gradle.ktlint' version '12.3.0'
@@ -22,6 +24,8 @@ java {
 
 kotlin {
     jvmToolchain(21)
+    // Added to dismiss warnings, see: https://github.com/loculus-project/loculus/issues/4529
+    compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
 }
 
 repositories {
