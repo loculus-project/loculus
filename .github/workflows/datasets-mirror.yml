@@ -17,6 +17,8 @@ jobs:
           - 31631   # Coronavirus OC43
           - 31704   # Coxsackievirus A16
           - 39054   # Enterovirus A71
+          - 42769   # Coxsackievirus A10
+          - 42789   # Enterovirus D68
           - 86107   # Coxsackievirus A6
           - 118655  # Oropouche
           - 138948  # Enterovirus A
