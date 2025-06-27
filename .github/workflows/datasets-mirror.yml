@@ -10,10 +10,15 @@ jobs:
       matrix:
         taxon_id:
           - 10244   # Mpox
+          - 11053   # Dengue type 1
+          - 11060   # Dengue type 2
+          - 11069   # Dengue type 3
+          - 11070   # Dengue type 4
           - 11137   # Coronavirus 229E
           - 11250   # RSV
           - 11520   # Influenza B
           - 12059   # Enterovirus
+          - 12637   # Dengue (all)
           - 31631   # Coronavirus OC43
           - 31704   # Coxsackievirus A16
           - 39054   # Enterovirus A71
