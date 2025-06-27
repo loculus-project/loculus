@@ -1,0 +1,34 @@
+name: 'Enterovirus DB'
+organisms:
+  enterovirus:
+    schema:
+      organismName: 'Enterovirus'
+      image: "/images/organisms/evs.jpg"
+      metadata:
+        - name: country
+          type: string
+          initiallyVisible: true
+        - name: city
+          type: string
+          initiallyVisible: true
+      website:
+        tableColumns:
+          - country
+          - city
+        defaultOrder: descending
+        defaultOrderBy: country
+    preprocessing:
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - 'prepro'
+        configFile:
+          log_level: DEBUG
+          genes: []
+          batch_size: 100
+    referenceGenomes:
+      nucleotideSequences:
+        - name: 'main'
+          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+      genes: []
+createTestAccounts: true
