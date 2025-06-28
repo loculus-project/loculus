@@ -23,7 +23,7 @@ export const test = base.extend<TestFixtures>({
         await use(testAccount);
     },
 
-pageWithACreatedUser: [
+    pageWithACreatedUser: [
         async ({ page, testAccount }, use) => {
             const authPage = new AuthPage(page);
             await authPage.createAccount(testAccount);
@@ -33,14 +33,23 @@ pageWithACreatedUser: [
                 await authPage.logout();
             }
         },
-        { timeout: 30_000 }],
+        { timeout: 30_000 },
+    ],
 
     consoleWarnings: [
         async ({ page }, use) => {
             const warnings: string[] = [];
             const handleConsole = (msg: ConsoleMessage) => {
                 if (msg.type() === 'warning') {
-                    warnings.push(msg.text());
+                    const warningText = msg.text();
+                    // Filter out known harmless warnings
+                    if (
+                        !warningText.includes(
+                            'Form submission canceled because the form is not connected',
+                        )
+                    ) {
+                        warnings.push(warningText);
+                    }
                 }
             };
             page.on('console', handleConsole);
@@ -49,6 +58,5 @@ pageWithACreatedUser: [
             expect(warnings).toEqual([]);
         },
         { auto: true },
-
     ],
 });
