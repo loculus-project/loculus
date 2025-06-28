@@ -33,7 +33,7 @@ pageWithACreatedUser: [
                 await authPage.logout();
             }
         },
-        { timeout: 30_000 },
+        { timeout: 30_000 }],
 
     consoleWarnings: [
         async ({ page }, use) => {
