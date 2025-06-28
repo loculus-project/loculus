@@ -196,13 +196,12 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated>
+                    <DisabledUntilHydrated alsoDisabledIf={isLoading}>
                         <button
                             name='submit'
                             type='submit'
                             className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                             onClick={(e) => void handleSubmit(e)}
-                            disabled={isLoading}
                         >
                             <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                                 <span className='loading loading-spinner loading-sm' />
