@@ -5,8 +5,8 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction } from 're
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
+import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
-import useClientFlag from '../../hooks/isClient.ts';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -24,8 +24,8 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -61,7 +61,6 @@ const InnerDataUploadForm = ({
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
-    const isClient = useClientFlag();
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
@@ -197,18 +196,19 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <button
-                        name='submit'
-                        type='submit'
-                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                        onClick={(e) => void handleSubmit(e)}
-                        disabled={isLoading || !isClient}
-                    >
-                        <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
-                            <span className='loading loading-spinner loading-sm' />
-                        </div>
-                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
-                    </button>
+                    <DisabledUntilHydrated alsoDisabledIf={isLoading}>
+                        <button
+                            name='submit'
+                            type='submit'
+                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                            onClick={(e) => void handleSubmit(e)}
+                        >
+                            <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
+                                <span className='loading loading-spinner loading-sm' />
+                            </div>
+                            <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                        </button>
+                    </DisabledUntilHydrated>
                 </div>
             </div>
         </div>

@@ -13,8 +13,8 @@ import {
     StateInput,
     groupFromFormData,
 } from './Inputs';
-import useClientFlag from '../../hooks/isClient';
 import type { NewGroup } from '../../types/backend';
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 
 interface GroupFormProps {
@@ -72,8 +72,6 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
         }
     };
 
-    const isClient = useClientFlag();
-
     return (
         <div className='p-4 max-w-6xl mx-auto'>
             <h2 className='title'>{title}</h2>
@@ -101,13 +99,11 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <button
-                            type='submit'
-                            className='btn btn-primary px-4 py-2 loculusColor text-white rounded'
-                            disabled={!isClient}
-                        >
-                            {buttonText}
-                        </button>
+                        <DisabledUntilHydrated>
+                            <button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
+                                {buttonText}
+                            </button>
+                        </DisabledUntilHydrated>
                     </div>
                 </div>
             </form>

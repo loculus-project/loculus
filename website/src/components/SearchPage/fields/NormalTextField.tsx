@@ -1,8 +1,8 @@
 import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
-import useClientFlag from '../../../hooks/isClient.ts';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config.ts';
+import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 
 export type NormalFieldProps = {
     field: MetadataFilter;
@@ -16,20 +16,20 @@ export type NormalFieldProps = {
 
 export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((props, ref) => {
     const { field, setSomeFieldValues, multiline, onFocus, onBlur, fieldValue } = props;
-    const isClient = useClientFlag();
 
     return (
-        <TextField
-            label={field.displayName ?? field.name}
-            type={field.type}
-            fieldValue={fieldValue}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            onChange={(e) => setSomeFieldValues([field.name, e.target.value])}
-            autoComplete='off'
-            multiline={multiline}
-            ref={ref}
-            disabled={!isClient}
-        />
+        <DisabledUntilHydrated>
+            <TextField
+                label={field.displayName ?? field.name}
+                type={field.type}
+                fieldValue={fieldValue}
+                onFocus={onFocus}
+                onBlur={onBlur}
+                onChange={(e) => setSomeFieldValues([field.name, e.target.value])}
+                autoComplete='off'
+                multiline={multiline}
+                ref={ref}
+            />
+        </DisabledUntilHydrated>
     );
 });

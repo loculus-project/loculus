@@ -4,12 +4,12 @@ import { toast } from 'react-toastify';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
-import useClientFlag from '../../hooks/isClient.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -32,7 +32,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
-    const isClient = useClientFlag();
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -51,31 +50,36 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
-                        <button className='btn' onClick={() => setExportModalVisible(true)} disabled={!isClient}>
-                            Export
-                        </button>
+                        <DisabledUntilHydrated>
+                            <button className='btn' onClick={() => setExportModalVisible(true)}>
+                                Export
+                            </button>
+                        </DisabledUntilHydrated>
                     </div>
                     <div className='px-2'>
                         {isAdminView ? (
-                            <button className='btn' onClick={() => setEditModalVisible(true)} disabled={!isClient}>
-                                Edit
-                            </button>
+                            <DisabledUntilHydrated>
+                                <button className='btn' onClick={() => setEditModalVisible(true)}>
+                                    Edit
+                                </button>
+                            </DisabledUntilHydrated>
                         ) : null}
                     </div>
                     <div className='px-2'>
                         {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
-                            <button
-                                className='btn'
-                                onClick={() =>
-                                    displayConfirmationDialog({
-                                        dialogText: `Are you sure you want to delete this seqSet version?`,
-                                        onConfirmation: handleDeleteSeqSet,
-                                    })
-                                }
-                                disabled={!isClient}
-                            >
-                                Delete
-                            </button>
+                            <DisabledUntilHydrated>
+                                <button
+                                    className='btn'
+                                    onClick={() =>
+                                        displayConfirmationDialog({
+                                            dialogText: `Are you sure you want to delete this seqSet version?`,
+                                            onConfirmation: handleDeleteSeqSet,
+                                        })
+                                    }
+                                >
+                                    Delete
+                                </button>
+                            </DisabledUntilHydrated>
                         ) : null}
                     </div>
                 </div>
