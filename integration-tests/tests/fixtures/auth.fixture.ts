@@ -35,5 +35,4 @@ export const test = base.extend<TestFixtures>({
         },
         { timeout: 30_000 },
     ],
-
 });
