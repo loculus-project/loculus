@@ -2,6 +2,7 @@ import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } 
 import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
+import useClientFlag from '../../../hooks/isClient.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import { parseMutationsString, type MutationQuery, parseMutationString } from '../../../utils/mutation.ts';
 import { serializeMutationQueries } from '../../../utils/mutation.ts';
@@ -17,6 +18,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     const [options, setOptions] = useState<MutationQuery[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
+    const isClient = useClientFlag();
 
     const selectedOptions = useMemo(
         () => parseMutationsString(value, referenceGenomesSequenceNames),
@@ -52,7 +54,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
 
     return (
         <div className='flex relative mb-2 flex-row w-full'>
-            <Combobox value={selectedOptions} onChange={handleOptionClick}>
+            <Combobox value={selectedOptions} onChange={handleOptionClick} disabled={!isClient}>
                 <div className='w-full relative mt-1'>
                     <div
                         className={`w-full flex flex-wrap items-center border border-gray-300 bg-white rounded-md shadow-sm text-left cursor-default focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 sm:text-sm

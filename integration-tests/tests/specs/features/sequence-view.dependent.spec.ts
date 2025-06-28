@@ -52,7 +52,7 @@ test.describe('Sequence view in review card', () => {
         await reviewPage.switchSequenceTab(availableTabs[0]);
 
         await reviewPage.closeSequencesDialog();
-        await expect(dialogTitle).not.toBeVisible();
+        await expect(dialogTitle).toBeHidden();
 
         await reviewPage.releaseValidSequences();
     });

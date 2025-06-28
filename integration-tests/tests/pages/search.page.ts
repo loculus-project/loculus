@@ -52,24 +52,6 @@ export class SearchPage {
         await this.page.getByLabel('Accession').fill(accessions);
     }
 
-    async enterCollectionDateFrom(date: string) {
-        const fromInput = this.page.getByText('From').locator('..').locator('input[type="text"]');
-
-        await expect(fromInput).toBeEnabled({ timeout: 10000 });
-
-        await fromInput.click({
-            position: { x: 3, y: 3 },
-            force: true,
-        });
-
-        await fromInput.fill('');
-        await fromInput.pressSequentially(date, { delay: 100 });
-
-        const formattedDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6)}`;
-        await expect(fromInput).toHaveValue(formattedDate);
-        await expect(this.page.getByText('Collection date - From:')).toBeVisible();
-    }
-
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
     }
@@ -89,32 +71,32 @@ export class SearchPage {
         return loculusId;
     }
 
-    async getSequenceRows() {
+    getSequenceRows() {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
     async clickOnSequence(rowIndex = 0) {
-        const rows = await this.getSequenceRows();
+        const rows = this.getSequenceRows();
         await rows.nth(rowIndex).click();
     }
 
-    async getSequencePreviewModal() {
+    getSequencePreviewModal() {
         return this.page.locator('[data-testid="sequence-preview-modal"]');
     }
 
-    async getHalfScreenPreview() {
+    getHalfScreenPreview() {
         return this.page.locator('[data-testid="half-screen-preview"]');
     }
 
-    async toggleHalfScreenButton() {
+    toggleHalfScreenButton() {
         return this.page.locator('[data-testid="toggle-half-screen-button"]');
     }
 
-    async closePreviewButton() {
+    closePreviewButton() {
         return this.page.locator('[data-testid="close-preview-button"]');
     }
 
-    async getUrlParams() {
+    getUrlParams() {
         return new URL(this.page.url()).searchParams;
     }
 

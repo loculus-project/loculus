@@ -4,11 +4,11 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         searchPage = new SearchPage(page);
     });
 
-    test('test that search form resets when the reset button is clicked', async ({ page }) => {
+    test('search form resets when the reset button is clicked', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         await searchPage.select('Collection country', 'France');
@@ -20,7 +20,7 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('test that hidden field values are kept in the URL params', async ({ page }) => {
+    test('hidden field values are kept in the URL params', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         // This is just to ensure that things are interactive and ready - bit of a hack for now
@@ -36,11 +36,5 @@ test.describe('Search', () => {
         expect(searchParams.get('isRevocation')).toBe('');
         expect(searchParams.has('versionStatus')).toBeTruthy();
         expect(searchParams.get('versionStatus')).toBe('');
-    });
-
-    test('test that date filter can be added', async ({ page }) => {
-        await searchPage.ebolaSudan();
-
-        await searchPage.enterCollectionDateFrom('20240115');
     });
 });

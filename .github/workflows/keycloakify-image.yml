@@ -48,7 +48,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-image.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-image.yml', './website/.nvmrc' ) }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -69,10 +69,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Get node version build arg
+        id: get-node-version
         if: env.CACHE_HIT == 'false'
         run: |
-          NODE_VERSION=$(cat website/.nvmrc | tr -cd [:digit:].)
-          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_ENV
+          NODE_VERSION=$(grep -v "^[[:space:]]*#" website/.nvmrc | tr -d 'v')
+          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
       - name: Build and push image
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v6
@@ -83,7 +84,7 @@ jobs:
           cache-from: type=gha,scope=keycloakify-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
-          build-args: NODE_VERSION=${{ env.NODE_VERSION }}
+          build-args: NODE_VERSION=${{ steps.get-node-version.outputs.NODE_VERSION }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |

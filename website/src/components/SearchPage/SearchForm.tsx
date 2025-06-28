@@ -12,6 +12,7 @@ import { LineageField } from './fields/LineageField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
+import useClientFlag from '../../hooks/isClient.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -50,6 +51,7 @@ export const SearchForm = ({
     showMutationSearch,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
+    const isClient = useClientFlag();
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -82,7 +84,7 @@ export const SearchForm = ({
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
-                                <button className='hover:underline' onClick={toggleFieldSelector}>
+                                <button className='hover:underline' onClick={toggleFieldSelector} disabled={!isClient}>
                                     <StreamlineWrench className='inline-block' /> Add Search Fields
                                 </button>
                                 <button

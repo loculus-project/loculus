@@ -13,8 +13,17 @@ class SubmissionPage {
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
-        await this.page.getByRole('link', { name: 'Submit' }).click();
-        await this.page.getByRole('link', { name: organism }).click();
+        await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
+
+        // Depending on current state (organism selected or not), we need to switch
+        const organismSwitchLink = this.page.getByRole('link', { name: organism });
+        const organismLocator = this.page.locator('label').filter({ hasText: organism });
+
+        await Promise.race([
+            organismLocator.waitFor({ state: 'visible', timeout: 5000 }),
+            organismSwitchLink.click(),
+        ]);
+
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
@@ -25,14 +34,14 @@ class SubmissionPage {
 
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        await this.page.waitForURL('**\/review');
+        await this.page.waitForURL('**/review');
         return new ReviewPage(this.page);
     }
 }
 
 export class SingleSequenceSubmissionPage extends SubmissionPage {
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
-        super.navigateToSubmissionPage(organism);
+        await super.navigateToSubmissionPage(organism);
         await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
     }
 
@@ -47,12 +56,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         collectionDate: string;
         authorAffiliations: string;
     }) {
-        // exactly match "ID:"
-        await this.page.getByLabel(/^ID:$/).fill(submissionId);
-        await this.page.getByLabel('Collection country:').fill(collectionCountry);
-        await this.page.getByLabel('Collection country:').blur();
-        await this.page.getByLabel('Collection date:').fill(collectionDate);
-        await this.page.getByLabel('Author affiliations:').fill(authorAffiliations);
+        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
+        await this.page.getByLabel('Collection country').fill(collectionCountry);
+        await this.page.getByLabel('Collection country').blur();
+        await this.page.getByLabel('Collection date').fill(collectionDate);
+        await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
     async fillSubmissionFormDummyOrganism({
@@ -64,20 +72,20 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         country: string;
         date: string;
     }) {
-        await this.page.getByLabel(/^ID:$/).fill(submissionId);
-        await this.page.getByLabel('Country:').fill(country);
-        await this.page.getByLabel('Country:').blur();
-        await this.page.getByLabel('Date:').fill(date);
+        await this.page.getByLabel('ID', { exact: true }).fill(submissionId);
+        await this.page.getByLabel('Country').fill(country);
+        await this.page.getByLabel('Country').blur();
+        await this.page.getByLabel('Date').fill(date);
     }
 
     async fillSequenceData(sequenceData: Record<string, string>) {
-        Object.entries(sequenceData).forEach(async ([key, value]) => {
+        for (const [key, value] of Object.entries(sequenceData)) {
             await this.page.getByLabel(`${key} segment file`).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
                 buffer: Buffer.from(value),
             });
-        });
+        }
     }
 
     async uploadExternalFiles(
@@ -102,15 +110,24 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             collectionCountry,
             collectionDate,
             authorAffiliations,
+            groupId = undefined,
         }: {
             submissionId: string;
             collectionCountry: string;
             collectionDate: string;
             authorAffiliations: string;
+            groupId?: string;
         },
         sequenceData: Record<string, string>,
     ): Promise<ReviewPage> {
         await this.navigateToSubmissionPage();
+        if (groupId) {
+            const currentUrl = this.page.url();
+            const newUrl = currentUrl.replace(/submission\/\d+/, `submission/${groupId}`);
+            if (currentUrl !== newUrl) {
+                await this.page.goto(newUrl);
+            }
+        }
         await this.fillSubmissionForm({
             submissionId,
             collectionCountry,

@@ -4,7 +4,7 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Column Visibility', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(({ page }) => {
         searchPage = new SearchPage(page);
     });
 
@@ -16,6 +16,6 @@ test.describe('Column Visibility', () => {
 
         await page.getByRole('checkbox', { name: 'Pango lineage' }).waitFor();
         await expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
-        await expect(page.getByRole('checkbox', { name: 'Hidden Field' })).not.toBeVisible();
+        await expect(page.getByRole('checkbox', { name: 'Hidden Field' })).toBeHidden();
     });
 });
