@@ -27,7 +27,7 @@ export const test = base.extend<ConsoleWarningsFixtures>({
             // Only assert no warnings/errors for Chrome for now
             if (browserName === 'chromium') {
                 expect(warnings).toEqual([]);
-            else if (warnings.length > 0) {
+            } else if (warnings.length > 0) {
                 console.warn(`Console warnings/errors in ${browserName}: ${warnings.join('\n')}`);
             }
         },
