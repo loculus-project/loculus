@@ -1,4 +1,5 @@
-import { expect, test as setup } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test as setup } from './fixtures/console-warnings.fixture';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { readonlyGroup } from './fixtures/group.fixture';
