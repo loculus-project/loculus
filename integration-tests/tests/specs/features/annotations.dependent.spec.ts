@@ -60,7 +60,7 @@ FT                   /collection_date="2021-05-12"
 FT   gene            1..910
 FT                   /gene="NP"
 FT                   /product="NP"
-FT   CDS             36..910
+FT   CDS             1..910
 FT                   /gene="NP"
 FT                   /product="nucleoprotein"
 FT                   /protein_id="YP_138520.1"
