@@ -4,7 +4,7 @@ import { test } from '../../fixtures/group.fixture';
 
 test.describe('Sequence Preview Annotations', () => {
     test('should have an embl file in the Files section', async ({ page }) => {
-        let searchPage = new SearchPage(page);
+        const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 
         await searchPage.enableSearchFields(
