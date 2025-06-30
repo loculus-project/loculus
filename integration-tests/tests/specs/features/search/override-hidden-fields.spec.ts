@@ -5,7 +5,7 @@ import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
-test.only('Override hidden fields', async ({ page, pageWithGroup }) => {
+test('Override hidden fields', async ({ page, pageWithGroup }) => {
     test.setTimeout(95_000);
     const uuid = uuidv4();
 
