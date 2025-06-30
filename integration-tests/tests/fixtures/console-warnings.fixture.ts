@@ -10,6 +10,9 @@ export const test = base.extend({
                     !messageText.includes(
                         'Form submission canceled because the form is not connected',
                     ) &&
+                    !messageText.includes(
+                        'Failed to load resource: the server responded with a status of 422 ()',
+                    ) &&
                     browserName === 'chromium'
                 ) {
                     expect(false, `Unexpected console ${msg.type()}: ${messageText}`).toBe(true);

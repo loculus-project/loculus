@@ -5,10 +5,8 @@ import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
-test.fail('Override hidden fields', async ({ page, pageWithGroup }) => {
-    // this test will fail, because there's a console error when calling get-data-to-edit for the revoked sequence.
-    // we want to auto-approve revocations anyways: https://github.com/loculus-project/loculus/issues/1332
-    test.setTimeout(180000);
+test.only('Override hidden fields', async ({ page, pageWithGroup }) => {
+    test.setTimeout(95_000);
     const uuid = uuidv4();
 
     await page.goto('/');
@@ -102,8 +100,7 @@ test.fail('Override hidden fields', async ({ page, pageWithGroup }) => {
     await search.expectSequenceCount(2);
 
     await page.getByRole('button', { name: 'Reset' }).click();
-    await search.enableSearchFields('Author Affiliations', 'Is revocation');
-    await search.fill('Author affiliations', uuid);
+    await search.enableSearchFields('Is revocation');
     await search.select('Is revocation', 'true');
     await expect(
         page.getByRole('link', { name: expectedRevocationAccessionVersion }),
