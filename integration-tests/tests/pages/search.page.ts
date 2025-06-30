@@ -83,7 +83,7 @@ export class SearchPage {
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
-        const rows = await this.getSequenceRows();
+        const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
         const accessionVersionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
