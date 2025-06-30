@@ -5,8 +5,8 @@ import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
-test('test', async ({ page, pageWithGroup }) => {
-    test.setTimeout(180000);
+test('Override hidden fields', async ({ page, pageWithGroup }) => {
+    test.setTimeout(95_000);
     const uuid = uuidv4();
 
     await page.goto('/');
@@ -56,7 +56,7 @@ test('test', async ({ page, pageWithGroup }) => {
 
     await page.getByRole('cell', { name: 'France' }).click();
     await page.getByRole('link', { name: 'Revise this sequence' }).click();
-    await page.getByLabel('Collection date:').fill('2012-12-13');
+    await page.getByLabel('Collection date').fill('2012-12-13');
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByText('Review current submissions')).toBeVisible();
@@ -90,7 +90,7 @@ test('test', async ({ page, pageWithGroup }) => {
     await search.select('Collection country', 'France');
     await page.getByLabel('Clear').click();
 
-    await search.enableSearchFields('Author affiliations', 'Is revocation', 'Version status');
+    await search.enableSearchFields('Author affiliations', 'Version status');
     await search.fill('Author affiliations', uuid);
 
     await search.expectSequenceCount(1);
