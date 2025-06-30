@@ -67,7 +67,7 @@
         "@astrojs/react": "^4.3.0",
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.0",
-        "@eslint/js": "^9.29.0",
+        "@eslint/js": "^9.30.0",
         "@iconify/json": "^2.2.352",
         "@playwright/test": "^1.53.1",
         "@tailwindcss/forms": "^0.5.9",
