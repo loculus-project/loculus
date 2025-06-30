@@ -53,7 +53,6 @@ jobs:
             micromamba-version: 'latest'
             init-shell: >-
                 bash
-                powershell
             cache-environment: true
             post-cleanup: 'all'
       - name: Run tests
