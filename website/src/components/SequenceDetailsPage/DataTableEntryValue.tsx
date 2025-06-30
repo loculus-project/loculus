@@ -108,7 +108,7 @@ const computePreview = (value: string): string => {
     }
 
     const spaceIndex = value.lastIndexOf(' ', searchEnd);
-    if (spaceIndex !== -1) {
+    if (spaceIndex >= searchStart) {
         return value.slice(0, spaceIndex).trim();
     }
 
