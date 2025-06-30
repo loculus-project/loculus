@@ -73,7 +73,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                                     onChange={() => setAgreedToDataUseTerms(!agreedToDataUseTerms)}
                                 />
                                 <span className='text-sm'>
-                                    I agree to the {/* TODO(862) */}
+                                    I agree to the{' '}
                                     <a
                                         href={routes.datauseTermsPage()}
                                         className='underline'
