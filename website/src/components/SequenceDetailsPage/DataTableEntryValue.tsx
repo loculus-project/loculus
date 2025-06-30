@@ -92,6 +92,28 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
 };
 
 const MAX_PLAIN_STRING_LENGTH = 400;
+const SHOW_MORE_LENGTH = 10; // 'Show more' text length
+
+// Preview ends at the last comma or semicolon in the last 50 characters preceding the display limit.
+// If there's no comma or semicolon, it will cut off at the last space before the display limit.
+// If no space is found, it will cut off at the display limit.
+// We reserve 13 characters for the 'Show more' text, so the preview is limited to 387 characters.
+const computePreview = (value: string): string => {
+    const searchStart = MAX_PLAIN_STRING_LENGTH - 50;
+    const searchEnd = MAX_PLAIN_STRING_LENGTH - 3 - SHOW_MORE_LENGTH; // 13 chars reserved
+
+    const commaIndex = Math.max(value.lastIndexOf(',', searchEnd), value.lastIndexOf(';', searchEnd));
+    if (commaIndex >= searchStart) {
+        return value.slice(0, commaIndex + 1).trim();
+    }
+
+    const spaceIndex = value.lastIndexOf(' ', searchEnd);
+    if (spaceIndex !== -1) {
+        return value.slice(0, spaceIndex).trim();
+    }
+
+    return value.slice(0, searchEnd).trim();
+};
 
 const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
     const [showMore, setShowMore] = React.useState(false);
@@ -101,9 +123,10 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
     }
 
     if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
+        const preview = computePreview(value);
         return (
             <span>
-                {showMore ? value : `${value.slice(0, MAX_PLAIN_STRING_LENGTH)}...`}{' '}
+                {showMore ? value : `${preview}...`}{' '}
                 <button onClick={() => setShowMore(!showMore)} className='underline'>
                     {showMore ? 'Show less' : 'Show more'}
                 </button>
