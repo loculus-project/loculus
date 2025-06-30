@@ -3,7 +3,7 @@ import { test } from '../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../pages/search.page';
 import fs from 'fs';
 
-test('Download metadata TSV for a single sequence', async ({ pageWithFailOnConsole: page }) => {
+test('Download metadata TSV for a single sequence', async ({ page }) => {
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
 

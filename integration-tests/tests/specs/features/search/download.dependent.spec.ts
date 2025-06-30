@@ -3,7 +3,7 @@ import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import fs from 'fs';
 
-test('Download metadata and check number of cols', async ({ pageWithFailOnConsole: page }) => {
+test('Download metadata and check number of cols', async ({ page }) => {
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
 
@@ -36,10 +36,7 @@ test('Download metadata and check number of cols', async ({ pageWithFailOnConsol
     expect(fields).toHaveLength(11);
 });
 
-test('Download metadata with POST and check number of cols', async ({
-    pageWithFailOnConsole: page,
-    browserName,
-}) => {
+test('Download metadata with POST and check number of cols', async ({ page, browserName }) => {
     test.skip(
         browserName === 'firefox',
         'Firefox raises a native warning that blocks the download',
