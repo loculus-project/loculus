@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import fs from 'fs';
 

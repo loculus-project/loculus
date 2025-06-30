@@ -1,4 +1,5 @@
-import { test as base, Page } from '@playwright/test';
+import { test as base } from './console-warnings.fixture';
+import { Page } from '@playwright/test';
 
 import { v4 as uuidv4 } from 'uuid';
 import { AuthPage } from '../pages/auth.page';
