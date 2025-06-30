@@ -304,7 +304,6 @@ SQ
      ttttatcagt tttattattt ccagggtgtg gggggaacgg cggctgctgg caccagactt     12180
      gccctccaat ggatcct                                                    12197
 //
-
 ID   LOC_000006N_M; ; linear; RNA; ; UNC; 5323 BP.
 XX
 AC   LOC_000006N_M;
@@ -453,7 +452,6 @@ SQ
      agctacattt aatccgtttc attgtatccg caagcaagct ctgcaatgcc caacaccgcc      5280
      attactccat ttactctgac ctaaaccttg actgcgtgcc gcc                        5323
 //
-
 ID   LOC_000006N_S; ; linear; RNA; ; UNC; 1828 BP.
 XX
 AC   LOC_000006N_S;
