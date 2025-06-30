@@ -142,7 +142,7 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
     }
 
     if (value !== '') {
-        return <>{value}</>;
+        return value;
     }
 
     return <span className='italic'>None</span>;
