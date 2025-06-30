@@ -192,7 +192,8 @@ open class ReleasedDataModel(
                         filesMapWithUrls(
                             rawProcessedData.accession,
                             rawProcessedData.version,
-                            rawProcessedData.processedData.files!!,
+                            // Revokation entries do not have files, hence need the empty map fallback
+                            rawProcessedData.processedData.files ?: emptyMap(),
                         )
                             .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
                             .toMap()
