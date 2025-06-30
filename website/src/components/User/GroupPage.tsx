@@ -1,11 +1,11 @@
 import { type FC, type FormEvent, useState, type ReactNode } from 'react';
 
-import useClientFlag from '../../hooks/isClient.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
@@ -32,8 +32,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const [newUserName, setNewUserName] = useState<string>('');
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
-    const isClient = useClientFlag();
 
     const { groupDetails, removeFromGroup, addUserToGroup } = useGroupPageHooks({
         clientConfig,
@@ -102,27 +100,27 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             >
                                 Edit group
                             </a>
-                            <button
-                                onClick={() => {
-                                    const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
-                                    const lastMemberWarning =
-                                        'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
-                                    const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
+                            <DisabledUntilHydrated>
+                                <button
+                                    className='object-right p-2 loculusColor text-white rounded px-4'
+                                    onClick={() => {
+                                        const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
+                                        const lastMemberWarning =
+                                            'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
+                                        const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
 
-                                    displayConfirmationDialog({
-                                        dialogText,
-
-                                        onConfirmation: async () => {
-                                            await removeFromGroup(username);
-                                            window.location.href = routes.userOverviewPage();
-                                        },
-                                    });
-                                }}
-                                className='object-right p-2 loculusColor text-white rounded px-4'
-                                disabled={!isClient}
-                            >
-                                Leave group
-                            </button>
+                                        displayConfirmationDialog({
+                                            dialogText,
+                                            onConfirmation: async () => {
+                                                await removeFromGroup(username);
+                                                window.location.href = routes.userOverviewPage();
+                                            },
+                                        });
+                                    }}
+                                >
+                                    Leave group
+                                </button>
+                            </DisabledUntilHydrated>
                         </>
                     )}
                 </div>
@@ -159,13 +157,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='p-2 border border-gray-300 rounded mr-2'
                                 required
                             />
-                            <button
-                                type='submit'
-                                className='px-4 py-2 loculusColor text-white rounded'
-                                disabled={!isClient}
-                            >
-                                Add user
-                            </button>
+                            <DisabledUntilHydrated>
+                                <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                                    Add user
+                                </button>
+                            </DisabledUntilHydrated>
                         </div>
                     </form>
                     <div className='flex-1 overflow-y-auto'>
@@ -174,22 +170,23 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (
-                                        <button
-                                            onClick={() => {
-                                                displayConfirmationDialog({
-                                                    dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
-                                                    onConfirmation: async () => {
-                                                        await removeFromGroup(user.name);
-                                                    },
-                                                });
-                                            }}
-                                            className='px-2 py-1 loculusColor text-white rounded'
-                                            title='Remove user from group'
-                                            aria-label={`Remove User ${user.name}`}
-                                            disabled={!isClient}
-                                        >
-                                            Remove user
-                                        </button>
+                                        <DisabledUntilHydrated>
+                                            <button
+                                                onClick={() => {
+                                                    displayConfirmationDialog({
+                                                        dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
+                                                        onConfirmation: async () => {
+                                                            await removeFromGroup(user.name);
+                                                        },
+                                                    });
+                                                }}
+                                                className='px-2 py-1 loculusColor text-white rounded'
+                                                title='Remove user from group'
+                                                aria-label={`Remove User ${user.name}`}
+                                            >
+                                                Remove user
+                                            </button>
+                                        </DisabledUntilHydrated>
                                     )}
                                 </li>
                             ))}

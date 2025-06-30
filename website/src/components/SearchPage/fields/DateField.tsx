@@ -3,8 +3,8 @@ import { useEffect, useRef, useState, type FC } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
-import useClientFlag from '../../../hooks/isClient';
 import { type MetadataFilter, type SetSomeFieldValues } from '../../../types/config';
+import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 
 type CustomizedDatePickerProps = {
     field: MetadataFilter;
@@ -136,8 +136,6 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
     valueToDateConverter,
     fieldValue,
 }) => {
-    const isClient = useClientFlag();
-
     /**
      * Using DatePicker with controlled value causes issues:
      * - it misbehaves on typing when LAPIS errors, e.g. on out-of-range integers
@@ -181,18 +179,19 @@ const CustomizedDatePicker: FC<CustomizedDatePickerProps> = ({
                 <label htmlFor={field.name} className='block text-sm w-16 my-3 text-right mr-2 text-gray-400'>
                     {field.displayName ?? field.name}
                 </label>
-                <DatePicker
-                    format='yyyy-MM-dd'
-                    defaultValue={defaultDate}
-                    id={field.name}
-                    name={field.name}
-                    key={resetKey}
-                    isoWeek
-                    oneTap
-                    onChange={handleChange}
-                    onClean={handleClean}
-                    disabled={!isClient}
-                />
+                <DisabledUntilHydrated>
+                    <DatePicker
+                        format='yyyy-MM-dd'
+                        defaultValue={defaultDate}
+                        id={field.name}
+                        name={field.name}
+                        key={resetKey}
+                        isoWeek
+                        oneTap
+                        onChange={handleChange}
+                        onClean={handleClean}
+                    />
+                </DisabledUntilHydrated>
             </div>
         </div>
     );
