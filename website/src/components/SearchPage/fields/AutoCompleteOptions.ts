@@ -80,7 +80,7 @@ const createGenericOptionsHook = (
  * @param lineageDefinition The lineage definition.
  * @param counts Counts as they occur for lineages or aliases, without any aggregation.
  * @param includeSublineages Whether to aggregate across descendants or not.
- * @returns Counts for all lineages and aliases.
+ * @returns Counts for all lineages; including only canonical lineage names.
  */
 function aggregateCounts(
     lineageDefinition: LineageDefinition,
@@ -133,14 +133,6 @@ function aggregateCounts(
         }
     } else {
         resolvedCounts = canonicalCounts;
-    }
-
-    // add counts for aliases back
-    for (const [alias, canonicalLineage] of canonicalNames.entries()) {
-        if (alias !== canonicalLineage) {
-            const canonicalCount = canonicalCounts.get(canonicalLineage)!;
-            resolvedCounts.set(alias, canonicalCount);
-        }
     }
 
     return resolvedCounts;
@@ -204,13 +196,10 @@ const createLineageOptionsHook = (
             const aggregatedCounts = aggregateCounts(lineageDefinition, unaggregatedCounts, includeSublineages);
 
             // generate options
-            Object.entries(lineageDefinition).forEach(([lineageName, { aliases }]) => {
+            Object.keys(lineageDefinition).forEach((lineageName) => {
                 let count: number | undefined = aggregatedCounts.get(lineageName);
                 if (count === 0) count = undefined;
                 options.push({ option: lineageName, count });
-                if (aliases) {
-                    aliases.forEach((alias) => options.push({ option: alias, count }));
-                }
             });
         }
 

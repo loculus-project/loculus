@@ -41,13 +41,13 @@ describe('LineageField', () => {
                 'A.1': {
                     parents: ['A'],
                 },
-                'A.1.1': {
+                'B': {
                     parents: ['A.1'],
-                    aliases: ['B'],
+                    aliases: ['A.1.1'],
                 },
-                'A.2': {
+                'C': {
                     parents: ['A'],
-                    aliases: ['C'],
+                    aliases: ['A.2'],
                 },
             },
             /* eslint-enable @typescript-eslint/naming-convention */
@@ -121,12 +121,11 @@ describe('LineageField', () => {
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        expect(options.length).toBe(6);
+        expect(options.length).toBe(4);
         expect(options[0].textContent).toBe('A');
         expect(options[1].textContent).toBe('A.1(10)');
-        // A.1.1 and B are aliases -> should have same, aggregated count
-        expect(options[2].textContent).toBe('A.1.1(35)');
-        expect(options[4].textContent).toBe('B(35)');
+        // A.1.1 and B are aliases -> B should have aggregated count
+        expect(options[2].textContent).toBe('B(35)');
     });
 
     it('aggregates counts for sublineages correctly', async () => {
@@ -146,12 +145,11 @@ describe('LineageField', () => {
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        expect(options.length).toBe(6);
+        expect(options.length).toBe(4);
         expect.soft(options[0].textContent).toBe('A(53)');
         expect.soft(options[1].textContent).toBe('A.1(45)');
-        expect.soft(options[2].textContent).toBe('A.1.1(35)');
-        expect.soft(options[3].textContent).toBe('A.2(8)');
-        expect.soft(options[4].textContent).toBe('B(35)');
+        expect.soft(options[2].textContent).toBe('B(35)');
+        expect.soft(options[3].textContent).toBe('C(8)');
     });
 
     it('handles input changes and calls setSomeFieldValues', async () => {
@@ -170,13 +168,13 @@ describe('LineageField', () => {
         const options = await screen.findAllByRole('option');
         await userEvent.click(options[2]);
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1']);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'B']);
 
         const checkbox = screen.getByRole('checkbox');
         fireEvent.click(checkbox);
         expect(checkbox).toBeChecked();
 
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'A.1.1*']);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['lineage', 'B*']);
     });
 
     it('clears wildcard when sublineages is unchecked', () => {
