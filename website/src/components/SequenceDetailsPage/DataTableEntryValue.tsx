@@ -127,7 +127,7 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
         return (
             <span>
                 {showMore ? value : `${preview}...`}{' '}
-                <button onClick={() => setShowMore(!showMore)} className='underline'>
+                <button onClick={() => setShowMore(!showMore)} className='block'>
                     {showMore ? 'Show less' : 'Show more'}
                 </button>
             </span>
