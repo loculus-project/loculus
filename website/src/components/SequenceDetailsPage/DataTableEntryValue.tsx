@@ -118,12 +118,19 @@ const computePreview = (value: string): string => {
 const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
     const [showMore, setShowMore] = React.useState(false);
 
+    const preview = React.useMemo(() => {
+        if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
+            return computePreview(value);
+        }
+        return null;
+    }, [value]);
+
     if (typeof value === 'boolean') {
         return <span>{value ? 'True' : 'False'}</span>;
     }
 
-    if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
-        const preview = computePreview(value);
+    // If a preview was generated, display the truncated text with a "Show more" button.
+    if (preview) {
         return (
             <span>
                 {showMore ? value : `${preview}...`}{' '}
