@@ -259,4 +259,5 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
 
         embl_content.append(sequence.format("embl"))
 
-    return "\n".join(embl_content)
+    # Multi-segment sequences have no empty lines between segments
+    return "".join(embl_content)
