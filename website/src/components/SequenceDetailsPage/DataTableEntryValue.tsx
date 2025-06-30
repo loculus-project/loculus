@@ -98,7 +98,7 @@ const SHOW_MORE_LENGTH = 10; // 'Show more' text length
 // If there's no comma or semicolon, it will cut off at the last space before the display limit.
 // If no space is found, it will cut off at the display limit.
 // We reserve 13 characters for the 'Show more' text, so the preview is limited to 387 characters.
-const computePreview = (value: string): string => {
+const computePreviewString = (value: string): string => {
     const searchStart = MAX_PLAIN_STRING_LENGTH - 50;
     const searchEnd = MAX_PLAIN_STRING_LENGTH - 3 - SHOW_MORE_LENGTH; // 13 chars reserved
 
@@ -120,7 +120,7 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
 
     const preview = React.useMemo(() => {
         if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
-            return computePreview(value);
+            return computePreviewString(value);
         }
         return null;
     }, [value]);
@@ -129,7 +129,6 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
         return <span>{value ? 'True' : 'False'}</span>;
     }
 
-    // If a preview was generated, display the truncated text with a "Show more" button.
     if (preview) {
         return (
             <span>
