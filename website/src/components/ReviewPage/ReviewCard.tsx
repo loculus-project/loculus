@@ -509,12 +509,17 @@ function useGetMetadataAndAnnotations(
     accessToken: string,
     sequenceEntryStatus: SequenceEntryStatus,
 ) {
-    const { status, accession, version } = sequenceEntryStatus;
+    const { status, accession, version, isRevocation } = sequenceEntryStatus;
     return backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism, accession, version },
         },
-        { enabled: status !== receivedStatus && status !== inProcessingStatus },
+        {
+            enabled:
+                status !== receivedStatus &&
+                status !== inProcessingStatus &&
+                !isRevocation,
+        },
     );
 }
