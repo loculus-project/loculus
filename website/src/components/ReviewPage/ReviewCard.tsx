@@ -516,10 +516,7 @@ function useGetMetadataAndAnnotations(
             params: { organism, accession, version },
         },
         {
-            enabled:
-                status !== receivedStatus &&
-                status !== inProcessingStatus &&
-                !isRevocation,
+            enabled: status !== receivedStatus && status !== inProcessingStatus && !isRevocation,
         },
     );
 }
