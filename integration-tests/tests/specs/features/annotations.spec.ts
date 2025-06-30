@@ -3,13 +3,8 @@ import { SearchPage } from '../../pages/search.page';
 import { test } from '../../fixtures/group.fixture';
 
 test.describe('Sequence Preview Annotations', () => {
-    let searchPage: SearchPage;
-
-    test.beforeEach(async ({ page }) => {
-        searchPage = new SearchPage(page);
-    });
-
     test('should have an embl file in the Files section', async ({ page }) => {
+        let searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 
         await searchPage.enableSearchFields(
