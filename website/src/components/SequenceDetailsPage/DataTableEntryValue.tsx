@@ -91,13 +91,28 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
     );
 };
 
+const MAX_PLAIN_STRING_LENGTH = 400;
+
 const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
+    const [showMore, setShowMore] = React.useState(false);
+
     if (typeof value === 'boolean') {
         return <span>{value ? 'True' : 'False'}</span>;
     }
 
+    if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
+        return (
+            <span>
+                {showMore ? value : `${value.slice(0, MAX_PLAIN_STRING_LENGTH)}...`}{' '}
+                <button onClick={() => setShowMore(!showMore)} className='underline'>
+                    {showMore ? 'Show less' : 'Show more'}
+                </button>
+            </span>
+        );
+    }
+
     if (value !== '') {
-        return value;
+        return <>{value}</>;
     }
 
     return <span className='italic'>None</span>;
