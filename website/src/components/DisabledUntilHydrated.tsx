@@ -1,9 +1,9 @@
-import { cloneElement, type FC, type ReactElement } from 'react';
+import { Children, cloneElement, type FC, type ReactElement } from 'react';
 
 import useClientFlag from '../hooks/isClient';
 
 interface DisabledUntilHydratedProps {
-    children: ReactElement;
+    children: ReactElement<{ disabled?: boolean }>;
     alsoDisabledIf?: boolean;
 }
 
@@ -12,7 +12,17 @@ interface DisabledUntilHydratedProps {
  */
 const DisabledUntilHydrated: FC<DisabledUntilHydratedProps> = ({ children, alsoDisabledIf = false }) => {
     const isClient = useClientFlag();
-    return cloneElement(children, { disabled: !isClient || alsoDisabledIf });
+
+    // Ensure that there is exactly one child element
+    const child = Children.only(children);
+    // Error if we're overriding a `disabled` prop
+    if (child.props.disabled !== undefined) {
+        throw new Error(
+            'DisabledUntilHydrated: child element should not set its own `disabled` prop—it will be overridden.',
+        );
+    }
+
+    return cloneElement(child, { disabled: !isClient || alsoDisabledIf });
 };
 
 export default DisabledUntilHydrated;
