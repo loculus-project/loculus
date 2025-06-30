@@ -49,6 +49,8 @@ lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+  mpox:
+    1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/mpox/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1707,6 +1709,634 @@ defaultOrganisms:
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
         - name: NP
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+  mpox:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "Mpox Virus"
+      image: "/images/organisms/mpox_small.jpg"
+      linkOuts:
+        - name: "Nextclade"
+          maxNumberOfRecommendedEntries: 200 # Nextclade handles ~80MB of sequences, mpox is ~197kB
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/mpox/all-clades"
+        - name: "Country map"
+          url: "https://mapoplexus.genomium.org/?url={{[metadata]}}"
+      metadataAdd:
+        - name: clade
+          displayName: Clade
+          header: "Clade & Lineage"
+          includeInDownloadsByDefault: true
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          preprocessing:
+            inputs: {input: nextclade.clade}
+          columnWidth: 60
+          order: 5
+        - name: outbreak
+          displayName: Outbreak
+          header: "Clade & Lineage"
+          includeInDownloadsByDefault: true
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          preprocessing:
+            inputs: {input: nextclade.customNodeAttributes.outbreak}
+          columnWidth: 74
+          order: 6
+        - name: lineage
+          displayName: Lineage
+          header: "Clade & Lineage"
+          includeInDownloadsByDefault: true
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          preprocessing:
+            inputs: {input: nextclade.customNodeAttributes.lineage}
+          columnWidth: 64
+          order: 7
+          lineageSystem: mpox
+        - name: totalStopCodons
+          displayName: Total stop codons
+          type: int
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+        - name: stopCodons
+          displayName: Stop codons
+          header: "Alignment and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+      website:
+        <<: *website
+        tableColumns:
+          - sampleCollectionDate
+          - geoLocCountry
+          - geoLocAdmin1
+          - authors
+          - authorAffiliations
+          - earliestReleaseDate
+          - clade
+          - lineage
+          - length
+        defaultOrderBy: sampleCollectionDate
+        defaultOrder: descending
+    preprocessing:
+      - <<: *preprocessing
+        replicas: 3
+        version: 1
+        configFile:
+          <<: *preprocessingConfigFile
+          nextclade_dataset_name: nextstrain/mpox/all-clades
+          nextclade_dataset_tag: 2025-04-25--12-24-24Z
+          batch_size: 5
+          genes: &mpoxGenes
+            - OPG001
+            - OPG002
+            - OPG003
+            - OPG005
+            - OPG015
+            - OPG016
+            - OPG019
+            - OPG021
+            - OPG022
+            - OPG023
+            - OPG024
+            - OPG025
+            - OPG027
+            - OPG029
+            - OPG030
+            - OPG031
+            - OPG034
+            - OPG035
+            - OPG036
+            - OPG037
+            - OPG038
+            - OPG039
+            - OPG040
+            - OPG042
+            - OPG043
+            - OPG044
+            - OPG045
+            - OPG046
+            - OPG047
+            - OPG048
+            - OPG049
+            - OPG050
+            - OPG051
+            - OPG052
+            - OPG053
+            - OPG054
+            - OPG055
+            - OPG056
+            - OPG057
+            - OPG058
+            - OPG059
+            - OPG060
+            - OPG061
+            - OPG062
+            - OPG063
+            - OPG064
+            - OPG065
+            - OPG066
+            - OPG068
+            - OPG069
+            - OPG070
+            - OPG071
+            - OPG072
+            - OPG073
+            - OPG074
+            - OPG075
+            - OPG076
+            - OPG077
+            - OPG078
+            - OPG079
+            - OPG080
+            - OPG081
+            - OPG082
+            - OPG083
+            - OPG084
+            - OPG085
+            - OPG086
+            - OPG087
+            - OPG088
+            - OPG089
+            - OPG090
+            - OPG091
+            - OPG092
+            - OPG093
+            - OPG094
+            - OPG095
+            - OPG096
+            - OPG097
+            - OPG098
+            - OPG099
+            - OPG100
+            - OPG101
+            - OPG102
+            - OPG103
+            - OPG104
+            - OPG105
+            - OPG106
+            - OPG107
+            - OPG108
+            - OPG109
+            - OPG110
+            - OPG111
+            - OPG112
+            - OPG113
+            - OPG114
+            - OPG115
+            - OPG116
+            - OPG117
+            - OPG118
+            - OPG119
+            - OPG120
+            - OPG121
+            - OPG122
+            - OPG123
+            - OPG124
+            - OPG125
+            - OPG126
+            - OPG127
+            - OPG128
+            - OPG129
+            - OPG130
+            - OPG131
+            - OPG132
+            - OPG133
+            - OPG134
+            - OPG135
+            - OPG136
+            - OPG137
+            - OPG138
+            - OPG139
+            - OPG140
+            - OPG141
+            - OPG142
+            - OPG143
+            - OPG144
+            - OPG145
+            - OPG146
+            - OPG147
+            - OPG148
+            - OPG149
+            - OPG150
+            - OPG151
+            - OPG153
+            - OPG154
+            - OPG155
+            - OPG156
+            - OPG157
+            - OPG158
+            - OPG159
+            - OPG160
+            - OPG161
+            - OPG162
+            - OPG163
+            - OPG164
+            - OPG165
+            - OPG166
+            - OPG167
+            - OPG170
+            - OPG171
+            - OPG172
+            - OPG173
+            - OPG174
+            - OPG175
+            - OPG176
+            - OPG178
+            - OPG180
+            - OPG181
+            - OPG185
+            - OPG187
+            - OPG188
+            - OPG189
+            - OPG190
+            - OPG191
+            - OPG192
+            - OPG193
+            - OPG195
+            - OPG197
+            - OPG198
+            - OPG199
+            - OPG200
+            - OPG204
+            - OPG205
+            - OPG208
+            - OPG209
+            - OPG210
+    ingest:
+      <<: *ingest
+      configFile:
+        <<: *ingestConfigFile
+        taxon_id: 10244
+        subsample_fraction: 0.01
+    enaDeposition:
+      configFile:
+        taxon_id: 10244
+        scientific_name: "Monkeypox virus"
+        molecule_type: "genomic DNA"
+    referenceGenomes:
+      nucleotideSequences:
+        - name: "main"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/mpox/reference.fasta]]"
+          insdcAccessionFull: NC_063383.1
+      genes:
+        - name: OPG001
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG001.fa]]"
+        - name: OPG002
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG002.fa]]"
+        - name: OPG003
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG003.fa]]"
+        - name: OPG005
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG005.fa]]"
+        - name: OPG015
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG015.fa]]"
+        - name: OPG016
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG016.fa]]"
+        - name: OPG019
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG019.fa]]"
+        - name: OPG021
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG021.fa]]"
+        - name: OPG022
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG022.fa]]"
+        - name: OPG023
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG023.fa]]"
+        - name: OPG024
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG024.fa]]"
+        - name: OPG025
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG025.fa]]"
+        - name: OPG027
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG027.fa]]"
+        - name: OPG029
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG029.fa]]"
+        - name: OPG030
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG030.fa]]"
+        - name: OPG031
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG031.fa]]"
+        - name: OPG034
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG034.fa]]"
+        - name: OPG035
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG035.fa]]"
+        - name: OPG036
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG036.fa]]"
+        - name: OPG037
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG037.fa]]"
+        - name: OPG038
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG038.fa]]"
+        - name: OPG039
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG039.fa]]"
+        - name: OPG040
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG040.fa]]"
+        - name: OPG042
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG042.fa]]"
+        - name: OPG043
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG043.fa]]"
+        - name: OPG044
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG044.fa]]"
+        - name: OPG045
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG045.fa]]"
+        - name: OPG046
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG046.fa]]"
+        - name: OPG047
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG047.fa]]"
+        - name: OPG048
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG048.fa]]"
+        - name: OPG049
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG049.fa]]"
+        - name: OPG050
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG050.fa]]"
+        - name: OPG051
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG051.fa]]"
+        - name: OPG052
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG052.fa]]"
+        - name: OPG053
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG053.fa]]"
+        - name: OPG054
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG054.fa]]"
+        - name: OPG055
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG055.fa]]"
+        - name: OPG056
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG056.fa]]"
+        - name: OPG057
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG057.fa]]"
+        - name: OPG058
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG058.fa]]"
+        - name: OPG059
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG059.fa]]"
+        - name: OPG060
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG060.fa]]"
+        - name: OPG061
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG061.fa]]"
+        - name: OPG062
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG062.fa]]"
+        - name: OPG063
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG063.fa]]"
+        - name: OPG064
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG064.fa]]"
+        - name: OPG065
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG065.fa]]"
+        - name: OPG066
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG066.fa]]"
+        - name: OPG068
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG068.fa]]"
+        - name: OPG069
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG069.fa]]"
+        - name: OPG070
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG070.fa]]"
+        - name: OPG071
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG071.fa]]"
+        - name: OPG072
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG072.fa]]"
+        - name: OPG073
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG073.fa]]"
+        - name: OPG074
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG074.fa]]"
+        - name: OPG075
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG075.fa]]"
+        - name: OPG076
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG076.fa]]"
+        - name: OPG077
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG077.fa]]"
+        - name: OPG078
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG078.fa]]"
+        - name: OPG079
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG079.fa]]"
+        - name: OPG080
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG080.fa]]"
+        - name: OPG081
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG081.fa]]"
+        - name: OPG082
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG082.fa]]"
+        - name: OPG083
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG083.fa]]"
+        - name: OPG084
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG084.fa]]"
+        - name: OPG085
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG085.fa]]"
+        - name: OPG086
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG086.fa]]"
+        - name: OPG087
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG087.fa]]"
+        - name: OPG088
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG088.fa]]"
+        - name: OPG089
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG089.fa]]"
+        - name: OPG090
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG090.fa]]"
+        - name: OPG091
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG091.fa]]"
+        - name: OPG092
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG092.fa]]"
+        - name: OPG093
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG093.fa]]"
+        - name: OPG094
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG094.fa]]"
+        - name: OPG095
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG095.fa]]"
+        - name: OPG096
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG096.fa]]"
+        - name: OPG097
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG097.fa]]"
+        - name: OPG098
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG098.fa]]"
+        - name: OPG099
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG099.fa]]"
+        - name: OPG100
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG100.fa]]"
+        - name: OPG101
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG101.fa]]"
+        - name: OPG102
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG102.fa]]"
+        - name: OPG103
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG103.fa]]"
+        - name: OPG104
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG104.fa]]"
+        - name: OPG105
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG105.fa]]"
+        - name: OPG106
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG106.fa]]"
+        - name: OPG107
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG107.fa]]"
+        - name: OPG108
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG108.fa]]"
+        - name: OPG109
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG109.fa]]"
+        - name: OPG110
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG110.fa]]"
+        - name: OPG111
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG111.fa]]"
+        - name: OPG112
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG112.fa]]"
+        - name: OPG113
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG113.fa]]"
+        - name: OPG114
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG114.fa]]"
+        - name: OPG115
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG115.fa]]"
+        - name: OPG116
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG116.fa]]"
+        - name: OPG117
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG117.fa]]"
+        - name: OPG118
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG118.fa]]"
+        - name: OPG119
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG119.fa]]"
+        - name: OPG120
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG120.fa]]"
+        - name: OPG121
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG121.fa]]"
+        - name: OPG122
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG122.fa]]"
+        - name: OPG123
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG123.fa]]"
+        - name: OPG124
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG124.fa]]"
+        - name: OPG125
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG125.fa]]"
+        - name: OPG126
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG126.fa]]"
+        - name: OPG127
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG127.fa]]"
+        - name: OPG128
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG128.fa]]"
+        - name: OPG129
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG129.fa]]"
+        - name: OPG130
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG130.fa]]"
+        - name: OPG131
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG131.fa]]"
+        - name: OPG132
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG132.fa]]"
+        - name: OPG133
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG133.fa]]"
+        - name: OPG134
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG134.fa]]"
+        - name: OPG135
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG135.fa]]"
+        - name: OPG136
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG136.fa]]"
+        - name: OPG137
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG137.fa]]"
+        - name: OPG138
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG138.fa]]"
+        - name: OPG139
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG139.fa]]"
+        - name: OPG140
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG140.fa]]"
+        - name: OPG141
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG141.fa]]"
+        - name: OPG142
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG142.fa]]"
+        - name: OPG143
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG143.fa]]"
+        - name: OPG144
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG144.fa]]"
+        - name: OPG145
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG145.fa]]"
+        - name: OPG146
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG146.fa]]"
+        - name: OPG147
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG147.fa]]"
+        - name: OPG148
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG148.fa]]"
+        - name: OPG149
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG149.fa]]"
+        - name: OPG150
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG150.fa]]"
+        - name: OPG151
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG151.fa]]"
+        - name: OPG153
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG153.fa]]"
+        - name: OPG154
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG154.fa]]"
+        - name: OPG155
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG155.fa]]"
+        - name: OPG156
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG156.fa]]"
+        - name: OPG157
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG157.fa]]"
+        - name: OPG158
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG158.fa]]"
+        - name: OPG159
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG159.fa]]"
+        - name: OPG160
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG160.fa]]"
+        - name: OPG161
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG161.fa]]"
+        - name: OPG162
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG162.fa]]"
+        - name: OPG163
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG163.fa]]"
+        - name: OPG164
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG164.fa]]"
+        - name: OPG165
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG165.fa]]"
+        - name: OPG166
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG166.fa]]"
+        - name: OPG167
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG167.fa]]"
+        - name: OPG170
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG170.fa]]"
+        - name: OPG171
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG171.fa]]"
+        - name: OPG172
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG172.fa]]"
+        - name: OPG173
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG173.fa]]"
+        - name: OPG174
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG174.fa]]"
+        - name: OPG175
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG175.fa]]"
+        - name: OPG176
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG176.fa]]"
+        - name: OPG178
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG178.fa]]"
+        - name: OPG180
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG180.fa]]"
+        - name: OPG181
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG181.fa]]"
+        - name: OPG185
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG185.fa]]"
+        - name: OPG187
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG187.fa]]"
+        - name: OPG188
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG188.fa]]"
+        - name: OPG189
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG189.fa]]"
+        - name: OPG190
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG190.fa]]"
+        - name: OPG191
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG191.fa]]"
+        - name: OPG192
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG192.fa]]"
+        - name: OPG193
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG193.fa]]"
+        - name: OPG195
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG195.fa]]"
+        - name: OPG197
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG197.fa]]"
+        - name: OPG198
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG198.fa]]"
+        - name: OPG199
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG199.fa]]"
+        - name: OPG200
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG200.fa]]"
+        - name: OPG204
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG204.fa]]"
+        - name: OPG205
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG205.fa]]"
+        - name: OPG208
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG208.fa]]"
+        - name: OPG209
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG209.fa]]"
+        - name: OPG210
+          sequence: "[[URL:https://theosanderson.github.io/mpox/OPG210.fa]]"
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
