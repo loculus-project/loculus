@@ -5,11 +5,13 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Search', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(({ page }) => {
+    test.beforeEach(({ pageWithFailOnConsole: page }) => {
         searchPage = new SearchPage(page);
     });
 
-    test('search form resets when the reset button is clicked', async ({ page }) => {
+    test('search form resets when the reset button is clicked', async ({
+        pageWithFailOnConsole: page,
+    }) => {
         await searchPage.ebolaSudan();
 
         await searchPage.select('Collection country', 'France');
@@ -21,7 +23,9 @@ test.describe('Search', () => {
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
-    test('hidden field values are kept in the URL params', async ({ page }) => {
+    test('hidden field values are kept in the URL params', async ({
+        pageWithFailOnConsole: page,
+    }) => {
         await searchPage.ebolaSudan();
 
         // This is just to ensure that things are interactive and ready - bit of a hack for now

@@ -9,7 +9,9 @@ test.describe('Sequence Preview URL Parameters', () => {
         searchPage = new SearchPage(page);
     });
 
-    test('should store the previewed sequence ID in the URL', async ({ page }) => {
+    test('should store the previewed sequence ID in the URL', async ({
+        pageWithFailOnConsole: page,
+    }) => {
         await searchPage.ebolaSudan();
 
         let urlParams = searchPage.getUrlParams();
@@ -36,7 +38,7 @@ test.describe('Sequence Preview URL Parameters', () => {
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
     });
 
-    test('should store half-screen state in the URL', async ({ page }) => {
+    test('should store half-screen state in the URL', async ({ pageWithFailOnConsole: page }) => {
         await searchPage.ebolaSudan();
 
         await searchPage.clickOnSequence(0);
@@ -59,7 +61,9 @@ test.describe('Sequence Preview URL Parameters', () => {
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
     });
 
-    test('should restore state from URL parameters on page load', async ({ page }) => {
+    test('should restore state from URL parameters on page load', async ({
+        pageWithFailOnConsole: page,
+    }) => {
         await searchPage.ebolaSudan();
 
         await searchPage.clickOnSequence(0);

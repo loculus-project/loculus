@@ -5,12 +5,12 @@ import { SearchPage } from '../../../pages/search.page';
 test.describe('Column Visibility', () => {
     let searchPage: SearchPage;
 
-    test.beforeEach(({ page }) => {
+    test.beforeEach(({ pageWithFailOnConsole: page }) => {
         searchPage = new SearchPage(page);
     });
 
     test('should show possibly-visible columns and hide always-hidden ones in the customization modal', async ({
-        page,
+        pageWithFailOnConsole: page,
     }) => {
         await searchPage.navigateToVirus('Test Dummy Organism');
         await page.getByText('Customize columns').click();

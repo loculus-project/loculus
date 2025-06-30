@@ -24,11 +24,11 @@ export const test = base.extend<TestFixtures>({
     },
 
     pageWithACreatedUser: [
-        async ({ page, testAccount }, use) => {
-            const authPage = new AuthPage(page);
+        async ({ pageWithFailOnConsole, testAccount }, use) => {
+            const authPage = new AuthPage(pageWithFailOnConsole);
             await authPage.createAccount(testAccount);
             try {
-                await use(page);
+                await use(pageWithFailOnConsole);
             } finally {
                 await authPage.logout();
             }
