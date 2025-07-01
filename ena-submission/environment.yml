@@ -2,6 +2,7 @@ name: loculus-ena-submission
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   # Core Python dependencies
   - python =3.12
