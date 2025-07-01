@@ -19,3 +19,6 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
+  - types-pytz
+  - types-psycopg2
+  - python-dotenv
