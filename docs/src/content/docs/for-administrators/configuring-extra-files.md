@@ -7,6 +7,28 @@ You can configure Loculus to support the submission of extra files for sequences
 
 To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
+## Conceptional overview
+
+How does file sharing work under the hood?
+
+Files are not inherently coupled to any particular sequence, and differ to fasta and metadata files in that.
+
+Files are uploaded first, and then associated to a sequence entry. 
+At the time of uploading, only an owning group needs to be specified.
+
+Because of this, the same file can also be attached to multiple sequence entries.
+
+The files will not be publicly accessible, until an associated sequence entry is released.
+
+The files are stored in S3.
+S3 already has a public/private mechanism, which is leveraged by loculus.
+Loculus tags files with `public=true` if they should be public, and the S3 is configured with a policy to make files with this tag publicly accessible.
+
+The preprocessing pipeline gets access to the files before they are released, and the pipeline can also upload its own new files.
+It can also generate files without user input.
+
+Files that are part of the submission input are configured separately from files that are part of the output.
+
 ## Configuring an S3 bucket
 
 You should operate an S3 bucket, and have the credentials at hand.
