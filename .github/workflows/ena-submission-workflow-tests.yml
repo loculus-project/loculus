@@ -67,7 +67,6 @@ jobs:
             environment-file: ena-submission/environment.yml
             micromamba-version: 'latest'
             cache-environment: true
-            cache-environment-key: micromamba-${{ hashFiles('ena-submission/environment.yml') }}
       - name: Run tests
         run: |
             pip install .
