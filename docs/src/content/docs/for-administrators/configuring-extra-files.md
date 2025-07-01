@@ -75,6 +75,8 @@ For this to work, you need to configure a bucket policy like this:
 }
 ```
 
+Consult the documentation of your particular S3 provider on how to configure bucket policies.
+
 ## Configuring file submission
 
 Users can submit files along with sequence metadata and sequences (or also instead of sequences).
