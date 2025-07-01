@@ -1697,7 +1697,7 @@ defaultOrganisms:
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - genotype
         metadata_filter:
-          genotype: CV-A16
+          genotype: EV-A71
     enaDeposition:
       configFile:
         taxon_id: 39054
@@ -1794,7 +1794,7 @@ defaultOrganisms:
         minimizer_parser: # Name of each '_' - separated entry in the minimizer index
           - genotype
         metadata_filter:
-          genotype: CV-A16
+          genotype: EV-D68
     enaDeposition:
       configFile:
         taxon_id: 42789
@@ -1804,7 +1804,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evd68/reference.fasta]]"
-          insdcAccessionFull: U05876.1
+          insdcAccessionFull: AY426531.1
       genes:
         - name: "VP4"
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evd68/VP4.fasta]]"
