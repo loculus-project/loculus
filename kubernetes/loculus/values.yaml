@@ -1474,9 +1474,6 @@ defaultOrganisms:
           noInput: true
           header: "Genotype"
           ingest: segment
-          hideOnSequenceDetailsPage: true
-          hideInSearchResultsTable: true
-          notSearchable: true
       website:
         <<: *website
         tableColumns:
