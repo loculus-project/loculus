@@ -1469,9 +1469,10 @@ defaultOrganisms:
             inputs: {input: nextclade.clade}
           columnWidth: 80
           order: 5
-        - name: segment
+        - name: genotype
           displayName: Genotype
           header: "Genotype"
+          noInput: true
           ingest: segment
       website:
         <<: *website
