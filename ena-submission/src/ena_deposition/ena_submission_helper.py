@@ -61,6 +61,8 @@ def get_ena_config(
     ena_submission_url_default: str,
     ena_reports_service_url_default: str,
 ) -> ENAConfig:
+    import dotenv
+    dotenv.load_dotenv()
     ena_submission_username = os.getenv("ENA_USERNAME")
     if not ena_submission_username:
         ena_submission_username = ena_submission_username_default
@@ -187,16 +189,18 @@ def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationRe
     > {output}
     """
     errors = []
-    warnings = []
+    warnings: list[str] = []
 
     try:
         xml = get_project_xml(project_set)
+        logger.debug(f"Posting Project creation XML to ENA with alias {project_set.project[0].alias}")
+        # Actual HTTP request to ENA happens here
         response = post_webin(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -259,7 +263,7 @@ def create_ena_sample(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
