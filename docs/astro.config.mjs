@@ -71,6 +71,7 @@ export default defineConfig({
                                 'for-administrators/build-new-preprocessing-pipeline',
                             ],
                         },
+                        { label: 'Configuring extra files', link: '/for-administrators/configuring-extra-files/' },
                         { label: 'Data use terms', link: '/for-administrators/data-use-terms/' },
                         { label: 'User administration', link: '/for-administrators/user-administration/' },
                     ],

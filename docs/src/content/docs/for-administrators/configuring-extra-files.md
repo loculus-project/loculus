@@ -2,8 +2,10 @@
 title: Configuring extra file submission
 ---
 
-Loculus supports the handling of arbitrary files.
+Loculus supports the handling of arbitrary files associated with sequence entries.
 You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical usecase would be for raw reads. The files are stored in S3.
+
+To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
 ## Configuring an S3 bucket
 
@@ -19,16 +21,21 @@ s3:
     bucket: loculus-preview-private
 ```
 
-Configure the credentials:
+Configure the credentials using [sealed secrets](https://github.com/bitnami-labs/sealed-secrets):
 
 ```yaml
 secrets:
   s3-bucket:
-    type: raw
-    data:
-      accessKey: 'yourAccessKeyHere'
-      secretKey: 'yourSecretKeyHere'
+    type: sealedsecret
+    clusterWide: 'true'
+    encryptedData:
+      accessKey: AgCm73j1g21Dn....
+      secretKey: AgAS8a/ldl....
 ```
+
+:::note
+You can also use the `raw` secret type, but be aware that keeping credentials in plain text in your configuration file can be a security hazard.
+:::
 
 The backend makes files in the bucket public, by tagging them with `public=true`.
 For this to work, you need to configure a bucket policy like this:
