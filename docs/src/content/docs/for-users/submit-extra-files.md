@@ -23,6 +23,11 @@ To submit files via the API, it's a two step process.
 1. Upload the files, and receive file IDs for them.
 2. Attach the file IDs during submission.
 
+:::note
+You can submit the same file ID (and thus the same file) with multiple submission IDs or sequences.
+You do not need to upload it multiple times.
+:::
+
 ### Uploading the files
 
 To upload files, call the `/files/request-upload` endpoint.
