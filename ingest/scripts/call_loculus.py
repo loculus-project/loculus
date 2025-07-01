@@ -468,7 +468,7 @@ def get_submitted(config: Config, output: str):
             raise ValueError from err
 
         if len(entries) == expected_record_count:
-            f"Got {len(entries)} records as expected"
+            logger.info(f"Got {len(entries)} records as expected")
             break
         logger.error(
             f"Got incomplete original metadata stream: expected {len(entries)}"
