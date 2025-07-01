@@ -25,15 +25,15 @@ Backend -left-> Keycloak : authenticate
 Website -down-> Backend : upload\nsequence data
 Backend --> Preprocessing : fetch new\nsequence entries
 Backend <-- Preprocessing : submit enriched\nsequence entries
-Backend <-down-> Postgres : persist\nsequence entries
-Ingest -left-> Backend : new Genbank sequences
+Backend <--> Postgres : persist\nsequence entries
+Ingest --> Backend : new Genbank\nsequences
 
 Backend -up-> SILO: provide\nsequence entries
 LAPIS -left-> Website : sequence query\nresults
 LAPIS <-right- SILO : sequence query\nresults
 
-Website -> S3: upload extra files
-Backend --> S3: set files to public
-S3 --> Preprocessing: provide user submitted files
+Website -> S3: upload\nextra files
+Backend --> S3: set files\nto public
+S3 -right-> Preprocessing: provide user submitted files
 
 @enduml
