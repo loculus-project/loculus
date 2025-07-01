@@ -76,10 +76,10 @@ my-organism:
       files:
         enabled: true # enable the feature
         categories:
-          - name: raw_reads # configure a submission category
+          - name: rawReads # configure a submission category
 ```
 
-The example above configures the `raw_reads` file category.
+The example above configures the `rawReads` file category.
 
 If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
 
@@ -94,9 +94,9 @@ To configure:
 my-organism:
   schema:
     files:
-      - name: raw_reads
+      - name: rawReads
 ```
 
 :::note
-The name (`raw_reads` in the example above) needs to not be a name that is also used by a metadata field!
+The name (`rawReads` in the example above) needs to not be a name that is also used by a metadata field!
 :::

@@ -16,8 +16,6 @@ If files are uploaded successfully, there will be a green checkmark:
 
 For bulk submission, you need to upload a folder with one subfolder per submission ID.
 
-The nextclade pipeline will not change the filenames, so the file names of the files will become the identifiers for the files later on.
-
 ## API
 
 To submit files via the API, it's a two step process.

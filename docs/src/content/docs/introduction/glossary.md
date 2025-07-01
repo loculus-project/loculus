@@ -19,6 +19,10 @@ The "Loculus backend" is the central server service of Loculus and responsible f
 
 A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
 
+### File category
+
+### File ID
+
 ### Insertion
 
 An insertion is a type of [mutation](#mutation) where one or more nucleotides or amino acids are present in a sample sequence but not in a reference sequence. The notation for an insertion in the case of a single-segmented nucleotide sequence is `ins_<position>:<inserted bases>` (e.g., ins_100:AAT). An insertion in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence further contains `<segment/gene name>:` in front of the position (e.g., ins_E:100:AAT).
@@ -74,6 +78,10 @@ A revision adds an updated version of a [sequence entry](#sequence-entry).
 ### Revocation
 
 A revocation adds a new version that declares a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still publicly available but are highlighted as revoked.
+
+### S3 (Simple Storage Service)
+
+S3 is an object storage service. Loculus uses it for the file sharing feature.
 
 ### Schema
 
