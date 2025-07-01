@@ -1512,17 +1512,17 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           ingest: segment
+          initiallyVisible: true
       website:
         <<: *website
         tableColumns:
           - sampleCollectionDate
           - geoLocCountry
-          - geoLocAdmin1
           - authors
           - authorAffiliations
           - ncbiReleaseDate
           - hostNameScientific
-          - clade
+          - genotype
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
