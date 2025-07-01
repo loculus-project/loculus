@@ -170,12 +170,22 @@ micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ena-submission
 ```
 
-### Using ENA's webin-cli
+### Pip installing the ena_deposition package
 
-In order to submit assemblies you will also need to install ENA's `webin-cli.jar`. Their [webpage](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html) offers more instructions. This pipeline has been tested with `WEBIN_CLI_VERSION=7.3.1`.
+Before running the ena_deposition package you need to install it. This can be done by running:
 
 ```sh
-wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
+pip install -e .
+```
+
+### Downloading ENA's webin-cli
+
+In order to submit assemblies you will also need to install ENA's `webin-cli.jar`. Their [webpage](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html) offers more instructions. The current version of the webin-cli is stored in the `.webinrc` file in this repository. You can download it using the following command:
+
+```sh
+WEBIN_CLI_VERSION=$(cat .webinrc)
+mkdir -p package
+wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O package/webin-cli.jar
 ```
 
 ## Testing
@@ -186,16 +196,22 @@ wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_
 
 ### Run tests
 
+#### Unit tests
+
 ```sh
 micromamba activate loculus-ena-submission
 python3 scripts/test_ena_submission.py
 ```
 
+#### Dry run
+
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same config.yaml that will be used in production (use deploy.py to generate this). Also note that the generator can only produce output for one submission at a time.
 
-```
+```sh
 python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
+
+#### Integration tests
 
 You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`. 
 
@@ -205,8 +221,7 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 python3 scripts/test_ena_submission_integration.py
 ```
 
-The tests perform the same tests as described in the section on testing submission locally below. 
-
+The tests perform the same tests as described in the section on testing submission locally below.
 
 ### Testing submission locally
 
