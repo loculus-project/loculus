@@ -1,15 +1,18 @@
 @startuml
 
 component "Loculus Website" as Website
-component "Ingest Pipeline" as Ingest
-component "Loculus Backend" as Backend
+
+together {
+    component "Loculus Backend" as Backend
+    component Keycloak
+}
 
 component "Postgres DB" as Postgres
 component S3
 
 component "Preprocessing Pipeline" as Preprocessing
+component "Ingest Pipeline" as Ingest
 
-component Keycloak
 
 frame SILO-LAPIS {
     component SILO
@@ -17,20 +20,20 @@ frame SILO-LAPIS {
 }
 
 Website --> Keycloak : authenticate
-Backend -right-> Keycloak : authenticate
+Backend -left-> Keycloak : authenticate
 
-Website -down-> Backend : upload sequence data
-Backend <-down-> Postgres : persist sequence entries
-Backend --> Preprocessing : fetch new sequence entries
-Backend <-- Preprocessing : submit enriched sequence entries
-Ingest -down-> Backend : new Genbank sequences
+Website -down-> Backend : upload\nsequence data
+Backend --> Preprocessing : fetch new\nsequence entries
+Backend <-- Preprocessing : submit enriched\nsequence entries
+Backend <-down-> Postgres : persist\nsequence entries
+Ingest --> Backend : new Genbank sequences
 
-SILO <-- Backend : provide sequence entries
-LAPIS -up-> Website : sequence query results
-LAPIS <-down- SILO : sequence query results
+Backend -right-> SILO: provide sequence entries
+LAPIS --> Website : sequence query\nresults
+LAPIS <-down- SILO : sequence query\nresults
 
 Website -> S3: upload extra files
-Backend -down-> S3: Set files to public
-S3 -down-> Preprocessing: Provide user submitted files
+Backend --> S3: set files to public
+S3 -down-> Preprocessing: provide user submitted files
 
 @enduml

@@ -17,6 +17,7 @@ Loculus has a modular architecture and consists of several sub-services:
 - **Preprocessing pipeline(s):** A preprocessing pipeline fetches [unprocessed/user-submitted data](../glossary#unprocessed-data) from the backend server, processes them (which usually includes cleaning, alignment and adding annotations), and sends [processed data](../glossary#processed-data) back to the backend server. The pipeline contains [organism](../glossary#organism)-specific logic, thus, there is a separate pipeline for each organism. We maintain a customizable preprocessing pipeline that uses [Nextclade](https://github.com/nextstrain/nextclade) for alignment, quality checks and annotations but it is easy to write a new one by following the [preprocessing pipeline specifications](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md).
 - **S3:** When using the file sharing feature, Loculus uses S3 to store and serve submitted files.
 
+<!-- The diagram is taken from /backend/docs/plantuml where it can be regenerated -->
 ![Architecture overview](./architectureOverview.svg)
 
 ## Motivation
