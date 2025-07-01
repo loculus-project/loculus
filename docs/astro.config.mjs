@@ -48,6 +48,7 @@ export default defineConfig({
                         { label: 'Edit account', link: '/for-users/edit-account/' },
                         { label: 'Create and manage groups', link: '/for-users/create-manage-groups/' },
                         { label: 'Submit sequences', link: '/for-users/submit-sequences/' },
+                        { label: 'Submit extra files', link: '/for-users/submit-extra-files/' },
                         { label: 'Revise sequences', link: '/for-users/revise-sequences/' },
                         { label: 'Revoke sequences', link: '/for-users/revoke-sequences/' },
                         { label: 'Approve submissions', link: '/for-users/approve-submissions/' },

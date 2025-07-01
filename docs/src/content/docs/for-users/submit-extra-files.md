@@ -1,13 +1,22 @@
 ---
-title: How to use the file sharing feature
+title: Submitting extra files alongside your sequences
 ---
 
-If the administrator has enabled the file sharing feature for an organism, you can upload files.
-
+If the administrator has enabled the file sharing feature for an organism, you can upload files for preconfigured categories of files.
 
 ## Website
 
 On the website submission form, there is an input field to upload files into.
+
+![The extra files component](../../../assets/ExtraFilesComponent.png)
+
+If files are uploaded successfully, there will be a green checkmark:
+
+![The extra files component](../../../assets/ExtraFilesUploaded.png)
+
+For bulk submission, you need to upload a folder with one subfolder per submission ID.
+
+The nextclade pipeline will not change the filenames, so the file names of the files will become the identifiers for the files later on.
 
 ## API
 
@@ -53,3 +62,20 @@ curl -X PUT \
 
 ### Attach file IDs to submission
 
+Now, you can follow the regular steps for [sequence submission](./submit-sequences), calling the `/<organism>/submit` endpoint.
+But you add another parameter to the curl call:
+
+```bash
+  -F 'fileMapping=<mapping JSON>'
+```
+
+And the `mapping JSON` has this structure:
+
+```json
+{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}
+```
+
+- The `submissionID` links the file mapping to the sequence.
+- The `fileCategory` needs to be a predefined category which is organism specific.
+- The `fileId` is the ID received in the previous step, which identifies the actual file.
+- The `fileName` can be chosen freely, but depending on configurtion it might become an identifier for the file later on.
