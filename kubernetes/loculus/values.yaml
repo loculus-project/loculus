@@ -1451,13 +1451,13 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/cva16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
+          url: "https://clades.nextstrain.org/?dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/cva16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/cva10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
+          url: "https://clades.nextstrain.org/?dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/cva10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/eva71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
+          url: "https://clades.nextstrain.org/?dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/eva71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/evd68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/evs/data_output"
+          url: "https://clades.nextstrain.org/?dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/evd68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
       metadataAdd:
         - name: clade
           displayName: Clade
@@ -1489,10 +1489,6 @@ defaultOrganisms:
           - authorAffiliations
           - ncbiReleaseDate
           - hostNameScientific
-          - length_cva16
-          - length_cva10
-          - length_eva71
-          - length_evd68
           - clade
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
@@ -1508,14 +1504,14 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 12059
+        taxon_id: 138948 # All EVs = 12059
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
     enaDeposition:
       configFile:
-        taxon_id: 12059
+        taxon_id: 138948 # All EVs = 12059
         scientific_name: "Enterovirus"
         molecule_type: "genomic RNA"
     referenceGenomes:
