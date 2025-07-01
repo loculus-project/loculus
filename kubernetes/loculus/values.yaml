@@ -1504,7 +1504,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 138948 # EVs A (All EVs = 12059)
+        taxon_id: 12059 # EVs A (All EVs = 12059)
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
@@ -1515,7 +1515,7 @@ defaultOrganisms:
         #  nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
     enaDeposition:
       configFile:
-        taxon_id: 138948 # All EVs = 12059
+        taxon_id: 12059 # All EVs A = 138948
         scientific_name: "Enterovirus"
         molecule_type: "genomic RNA"
     referenceGenomes:
