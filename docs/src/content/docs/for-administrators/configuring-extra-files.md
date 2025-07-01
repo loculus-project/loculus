@@ -3,7 +3,7 @@ title: Configuring extra file submission
 ---
 
 Loculus supports the handling of arbitrary files associated with sequence entries.
-You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical usecase would be for raw reads. The files are stored in [S3](../introduction/glossary#s3-simple-storage-service).
+You can configure Loculus to support the submission of extra files for sequences, as well as providing extra files along with the sequence data and metadata for download. A typical usecase would be for raw reads. The files are stored in [S3](../../introduction/glossary#s3-simple-storage-service).
 
 To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
