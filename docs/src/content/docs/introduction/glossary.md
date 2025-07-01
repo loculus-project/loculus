@@ -21,12 +21,17 @@ A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid i
 
 ### File category
 
-File categories are categories of files submitted or created with the file sharing feature. Additional files can be attached to a sequence entry, and every file needs to be within a predefined category. A category can be for example `rawReads` for files of raw reads.
+File categories are categories of files submitted or created with the [file sharing feature](#file-sharing-feature). Additional files can be attached to a sequence entry, and every file needs to be within a predefined category. A category can be for example `rawReads` for files of raw reads.
 
 ### File ID
 
-As part of the file sharing feature, every file that is submitted gets an ID, which is the file ID.
+As part of the [file sharing feature](#file-sharing-feature), every file that is submitted gets an ID, which is the file ID.
 It uniquely identifies this file and can be used to attach the file to a sequence entry.
+This does not apply to sequence and metadata files supplied as part of the bulk submission.
+
+### File sharing feature
+
+The file sharing feature can be enabled for an [organism](#organism). If it is enabled, users can submit files into preconfigured [file categories](#file-category), per sequence. The files are then associated to this sequence and can be downloaded later on in the sequence detail view.
 
 ### Insertion
 
@@ -86,7 +91,7 @@ A revocation adds a new version that declares a [sequence entry](#sequence-entry
 
 ### S3 (Simple Storage Service)
 
-S3 refers to a class of object storage services, the most popular implementation being the AWS S3. Loculus uses it for the file sharing feature.
+S3 refers to a class of object storage services, the most popular implementation being the AWS S3. Loculus uses it for the [file sharing feature](#file-sharing-feature).
 
 ### Schema
 
