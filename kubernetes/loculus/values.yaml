@@ -1203,8 +1203,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         - "prepro"
       replicas: 2
       configFile: &preprocessingConfigFile
-        scientific_name: "Sudan ebolavirus"
-        molecule_type: "genomic RNA"
         log_level: DEBUG
         genes: []
         batch_size: 100
@@ -1311,8 +1309,6 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
-          scientific_name: "West Nile virus"
-          molecule_type: "genomic RNA"
           nextclade_dataset_name: nextstrain/wnv/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
@@ -1633,8 +1629,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          scientific_name: "Orthonairovirus haemorrhagiae"
-          molecule_type: "genomic RNA"
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/cchfv/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
