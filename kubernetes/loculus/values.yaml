@@ -1447,7 +1447,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Coxsackievirus A16"
-      image: "/images/organisms/enterovirusA.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
           displayName: Subgenotype
@@ -1544,7 +1544,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Coxsackievirus A10"
-      image: "/images/organisms/enterovirusA.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: subgenotype
           displayName: Subgenotype
@@ -1641,7 +1641,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Enterovirus A71"
-      image: "/images/organisms/enterovirusA.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: clade
           displayName: Clade
@@ -1738,7 +1738,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Enterovirus D68"
-      image: "/images/organisms/enterovirusD.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
+      image: "/images/organisms/enterovirus.jpg" ### TODO: find image and save it in "/images/organisms/XXX.jpg"! 
       metadataAdd:
         - name: clade
           displayName: Clade
