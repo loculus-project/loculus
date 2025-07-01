@@ -18,6 +18,7 @@ Loculus has a modular architecture and consists of several sub-services:
 - **S3:** [S3](../glossary#s3-simple-storage-service) is a file storage service which is used by Loculus to store and serve files for the [file sharing feature](../glossary#file-sharing-feature). Users upload files directly to S3 and files are also served with links directly to S3.
 
 <!-- The diagram is taken from /backend/docs/plantuml where it can be regenerated -->
+
 ![Architecture overview](./architectureOverview.svg)
 
 ## Motivation

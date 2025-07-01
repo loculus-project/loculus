@@ -13,7 +13,7 @@ How does file sharing work under the hood?
 
 Files are not inherently coupled to any particular sequence, and differ to fasta and metadata files in that.
 
-Files are uploaded first, and then associated to a sequence entry. 
+Files are uploaded first, and then associated to a sequence entry.
 At the time of uploading, only an owning group needs to be specified.
 
 Because of this, the same file can also be attached to multiple sequence entries.
