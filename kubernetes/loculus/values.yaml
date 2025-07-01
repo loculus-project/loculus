@@ -1709,7 +1709,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/eva71/reference.fasta]]"
-          insdcAccessionFull: U05876.1
+          insdcAccessionFull: U22521.1
       genes:
         - name: "VP4"
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/eva71/VP4.fasta]]"
