@@ -21,11 +21,11 @@ A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid i
 
 ### File category
 
-File categories are categories of files submitted or created with the file sharing feature. Additional files can be attached to a sequence entry, and every file needs to be within a predefined category.
+File categories are categories of files submitted or created with the file sharing feature. Additional files can be attached to a sequence entry, and every file needs to be within a predefined category. A category can be for example `rawReads` for files of raw reads.
 
 ### File ID
 
-As part of the file sharing feature, every file that is submitted gets and ID, which is the file ID.
+As part of the file sharing feature, every file that is submitted gets an ID, which is the file ID.
 It uniquely identifies this file and can be used to attach the file to a sequence entry.
 
 ### Insertion
