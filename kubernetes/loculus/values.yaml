@@ -1447,7 +1447,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Enterovirus"
-      nucleotideSequences: [cva16, cva10, eva71, evd68]
+      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68]
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
@@ -1506,9 +1506,11 @@ defaultOrganisms:
         <<: *ingestConfigFile
         taxon_id: 138948 # All EVs = 12059
         segment_identification:
-          method: "align"
-          nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
+          method: "minimizer"
+          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+        #  method: "align"
+        #  nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
+        #  nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
     enaDeposition:
       configFile:
         taxon_id: 138948 # All EVs = 12059
@@ -1516,16 +1518,16 @@ defaultOrganisms:
         molecule_type: "genomic RNA"
     referenceGenomes:
       nucleotideSequences:
-        - name: cva16
+        - name: CV-A16
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva16/reference-cva16.fasta]]"
           insdcAccessionFull: U05876.1
-        - name: cva10
+        - name: CV-A10
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/cva10/reference-cva10.fasta]]"
           insdcAccessionFull: AY421767.1
-        - name: eva71
+        - name: EV-A71
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/eva71/reference-eva71.fasta]]"
           insdcAccessionFull: U22521.1
-        - name: evd68
+        - name: EV-D68
           sequence: "[[URL:https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/enterovirus/evd68/reference-evd68.fasta]]"
           insdcAccessionFull: AY426531.1
       genes:
