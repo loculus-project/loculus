@@ -2,7 +2,7 @@ name: ena-submission-workflow-tests
 on:
   pull_request:
     paths:
-      - "ena-submission/scripts/test_ena_submission_integration.py"
+      - "ena-submission/**"
       - ".github/workflows/ena-submission-workflow-tests.yml"
   push:
     branches:
