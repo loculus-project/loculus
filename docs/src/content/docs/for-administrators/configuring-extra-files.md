@@ -9,29 +9,18 @@ To enable this feature you need to configure an S3 bucket for Loculus to use, an
 
 ## Conceptional overview
 
-How does file sharing work under the hood?
+Extra files submitted alongside sequence and metadata are treated differently. Loculus uses S3 - a generic object storage service - to store these files. Files are uploaded directly to S3 using presigned URLs.
 
-Files are not inherently coupled to any particular sequence, and differ to fasta and metadata files in that.
+Unlike files that contain sequence data, the file sharing files are not inherently coupled to any particular sequence.
+Files are uploaded first, and then associated to a sequence entry, at the time of uploading, only an owning group needs to be specified. Because of this, the same file can also be attached to multiple sequence entries as well.
 
-Files are uploaded first, and then associated to a sequence entry.
-At the time of uploading, only an owning group needs to be specified.
+The files will not be publicly accessible, until an associated sequence entry is released. Loculus uses the file access mechanisms built into S3: Loculus tags files with `public=true` if they should be public, and the S3 is configured with a policy to make files with this tag publicly accessible (this configuration needs to be applied by the S3 administrator).
 
-Because of this, the same file can also be attached to multiple sequence entries.
-
-The files will not be publicly accessible, until an associated sequence entry is released.
-
-The files are stored in S3.
-S3 already has a public/private mechanism, which is leveraged by loculus.
-Loculus tags files with `public=true` if they should be public, and the S3 is configured with a policy to make files with this tag publicly accessible.
-
-The preprocessing pipeline gets access to the files before they are released, and the pipeline can also upload its own new files.
-It can also generate files without user input.
-
-Files that are part of the submission input are configured separately from files that are part of the output.
+When configuring this feature for an organism, you can configure file categories for which users can submit files, as well as file "output" categories, which will then be visible alongside other sequence data and metadata in the sequence detail view. You can also configure only submit files (which can then be used by the preprocessing pipeline in some way) or only "output" files, which the preprocessing pipeline can generate on its own. The preprocessing pipeline gets access to submitted files before they are released, and the pipeline can also upload its own new files.
 
 ## Configuring an S3 bucket
 
-You should operate an S3 bucket, and have the credentials at hand.
+You neeed admin access to an S3 bucket, and have the credentials at hand.
 
 Enable S3 and configure the location of the bucket:
 
