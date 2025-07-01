@@ -62,7 +62,7 @@ class Config:
 
 
 # id is actually NCBI accession
-INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "id"}
+INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"id"}
 
 
 @click.command()
