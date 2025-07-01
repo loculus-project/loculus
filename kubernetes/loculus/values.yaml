@@ -1506,6 +1506,8 @@ defaultOrganisms:
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_parser:
+            - genotype
         #  method: "align"
         #  nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
         #  nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
