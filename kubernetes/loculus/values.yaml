@@ -1471,7 +1471,6 @@ defaultOrganisms:
           order: 5
         - name: segment
           displayName: Genotype
-          noInput: true
           header: "Genotype"
           ingest: segment
       website:
