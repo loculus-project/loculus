@@ -26,14 +26,14 @@ Website -down-> Backend : upload\nsequence data
 Backend --> Preprocessing : fetch new\nsequence entries
 Backend <-- Preprocessing : submit enriched\nsequence entries
 Backend <-down-> Postgres : persist\nsequence entries
-Ingest --> Backend : new Genbank sequences
+Ingest -left-> Backend : new Genbank sequences
 
-Backend -right-> SILO: provide sequence entries
-LAPIS --> Website : sequence query\nresults
-LAPIS <-down- SILO : sequence query\nresults
+Backend -up-> SILO: provide\nsequence entries
+LAPIS -left-> Website : sequence query\nresults
+LAPIS <-right- SILO : sequence query\nresults
 
 Website -> S3: upload extra files
 Backend --> S3: set files to public
-S3 -down-> Preprocessing: provide user submitted files
+S3 --> Preprocessing: provide user submitted files
 
 @enduml
