@@ -86,7 +86,7 @@ A revocation adds a new version that declares a [sequence entry](#sequence-entry
 
 ### S3 (Simple Storage Service)
 
-S3 is an object storage service. Loculus uses it for the file sharing feature.
+S3 refers to a class of object storage services, the most popular implementation being the AWS S3. Loculus uses it for the file sharing feature.
 
 ### Schema
 
