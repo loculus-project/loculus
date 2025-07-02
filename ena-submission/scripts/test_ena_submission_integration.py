@@ -64,6 +64,26 @@ INPUT_FILE = "./test/approved_ena_submission_list_test.json"
 logger = logging.getLogger(__name__)
 
 
+def assert_biosample_accession(
+    rows: list[dict[str, Any]], biosample_accession: str, full_accession: str
+) -> None:
+    assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
+    if biosample_accession:
+        assert rows[0]["result"].get("biosample_accession") == biosample_accession, (
+            "Incorrect biosample accession in sample table."
+        )
+
+
+def assert_bioproject_accession(
+    rows: list[dict[str, Any]], bioproject_accession: str, group_id: str, full_accession: str
+) -> None:
+    assert len(rows) == 1, f"Project {group_id} for {full_accession} not found in project table."
+    if bioproject_accession:
+        assert rows[0]["result"].get("bioproject_accession") == bioproject_accession, (
+            "Incorrect bioproject accession in project table."
+        )
+
+
 def delete_all_records(db_config: SimpleConnectionPool) -> None:
     logger.debug("Deleting all records from all deposition tables except flyway")
     for table_name in [
@@ -130,12 +150,7 @@ def check_sample_submission_submitted(
             TableName.SAMPLE_TABLE,
             conditions={"accession": accession, "version": version, "status": "SUBMITTED"},
         )
-        assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
-        biosample = data["metadata"]["biosampleAccession"]
-        if biosample:
-            assert (
-                len([row["result"].get("biosample_accession") == biosample for row in rows]) == 1
-            ), "Incorrect biosample accession in sample table."
+        assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
         assert in_submission_table(
             db_config,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_SAMPLE},
@@ -152,12 +167,7 @@ def check_sample_submission_has_errors(
             TableName.SAMPLE_TABLE,
             conditions={"accession": accession, "version": version, "status": "HAS_ERRORS"},
         )
-        assert len(rows) == 1, f"Sample for {full_accession} not found in sample table."
-        biosample = data["metadata"]["biosampleAccession"]
-        if biosample:
-            assert (
-                len([row["result"].get("ena_sample_accession") == biosample for row in rows]) == 1
-            ), "Incorrect biosample accession in sample table."
+        assert_biosample_accession(rows, data["metadata"]["biosampleAccession"], full_accession)
 
 
 def check_assembly_submission_waiting(
@@ -249,14 +259,9 @@ def check_project_submission_submitted(
             TableName.PROJECT_TABLE,
             conditions={"group_id": group_id, "organism": organism, "status": "SUBMITTED"},
         )
-        assert len(rows) == 1, (
-            f"Project {group_id} for {full_accession} not found in project table."
+        assert_bioproject_accession(
+            rows, data["metadata"]["bioprojectAccession"], group_id, full_accession
         )
-        bioproject = data["metadata"]["bioprojectAccession"]
-        if bioproject:
-            assert (
-                len([row["result"].get("bioproject_accession") == bioproject for row in rows]) == 1
-            ), "Incorrect bioproject accession in project table."
         assert in_submission_table(
             db_config,
             {"accession": accession, "version": version, "status_all": StatusAll.SUBMITTED_PROJECT},
@@ -274,14 +279,9 @@ def check_project_submission_has_errors(
             TableName.PROJECT_TABLE,
             conditions={"group_id": group_id, "organism": organism, "status": "HAS_ERRORS"},
         )
-        assert len(rows) == 1, (
-            f"Project {group_id} for {full_accession} not found in project table."
+        assert_bioproject_accession(
+            rows, data["metadata"]["bioprojectAccession"], group_id, full_accession
         )
-        bioproject = data["metadata"]["bioprojectAccession"]
-        if bioproject:
-            assert (
-                len([row["result"].get("bioproject_accession") == bioproject for row in rows]) == 1
-            ), "Incorrect bioproject accession in project table."
 
 
 def set_db_to_known_erz_accession(
