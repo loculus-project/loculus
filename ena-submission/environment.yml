@@ -27,6 +27,7 @@ dependencies:
   - types-psycopg2
   - types-requests
   - types-PyYAML
+  - pydantic
   - python-dotenv
   - pytest
   - pip:

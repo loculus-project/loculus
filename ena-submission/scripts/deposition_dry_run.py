@@ -133,7 +133,7 @@ def local_ena_submission_generator(
             sample_xml["SAMPLE"], encoding="utf-8"
         )
         logger.info(
-            "You can submi the sample to ENA using the command: \n"
+            "You can submit the sample to ENA using the command: \n"
             "curl -X POST $ena_submission_url "
             "-u '$ena_submission_username:$ena_submission_password' "
             "-F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"

@@ -185,7 +185,6 @@ class SampleCreationTests(unittest.TestCase):
         self.assertEqual(response.result, desired_response)
 
     def test_sample_set_construction(self):
-        self.maxDiff = None
         config = mock_config()
         sample_set = construct_sample_set_object(
             config,
