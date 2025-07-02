@@ -261,7 +261,10 @@ def create_ena_sample(
             msg = f"XML response not as expected, response: {response.text}"
             raise ValueError(msg)
     except Exception:
-        error_message = f"Response is in unexpected format. Request: {response.request}, Response: {response.text}"
+        error_message = (
+            f"Response is in unexpected format. Request: {response.request}, "
+            f"Response: {response.text}"
+        )
         logger.warning(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
@@ -574,8 +577,9 @@ def create_ena_assembly(
 ) -> CreationResult:
     """
     This is equivalent to running:
-    ena-webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
-        -context genome -manifest {manifest_file} -submit
+    ena-webin-cli -username {params.ena_submission_username} \\
+        -password {params.ena_submission_password} -context genome \\
+        -manifest {manifest_file} -submit
     test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
     errors: list[str] = []
@@ -630,9 +634,10 @@ def get_ena_analysis_process(
     Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
     Weird name "process" instead of "processing_result" is to match the ENA API.
     This is equivalent to running:
-    curl -X 'GET' \
-    '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
-    -H 'accept: */*' \
+    curl -X 'GET' \\
+    '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json\\
+&max-results=100' \\
+    -H 'accept: */*' \\
     -H 'Authorization: Basic USERNAME PASSWORD'
     """
     url: Final = (
@@ -746,9 +751,11 @@ def get_chromsome_accessions(
 
         if end_num - start_num != len(segment_order) - 1:
             logger.error(
-                f"Unexpected response format: chromosome does not have expected number of segments. "
-                f"Expected {len(segment_order)} segments, got {end_num - start_num + 1}. "
-                f"For insdc_accession_range: {insdc_accession_range} and segment_order: {segment_order}"
+                f"Unexpected response format: chromosome does not have expected number "
+                f"of segments. Expected {len(segment_order)} segments, "
+                f"got {end_num - start_num + 1}. "
+                f"For insdc_accession_range: {insdc_accession_range} and "
+                f"segment_order: {segment_order}"
             )
             msg = "Unexpected number of segments"
             raise ValueError(msg)
