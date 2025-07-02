@@ -1,6 +1,14 @@
-# WARNING: This script tests the full ENA submission pipeline - it sends sequences to ENA dev - when editing always ensure `test=true`.
-# docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
-# flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
+"""
+WARNING: This script tests the full ENA submission pipeline:
+    - it sends sequences to ENA dev
+    - when editing always ensure `test=true`.
+docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure \
+    -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
+flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema \
+    -user=postgres -password=unsecure -locations=filesystem:./flyway/sql migrate
+"""
+
+# ruff: noqa: S101 (allow asserts in tests))
 import json
 import logging
 import unittest
@@ -348,7 +356,10 @@ def _test_assembly_submission_errored(
     check_assembly_submission_has_errors(db_config, sequences_to_upload)
 
     assembly_table_handle_errors(db_config, config, slack_config, time_threshold=0)
-    msg = f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in status HAS_ERRORS or SUBMITTING for over 0m"
+    msg = (
+        f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in "
+        "status HAS_ERRORS or SUBMITTING for over 0m"
+    )
     mock_notify.assert_called_once_with(slack_config, msg)
 
 
@@ -519,7 +530,10 @@ class IncorrectBioprojectPassed(SubmissionTests):
         project_table_handle_errors(
             self.db_config, self.config, self.slack_config, time_threshold=0
         )
-        msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table in status HAS_ERRORS or SUBMITTING for over 0m"
+        msg = (
+            f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table "
+            "in status HAS_ERRORS or SUBMITTING for over 0m"
+        )
         mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
@@ -581,7 +595,10 @@ class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
         create_sample_submission_table_start(self.db_config, config=self.config)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
         sample_table_handle_errors(self.db_config, self.config, self.slack_config, time_threshold=0)
-        msg = f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table in status HAS_ERRORS or SUBMITTING for over 0m"
+        msg = (
+            f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "
+            "in status HAS_ERRORS or SUBMITTING for over 0m"
+        )
         mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
