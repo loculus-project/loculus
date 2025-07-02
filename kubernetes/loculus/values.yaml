@@ -50,7 +50,7 @@ lineageSystemDefinitions:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
   alternativeLineage:
-    4: https://raw.githubusercontent.com/loculus-project/loculus/97fcd5b4ae8280f5b966e47a7bf8ae94a7ca9c19/preprocessing/dummy/lineage-alternative.yaml
+    4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
