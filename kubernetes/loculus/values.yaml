@@ -1457,33 +1457,72 @@ defaultOrganisms:
         - name: "Nextclade (EV-D68)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
       metadataAdd:
-        - name: clade
-          displayName: Clade
-          noInput: true
+        - name: clade_cv_a16
+          displayName: Clade CV-A16
           header: "Clade"
+          noInput: true
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
           includeInDownloadsByDefault: true
           preprocessing:
+            args: 
+              segment: CV-A16
             inputs: {input: nextclade.clade}
-          columnWidth: 80
-          order: 5
-        - name: segment
+        - name: clade_cv_a10
+          displayName: Clade CV-A10
+          header: "Clade"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            args: 
+              segment: CV-A10
+            inputs: {input: nextclade.clade}
+        - name: clade_ev_a71
+          displayName: Clade EV-A71
+          header: "Clade"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            args: 
+              segment: EV-A71
+            inputs: {input: nextclade.clade}
+        - name: clade_ev_d68
+          displayName: Clade EV-D68
+          header: "Clade"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            args: 
+              segment: EV-D68
+            inputs: {input: nextclade.clade}
+        - name: genotype
           displayName: Genotype
           header: "Genotype"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
           ingest: segment
+          initiallyVisible: true
       website:
         <<: *website
         tableColumns:
           - sampleCollectionDate
           - geoLocCountry
-          - geoLocAdmin1
           - authors
           - authorAffiliations
           - ncbiReleaseDate
           - hostNameScientific
-          - clade
+          - genotype
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
