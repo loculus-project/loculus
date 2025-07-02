@@ -1,13 +1,12 @@
 import { expect } from '@playwright/test';
 import { test } from '../../../fixtures/group.fixture';
-import { ReviewPage } from '../../../pages/review.page';
 import { SearchPage } from '../../../pages/search.page';
 import { BulkSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
 const SEQUENCE = 'ATTGATCTCATCATTT';
 
-test.only('Override hidden fields', async ({ page, pageWithGroup }) => {
+test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
     test.setTimeout(95_000);
     const uuid = uuidv4();
 
@@ -49,6 +48,15 @@ test.only('Override hidden fields', async ({ page, pageWithGroup }) => {
     await search.testOrganismWithoutAlignment();
 
     await search.select('Host', uuid);
-
-    await page.waitForTimeout(60000);  // for now
+    await page.getByRole('checkbox', { name: 'include sublineages' }).check();
+    await page.getByRole('textbox', { name: 'Lineage' }).click();
+    // check diamon structure of A is correct
+    await expect(page.getByRole('option', { name: 'A (3)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.1 (2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.2 (2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'A.1.1 (1)' })).toBeVisible();
+    // check alias with B/C works correctly
+    await expect(page.getByRole('option', { name: 'B.1 (3)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'B.1.1 (2)' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'C.1 (1)' })).toBeVisible();
 });
