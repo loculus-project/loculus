@@ -399,32 +399,28 @@ class SubmissionDatabaseService(
         }
     }
 
+    /**
+     * Returns all files associated with the given AccessionVersions.
+     * Note: Also returns files from 'future' preprocessing versions!
+     */
     private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
-        // TODO update function name
+        val preproData = SequenceEntriesPreprocessedDataTable
+        val sequenceEntries = SequenceEntriesView
         val result = mutableListOf<FileId>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
-            SequenceEntriesPreprocessedDataTable
+            preproData
                 .join(
-                    SequenceEntriesView,
+                    sequenceEntries,
                     JoinType.INNER,
                     additionalConstraint = {
-                        (
-                            SequenceEntriesPreprocessedDataTable.accessionColumn eq
-                                SequenceEntriesView.accessionColumn
-                            ) and
-                            (
-                                SequenceEntriesPreprocessedDataTable.versionColumn eq
-                                    SequenceEntriesView.versionColumn
-                                ) and
-                            (
-                                SequenceEntriesPreprocessedDataTable.pipelineVersionColumn greaterEq
-                                    SequenceEntriesView.pipelineVersionColumn
-                                )
+                        (preproData.accessionColumn eq sequenceEntries.accessionColumn) and
+                            (preproData.versionColumn eq sequenceEntries.versionColumn) and
+                            (preproData.pipelineVersionColumn greaterEq sequenceEntries.pipelineVersionColumn)
                     },
                 )
-                .select(SequenceEntriesPreprocessedDataTable.processedDataColumn)
+                .select(preproData.processedDataColumn)
                 .where {
-                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
+                    sequenceEntries.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .flatMap {
                     it[SequenceEntriesPreprocessedDataTable.processedDataColumn]?.files?.values.orEmpty()
