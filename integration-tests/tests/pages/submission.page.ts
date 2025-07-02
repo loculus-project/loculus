@@ -63,6 +63,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Author affiliations').fill(authorAffiliations);
     }
 
+    async fillField(fieldName: string, value: string) {
+        await this.page.getByLabel(fieldName).fill(value);
+        await this.page.getByLabel(fieldName).blur();
+    }
+
     async fillSubmissionFormDummyOrganism({
         submissionId,
         country,
@@ -157,6 +162,18 @@ export class BulkSubmissionPage extends SubmissionPage {
             name: 'metadata.tsv',
             mimeType: 'text/plain',
             buffer: Buffer.from(tsvContent),
+        });
+    }
+
+    async uploadSequencesFile(sequenceData: Record<string, string>) {
+        const fastaContent = Object.entries(sequenceData)
+            .map(([id, sequence]) => `>${id}\n${sequence}`)
+            .join('\n');
+
+        await this.page.getByTestId('sequence_file').setInputFiles({
+            name: 'sequences.fasta',
+            mimeType: 'text/plain',
+            buffer: Buffer.from(fastaContent),
         });
     }
 

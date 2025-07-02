@@ -46,24 +46,12 @@ const config = {
             testMatch: /readonly\.setup\.ts/,
         },
         {
-            name: 'chromium-with-dep',
-            use: { ...devices['Desktop Chrome'] },
-            dependencies: ['readonly setup'],
-            testMatch: /.*\.dependent\.spec\.ts/,
-        },
-        {
             name: 'firefox-with-dep',
             use: {
                 ...devices['Desktop Firefox'],
             },
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
-        },
-
-        {
-            name: 'chromium-without-dep',
-            use: { ...devices['Desktop Chrome'] },
-            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
         {
             name: 'firefox-without-dep',
