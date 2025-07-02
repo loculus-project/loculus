@@ -19,7 +19,6 @@ class SlackConfig:
     last_notification_sent: datetime | None
 
 
-
 def slack_conn_init(
     slack_hook_default: str, slack_token_default: str, slack_channel_id_default: str
 ) -> SlackConfig:

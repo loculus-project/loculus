@@ -2,13 +2,15 @@ import json
 import logging
 import threading
 import time
+import traceback
 from datetime import datetime, timedelta
 from typing import Any, Literal
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
 
-from .call_loculus import get_group_info
+from ena_deposition import call_loculus
+
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
@@ -19,7 +21,6 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
-    get_ena_config,
     get_molecule_type,
 )
 from .ena_types import (
@@ -27,6 +28,7 @@ from .ena_types import (
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
     ChromosomeType,
+    Topology,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -60,12 +62,13 @@ def create_chromosome_list_object(
     segment_order = get_segment_order(unaligned_sequences)
 
     for segment_name in segment_order:
+        topology = Topology(organism_metadata.get("topology", "linear"))
         if multi_segment:
             entry = AssemblyChromosomeListFileObject(
                 object_name=f"{seq_key['accession']}_{segment_name}",
                 chromosome_name=segment_name,
                 chromosome_type=ChromosomeType.SEGMENTED,
-                topology=organism_metadata.get("topology", "linear"),
+                topology=topology,
             )
             entries.append(entry)
             continue
@@ -73,7 +76,7 @@ def create_chromosome_list_object(
             object_name=f"{seq_key['accession']}",
             chromosome_name="genome",
             chromosome_type=ChromosomeType.MONOPARTITE,
-            topology=organism_metadata.get("topology", "linear"),
+            topology=topology,
         )
         entries.append(entry)
 
@@ -89,22 +92,30 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_address(config: Config, entry: dict[str, str]) -> str:
+def get_address(config: Config, entry: dict[str, Any]) -> str:
     address_string = entry["center_name"]
     if config.is_broker:
         try:
-            group_info = get_group_info(config, entry["metadata"]["groupId"])[0]["group"]
-            address = group_info["address"]
-            address_list = [
-                entry["center_name"],  # corresponds to Loculus' "Institution" group field
-                address.get("city"),
-                address.get("state"),
-                address.get("country"),
+            group_info = call_loculus.get_group_info(config, entry["metadata"]["groupId"])[0][
+                "group"
             ]
-            address_string = ", ".join([x for x in address_list if x is not None])
-            logger.debug("Created address from group_info")
         except Exception as e:
-            logger.error(f"Was unable to create address, setting address to center_name due to {e}")
+            logger.error(
+                f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
+                f"{traceback.format_exc()}"
+            )
+            raise RuntimeError(
+                f"Failed to fetch group info from Loculus for group: {entry['metadata']['groupId']}, {e}"
+            ) from e
+        address = group_info["address"]
+        address_list = [
+            entry["center_name"],  # corresponds to Loculus' "Institution" group field
+            address.get("city"),
+            address.get("state"),
+            address.get("country"),
+        ]
+        address_string = ", ".join([x for x in address_list if x is not None])
+        logger.debug("Created address from group_info")
     return address_string
 
 
@@ -118,18 +129,18 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
         if type == "int":
             assert len(loculus_fields) == 1, "Only one loculus field allowed for int type"
             try:
-                value = int(metadata.get(loculus_fields[0]))
+                value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
             except TypeError:
-                value = default
+                value = default  # type: ignore
         else:
             values = [
                 metadata.get(loculus_field)
                 for loculus_field in loculus_fields
                 if metadata.get(loculus_field)
             ]
-            value = default or None if not values else ", ".join(values)
+            value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
-            value = get_authors(value)
+            value = get_authors(str(value))
         assembly_values[key] = value
     return assembly_values
 
@@ -188,17 +199,26 @@ def create_manifest_object(
 
     assembly_values = get_assembly_values_in_metadata(config, metadata)
 
-    return AssemblyManifest(
-        study=study_accession,
-        sample=sample_accession,
-        assemblyname=assembly_name,
-        flatfile=flat_file,
-        chromosome_list=chromosome_list_file,
-        description=get_description(config, metadata),
-        moleculetype=get_molecule_type(organism_metadata),
-        **assembly_values,
-        address=get_address(config, submission_table_entry),
-    )
+    try:
+        manifest = AssemblyManifest(
+            study=study_accession,
+            sample=sample_accession,
+            assemblyname=assembly_name,
+            flatfile=flat_file,
+            chromosome_list=chromosome_list_file,
+            description=get_description(config, metadata),
+            moleculetype=get_molecule_type(organism_metadata),
+            **assembly_values,
+            address=get_address(config, submission_table_entry),
+        )
+    except Exception as e:
+        # log traceback for better debugging
+        logger.error(f"Error creating AssemblyManifest: {e}. Traceback: {traceback.format_exc()}")
+        raise RuntimeError(
+            f"Failed to create AssemblyManifest for accession {submission_table_entry['accession']}"
+        ) from e
+
+    return manifest
 
 
 def submission_table_start(db_config: SimpleConnectionPool):
@@ -268,8 +288,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
     )
     if len(submitting_assembly) > 0:
         logger.debug(
-            f"Found {len(submitting_assembly)} entries in submission_table in"
-            " status SUBMITTING_ASSEMBLY"
+            f"Found {len(submitting_assembly)} entries in submission_table in status SUBMITTING_ASSEMBLY"
         )
     for row in submitting_assembly:
         seq_key = {"accession": row["accession"], "version": row["version"]}
@@ -302,7 +321,10 @@ def update_assembly_error(
     update_type: Literal["revision"] | Literal["creation"],
     retry_number: int = 3,
 ):
-    logger.error(error)
+    logger.error(
+        f"Assembly {update_type} failed for accession {seq_key['accession']} "
+        f"version {seq_key['version']}. Propagating to db. Error: {error}"
+    )
     update_values = {
         "status": Status.HAS_ERRORS,
         "errors": json.dumps([error]),
@@ -314,7 +336,8 @@ def update_assembly_error(
         if tries > 0:
             # If state not correctly added retry
             logger.warning(
-                f"Assembly {update_type} failed and DB update failed - reentry DB update #{tries}."
+                f"While writing assembly creation error to db: DB update failed - reentry DB update "
+                f"Retry attempt: #{tries}."
             )
         number_rows_updated = update_db_where_conditions(
             db_config,
@@ -324,8 +347,15 @@ def update_assembly_error(
         )
         tries += 1
 
+    if number_rows_updated != 1:
+        error_msg = (
+            f"Assembly {update_type} failed for accession {seq_key['accession']} "
+            f"version {seq_key['version']}. DB update failed after {retry_number} attempts."
+        )
+        logger.error(error_msg)
 
-def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, str]) -> bool:
+
+def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
     """
     Check if assembly can be revised
     1. Check if last version exists in submission_table -> internal error
@@ -427,12 +457,6 @@ def assembly_table_create(
     If test=True: add a timestamp to the alias suffix to allow for multiple submissions of the same
     manifest for testing AND use the test ENA webin-cli endpoint for submission.
     """
-    ena_config = get_ena_config(
-        config.ena_submission_username,
-        config.ena_submission_password,
-        config.ena_submission_url,
-        config.ena_reports_service_url,
-    )
     conditions = {"status": Status.READY}
     ready_to_submit_assembly = find_conditions_in_db(
         db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions
@@ -475,7 +499,7 @@ def assembly_table_create(
             )
             continue
 
-        update_values = {"status": Status.SUBMITTING}
+        update_values: dict[str, Any] = {"status": Status.SUBMITTING}
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name=TableName.ASSEMBLY_TABLE,
@@ -485,16 +509,17 @@ def assembly_table_create(
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
             logger.warning(
-                "assembly_table: Status update from READY to SUBMITTING failed "
-                "- not starting submission."
+                "assembly_table: Status update from READY to SUBMITTING failed - not starting submission."
             )
             continue
         logger.info(f"Starting assembly creation for accession {row['accession']}")
         segment_order = get_segment_order(
             sample_data_in_submission_table[0]["unaligned_nucleotide_sequences"]
         )
+
+        # Actual webin-cli command is run here
         assembly_creation_results: CreationResult = create_ena_assembly(
-            ena_config,
+            config,
             manifest_file,
             accession=seq_key["accession"],
             center_name=center_name,
@@ -522,11 +547,14 @@ def assembly_table_create(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded! - waiting for ENA accession"
+                    f"Assembly submission for accession {row['accession']} succeeded with: {assembly_creation_results.result}"
                 )
         else:
             update_assembly_error(
-                db_config, assembly_creation_results.errors, seq_key=row, update_type="creation"
+                db_config,
+                str(assembly_creation_results.errors),
+                seq_key=row,
+                update_type="creation",
             )
 
 
@@ -542,13 +570,7 @@ def assembly_table_update(
     2. If over time_threshold since last check, check if accession exists in ENA
     3. If (exists): update state to SUBMITTED with results
     """
-    global _last_ena_check  # noqa: PLW0602
-    ena_config = get_ena_config(
-        config.ena_submission_username,
-        config.ena_submission_password,
-        config.ena_submission_url,
-        config.ena_reports_service_url,
-    )
+    global _last_ena_check  # noqa: PLW0603
     conditions = {"status": Status.WAITING}
     waiting = find_conditions_in_db(
         db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=conditions
@@ -565,7 +587,7 @@ def assembly_table_update(
             previous_result = row["result"]
             segment_order = previous_result["segment_order"]
             new_result: CreationResult = get_ena_analysis_process(
-                ena_config, previous_result["erz_accession"], segment_order
+                config, previous_result["erz_accession"], segment_order
             )
             _last_ena_check = time
 
@@ -625,7 +647,7 @@ def assembly_table_update(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded and accession returned!"
+                    f"Assembly submission for accession {row['accession']} succeeded and accession returned: {update_values}!"
                 )
 
 
@@ -697,7 +719,3 @@ def create_assembly(config: Config, stop_event: threading.Event):
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
-
-
-if __name__ == "__main__":
-    create_assembly()

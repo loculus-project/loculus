@@ -1,14 +1,18 @@
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
+from typing import Any
 
 import psycopg2
 import pytz
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+
+logger = logging.getLogger(__name__)
 
 
 def convert_jdbc_to_psycopg2(jdbc_url):
@@ -211,6 +215,7 @@ def delete_records_in_db(
     Returns:
         int: The number of rows deleted.
     """
+    logger.debug(f"Deleting records from {table_name} where {conditions}")
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -238,12 +243,14 @@ def delete_records_in_db(
     finally:
         db_conn_pool.putconn(con)
 
+    logger.debug(f"Deleted {deleted_rows} rows from {table_name} where {conditions}")
+
     return deleted_rows
 
 
 def find_conditions_in_db(
-    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
-) -> list[dict[str, str]]:
+    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, Any]
+) -> list[dict[str, Any]]:
     """
     Return all records from the specified table that match all the conditions
     Args:
@@ -355,7 +362,7 @@ def update_db_where_conditions(
     db_conn_pool: SimpleConnectionPool,
     table_name: TableName,
     conditions: dict[str, str],
-    update_values: dict[str, str],
+    update_values: dict[str, Any],
 ) -> int:
     updated_row_count = 0
     con = db_conn_pool.getconn()

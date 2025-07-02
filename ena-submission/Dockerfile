@@ -1,34 +1,11 @@
-FROM mambaorg/micromamba:1.5.8
+FROM mambaorg/micromamba:2.3.0
 
-# Install dependencies needed for webin-cli
-USER root
-RUN apt-get update && apt-get install -y \
-    default-jre \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /package && chown -R $MAMBA_USER:$MAMBA_USER /package
-USER $MAMBA_USER
+WORKDIR /opt/app
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
-COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
-
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml .mambarc ./
 RUN micromamba config set extract_threads 1 \
-    && micromamba install -y -n base -f /tmp/env.yaml --rc-file /tmp/.mambarc \
-    && micromamba clean --all --yes
+ && micromamba install --yes --name base -f environment.yml --rc-file .mambarc \
+ && micromamba clean --all --yes
 
-# Set the environment variable to activate the conda environment
-ARG MAMBA_DOCKERFILE_ACTIVATE=1
-
-COPY .webinrc /tmp/.webinrc
-
-USER root
-RUN export WEBIN_CLI_VERSION=$(cat /tmp/.webinrc) && \
-    wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O /package/webin-cli.jar
-USER $MAMBA_USER
-
-COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
-
-RUN ls -alht /package
-RUN pip install /package
-
-WORKDIR /package
+COPY --chown=$MAMBA_USER:$MAMBA_USER . .
+RUN micromamba run pip install --no-cache-dir .

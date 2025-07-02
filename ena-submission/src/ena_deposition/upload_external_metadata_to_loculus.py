@@ -10,7 +10,8 @@ from typing import Any
 import pytz
 from psycopg2.pool import SimpleConnectionPool
 
-from .call_loculus import submit_external_metadata
+from ena_deposition.call_loculus import submit_external_metadata
+
 from .config import Config
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -198,7 +199,3 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
             slack_config,
         )
         time.sleep(config.time_between_iterations)
-
-
-if __name__ == "__main__":
-    upload_external_metadata()

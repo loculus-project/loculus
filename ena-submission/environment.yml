@@ -9,6 +9,7 @@ dependencies:
   - pip >=24
   # Extra dependencies
   - click
+  - ena-webin-cli =8.2.0
   - fastapi
   - pydantic
   - jsonlines
@@ -20,6 +21,12 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
+  - tenacity
   - types-pytz
   - types-psycopg2
+  - types-requests
+  - types-PyYAML
   - python-dotenv
+  - pytest
+  - pip:
+      - types-xmltodict

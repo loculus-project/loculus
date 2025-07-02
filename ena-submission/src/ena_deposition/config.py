@@ -1,7 +1,9 @@
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
+import dotenv
 import yaml
 
 
@@ -28,18 +30,23 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
-    metadata_mapping: dict[str, dict[str, list[str]]]
+    metadata_mapping: dict[str, dict[str, str | list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
-    manifest_fields_mapping: dict[str, dict[str, str]]
+    manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
     ena_deposition_port: int
+    ena_http_timeout_seconds: int = 60
+    # By default, don't retry HTTP requests to ENA
+    ena_http_retry_attempts: int = 1
     submit_to_ena_prod: bool = False
     is_broker: bool = False
-    allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])
-    min_between_github_requests: int | None = 2
-    time_between_iterations: int | None = 10
-    min_between_ena_checks: int | None = 5
+    allowed_submission_hosts: list[str] = field(
+        default_factory=lambda: ["https://backend.pathoplexus.org"]
+    )
+    min_between_github_requests: int = 2
+    time_between_iterations: int = 10
+    min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
@@ -80,6 +87,16 @@ def get_config(config_file: str) -> Config:
         if key not in full_config:
             full_config[key] = value
     relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+
+    dotenv.load_dotenv()  # Load environment variables from .env file
+    relevant_config["ena_submission_username"] = os.getenv(
+        "ENA_USERNAME", relevant_config["ena_submission_username"]
+    )
+    relevant_config["ena_submission_password"] = os.getenv(
+        "ENA_PASSWORD", relevant_config["ena_submission_password"]
+    )
+    relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
+
     config = Config(**relevant_config)
     secure_ena_connection(config)
     return config

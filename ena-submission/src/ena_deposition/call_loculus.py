@@ -114,15 +114,18 @@ def submit_external_metadata(
     return response
 
 
-def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
+def get_group_info(config: Config, group_id: int) -> list[dict[str, Any]]:
     """Get group info given id"""
 
-    # TODO: only get a list of released accessionVersions and compare with submission DB.
     url = f"{backend_url(config)}/groups/{group_id}"
 
     headers = {"Content-Type": "application/json"}
 
-    response = make_request(HTTPMethod.GET, url, config, headers=headers)
+    try:
+        response = make_request(HTTPMethod.GET, url, config, headers=headers)
+    except requests.exceptions.HTTPError as err:
+        logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
+        raise requests.exceptions.HTTPError from err
 
     entries: list[dict[str, Any]] = []
     try:

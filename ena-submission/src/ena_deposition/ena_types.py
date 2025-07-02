@@ -6,6 +6,7 @@ from enum import Enum
 class XmlNone(str):
     pass
 
+
 @dataclass
 class XmlAttribute:
     def __init__(self, name):
@@ -55,7 +56,6 @@ class SequencingProject:
     locus_tag_prefix: list[str] = dataclasses.field(default_factory=list)
 
 
-
 @dataclass
 class SubmissionProject:
     sequencing_project: SequencingProject | XmlNone = dataclasses.field(default_factory=XmlNone)
@@ -99,7 +99,7 @@ class ProjectType:
     project_attributes: dict[str, str] | None = None
 
 
-def default_project_type():
+def default_project_type() -> ProjectType:
     return ProjectType(
         name="default_name", title="default_title", description="default_description"
     )
@@ -108,6 +108,10 @@ def default_project_type():
 @dataclass
 class ProjectSet:
     project: list[ProjectType]
+
+
+def default_project_set() -> ProjectSet:
+    return ProjectSet(project=[default_project_type()])
 
 
 @dataclass
@@ -127,7 +131,7 @@ class SampleAttribute:
 
 @dataclass
 class SampleAttributes:
-    sample_attribute: list[SampleAttribute] = None
+    sample_attribute: list[SampleAttribute]
 
 
 @dataclass
@@ -153,6 +157,10 @@ def default_sample_type():
 @dataclass
 class SampleSetType:
     sample: list[SampleType]
+
+
+def default_sample_set_type() -> SampleSetType:
+    return SampleSetType(sample=[default_sample_type()])
 
 
 class AssemblyType(Enum):

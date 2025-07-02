@@ -5,6 +5,7 @@ on:
     paths:
       - "ena-submission/**"
       - ".github/workflows/ena-submission-unit-tests.yaml"
+      - "ruff.toml"
   push:
     branches:
       - main
@@ -13,6 +14,15 @@ concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-unit-tests
   cancel-in-progress: true
 jobs:
+  checkFormat:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check --diff"
+          src: "ena-submission"
   unitTests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -21,16 +31,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
-        with: 
-            environment-file: ena-submission/environment.yml
-            micromamba-version: 'latest'
-            init-shell: >-
-                bash
-            cache-environment: true
-            post-cleanup: 'all'
+        with:
+          environment-file: "ena-submission/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
       - name: Run tests
         run: |
-            pip install .
-            python3 scripts/test_ena_submission.py
+          pip install .
+          # The integration tests are run in a separate workflow
+          # They require postgres to be running
+            pytest \
+            --ignore=./scripts/test_ena_submission_integration.py \
+            --ignore=./scripts/test_api.py
         shell: micromamba-shell {0}
         working-directory: ena-submission

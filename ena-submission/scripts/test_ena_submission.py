@@ -3,6 +3,7 @@ import gzip
 import json
 import unittest
 from pathlib import Path
+from typing import Final
 from unittest import mock
 
 import xmltodict
@@ -14,7 +15,6 @@ from ena_deposition.create_assembly import (
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import (
-    ENAConfig,
     create_chromosome_list,
     create_ena_project,
     create_ena_sample,
@@ -26,19 +26,14 @@ from ena_deposition.ena_submission_helper import (
     get_sample_xml,
     reformat_authors_from_loculus_to_embl_style,
 )
-from ena_deposition.ena_types import default_project_type, default_sample_type
+from ena_deposition.ena_types import (
+    default_project_set,
+    default_sample_set_type,
+)
 
 # Default configs
 with open("config/defaults.yaml", encoding="utf-8") as f:
     defaults = yaml.safe_load(f)
-
-# Setup a mock configuration
-test_ena_config = ENAConfig(
-    ena_submission_url="https://test.url",
-    ena_reports_service_url="https://test.url",
-    ena_submission_password="test_password",  # noqa: S106
-    ena_submission_username="test_user",
-)
 
 
 def mock_config():
@@ -58,7 +53,16 @@ def mock_config():
     ]
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
+    config.is_broker = True
+    config.ena_submission_url = "https://test.url"
+    config.ena_reports_service_url = "https://test.url"
+    config.ena_submission_password = "test_password"
+    config.ena_submission_username = "test_user"
+    config.ena_http_timeout_seconds = 10
     return config
+
+
+MOCK_CONFIG: Final = mock_config()
 
 
 # Example XMLs
@@ -71,16 +75,17 @@ test_project_xml_failure_response = """
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
-revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(encoding="utf-8")
+revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(
+    encoding="utf-8"
+)
 process_response_text = Path("test/get_ena_analysis_process_response.json").read_text(
     encoding="utf-8"
 )
 
 
 # Test sample
-loculus_sample: dict = json.load(
-    open("test/approved_ena_submission_list_test.json", encoding="utf-8")
-)
+with open("test/approved_ena_submission_list_test.json", encoding="utf-8") as f:
+    loculus_sample: dict = json.load(f)
 sample_data_in_submission_table = {
     "accession": "LOC_0001TLY",
     "version": "1",
@@ -115,8 +120,8 @@ class ProjectCreationTests(unittest.TestCase):
     def test_create_project_success(self, mock_post) -> None:
         # Testing successful project creation
         mock_post.return_value = mock_requests_post(200, test_project_xml_response)
-        project_set = default_project_type()
-        response = create_ena_project(test_ena_config, project_set)
+        project_set = default_project_set()
+        response = create_ena_project(MOCK_CONFIG, project_set)
         desired_response = {
             "bioproject_accession": "PRJEB20767",
             "ena_submission_accession": "ERA912529",
@@ -127,8 +132,10 @@ class ProjectCreationTests(unittest.TestCase):
     def test_create_project_xml_failure(self, mock_post):
         # Testing project creation failure due to incorrect status
         mock_post.return_value = mock_requests_post(200, test_project_xml_failure_response)
-        project_set = default_project_type()
-        response = create_ena_project(test_ena_config, project_set)
+        project_set = default_project_set()
+        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+            response = create_ena_project(MOCK_CONFIG, project_set)
+            self.assertIn("Response is in unexpected format", cm.output[0])
         error_message_part = "Response is in unexpected format"
         self.assertIn(error_message_part, response.errors[0])
 
@@ -136,8 +143,10 @@ class ProjectCreationTests(unittest.TestCase):
     def test_create_project_server_failure(self, mock_post):
         # Testing project creation failure
         mock_post.return_value = mock_requests_post(500, "Internal Server Error")
-        project_set = default_project_type()
-        response = create_ena_project(test_ena_config, project_set)
+        project_set = default_project_set()
+        with self.assertLogs("ena_deposition.ena_submission_helper", level="WARNING") as cm:
+            response = create_ena_project(MOCK_CONFIG, project_set)
+            self.assertIn("Request failed with status:500", cm.output[0])
         error_message_part = "Request failed with status:500"
         self.assertIn(error_message_part, response.errors[0])
         error_message_part = "Response: Internal Server Error"
@@ -161,8 +170,8 @@ class SampleCreationTests(unittest.TestCase):
     @mock.patch("requests.post")
     def test_create_sample_success(self, mock_post):
         mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
-        sample_set = default_sample_type()
-        response = create_ena_sample(test_ena_config, sample_set)
+        sample_set = default_sample_set_type()
+        response = create_ena_sample(MOCK_CONFIG, sample_set)
         desired_response = {
             "ena_sample_accession": "ERS1833148",
             "biosample_accession": "SAMEA104174130",
@@ -171,6 +180,7 @@ class SampleCreationTests(unittest.TestCase):
         self.assertEqual(response.result, desired_response)
 
     def test_sample_set_construction(self):
+        self.maxDiff = None
         config = mock_config()
         sample_set = construct_sample_set_object(
             config,
@@ -263,17 +273,27 @@ class AssemblyCreationTests(unittest.TestCase):
             b">LOC_0001TLY\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
-    def test_create_manifest(self):
+    @mock.patch("ena_deposition.call_loculus.get_group_info")
+    def test_create_manifest(self, mock_get_group_info):
         config = mock_config()
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
+        mock_get_group_info.return_value = [
+            {
+                "group": {
+                    "institution": "University of Test",
+                    "address": {"city": "test city", "country": "Switzerland"},
+                    "groupName": "test group",
+                }
+            }
+        ]
         manifest = create_manifest_object(
             config,
             sample_accession,
             study_accession,
             sample_data_in_submission_table,
         )
-        manifest_file_name = create_manifest(manifest)
+        manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}
         with open(manifest_file_name, encoding="utf-8") as gz:
             reader = csv.reader(gz, delimiter="\t")
@@ -288,8 +308,10 @@ class AssemblyCreationTests(unittest.TestCase):
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
+            "ADDRESS": "Fake center name, test city, Switzerland",
             "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
+            "AUTHORS": "M. Ammar M.S.;",
             "COVERAGE": "1",
             "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
@@ -337,19 +359,25 @@ class AssemblyCreationTests(unittest.TestCase):
 
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["main"]
-        with self.assertRaises(ValueError):
+        with (
+            self.assertRaises(ValueError),
+            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+        ):
             get_chromsome_accessions(insdc_accession_range, segment_order)
 
         insdc_accession_range = "OZ189935-TK189936"
         segment_order = ["A", "B"]
-        with self.assertRaises(ValueError):
+        with (
+            self.assertRaises(ValueError),
+            self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
+        ):
             get_chromsome_accessions(insdc_accession_range, segment_order)
 
     @mock.patch("requests.get")
     def test_get_ena_analysis_process(self, mock_post):
         mock_post.return_value = mock_requests_post(200, process_response_text)
         response = get_ena_analysis_process(
-            test_ena_config, erz_accession="ERZ000001", segment_order=["main"]
+            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"]
         )
         desired_response = {
             "erz_accession": "ERZ000001",

@@ -8,6 +8,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 import click
@@ -89,7 +90,11 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = {"institution": center_name, "address": {"city": "CITY", "country": "COUNTRY"}, "groupName": "GROUP_NAME"}
+    group_info = {
+        "institution": center_name,
+        "address": {"city": "CITY", "country": "COUNTRY"},
+        "groupName": "GROUP_NAME",
+    }
 
     if mode == "project":
         project_set = construct_project_set_object(group_info, config, entry)
@@ -99,10 +104,12 @@ def local_ena_submission_generator(
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
-        with open(os.path.join(directory, "submission.xml"), "w") as file:
-            file.write(project_xml["SUBMISSION"])
-        with open(os.path.join(directory, "project.xml"), "w") as file:
-            file.write(project_xml["PROJECT"])
+        Path(os.path.join(directory, "submission.xml")).write_text(
+            project_xml["SUBMISSION"], encoding="utf-8"
+        )
+        Path(os.path.join(directory, "project.xml")).write_text(
+            project_xml["PROJECT"], encoding="utf-8"
+        )
 
         logger.info(
             "You can submit the project to ENA using the command: \n"
@@ -122,13 +129,14 @@ def local_ena_submission_generator(
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
-        with open(os.path.join(directory, "submission.xml"), "w") as file:
-            file.write(sample_xml["SUBMISSION"])
-        with open(os.path.join(directory, "sample.xml"), "w") as file:
-            file.write(sample_xml["SAMPLE"])
-
+        Path(os.path.join(directory, "submission.xml")).write_text(
+            sample_xml["SUBMISSION"], encoding="utf-8"
+        )
+        Path(os.path.join(directory, "sample.xml")).write_text(
+            sample_xml["SAMPLE"], encoding="utf-8"
+        )
         logger.info(
-            "You can submit the sample to ENA using the command: \n"
+            "You can submi the sample to ENA using the command: \n"
             "curl -X POST $ena_submission_url "
             "-u '$ena_submission_username:$ena_submission_password' "
             "-F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"
@@ -154,7 +162,7 @@ def local_ena_submission_generator(
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
-            "java -jar webin-cli.jar -username $ena_submission_username "
+            "ena-webin-cli -username $ena_submission_username "
             "-password $ena_submission_password -context genome "
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"
