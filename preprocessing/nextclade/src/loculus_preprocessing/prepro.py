@@ -143,7 +143,7 @@ def run_sort(
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("\")[-1]]  # type: ignore
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
