@@ -9,9 +9,9 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import Field, dataclass, is_dataclass
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, ClassVar, Final, Literal, Protocol, cast
 
 import pytz
 import requests
@@ -68,37 +68,63 @@ def recursive_defaultdict():
     return defaultdict(recursive_defaultdict)
 
 
-def dataclass_to_dict(dataclass_instance):
+class DataclassProtocol(Protocol):
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
+
+
+def assert_dataclass(obj: Any) -> None:
+    """
+    Asserts that the object is a dataclass instance.
+    Raises TypeError if not.
+    """
+    if not is_dataclass(obj):
+        msg = f"Expected a dataclass instance, got {type(obj).__name__}: {obj}."
+        raise TypeError(msg)
+
+
+def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
     """
     Converts a dataclass instance to a dictionary, handling nested dataclasses.
     """
-    if not hasattr(dataclass_instance, "__dataclass_fields__"):
-        return dataclass_instance
-    result = {}
-    for field in dataclass_instance.__dataclass_fields__:
-        value = getattr(dataclass_instance, field)
-        is_xml_attribute = isinstance(value, XmlAttribute)
+    assert_dataclass(dataclass_instance)
+    result: dict[str, Any] = {}
+    for field_name in dataclass_instance.__dataclass_fields__:
+        value = getattr(dataclass_instance, field_name)
         if isinstance(value, XmlNone):
-            result[field.upper()] = None
+            result[field_name.upper()] = None
             continue
         if value is None:
             continue
         if isinstance(value, list):
-            result[field.upper()] = [dataclass_to_dict(item) for item in value]
-        elif is_xml_attribute:
-            attribute_field = "@" + field
+            res = []
+            for item in value:
+                assert_dataclass(item)
+                res.append(dataclass_to_dict(cast(DataclassProtocol, item)))
+            result[field_name.upper()] = res
+        elif isinstance(value, XmlAttribute):
+            attribute_field = "@" + field_name
             result[attribute_field] = value
+        elif isinstance(value, (str, int, float, bool)):
+            result[field_name.upper()] = value
+        elif is_dataclass(value):
+            result[field_name.upper()] = dataclass_to_dict(cast(DataclassProtocol, value))
         else:
-            result[field.upper()] = dataclass_to_dict(value)
+            msg = (
+                f"Unsupported type {type(value)} for field {field_name} in dataclass "
+                f"{dataclass_instance.__class__.__name__} with value {value}."
+            )
+            logger.error(msg)
+            raise TypeError(msg)
     return result
 
 
-def dataclass_to_xml(dataclass_instance, root_name="root"):
+def dataclass_to_xml(dataclass_instance: DataclassProtocol, root_name="root") -> str:
+    assert_dataclass(dataclass_instance)
     dataclass_dict = dataclass_to_dict(dataclass_instance)
     return xmltodict.unparse({root_name: dataclass_dict}, pretty=True)
 
 
-def get_submission_dict(hold_until_date: str | None = None):
+def get_submission_dict(hold_until_date: str | None = None) -> Submission:
     if not hold_until_date:
         hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
     return Submission(
@@ -106,7 +132,7 @@ def get_submission_dict(hold_until_date: str | None = None):
     )
 
 
-def get_project_xml(project_set):
+def get_project_xml(project_set: ProjectSet) -> dict[str, str]:
     submission_set = get_submission_dict()
     return {
         "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
