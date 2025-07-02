@@ -323,7 +323,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
 def update_assembly_error(
     db_config: SimpleConnectionPool,
-    error: str,
+    error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
     retry_number: int = 3,
@@ -334,7 +334,7 @@ def update_assembly_error(
     )
     update_values = {
         "status": Status.HAS_ERRORS,
-        "errors": json.dumps([error]),
+        "errors": json.dumps(error),
         "started_at": datetime.now(tz=pytz.utc),
     }
     number_rows_updated = 0
@@ -564,7 +564,7 @@ def assembly_table_create(
         else:
             update_assembly_error(
                 db_config,
-                str(assembly_creation_results.errors),
+                assembly_creation_results.errors,
                 seq_key=row,
                 update_type="creation",
             )

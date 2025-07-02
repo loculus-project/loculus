@@ -69,8 +69,7 @@ def construct_project_set_object(
     address = group_info.address
     group_name = group_info.group_name
     center_name = group_info.institution
-    address_list = [address.city, address.country]
-    address_string = ", ".join([x for x in address_list if x is not None])
+    address_string = ", ".join([x for x in [address.city, address.country] if x])
 
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
