@@ -400,14 +400,34 @@ class SubmissionDatabaseService(
     }
 
     private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+        // TODO update function name
         val result = mutableListOf<FileId>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
-            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+            SequenceEntriesPreprocessedDataTable
+                .join(
+                    SequenceEntriesView,
+                    JoinType.INNER,
+                    additionalConstraint = {
+                        (
+                            SequenceEntriesPreprocessedDataTable.accessionColumn eq
+                                SequenceEntriesView.accessionColumn
+                            ) and
+                            (
+                                SequenceEntriesPreprocessedDataTable.versionColumn eq
+                                    SequenceEntriesView.versionColumn
+                                ) and
+                            (
+                                SequenceEntriesPreprocessedDataTable.pipelineVersionColumn greaterEq
+                                    SequenceEntriesView.pipelineVersionColumn
+                                )
+                    },
+                )
+                .select(SequenceEntriesPreprocessedDataTable.processedDataColumn)
                 .where {
                     SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .flatMap {
-                    it[SequenceEntriesView.processedDataColumn]?.files?.values.orEmpty()
+                    it[SequenceEntriesPreprocessedDataTable.processedDataColumn]?.files?.values.orEmpty()
                 }
                 .flatten()
                 .forEach { result.add(it.fileId) }
@@ -620,6 +640,8 @@ class SubmissionDatabaseService(
         }
 
         val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        // TODO - publish files for current version, but also for potential
+        // new pipeline versions
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
