@@ -50,7 +50,7 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
     await search.select('Host', uuid);
     await page.getByRole('checkbox', { name: 'include sublineages' }).check();
     await page.getByRole('textbox', { name: 'Lineage' }).click();
-    // check diamon structure of A is correct
+    // check diamond structure of A is correct
     await expect(page.getByRole('option', { name: 'A (3)' })).toBeVisible();
     await expect(page.getByRole('option', { name: 'A.1 (2)' })).toBeVisible();
     await expect(page.getByRole('option', { name: 'A.2 (2)' })).toBeVisible();
