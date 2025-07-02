@@ -155,10 +155,10 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
 def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
     """
     The project creation request should be equivalent to 
-    curl -u {params.ena_submission_username}:{params.ena_submission_password} \
-        -F "SUBMISSION=@{submission.xml}" \
-        -F "PROJECT=@{project.xml}" \
-        {params.ena_submission_url} \
+    curl -u {params.ena_submission_username}:{params.ena_submission_password} \\
+        -F "SUBMISSION=@{submission.xml}" \\
+        -F "PROJECT=@{project.xml}" \\
+        {params.ena_submission_url} \\
     > {output}
     """
     errors = []

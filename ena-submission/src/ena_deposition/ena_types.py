@@ -1,9 +1,10 @@
 import dataclasses
+from collections import UserString
 from dataclasses import dataclass
 from enum import Enum
 
 
-class XmlNone(str):
+class XmlNone(UserString):
     pass
 
 
@@ -58,7 +59,9 @@ class SequencingProject:
 
 @dataclass
 class SubmissionProject:
-    sequencing_project: SequencingProject | XmlNone = dataclasses.field(default_factory=XmlNone)
+    sequencing_project: SequencingProject | XmlNone = dataclasses.field(
+        default_factory=lambda: XmlNone("")
+    )
     organism: OrganismType | None = None
 
 

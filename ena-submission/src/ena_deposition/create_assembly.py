@@ -104,9 +104,11 @@ def get_address(config: Config, entry: dict[str, Any]) -> str:
                 f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
                 f"{traceback.format_exc()}"
             )
-            raise RuntimeError(
-                f"Failed to fetch group info from Loculus for group: {entry['metadata']['groupId']}, {e}"
-            ) from e
+            msg = (
+                "Failed to fetch group info from Loculus for group: "
+                f"{entry['metadata']['groupId']}, {e}"
+            )
+            raise RuntimeError(msg) from e
         address = group_info["address"]
         address_list = [
             entry["center_name"],  # corresponds to Loculus' "Institution" group field
@@ -214,9 +216,10 @@ def create_manifest_object(
     except Exception as e:
         # log traceback for better debugging
         logger.error(f"Error creating AssemblyManifest: {e}. Traceback: {traceback.format_exc()}")
-        raise RuntimeError(
+        msg = (
             f"Failed to create AssemblyManifest for accession {submission_table_entry['accession']}"
-        ) from e
+        )
+        raise RuntimeError(msg) from e
 
     return manifest
 
