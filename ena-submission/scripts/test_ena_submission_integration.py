@@ -11,7 +11,6 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 # ruff: noqa: S101 (allow asserts in tests))
 import json
 import logging
-import unittest
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Final
@@ -440,8 +439,8 @@ def simple_submission(
     check_sent_to_loculus(db_config, sequences_to_upload)
 
 
-class SubmissionTests(unittest.TestCase):
-    def setUp(self) -> None:
+class TestSubmission:
+    def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
         self.db_config = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
@@ -461,8 +460,12 @@ class SubmissionTests(unittest.TestCase):
         )
         assert self.config.test, "Test mode is not enabled."
 
-    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
-    @patch("ena_deposition.call_loculus.get_group_info")
+
+class TestSimpleSubmission(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_submit(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         """
         Test the full ENA submission pipeline with accurate data - this should succeed
@@ -472,9 +475,11 @@ class SubmissionTests(unittest.TestCase):
         )
 
 
-class KnownBioproject(SubmissionTests):
-    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
-    @patch("ena_deposition.call_loculus.get_group_info")
+class TestKnownBioproject(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_submit(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         """
         Test the full ENA submission pipeline with accurate data and a known bioproject
@@ -501,8 +506,8 @@ class KnownBioproject(SubmissionTests):
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
-class IncorrectBioprojectPassed(SubmissionTests):
-    @patch("ena_deposition.notifications.notify")
+class TestIncorrectBioprojectPassed(TestSubmission):
+    @patch("ena_deposition.notifications.notify", autospec=True)
     def test_submit(self, mock_notify: Mock) -> None:
         """
         Test submitting sequences with an incorrect bioproject - this should fail
@@ -530,9 +535,11 @@ class IncorrectBioprojectPassed(SubmissionTests):
         mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
-class KnownBioprojectAndBioSample(SubmissionTests):
-    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
-    @patch("ena_deposition.call_loculus.get_group_info")
+class TestKnownBioprojectAndBioSample(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_submit(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         """
         Test submitting sequences with accurate data and known bioproject and biosample
@@ -561,7 +568,7 @@ class KnownBioprojectAndBioSample(SubmissionTests):
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
-class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
+class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
     def test_submit(self, mock_notify: Mock, mock_get_group_info: Mock) -> None:
@@ -595,9 +602,11 @@ class KnownBioprojectAndIncorrectBioSample(SubmissionTests):
         mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
-class SimpleRevisionTests(SubmissionTests):
-    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
-    @patch("ena_deposition.call_loculus.get_group_info")
+class TestSimpleRevisionTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         simple_submission(
@@ -624,12 +633,17 @@ class SimpleRevisionTests(SubmissionTests):
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
-class RevisionWithManifestChangeTests(SubmissionTests):
-    @patch("ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata")
-    @patch("ena_deposition.call_loculus.get_group_info")
+class TestRevisionWithManifestChangeTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
     def test_revise(
-        self, mock_notify: Mock, mock_get_group_info: Mock, mock_submit_external_metadata: Mock
+        self,
+        mock_notify: Mock,
+        mock_get_group_info: Mock,
+        mock_submit_external_metadata: Mock,
     ) -> None:
         self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
         simple_submission(
@@ -653,7 +667,3 @@ class RevisionWithManifestChangeTests(SubmissionTests):
         _test_assembly_submission_errored(
             self.db_config, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
