@@ -68,10 +68,11 @@ MOCK_CONFIG: Final = mock_config()
 # Example XMLs
 test_project_xml_response = Path("test/test_project_response.xml").read_text(encoding="utf-8")
 text_project_xml_request = Path("test/text_project_request.xml").read_text(encoding="utf-8")
-test_project_xml_failure_response = """
-<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml" success="false">
-</RECEIPT>
-"""
+test_project_xml_failure_response = (
+    '<RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml"'
+    ' success="false">'
+    "\n</RECEIPT>"
+)
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
@@ -315,7 +316,9 @@ class AssemblyCreationTests(unittest.TestCase):
             "COVERAGE": "1",
             "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
-            "DESCRIPTION": "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1",
+            "DESCRIPTION": (
+                "Original sequence submitted to Loculus with accession: LOC_0001TLY, version: 1"
+            ),
             "MOLECULETYPE": "genomic RNA",
         }
 

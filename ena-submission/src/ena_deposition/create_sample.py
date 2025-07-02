@@ -445,7 +445,8 @@ def sample_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_with_errors)} entries"
             f" in sample_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(

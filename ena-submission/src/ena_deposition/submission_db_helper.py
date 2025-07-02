@@ -258,8 +258,9 @@ def find_conditions_in_db(
         table_name (TableName): The table to search in.
         conditions (dict[str, str]): A dictionary of column names and values for filtering.
     Returns:
-        list[dict[str, str]]: A list of dictionaries representing the records that match the conditions.
-        Each dictionary contains column names as keys and their corresponding values.
+        list[dict[str, str]]: A list of dictionaries representing the records that
+            match the conditions. Each dictionary contains column names as keys and
+            their corresponding values.
     """
     con = db_conn_pool.getconn()
     try:
@@ -408,7 +409,8 @@ def add_to_project_table(
             project_table_entry.started_at = datetime.now(tz=pytz.utc)
 
             cur.execute(
-                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING project_id",
+                "INSERT INTO project_table VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "RETURNING project_id",
                 (
                     project_table_entry.group_id,
                     project_table_entry.organism,

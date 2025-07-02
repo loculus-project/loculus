@@ -291,7 +291,8 @@ def submission_table_update(db_config: SimpleConnectionPool):
     )
     if len(submitting_assembly) > 0:
         logger.debug(
-            f"Found {len(submitting_assembly)} entries in submission_table in status SUBMITTING_ASSEMBLY"
+            f"Found {len(submitting_assembly)} entries in submission_table "
+            f"in status SUBMITTING_ASSEMBLY"
         )
     for row in submitting_assembly:
         seq_key = {"accession": row["accession"], "version": row["version"]}
@@ -339,8 +340,8 @@ def update_assembly_error(
         if tries > 0:
             # If state not correctly added retry
             logger.warning(
-                f"While writing assembly creation error to db: DB update failed - reentry DB update "
-                f"Retry attempt: #{tries}."
+                f"While writing assembly creation error to db: DB update failed - "
+                f"reentry DB update Retry attempt: #{tries}."
             )
         number_rows_updated = update_db_where_conditions(
             db_config,
@@ -362,8 +363,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     """
     Check if assembly can be revised
     1. Check if last version exists in submission_table -> internal error
-    2. Check if biosampleAccession and bioprojectAccession are the same as in previous version -> cannot be revised
-    3. Check if metadata fields in manifest have changed since previous version -> requires manual revision
+    2. Check if biosampleAccession and bioprojectAccession are the same as in previous
+       version -> cannot be revised
+    3. Check if metadata fields in manifest have changed since previous version ->
+       requires manual revision
     """
     if not is_revision(db_config, entry):
         return False
@@ -381,7 +384,8 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
         db_config, last_version_data[0]
     )
     logger.debug(
-        f"Previous sample accession: {previous_sample_accession}, previous study accession: {previous_study_accession}"
+        f"Previous sample accession: {previous_sample_accession}, "
+        f"previous study accession: {previous_study_accession}"
     )
     if entry["metadata"].get("biosampleAccession"):
         new_sample_accession = entry["metadata"]["biosampleAccession"]
@@ -512,7 +516,8 @@ def assembly_table_create(
         if number_rows_updated != 1:
             # state not correctly updated - do not start submission
             logger.warning(
-                "assembly_table: Status update from READY to SUBMITTING failed - not starting submission."
+                "assembly_table: Status update from READY to SUBMITTING failed - "
+                "not starting submission."
             )
             continue
         logger.info(f"Starting assembly creation for accession {row['accession']}")
@@ -550,7 +555,8 @@ def assembly_table_create(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded with: {assembly_creation_results.result}"
+                    f"Assembly submission for accession {row['accession']} succeeded with: "
+                    f"{assembly_creation_results.result}"
                 )
         else:
             update_assembly_error(
@@ -615,7 +621,8 @@ def assembly_table_update(
                 while number_rows_updated != 1 and tries < retry_number:
                     if tries > 0:
                         logger.warning(
-                            f"Assembly partially in ENA but DB update failed - reentry DB update #{tries}."
+                            f"Assembly partially in ENA but DB update failed - "
+                            f"reentry DB update #{tries}."
                         )
                     number_rows_updated = update_db_where_conditions(
                         db_config,
@@ -626,7 +633,8 @@ def assembly_table_update(
                     tries += 1
                 if number_rows_updated == 1:
                     logger.info(
-                        f"Partial results of assembly submission for accession {row['accession']} returned!"
+                        f"Partial results of assembly submission for accession "
+                        f"{row['accession']} returned!"
                     )
                 continue
             update_values = {
@@ -650,7 +658,8 @@ def assembly_table_update(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded and accession returned: {update_values}!"
+                    f"Assembly submission for accession {row['accession']} succeeded "
+                    f"and accession returned: {update_values}!"
                 )
 
 
@@ -674,7 +683,8 @@ def assembly_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_with_errors)} entries"
             f" in assembly_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
@@ -691,7 +701,8 @@ def assembly_table_handle_errors(
     )
     if len(entries_waiting) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_waiting)} entries in assembly_table in"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_waiting)} entries in assembly_table in"
             f" status WAITING for over {time_threshold_waiting}h"
         )
         send_slack_notification(

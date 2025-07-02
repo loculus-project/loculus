@@ -51,8 +51,9 @@ def filter_for_submission(
     To prevent this we need to make sure:
         - data was not submitted by the config.ingest_pipeline_submission_group
         - data is not in submission_table
-        - as an extra check we send a notification if there are sequences with ena-specific-metadata fields
-        (users can add these fields, nothing prohibits them from doing so)
+        - as an extra check we send a notification if there are sequences with
+          ena-specific-metadata fields (users can add these fields, nothing prohibits them
+          from doing so)
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()

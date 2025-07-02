@@ -75,10 +75,16 @@ def construct_project_set_object(
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        name=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}",
-        title=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}, {address_string}",
+        name=f"{metadata_dict['scientific_name']}: Genome sequencing by "
+             f"{group_name}, {center_name}",
+        title=(
+            f"{metadata_dict['scientific_name']}: Genome sequencing by "
+            f"{group_name}, {center_name}, {address_string}"
+        ),
         description=(
-            f"Automated upload of {metadata_dict['scientific_name']} sequences submitted by {group_name}, {center_name}, {address_string} to {config.db_name}"
+            f"Automated upload of {metadata_dict['scientific_name']} sequences "
+            f"submitted by {group_name}, {center_name}, {address_string} "
+            f"to {config.db_name}"
         ),
         submission_project=SubmissionProject(
             organism=OrganismType(
@@ -176,7 +182,8 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     2. If (exists "bioproject" in "metadata"):
     a.      If ("bioproject" in "result"["bioproject"]) in projects for that (group_id, organism):
                 update state in submission_table to SUBMITTED_PROJECT, add center_name, project_id
-    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT, add center_name, project_id
+    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT,
+            add center_name, project_id
     c.      break
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
@@ -371,7 +378,8 @@ def project_table_create(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Project creation for group_id {row['group_id']} organism {row['organism']} succeeded with: {project_creation_results.result}"
+                    f"Project creation for group_id {row['group_id']} organism "
+                    f"{row['organism']} succeeded with: {project_creation_results.result}"
                 )
         else:
             update_values = {
@@ -385,7 +393,8 @@ def project_table_create(
                 if tries > 0:
                     # If state not correctly added retry
                     logger.warning(
-                        f"Project creation failed and DB update failed - reentry DB update #{tries}."
+                        f"Project creation failed and DB update failed - "
+                        f"reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
@@ -415,7 +424,8 @@ def project_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_with_errors)} entries"
             f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
