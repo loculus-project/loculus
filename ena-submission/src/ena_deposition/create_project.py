@@ -75,8 +75,9 @@ def construct_project_set_object(
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        name=f"{metadata_dict['scientific_name']}: Genome sequencing by "
-             f"{group_name}, {center_name}",
+        name=(
+            f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}"
+        ),
         title=(
             f"{metadata_dict['scientific_name']}: Genome sequencing by "
             f"{group_name}, {center_name}, {address_string}"

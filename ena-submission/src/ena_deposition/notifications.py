@@ -57,13 +57,13 @@ def upload_file_with_comment(
 ) -> web.SlackResponse:
     """Upload file with comment to slack channel"""
     client = WebClient(token=config.slack_token)
-    output_file_zip = file_path.split(".")[0] + ".zip"
-    zip = zipfile.ZipFile(output_file_zip, "w", zipfile.ZIP_DEFLATED)
-    zip.write(file_path)
-    zip.close()
+    # Why do we need to strip the extension and replace with .zip?
+    output_file_zip = file_path.rsplit(".", 1)[0] + ".zip"
+    with zipfile.ZipFile(output_file_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(file_path, arcname=os.path.basename(file_path))
     return client.files_upload_v2(
         file=output_file_zip,
-        title=file_path.split("/")[-1],
+        title=file_path.rsplit("/", 1)[-1],
         channel=config.slack_channel_id,
         initial_comment=comment,
     )

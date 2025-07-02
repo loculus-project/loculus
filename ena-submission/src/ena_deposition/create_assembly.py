@@ -129,7 +129,12 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
         type = config.manifest_fields_mapping[key].get("type")
         function = config.manifest_fields_mapping[key].get("function")
         if type == "int":
-            assert len(loculus_fields) == 1, "Only one loculus field allowed for int type"
+            if len(loculus_fields) != 1:
+                msg = (
+                    "Only one loculus field allowed for int type but found: len(loculus_fields): "
+                    f"{len(loculus_fields)} for key: {key}. Fields: {loculus_fields}."
+                )
+                raise ValueError(msg)
             try:
                 value = str(int(metadata.get(loculus_fields[0])))  # type: ignore
             except TypeError:

@@ -6,6 +6,8 @@ from typing import Any
 import dotenv
 import yaml
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Config:
@@ -56,13 +58,13 @@ def secure_ena_connection(config: Config):
     """Modify passed-in config object"""
     submit_to_ena_prod = config.submit_to_ena_prod
     if submit_to_ena_prod and (config.backend_url not in config.allowed_submission_hosts):
-        logging.warning("WARNING: backend_url not in allowed_hosts")
+        logger.warning("WARNING: backend_url not in allowed_hosts")
         submit_to_ena_prod = False
     submit_to_ena_dev = not submit_to_ena_prod
 
     if submit_to_ena_dev:
         config.test = True
-        logging.info("Submitting to ENA dev environment")
+        logger.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
         if not config.github_test_url:
             config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
@@ -72,7 +74,7 @@ def secure_ena_connection(config: Config):
 
     if submit_to_ena_prod:
         config.test = False
-        logging.warning("WARNING: Submitting to ENA production")
+        logger.warning("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
         config.github_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"

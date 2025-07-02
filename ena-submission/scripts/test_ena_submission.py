@@ -1,6 +1,7 @@
 import csv
 import gzip
 import json
+import logging
 import unittest
 from pathlib import Path
 from typing import Final
@@ -31,6 +32,9 @@ from ena_deposition.ena_types import (
     default_sample_set_type,
 )
 
+logger = logging.getLogger(__name__)
+
+
 # Default configs
 with open("config/defaults.yaml", encoding="utf-8") as f:
     defaults = yaml.safe_load(f)
@@ -56,7 +60,7 @@ def mock_config():
     config.is_broker = True
     config.ena_submission_url = "https://test.url"
     config.ena_reports_service_url = "https://test.url"
-    config.ena_submission_password = "test_password"
+    config.ena_submission_password = "test_password"  # noqa: S105
     config.ena_submission_username = "test_user"
     config.ena_http_timeout_seconds = 10
     return config
@@ -108,11 +112,12 @@ sample_table_entry = {
 
 
 # Mock requests
-def mock_requests_post(status_code, text):
+def mock_requests_post(status_code: int, text: str) -> mock.Mock:
     mock_response = mock.Mock()
     mock_response.status_code = status_code
     mock_response.text = text
-    mock_response.ok = mock_response.status_code < 400
+    http_success_threshold: Final = 400
+    mock_response.ok = mock_response.status_code < http_success_threshold
     return mock_response
 
 
@@ -299,10 +304,16 @@ class AssemblyCreationTests(unittest.TestCase):
         with open(manifest_file_name, encoding="utf-8") as gz:
             reader = csv.reader(gz, delimiter="\t")
             for row in reader:
-                if len(row) >= 2:  # Ensure the row has at least two elements
+                try:
                     key = row[0]
                     value = row[1]
                     data[key] = value
+                except IndexError as e:
+                    msg = (
+                        f"Error reading manifest file: {manifest_file_name}. "
+                        f"Row does not have enough elements: {row}"
+                    )
+                    raise ValueError(msg) from e
         # Temp file names are different
         data.pop("CHROMOSOME_LIST")
         data.pop("FLATFILE")

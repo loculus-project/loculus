@@ -396,7 +396,7 @@ def create_flatfile(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
             filename = temp.name
 
-    seqIO_moleculetype = {
+    seq_io_moleculetype = {
         MoleculeType.GENOMIC_DNA: "DNA",
         MoleculeType.GENOMIC_RNA: "RNA",
         MoleculeType.VIRAL_CRNA: "cRNA",
@@ -415,7 +415,7 @@ def create_flatfile(
             Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype[moleculetype],
+                "molecule_type": seq_io_moleculetype[moleculetype],
                 "organism": organism,
                 "topology": organism_metadata.get("topology", "linear"),
                 "references": [reference],
@@ -706,7 +706,7 @@ def get_ena_analysis_process(
                 assembly_results.update(chromosome_accessions_dict)
         else:
             return CreationResult(result=None, errors=errors, warnings=warnings)
-    except:
+    except Exception:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
             f"Request: {response.request}, Response: {response.text}"
