@@ -154,7 +154,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
 
 def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
     """
-    The project creation request should be equivalent to 
+    The project creation request should be equivalent to
     curl -u {params.ena_submission_username}:{params.ena_submission_password} \\
         -F "SUBMISSION=@{submission.xml}" \\
         -F "PROJECT=@{project.xml}" \\
@@ -219,11 +219,11 @@ def create_ena_sample(
     config: Config, sample_set: SampleSetType, revision: bool = False
 ) -> CreationResult:
     """
-    The sample creation request should be equivalent to 
-    curl -u {params.ena_submission_username}:{params.ena_submission_password} \
-       -F "SUBMISSION=@submission.xml" \
-       -F "SAMPLE=@{sample.xml}" \
-       {params.ena_submission_url} \
+    The sample creation request should be equivalent to
+    curl -u {params.ena_submission_username}:{params.ena_submission_password} \\
+       -F "SUBMISSION=@submission.xml" \\
+       -F "SAMPLE=@{sample.xml}" \\
+       {params.ena_submission_url} \\
        > {output}
     """
     errors = []
@@ -258,8 +258,9 @@ def create_ena_sample(
         )
         if not valid:
             # normal value error
-            raise ValueError(f"XML response not as expected, response: {response.text}")
-    except:
+            msg = f"XML response not as expected, response: {response.text}"
+            raise ValueError(msg)
+    except Exception:
         error_message = f"Response is in unexpected format. Request: {response.request}, Response: {response.text}"
         logger.warning(error_message)
         errors.append(error_message)
@@ -492,8 +493,9 @@ def create_manifest(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
             filename = temp.name
     if not manifest.fasta and not manifest.flatfile:
-        raise ValueError("Either fasta or flatfile must be provided")
-    with open(filename, "w") as f:
+        msg = "Either fasta or flatfile must be provided"
+        raise ValueError(msg)
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
         f.write(
@@ -517,12 +519,14 @@ def create_manifest(
         if manifest.authors:
             if not is_broker:
                 logger.error("Cannot set authors field for non broker")
-                raise ValueError("Cannot set authors field for non broker")
+                msg = "Cannot set authors field for non broker"
+                raise ValueError(msg)
             f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.address:
             if not is_broker:
                 logger.error("Cannot set address field for non broker")
-                raise ValueError("Cannot set address field for non broker")
+                msg = "Cannot set address field for non broker"
+                raise ValueError(msg)
             f.write(f"ADDRESS\t{manifest.address}\n")
 
     return filename
@@ -733,7 +737,8 @@ def get_chromsome_accessions(
         end_letters = end[:2]
 
         if start_letters != end_letters:
-            raise ValueError("Prefixes in the accession range do not match")
+            msg = "Prefixes in the accession range do not match"
+            raise ValueError(msg)
 
         num_digits = len(start) - 2
         start_num = int(start[2:])
@@ -745,7 +750,8 @@ def get_chromsome_accessions(
                 f"Expected {len(segment_order)} segments, got {end_num - start_num + 1}. "
                 f"For insdc_accession_range: {insdc_accession_range} and segment_order: {segment_order}"
             )
-            raise ValueError("Unexpected number of segments")
+            msg = "Unexpected number of segments"
+            raise ValueError(msg)
 
         match segment_order:
             case ["main"]:
@@ -770,7 +776,8 @@ def get_chromsome_accessions(
             f"Error processing chromosome accessions: {e!s}. "
             f"For insdc_accession_range: {insdc_accession_range} and segment_order: {segment_order}"
         )
-        raise ValueError("Failed to process chromosome accessions") from e
+        msg = "Failed to process chromosome accessions"
+        raise ValueError(msg) from e
 
 
 def set_error_if_accession_not_exists(
