@@ -12,7 +12,7 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
 
     await page.goto('/');
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
-    await submissionPage.navigateToSubmissionPage('Test organism (without alignment)')
+    await submissionPage.navigateToSubmissionPage('Test organism (without alignment)');
     await submissionPage.uploadMetadataFile(
         ['id', 'date', 'host', 'lineage'],
         [
@@ -22,8 +22,8 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
             ['FOO.4', '2023-05-12', uuid, 'B.1'],
             ['FOO.5', '2023-05-12', uuid, 'B.1.1'],
             ['FOO.6', '2023-05-12', uuid, 'C.1'],
-        ]
-    )
+        ],
+    );
     await submissionPage.uploadSequencesFile({
         'FOO.1': SEQUENCE,
         'FOO.2': SEQUENCE,
@@ -31,9 +31,9 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
         'FOO.4': SEQUENCE,
         'FOO.5': SEQUENCE,
         'FOO.6': SEQUENCE,
-    })
+    });
     await submissionPage.acceptTerms();
-    let reviewPage = await submissionPage.submitSequence();
+    const reviewPage = await submissionPage.submitSequence();
 
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseValidSequences();
@@ -44,7 +44,7 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
         await page.waitForTimeout(2000);
     }
 
-    let search = new SearchPage(page);
+    const search = new SearchPage(page);
     await search.testOrganismWithoutAlignment();
 
     await search.select('Host', uuid);
