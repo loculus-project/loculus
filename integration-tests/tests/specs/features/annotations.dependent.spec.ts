@@ -14,6 +14,7 @@ test.describe('Sequence Preview Annotations', () => {
         );
 
         // use this to find our pre-made sequence
+        await searchPage.fill('Submission ID', 'foobar');
         await searchPage.fill('Author affiliations', 'Patho Institute, Paris');
 
         const accessionVersion = await searchPage.clickOnSequenceAndGetAccession(0);
