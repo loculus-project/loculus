@@ -143,14 +143,13 @@ def run_sort(
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
-    logger.error("accepted dataset names:")
-    logger.error(accepted_dataset_names)
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("\")[-1]]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
         "nextclade3",
         "sort",
+        input_file,
         "-m" if config.minimizer_url else "",
         f"{minimizer_file}" if config.minimizer_url else "",
         "--output-results-tsv",
@@ -164,15 +163,12 @@ def run_sort(
         "--all-matches",
         "--server",
         f"{nextclade_dataset_server}",
-        input_file,
     ]
 
-    logger.error(f"Running nextclade sort: {command}")
+    logger.debug(f"Running nextclade sort: {command}")
 
     exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
     if exit_code != 0:
-        logger.error(
-            f"nextclade sort failed with exit code {exit_code} for input file: {input_file}")
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
 
@@ -885,7 +881,7 @@ def process_all(
             try:
                 processed_single = process_single(id, result, config)
             except Exception as e:
-                logger.error(f"Processing failed for {id} with error: ")
+                logger.error(f"Processing failed for {id} with error: {e}")
                 processed_single = processed_entry_with_errors(id)
             processed_results.append(processed_single)
     else:
