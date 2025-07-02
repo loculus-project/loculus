@@ -1272,6 +1272,19 @@ class SubmissionDatabaseService(
         }
     }
 
+    fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
+        val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
+            pipelineVersionColumn less earliestVersionToKeep
+        }
+        log.info {
+            "Cleaned up $numberDeleted sequences for organism $organism " +
+                "that are older than preprocessing version $earliestVersionToKeep."
+        }
+    }
+
+    /**
+     * Returns a map from organism names to new versions or null if version wasn't ugraded.
+     */
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
         SequenceEntriesTable.distinctOrganisms().map { organismName ->
             Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
