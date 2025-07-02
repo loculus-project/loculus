@@ -399,15 +399,31 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+    /**
+     * Returns all files associated with the given AccessionVersions.
+     * Note: Also returns files from 'future' preprocessing versions!
+     */
+    private fun selectFilesToPublishForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+        val preproData = SequenceEntriesPreprocessedDataTable
+        val sequenceEntries = SequenceEntriesView
         val result = mutableListOf<FileId>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
-            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+            preproData
+                .join(
+                    sequenceEntries,
+                    JoinType.INNER,
+                    additionalConstraint = {
+                        (preproData.accessionColumn eq sequenceEntries.accessionColumn) and
+                            (preproData.versionColumn eq sequenceEntries.versionColumn) and
+                            (preproData.pipelineVersionColumn greaterEq sequenceEntries.pipelineVersionColumn)
+                    },
+                )
+                .select(preproData.processedDataColumn)
                 .where {
-                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
+                    sequenceEntries.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .flatMap {
-                    it[SequenceEntriesView.processedDataColumn]?.files?.values.orEmpty()
+                    it[preproData.processedDataColumn]?.files?.values.orEmpty()
                 }
                 .flatten()
                 .forEach { result.add(it.fileId) }
@@ -619,7 +635,7 @@ class SubmissionDatabaseService(
             }
         }
 
-        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
