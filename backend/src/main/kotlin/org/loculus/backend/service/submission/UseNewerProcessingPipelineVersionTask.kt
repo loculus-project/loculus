@@ -15,6 +15,14 @@ class UseNewerProcessingPipelineVersionTask(
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     fun task() {
-        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        newVersions.forEach { (organism, latestVersion) ->
+            {
+                if (latestVersion != null) {
+                    submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion - 1)
+                }
+            }
+        }
     }
 }
