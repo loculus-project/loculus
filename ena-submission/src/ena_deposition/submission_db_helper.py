@@ -146,7 +146,7 @@ class ProjectTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     center_name: str | None = None
-    result: str | None = None
+    result: dict[str, str] | str | None = None
 
 
 @dataclass
@@ -158,7 +158,7 @@ class SampleTableEntry:
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    result: str | None = None
+    result: dict[str, str] | str | None = None
 
 
 @dataclass

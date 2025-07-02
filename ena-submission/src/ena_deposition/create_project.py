@@ -3,12 +3,12 @@ import logging
 import threading
 import time
 from datetime import datetime
-from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition import call_loculus
+from ena_deposition.loculus_models import Group
 
 from .config import Config
 from .ena_submission_helper import (
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def construct_project_set_object(
-    group_info: dict[str, Any],
+    group_info: Group,
     config: Config,
     entry: dict[str, str],
     test=False,
@@ -66,10 +66,10 @@ def construct_project_set_object(
         config.set_alias_suffix,
     )
 
-    address = group_info["address"]
-    group_name = group_info["groupName"]
-    center_name = group_info["institution"]
-    address_list = [address.get("city"), address.get("country")]
+    address = group_info.address
+    group_name = group_info.group_name
+    center_name = group_info.institution
+    address_list = [address.city, address.country]
     address_string = ", ".join([x for x in address_list if x is not None])
 
     project_type = ProjectType(
@@ -147,12 +147,11 @@ def set_project_table_entry(db_config, config, row):
 
     logger.info("Adding bioprojectAccession to project_table")
     try:
-        group_info = call_loculus.get_group_info(config, row["group_id"])[0]["group"]
-        center_name = group_info["institution"]
+        group_details = call_loculus.get_group_info(config, row["group_id"])
     except Exception as e:
         logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
-        time.sleep(30)
         return
+    center_name = group_details.institution
     entry = {
         "group_id": row["group_id"],
         "organism": row["organism"],
@@ -324,17 +323,16 @@ def project_table_create(
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         try:
-            group_info = call_loculus.get_group_info(config, int(row["group_id"]))[0]["group"]
+            group_info = call_loculus.get_group_info(config, int(row["group_id"]))
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
-            time.sleep(30)
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
-            "center_name": group_info["institution"],
+            "center_name": group_info.institution,
         }
         number_rows_updated = update_db_where_conditions(
             db_config,

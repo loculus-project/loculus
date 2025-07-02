@@ -1,3 +1,5 @@
+# ruff: noqa: S101
+
 import csv
 import gzip
 import json
@@ -31,8 +33,11 @@ from ena_deposition.ena_types import (
     default_project_set,
     default_sample_set_type,
 )
+from ena_deposition.loculus_models import Group
 
 logger = logging.getLogger(__name__)
+
+TEST_GROUP: Final = Group._create_example_for_tests()
 
 
 # Default configs
@@ -132,7 +137,7 @@ class ProjectCreationTests(unittest.TestCase):
             "bioproject_accession": "PRJEB20767",
             "ena_submission_accession": "ERA912529",
         }
-        self.assertEqual(response.result, desired_response)
+        assert response.result == desired_response
 
     @mock.patch("requests.post")
     def test_create_project_xml_failure(self, mock_post):
@@ -143,7 +148,7 @@ class ProjectCreationTests(unittest.TestCase):
             response = create_ena_project(MOCK_CONFIG, project_set)
             self.assertIn("Response is in unexpected format", cm.output[0])
         error_message_part = "Response is in unexpected format"
-        self.assertIn(error_message_part, response.errors[0])
+        assert error_message_part in response.errors[0]
 
     @mock.patch("requests.post")
     def test_create_project_server_failure(self, mock_post):
@@ -154,21 +159,16 @@ class ProjectCreationTests(unittest.TestCase):
             response = create_ena_project(MOCK_CONFIG, project_set)
             self.assertIn("Request failed with status:500", cm.output[0])
         error_message_part = "Request failed with status:500"
-        self.assertIn(error_message_part, response.errors[0])
+        assert error_message_part in response.errors[0]
         error_message_part = "Response: Internal Server Error"
-        self.assertIn(error_message_part, response.errors[0])
+        assert error_message_part in response.errors[0]
 
     def test_construct_project_set_object(self):
         config = mock_config()
-        group_info = {
-            "institution": "Test institution",
-            "address": {"country": "country", "city": "city"},
-            "groupName": "Test group",
-        }
-        project_set = construct_project_set_object(group_info, config, project_table_entry)
-        self.assertEqual(
-            xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET")),
-            xmltodict.parse(text_project_xml_request),
+        project_set = construct_project_set_object(TEST_GROUP, config, project_table_entry)
+        assert (
+            xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET"))
+            == xmltodict.parse(text_project_xml_request)
         )
 
 
@@ -284,15 +284,7 @@ class AssemblyCreationTests(unittest.TestCase):
         config = mock_config()
         study_accession = "Test Study Accession"
         sample_accession = "Test Sample Accession"
-        mock_get_group_info.return_value = [
-            {
-                "group": {
-                    "institution": "University of Test",
-                    "address": {"city": "test city", "country": "Switzerland"},
-                    "groupName": "test group",
-                }
-            }
-        ]
+        mock_get_group_info.return_value = TEST_GROUP
         manifest = create_manifest_object(
             config,
             sample_accession,
@@ -320,7 +312,7 @@ class AssemblyCreationTests(unittest.TestCase):
         expected_data = {
             "STUDY": study_accession,
             "SAMPLE": sample_accession,
-            "ADDRESS": "Fake center name, test city, Switzerland",
+            "ADDRESS": "Fake center name, Basel, BS, Switzerland",
             "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
             "AUTHORS": "M. Ammar M.S.;",

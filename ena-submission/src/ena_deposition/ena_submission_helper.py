@@ -407,12 +407,12 @@ def create_flatfile(
     multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
 
     for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
-        if not sequence_str:
+        if not isinstance(sequence_str, str) or len(sequence_str) == 0:
             continue
         reference = Reference()
         reference.authors = authors
         sequence = SeqRecord(
-            Seq(sequence_str),
+            seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
                 "molecule_type": seq_io_moleculetype[moleculetype],
@@ -424,7 +424,7 @@ def create_flatfile(
         )
 
         source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
+            FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
                 "molecule_type": str(moleculetype),
@@ -788,7 +788,7 @@ def get_chromsome_accessions(
 
 
 def set_error_if_accession_not_exists(
-    conditions: dict[str, str],
+    conditions: dict[str, str | dict[str, str]],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
     db_pool: SimpleConnectionPool,
@@ -807,17 +807,22 @@ def set_error_if_accession_not_exists(
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
-    conditions.update({"status": Status.HAS_ERRORS, "errors": json.dumps([error_text])})
-
+    succeeded: bool | int | None
     if accession_type == "BIOSAMPLE":
-        conditions.update(
-            {"result": {"ena_sample_accession": accession, "biosample_accession": accession}}
+        sample_table_entry = SampleTableEntry(
+            **conditions,
+            status=Status.HAS_ERRORS,
+            errors=json.dumps([error_text]),
+            result={"ena_sample_accession": accession, "biosample_accession": accession},
         )
-        sample_table_entry = SampleTableEntry(**conditions)
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
     else:
-        conditions.update({"result": {"bioproject_accession": accession}})
-        project_table_entry = ProjectTableEntry(**conditions)
+        project_table_entry = ProjectTableEntry(
+            **conditions,
+            status=Status.HAS_ERRORS,
+            errors=json.dumps([error_text]),
+            result={"bioproject_accession": accession},
+        )
         succeeded = add_to_project_table(db_pool, project_table_entry)
 
     if not succeeded:

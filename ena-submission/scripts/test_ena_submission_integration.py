@@ -50,6 +50,7 @@ from ena_deposition.create_sample import (
 from ena_deposition.create_sample import (
     submission_table_update as create_sample_submission_table_update,
 )
+from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
     StatusAll,
@@ -69,7 +70,10 @@ from psycopg2.pool import SimpleConnectionPool
 CONFIG_FILE = "./test/test_config.yaml"
 INPUT_FILE = "./test/approved_ena_submission_list_test.json"
 
+
 logger = logging.getLogger(__name__)
+
+TEST_GROUP: Final = Group._create_example_for_tests()
 
 
 def assert_biosample_accession(
@@ -413,17 +417,6 @@ def mock_requests_post() -> Mock:
     mock_response.status_code = 204
     mock_response.ok = True
     return mock_response
-
-
-TEST_GROUP: Final = [
-    {
-        "group": {
-            "institution": "University of Test",
-            "address": {"city": "test city", "country": "Switzerland"},
-            "groupName": "test group",
-        }
-    }
-]
 
 
 def simple_submission(
