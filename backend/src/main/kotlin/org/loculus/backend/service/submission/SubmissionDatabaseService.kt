@@ -403,7 +403,7 @@ class SubmissionDatabaseService(
      * Returns all files associated with the given AccessionVersions.
      * Note: Also returns files from 'future' preprocessing versions!
      */
-    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+    private fun selectFilesToPublishForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
         val preproData = SequenceEntriesPreprocessedDataTable
         val sequenceEntries = SequenceEntriesView
         val result = mutableListOf<FileId>()
@@ -635,9 +635,7 @@ class SubmissionDatabaseService(
             }
         }
 
-        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
-        // TODO - publish files for current version, but also for potential
-        // new pipeline versions
+        val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
