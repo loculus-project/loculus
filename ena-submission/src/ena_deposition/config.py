@@ -39,8 +39,9 @@ class Config:
     ena_deposition_host: str
     ena_deposition_port: int
     ena_http_timeout_seconds: int = 60
-    # By default, don't retry HTTP requests to ENA
-    ena_http_retry_attempts: int = 1
+    ena_http_get_retry_attempts: int = 3
+    # By default, don't retry HTTP post requests to ENA
+    ena_http_post_retry_attempts: int = 1
     submit_to_ena_prod: bool = False
     is_broker: bool = False
     allowed_submission_hosts: list[str] = field(

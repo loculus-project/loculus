@@ -292,7 +292,7 @@ def post_webin_with_retry(config: Config, xml: dict[str, Any]) -> requests.Respo
         )
 
     retryer = Retrying(
-        stop=stop_after_attempt(config.ena_http_retry_attempts),
+        stop=stop_after_attempt(config.ena_http_post_retry_attempts),
         wait=wait_fixed(2),
         retry=retry_if_exception_type(requests.exceptions.Timeout),
         reraise=True,
@@ -311,7 +311,7 @@ def ena_http_get_with_retry(config: Config, url: str) -> requests.Response:
         )
 
     retryer = Retrying(
-        stop=stop_after_attempt(config.ena_http_retry_attempts),
+        stop=stop_after_attempt(config.ena_http_get_retry_attempts),
         wait=wait_fixed(2),
         retry=retry_if_exception_type(requests.exceptions.Timeout),
         reraise=True,
