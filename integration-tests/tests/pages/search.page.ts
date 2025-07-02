@@ -82,6 +82,11 @@ export class SearchPage {
         return this.page.locator('[data-testid="sequence-row"]');
     }
 
+    async clickOnSequence(rowIndex = 0) {
+        const rows = this.getSequenceRows();
+        await rows.nth(rowIndex).click();
+    }
+
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
         const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
