@@ -546,10 +546,13 @@ def post_webin_cli(
         f"-manifest='{manifest_filename}'",
         f"-outputdir='{tmpdir.name}'",
         "-test" if test else "",
-        "-password",
-        f"'{config.ena_submission_password}'",  # password last so we can easily remove it from logs
+        f"-password='{config.ena_submission_password}'",
     ]
-    logger.debug(f"Invoking webin-cli with args: {subprocess_args[:-1]}")  # -1 to remove password
+    sanitized_args = [
+        arg if not arg.startswith("-password") else "-password=<REDACTED>"
+        for arg in subprocess_args
+    ]
+    logger.debug(f"Invoking webin-cli with args: {sanitized_args}")  # -1 to remove password
     # config.ena_submission_password and config.ena_submission_username can be used for injection
     # should sanitize these values before passing to subprocess
     return subprocess.run(
