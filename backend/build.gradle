@@ -26,6 +26,8 @@ kotlin {
     jvmToolchain(21)
     // Added to dismiss warnings, see: https://github.com/loculus-project/loculus/issues/4529
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    // required since kotlinx-datetime:0.7.0
+    compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
 }
 
 repositories {
@@ -46,7 +48,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.0"
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.5"
     implementation("io.minio:minio:8.5.17")
