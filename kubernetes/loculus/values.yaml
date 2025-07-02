@@ -1449,13 +1449,13 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich:CV-A16|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich:CV-A10|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich:EV-A71|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich:EV-D68|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
       metadataAdd:
         - name: clade_cv_a16
           displayName: Clade CV-A16
