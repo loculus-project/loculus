@@ -146,18 +146,13 @@ def local_ena_submission_generator(
 
     if mode == "assembly":
         entry["center_name"] = center_name
-        dummy_sample_dict = {"result": {"ena_sample_accession": "BIOSAMPLE_ACCESSION"}}
-        dummy_project_dict = {
-            "result": {"bioproject_accession": "BIOPROJECT_ACCESSION"},
-            "center_name": center_name,
-        }
 
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
         manifest_object = create_manifest_object(
-            config, dummy_sample_dict, dummy_project_dict, entry, dir=directory
+            config, "BIOSAMPLE_ACCESSION", "BIOPROJECT_ACCESSION", entry, dir=directory
         )
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(

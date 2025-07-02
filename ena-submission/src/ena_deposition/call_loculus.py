@@ -1,12 +1,13 @@
 import json
 import logging
 import os
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from http import HTTPMethod
 from typing import Any
 
 import jsonlines
 import requests
+from pydantic import JsonValue
 
 from .config import Config
 
@@ -114,7 +115,7 @@ def submit_external_metadata(
     return response
 
 
-def get_group_info(config: Config, group_id: int) -> list[dict[str, Any]]:
+def get_group_info(config: Config, group_id: int) -> Sequence[JsonValue]:
     """Get group info given id"""
 
     url = f"{backend_url(config)}/groups/{group_id}"
@@ -127,7 +128,6 @@ def get_group_info(config: Config, group_id: int) -> list[dict[str, Any]]:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
 
-    entries: list[dict[str, Any]] = []
     try:
         entries = list(jsonlines.Reader(response.iter_lines()).iter())
     except jsonlines.Error as err:
