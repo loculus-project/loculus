@@ -63,7 +63,7 @@ def local_ena_submission_generator(
     mode,
     revision,
     log_level,
-):
+) -> None:
     """
     Produce output of submission pipeline locally
     """
@@ -76,7 +76,7 @@ def local_ena_submission_generator(
         sequences_to_upload: dict[str, Any] = json.load(json_file)
 
     if len(sequences_to_upload) > 1:
-        logging.error("Script can only handle one entry at a time")
+        logger.error("Script can only handle one entry at a time")
         return
 
     for full_accession, data in sequences_to_upload.items():

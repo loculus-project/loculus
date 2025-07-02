@@ -113,7 +113,8 @@ def get_external_metadata_and_send_to_loculus(
             while number_rows_updated != 1 and tries < retry_number:
                 if tries > 0:
                     logger.warning(
-                        f"External Metadata Update succeeded but db update failed - reentry DB update #{tries}."
+                        f"External Metadata Update succeeded but db update failed - "
+                        f"reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
@@ -124,7 +125,7 @@ def get_external_metadata_and_send_to_loculus(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(f"External metadata update for {entry['accession']} succeeded!")
-        except:
+        except Exception:
             logger.error(f"ExternalMetadata update failed for {accession}")
             update_values = {
                 "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
@@ -136,7 +137,8 @@ def get_external_metadata_and_send_to_loculus(
                 if tries > 0:
                     # If state not correctly added retry
                     logger.warning(
-                        f"External metadata update creation failed and DB update failed - reentry DB update #{tries}."
+                        f"External metadata update creation failed and DB update failed - "
+                        f"reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
@@ -159,7 +161,8 @@ def upload_handle_errors(
     - time_threshold: (minutes)
     - slack_time_threshold: (hours)
 
-    1. Find all entries in submission_table in state HAS_ERRORS_EXT_METADATA_UPLOAD over time_threshold
+    1. Find all entries in submission_table in state HAS_ERRORS_EXT_METADATA_UPLOAD
+       over time_threshold
     2. If time since last slack_notification is over slack_time_threshold send notification
     """
     entries_with_errors = find_stuck_in_submission_db(
@@ -168,8 +171,9 @@ def upload_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
-            f" in submission_table in status HAS_ERRORS_EXT_METADATA_UPLOAD for over {time_threshold}m"
+            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} "
+            f"entries in submission_table in status HAS_ERRORS_EXT_METADATA_UPLOAD "
+            f"for over {time_threshold}"
         )
         send_slack_notification(
             error_msg,
