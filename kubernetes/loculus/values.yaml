@@ -49,6 +49,8 @@ lineageSystemDefinitions:
   pangoLineage:
     1: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    3: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
+    4: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1576,6 +1578,13 @@ defaultOrganisms:
             function: parse_and_assert_past_date
             inputs:
               date: date
+        - name: pangoLineage
+          initiallyVisible: true
+          displayName: "Pango lineage"
+          autocomplete: true
+          required: true
+          type: string
+          lineageSystem: pangoLineage
         - name: region
           type: string
           initiallyVisible: true
