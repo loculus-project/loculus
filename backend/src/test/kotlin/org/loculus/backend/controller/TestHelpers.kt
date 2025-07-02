@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 const val DEFAULT_ORGANISM = "dummyOrganism"
 const val OTHER_ORGANISM = "otherOrganism"
@@ -36,7 +35,6 @@ const val ORGANISM_WITHOUT_CONSENSUS_SEQUENCES = "dummyOrganismWithoutConsensusS
 const val DEFAULT_PIPELINE_VERSION = 1L
 const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
 
-@OptIn(ExperimentalTime::class)
 fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(months, MONTH)
 
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
