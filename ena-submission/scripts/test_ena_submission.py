@@ -166,10 +166,9 @@ class ProjectCreationTests(unittest.TestCase):
     def test_construct_project_set_object(self):
         config = mock_config()
         project_set = construct_project_set_object(TEST_GROUP, config, project_table_entry)
-        assert (
-            xmltodict.parse(dataclass_to_xml(project_set, root_name="PROJECT_SET"))
-            == xmltodict.parse(text_project_xml_request)
-        )
+        assert xmltodict.parse(
+            dataclass_to_xml(project_set, root_name="PROJECT_SET")
+        ) == xmltodict.parse(text_project_xml_request)
 
 
 class SampleCreationTests(unittest.TestCase):
