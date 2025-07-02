@@ -74,7 +74,3 @@ def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input
             time.sleep(
                 config.min_between_github_requests * 60
             )  # Sleep for x min to not overwhelm github
-
-
-if __name__ == "__main__":
-    trigger_submission_to_ena()

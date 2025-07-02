@@ -22,28 +22,12 @@ class SlackConfig:
 def slack_conn_init(
     slack_hook_default: str, slack_token_default: str, slack_channel_id_default: str
 ) -> SlackConfig:
-    slack_hook = os.getenv("SLACK_HOOK")
-    if not slack_hook:
-        slack_hook = slack_hook_default
-
-    slack_token = os.getenv("SLACK_TOKEN")
-    if not slack_token:
-        slack_token = slack_token_default
-
-    slack_channel_id = os.getenv("SLACK_CHANNEL_ID")
-    if not slack_channel_id:
-        slack_channel_id = slack_channel_id_default
-
-    last_notification_sent = None
-
-    params = {
-        "slack_hook": slack_hook,
-        "slack_token": slack_token,
-        "slack_channel_id": slack_channel_id,
-        "last_notification_sent": last_notification_sent,
-    }
-
-    return SlackConfig(**params)
+    return SlackConfig(
+        slack_hook=os.getenv("SLACK_HOOK", slack_hook_default),
+        slack_token=os.getenv("SLACK_TOKEN", slack_token_default),
+        slack_channel_id=os.getenv("SLACK_CHANNEL_ID", slack_channel_id_default),
+        last_notification_sent=None,
+    )
 
 
 def notify(config: SlackConfig, text: str):
