@@ -432,7 +432,7 @@ def simple_submission(
     _test_successful_sample_submission(db_config, config, sequences_to_upload)
     _test_successful_assembly_submission(db_config, config, sequences_to_upload)
 
-    get_external_metadata_and_send_to_loculus(db_config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_config, config)
     check_sent_to_loculus(db_config, sequences_to_upload)
 
 
@@ -493,7 +493,7 @@ class KnownBioproject(SubmissionTests):
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
@@ -550,7 +550,7 @@ class KnownBioprojectAndBioSample(SubmissionTests):
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
@@ -610,7 +610,7 @@ class SimpleRevisionTests(SubmissionTests):
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
 
         # send to loculus
-        get_external_metadata_and_send_to_loculus(self.db_config, sequences_to_upload)
+        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
         check_sent_to_loculus(self.db_config, sequences_to_upload)
 
 
