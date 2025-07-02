@@ -8,6 +8,7 @@ dependencies:
   - python =3.12
   - pip >=24
   # Extra dependencies
+  - beautifulsoup4
   - click
   - ena-webin-cli =8.2.0
   - fastapi

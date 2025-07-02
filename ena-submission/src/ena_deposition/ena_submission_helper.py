@@ -8,9 +8,10 @@ import re
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 import pytz
 import requests
@@ -19,6 +20,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from bs4 import BeautifulSoup
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 from tenacity import (
@@ -59,7 +61,7 @@ logger = logging.getLogger(__name__)
 class CreationResult:
     errors: list[str]
     warnings: list[str]
-    result: dict[str, str | list[str]] | None = None
+    result: dict[str, str | Sequence[str]] | None = None
 
 
 def recursive_defaultdict():
@@ -621,33 +623,51 @@ def get_ena_analysis_process(
     config: Config, erz_accession: str, segment_order: list[str]
 ) -> CreationResult:
     """
+    Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
     Weird name "process" instead of "processing_result" is to match the ENA API.
     This is equivalent to running:
     curl -X 'GET' \
     '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
     -H 'accept: */*' \
-    -H 'Authorization: Basic KEY'
+    -H 'Authorization: Basic USERNAME PASSWORD'
     """
-    url = f"{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100"
+    url: Final = (
+        config.ena_reports_service_url
+        + "/analysis-process/"
+        + erz_accession
+        + "?format=json&max-results=100"
+    )
 
     errors = []
     warnings: list[str] = []
     assembly_results = {"segment_order": segment_order, "erz_accession": erz_accession}
     logger.debug(f"Getting ENA analysis process for ERZ accession: {erz_accession}")
     try:
-        response = ena_http_get_with_retry(config, url)
+        response: requests.Response = ena_http_get_with_retry(config, url)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     if not response.ok:
+        req = response.request
+        headers = req.headers
+        headers["Authorization"] = "Basic <REDACTED>"  # Redact sensitive info
+        text = response.text
         error_message = (
-            f"ENA check failed with status:{response.status_code}. "
-            f"Request: {response.request}, Response: {response.text}"
+            f"Getting ENA processing results & accessions failed with status code: "
+            f"{response.status_code}. "
+            f"Request: method={req.method}, url={req.url}, headers={headers}. "
         )
-        logger.warning(error_message)
+        if response.headers.get("Content-Type", "").startswith("text/html"):
+            soup = BeautifulSoup(text, "html.parser")
+            title = (
+                soup.title.string if soup.title else soup.h1.string if soup.h1 else "No title found"
+            )
+            error_message += f"Response was HTML with title: {title}"
+        logger.error(error_message)
         errors.append(error_message)
+        logger.debug(f"First 1000 characters of ENA API response text: {response.text[:1000]}")
         return CreationResult(result=None, errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
