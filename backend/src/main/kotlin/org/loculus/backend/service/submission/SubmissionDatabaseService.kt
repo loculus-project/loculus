@@ -423,7 +423,7 @@ class SubmissionDatabaseService(
                     sequenceEntries.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .flatMap {
-                    it[SequenceEntriesPreprocessedDataTable.processedDataColumn]?.files?.values.orEmpty()
+                    it[preproData.processedDataColumn]?.files?.values.orEmpty()
                 }
                 .flatten()
                 .forEach { result.add(it.fileId) }
