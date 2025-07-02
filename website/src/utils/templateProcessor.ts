@@ -26,7 +26,7 @@ export function matchPlaceholders(template: string): PlaceholderMatch[] {
     // [type] or [type|format] or [type:segment] or [type:segment|format]
     // or [type+rich] or [type+rich|format] or [type:segment+rich] or [type:segment+rich|format]
     // or [metadata+col1,col2]
-    const placeholderRegex = /\[([\w]+)(?::([\w]+))?(?:\+([^\]|]+))?(?:\|([^\]]+))?\]/g;
+    const placeholderRegex = /\[([\w]+)(?::([\w-]+))?(?:\+([^\]|]+))?(?:\|([^\]]+))?\]/g;
     const matches = Array.from(template.matchAll(placeholderRegex));
 
     return matches.map((match) => {
