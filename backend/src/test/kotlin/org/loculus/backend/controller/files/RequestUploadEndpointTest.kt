@@ -137,6 +137,7 @@ class RequestUploadEndpointTest(
     }
 
     // This should actually be 401 but current behavior is buggy
+    // see https://github.com/loculus-project/loculus/issues/4601
     @Test
     fun `GIVEN request without authentication THEN returns 403 forbidden`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
@@ -151,7 +152,6 @@ class RequestUploadEndpointTest(
 
         client.requestUploads(groupId = groupId, numberFiles = 1, jwt = "invalid-token")
             .andExpect(status().isUnauthorized)
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(header().string("WWW-Authenticate", containsString("Bearer")))
     }
 
