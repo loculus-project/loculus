@@ -41,7 +41,7 @@ class FilesController(
 ) {
 
     @Operation(
-        summary = "Get file",
+        summary = "Download file via redirect to S3 pre-signed URL",
         description = "Returns a 307 redirect to a pre-signed S3 download URL",
     )
     @ApiResponse(
@@ -49,8 +49,9 @@ class FilesController(
         description = "Temporary redirect to S3 download URL",
         headers = [Header(name = HttpHeaders.LOCATION, description = "S3 download URL")],
     )
-    @ApiResponse(responseCode = "403", description = "Authentication needed or not authorized")
-    @ApiResponse(responseCode = "404", description = "File not found")
+    @ApiResponse(responseCode = "401", description = "Authentication needed: the file is not public")
+    @ApiResponse(responseCode = "403", description = "Not authorized to access this non-public file.")
+    @ApiResponse(responseCode = "404", description = "File or accession version does not exist.")
     @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
@@ -72,7 +73,7 @@ class FilesController(
                         .andThatUserIsAllowedToEditSequenceEntries(user)
                 }
             } else {
-                throw ForbiddenException("Authentication needed: the file is not public")
+                throw UnauthorizedException("Authentication needed: the file is not public")
             }
         }
         val presignedUrl = s3Service.createUrlToReadPrivateFile(
