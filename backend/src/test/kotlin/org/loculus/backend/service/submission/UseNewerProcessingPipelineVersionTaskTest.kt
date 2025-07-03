@@ -121,13 +121,21 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
+
+        var existingPipelineVersions = SequenceEntriesPreprocessedDataTable
+            .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+            .distinct()
+            .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
+
+        assertThat(existingPipelineVersions, `is`(listOf(1L, 2L)))
+
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
         useNewerProcessingPipelineVersionTask.task()
 
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
-        val existingPipelineVersions = SequenceEntriesPreprocessedDataTable
+        existingPipelineVersions = SequenceEntriesPreprocessedDataTable
             .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
             .distinct()
             .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
