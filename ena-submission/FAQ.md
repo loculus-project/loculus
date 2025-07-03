@@ -12,14 +12,10 @@ Not mutating variables is a good practice, it makes reasoning about the code eas
 
 ## Integration tests
 
-### How is the code organized?
-
-Each class that inherits from `unittest.TestCase` is a separate test suite: `SubmissionTests` tests happy-path of a single submission.
-
 ### How to run a single test?
 
 ```sh
-pytest scripts/test_ena_submission_integration.py::SubmissionTests::test_submit -v
+pytest scripts/test_ena_submission_integration.py::TestSimpleSubmission::test_submit
 ```
 
 ### How do the mocks work?
@@ -66,6 +62,7 @@ When the patched methods are called in the code under test, they will use the mo
 All tests can be run normally with `python3 test_file.py` or with `pytest`.
 
 Pytest automatically discovers and runs tests that follow a naming convention:
+
 - Files named: `test_*.py` or `*_test.py`
 - Functions starting with: `test_`
 - Classes starting with: `Test` (but not classes with `__init__`)
