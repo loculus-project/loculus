@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import Field, dataclass, is_dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Final, Literal, Protocol, cast
+from typing import Any, ClassVar, Final, Literal, Protocol
 
 import pytz
 import requests
