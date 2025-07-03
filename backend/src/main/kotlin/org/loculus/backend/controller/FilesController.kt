@@ -91,26 +91,11 @@ class FilesController(
             "The URLs should be used to upload the files. Afterwards, the file IDs can be used in the " +
             "`fileMapping` in the /submit endpoint.",
     )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Successfully generated pre-signed upload URLs",
-    )
-    @ApiResponse(
-        responseCode = "400",
-        description = "Invalid request parameters (e.g., invalid groupId or numberFiles)",
-    )
-    @ApiResponse(
-        responseCode = "401",
-        description = "Authentication required",
-    )
-    @ApiResponse(
-        responseCode = "403",
-        description = "User is not a member of the specified group",
-    )
-    @ApiResponse(
-        responseCode = "404",
-        description = "Group does not exist",
-    )
+    @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
+    @ApiResponse(responseCode = "400", description = "Invalid request parameters")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
+    @ApiResponse(responseCode = "404", description = "Group does not exist")
     @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam
