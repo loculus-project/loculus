@@ -19,10 +19,6 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
 
     @Transactional(readOnly = true)
     fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
-        if (authenticatedUser.isSuperUser) {
-            return
-        }
-
         val existingGroups = GroupsTable
             .selectAll()
             .where { GroupsTable.id inList groupIds }
@@ -33,6 +29,10 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
 
         if (nonExistingGroups.isNotEmpty()) {
             throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do not exist.")
+        }
+
+        if (authenticatedUser.isSuperUser) {
+            return
         }
 
         val username = authenticatedUser.username
