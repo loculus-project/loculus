@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.net.URI
 
 private val log = KotlinLogging.logger {}
 
@@ -45,21 +46,19 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    @ExceptionHandler(DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi::class)
-    @ApiResponse(
-        responseCode = "401",
-        headers = [
-            Header(
-                name = "WWW-Authenticate",
-                description = "Error information",
-                schema = Schema(type = "string"),
-            ),
-        ],
-    )
-    fun handleUnauthorizedException(e: Exception): ResponseEntity<Void> {
-        log.info { "Caught ${e.javaClass}: ${e.message}" }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+   
+    @ExceptionHandler(UnauthorizedException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun handleUnauthorizedException(e: UnauthorizedException): ResponseEntity<ProblemDetail> {
+        log.info { "Caught unauthorized exception: ${e.message}" }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .body(
+                ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.message ?: "Unauthorized")
+                    .apply {
+                        type = URI.create("about:blank")
+                    }
+            )
     }
 
     @ExceptionHandler(
@@ -104,10 +103,14 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleForbiddenException(e: ForbiddenException): ResponseEntity<ProblemDetail> {
         log.info { "Caught forbidden exception: ${e.message}" }
 
-        return responseEntity(
-            HttpStatus.FORBIDDEN,
-            e.message,
-        )
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .body(
+                ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.message ?: "Forbidden")
+                    .apply {
+                        type = URI.create("about:blank")
+                    }
+            )
     }
 
     private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> =
@@ -152,10 +155,12 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 }
 
 class BadRequestException(message: String, override val cause: Throwable? = null) : RuntimeException(message)
+/** User is not authenticated or the authentication token is invalid */
+class UnauthorizedException(message: String) : RuntimeException(message)
+/** User is authenticated but not authorized to perform the requested action */
 class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
 class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
 class ConflictException(message: String) : RuntimeException(message)
-class DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi : RuntimeException()
