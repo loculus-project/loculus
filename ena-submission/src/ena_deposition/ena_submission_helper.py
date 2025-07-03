@@ -80,6 +80,10 @@ def assert_dataclass(obj: Any) -> None:
     if not is_dataclass(obj):
         msg = f"Expected a dataclass instance, got {type(obj).__name__}: {obj}."
         raise TypeError(msg)
+    if isinstance(obj, type):
+        # It's a dataclass class, not an instance - handle this case
+        msg = f"Expected dataclass instance, got dataclass class: {obj}"
+        raise TypeError(msg)
 
 
 def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
@@ -99,15 +103,16 @@ def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
             res = []
             for item in value:
                 assert_dataclass(item)
-                res.append(dataclass_to_dict(cast(DataclassProtocol, item)))
+                res.append(dataclass_to_dict(item))
             result[field_name.upper()] = res
         elif isinstance(value, XmlAttribute):
             attribute_field = "@" + field_name
             result[attribute_field] = value
         elif isinstance(value, (str, int, float, bool)):
             result[field_name.upper()] = value
-        elif is_dataclass(value):
-            result[field_name.upper()] = dataclass_to_dict(cast(DataclassProtocol, value))
+        elif is_dataclass(value) and not isinstance(value, type):
+            assert_dataclass(value)
+            result[field_name.upper()] = dataclass_to_dict(value)
         else:
             msg = (
                 f"Unsupported type {type(value)} for field {field_name} in dataclass "
