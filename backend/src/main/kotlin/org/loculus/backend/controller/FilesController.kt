@@ -2,6 +2,8 @@ package org.loculus.backend.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.headers.Header
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
@@ -15,6 +17,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -37,6 +40,17 @@ class FilesController(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
 ) {
 
+    @Operation(
+        summary = "Get file",
+        description = "Returns a 307 redirect to a pre-signed S3 download URL",
+    )
+    @ApiResponse(
+        responseCode = "307",
+        description = "Temporary redirect to S3 download URL",
+        headers = [Header(name = HttpHeaders.LOCATION, description = "S3 download URL")],
+    )
+    @ApiResponse(responseCode = "403", description = "Authentication needed or not authorized")
+    @ApiResponse(responseCode = "404", description = "File not found")
     @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
