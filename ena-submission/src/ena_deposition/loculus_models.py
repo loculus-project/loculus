@@ -2,6 +2,7 @@
 #   filename:  openapi.json
 #   timestamp: 2025-07-02T19:27:09+00:00
 
+# Delay annotation evaluation to avoid circular imports
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
