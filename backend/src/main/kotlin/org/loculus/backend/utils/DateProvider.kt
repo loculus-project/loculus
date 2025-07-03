@@ -1,9 +1,9 @@
 package org.loculus.backend.utils
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.springframework.stereotype.Component
+import kotlin.time.Clock
 
 @Component
 class DateProvider {

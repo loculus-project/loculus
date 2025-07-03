@@ -3,7 +3,6 @@ package org.loculus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -28,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import kotlin.time.Clock
 
 const val DEFAULT_ORGANISM = "dummyOrganism"
 const val OTHER_ORGANISM = "otherOrganism"

@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.debug
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -35,6 +34,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import kotlin.time.Clock
 
 @EndpointTest(properties = ["${BackendSpringProperty.DEBUG_MODE}=true"])
 class DeleteAllSequenceDataEndpointTest(
