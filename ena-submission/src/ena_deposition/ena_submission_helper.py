@@ -124,7 +124,6 @@ def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
 
 
 def dataclass_to_xml(dataclass_instance: DataclassProtocol, root_name="root") -> str:
-    assert_dataclass(dataclass_instance)
     dataclass_dict = dataclass_to_dict(dataclass_instance)
     return xmltodict.unparse({root_name: dataclass_dict}, pretty=True)
 
@@ -577,7 +576,7 @@ def post_webin_cli(
         f"Posting manifest {manifest_filename} to ENA Webin CLI with test={test} and "
         f"center_name={center_name}"
     )
-    subprocess_args = [
+    subprocess_args_with_emtpy_strings: Final[list[str]] = [
         "ena-webin-cli",
         f"-username={config.ena_submission_username}",
         f"-centername='{center_name}'" if center_name else "",
@@ -588,11 +587,13 @@ def post_webin_cli(
         "-test" if test else "",
         f"-password='{config.ena_submission_password}'",
     ]
-    sanitized_args = [
+    # Remove empty strings from the list
+    subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
+    redacted_args = [
         arg if not arg.startswith("-password") else "-password=<REDACTED>"
         for arg in subprocess_args
     ]
-    logger.debug(f"Invoking webin-cli with args: {sanitized_args}")  # -1 to remove password
+    logger.debug(f"Invoking webin-cli with args: {redacted_args}")
     # config.ena_submission_password and config.ena_submission_username can be used for injection
     # should sanitize these values before passing to subprocess
 
