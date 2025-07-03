@@ -106,4 +106,32 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         assertThat(rowCount, `is`(rowCountAfterV2))
     }
+
+    fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        useNewerProcessingPipelineVersionTask.task()
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        useNewerProcessingPipelineVersionTask.task()
+        convenienceClient.extractUnprocessedData(pipelineVersion = 3)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
+        useNewerProcessingPipelineVersionTask.task()
+
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
+
+        val existingPipelineVersions = SequenceEntriesPreprocessedDataTable
+            .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+            .distinct()
+            .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
+
+        assertThat(existingPipelineVersions, `is`(listOf(2L, 3L)))
+    }
 }
