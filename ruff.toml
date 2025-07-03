@@ -28,5 +28,12 @@ extend-select = [
     "UP",
     "W",
 ]
-ignore = ["ISC001"]
+ignore = [
+    "C901", # function is too complex
+    "ISC001",
+    "PLR0913", # Too many arguments
+    "PLR0914", # Too many local variables
+    "PLR0917", # Too many positional arguments
+    "PLR6301", # Method could be a function, class method, or static method
+]
 preview = true

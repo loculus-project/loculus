@@ -46,7 +46,7 @@ def get_jwt(config: Config) -> str:
     return jwt_keycloak["access_token"]
 
 
-def make_request(  # noqa: PLR0913, PLR0917
+def make_request(
     method: HTTPMethod,
     url: str,
     config: Config,

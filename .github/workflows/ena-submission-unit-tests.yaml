@@ -23,6 +23,15 @@ jobs:
         with:
           args: "format --check --diff"
           src: "ena-submission"
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"
+          src: "ena-submission"
   unitTests:
     name: Unit Tests
     runs-on: ubuntu-latest
