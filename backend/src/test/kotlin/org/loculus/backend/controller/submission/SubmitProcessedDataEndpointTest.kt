@@ -718,6 +718,9 @@ class SubmitProcessedDataEndpointTest(
             pipelineVersion = 1,
         ).andExpect(status().isNoContent)
 
+        // Step 4: approve entry
+        convenienceClient.approveProcessedSequenceEntries(listOf(AccessionVersion(accession, 1)))
+
         // Step 3: extract and submit processed entry with higher pipeline version and new file
         val fileIdAndUrlV2 = filesClient.requestUploads(
             groupId = groupId,
@@ -733,9 +736,6 @@ class SubmitProcessedDataEndpointTest(
             ),
             pipelineVersion = 2,
         ).andExpect(status().isNoContent)
-
-        // Step 4: approve entry
-        convenienceClient.approveProcessedSequenceEntries(listOf(AccessionVersion(accession, 1)))
 
         // Step 5: run task to update pipeline version
         useNewerProcessingPipelineVersionTask.task()
