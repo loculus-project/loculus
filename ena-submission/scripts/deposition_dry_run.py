@@ -17,7 +17,7 @@ from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
-from ena_deposition.loculus_models import Group
+from ena_deposition.loculus_models import Address, Group
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -91,7 +91,20 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = Group._create_example_for_tests()
+    group_info = Group(
+        groupId=123,
+        groupName="GROUP_NAME",
+        institution=center_name,
+        contactEmail="someemail@example.com",
+        address=Address(
+            line1="ADDRESS_LINE_1",
+            line2="ADDRESS_LINE_2",
+            city="CITY",
+            state="STATE",
+            postalCode="POSTAL_CODE",
+            country="COUNTRY",
+        ),
+    )
 
     if mode == "project":
         project_set = construct_project_set_object(group_info, config, entry)
