@@ -86,6 +86,7 @@ class FilesController(
     }
 
     @Operation(
+        summary = "Request S3 pre-signed URLs for file uploads",
         description =
         "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
             "The URLs should be used to upload the files. Afterwards, the file IDs can be used in the " +
