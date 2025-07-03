@@ -34,7 +34,7 @@ class DataUseTermsControllerTest(
 
         client.getDataUseTerms(nonExistingAccession)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("Accession $nonExistingAccession not found")),
             )
@@ -95,7 +95,7 @@ class DataUseTermsControllerTest(
     fun `GIVEN non-existing accessions WHEN setting new data use terms THEN return unprocessable entity`() {
         client.changeDataUseTerms(DEFAULT_DATA_USE_CHANGE_REQUEST)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("Accessions 1, 2 do not exist")),
             )
@@ -139,7 +139,7 @@ class DataUseTermsControllerTest(
             jwt = generateJwtFor("user that is not a member of the group"),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail", containsString("not a member of group(s)")))
     }
 
@@ -200,7 +200,7 @@ class DataUseTermsControllerTest(
                 setupDataUseTerms = DataUseTerms.Open,
                 newDataUseTerms = DataUseTerms.Open,
                 expectedStatus = status().isUnprocessableEntity,
-                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "The data use terms have already been set to 'Open'",
             ),
             DataUseTermsTestCase(
@@ -214,14 +214,14 @@ class DataUseTermsControllerTest(
                 setupDataUseTerms = DataUseTerms.Open,
                 newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                 expectedStatus = status().isUnprocessableEntity,
-                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "Cannot change data use terms from OPEN to RESTRICTED.",
             ),
             DataUseTermsTestCase(
                 setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                 newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(-1)),
                 expectedStatus = status().isBadRequest,
-                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "The date 'restrictedUntil' must be in the future, " +
                     "up to a maximum of 1 year from now.",
             ),
@@ -229,7 +229,7 @@ class DataUseTermsControllerTest(
                 setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                 newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
                 expectedStatus = status().isUnprocessableEntity,
-                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                 expectedDetailContains = "Cannot extend restricted data use period. " +
                     "Please choose a date before ${dateMonthsFromNow(6)}.",
             ),

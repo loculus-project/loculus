@@ -39,7 +39,7 @@ class GetFilesEndpointTest(
 
         filesClient.getFile(data.accession, data.version, "myFileCategory", "hello.txt")
             .andExpect(status().isUnauthorized())
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",

@@ -49,6 +49,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         log.info { "Caught unauthorized exception: ${e.message}" }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(
                 ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.message ?: "Unauthorized")
                     .apply {
@@ -101,6 +102,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(
                 ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.message ?: "Forbidden")
                     .apply {
@@ -118,7 +120,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         detail: String?,
     ): ResponseEntity<ProblemDetail> = ResponseEntity
         .status(httpStatus)
-        .contentType(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_PROBLEM_JSON)
         .body(
             ProblemDetail.forStatus(httpStatus).also {
                 it.title = title

@@ -63,7 +63,7 @@ class GetDataToEditEndpointTest(
 
         client.getSequenceEntryToEdit(nonExistentAccession, 1)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions $nonExistentAccession.1 do not exist",
@@ -83,7 +83,7 @@ class GetDataToEditEndpointTest(
             .andExpect(status().isOk)
         client.getSequenceEntryToEdit(firstAccession, 1, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     containsString(
@@ -101,7 +101,7 @@ class GetDataToEditEndpointTest(
 
         client.getSequenceEntryToEdit("1", nonExistentAccessionVersion)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions 1.$nonExistentAccessionVersion do not exist",
@@ -120,7 +120,7 @@ class GetDataToEditEndpointTest(
             jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )

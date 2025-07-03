@@ -68,7 +68,7 @@ class RevokeEndpointTest(
         val nonExistingAccession = "123"
         client.revokeSequenceEntries(listOf(nonExistingAccession))
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accessions $nonExistingAccession do not exist",
@@ -83,7 +83,7 @@ class RevokeEndpointTest(
 
         client.revokeSequenceEntries(listOf(accessions.first()), organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     containsString("accession versions are not of organism $OTHER_ORGANISM:"),
@@ -98,7 +98,7 @@ class RevokeEndpointTest(
         val notSubmitter = "nonExistingUser"
         client.revokeSequenceEntries(accessions, jwt = generateJwtFor(notSubmitter))
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )
@@ -133,7 +133,7 @@ class RevokeEndpointTest(
 
         client.revokeSequenceEntries(accessions)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",

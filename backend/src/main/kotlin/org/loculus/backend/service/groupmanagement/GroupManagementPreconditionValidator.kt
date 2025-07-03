@@ -39,7 +39,6 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
     @Transactional(readOnly = true)
     fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
         validateGroupsExist(groupIds)
-
         if (authenticatedUser.isSuperUser) {
             return
         }
