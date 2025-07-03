@@ -117,6 +117,13 @@ def submit_external_metadata(
 def get_group_info(config: Config, group_id: int) -> Group:
     """Get group info given id"""
 
+    try:
+        group_id = int(group_id)
+    except ValueError as e:
+        msg = f"Invalid group_id: {group_id}. It must be an integer."
+        logger.error(msg)
+        raise ValueError(msg) from e
+
     url = f"{backend_url(config)}/groups/{group_id}"
 
     headers = {"Content-Type": "application/json"}

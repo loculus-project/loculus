@@ -322,7 +322,7 @@ def project_table_create(
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         try:
-            group_info = call_loculus.get_group_info(config, int(row["group_id"]))
+            group_info = call_loculus.get_group_info(config, row["group_id"])
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
             continue
