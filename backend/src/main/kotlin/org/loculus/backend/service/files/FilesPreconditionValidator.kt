@@ -15,6 +15,7 @@ class FilesPreconditionValidator(
      */
     @Transactional(readOnly = true)
     fun validateUserIsAllowedToUploadFileForGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
+        groupManagementPreconditionValidator.validateGroupExists(groupId)
         if (authenticatedUser.isPreprocessingPipeline) {
             return
         }
