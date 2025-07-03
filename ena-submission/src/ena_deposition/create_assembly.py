@@ -530,9 +530,8 @@ def assembly_table_create(
 
         # Actual webin-cli command is run here
         assembly_creation_results: CreationResult = create_ena_assembly(
-            config,
-            manifest_file,
-            accession=seq_key["accession"],
+            config=config,
+            manifest_filename=manifest_file,
             center_name=center_name,
             test=test,
         )

@@ -599,7 +599,7 @@ def post_webin_cli(
 
 
 def create_ena_assembly(
-    config: Config, manifest_filename: str, accession: str = "", center_name=None, test=True
+    config: Config, manifest_filename: str, center_name=None, test=True
 ) -> CreationResult:
     """
     This is equivalent to running:
