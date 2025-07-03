@@ -35,5 +35,6 @@ LAPIS <-right- SILO : sequence query\nresults
 Website -> S3: upload\nextra files
 Backend --> S3: set files\nto public
 S3 -right-> Preprocessing: provide user submitted files
+Preprocessing -left-> S3: upload processed files
 
 @enduml
