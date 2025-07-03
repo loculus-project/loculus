@@ -590,7 +590,10 @@ def post_webin_cli(
     logger.debug(f"Invoking webin-cli with args: {sanitized_args}")  # -1 to remove password
     # config.ena_submission_password and config.ena_submission_username can be used for injection
     # should sanitize these values before passing to subprocess
-    return subprocess.run(  # noqa: S603
+
+    
+
+    return subprocess.run(  # noqa: S603, PLR9013
         subprocess_args,
         capture_output=True,
         text=True,
