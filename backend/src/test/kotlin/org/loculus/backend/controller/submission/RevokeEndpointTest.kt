@@ -98,7 +98,7 @@ class RevokeEndpointTest(
         val notSubmitter = "nonExistingUser"
         client.revokeSequenceEntries(accessions, jwt = generateJwtFor(notSubmitter))
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )

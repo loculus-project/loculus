@@ -274,7 +274,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             jwt = jwtForDefaultUser,
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
@@ -290,7 +290,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
@@ -397,7 +397,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME)
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) " +

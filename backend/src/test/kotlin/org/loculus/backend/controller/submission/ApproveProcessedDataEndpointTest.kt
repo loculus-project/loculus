@@ -110,7 +110,7 @@ class ApproveProcessedDataEndpointTest(
 
         client.approveProcessedSequenceEntries(scope = ALL, accessionVersions, jwt = generateJwtFor("other user"))
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "$.detail",

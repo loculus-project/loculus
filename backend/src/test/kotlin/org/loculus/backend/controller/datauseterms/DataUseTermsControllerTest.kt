@@ -139,7 +139,7 @@ class DataUseTermsControllerTest(
             jwt = generateJwtFor("user that is not a member of the group"),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(jsonPath("\$.detail", containsString("not a member of group(s)")))
     }
 

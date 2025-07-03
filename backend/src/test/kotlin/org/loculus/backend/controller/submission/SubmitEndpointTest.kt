@@ -31,6 +31,7 @@ import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
@@ -90,7 +91,7 @@ class SubmitEndpointTest(
             jwt = generateJwtFor(otherUser),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",

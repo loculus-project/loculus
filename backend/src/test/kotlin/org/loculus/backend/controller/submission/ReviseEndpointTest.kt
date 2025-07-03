@@ -37,6 +37,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
@@ -180,7 +181,7 @@ class ReviseEndpointTest(
             jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
