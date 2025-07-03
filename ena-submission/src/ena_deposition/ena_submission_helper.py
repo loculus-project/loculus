@@ -595,13 +595,15 @@ def post_webin_cli(
     ]
     logger.debug(f"Invoking webin-cli with args: {redacted_args}")
     # config.ena_submission_password and config.ena_submission_username can be used for injection
-    # should sanitize these values before passing to subprocess
+    # however we don't spawn a shell (shell=False) and trust webin-cli to handle the arguments 
+    # safely.
 
     return subprocess.run(  # noqa: S603
         subprocess_args,
         capture_output=True,
         text=True,
         check=False,
+        shell=False,
     )
 
 
