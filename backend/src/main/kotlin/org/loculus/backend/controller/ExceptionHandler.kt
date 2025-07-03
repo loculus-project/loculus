@@ -1,8 +1,5 @@
 package org.loculus.backend.controller
 
-import io.swagger.v3.oas.annotations.headers.Header
-import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
 import org.springframework.http.HttpHeaders
@@ -46,7 +43,6 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-   
     @ExceptionHandler(UnauthorizedException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun handleUnauthorizedException(e: UnauthorizedException): ResponseEntity<ProblemDetail> {
@@ -57,7 +53,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
                 ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.message ?: "Unauthorized")
                     .apply {
                         type = URI.create("about:blank")
-                    }
+                    },
             )
     }
 
@@ -109,7 +105,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
                 ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.message ?: "Forbidden")
                     .apply {
                         type = URI.create("about:blank")
-                    }
+                    },
             )
     }
 
@@ -155,8 +151,10 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 }
 
 class BadRequestException(message: String, override val cause: Throwable? = null) : RuntimeException(message)
+
 /** User is not authenticated or the authentication token is invalid */
 class UnauthorizedException(message: String) : RuntimeException(message)
+
 /** User is authenticated but not authorized to perform the requested action */
 class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
