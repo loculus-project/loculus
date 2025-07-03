@@ -53,3 +53,9 @@ class ApiTest(unittest.TestCase):
             "insdcAccessions": ["INS001", "INS002", "INS003"],
             "biosampleAccessions": list(mock_biosamples.values()),
         }
+
+
+if __name__ == "__main__":
+    import pytest
+
+    pytest.main([__file__])

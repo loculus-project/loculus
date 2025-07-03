@@ -667,3 +667,9 @@ class TestRevisionWithManifestChangeTests(TestSubmission):
         _test_assembly_submission_errored(
             self.db_config, self.config, self.slack_config, sequences_to_upload, mock_notify
         )
+
+
+if __name__ == "__main__":
+    import pytest
+
+    pytest.main([__file__])

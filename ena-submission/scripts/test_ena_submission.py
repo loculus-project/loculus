@@ -390,3 +390,9 @@ class AssemblyCreationTests(unittest.TestCase):
             "segment_order": ["main"],
         }
         self.assertEqual(response.result, desired_response)
+
+
+if __name__ == "__main__":
+    import pytest
+
+    pytest.main([__file__])
