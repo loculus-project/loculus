@@ -12,7 +12,7 @@ To enable this feature you need to configure an S3 bucket for Loculus to use, an
 Extra files submitted alongside sequence and metadata are treated differently. Loculus uses S3 - a generic object storage service - to store these files. Files are uploaded directly to S3 using presigned URLs.
 
 Unlike files that contain sequence data, the file sharing files are not inherently coupled to any particular sequence.
-Files are uploaded first, and then associated to a sequence entry, at the time of uploading, only an owning group needs to be specified. Because of this, the same file can also be attached to multiple sequence entries as well.
+Files are uploaded first, and then associated to a sequence entry; at the time of uploading, only an owning group needs to be specified. Because of this, the same file can also be attached to multiple sequence entries as well.
 
 The files will not be publicly accessible, until an associated sequence entry is released. Loculus uses the file access mechanisms built into S3: Loculus tags files with `public=true` if they should be public, and the S3 is configured with a policy to make files with this tag publicly accessible (this configuration needs to be applied by the S3 administrator).
 
