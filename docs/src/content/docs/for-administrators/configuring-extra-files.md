@@ -20,7 +20,7 @@ When configuring this feature for an organism, you can configure file categories
 
 ## Configuring an S3 bucket
 
-You neeed admin access to an S3 bucket, and have the credentials at hand.
+You need admin access to an S3 bucket, and have the credentials at hand.
 
 Enable S3 and configure the location of the bucket:
 
