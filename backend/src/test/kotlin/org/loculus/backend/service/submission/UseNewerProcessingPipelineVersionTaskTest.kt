@@ -111,16 +111,14 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
     @Test
     fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
+        // ... but only for that organism!
+
+        // create data for OTHER_ORGANISM - so we can check later that it doesn't get deleted
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = OTHER_ORGANISM,
         )
 
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
-
-        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
-        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
-
-        val processedData = accessionVersions.map {
+        val processedData = convenienceClient.submitDefaultFiles().submissionIdMappings.map {
             PreparedProcessedData.successfullyProcessed(it.accession, it.version)
         }
 
@@ -133,6 +131,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
 
         transaction {
+            // check that nothing got deleted yet
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(1L, 2L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
@@ -144,6 +143,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         transaction {
+            // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
