@@ -143,7 +143,7 @@ def run_sort(
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
@@ -229,7 +229,7 @@ def run_sort(
                     message=(
                         f"This sequence best matches {row['dataset']}, "
                         "a different organism than the one you are submitting to: "
-                        f"{config.organism}. It is therefore not possible to release. "
+                        f"{segment}. It is therefore not possible to release. "
                         "Contact the administrator if you think this message is an error."
                     ),
                 )
