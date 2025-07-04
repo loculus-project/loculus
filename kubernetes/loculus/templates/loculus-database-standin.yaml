@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: loculus-database
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-options: Replace=false
 spec:
   replicas: 1
   selector:
