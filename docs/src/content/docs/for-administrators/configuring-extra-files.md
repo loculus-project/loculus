@@ -14,7 +14,7 @@ Extra files submitted alongside sequence and metadata are treated differently. L
 Unlike files that contain sequence data, the file sharing files are not inherently coupled to any particular sequence.
 Files are uploaded first, and then associated to a sequence entry; at the time of uploading, only an owning group needs to be specified. Because of this, the same file can also be attached to multiple sequence entries as well.
 
-The files will not be publicly accessible, until an associated sequence entry is released. Loculus uses the file access mechanisms built into S3: Loculus tags files with `public=true` if they should be public, and the S3 is configured with a policy to make files with this tag publicly accessible (this configuration needs to be applied by the S3 administrator).
+The files will not be publicly accessible, until an associated sequence entry is released.
 
 When configuring this feature for an organism, you can configure file categories for which users can submit files, as well as file "output" categories, which will then be visible alongside other sequence data and metadata in the sequence detail view. You can also configure only submit files (which can then be used by the preprocessing pipeline in some way) or only "output" files, which the preprocessing pipeline can generate on its own. The preprocessing pipeline gets access to submitted files before they are released, and the pipeline can also upload its own new files.
 
@@ -53,6 +53,8 @@ secrets:
 You can also use the `raw` secret type, but be aware that keeping credentials in plain text in your configuration file can be a security hazard.
 :::
 
+## Set S3 policy
+
 The backend makes files in the bucket public, by tagging them with `public=true`.
 For this to work, you need to configure a bucket policy like this:
 
@@ -76,6 +78,10 @@ For this to work, you need to configure a bucket policy like this:
 ```
 
 Consult the documentation of your particular S3 provider on how to configure bucket policies.
+
+:::note
+This step is only required if you wish to be able to have the files be set to public on your S3 instance, accessible without the need to request pre-signed URLs from the backend.
+:::
 
 ## Configuring file submission
 

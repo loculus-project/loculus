@@ -65,11 +65,16 @@ class FilesController(
         @PathVariable fileName: String,
     ): ResponseEntity<Void> {
         val accessionVersion = AccessionVersion(accession, version)
-        val fileId = submissionDatabaseService.getFileId(accessionVersion, fileCategory, fileName)
+        val fileIdAndReleasedAt = submissionDatabaseService.getFileIdAndReleasedAt(
+            accessionVersion,
+            fileCategory,
+            fileName,
+        )
+        val fileId = fileIdAndReleasedAt?.fileId
+        val isPublic = fileIdAndReleasedAt?.releasedAt != null
         if (fileId == null) {
             throw NotFoundException("File not found")
         }
-        val isPublic = filesDatabaseService.isFilePublic(fileId)!!
         if (!isPublic) {
             if (user is AuthenticatedUser) {
                 accessionPreconditionValidator.validate {

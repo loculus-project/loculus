@@ -23,43 +23,33 @@ The preprocessing pipeline gets access to the files as well, when processing seq
 
 The preprocessing pipeline has extra permissions and can also upload new files on behalf of the submitting group.
 
-## Releasing
+## Accessing a processed file
 
-When a sequence entry is released, the associated files are made public as well.
-This is done by setting a `released_at` timestamp in the `files` table, and making the file object in S3 public.
-The bucket is configured to allow public access for objects which are tagged with `public=true`,
+To access a processed file, the `/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint can be called. If the sequence entry is released, the file is public and can be accessed without authentication. If the sequence entry is not released, it can only be accessed by authenticated and authorized users.
+
+If the file exists and may be accessed by the user, the endpoint will return a `307 redirect`-response, redirecting a user to a pre-signed URL to receive the file.
+
+## S3 file visibility
+
+By default, the files on S3 are private. When a sequence entry is released, the associated files are made public in S3 as well. The bucket is configured to allow public access for objects which are tagged with `public=true`,
 so to make a file public, the backend sets this tag on the object in S3.
 
 ### Releasing and pipeline upgrades
 
-There are currently two mechanisms to handle files of new pipeline versions.
+There are currently two mechanisms to handle files of new pipeline versions:
 
-When files are uploaded for entries that are already public, the files are [published right away](https://github.com/loculus-project/loculus/pull/4515).
-
-When files are uploaded for entries that are not yet published, but are also uploaded with a pipeline version greater than the current one, the backend will [_also_ publish these already](https://github.com/loculus-project/loculus/pull/4581). This is to prevent the files from being private once the current pipeline version is bumped. Why not publish these files during the pipeline version bump? The database is not locked during the bump, and so a file that is uploaded with the n+1 pipeline version could be missed.
+- When files are uploaded for entries that are already public, the files are [published right away](https://github.com/loculus-project/loculus/pull/4515).
+- When files are uploaded for entries that are not yet published, but are also uploaded with a pipeline version greater than the current one, the backend will [_also_ publish these already](https://github.com/loculus-project/loculus/pull/4581). This is to prevent the files from being private once the current pipeline version is bumped. Why not publish these files during the pipeline version bump? The database is not locked during the bump, and so a file that is uploaded with the n+1 pipeline version could be missed.
 
 ## The files table
 
-The database has a table to keep track of the files:
-
-```
-CREATE TABLE public.files (
-    id uuid NOT NULL,
-    upload_requested_at timestamp without time zone NOT NULL,
-    uploader text NOT NULL,
-    group_id integer NOT NULL,
-    released_at timestamp without time zone,
-    size bigint
-);
-```
+The database has a table to keep track of the files.
 
 Entries in this table are created by the backend when the `request-uploads` endpoint is called.
 The request records who made the request, for which group and when.
 Note that the file does not yet exist in S3, the user still needs to upload it.
 
 When a file ID is first submitted together with a sequence entry, the backend checks the file size and sets the `size` field; this is then also the marker used to ensure that a file has actually been uploaded (otherwise the column is `null`).
-
-On release, the release time is also marked in the database.
 
 This table can also be used to find "orphaned" files, i.e. files that have been requested and uploaded,
 but haven't been referenced in any sequence submission.

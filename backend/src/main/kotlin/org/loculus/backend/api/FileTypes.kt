@@ -5,6 +5,7 @@ package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.service.files.FileId
 
 data class FileIdAndWriteUrl(
@@ -40,3 +41,5 @@ data class FileIdAndNameAndReadUrl(val fileId: FileId, val name: String, @JsonPr
 fun FileIdAndNameAndReadUrl.toFileIdAndName(): FileIdAndName = FileIdAndName(fileId, name)
 
 data class FileIdAndEtags(val fileId: FileId, val etags: List<String>)
+
+data class FileIdAndMaybeReleasedAt(val fileId: FileId, val releasedAt: LocalDateTime?)
