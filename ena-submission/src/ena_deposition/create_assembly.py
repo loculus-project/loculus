@@ -114,7 +114,7 @@ def get_address(config: Config, entry: dict[str, Any]) -> str:
             address.state,
             address.country,
         ]
-        address_string = ", ".join([x for x in address_list if x is not None])
+        address_string = ", ".join([x for x in address_list if x])
         logger.debug("Created address from group_info")
     return address_string
 
