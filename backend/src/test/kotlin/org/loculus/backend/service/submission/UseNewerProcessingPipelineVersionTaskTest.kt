@@ -107,6 +107,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(rowCount, `is`(rowCountAfterV2))
     }
 
+    @Test
     fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
         val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
@@ -122,12 +123,9 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
 
-        var existingPipelineVersions = SequenceEntriesPreprocessedDataTable
-            .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
-            .distinct()
-            .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
-
-        assertThat(existingPipelineVersions, `is`(listOf(1L, 2L)))
+        transaction {
+            assertThat(getExistingPipelineVersions(), `is`(listOf(1L, 2L)))
+        }
 
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
@@ -135,11 +133,14 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
-        existingPipelineVersions = SequenceEntriesPreprocessedDataTable
-            .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
-            .distinct()
-            .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
-
-        assertThat(existingPipelineVersions, `is`(listOf(2L, 3L)))
+        transaction {
+            assertThat(getExistingPipelineVersions(), `is`(listOf(2L, 3L)))
+        }
     }
+
+    private fun getExistingPipelineVersions() = SequenceEntriesPreprocessedDataTable
+        .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
 }
