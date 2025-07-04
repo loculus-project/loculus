@@ -220,37 +220,23 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
         if len(corresponding_sample) == 1:
             if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTED_SAMPLE
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-            continue
-
-        # If not: create sample_entry, change status to SUBMITTING_SAMPLE
-        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-            set_sample_table_entry(db_config, row, seq_key, config)
-            continue
-        sample_table_entry = SampleTableEntry(**seq_key)
-        succeeded = add_to_sample_table(db_config, sample_table_entry)
-        if succeeded:
-            update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
+                status_all = StatusAll.SUBMITTING_SAMPLE
+        else:
+            # If not: create sample_entry, change status to SUBMITTING_SAMPLE
+            if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
+                set_sample_table_entry(db_config, row, seq_key, config)
+                continue
+            if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
+                continue
+            status_all = StatusAll.SUBMITTING_SAMPLE
+        update_db_where_conditions(
+            db_config,
+            table_name=TableName.SUBMISSION_TABLE,
+            conditions=seq_key,
+            update_values={"status_all": status_all},
+        )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
