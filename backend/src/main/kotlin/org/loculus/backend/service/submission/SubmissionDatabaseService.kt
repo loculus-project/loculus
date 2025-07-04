@@ -11,6 +11,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -1272,13 +1273,30 @@ class SubmissionDatabaseService(
         }
     }
 
+    /**
+     * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
+     * the given organism and are older than the earliest preprocessing pipeline version to keep.
+     */
     fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
-        val numberDeleted = SequenceEntriesPreprocessedDataTable.deleteWhere {
-            pipelineVersionColumn less earliestVersionToKeep
-        }
-        log.info {
-            "Cleaned up $numberDeleted sequences for organism $organism " +
-                "that are older than preprocessing version $earliestVersionToKeep."
+        val sql = """
+        DELETE FROM sequence_entries_preprocessed_data
+        WHERE pipeline_version < ? AND 
+        (accession, version) IN (
+            SELECT sep.accession, sep.version
+            FROM sequence_entries_preprocessed_data sep
+            JOIN sequence_entries se ON sep.accession = se.accession AND sep.version = se.version
+            WHERE se.organism = ?
+        )
+        """.trimIndent()
+        transaction {
+            exec(
+                sql,
+                listOf(
+                    Pair(LongColumnType(), earliestVersionToKeep),
+                    Pair(VarCharColumnType(), organism),
+                ),
+                explicitStatementType = StatementType.DELETE,
+            )
         }
     }
 
