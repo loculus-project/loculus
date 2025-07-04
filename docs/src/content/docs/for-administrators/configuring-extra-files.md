@@ -111,5 +111,5 @@ my-organism:
 ```
 
 :::note
-The name (`rawReads` in the example above) must to not be a name that is also used by a metadata field!
+The name (`rawReads` in the example above) must not be a name that is also used by a metadata field!
 :::
