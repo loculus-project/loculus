@@ -273,8 +273,8 @@ b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/filepre
 
 4. Submit the files using the webin-cli:
 
-   ```bash
-   webin-cli -[validate|submit] \
+   ```sh
+   ena-webin-cli -[validate|submit] \
        -context genome \
        -manifest manifest.tsv \
        -username Webin-XXXXX \
@@ -459,8 +459,8 @@ Webin will report two unique accession numbers for each read submission. The fir
 
 You can see the permitted values of all permitted fields by following the links below or running
 
-```
-java -jar webin-cli.jar -context reads -fields
+```sh
+ena-webin-cli -context reads -fields
 ```
 
 - STUDY: Study accession or unique name (alias)
@@ -485,15 +485,15 @@ and then link (local location of raw reads file):
 
 Note For CRAM files ENA will validate that the reference sequence exists
 
-3. submit using the webin-cli
+3. submit using the webin-cli:
 
-```bash
-   webin-cli -[validate|submit] \
-       -context reads \
-       -manifest manifest.tsv \
-       -username Webin-XXXXX \
-       -password YYYYYY
-```
+  ```sh
+  ena-webin-cli -[validate|submit] \
+    -context reads \
+    -manifest manifest.tsv \
+    -username Webin-XXXXX \
+    -password YYYYYY
+  ```
 
 ### Programmatic submission
 

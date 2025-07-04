@@ -5,4 +5,5 @@ project/
 sample/
 __pycache__
 config/config.yaml
+tests.log
 webin-cli.jar

@@ -36,13 +36,10 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         }
         submission_table_entry = SubmissionTableEntry(**entry)
         add_to_submission_table(db_config, submission_table_entry)
-        logger.info(f"Uploaded {full_accession} to submission_table")
+        logger.info(f"Inserted {full_accession} into submission_table")
 
 
-def trigger_submission_to_ena(
-    config: Config, stop_event: threading.Event, input_file=None
-):
-
+def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input_file=None):
     db_config = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
@@ -61,7 +58,7 @@ def trigger_submission_to_ena(
         try:
             response = requests.get(
                 config.github_url,
-                timeout=10,
+                timeout=60,
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -74,8 +71,6 @@ def trigger_submission_to_ena(
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
         finally:
-            time.sleep(config.min_between_github_requests * 60)  # Sleep for x min to not overwhelm github
-
-
-if __name__ == "__main__":
-    trigger_submission_to_ena()
+            time.sleep(
+                config.min_between_github_requests * 60
+            )  # Sleep for x min to not overwhelm github

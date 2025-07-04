@@ -53,11 +53,6 @@ jobs:
             -password=unsecure \
             -locations=filesystem:./ena-submission/flyway/sql \
             migrate
-      - name: Install WEBIN CLI
-        run: |
-          WEBIN_CLI_VERSION=$(cat ena-submission/.webinrc)
-          wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" \
-            -O ena-submission/webin-cli.jar
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with: 
@@ -67,6 +62,8 @@ jobs:
       - name: Run tests
         run: |
             pip install .
-            python3 scripts/test_ena_submission_integration.py
+            # The unit tests are run in ena-submission-unit-tests.yaml
+            pytest \
+              --ignore=./scripts/test_ena_submission.py
         shell: micromamba-shell {0}
         working-directory: ena-submission

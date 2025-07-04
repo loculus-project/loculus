@@ -7,13 +7,14 @@ from datetime import datetime
 import pytz
 from psycopg2.pool import SimpleConnectionPool
 
-from .call_loculus import get_group_info
+from ena_deposition import call_loculus
+from ena_deposition.loculus_models import Group
+
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
     create_ena_project,
     get_alias,
-    get_ena_config,
     set_error_if_accession_not_exists,
 )
 from .ena_types import (
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def construct_project_set_object(
-    group_info: dict[str, str],
+    group_info: Group,
     config: Config,
     entry: dict[str, str],
     test=False,
@@ -65,19 +66,25 @@ def construct_project_set_object(
         config.set_alias_suffix,
     )
 
-    address = group_info["address"]
-    group_name = group_info["groupName"]
-    center_name = group_info["institution"]
-    address_list = [address.get("city"), address.get("country")]
-    address_string = ", ".join([x for x in address_list if x is not None])
+    address = group_info.address
+    group_name = group_info.group_name
+    center_name = group_info.institution
+    address_string = ", ".join([x for x in [address.city, address.country] if x])
 
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        name=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}",
-        title=f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}, {address_string}",  # noqa: E501
+        name=(
+            f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}"
+        ),
+        title=(
+            f"{metadata_dict['scientific_name']}: Genome sequencing by "
+            f"{group_name}, {center_name}, {address_string}"
+        ),
         description=(
-            f"Automated upload of {metadata_dict['scientific_name']} sequences submitted by {group_name}, {center_name}, {address_string} to {config.db_name}",  # noqa: E501
+            f"Automated upload of {metadata_dict['scientific_name']} sequences "
+            f"submitted by {group_name}, {center_name}, {address_string} "
+            f"to {config.db_name}"
         ),
         submission_project=SubmissionProject(
             organism=OrganismType(
@@ -86,7 +93,7 @@ def construct_project_set_object(
             )
         ),
         project_links=ProjectLinks(
-            project_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["group_id"]))
+            project_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["group_id"]))]
         ),
     )
     return ProjectSet(project=[project_type])
@@ -127,7 +134,11 @@ def set_project_table_entry(db_config, config, row):
     logger.info("Checking if bioproject actually exists and is public")
     if (
         set_error_if_accession_not_exists(
-            conditions=group_key, accession=bioproject, accession_type="BIOPROJECT", db_pool=db_config
+            conditions=group_key,
+            accession=bioproject,
+            accession_type="BIOPROJECT",
+            db_pool=db_config,
+            config=config,
         )
         is False
     ):
@@ -135,12 +146,11 @@ def set_project_table_entry(db_config, config, row):
 
     logger.info("Adding bioprojectAccession to project_table")
     try:
-        group_info = get_group_info(config, row["group_id"])[0]["group"]
-        center_name = group_info["institution"]
+        group_details = call_loculus.get_group_info(config, row["group_id"])
     except Exception as e:
         logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
-        time.sleep(30)
         return
+    center_name = group_details.institution
     entry = {
         "group_id": row["group_id"],
         "organism": row["organism"],
@@ -171,7 +181,8 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     2. If (exists "bioproject" in "metadata"):
     a.      If ("bioproject" in "result"["bioproject"]) in projects for that (group_id, organism):
                 update state in submission_table to SUBMITTED_PROJECT, add center_name, project_id
-    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT, add center_name, project_id
+    b.      Else create entry in project_table, update state to SUBMITTED_PROJECT,
+            add center_name, project_id
     c.      break
     3. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
@@ -302,12 +313,6 @@ def project_table_create(
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     project for testing.
     """
-    ena_config = get_ena_config(
-        config.ena_submission_username,
-        config.ena_submission_password,
-        config.ena_submission_url,
-        config.ena_reports_service_url,
-    )
     conditions = {"status": Status.READY}
     ready_to_submit_project = find_conditions_in_db(
         db_config, table_name=TableName.PROJECT_TABLE, conditions=conditions
@@ -317,17 +322,16 @@ def project_table_create(
         group_key = {"group_id": row["group_id"], "organism": row["organism"]}
 
         try:
-            group_info = get_group_info(config, row["group_id"])[0]["group"]
+            group_info = call_loculus.get_group_info(config, row["group_id"])
         except Exception as e:
             logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
-            time.sleep(30)
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)
         update_values = {
             "status": Status.SUBMITTING,
             "started_at": datetime.now(tz=pytz.utc),
-            "center_name": group_info["institution"],
+            "center_name": group_info.institution,
         }
         number_rows_updated = update_db_where_conditions(
             db_config,
@@ -347,7 +351,8 @@ def project_table_create(
         logger.info(
             f"Starting Project creation for group_id {row['group_id']} organism {row['organism']}"
         )
-        project_creation_results: CreationResult = create_ena_project(ena_config, project_set)
+        # Actual HTTP request to ENA happens here
+        project_creation_results: CreationResult = create_ena_project(config, project_set)
         if project_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
@@ -371,7 +376,8 @@ def project_table_create(
                 tries += 1
             if number_rows_updated == 1:
                 logger.info(
-                    f"Project creation for group_id {row['group_id']} organism {row['organism']} succeeded!"
+                    f"Project creation for group_id {row['group_id']} organism "
+                    f"{row['organism']} succeeded with: {project_creation_results.result}"
                 )
         else:
             update_values = {
@@ -385,7 +391,8 @@ def project_table_create(
                 if tries > 0:
                     # If state not correctly added retry
                     logger.warning(
-                        f"Project creation failed and DB update failed - reentry DB update #{tries}."
+                        f"Project creation failed and DB update failed - "
+                        f"reentry DB update #{tries}."
                     )
                 number_rows_updated = update_db_where_conditions(
                     db_config,
@@ -415,7 +422,8 @@ def project_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_with_errors)} entries"
             f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
@@ -448,7 +456,3 @@ def create_project(config: Config, stop_event: threading.Event):
         project_table_create(db_config, config, test=config.test)
         project_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
-
-
-if __name__ == "__main__":
-    create_project()

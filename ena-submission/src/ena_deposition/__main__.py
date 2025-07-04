@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
     "--input-file",
     type=click.Path(exists=True),
 )
-def run(config_file, input_file):
+def run(config_file: str, input_file: str) -> None:
     logging.basicConfig(
         encoding="utf-8",
         level=logging.INFO,
@@ -40,8 +40,6 @@ def run(config_file, input_file):
     logging.getLogger("requests").setLevel(logging.INFO)
     logger.info(f"Config: {config}")
 
-    global stop_event
-
     if input_file:
         logger.info("Triggering submission from file")
         trigger_submission_to_ena(config, stop_event, input_file=input_file)
@@ -52,7 +50,7 @@ def run(config_file, input_file):
             executor.submit(create_sample, config, stop_event),
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
-            executor.submit(start_api, config, stop_event)
+            executor.submit(start_api, config, stop_event),
         ]
         if not input_file:
             futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))

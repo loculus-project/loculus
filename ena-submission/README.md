@@ -178,16 +178,6 @@ Before running the ena_deposition package you need to install it. This can be do
 pip install -e .
 ```
 
-### Downloading ENA's webin-cli
-
-In order to submit assemblies you will also need to install ENA's `webin-cli.jar`. Their [webpage](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html) offers more instructions. The current version of the webin-cli is stored in the `.webinrc` file in this repository. You can download it using the following command:
-
-```sh
-WEBIN_CLI_VERSION=$(cat .webinrc)
-mkdir -p package
-wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O webin-cli.jar
-```
-
 ## Testing
 
 > [!WARNING]
@@ -205,7 +195,9 @@ python3 scripts/test_ena_submission.py
 
 #### Dry run
 
-You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same config.yaml that will be used in production (use deploy.py to generate this). Also note that the generator can only produce output for one submission at a time.
+You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same `config.yaml` that will be used in production (use `../deploy.py` to generate this). Also note that the generator can only produce output for one submission at a time.
+
+TODO: Explain how to get the production config file
 
 ```sh
 python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
@@ -213,12 +205,11 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 
 #### Integration tests
 
-You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`. 
-#### Integration tests
-
 You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`.
 
 You also need to set the environment variables `ENA_USERNAME` and `ENA_PASSWORD` to your ENA test account credentials. You can use the `.env` file in the root of this repository to set these variables.
+
+Depending on the type of ENA account you are using, you need to set `is_broker` to `True` or `False`. By default it's `False`.
 
 ```sh
 docker run --name test-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=unsecure -e POSTGRES_DB=loculus -p 5432:5432 -d postgres
