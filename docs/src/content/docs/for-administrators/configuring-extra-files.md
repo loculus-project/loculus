@@ -7,7 +7,7 @@ You can configure Loculus to support the submission of extra files for sequences
 
 To enable this feature you need to configure an S3 bucket for Loculus to use, and then configure the file categories per organism.
 
-## Conceptional overview
+## Conceptual overview
 
 Extra files submitted alongside sequence and metadata are treated differently. Loculus uses S3 - a generic object storage service - to store these files. Files are uploaded directly to S3 using presigned URLs.
 
@@ -111,5 +111,5 @@ my-organism:
 ```
 
 :::note
-The name (`rawReads` in the example above) needs to not be a name that is also used by a metadata field!
+The name (`rawReads` in the example above) must to not be a name that is also used by a metadata field!
 :::
