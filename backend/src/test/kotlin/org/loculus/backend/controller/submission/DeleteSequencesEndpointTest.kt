@@ -112,7 +112,7 @@ class DeleteSequencesEndpointTest(
             }
         deletionResult.andExpect(status().isUnprocessableEntity)
             .andExpect(
-                content().contentType(MediaType.APPLICATION_JSON_VALUE),
+                content().contentType(MediaType.APPLICATION_PROBLEM_JSON),
             )
             .andExpect(
                 jsonPath("\$.detail", containsString(errorString)),
@@ -137,7 +137,7 @@ class DeleteSequencesEndpointTest(
             accessionVersionsFilter = listOf(nonExistingAccession, nonExistingVersion),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -258,7 +258,7 @@ class DeleteSequencesEndpointTest(
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("accession versions are not of organism $OTHER_ORGANISM:")),
             )
@@ -275,7 +275,7 @@ class DeleteSequencesEndpointTest(
             jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )

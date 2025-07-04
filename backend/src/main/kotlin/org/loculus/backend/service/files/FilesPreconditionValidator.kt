@@ -20,4 +20,9 @@ class FilesPreconditionValidator(
         }
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
     }
+
+    @Transactional(readOnly = true)
+    fun validateGroupExists(groupId: Int) {
+        groupManagementPreconditionValidator.validateGroupExists(groupId)
+    }
 }

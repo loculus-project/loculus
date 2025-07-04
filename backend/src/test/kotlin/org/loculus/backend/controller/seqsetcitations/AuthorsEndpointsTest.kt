@@ -23,7 +23,7 @@ class AuthorsEndpointsTest(@Autowired private val client: SeqSetCitationsControl
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
         client.getAuthor(username = MOCK_USERNAME)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value("Author profile $MOCK_USERNAME does not exist"))
     }
 

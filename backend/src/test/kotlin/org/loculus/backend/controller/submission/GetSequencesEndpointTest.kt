@@ -104,7 +104,7 @@ class GetSequencesEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(
-                jsonPath("$.detail", containsString("Group(s) $nonExistingGroup do not exist.")),
+                jsonPath("$.detail", containsString("Group(s) $nonExistingGroup do(es) not exist.")),
             )
     }
 

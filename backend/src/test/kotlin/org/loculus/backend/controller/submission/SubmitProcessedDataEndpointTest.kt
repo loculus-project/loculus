@@ -323,7 +323,7 @@ class SubmitProcessedDataEndpointTest(
             invalidDataScenario.processedDataThatNeedsAValidAccession.copy(accession = accessions.first()),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
         val sequenceStatus = convenienceClient.getSequenceEntry(
@@ -344,7 +344,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = nonExistentAccession),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
                     .value(
@@ -370,7 +370,7 @@ class SubmitProcessedDataEndpointTest(
                 .copy(version = nonExistentVersion),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession version ${accessions.first()}.$nonExistentVersion does not exist " +
@@ -395,7 +395,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = accessionsNotInProcessing.first()),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession version ${accessionsNotInProcessing.first()}.1 " +
@@ -428,7 +428,7 @@ class SubmitProcessedDataEndpointTest(
             """.replace(Regex("\\s"), ""),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value(containsString("Failed to deserialize NDJSON")))
             .andExpect(jsonPath("\$.detail").value(containsString("failed for JSON property metadata")))
     }
@@ -442,7 +442,7 @@ class SubmitProcessedDataEndpointTest(
             organism = DEFAULT_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
                     .value(containsString("$accession.1 is for organism otherOrganism")),

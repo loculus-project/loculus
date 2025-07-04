@@ -18,6 +18,7 @@ import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -83,7 +84,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -112,7 +113,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isBadRequest())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -140,7 +141,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isBadRequest())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -166,7 +167,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -192,7 +193,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -222,7 +223,7 @@ class SubmitEndpointFileSharingTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
