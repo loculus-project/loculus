@@ -2,6 +2,8 @@ package org.loculus.backend.service.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
@@ -109,6 +111,22 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
     @Test
     fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
+
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+            organism = OTHER_ORGANISM
+        )
+
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
+        /**
+        val otherAVs = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM).submissionIdMappings
+        val otherPD = otherAVs.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1, organism = OTHER_ORGANISM)
+        convenienceClient.submitProcessedData(otherPD, pipelineVersion = 1, organism = OTHER_ORGANISM)
+        **/
+
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
         val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
 
@@ -119,12 +137,14 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
         useNewerProcessingPipelineVersionTask.task()
+
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
         useNewerProcessingPipelineVersionTask.task()
 
         transaction {
-            assertThat(getExistingPipelineVersions(), `is`(listOf(1L, 2L)))
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(1L, 2L)))
+            assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
 
         convenienceClient.extractUnprocessedData(pipelineVersion = 3)
@@ -134,12 +154,19 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         transaction {
-            assertThat(getExistingPipelineVersions(), `is`(listOf(2L, 3L)))
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
+            assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
     }
 
-    private fun getExistingPipelineVersions() = SequenceEntriesPreprocessedDataTable
+    // TODO, this isn't organism specific, but should be
+    private fun getExistingPipelineVersions(organism: String) = SequenceEntriesPreprocessedDataTable
+        .join(SequenceEntriesTable, joinType = JoinType.INNER) {
+            (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
+            (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
+        }
         .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .where { SequenceEntriesTable.organismColumn eq organism }
         .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
