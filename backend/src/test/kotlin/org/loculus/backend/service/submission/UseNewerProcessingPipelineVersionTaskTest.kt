@@ -111,21 +111,11 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
     @Test
     fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
-
-
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
-            organism = OTHER_ORGANISM
+            organism = OTHER_ORGANISM,
         )
 
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(OTHER_ORGANISM)), `is`(1L))
-        /**
-        val otherAVs = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM).submissionIdMappings
-        val otherPD = otherAVs.map {
-            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
-        }
-        convenienceClient.extractUnprocessedData(pipelineVersion = 1, organism = OTHER_ORGANISM)
-        convenienceClient.submitProcessedData(otherPD, pipelineVersion = 1, organism = OTHER_ORGANISM)
-        **/
 
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(1L))
         val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
@@ -159,11 +149,14 @@ class UseNewerProcessingPipelineVersionTaskTest(
         }
     }
 
-    // TODO, this isn't organism specific, but should be
+    /**
+     * Returns an ordered list of pipeline versions for which data exists in the
+     * SequenceEntriesPreprocessedDataTable table.
+     */
     private fun getExistingPipelineVersions(organism: String) = SequenceEntriesPreprocessedDataTable
         .join(SequenceEntriesTable, joinType = JoinType.INNER) {
             (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
-            (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
+                (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
         }
         .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .where { SequenceEntriesTable.organismColumn eq organism }
