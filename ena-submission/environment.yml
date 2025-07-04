@@ -31,4 +31,6 @@ dependencies:
   - python-dotenv
   - pytest
   - pip:
+      # Unfortunately not in conda-forge
+      # TODO: Add to conda-forge
       - types-xmltodict
