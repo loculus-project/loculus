@@ -102,7 +102,6 @@ def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
         if isinstance(value, list):
             res = []
             for item in value:
-                assert_dataclass(item)
                 res.append(dataclass_to_dict(item))
             result[field_name.upper()] = res
         elif isinstance(value, XmlAttribute):
@@ -111,7 +110,6 @@ def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
         elif isinstance(value, (str, int, float, bool)):
             result[field_name.upper()] = value
         elif is_dataclass(value) and not isinstance(value, type):
-            assert_dataclass(value)
             result[field_name.upper()] = dataclass_to_dict(value)
         else:
             msg = (
