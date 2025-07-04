@@ -250,23 +250,22 @@ def submission_table_start(db_config: SimpleConnectionPool):
         corresponding_assembly = find_conditions_in_db(
             db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
         )
+        status_all = None
         if len(corresponding_assembly) == 1:
             if corresponding_assembly[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_ALL}
+                status_all = StatusAll.SUBMITTED_ALL
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
+                status_all = StatusAll.SUBMITTING_ASSEMBLY
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            assembly_table_entry = AssemblyTableEntry(**seq_key)
-            succeeded = add_to_assembly_table(db_config, assembly_table_entry)
-            update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-            if not succeeded:
+            if not add_to_assembly_table(db_config, AssemblyTableEntry(**seq_key)):
                 continue
+            status_all = StatusAll.SUBMITTING_ASSEMBLY
         update_db_where_conditions(
             db_config,
             table_name=TableName.SUBMISSION_TABLE,
             conditions=seq_key,
-            update_values=update_values,
+            update_values={"status_all": status_all},
         )
 
 
