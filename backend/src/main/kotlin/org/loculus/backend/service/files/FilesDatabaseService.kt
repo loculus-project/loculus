@@ -30,25 +30,6 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 
     /**
-     * Set the release date for all given file IDs to now, if they are not set already.
-     */
-    fun release(fileIds: Set<FileId>) {
-        val now = dateProvider.getCurrentDateTime()
-        FilesTable.update({
-            FilesTable.idColumn inList fileIds and (FilesTable.releasedAtColumn.isNull())
-        }) {
-            it[releasedAtColumn] = now
-        }
-    }
-
-    fun isFilePublic(fileId: FileId): Boolean? = FilesTable
-        .select(FilesTable.releasedAtColumn)
-        .where { FilesTable.idColumn eq fileId }
-        .map { it[FilesTable.releasedAtColumn] }
-        .first()
-        .let { it != null }
-
-    /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
      * no file has been uploaded yet (and therefore there's no file size).
      */
