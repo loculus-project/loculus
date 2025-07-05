@@ -41,7 +41,7 @@ class FilesController(
 ) {
 
     @Operation(
-        summary = "Get file",
+        summary = "Download file via S3 redirect",
         description = "Returns a 307 redirect to a pre-signed S3 download URL",
     )
     @ApiResponse(
