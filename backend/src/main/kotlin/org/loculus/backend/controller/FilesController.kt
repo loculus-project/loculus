@@ -50,7 +50,7 @@ class FilesController(
         headers = [Header(name = HttpHeaders.LOCATION, description = "S3 download URL")],
     )
     @ApiResponse(responseCode = "403", description = "Authentication needed or not authorized")
-    @ApiResponse(responseCode = "404", description = "File not found")
+    @ApiResponse(responseCode = "404", description = "File does not exist")
     @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
