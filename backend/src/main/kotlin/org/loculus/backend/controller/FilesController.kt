@@ -49,7 +49,7 @@ class FilesController(
         description = "Temporary redirect to S3 download URL",
         headers = [Header(name = HttpHeaders.LOCATION, description = "S3 download URL")],
     )
-    @ApiResponse(responseCode = "403", description = "Authentication needed or not authorized")
+    @ApiResponse(responseCode = "403", description = "Authentication needed or not authorized. Non-public files require authentication and authorization.")
     @ApiResponse(responseCode = "404", description = "File does not exist")
     @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
