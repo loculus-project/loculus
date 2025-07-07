@@ -78,34 +78,75 @@ class ENAVisibilityChecker(VisibilityChecker):
         return None
 
 
+GcaCacheKey = tuple[str] | tuple[str, str] | tuple[str, str, str]
+
+gca_cache: dict[GcaCacheKey, bool] = {}
+
+
+def _check_and_cache_gca(config: Config, path_segments: GcaCacheKey) -> bool:
+    """
+    Helper function to check ENA for a GCA accession part and cache the result.
+    Returns True if found and caches True, False if not found and caches False.
+    """
+    cache_key = path_segments
+
+    if cache_key in gca_cache:
+        return gca_cache[cache_key]
+
+    url_path = "/".join(path_segments)
+    response = requests.get(
+        f"https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/{url_path}/",
+        allow_redirects=False,
+        timeout=config.ena_http_timeout_seconds,
+    )
+
+    if response.status_code == HTTPStatus.OK:
+        gca_cache[cache_key] = True
+        return True
+    gca_cache[cache_key] = False
+    return False
+
+
+def check_gca_cached(config: "Config", accession: str) -> datetime | None:
+    """
+    Checks if a GCA accession exists by querying ENA's API, with caching.
+    It attempts to validate parts of the accession from longest to shortest.
+    """
+    _prefix, numbers = accession.split("_")
+    first_three = numbers[:3]
+    second_three = numbers[3:6]
+    third_three = numbers[6:9]
+
+    if not _check_and_cache_gca(config, (first_three,)):
+        return None
+
+    if not _check_and_cache_gca(config, (first_three, second_three)):
+        return None
+
+    if not _check_and_cache_gca(config, (first_three, second_three, third_three)):
+        return None
+
+    return datetime.now(pytz.UTC)
+
+
 class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
         if accession.startswith("GCA"):
-            _prefix, numbers = accession.split("_")
-            # Strip any possible `.`... suffix
-            numbers = numbers.split(".")[0] if "." in numbers else numbers
-            # Split numbers into groups of 3
-            groups = [numbers[i : i + 3] for i in range(0, len(numbers), 3)]
-            group_string = "/".join(groups)
-            response = requests.get(
-                f"https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/{group_string}/",
-                allow_redirects=False,
-                timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
-            )
+            return check_gca_cached(config, accession)
+
+        if accession.startswith("PRJ"):
+            path = "bioproject"
+        elif accession.startswith("SAM"):
+            path = "biosample"
         else:
-            if accession.startswith("PRJ"):
-                path = "bioproject"
-            elif accession.startswith("SAM"):
-                path = "biosample"
-            else:
-                path = "nuccore"
-            response = requests.get(
-                f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
-                allow_redirects=False,
-                timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
-            )
+            path = "nuccore"
+        response = requests.get(
+            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
+            allow_redirects=False,
+            timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
+        )
         if response.status_code == HTTPStatus.OK:
             return datetime.now(pytz.UTC)
         return None
@@ -349,8 +390,10 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
         check_and_update_visibility_all_columns(config, pool)
         logger.debug("check_and_update_visibility finished, sleeping for a while")
 
+        gca_cache.clear()
+
         elapsed_time = time.time() - start_time
-        if elapsed_time < config.time_between_publicness_checks:
-            wait_time = config.time_between_publicness_checks - elapsed_time
+        if elapsed_time < 60 * config.min_between_publicness_checks:
+            wait_time = 60 * config.min_between_publicness_checks - elapsed_time
             logger.debug(f"Waiting {wait_time:.2f} seconds before next iteration")
             time.sleep(wait_time)

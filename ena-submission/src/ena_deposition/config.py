@@ -49,7 +49,7 @@ class Config:
     )
     min_between_github_requests: int = 2
     time_between_iterations: int = 10
-    time_between_publicness_checks: int = 12 * 60 * 60  # 12 hours
+    min_between_publicness_checks: int = 12 * 60  # 12 hours
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
