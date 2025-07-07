@@ -506,7 +506,7 @@ def test_preprocessing_without_consensus_sequences():
             submittedAt="2024-01-01T00:00:00Z",
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name
+                "name_required": sequence_name,
             },
             unalignedNucleotideSequences={},
         ),
@@ -593,31 +593,64 @@ def test_format_authors() -> None:
 def test_parse_date_into_range() -> None:
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
+            {"date": "2021-12"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeString", "submittedAt": "2021-12-15"},
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeLower"}
+            {"date": "2021-12"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeLower", "submittedAt": "2021-12-15"},
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-12"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
+            {"date": "2021-12"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeUpper", "submittedAt": "2022-12-15"},
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021-02"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
+            {"date": "2021-12"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-15"},
+        ).datum
+        == "2021-12-15"
+    ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021-02"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-02-15"},
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "2021"}, "field_name", ["field_name"], {"fieldType": "dateRangeUpper"}
+            {"date": "2021"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-15"},
+        ).datum
+        == "2021-12-15"
+    ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
+    assert (
+        ProcessingFunctions.parse_date_into_range(
+            {"date": "2021"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeUpper", "submittedAt": "2022-01-15"},
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
@@ -626,7 +659,7 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper"},
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-16"},
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -635,19 +668,25 @@ def test_parse_date_into_range() -> None:
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper"},
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-16"},
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": ""}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
+            {"date": ""},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeString", "submittedAt": "2021-12-16"},
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
     assert (
         ProcessingFunctions.parse_date_into_range(
-            {"date": "not.date"}, "field_name", ["field_name"], {"fieldType": "dateRangeString"}
+            {"date": "not.date"},
+            "field_name",
+            ["field_name"],
+            {"fieldType": "dateRangeString", "submittedAt": "2021-12-16"},
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
@@ -656,7 +695,7 @@ def test_parse_date_into_range() -> None:
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeLower"},
+            {"fieldType": "dateRangeLower", "submittedAt": "2021-12-16"},
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
