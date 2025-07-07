@@ -146,7 +146,7 @@ class SubmissionTableEntry:
 class ProjectTableEntry:
     group_id: int
     organism: str
-    project_id: int  # Actual primary key
+    project_id: int | None = None
     errors: str | None = None
     warnings: str | None = None
     status: Status = Status.READY
