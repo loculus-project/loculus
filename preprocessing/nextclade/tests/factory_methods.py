@@ -37,7 +37,9 @@ class UnprocessedEntryFactory:
             accessionVersion=f"LOC_{accession_id}.1",
             data=UnprocessedData(
                 submitter="test_submitter",
-                submittedAt="2023-10-01T00:00:00Z",
+                submittedAt=str(datetime.strptime("2021-12-15", "%Y-%m-%d")
+                .replace(tzinfo=pytz.utc)
+                .timestamp()),
                 metadata=metadata_dict,
                 unalignedNucleotideSequences={"main": ""},
             ),
