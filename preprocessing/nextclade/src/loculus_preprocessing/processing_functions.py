@@ -250,7 +250,7 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
-        submitted_at_str = args.get("submittedAt", "") or ""
+        submitted_at_str = str(args.get("submittedAt", "")) or ""
         try:
             if not isinstance(submitted_at_str, str):
                 msg = f"Expected submittedAt to be a string, got {type(submitted_at_str)}"
