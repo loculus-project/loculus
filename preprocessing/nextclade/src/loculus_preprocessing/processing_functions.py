@@ -26,7 +26,7 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
-options_cache = {}
+options_cache: dict[str, dict[str, str]] = {}
 
 
 def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
@@ -250,8 +250,31 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
-        now = datetime.now(tz=pytz.utc)
-        max_upper_limit = min(now, release_date) if release_date else now
+        try:
+            submitted_at = datetime.fromtimestamp(float(str(args["submittedAt"])), tz=pytz.utc)
+        except Exception:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=(
+                            f"Internal Error: Function parse_into_ranges did not receive valid "
+                            f"submittedAt date, with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
 
         if not input_date_str:
             return ProcessingResult(

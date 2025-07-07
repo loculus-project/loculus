@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
+
+import pytz
 
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -37,6 +40,9 @@ class UnprocessedEntryFactory:
             accessionVersion=f"LOC_{accession_id}.1",
             data=UnprocessedData(
                 submitter="test_submitter",
+                submittedAt=str(
+                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
+                ),
                 metadata=metadata_dict,
                 unalignedNucleotideSequences={"main": ""},
             ),
@@ -84,7 +90,8 @@ class ProcessedEntryFactory:
                         AnnotationSource(
                             name=field,
                             type=AnnotationSourceType.METADATA,
-                        ) for field in error.unprocessedFieldsName
+                        )
+                        for field in error.unprocessedFieldsName
                     ],
                     processedFields=[
                         AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
@@ -100,7 +107,8 @@ class ProcessedEntryFactory:
                         AnnotationSource(
                             name=field,
                             type=AnnotationSourceType.METADATA,
-                        ) for field in warning.unprocessedFieldsName
+                        )
+                        for field in warning.unprocessedFieldsName
                     ],
                     processedFields=[
                         AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
