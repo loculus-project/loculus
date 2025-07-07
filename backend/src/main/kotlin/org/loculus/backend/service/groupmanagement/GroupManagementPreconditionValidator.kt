@@ -11,18 +11,13 @@ import org.springframework.transaction.annotation.Transactional
 
 @Component
 class GroupManagementPreconditionValidator(private val keycloakAdapter: KeycloakAdapter) {
-
     @Transactional(readOnly = true)
-    fun validateUserIsAllowedToModifyGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
-        validateUserIsAllowedToModifyGroups(listOf(groupId), authenticatedUser)
+    fun validateGroupExists(groupId: Int) {
+        validateGroupsExist(listOf(groupId))
     }
 
     @Transactional(readOnly = true)
-    fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
-        if (authenticatedUser.isSuperUser) {
-            return
-        }
-
+    fun validateGroupsExist(groupIds: List<Int>) {
         val existingGroups = GroupsTable
             .selectAll()
             .where { GroupsTable.id inList groupIds }
@@ -32,8 +27,27 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
         val nonExistingGroups = groupIds.toSet() - existingGroups
 
         if (nonExistingGroups.isNotEmpty()) {
-            throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do not exist.")
+            throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do(es) not exist.")
         }
+    }
+
+    @Transactional(readOnly = true)
+    fun validateUserIsAllowedToModifyGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
+        validateUserIsAllowedToModifyGroups(listOf(groupId), authenticatedUser)
+    }
+
+    @Transactional(readOnly = true)
+    fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
+        validateGroupsExist(groupIds)
+        if (authenticatedUser.isSuperUser) {
+            return
+        }
+
+        val existingGroups = GroupsTable
+            .selectAll()
+            .where { GroupsTable.id inList groupIds }
+            .map { it[GroupsTable.id].value }
+            .toSet()
 
         val username = authenticatedUser.username
         val userGroups = UserGroupsTable

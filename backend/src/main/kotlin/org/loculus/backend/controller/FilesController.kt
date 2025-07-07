@@ -58,7 +58,7 @@ class FilesController(
                         .andThatUserIsAllowedToEditSequenceEntries(user)
                 }
             } else {
-                throw ForbiddenException("Authentication needed: the file is not public")
+                throw UnauthorizedException("Authentication needed: the file is not public")
             }
         }
         val presignedUrl = s3Service.createUrlToReadPrivateFile(
@@ -90,8 +90,14 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
-        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        filesPreconditionValidator.apply {
+            validateGroupExists(groupId)
+            validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        }
         val response = mutableListOf<FileIdAndWriteUrl>()
+        if (numberFiles < 1) {
+            throw BadRequestException("Number of files must be at least 1")
+        }
         repeat(numberFiles) {
             val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
