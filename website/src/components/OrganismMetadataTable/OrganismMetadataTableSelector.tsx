@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
 import { OrganismMetadataTable } from './OrganismMetadataTable.tsx';
@@ -16,18 +16,46 @@ type Props = {
 };
 
 const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
-    const [selectedOrganism, setSelectedOrganism] = useState<OrganismMetadata | null>(null);
+    const [selectedOrganismKey, setSelectedOrganismKey] = useState<string>('');
+    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
 
     const handleOrganismSelect = (event: { target: { value: string } }) => {
-        const organismKey = event.target.value;
-        const organism = organisms.find((o) => o.key === organismKey);
-        setSelectedOrganism(organism ?? null);
+        setSelectedOrganismKey(event.target.value);
     };
+
+    useEffect(() => {
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            setSelectedOrganismKey(params.get('organism') ?? '');
+        };
+
+        handlePopState();
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (selectedOrganismKey) {
+            params.set('organism', selectedOrganismKey);
+        } else {
+            params.delete('organism');
+        }
+
+        const newUrl =
+            window.location.origin + window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+    }, [selectedOrganismKey]);
 
     return (
         <div>
             <div>
-                <select id='organism-select' onChange={handleOrganismSelect} className='border border-gray-300 p-2'>
+                <select
+                    id='organism-select'
+                    value={selectedOrganismKey}
+                    onChange={handleOrganismSelect}
+                    className='border border-gray-300 p-2'
+                >
                     <option value=''>-- Select an Organism --</option>
                     {organisms.map((organism) => (
                         <option key={organism.key} value={organism.key}>

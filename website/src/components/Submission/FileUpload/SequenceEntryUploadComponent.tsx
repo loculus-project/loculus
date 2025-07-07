@@ -59,6 +59,8 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
         }
     };
 
+    const finalMetadataFormatDocsUrl = metadataFormatDocsUrl.replace('{organism}', organism);
+
     return (
         <div className='grid sm:grid-cols-3 gap-x-16'>
             <div className=''>
@@ -78,7 +80,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         </span>
                     )}
                     The documentation pages contain more details on the required{' '}
-                    <a href={metadataFormatDocsUrl} className='text-primary-700 opacity-90'>
+                    <a href={finalMetadataFormatDocsUrl} className='text-primary-700 opacity-90'>
                         metadata format
                     </a>{' '}
                     including a list of all supported metadata. You can download a{' '}
