@@ -27,10 +27,7 @@ dependencies:
   - types-psycopg2
   - types-requests
   - types-PyYAML
+  - types-xmltodict
   - pydantic
   - python-dotenv
   - pytest
-  - pip:
-      # Unfortunately not in conda-forge
-      # TODO: Add to conda-forge
-      - types-xmltodict
