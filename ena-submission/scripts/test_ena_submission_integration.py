@@ -16,8 +16,13 @@ from datetime import datetime, timedelta
 from typing import Any, Final
 from unittest.mock import Mock, patch
 
+import pytest
 import pytz
-from ena_deposition.check_external_visibility import check_and_update_visibility_ena_project
+from ena_deposition.check_external_visibility import (
+    COLUMN_CONFIGS,
+    EntityType,
+    check_and_update_visibility_for_column,
+)
 from ena_deposition.config import Config, get_config
 from ena_deposition.create_assembly import (
     assembly_table_create,
@@ -53,11 +58,12 @@ from ena_deposition.create_sample import (
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
-    ProjectTableEntry,
     Status,
     StatusAll,
     TableName,
+    add_to_assembly_table,
     add_to_project_table,
+    add_to_sample_table,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -483,65 +489,152 @@ class TestSubmission:
 
 
 class TestFirstPublicUpdate(TestSubmission):
-    def test_first_public_update(self) -> None:
+    # Test data for each (entity_type, column_name) combination
+    # Key is (EntityType, column_name) to match COLUMN_CONFIGS exactly
+    TEST_DATA: Final = {
+        (EntityType.PROJECT, "ena_first_publicly_visible"): {
+            "invalid_result": {"bioproject_accession": "PRJEB2"},
+            "valid_result": {"bioproject_accession": "PRJEB53055"},
+            "base_entry": {
+                "group_id": 1,
+                "organism": "test_organism",
+                "project_id": 0,
+                "status": Status.SUBMITTED,
+            },
+        },
+        (EntityType.SAMPLE, "ena_first_publicly_visible"): {
+            "invalid_result": {"biosample_accession": "SAMEA999999999"},
+            "valid_result": {"biosample_accession": "SAMEA7997453"},
+            "base_entry": {
+                "accession": "test_accession",
+                "version": 1,
+                "status": Status.SUBMITTED,
+            },
+        },
+        (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): {
+            "invalid_result": {
+                "insdc_accession_full_seg1": "XY999999",
+                "insdc_accession_full_seg2": "XY999998",
+            },
+            "valid_result": {
+                "insdc_accession_full_seg1": "OZ271453",
+                "insdc_accession_full_seg2": "OZ271454",
+            },
+            "base_entry": {
+                "accession": "test_accession",
+                "version": 1,
+                "status": Status.SUBMITTED,
+            },
+        },
+        (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): {
+            "invalid_result": {"gca_accession": "GCA_999999999.1"},
+            "valid_result": {"gca_accession": "GCA_965620435.1"},
+            "base_entry": {
+                "accession": "test_accession",
+                "version": 1,
+                "status": Status.SUBMITTED,
+            },
+        },
+    }
+
+    @pytest.mark.parametrize(
+        "entity_type,column_name",
+        [(entity_type, column_name) for (entity_type, column_name) in COLUMN_CONFIGS],
+    )
+    def test_first_public_update_all_types(self, entity_type: EntityType, column_name: str) -> None:
         """
-        Test that first_publicly_visible works as expected:
-        1. Put project/sample/assembly in status READY with non-existing accessions
-        2. Run check_and_update_visibility_ena_project(config, pool)
-        3. Check that first_publicly_visible is still none for all entries
-        4. Update project/sample/assembly to existing accessions
-        5. Run check_and_update_visibility_ena_project(config, pool)
-        6. Check that first_publicly_visible is updated to current timestamp
+        Test that first_publicly_visible works for all entity types and columns:
+        1. Put entity in status SUBMITTED with non-existing accessions
+        2. Run check_and_update_visibility_for_column
+        3. Check that visibility column is still None
+        4. Update entity to existing accessions
+        5. Run check_and_update_visibility_for_column again
+        6. Check that visibility column is updated to current timestamp
         """
-        project_entry = ProjectTableEntry(
-            group_id=1,
-            organism="test_organism",
-            project_id=0,  # This will be auto-generated and returned
-            status=Status.SUBMITTED,
-            result={"bioproject_accession": "PRJEB2"},
-        )
+        config = COLUMN_CONFIGS[entity_type, column_name]
+
+        # Get test data for this specific (entity_type, column_name) combination
+        test_data_key = (entity_type, column_name)
+        if test_data_key not in self.TEST_DATA:
+            pytest.skip(f"No test data configured for {entity_type.value}.{column_name}")
+
+        test_data = self.TEST_DATA[test_data_key]
+
+        # Get the add function based on the table name
+        add_function_map = {
+            TableName.PROJECT_TABLE: add_to_project_table,
+            TableName.SAMPLE_TABLE: add_to_sample_table,
+            TableName.ASSEMBLY_TABLE: add_to_assembly_table,
+        }
+        add_function = add_function_map[config.table_name]
+
+        # Create entry with invalid accessions
+        entry_data = {**test_data["base_entry"], "result": test_data["invalid_result"]}
+        entry = config.entry_class(**entry_data)
 
         # Insert into the database
-        project_id = add_to_project_table(self.db_config, project_entry)
-
-        if project_id is None:
-            msg = "Failed to add project entry to the database."
+        entity_id = add_function(self.db_config, entry)
+        if entity_id is None:
+            msg = f"Failed to add {entity_type.value} entry to the database."
             raise ValueError(msg)
 
-        check_and_update_visibility_ena_project(self.config, self.db_config)
+        # Build conditions dict for composite keys
+        if add_function == add_to_project_table:
+            # Single key (like project_id)
+            conditions = {config.id_fields[0]: entity_id}
+        else:
+            conditions = {field: getattr(entry, field) for field in config.id_fields}
 
-        # Check that first_publicly_visible is None
+        # Run visibility check with invalid accessions
+        check_and_update_visibility_for_column(
+            self.config, self.db_config, entity_type, column_name
+        )
+
+        # Check that visibility column is None
         rows: list[dict] = find_conditions_in_db(
             self.db_config,
-            TableName.PROJECT_TABLE,
-            conditions={"project_id": project_id},
+            config.table_name,
+            conditions=conditions,
         )
-        logger.debug(f"Rows found: {rows}")
-        assert len(rows) == 1, "Project not found in project table."
-        project_entry = ProjectTableEntry(**rows[0])
-        assert project_entry.ena_first_publicly_visible is None, (
-            "First publicly visible should be None for non-existing accessions."
+        logger.debug(f"Rows found after invalid check: {rows}")
+        assert len(rows) == 1, f"{entity_type.value} not found in table."
+
+        entry_after_invalid = config.entry_class(**rows[0])
+        visibility_value = getattr(entry_after_invalid, column_name)
+        assert visibility_value is None, (
+            f"{column_name} should be None for non-existing accessions. Got: {visibility_value}"
         )
 
-        # Update the project entry to have a valid accession
+        # Update the entry to have valid accessions
         update_db_where_conditions(
             self.db_config,
-            TableName.PROJECT_TABLE,
-            conditions={"project_id": project_id},
-            update_values={"result": json.dumps({"bioproject_accession": "PRJEB53055"})},
+            config.table_name,
+            conditions=conditions,
+            update_values={"result": json.dumps(test_data["valid_result"])},
         )
 
-        # Run the visibility check again
-        check_and_update_visibility_ena_project(self.config, self.db_config)
+        # Run the visibility check again with valid accessions
+        check_and_update_visibility_for_column(
+            self.config, self.db_config, entity_type, column_name
+        )
+
+        # Check that visibility column is now updated
         rows = find_conditions_in_db(
             self.db_config,
-            TableName.PROJECT_TABLE,
-            conditions={"project_id": project_id},
+            config.table_name,
+            conditions=conditions,
         )
-        assert len(rows) == 1, "Project not found in project table after update."
-        project_entry = ProjectTableEntry(**rows[0])
-        assert project_entry.ena_first_publicly_visible is not None, (
-            "First publicly visible should be updated to current timestamp for valid accessions."
+        assert len(rows) == 1, f"{entity_type.value} not found in table after update."
+
+        entry_after_valid = config.entry_class(**rows[0])
+        visibility_value = getattr(entry_after_valid, column_name)
+        assert visibility_value is not None, (
+            f"{column_name} should be updated to current timestamp for valid accessions. "
+            f"Got: {visibility_value}"
+        )
+        logger.info(
+            f"✓ {entity_type.value}.{column_name} test passed: "
+            f"timestamp = {visibility_value}, conditions = {conditions}"
         )
 
 

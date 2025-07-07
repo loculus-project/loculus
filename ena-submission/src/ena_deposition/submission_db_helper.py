@@ -158,7 +158,7 @@ class ProjectTableEntry:
     ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SampleTableEntry:
     accession: str
     version: int
@@ -168,9 +168,11 @@ class SampleTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: dict[str, str] | str | None = None
+    ena_first_publicly_visible: datetime | None = None
+    ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AssemblyTableEntry:
     accession: str
     version: int
@@ -180,6 +182,10 @@ class AssemblyTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: str | None = None
+    ena_nucleotide_first_publicly_visible: datetime | None = None
+    ncbi_nucleotide_first_publicly_visible: datetime | None = None
+    ena_gca_first_publicly_visible: datetime | None = None
+    ncbi_gca_first_publicly_visible: datetime | None = None
 
 
 type Accession = str
