@@ -632,7 +632,7 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-02"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-02-15"},
+            {"fieldType": "dateRangeUpper", "submittedAt": "2021-03-15"},
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
