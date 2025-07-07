@@ -55,6 +55,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     organismName: "Ebola Sudan"
+    longDisplayName: "Ebola virus (Sudan ebolavirus)"
     image: "/images/organisms/ebolasudan_small.jpg"
     linkOuts:
       - name: "Nextclade"
@@ -1260,6 +1261,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "West Nile Virus"
+      longDisplayName: "West Nile Virus (Flavivirus)"
       image: "/images/organisms/wnv_small.jpg"
       linkOuts:
         - name: "Nextclade"
@@ -1349,6 +1351,7 @@ defaultOrganisms:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Dummy Organism"
+      longDisplayName: "Test Dummy Organism for development"
       metadataTemplate:
         - country
         - date
@@ -1446,6 +1449,7 @@ defaultOrganisms:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (with files)"
+      longDisplayName: "Test organism including file submissions"
       nucleotideSequences: []
       submissionDataTypes:
         consensusSequences: false
@@ -1509,6 +1513,7 @@ defaultOrganisms:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (without alignment)"
+      longDisplayName: "Test organism without sequence alignment"
       metadata:
         - name: date
           type: date
@@ -1575,6 +1580,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      longDisplayName: "Crimean-Congo Hemorrhagic Fever Virus (Nairovirus)"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:

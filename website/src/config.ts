@@ -103,12 +103,14 @@ export function getMetadataDisplayNames(organism: string): Map<string, string> {
 export type Organism = {
     key: string;
     displayName: string;
+    longDisplayName?: string;
 };
 
 export function getConfiguredOrganisms() {
     return Object.entries(getWebsiteConfig().organisms).map(([key, instance]) => ({
         key,
         displayName: instance.schema.organismName,
+        longDisplayName: instance.schema.longDisplayName,
         image: instance.schema.image,
     }));
 }
