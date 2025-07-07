@@ -23,7 +23,6 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
         setSelectedOrganismKey(event.target.value);
     };
 
-    // Update dropdown when the URL query parameter changes
     useEffect(() => {
         const handlePopState = () => {
             const params = new URLSearchParams(window.location.search);
@@ -35,7 +34,6 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
         return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
-    // Update the URL query parameter when the dropdown selection changes
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (selectedOrganismKey) {
