@@ -1505,7 +1505,7 @@ defaultOrganisms:
       nucleotideSequences: []
       genes: []
   not-aligned-organism:
-    enabled: false
+    enabled: true
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (without alignment)"
