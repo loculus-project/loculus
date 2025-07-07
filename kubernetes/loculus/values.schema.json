@@ -205,6 +205,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "enabled": {
+          "groups": ["organism"],
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this organism is enabled."
+        },
         "schema": {
           "groups": ["organism"],
           "docsIncludePrefix": false,

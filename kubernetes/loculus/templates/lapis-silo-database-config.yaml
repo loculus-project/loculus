@@ -2,7 +2,7 @@
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 {{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
-{{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
 
 {{- $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
 {{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
