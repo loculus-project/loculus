@@ -489,62 +489,66 @@ class TestSubmission:
 
 
 class TestFirstPublicUpdate(TestSubmission):
-    # Test data for each (entity_type, column_name) combination
-    # Key is (EntityType, column_name) to match COLUMN_CONFIGS exactly
+    PROJECT_CONFIG: Final = {
+        "invalid_result": {"bioproject_accession": "PRJEB2"},
+        "valid_result": {"bioproject_accession": "PRJEB53055"},
+        "base_entry": {
+            "group_id": 1,
+            "organism": "test_organism",
+            "project_id": 0,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_project_table,
+    }
+
+    SAMPLE_CONFIG: Final = {
+        "invalid_result": {"biosample_accession": "SAMEA999999999"},
+        "valid_result": {"biosample_accession": "SAMEA7997453"},
+        "base_entry": {
+            "accession": "test_accession",
+            "version": 1,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_sample_table,
+    }
+
+    NUCLEOTIDE_CONFIG: Final = {
+        "invalid_result": {
+            "insdc_accession_full_seg1": "XY999999",
+            "insdc_accession_full_seg2": "XY999998",
+        },
+        "valid_result": {
+            "insdc_accession_full_seg1": "OZ271453",
+            "insdc_accession_full_seg2": "OZ271454",
+        },
+        "base_entry": {
+            "accession": "test_accession",
+            "version": 1,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_assembly_table,
+    }
+
+    GCA_CONFIG: Final = {
+        "invalid_result": {"gca_accession": "GCA_999999999.1"},
+        "valid_result": {"gca_accession": "GCA_965196905.1"},
+        "base_entry": {
+            "accession": "test_accession",
+            "version": 1,
+            "status": Status.SUBMITTED,
+        },
+        "add_function": add_to_assembly_table,
+    }
+
     TEST_DATA: Final = {
-        (EntityType.PROJECT, "ena_first_publicly_visible"): {
-            "invalid_result": {"bioproject_accession": "PRJEB2"},
-            "valid_result": {"bioproject_accession": "PRJEB53055"},
-            "base_entry": {
-                "group_id": 1,
-                "organism": "test_organism",
-                "project_id": 0,
-                "status": Status.SUBMITTED,
-            },
-        },
-        (EntityType.PROJECT, "ncbi_first_publicly_visible"): {
-            "invalid_result": {"bioproject_accession": "PRJEB2"},
-            "valid_result": {"bioproject_accession": "PRJEB53055"},
-            "base_entry": {
-                "group_id": 1,
-                "organism": "test_organism",
-                "project_id": 0,
-                "status": Status.SUBMITTED,
-            },
-        },
-        (EntityType.SAMPLE, "ena_first_publicly_visible"): {
-            "invalid_result": {"biosample_accession": "SAMEA999999999"},
-            "valid_result": {"biosample_accession": "SAMEA7997453"},
-            "base_entry": {
-                "accession": "test_accession",
-                "version": 1,
-                "status": Status.SUBMITTED,
-            },
-        },
-        (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): {
-            "invalid_result": {
-                "insdc_accession_full_seg1": "XY999999",
-                "insdc_accession_full_seg2": "XY999998",
-            },
-            "valid_result": {
-                "insdc_accession_full_seg1": "OZ271453",
-                "insdc_accession_full_seg2": "OZ271454",
-            },
-            "base_entry": {
-                "accession": "test_accession",
-                "version": 1,
-                "status": Status.SUBMITTED,
-            },
-        },
-        (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): {
-            "invalid_result": {"gca_accession": "GCA_999999999.1"},
-            "valid_result": {"gca_accession": "GCA_965620435.1"},
-            "base_entry": {
-                "accession": "test_accession",
-                "version": 1,
-                "status": Status.SUBMITTED,
-            },
-        },
+        (EntityType.PROJECT, "ena_first_publicly_visible"): PROJECT_CONFIG,
+        (EntityType.PROJECT, "ncbi_first_publicly_visible"): PROJECT_CONFIG,
+        (EntityType.SAMPLE, "ena_first_publicly_visible"): SAMPLE_CONFIG,
+        (EntityType.SAMPLE, "ncbi_first_publicly_visible"): SAMPLE_CONFIG,
+        (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
+        (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): NUCLEOTIDE_CONFIG,
+        (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): GCA_CONFIG,
+        (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): GCA_CONFIG,
     }
 
     @pytest.mark.parametrize(
@@ -570,19 +574,12 @@ class TestFirstPublicUpdate(TestSubmission):
 
         test_data = self.TEST_DATA[test_data_key]
 
-        # Get the add function based on the table name
-        add_function_map = {
-            TableName.PROJECT_TABLE: add_to_project_table,
-            TableName.SAMPLE_TABLE: add_to_sample_table,
-            TableName.ASSEMBLY_TABLE: add_to_assembly_table,
-        }
-        add_function = add_function_map[config.table_name]
-
         # Create entry with invalid accessions
         entry_data = {**test_data["base_entry"], "result": test_data["invalid_result"]}
         entry = config.entry_class(**entry_data)
 
         # Insert into the database
+        add_function = test_data["add_function"]
         entity_id = add_function(self.db_config, entry)
         if entity_id is None:
             msg = f"Failed to add {entity_type.value} entry to the database."

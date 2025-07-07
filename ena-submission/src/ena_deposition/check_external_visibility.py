@@ -1,14 +1,11 @@
 """
 Query ENA and NCBI to check if a given accession is publicly visible
 Add timestamp to project/sample/assembly table when first publicly visible
+1. Find all accessions that don't yet have a publicly visible timestamp
+2. Query ENA and NCBI for these accessions
+3. If publicly visible, update the timestamp in the database
+4. Repeat periodically
 """
-
-# 1. Find all accessions that don't yet have a publicly visible timestamp
-# 2. Query ENA and NCBI for these accessions
-# 3. If publicly visible, update the timestamp in the database
-# 4. Sleep
-
-from __future__ import annotations
 
 import logging
 import threading
@@ -73,6 +70,7 @@ class ENAVisibilityChecker(VisibilityChecker):
         file_type = "xml" if accession.startswith(("PRJ", "SAM", "GCA")) else "embl"
         response = requests.get(
             f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}",
+            allow_redirects=False,
             timeout=config.ena_http_timeout_seconds,
         )
         if response.status_code == HTTPStatus.OK:
@@ -84,20 +82,30 @@ class NCBIVisibilityChecker(VisibilityChecker):
     """Checker for NCBI visibility"""
 
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
-        # Implement NCBI-specific visibility check
-        # This is a placeholder - adjust URL and logic as needed
-        if accession.startswith("PRJ"):
-            path = "bioproject"
-        elif accession.startswith("SAM"):
-            path = "biosample"
-        elif accession.startswith("GCA"):
-            path = "datasets/genome"
+        if accession.startswith("GCA"):
+            _prefix, numbers = accession.split("_")
+            # Strip any possible `.`... suffix
+            numbers = numbers.split(".")[0] if "." in numbers else numbers
+            # Split numbers into groups of 3
+            groups = [numbers[i : i + 3] for i in range(0, len(numbers), 3)]
+            group_string = "/".join(groups)
+            response = requests.get(
+                f"https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/{group_string}/",
+                allow_redirects=False,
+                timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
+            )
         else:
-            path = "nuccore"
-        response = requests.get(
-            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}",
-            timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
-        )
+            if accession.startswith("PRJ"):
+                path = "bioproject"
+            elif accession.startswith("SAM"):
+                path = "biosample"
+            else:
+                path = "nuccore"
+            response = requests.get(
+                f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
+                allow_redirects=False,
+                timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
+            )
         if response.status_code == HTTPStatus.OK:
             return datetime.now(pytz.UTC)
         return None
@@ -129,6 +137,14 @@ COLUMN_CONFIGS = {
         accession_field="biosample_accession",
         checker_class=ENAVisibilityChecker,
     ),
+    (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
+        table_name=TableName.SAMPLE_TABLE,
+        entry_class=SampleTableEntry,
+        id_fields=["accession", "version"],
+        visibility_column="ncbi_first_publicly_visible",
+        accession_field="biosample_accession",
+        checker_class=NCBIVisibilityChecker,
+    ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
@@ -139,6 +155,15 @@ COLUMN_CONFIGS = {
         checker_class=ENAVisibilityChecker,
         check_all_segments=True,  # Check all segments for multi-segmented assemblies
     ),
+    (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
+        table_name=TableName.ASSEMBLY_TABLE,
+        entry_class=AssemblyTableEntry,
+        id_fields=["accession", "version"],
+        visibility_column="ncbi_nucleotide_first_publicly_visible",
+        accession_field="insdc_accession_full",  # Prefix for multi-segment accessions
+        checker_class=NCBIVisibilityChecker,
+        check_all_segments=True,  # Check all segments for multi-segmented assemblies
+    ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
@@ -147,6 +172,14 @@ COLUMN_CONFIGS = {
         visibility_column="ena_gca_first_publicly_visible",
         accession_field="gca_accession",
         checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
+        table_name=TableName.ASSEMBLY_TABLE,
+        entry_class=AssemblyTableEntry,
+        id_fields=["accession", "version"],
+        visibility_column="ncbi_gca_first_publicly_visible",
+        accession_field="gca_accession",
+        checker_class=NCBIVisibilityChecker,
     ),
 }
 
@@ -308,10 +341,16 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
     pool = db_init(config.db_password, config.db_username, config.db_url)
 
     while True:
+        start_time = time.time()
         if stop_event.is_set():
             print("check_and_update_visibility stopped due to exception in another task")
             return
 
         check_and_update_visibility_all_columns(config, pool)
         logger.debug("check_and_update_visibility finished, sleeping for a while")
-        time.sleep(config.time_between_iterations)
+
+        elapsed_time = time.time() - start_time
+        if elapsed_time < config.time_between_publicness_checks:
+            wait_time = config.time_between_publicness_checks - elapsed_time
+            logger.debug(f"Waiting {wait_time:.2f} seconds before next iteration")
+            time.sleep(wait_time)
