@@ -31,7 +31,9 @@ import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
+import org.springframework.http.MediaType
+import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -75,7 +77,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail", containsString("Group(s) $groupId do not exist")))
     }
 
@@ -90,7 +92,7 @@ class SubmitEndpointTest(
             jwt = generateJwtFor(otherUser),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -111,7 +113,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
     }
 
@@ -128,7 +130,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
@@ -144,7 +146,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
@@ -181,7 +183,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -211,7 +213,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -242,7 +244,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -262,7 +264,7 @@ class SubmitEndpointTest(
             fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -305,7 +307,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
             )
@@ -320,7 +322,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -337,7 +339,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isOk)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
@@ -633,7 +635,7 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "The metadata file contains both 'id' and 'submissionId'. Only one is allowed.",

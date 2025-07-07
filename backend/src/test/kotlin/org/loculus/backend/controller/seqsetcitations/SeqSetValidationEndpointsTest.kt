@@ -36,7 +36,7 @@ class SeqSetValidationEndpointsTest(
         val accessionJson = """[{"accession": "ABCD", "type": "loculus"}]"""
         client.validateSeqSetRecords(seqSetRecords = accessionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -47,7 +47,7 @@ class SeqSetValidationEndpointsTest(
         val accessionVersionJson = """[{"accession": "ABCD.1", "type": "loculus"}]"""
         client.validateSeqSetRecords(seqSetRecords = accessionVersionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -61,7 +61,7 @@ class SeqSetValidationEndpointsTest(
         val accessionJson = """[{"accession": "ABCD.EF", "type": "loculus"}]"""
         client.validateSeqSetRecords(seqSetRecords = accessionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -80,7 +80,7 @@ class SeqSetValidationEndpointsTest(
 
         client.validateSeqSetRecords(seqSetRecords = accessionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -101,7 +101,7 @@ class SeqSetValidationEndpointsTest(
         ]"""
         client.validateSeqSetRecords(seqSetRecords = accessionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -123,7 +123,7 @@ class SeqSetValidationEndpointsTest(
     fun `WHEN writing seqSet with missing name THEN returns unprocessable entity`() {
         client.createSeqSet(seqSetName = "")
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -132,7 +132,7 @@ class SeqSetValidationEndpointsTest(
             )
         client.updateSeqSet(seqSetName = "")
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -153,7 +153,7 @@ class SeqSetValidationEndpointsTest(
 
         client.updateSeqSet(seqSetId = seqSetId, seqSetRecords = accessionJson)
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -166,7 +166,7 @@ class SeqSetValidationEndpointsTest(
     fun `WHEN writing seqSet with missing records THEN returns unprocessable entity`() {
         client.createSeqSet(seqSetRecords = "[]")
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -175,7 +175,7 @@ class SeqSetValidationEndpointsTest(
             )
         client.updateSeqSet(seqSetRecords = "[]")
             .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -203,7 +203,7 @@ class SeqSetValidationEndpointsTest(
         }
         createSeqSetWithDOI(accessionJson)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",

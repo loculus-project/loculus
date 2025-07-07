@@ -1268,7 +1268,6 @@ defaultOrganisms:
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
         - name: "Country map"
           url: "https://mapoplexus.genomium.org/?url={{[metadata+accessionVersion,accession,version,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocSite,hostNameCommon,hostNameScientific,authors,sampleCollectionDate]}}"
-
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1508,6 +1507,7 @@ defaultOrganisms:
       nucleotideSequences: []
       genes: []
   not-aligned-organism:
+    enabled: true
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (without alignment)"
