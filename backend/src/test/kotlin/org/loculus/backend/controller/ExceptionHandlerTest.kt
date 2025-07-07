@@ -70,7 +70,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
 
         mockMvc.perform(validRequest)
             .andExpect(status().isInternalServerError)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Internal Server Error"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
@@ -81,7 +81,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
 
         mockMvc.perform(validRequest)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
@@ -92,7 +92,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
 
         mockMvc.perform(validRequest)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
     }
@@ -132,7 +132,7 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
                 .withAuth(),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Bad Request"))
             .andExpect(jsonPath("$.detail", containsString("Invalid organism: unknownOrganism")))
     }

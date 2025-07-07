@@ -119,7 +119,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         detail: String?,
     ): ResponseEntity<ProblemDetail> = ResponseEntity
         .status(httpStatus)
-        .contentType(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_PROBLEM_JSON)
         .body(
             ProblemDetail.forStatus(httpStatus).also {
                 it.title = title
