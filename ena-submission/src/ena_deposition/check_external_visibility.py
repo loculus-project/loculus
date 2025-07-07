@@ -86,8 +86,16 @@ class NCBIVisibilityChecker(VisibilityChecker):
     def check_visibility(self, config: Config, accession: str) -> datetime | None:
         # Implement NCBI-specific visibility check
         # This is a placeholder - adjust URL and logic as needed
+        if accession.startswith("PRJ"):
+            path = "bioproject"
+        elif accession.startswith("SAM"):
+            path = "biosample"
+        elif accession.startswith("GCA"):
+            path = "datasets/genome"
+        else:
+            path = "nuccore"
         response = requests.get(
-            f"https://www.ncbi.nlm.nih.gov/search/api/entrez/{accession}",
+            f"https://www.ncbi.nlm.nih.gov/{path}/{accession}",
             timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
         )
         if response.status_code == HTTPStatus.OK:
@@ -104,6 +112,14 @@ COLUMN_CONFIGS = {
         visibility_column="ena_first_publicly_visible",
         accession_field="bioproject_accession",
         checker_class=ENAVisibilityChecker,
+    ),
+    (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
+        table_name=TableName.PROJECT_TABLE,
+        entry_class=ProjectTableEntry,
+        id_fields=["project_id"],
+        visibility_column="ncbi_first_publicly_visible",
+        accession_field="bioproject_accession",
+        checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,

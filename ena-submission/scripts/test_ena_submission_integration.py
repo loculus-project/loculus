@@ -502,6 +502,16 @@ class TestFirstPublicUpdate(TestSubmission):
                 "status": Status.SUBMITTED,
             },
         },
+        (EntityType.PROJECT, "ncbi_first_publicly_visible"): {
+            "invalid_result": {"bioproject_accession": "PRJEB2"},
+            "valid_result": {"bioproject_accession": "PRJEB53055"},
+            "base_entry": {
+                "group_id": 1,
+                "organism": "test_organism",
+                "project_id": 0,
+                "status": Status.SUBMITTED,
+            },
+        },
         (EntityType.SAMPLE, "ena_first_publicly_visible"): {
             "invalid_result": {"biosample_accession": "SAMEA999999999"},
             "valid_result": {"biosample_accession": "SAMEA7997453"},
