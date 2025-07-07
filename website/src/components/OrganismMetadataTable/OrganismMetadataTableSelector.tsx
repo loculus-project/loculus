@@ -17,8 +17,7 @@ type Props = {
 
 const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
     const [selectedOrganismKey, setSelectedOrganismKey] = useState<string>('');
-    const selectedOrganism =
-        organisms.find((o) => o.key === selectedOrganismKey) ?? null;
+    const selectedOrganism = organisms.find((o) => o.key === selectedOrganismKey) ?? null;
 
     const handleOrganismSelect = (event: { target: { value: string } }) => {
         setSelectedOrganismKey(event.target.value);
