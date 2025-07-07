@@ -503,6 +503,7 @@ def test_preprocessing_without_consensus_sequences():
         accessionVersion=f"LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
+            submittedAt="2024-01-01T00:00:00Z",
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name

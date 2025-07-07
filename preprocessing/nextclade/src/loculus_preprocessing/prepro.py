@@ -269,6 +269,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
+        input_metadata[id]["submittedAt"] = entry.data.submittedAt
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
@@ -621,6 +622,7 @@ def get_metadata(  # noqa: PLR0913, PLR0917
             input_fields.append(input_path)
         args = spec.args
         args["submitter"] = unprocessed.submitter
+        args["submittedAt"] = unprocessed.submittedAt
     else:
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = add_input_metadata(
@@ -629,6 +631,7 @@ def get_metadata(  # noqa: PLR0913, PLR0917
             input_fields.append(input_path)
         args = spec.args
         args["submitter"] = unprocessed.inputMetadata["submitter"]
+        args["submittedAt"] = unprocessed.inputMetadata["submittedAt"]
 
     if spec.function == "concatenate":
         spec_copy = copy.deepcopy(spec)

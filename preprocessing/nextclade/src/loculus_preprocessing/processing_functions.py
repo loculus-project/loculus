@@ -250,8 +250,35 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
-        now = datetime.now(tz=pytz.utc)
-        max_upper_limit = min(now, release_date) if release_date else now
+        submitted_at_str = args.get("submittedAt", "") or ""
+        try:
+            if not isinstance(submitted_at_str, str):
+                msg = f"Expected submittedAt to be a string, got {type(submitted_at_str)}"
+                raise ValueError(msg)
+            submitted_at = dateutil.parse(submitted_at_str).replace(tzinfo=pytz.utc)
+        except Exception:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=(
+                            f"Internal Error: Function parse_into_ranges did not receive valid "
+                            f"submittedAt date, with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
+                    )
+                ],
+            )
+
+        max_upper_limit = min(submitted_at, release_date) if release_date else submitted_at
 
         if not input_date_str:
             return ProcessingResult(
