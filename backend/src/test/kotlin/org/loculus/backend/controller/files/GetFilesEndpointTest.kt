@@ -11,7 +11,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -38,8 +38,8 @@ class GetFilesEndpointTest(
         )
 
         filesClient.getFile(data.accession, data.version, "myFileCategory", "hello.txt")
-            .andExpect(status().isForbidden())
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(status().isUnauthorized())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",

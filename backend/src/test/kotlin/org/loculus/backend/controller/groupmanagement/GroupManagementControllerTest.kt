@@ -198,7 +198,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     fun `WHEN I query details of a non-existing group THEN expect error that group does not exist`() {
         client.getDetailsOfGroup(groupId = 123456789)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
     }
 
@@ -235,7 +235,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.addUserToGroup(groupId = groupId, usernameToAdd = otherUser)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $otherUser does not exist.",
@@ -274,7 +274,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             jwt = jwtForDefaultUser,
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
@@ -290,7 +290,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
@@ -330,10 +330,10 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do not exist.",
+                    "Group(s) $groupId do(es) not exist.",
                 ),
             )
     }
@@ -346,7 +346,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME)
             .andExpect(status().isConflict)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is already member of the group $groupId.",
@@ -380,10 +380,10 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do not exist.",
+                    "Group(s) $groupId do(es) not exist.",
                 ),
             )
             .andReturn()
@@ -397,7 +397,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
         client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME)
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) " +

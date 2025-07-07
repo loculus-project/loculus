@@ -110,7 +110,7 @@ class ApproveProcessedDataEndpointTest(
 
         client.approveProcessedSequenceEntries(scope = ALL, accessionVersions, jwt = generateJwtFor("other user"))
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "$.detail",
@@ -139,7 +139,7 @@ class ApproveProcessedDataEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.detail", containsString("Accession versions $nonExistentAccession.1 do not exist")))
 
         convenienceClient.getSequenceEntry(processedAccessionVersion).assertStatusIs(PROCESSED)
@@ -159,7 +159,7 @@ class ApproveProcessedDataEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "$.detail",
@@ -189,7 +189,7 @@ class ApproveProcessedDataEndpointTest(
             accessionVersionsInCorrectState + accessionVersionNotInCorrectState,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "$.detail",
@@ -220,7 +220,7 @@ class ApproveProcessedDataEndpointTest(
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("$.detail")
                     .value(containsString("accession versions are not of organism otherOrganism")),
