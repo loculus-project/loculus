@@ -105,7 +105,7 @@ class SubmitExternalMetadataEndpointTest(
                 externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
                     .value(containsString("Unknown fields in metadata: insdcAccessionFull")),
@@ -125,7 +125,7 @@ class SubmitExternalMetadataEndpointTest(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
                     .value(
@@ -148,7 +148,7 @@ class SubmitExternalMetadataEndpointTest(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
                     .value(

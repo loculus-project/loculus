@@ -37,7 +37,9 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
+import org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -141,7 +143,7 @@ class ReviseEndpointTest(
             ),
             SubmitFiles.sequenceFileWith(),
         ).andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accessions 123 do not exist",
@@ -161,7 +163,7 @@ class ReviseEndpointTest(
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
                     containsString("accession versions are not of organism otherOrganism:"),
@@ -180,7 +182,7 @@ class ReviseEndpointTest(
             jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -198,7 +200,7 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -219,7 +221,7 @@ class ReviseEndpointTest(
             sequencesFile = null,
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
             )
@@ -239,7 +241,7 @@ class ReviseEndpointTest(
             organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
         )
             .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -319,7 +321,7 @@ class ReviseEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -348,7 +350,7 @@ class ReviseEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -384,7 +386,7 @@ class ReviseEndpointTest(
             ),
         )
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",

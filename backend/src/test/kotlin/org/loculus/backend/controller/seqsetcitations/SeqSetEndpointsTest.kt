@@ -45,7 +45,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     fun `WHEN calling get seqSet of non-existing id and version THEN returns not found`() {
         client.getSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_VERSION)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -167,7 +167,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
 
         client.deleteSeqSet(seqSetId, 1)
             .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
@@ -192,7 +192,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
 
         client.getSeqSet(seqSetId, 1)
             .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail", containsString("SeqSet $seqSetId, version 1 does not exist")),
             )
