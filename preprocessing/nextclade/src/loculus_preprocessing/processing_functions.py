@@ -250,9 +250,8 @@ class ProcessingFunctions:
         except Exception:
             release_date = None
 
-        submitted_at_str = str(args.get("submittedAt", "")) or ""
         try:
-            submitted_at = datetime.fromtimestamp(float(submitted_at_str), tz=pytz.utc)
+            submitted_at = datetime.fromtimestamp(float(args["submittedAt"]), tz=pytz.utc)
         except Exception:
             return ProcessingResult(
                 datum=None,
