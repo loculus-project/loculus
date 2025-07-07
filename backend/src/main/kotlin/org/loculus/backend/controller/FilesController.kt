@@ -2,6 +2,8 @@ package org.loculus.backend.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.headers.Header
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
@@ -15,6 +17,7 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -37,6 +40,18 @@ class FilesController(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
 ) {
 
+    @Operation(
+        summary = "Download file via redirect to S3 pre-signed URL",
+        description = "Returns a 307 redirect to a pre-signed S3 download URL",
+    )
+    @ApiResponse(
+        responseCode = "307",
+        description = "Temporary redirect to S3 download URL",
+        headers = [Header(name = HttpHeaders.LOCATION, description = "S3 download URL")],
+    )
+    @ApiResponse(responseCode = "401", description = "Authentication needed: the file is not public")
+    @ApiResponse(responseCode = "403", description = "Not authorized to access this non-public file.")
+    @ApiResponse(responseCode = "404", description = "File or accession version does not exist.")
     @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
     fun getFileDownloadUrl(
         @HiddenParam user: User,
@@ -71,11 +86,17 @@ class FilesController(
     }
 
     @Operation(
+        summary = "Request S3 pre-signed URLs for file uploads",
         description =
         "Requests S3 pre-signed URLs to upload files. The endpoint returns a list of file IDs and URLs. " +
             "The URLs should be used to upload the files. Afterwards, the file IDs can be used in the " +
             "`fileMapping` in the /submit endpoint.",
     )
+    @ApiResponse(responseCode = "200", description = "Successfully generated pre-signed upload URLs")
+    @ApiResponse(responseCode = "400", description = "Invalid request parameters")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "403", description = "User is not a member of the specified group")
+    @ApiResponse(responseCode = "404", description = "Group does not exist")
     @PostMapping("/request-upload")
     fun requestUploads(
         @HiddenParam
