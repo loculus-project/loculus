@@ -52,7 +52,7 @@ class ProcessingAnnotation:
 @dataclass
 class UnprocessedData:
     submitter: str
-    submittedAt: str  # ISO 8601 date string  # noqa: N815
+    submittedAt: str  # timestamp  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
 

@@ -1,7 +1,9 @@
 # ruff: noqa: S101
 from dataclasses import dataclass
+from datetime import datetime
 
 import pytest
+import pytz
 from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
@@ -596,7 +598,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeString", "submittedAt": "2021-12-15"},
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12"
     ), "dateRangeString: 2021-12 should be returned as is."
@@ -605,7 +610,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeLower", "submittedAt": "2021-12-15"},
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-01"
     ), "dateRangeLower: 2021-12 should be returned as 2021-12-01."
@@ -614,7 +622,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2022-12-15"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2022-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021-12 should be returned as 2021-12-31."
@@ -623,7 +634,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-15"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 should be returned as submittedAt time: 2021-12-15."
@@ -632,7 +646,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-02"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-03-15"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2021-03-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-02-28"
     ), "dateRangeUpper: 2021-02 should be returned as 2021-02-28."
@@ -641,7 +658,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-15"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-15."
@@ -650,7 +670,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2022-01-15"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2022-01-15", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-31"
     ), "dateRangeUpper: 2021 should be returned as 2021-12-31."
@@ -659,7 +682,10 @@ def test_parse_date_into_range() -> None:
             {"date": "2021-12", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-16"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: 2021-12 with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -668,7 +694,10 @@ def test_parse_date_into_range() -> None:
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeUpper", "submittedAt": "2021-12-16"},
+            {
+                "fieldType": "dateRangeUpper",
+                "submittedAt": datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         == "2021-12-15"
     ), "dateRangeUpper: empty date with releaseDate 2021-12-15 should be returned as 2021-12-15."
@@ -677,7 +706,10 @@ def test_parse_date_into_range() -> None:
             {"date": ""},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeString", "submittedAt": "2021-12-16"},
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         is None
     ), "dateRangeString: empty date should be returned as None."
@@ -686,7 +718,10 @@ def test_parse_date_into_range() -> None:
             {"date": "not.date"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeString", "submittedAt": "2021-12-16"},
+            {
+                "fieldType": "dateRangeString",
+                "submittedAt": datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         is None
     ), "dateRangeString: invalid date should be returned as None."
@@ -695,7 +730,10 @@ def test_parse_date_into_range() -> None:
             {"date": "", "releaseDate": "2021-12-15"},
             "field_name",
             ["field_name"],
-            {"fieldType": "dateRangeLower", "submittedAt": "2021-12-16"},
+            {
+                "fieldType": "dateRangeLower",
+                "submittedAt": datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc),
+            },
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
