@@ -333,7 +333,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do not exist.",
+                    "Group(s) $groupId do(es) not exist.",
                 ),
             )
     }
@@ -383,7 +383,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do not exist.",
+                    "Group(s) $groupId do(es) not exist.",
                 ),
             )
             .andReturn()
