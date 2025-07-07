@@ -17,6 +17,7 @@ from typing import Any, Final
 from unittest.mock import Mock, patch
 
 import pytz
+from ena_deposition.check_external_visibility import check_and_update_visibility_ena_project
 from ena_deposition.config import Config, get_config
 from ena_deposition.create_assembly import (
     assembly_table_create,
@@ -52,8 +53,11 @@ from ena_deposition.create_sample import (
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
+    ProjectTableEntry,
+    Status,
     StatusAll,
     TableName,
+    add_to_project_table,
     db_init,
     delete_records_in_db,
     find_conditions_in_db,
@@ -476,6 +480,69 @@ class TestSubmission:
             f"ENA submission URL is {self.config.ena_submission_url} instead of https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         )
         assert self.config.test, "Test mode is not enabled."
+
+
+class TestFirstPublicUpdate(TestSubmission):
+    def test_first_public_update(self) -> None:
+        """
+        Test that first_publicly_visible works as expected:
+        1. Put project/sample/assembly in status READY with non-existing accessions
+        2. Run check_and_update_visibility_ena_project(config, pool)
+        3. Check that first_publicly_visible is still none for all entries
+        4. Update project/sample/assembly to existing accessions
+        5. Run check_and_update_visibility_ena_project(config, pool)
+        6. Check that first_publicly_visible is updated to current timestamp
+        """
+        project_entry = ProjectTableEntry(
+            group_id=1,
+            organism="test_organism",
+            project_id=0,  # This will be auto-generated and returned
+            status=Status.SUBMITTED,
+            result={"bioproject_accession": "PRJEB2"},
+        )
+
+        # Insert into the database
+        project_id = add_to_project_table(self.db_config, project_entry)
+
+        if project_id is None:
+            msg = "Failed to add project entry to the database."
+            raise ValueError(msg)
+
+        check_and_update_visibility_ena_project(self.config, self.db_config)
+
+        # Check that first_publicly_visible is None
+        rows: list[dict] = find_conditions_in_db(
+            self.db_config,
+            TableName.PROJECT_TABLE,
+            conditions={"project_id": project_id},
+        )
+        logger.debug(f"Rows found: {rows}")
+        assert len(rows) == 1, "Project not found in project table."
+        project_entry = ProjectTableEntry(**rows[0])
+        assert project_entry.ena_first_publicly_visible is None, (
+            "First publicly visible should be None for non-existing accessions."
+        )
+
+        # Update the project entry to have a valid accession
+        update_db_where_conditions(
+            self.db_config,
+            TableName.PROJECT_TABLE,
+            conditions={"project_id": project_id},
+            update_values={"result": json.dumps({"bioproject_accession": "PRJEB53055"})},
+        )
+
+        # Run the visibility check again
+        check_and_update_visibility_ena_project(self.config, self.db_config)
+        rows = find_conditions_in_db(
+            self.db_config,
+            TableName.PROJECT_TABLE,
+            conditions={"project_id": project_id},
+        )
+        assert len(rows) == 1, "Project not found in project table after update."
+        project_entry = ProjectTableEntry(**rows[0])
+        assert project_entry.ena_first_publicly_visible is not None, (
+            "First publicly visible should be updated to current timestamp for valid accessions."
+        )
 
 
 class TestSimpleSubmission(TestSubmission):
