@@ -42,9 +42,7 @@ const OrganismMetadataTableSelector: FC<Props> = ({ organisms }) => {
             params.delete('organism');
         }
         const newUrl =
-            window.location.origin +
-            window.location.pathname +
-            (params.toString() ? `?${params.toString()}` : '');
+            window.location.origin + window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
         window.history.replaceState({ path: newUrl }, '', newUrl);
     }, [selectedOrganismKey]);
 
