@@ -59,7 +59,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
         }
     };
 
-    const finalMetadataFormatDocsUrl = metadataFormatDocsUrl.replace("{organism}",organism)
+    const finalMetadataFormatDocsUrl = metadataFormatDocsUrl.replace('{organism}', organism);
 
     return (
         <div className='grid sm:grid-cols-3 gap-x-16'>
