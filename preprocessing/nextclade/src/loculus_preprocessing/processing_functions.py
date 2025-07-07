@@ -255,7 +255,7 @@ class ProcessingFunctions:
             if not isinstance(submitted_at_str, str):
                 msg = f"Expected submittedAt to be a string, got {type(submitted_at_str)}"
                 raise ValueError(msg)
-            submitted_at = dateutil.parse(submitted_at_str)
+            submitted_at = datetime.fromtimestamp(float(submitted_at_str), tz=pytz.utc)
         except Exception:
             return ProcessingResult(
                 datum=None,
