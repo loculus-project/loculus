@@ -252,9 +252,6 @@ class ProcessingFunctions:
 
         submitted_at_str = str(args.get("submittedAt", "")) or ""
         try:
-            if not isinstance(submitted_at_str, str):
-                msg = f"Expected submittedAt to be a string, got {type(submitted_at_str)}"
-                raise ValueError(msg)
             submitted_at = datetime.fromtimestamp(float(submitted_at_str), tz=pytz.utc)
         except Exception:
             return ProcessingResult(
