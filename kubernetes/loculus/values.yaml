@@ -1259,6 +1259,7 @@ defaultOrganisms:
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
+    enabled: false
     schema:
       <<: *schema
       organismName: "West Nile Virus"
