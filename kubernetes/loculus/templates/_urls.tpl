@@ -62,7 +62,7 @@
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $lapisUrlTemplate := .lapisUrlTemplate }}
 {{ range $key, $organism := (.config.organisms | default .config.defaultOrganisms) }}
-{{- if ne ($organism.enabled | default true) false }}
+{{- if ne $organism.enabled false }}
 "{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
 {{- end }}
 {{ end }}
