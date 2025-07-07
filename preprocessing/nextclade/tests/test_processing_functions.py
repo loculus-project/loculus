@@ -32,6 +32,12 @@ from loculus_preprocessing.processing_functions import (
 test_config_file = "tests/test_config.yaml"
 
 
+def ts_from_ymd(year: int, month: int, day: int) -> str:
+    """Convert a year, month, and day into a UTC timestamp string."""
+    dt = datetime(year, month, day, tzinfo=pytz.UTC)
+    return str(dt.timestamp())
+
+
 @dataclass
 class Case:
     name: str
@@ -505,9 +511,7 @@ def test_preprocessing_without_consensus_sequences():
         accessionVersion=f"LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
-            submittedAt=str(
-                datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-            ),
+            submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name,
@@ -602,9 +606,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
         ).datum
         == "2021-12"
@@ -616,9 +618,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
         ).datum
         == "2021-12-01"
@@ -630,9 +630,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2022-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2022, 12, 15),
             },
         ).datum
         == "2021-12-31"
@@ -644,9 +642,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
         ).datum
         == "2021-12-15"
@@ -658,9 +654,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2021-03-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 3, 15),
             },
         ).datum
         == "2021-02-28"
@@ -672,9 +666,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 15),
             },
         ).datum
         == "2021-12-15"
@@ -686,9 +678,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2022-01-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2022, 1, 15),
             },
         ).datum
         == "2021-12-31"
@@ -700,9 +690,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
         ).datum
         == "2021-12-15"
@@ -714,9 +702,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeUpper",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
         ).datum
         == "2021-12-15"
@@ -728,9 +714,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
         ).datum
         is None
@@ -742,9 +726,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeString",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
         ).datum
         is None
@@ -756,9 +738,7 @@ def test_parse_date_into_range() -> None:
             ["field_name"],
             {
                 "fieldType": "dateRangeLower",
-                "submittedAt": str(
-                    datetime.strptime("2021-12-16", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
-                ),
+                "submittedAt": ts_from_ymd(2021, 12, 16),
             },
         ).datum
         is None

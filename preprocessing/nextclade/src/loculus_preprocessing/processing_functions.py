@@ -26,7 +26,7 @@ from .datatypes import (
 
 logger = logging.getLogger(__name__)
 
-options_cache = {}
+options_cache: dict[str, dict[str, str]] = {}
 
 
 def compute_options_cache(output_field: str, options_list: list[str]) -> dict[str, str]:
@@ -251,7 +251,7 @@ class ProcessingFunctions:
             release_date = None
 
         try:
-            submitted_at = datetime.fromtimestamp(float(args["submittedAt"]), tz=pytz.utc)
+            submitted_at = datetime.fromtimestamp(float(str(args["submittedAt"])), tz=pytz.utc)
         except Exception:
             return ProcessingResult(
                 datum=None,

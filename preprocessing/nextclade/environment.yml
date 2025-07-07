@@ -15,3 +15,9 @@ dependencies:
   - pytz=2024.2
   - requests=2.32
   - pandas=2.2
+  - ruff
+  - types-PyYAML
+  - types-requests
+  - types-pytz
+  - types-python-dateutil
+  - pytest
