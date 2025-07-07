@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
-import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
@@ -36,6 +35,7 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import kotlin.time.Clock
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$DATA_USE_TERMS_DISABLED_CONFIG"],

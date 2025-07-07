@@ -13,7 +13,6 @@ from .ena_submission_helper import (
     CreationResult,
     create_ena_sample,
     get_alias,
-    get_ena_config,
     set_error_if_accession_not_exists,
 )
 from .ena_types import (
@@ -65,14 +64,14 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
                 )
                 continue
             if function == "match" and (len(full_field_values) == len(args)):
-                value = True
+                value = "true"
                 for i in range(len(full_field_values)):
                     if not re.match(
                         args[i],
                         full_field_values[i],
                         re.IGNORECASE,
                     ):
-                        value = False
+                        value = "false"
                         break
             else:
                 continue
@@ -83,7 +82,9 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
         if value:
             list_sample_attributes.append(
                 SampleAttribute(
-                    tag=field, value=value, units=config.metadata_mapping[field].get("units")
+                    tag=field,
+                    value=value,
+                    units=config.metadata_mapping[field].get("units"),  # type: ignore
                 )
             )
             mapped_fields.append(field)
@@ -100,7 +101,7 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
 
 def construct_sample_set_object(
     config: Config,
-    sample_data_in_submission_table: dict[str, str],
+    sample_data_in_submission_table: dict[str, str | dict[str, str]],
     entry: dict[str, str],
     test: bool = False,
 ):
@@ -113,9 +114,9 @@ def construct_sample_set_object(
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    sample_metadata = sample_data_in_submission_table["metadata"]
+    sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
     center_name = sample_data_in_submission_table["center_name"]
-    organism = sample_data_in_submission_table["organism"]
+    organism: str = sample_data_in_submission_table["organism"]  # type: ignore
     organism_metadata = config.organisms[organism]["enaDeposition"]
     alias = get_alias(
         f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
@@ -143,14 +144,14 @@ def construct_sample_set_object(
             scientific_name=organism_metadata["scientific_name"],
         ),
         sample_links=SampleLinks(
-            sample_link=ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))
+            sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]
         ),
         sample_attributes=SampleAttributes(sample_attribute=list_sample_attributes),
     )
     return SampleSetType(sample=[sample_type])
 
 
-def set_sample_table_entry(db_config, row, seq_key):
+def set_sample_table_entry(db_config, row, seq_key, config: Config):
     """Set sample_table entry for entry with biosampleAccession"""
     logger.debug(
         f"Accession: {row['accession']} already has biosampleAccession, adding to sample_table"
@@ -161,7 +162,11 @@ def set_sample_table_entry(db_config, row, seq_key):
     seq_key = {"accession": row["accession"], "version": row["version"]}
     if (
         set_error_if_accession_not_exists(
-            conditions=seq_key, accession=biosample, accession_type="BIOSAMPLE", db_pool=db_config
+            conditions=seq_key,
+            accession=biosample,
+            accession_type="BIOSAMPLE",
+            db_pool=db_config,
+            config=config,
         )
         is False
     ):
@@ -182,13 +187,13 @@ def set_sample_table_entry(db_config, row, seq_key):
         }
         update_db_where_conditions(
             db_config,
-            table_name="submission_table",
+            table_name=TableName.SUBMISSION_TABLE,
             conditions=seq_key,
             update_values=update_values,
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
     2. If (exists an entry in the sample_table for (accession, version)):
@@ -234,7 +239,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
 
         # If not: create sample_entry, change status to SUBMITTING_SAMPLE
         if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-            set_sample_table_entry(db_config, row, seq_key)
+            set_sample_table_entry(db_config, row, seq_key, config)
             continue
         sample_table_entry = SampleTableEntry(**seq_key)
         succeeded = add_to_sample_table(db_config, sample_table_entry)
@@ -289,7 +294,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
 def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
     """Check if entry is incorrectly added older version - error and do not submit"""
-    version = seq_key["version"]
+    version = int(seq_key["version"])
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
@@ -335,12 +340,6 @@ def sample_table_create(
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     sample for testing.
     """
-    ena_config = get_ena_config(
-        config.ena_submission_username,
-        config.ena_submission_password,
-        config.ena_submission_url,
-        config.ena_reports_service_url,
-    )
     conditions = {"status": Status.READY}
     ready_to_submit_sample = find_conditions_in_db(
         db_config, table_name=TableName.SAMPLE_TABLE, conditions=conditions
@@ -377,7 +376,7 @@ def sample_table_create(
             continue
         logger.info(f"Starting sample creation for accession {row['accession']}")
         sample_creation_results: CreationResult = create_ena_sample(
-            ena_config, sample_set, revision=is_revision(db_config, seq_key)
+            config, sample_set, revision=is_revision(db_config, seq_key)
         )
         if sample_creation_results.result:
             update_values = {
@@ -401,7 +400,10 @@ def sample_table_create(
                 )
                 tries += 1
             if number_rows_updated == 1:
-                logger.info(f"Sample creation for accession {row['accession']} succeeded!")
+                logger.info(
+                    f"Sample creation for accession {row['accession']} "
+                    f"succeeded with: {sample_creation_results.result}"
+                )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
@@ -443,7 +445,8 @@ def sample_table_handle_errors(
     )
     if len(entries_with_errors) > 0:
         error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found {len(entries_with_errors)} entries"
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_with_errors)} entries"
             f" in sample_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
         )
         send_slack_notification(
@@ -470,13 +473,9 @@ def create_sample(config: Config, stop_event: threading.Event):
             print("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
-        submission_table_start(db_config)
+        submission_table_start(db_config, config=config)
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
         sample_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
-
-
-if __name__ == "__main__":
-    create_sample()

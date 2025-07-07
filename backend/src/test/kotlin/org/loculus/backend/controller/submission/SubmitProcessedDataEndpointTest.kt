@@ -1,9 +1,11 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
@@ -11,8 +13,10 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Insertion
+import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -34,12 +38,18 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.AminoAcidSymbols
 import org.loculus.backend.service.submission.NucleotideSymbols
+import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
@@ -49,6 +59,9 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,
+    @Autowired val useNewerProcessingPipelineVersionTask: UseNewerProcessingPipelineVersionTask,
+    @Autowired val submissionDatabaseService: SubmissionDatabaseService,
+    @Autowired val objectMapper: ObjectMapper,
 ) {
 
     @Autowired
@@ -613,6 +626,136 @@ class SubmitProcessedDataEndpointTest(
                     containsString("No file uploaded for file ID ${fileIdAndUrl.fileId}."),
                 ),
             )
+    }
+
+    @Test
+    fun `WHEN the preprocessing pipeline submits files for already approved entries THEN new file is public`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+
+        // Step 1: submit entry without files
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        // Step 2: extract and submit processed entry with files
+        val fileIdAndUrlV1 = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1")
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrlV1.fileId, "v1.txt"))),
+            ),
+            pipelineVersion = 1,
+        ).andExpect(status().isNoContent)
+
+        // Step 3: approve entry
+        convenienceClient.approveProcessedSequenceEntries(listOf(AccessionVersion(accession, 1)))
+
+        // Step 4: extract and submit processed entry with higher pipeline version and new file
+        val fileIdAndUrlV2 = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2")
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrlV2.fileId, "v2.txt"))),
+            ),
+            pipelineVersion = 2,
+        ).andExpect(status().isNoContent)
+
+        // Step 5: run task to update pipeline version
+        useNewerProcessingPipelineVersionTask.task()
+        assertThat(
+            submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)),
+            `is`(2L),
+        )
+
+        // Step 6: check file is publicly accessible
+        val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
+        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
+        val fileUrl = fileList.first()["url"]!!
+        val client = HttpClient.newHttpClient()
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(fileUrl))
+            .build()
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        assertThat(response.statusCode(), `is`(200))
+        assertThat(response.body(), `is`("FileV2"))
+    }
+
+    @Test
+    fun `WHEN the preprocessing pipeline is updated after V2 is submitted THEN new file is public`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+
+        // Step 1: submit entry without files
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        // Step 2: extract and submit processed entry with files
+        val fileIdAndUrlV1 = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrlV1.presignedWriteUrl, "FileV1")
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrlV1.fileId, "v1.txt"))),
+            ),
+            pipelineVersion = 1,
+        ).andExpect(status().isNoContent)
+
+        // Step 3: extract and submit processed entry with higher pipeline version and new file
+        val fileIdAndUrlV2 = filesClient.requestUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+        ).andGetFileIdsAndUrls()[0]
+        convenienceClient.uploadFile(fileIdAndUrlV2.presignedWriteUrl, "FileV2")
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf("myFileCategory" to listOf(FileIdAndName(fileIdAndUrlV2.fileId, "v2.txt"))),
+            ),
+            pipelineVersion = 2,
+        ).andExpect(status().isNoContent)
+
+        // Step 4: approve entry
+        convenienceClient.approveProcessedSequenceEntries(listOf(AccessionVersion(accession, 1)))
+
+        // Step 5: run task to update pipeline version
+        useNewerProcessingPipelineVersionTask.task()
+        assertThat(
+            submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)),
+            `is`(2L),
+        )
+
+        // Step 6: check file is publicly accessible
+        val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
+        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
+        val fileUrl = fileList.first()["url"]!!
+        val client = HttpClient.newHttpClient()
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(fileUrl))
+            .build()
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        assertThat(response.statusCode(), `is`(200))
+        assertThat(response.body(), `is`("FileV2"))
     }
 
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =

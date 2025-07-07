@@ -2,15 +2,12 @@ name: ena-submission-workflow-tests
 on:
   pull_request:
     paths:
-      - "ena-submission/scripts/test_ena_submission_integration.py"
+      - "ena-submission/**"
       - ".github/workflows/ena-submission-workflow-tests.yml"
   push:
     branches:
       - main
   workflow_dispatch:
-concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ena-submission-workflow-tests
-  cancel-in-progress: true
 jobs:
   Tests:
     runs-on: ubuntu-latest
@@ -34,31 +31,39 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Extract Flyway version
+        id: flyway_version
+        run: |
+          FLYWAY_VERSION=$(grep "^FROM flyway/flyway:" ./ena-submission/flyway/Dockerfile \
+            | sed -E 's/^FROM flyway\/flyway:([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "version=$FLYWAY_VERSION" >> $GITHUB_OUTPUT
       - name: Install Flyway
         run: |
-          curl -L -o flyway.tar.gz "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/10.0.0/flyway-commandline-10.0.0-linux-x64.tar.gz"
+          FLYWAY_VERSION=${{ steps.flyway_version.outputs.version }}
+          curl -L -o flyway.tar.gz \
+            https://github.com/flyway/flyway/releases/download/flyway-$FLYWAY_VERSION/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz
           tar -xzf flyway.tar.gz
-          sudo mv flyway-10.0.0 /opt/flyway
+          sudo mv flyway-$FLYWAY_VERSION /opt/flyway
           echo "/opt/flyway" >> $GITHUB_PATH
       - name: Run Flyway
-        run: flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_schema -user=postgres -password=unsecure -locations=filesystem:./ena-submission/flyway/sql migrate
-      - name: Install WEBIN CLI
-        run: |
-          WEBIN_CLI_VERSION=$(cat ena-submission/.webinrc)
-          wget -q "https://github.com/enasequence/webin-cli/releases/download/${WEBIN_CLI_VERSION}/webin-cli-${WEBIN_CLI_VERSION}.jar" -O ena-submission/webin-cli.jar
+        run: | 
+          flyway -url=jdbc:postgresql://localhost:5432/loculus \
+            -schemas=ena_deposition_schema \
+            -user=postgres \
+            -password=unsecure \
+            -locations=filesystem:./ena-submission/flyway/sql \
+            migrate
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with: 
             environment-file: ena-submission/environment.yml
             micromamba-version: 'latest'
-            init-shell: >-
-                bash
-                powershell
             cache-environment: true
-            post-cleanup: 'all'
       - name: Run tests
         run: |
             pip install .
-            python3 scripts/test_ena_submission_integration.py
+            # The unit tests are run in ena-submission-unit-tests.yaml
+            pytest \
+              --ignore=./scripts/test_ena_submission.py
         shell: micromamba-shell {0}
         working-directory: ena-submission

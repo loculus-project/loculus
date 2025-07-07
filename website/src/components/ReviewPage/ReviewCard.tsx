@@ -88,6 +88,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                             keyName='Revocation entry'
                             value='This is a revocation entry, which will create a new version that revokes this accession'
                             extraStyle='text-red-600 font-semibold'
+                            disableTruncate
                         />
                     )}
                 </div>
@@ -418,6 +419,7 @@ type KeyValueComponentProps = {
     keyStyle?: string;
     warnings?: ProcessingAnnotation[];
     errors?: ProcessingAnnotation[];
+    disableTruncate?: boolean;
 };
 
 const KeyValueComponent: FC<KeyValueComponentProps> = ({
@@ -428,6 +430,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     keyStyle,
     warnings,
     errors,
+    disableTruncate = false,
 }) => {
     const { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
 
@@ -438,10 +441,12 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     const [isTruncated, setIsTruncated] = useState(false);
 
     useEffect(() => {
-        if (textRef.current) {
+        if (textRef.current && !disableTruncate) {
             setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+        } else {
+            setIsTruncated(false);
         }
-    }, [value]);
+    }, [value, disableTruncate]);
 
     const showTooltip = primaryMessages !== undefined || isTruncated;
     const tooltipContent =
@@ -453,7 +458,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
             <span className={`text-base ${extraStyle}`}>
                 <span
                     ref={textRef}
-                    className={`${textColor} truncate max-w-xs inline-block`}
+                    className={`${textColor} ${disableTruncate ? '' : 'truncate max-w-xs inline-block'}`}
                     data-tooltip-id={showTooltip ? textTooltipId : undefined}
                 >
                     {value}
@@ -509,12 +514,14 @@ function useGetMetadataAndAnnotations(
     accessToken: string,
     sequenceEntryStatus: SequenceEntryStatus,
 ) {
-    const { status, accession, version } = sequenceEntryStatus;
+    const { status, accession, version, isRevocation } = sequenceEntryStatus;
     return backendClientHooks(clientConfig).useGetDataToEdit(
         {
             headers: createAuthorizationHeader(accessToken),
             params: { organism, accession, version },
         },
-        { enabled: status !== receivedStatus && status !== inProcessingStatus },
+        {
+            enabled: status !== receivedStatus && status !== inProcessingStatus && !isRevocation,
+        },
     );
 }

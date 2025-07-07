@@ -1,8 +1,12 @@
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
+import dotenv
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -28,18 +32,24 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
-    metadata_mapping: dict[str, dict[str, list[str]]]
+    metadata_mapping: dict[str, dict[str, str | list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
-    manifest_fields_mapping: dict[str, dict[str, str]]
+    manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
     ena_deposition_port: int
+    ena_http_timeout_seconds: int = 60
+    ena_http_get_retry_attempts: int = 3
+    # By default, don't retry HTTP post requests to ENA
+    ena_http_post_retry_attempts: int = 1
     submit_to_ena_prod: bool = False
     is_broker: bool = False
-    allowed_submission_hosts: list[str] = field(default_factory=lambda: ["https://backend.pathoplexus.org"])
-    min_between_github_requests: int | None = 2
-    time_between_iterations: int | None = 10
-    min_between_ena_checks: int | None = 5
+    allowed_submission_hosts: list[str] = field(
+        default_factory=lambda: ["https://backend.pathoplexus.org"]
+    )
+    min_between_github_requests: int = 2
+    time_between_iterations: int = 10
+    min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
@@ -49,13 +59,13 @@ def secure_ena_connection(config: Config):
     """Modify passed-in config object"""
     submit_to_ena_prod = config.submit_to_ena_prod
     if submit_to_ena_prod and (config.backend_url not in config.allowed_submission_hosts):
-        logging.warning("WARNING: backend_url not in allowed_hosts")
+        logger.warning("WARNING: backend_url not in allowed_hosts")
         submit_to_ena_prod = False
     submit_to_ena_dev = not submit_to_ena_prod
 
     if submit_to_ena_dev:
         config.test = True
-        logging.info("Submitting to ENA dev environment")
+        logger.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
         if not config.github_test_url:
             config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
@@ -65,7 +75,7 @@ def secure_ena_connection(config: Config):
 
     if submit_to_ena_prod:
         config.test = False
-        logging.warning("WARNING: Submitting to ENA production")
+        logger.warning("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
         config.github_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"
@@ -80,6 +90,16 @@ def get_config(config_file: str) -> Config:
         if key not in full_config:
             full_config[key] = value
     relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+
+    dotenv.load_dotenv()  # Load environment variables from .env file
+    relevant_config["ena_submission_username"] = os.getenv(
+        "ENA_USERNAME", relevant_config["ena_submission_username"]
+    )
+    relevant_config["ena_submission_password"] = os.getenv(
+        "ENA_PASSWORD", relevant_config["ena_submission_password"]
+    )
+    relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
+
     config = Config(**relevant_config)
     secure_ena_connection(config)
     return config

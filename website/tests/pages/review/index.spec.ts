@@ -65,14 +65,26 @@ test.describe('The review page', () => {
 
         await reviewPage.waitForTotalSequenceCountCorrect(total);
 
-        await reviewPage.page.goto(
-            `${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}dataUseTerms=RESTRICTED`,
-        );
-        reviewPage.page.getByText(`Search returned ${testSequenceCount} sequence`);
+        const page = reviewPage.page;
 
-        await reviewPage.page.locator('tr').first().waitFor();
-        const rowLocator = reviewPage.page.locator('tr').getByText('LOC').first();
+        await page.goto(`${baseUrl}${routes.mySequencesPage(dummyOrganism.key, groupId)}dataUseTerms=RESTRICTED`);
+
+        await expect
+            .poll(
+                async () => {
+                    await page.reload();
+                    return page.getByText(`Search returned ${testSequenceCount} sequence`).isVisible();
+                },
+                {
+                    message: 'Correct number of sequences never appeared on the page.',
+                    timeout: 60000,
+                },
+            )
+            .toBe(true);
+
+        const rowLocator = page.locator('a[href*="/seq/LOC"]').first();
+        await expect(rowLocator).toBeVisible();
         await rowLocator.click();
-        await expect(reviewPage.page.getByText('Restricted sequence')).toBeVisible();
+        await expect(page.getByText('Restricted sequence')).toBeVisible();
     });
 });

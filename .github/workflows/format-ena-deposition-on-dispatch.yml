@@ -1,11 +1,11 @@
-name: Format website code
+name: Format ENA deposition code on label or dispatch
 on:
   workflow_dispatch:
   pull_request:
     types: [synchronize, labeled]
     paths:
-      - "website/**"
-      - ".github/workflows/format-website-on-dispatch.yml"
+      - "ena-submission/**"
+      - ".github/workflows/format-ena-deposition-on-dispatch.yml"
 jobs:
   format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
@@ -18,20 +18,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Run ruff format
+        uses: astral-sh/ruff-action@v3
         with:
-          node-version-file: ./website/.nvmrc
-      - name: Cache .npm
-        uses: actions/cache@v4
+          args: "format"
+          src: "ena-submission"
+      - name: Run ruff check --fix
+        uses: astral-sh/ruff-action@v3
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
-      - name: NPM install and format website
-        working-directory: website
-        run: |
-          npm install
-          npm run format
+          args: "check --fix"
+          src: "ena-submission"
       - name: Commit and Push Changes
         run: |
           git config --global user.name 'Loculus bot'

@@ -8,6 +8,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 import click
@@ -16,6 +17,7 @@ from ena_deposition.create_assembly import create_manifest_object
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
 from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
+from ena_deposition.loculus_models import Address, Group
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -62,7 +64,7 @@ def local_ena_submission_generator(
     mode,
     revision,
     log_level,
-):
+) -> None:
     """
     Produce output of submission pipeline locally
     """
@@ -75,7 +77,7 @@ def local_ena_submission_generator(
         sequences_to_upload: dict[str, Any] = json.load(json_file)
 
     if len(sequences_to_upload) > 1:
-        logging.error("Script can only handle one entry at a time")
+        logger.error("Script can only handle one entry at a time")
         return
 
     for full_accession, data in sequences_to_upload.items():
@@ -89,7 +91,20 @@ def local_ena_submission_generator(
             "unaligned_nucleotide_sequences": data["unalignedNucleotideSequences"],
         }
 
-    group_info = {"institution": center_name, "address": {"city": "CITY", "country": "COUNTRY"}, "groupName": "GROUP_NAME"}
+    group_info = Group(
+        groupId=123,
+        groupName="GROUP_NAME",
+        institution=center_name,
+        contactEmail="someemail@example.com",
+        address=Address(
+            line1="ADDRESS_LINE_1",
+            line2="ADDRESS_LINE_2",
+            city="CITY",
+            state="STATE",
+            postalCode="POSTAL_CODE",
+            country="COUNTRY",
+        ),
+    )
 
     if mode == "project":
         project_set = construct_project_set_object(group_info, config, entry)
@@ -99,10 +114,12 @@ def local_ena_submission_generator(
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
-        with open(os.path.join(directory, "submission.xml"), "w") as file:
-            file.write(project_xml["SUBMISSION"])
-        with open(os.path.join(directory, "project.xml"), "w") as file:
-            file.write(project_xml["PROJECT"])
+        Path(os.path.join(directory, "submission.xml")).write_text(
+            project_xml["SUBMISSION"], encoding="utf-8"
+        )
+        Path(os.path.join(directory, "project.xml")).write_text(
+            project_xml["PROJECT"], encoding="utf-8"
+        )
 
         logger.info(
             "You can submit the project to ENA using the command: \n"
@@ -122,11 +139,12 @@ def local_ena_submission_generator(
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
-        with open(os.path.join(directory, "submission.xml"), "w") as file:
-            file.write(sample_xml["SUBMISSION"])
-        with open(os.path.join(directory, "sample.xml"), "w") as file:
-            file.write(sample_xml["SAMPLE"])
-
+        Path(os.path.join(directory, "submission.xml")).write_text(
+            sample_xml["SUBMISSION"], encoding="utf-8"
+        )
+        Path(os.path.join(directory, "sample.xml")).write_text(
+            sample_xml["SAMPLE"], encoding="utf-8"
+        )
         logger.info(
             "You can submit the sample to ENA using the command: \n"
             "curl -X POST $ena_submission_url "
@@ -138,23 +156,18 @@ def local_ena_submission_generator(
 
     if mode == "assembly":
         entry["center_name"] = center_name
-        dummy_sample_dict = {"result": {"ena_sample_accession": "BIOSAMPLE_ACCESSION"}}
-        dummy_project_dict = {
-            "result": {"bioproject_accession": "BIOPROJECT_ACCESSION"},
-            "center_name": center_name,
-        }
 
         directory = "assembly"
         os.makedirs(directory, exist_ok=True)
         logger.info(f"Writing results to {directory}")
 
         manifest_object = create_manifest_object(
-            config, dummy_sample_dict, dummy_project_dict, entry, dir=directory
+            config, "BIOSAMPLE_ACCESSION", "BIOPROJECT_ACCESSION", entry, dir=directory
         )
         create_manifest(manifest_object, is_broker=config.is_broker, dir=directory)
         logger.info(
             "You can submit the assembly to ENA using the command: \n"
-            "java -jar webin-cli.jar -username $ena_submission_username "
+            "ena-webin-cli -username $ena_submission_username "
             "-password $ena_submission_password -context genome "
             "-manifest assembly/manifest.tsv -submit "
             f"-centername {center_name}"

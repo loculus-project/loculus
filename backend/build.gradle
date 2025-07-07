@@ -6,6 +6,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
+    // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
+    // Then commit the changes
     id 'org.jetbrains.kotlin.jvm' version '2.2.0'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.2.0'
     id 'org.jlleitschuh.gradle.ktlint' version '12.3.0'
@@ -22,6 +24,9 @@ java {
 
 kotlin {
     jvmToolchain(21)
+    // Added to dismiss warnings, see: https://github.com/loculus-project/loculus/issues/4529
+    compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
 }
 
 repositories {
@@ -37,16 +42,16 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.7"
     implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9"
-    implementation "org.flywaydb:flyway-database-postgresql:11.9.2"
+    implementation "org.flywaydb:flyway-database-postgresql:11.10.0"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.0-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.5"
     implementation("io.minio:minio:8.5.17")
-    implementation("software.amazon.awssdk:s3:2.31.68")
+    implementation("software.amazon.awssdk:s3:2.31.73")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -65,9 +70,9 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.21.2"
-    testImplementation "org.testcontainers:minio:1.21.2"
-    testImplementation platform("org.junit:junit-bom:5.13.1")
+    testImplementation "org.testcontainers:postgresql:1.21.3"
+    testImplementation "org.testcontainers:minio:1.21.3"
+    testImplementation platform("org.junit:junit-bom:5.13.2")
     testImplementation "org.junit.platform:junit-platform-launcher"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.6.0") {
         attributes {

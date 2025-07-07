@@ -1,10 +1,13 @@
+# ruff: noqa: S101 (allow asserts in tests)
+
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from ena_deposition.api import app
 from ena_deposition.config import Config, get_config
 from ena_deposition.submission_db_helper import db_init
 from fastapi.testclient import TestClient
+from requests.status_codes import codes
 
 client = TestClient(app)
 
@@ -23,7 +26,7 @@ config_file = "./test/test_config.yaml"
 
 
 class ApiTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.config: Config = get_config(config_file)
         self.db_config = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
@@ -31,7 +34,9 @@ class ApiTest(unittest.TestCase):
 
     @patch("ena_deposition.api.get_insdc_accessions")
     @patch("ena_deposition.api.get_bio_sample_accessions")
-    def test_submit(self, mock_get_bio_sample_accessions, mock_get_insdc_accessions):
+    def test_submit(
+        self, mock_get_bio_sample_accessions: Mock, mock_get_insdc_accessions: Mock
+    ) -> None:
         """
         Test the full ENA submission pipeline with accurate data - this should succeed
         """
@@ -42,7 +47,7 @@ class ApiTest(unittest.TestCase):
 
         response = client.get("/submitted")
 
-        assert response.status_code == 200
+        assert response.status_code == codes.ok
         assert response.json() == {
             "status": "ok",
             "insdcAccessions": ["INS001", "INS002", "INS003"],
@@ -51,4 +56,6 @@ class ApiTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    import pytest
+
+    pytest.main([__file__])

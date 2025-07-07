@@ -5,7 +5,7 @@ export class SearchPage {
 
     async navigateToVirus(virus: string) {
         await this.page.goto('/');
-        await this.page.getByRole('link', { name: new RegExp(virus) }).click();
+        await this.page.getByRole('link', { name: virus }).click();
     }
 
     async ebolaSudan() {
@@ -14,6 +14,10 @@ export class SearchPage {
 
     async cchf() {
         await this.navigateToVirus('Crimean-Congo Hemorrhagic Fever Virus');
+    }
+
+    async testOrganismWithoutAlignment() {
+        await this.navigateToVirus('Test organism (without alignment)');
     }
 
     async select(fieldLabel: string, option: string) {

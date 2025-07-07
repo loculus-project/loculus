@@ -19,6 +19,20 @@ The "Loculus backend" is the central server service of Loculus and responsible f
 
 A deletion is a type of [mutation](#mutation) where a nucleotide or amino acid is present in a reference sequence but not present in the sample sequence. The notation for a deletion in the case of a single-segmented nucleotide sequence is `<base of reference genome><position>-` (e.g., C100-). A mutation in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence is further prefixed with the segment or gene name by adding `<segment/gene name>:` (e.g., E:S100-).
 
+### File category
+
+File categories are categories of files submitted or created with the [file sharing feature](#file-sharing-feature). Additional files can be attached to a sequence entry, and every file needs to be within a predefined category. A category can be for example `rawReads` for files of raw reads.
+
+### File ID
+
+As part of the [file sharing feature](#file-sharing-feature), every file that is submitted gets an ID, which is the file ID.
+It uniquely identifies this file and can be used to attach the file to a sequence entry.
+This does not apply to sequence and metadata files supplied as part of the bulk submission.
+
+### File sharing feature
+
+The file sharing feature can be enabled for an [organism](#organism). If it is enabled, users can submit files into preconfigured [file categories](#file-category), per sequence. The files are then associated to this sequence and can be downloaded later on in the sequence detail view.
+
 ### Insertion
 
 An insertion is a type of [mutation](#mutation) where one or more nucleotides or amino acids are present in a sample sequence but not in a reference sequence. The notation for an insertion in the case of a single-segmented nucleotide sequence is `ins_<position>:<inserted bases>` (e.g., ins_100:AAT). An insertion in the case of a [multi-segmented](#segment) nucleotide sequence or an amino acid sequence further contains `<segment/gene name>:` in front of the position (e.g., ins_E:100:AAT).
@@ -74,6 +88,10 @@ A revision adds an updated version of a [sequence entry](#sequence-entry).
 ### Revocation
 
 A revocation adds a new version that declares a [sequence entry](#sequence-entry) to be revoked. Revoked sequences are still publicly available but are highlighted as revoked.
+
+### S3 (Simple Storage Service)
+
+S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [MinIO](https://github.com/minio/minio)). Loculus uses it for the [file sharing feature](#file-sharing-feature).
 
 ### Schema
 

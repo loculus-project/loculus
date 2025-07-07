@@ -8,8 +8,10 @@ import re
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
-from dataclasses import dataclass
-from typing import Any, Literal
+from collections.abc import Sequence
+from dataclasses import Field, dataclass, is_dataclass
+from pathlib import Path
+from typing import Any, ClassVar, Final, Literal, Protocol
 
 import pytz
 import requests
@@ -18,8 +20,16 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from bs4 import BeautifulSoup
 from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
+from tenacity import (
+    RetryCallState,
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from ena_deposition.config import Config
 
@@ -48,82 +58,75 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ENAConfig:
-    ena_submission_username: str
-    ena_submission_password: str
-    ena_submission_url: str
-    ena_reports_service_url: str
-
-
-def get_ena_config(
-    ena_submission_username_default: str,
-    ena_submission_password_default: str,
-    ena_submission_url_default: str,
-    ena_reports_service_url_default: str,
-) -> ENAConfig:
-    ena_submission_username = os.getenv("ENA_USERNAME")
-    if not ena_submission_username:
-        ena_submission_username = ena_submission_username_default
-
-    ena_submission_password = os.getenv("ENA_PASSWORD")
-    if not ena_submission_password:
-        ena_submission_password = ena_submission_password_default
-
-    ena_submission_url = ena_submission_url_default
-    ena_reports_service_url = ena_reports_service_url_default
-
-    db_params = {
-        "ena_submission_username": ena_submission_username,
-        "ena_submission_password": ena_submission_password,
-        "ena_submission_url": ena_submission_url,
-        "ena_reports_service_url": ena_reports_service_url,
-    }
-
-    return ENAConfig(**db_params)
-
-
-@dataclass
 class CreationResult:
     errors: list[str]
     warnings: list[str]
-    result: dict[str, str] | None = None
+    result: dict[str, str | Sequence[str]] | None = None
 
 
 def recursive_defaultdict():
     return defaultdict(recursive_defaultdict)
 
 
-def dataclass_to_dict(dataclass_instance):
+class DataclassProtocol(Protocol):
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
+
+
+def assert_dataclass(obj: Any) -> None:
+    """
+    Asserts that the object is a dataclass instance.
+    Raises TypeError if not.
+    """
+    if not is_dataclass(obj):
+        msg = f"Expected a dataclass instance, got {type(obj).__name__}: {obj}."
+        raise TypeError(msg)
+    if isinstance(obj, type):
+        # It's a dataclass class, not an instance - handle this case
+        msg = f"Expected dataclass instance, got dataclass class: {obj}"
+        raise TypeError(msg)
+
+
+def dataclass_to_dict(dataclass_instance: DataclassProtocol) -> dict[str, Any]:
     """
     Converts a dataclass instance to a dictionary, handling nested dataclasses.
     """
-    if not hasattr(dataclass_instance, "__dataclass_fields__"):
-        return dataclass_instance
-    result = {}
-    for field in dataclass_instance.__dataclass_fields__:
-        value = getattr(dataclass_instance, field)
-        is_xml_attribute = isinstance(value, XmlAttribute)
+    assert_dataclass(dataclass_instance)
+    result: dict[str, Any] = {}
+    for field_name in dataclass_instance.__dataclass_fields__:
+        value = getattr(dataclass_instance, field_name)
         if isinstance(value, XmlNone):
-            result[field.upper()] = None
+            result[field_name.upper()] = None
             continue
         if value is None:
             continue
         if isinstance(value, list):
-            result[field.upper()] = [dataclass_to_dict(item) for item in value]
-        elif is_xml_attribute:
-            attribute_field = "@" + field
+            res = []
+            for item in value:
+                res.append(dataclass_to_dict(item))
+            result[field_name.upper()] = res
+        elif isinstance(value, XmlAttribute):
+            attribute_field = "@" + field_name
             result[attribute_field] = value
+        elif isinstance(value, (str, int, float, bool)):
+            result[field_name.upper()] = value
+        elif is_dataclass(value) and not isinstance(value, type):
+            result[field_name.upper()] = dataclass_to_dict(value)
         else:
-            result[field.upper()] = dataclass_to_dict(value)
+            msg = (
+                f"Unsupported type {type(value)} for field {field_name} in dataclass "
+                f"{dataclass_instance.__class__.__name__} with value {value}."
+            )
+            logger.error(msg)
+            raise TypeError(msg)
     return result
 
 
-def dataclass_to_xml(dataclass_instance, root_name="root"):
+def dataclass_to_xml(dataclass_instance: DataclassProtocol, root_name="root") -> str:
     dataclass_dict = dataclass_to_dict(dataclass_instance)
     return xmltodict.unparse({root_name: dataclass_dict}, pretty=True)
 
 
-def get_submission_dict(hold_until_date: str | None = None):
+def get_submission_dict(hold_until_date: str | None = None) -> Submission:
     if not hold_until_date:
         hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
     return Submission(
@@ -131,7 +134,7 @@ def get_submission_dict(hold_until_date: str | None = None):
     )
 
 
-def get_project_xml(project_set):
+def get_project_xml(project_set: ProjectSet) -> dict[str, str]:
     submission_set = get_submission_dict()
     return {
         "SUBMISSION": dataclass_to_xml(submission_set, root_name="SUBMISSION"),
@@ -177,26 +180,28 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     return ", ".join(ena_authors) + ";"
 
 
-def create_ena_project(config: ENAConfig, project_set: ProjectSet) -> CreationResult:
+def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
     """
-    The project creation request should be equivalent to 
-    curl -u {params.ena_submission_username}:{params.ena_submission_password} \
-        -F "SUBMISSION=@{submission.xml}" \
-        -F "PROJECT=@{project.xml}" \
-        {params.ena_submission_url} \
+    The project creation request should be equivalent to
+    curl -u {params.ena_submission_username}:{params.ena_submission_password} \\
+        -F "SUBMISSION=@{submission.xml}" \\
+        -F "PROJECT=@{project.xml}" \\
+        {params.ena_submission_url} \\
     > {output}
     """
     errors = []
-    warnings = []
+    warnings: list[str] = []
 
+    xml = get_project_xml(project_set)
+    logger.debug(f"Posting Project creation XML to ENA with alias {project_set.project[0].alias}")
     try:
-        xml = get_project_xml(project_set)
-        response = post_webin(config, xml)
+        # Actual HTTP request to ENA happens here
+        response = post_webin_with_retry(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -239,27 +244,28 @@ def get_sample_xml(sample_set, revision: bool = False) -> dict[str, str]:
 
 
 def create_ena_sample(
-    config: ENAConfig, sample_set: SampleSetType, revision: bool = False
+    config: Config, sample_set: SampleSetType, revision: bool = False
 ) -> CreationResult:
     """
-    The sample creation request should be equivalent to 
-    curl -u {params.ena_submission_username}:{params.ena_submission_password} \
-       -F "SUBMISSION=@submission.xml" \
-       -F "SAMPLE=@{sample.xml}" \
-       {params.ena_submission_url} \
+    The sample creation request should be equivalent to
+    curl -u {params.ena_submission_username}:{params.ena_submission_password} \\
+       -F "SUBMISSION=@submission.xml" \\
+       -F "SAMPLE=@{sample.xml}" \\
+       {params.ena_submission_url} \\
        > {output}
     """
     errors = []
-    warnings = []
+    warnings: list[str] = []
 
+    xml = get_sample_xml(sample_set, revision=revision)
+    logger.debug(f"Posting Sample creation XML to ENA with alias {sample_set.sample[0].alias}")
     try:
-        xml = get_sample_xml(sample_set, revision=revision)
-        response = post_webin(config, xml)
+        response = post_webin_with_retry(config, xml)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(results=None, errors=errors, warnings=warnings)
+        return CreationResult(result=None, errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -279,11 +285,13 @@ def create_ena_sample(
             and "@accession" in parsed_response["RECEIPT"]["SUBMISSION"]
         )
         if not valid:
-            raise requests.exceptions.RequestException
-    except:
+            # normal value error
+            msg = f"XML response not as expected, response: {response.text}"
+            raise ValueError(msg)
+    except Exception:
         error_message = (
-            f"Response is in unexpected format. "
-            f"Request: {response.request}, Response: {response.text}"
+            f"Response is in unexpected format. Request: {response.request}, "
+            f"Response: {response.text}"
         )
         logger.warning(error_message)
         errors.append(error_message)
@@ -296,13 +304,49 @@ def create_ena_sample(
     return CreationResult(result=sample_results, errors=errors, warnings=warnings)
 
 
-def post_webin(config: ENAConfig, xml: dict[str, Any]) -> requests.Response:
-    return requests.post(
-        config.ena_submission_url,
-        auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
-        files=xml,
-        timeout=10,  # wait a full 10 seconds for a response in case slow
+def log_before_retry(retry_state: RetryCallState):
+    attempt_num = retry_state.attempt_number
+    logger.info(f"Request timed out. Retrying attempt {attempt_num}...")
+
+
+def post_webin_with_retry(config: Config, xml: dict[str, Any]) -> requests.Response:
+    def _do_post():
+        # The only change is removing response.raise_for_status()
+        return requests.post(
+            config.ena_submission_url,
+            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            files=xml,
+            timeout=config.ena_http_timeout_seconds,
+        )
+
+    retryer = Retrying(
+        stop=stop_after_attempt(config.ena_http_post_retry_attempts),
+        wait=wait_fixed(2),
+        retry=retry_if_exception_type(requests.exceptions.Timeout),
+        reraise=True,
+        before_sleep=log_before_retry,
     )
+
+    return retryer(_do_post)
+
+
+def ena_http_get_with_retry(config: Config, url: str) -> requests.Response:
+    def _do_get():
+        return requests.get(
+            url,
+            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            timeout=config.ena_http_timeout_seconds,
+        )
+
+    retryer = Retrying(
+        stop=stop_after_attempt(config.ena_http_get_retry_attempts),
+        wait=wait_fixed(2),
+        retry=retry_if_exception_type(requests.exceptions.Timeout),
+        reraise=True,
+        before_sleep=log_before_retry,
+    )
+
+    return retryer(_do_get)
 
 
 def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | None = None) -> str:
@@ -380,7 +424,7 @@ def create_flatfile(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp:
             filename = temp.name
 
-    seqIO_moleculetype = {
+    seq_io_moleculetype = {
         MoleculeType.GENOMIC_DNA: "DNA",
         MoleculeType.GENOMIC_RNA: "RNA",
         MoleculeType.VIRAL_CRNA: "cRNA",
@@ -391,15 +435,15 @@ def create_flatfile(
     multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
 
     for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
-        if not sequence_str:
+        if not isinstance(sequence_str, str) or len(sequence_str) == 0:
             continue
         reference = Reference()
         reference.authors = authors
         sequence = SeqRecord(
-            Seq(sequence_str),
+            seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seqIO_moleculetype[moleculetype],
+                "molecule_type": seq_io_moleculetype[moleculetype],
                 "organism": organism,
                 "topology": organism_metadata.get("topology", "linear"),
                 "references": [reference],
@@ -408,7 +452,7 @@ def create_flatfile(
         )
 
         source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
+            FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
                 "molecule_type": str(moleculetype),
@@ -480,8 +524,9 @@ def create_manifest(
         with tempfile.NamedTemporaryFile(delete=False, suffix=".tsv") as temp:
             filename = temp.name
     if not manifest.fasta and not manifest.flatfile:
-        raise ValueError("Either fasta or flatfile must be provided")
-    with open(filename, "w") as f:
+        msg = "Either fasta or flatfile must be provided"
+        raise ValueError(msg)
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(f"STUDY\t{manifest.study}\n")
         f.write(f"SAMPLE\t{manifest.sample}\n")
         f.write(
@@ -504,140 +549,167 @@ def create_manifest(
             f.write(f"RUN_REF\t{manifest.run_ref}\n")
         if manifest.authors:
             if not is_broker:
-                logger.warning("Cannot set authors field for non broker")
-            else:
-                f.write(f"AUTHORS\t{manifest.authors}\n")
+                logger.error("Cannot set authors field for non broker")
+                msg = "Cannot set authors field for non broker"
+                raise ValueError(msg)
+            f.write(f"AUTHORS\t{manifest.authors}\n")
         if manifest.address:
             if not is_broker:
                 logger.error("Cannot set address field for non broker")
-            else:
-                f.write(f"ADDRESS\t{manifest.address}\n")
+                msg = "Cannot set address field for non broker"
+                raise ValueError(msg)
+            f.write(f"ADDRESS\t{manifest.address}\n")
 
     return filename
 
 
 def post_webin_cli(
-    config: ENAConfig, manifest_filename, center_name=None, test=True
+    config: Config,
+    manifest_filename,
+    tmpdir: tempfile.TemporaryDirectory,
+    center_name=None,
+    test=True,
 ) -> subprocess.CompletedProcess:
-    subprocess_args = [
-        "java",
-        "-jar",
-        "webin-cli.jar",
-        "-username",
-        config.ena_submission_username,
-        "-password",
-        config.ena_submission_password,
-        "-context",
-        "genome",
-        "-manifest",
-        manifest_filename,
+    logger.debug(
+        f"Posting manifest {manifest_filename} to ENA Webin CLI with test={test} and "
+        f"center_name={center_name}"
+    )
+    subprocess_args_with_emtpy_strings: Final[list[str]] = [
+        "ena-webin-cli",
+        f"-username={config.ena_submission_username}",
+        f"-centername='{center_name}'" if center_name else "",
         "-submit",
+        "-context=genome",
+        f"-manifest='{manifest_filename}'",
+        f"-outputdir='{tmpdir.name}'",
+        "-test" if test else "",
+        f"-password='{config.ena_submission_password}'",
     ]
-    subprocess_args.append("-test") if test else None
-    if center_name:
-        subprocess_args.extend(["-centername", center_name])
-    return subprocess.run(
+    # Remove empty strings from the list
+    subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
+    redacted_args = [
+        arg if not arg.startswith("-password") else "-password=<REDACTED>"
+        for arg in subprocess_args
+    ]
+    logger.debug(f"Invoking webin-cli with args: {redacted_args}")
+    # config.ena_submission_password and config.ena_submission_username can be used for injection
+    # however we don't spawn a shell (shell=False) and trust webin-cli to handle the arguments
+    # safely.
+
+    return subprocess.run(  # noqa: S603
         subprocess_args,
         capture_output=True,
         text=True,
         check=False,
+        shell=False,
     )
 
 
 def create_ena_assembly(
-    config: ENAConfig, manifest_filename: str, accession: str = "", center_name=None, test=True
+    config: Config, manifest_filename: str, center_name=None, test=True
 ) -> CreationResult:
     """
     This is equivalent to running:
-    webin-cli -username {params.ena_submission_username} -password {params.ena_submission_password}
-        -context genome -manifest {manifest_file} -submit
+    ena-webin-cli -username {params.ena_submission_username} \\
+        -password {params.ena_submission_password} -context genome \\
+        -manifest {manifest_file} -submit
     test=True, adds the `-test` flag which means submissions will use the ENA dev endpoint.
     """
-    errors = []
-    warnings = []
-    response = post_webin_cli(config, manifest_filename, center_name=center_name, test=test)
-    logger.info(response.stdout)
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # create a tmp dir for output files
+    # use normal python stuff for that
+
+    output_tmpdir = tempfile.TemporaryDirectory()
+
+    response = post_webin_cli(
+        config, manifest_filename, tmpdir=output_tmpdir, center_name=center_name, test=test
+    )
+
+    # Happy path: webin-cli succeeded and returned ERZ accession
+    if response.returncode == 0:
+        for line in response.stdout.splitlines():
+            if "The following analysis accession was assigned to the submission:" in line:
+                match = re.search(r"ERZ\d+", line)
+                if match:
+                    erz_accession = match.group(0)
+                    logger.info(f"Webin CLI succeeded and returned ERZ accession: {erz_accession}")
+                    return CreationResult(
+                        result={"erz_accession": erz_accession},
+                        errors=errors,
+                        warnings=warnings,
+                    )
+
+    # Handle the case where the webin-cli command fails or does not return ERZ accession
     if response.returncode != 0:
-        error_message = (
-            f"Request failed with status:{response.returncode}. "
-            f"Stdout: {response.stdout}, Stderr: {response.stderr}"
-        )
-        logger.error(error_message)
-        validate_log_path = f"/tmp/genome/{accession}*/**/*"
-        matching_files = [
-            f for f in glob.glob(validate_log_path, recursive=True) if os.path.isfile(f)
-        ]
+        error_message = f"Webin CLI command failed with status: {response.returncode}. "
+    else:
+        error_message = "Webin CLI command succeeded but did not return ERZ accession. "
+    error_message += f"Stdout: {response.stdout}, Stderr: {response.stderr}"
+    logger.error(error_message)
+    errors.append(error_message)
 
-        if not matching_files:
-            logger.error(f"No files found in {validate_log_path}.")
-        else:
-            for file_path in matching_files:
-                logger.info(f"Matching file found: {file_path}")
-                try:
-                    with open(file_path, "r") as file:
-                        contents = file.read()
-                        logger.info(f"Contents of the file:\n{contents}")
-                except Exception as e:
-                    logger.error(f"Error reading file {file_path}: {e}")
-        errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
-
-    lines = response.stdout.splitlines()
-    erz_accession = None
-    for line in lines:
-        if "The following analysis accession was assigned to the submission:" in line:
-            match = re.search(r"ERZ\d+", line)
-            if match:
-                erz_accession = match.group(0)
-                break
-    if not erz_accession:
-        error_message = (
-            f"Response is in unexpected format. "
-            f"Stdout: {response.stdout}, Stderr: {response.stderr}"
-        )
-        logger.warning(error_message)
-        errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
-    assembly_results = {
-        "erz_accession": erz_accession,
-    }
-    return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
+    for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
+        logger.info(f"Attempting to print webin-cli log file: {file_path}")
+        try:
+            contents = Path(file_path).read_text(encoding="utf-8")
+            logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
+        except Exception as e:
+            logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
+    return CreationResult(result=None, errors=errors, warnings=warnings)
 
 
 def get_ena_analysis_process(
-    config: ENAConfig, erz_accession: str, segment_order: list[str]
+    config: Config, erz_accession: str, segment_order: list[str]
 ) -> CreationResult:
     """
+    Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
     Weird name "process" instead of "processing_result" is to match the ENA API.
     This is equivalent to running:
-    curl -X 'GET' \
-    '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100' \
-    -H 'accept: */*' \
-    -H 'Authorization: Basic KEY'
+    curl -X 'GET' \\
+    '{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json\\
+&max-results=100' \\
+    -H 'accept: */*' \\
+    -H 'Authorization: Basic USERNAME PASSWORD'
     """
-    url = f"{config.ena_reports_service_url}/analysis-process/{erz_accession}?format=json&max-results=100"
+    url: Final = (
+        config.ena_reports_service_url
+        + "/analysis-process/"
+        + erz_accession
+        + "?format=json&max-results=100"
+    )
 
     errors = []
-    warnings = []
+    warnings: list[str] = []
     assembly_results = {"segment_order": segment_order, "erz_accession": erz_accession}
+    logger.debug(f"Getting ENA analysis process for ERZ accession: {erz_accession}")
     try:
-        response = requests.get(
-            url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
-            timeout=10,  # wait a full 10 seconds for a response in case slow
-        )
+        response: requests.Response = ena_http_get_with_retry(config, url)
     except requests.exceptions.RequestException as e:
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
         return CreationResult(result=None, errors=errors, warnings=warnings)
     if not response.ok:
+        req = response.request
+        headers = req.headers
+        headers["Authorization"] = "Basic <REDACTED>"  # Redact sensitive info
+        text = response.text
         error_message = (
-            f"ENA check failed with status:{response.status_code}. "
-            f"Request: {response.request}, Response: {response.text}"
+            f"Getting ENA processing results & accessions failed with status code: "
+            f"{response.status_code}. "
+            f"Request: method={req.method}, url={req.url}, headers={headers}. "
         )
-        logger.warning(error_message)
+        if response.headers.get("Content-Type", "").startswith("text/html"):
+            soup = BeautifulSoup(text, "html.parser")
+            title = (
+                soup.title.string if soup.title else soup.h1.string if soup.h1 else "No title found"
+            )
+            error_message += f"Response was HTML with title: {title}"
+        logger.error(error_message)
         errors.append(error_message)
+        logger.debug(f"First 1000 characters of ENA API response text: {response.text[:1000]}")
         return CreationResult(result=None, errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
@@ -667,7 +739,7 @@ def get_ena_analysis_process(
                 assembly_results.update(chromosome_accessions_dict)
         else:
             return CreationResult(result=None, errors=errors, warnings=warnings)
-    except:
+    except Exception:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
             f"Request: {response.request}, Response: {response.text}"
@@ -703,7 +775,8 @@ def get_chromsome_accessions(
         end_letters = end[:2]
 
         if start_letters != end_letters:
-            raise ValueError("Prefixes in the accession range do not match")
+            msg = "Prefixes in the accession range do not match"
+            raise ValueError(msg)
 
         num_digits = len(start) - 2
         start_num = int(start[2:])
@@ -711,9 +784,14 @@ def get_chromsome_accessions(
 
         if end_num - start_num != len(segment_order) - 1:
             logger.error(
-                "Unexpected response format: chromosome does not have expected number of segments"
+                f"Unexpected response format: chromosome does not have expected number "
+                f"of segments. Expected {len(segment_order)} segments, "
+                f"got {end_num - start_num + 1}. "
+                f"For insdc_accession_range: {insdc_accession_range} and "
+                f"segment_order: {segment_order}"
             )
-            raise ValueError("Unexpected number of segments")
+            msg = "Unexpected number of segments"
+            raise ValueError(msg)
 
         match segment_order:
             case ["main"]:
@@ -730,21 +808,29 @@ def get_chromsome_accessions(
                     results[f"insdc_accession_full_{segment}"] = f"{accession}.1"
                 return results
 
+    # Don't handle the Value error here, let it propagate
+    except ValueError as ve:
+        raise ve
     except Exception as e:
-        logger.error(f"Error processing chromosome accessions: {str(e)}")
-        raise ValueError("Failed to process chromosome accessions") from e
+        logger.error(
+            f"Error processing chromosome accessions: {e!s}. "
+            f"For insdc_accession_range: {insdc_accession_range} and segment_order: {segment_order}"
+        )
+        msg = "Failed to process chromosome accessions"
+        raise ValueError(msg) from e
 
 
 def set_error_if_accession_not_exists(
-    conditions: dict[str, str],
+    conditions: dict[str, str | dict[str, str]],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
     db_pool: SimpleConnectionPool,
+    config: Config,
 ) -> bool:
     """Make request to ENA to check if an accession exists"""
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
-    response = requests.get(url, timeout=10)
     try:
+        response = ena_http_get_with_retry(config, url)
         exists = int(response.json()["total"]) > 0
         if exists:
             return True
@@ -754,17 +840,22 @@ def set_error_if_accession_not_exists(
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
-    conditions.update({"status": Status.HAS_ERRORS, "errors": json.dumps([error_text])})
-
+    succeeded: bool | int | None
     if accession_type == "BIOSAMPLE":
-        conditions.update(
-            {"result": {"ena_sample_accession": accession, "biosample_accession": accession}}
+        sample_table_entry = SampleTableEntry(
+            **conditions,
+            status=Status.HAS_ERRORS,
+            errors=json.dumps([error_text]),
+            result={"ena_sample_accession": accession, "biosample_accession": accession},
         )
-        sample_table_entry = SampleTableEntry(**conditions)
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
     else:
-        conditions.update({"result": {"bioproject_accession": accession}})
-        project_table_entry = ProjectTableEntry(**conditions)
+        project_table_entry = ProjectTableEntry(
+            **conditions,
+            status=Status.HAS_ERRORS,
+            errors=json.dumps([error_text]),
+            result={"bioproject_accession": accession},
+        )
         succeeded = add_to_project_table(db_pool, project_table_entry)
 
     if not succeeded:

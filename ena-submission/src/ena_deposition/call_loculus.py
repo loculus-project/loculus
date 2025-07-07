@@ -5,10 +5,10 @@ from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
-import jsonlines
 import requests
 
 from .config import Config
+from .loculus_models import Group, GroupDetails
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def get_jwt(config: Config) -> str:
     return jwt_keycloak["access_token"]
 
 
-def make_request(  # noqa: PLR0913, PLR0917
+def make_request(
     method: HTTPMethod,
     url: str,
     config: Config,
@@ -114,28 +114,27 @@ def submit_external_metadata(
     return response
 
 
-def get_group_info(config: Config, group_id: int) -> dict[str, Any]:
+def get_group_info(config: Config, group_id: int) -> Group:
     """Get group info given id"""
 
-    # TODO: only get a list of released accessionVersions and compare with submission DB.
+    try:
+        group_id = int(group_id)
+    except ValueError as e:
+        msg = f"Invalid group_id: {group_id}. It must be an integer."
+        logger.error(msg)
+        raise ValueError(msg) from e
+
     url = f"{backend_url(config)}/groups/{group_id}"
 
     headers = {"Content-Type": "application/json"}
 
-    response = make_request(HTTPMethod.GET, url, config, headers=headers)
-
-    entries: list[dict[str, Any]] = []
     try:
-        entries = list(jsonlines.Reader(response.iter_lines()).iter())
-    except jsonlines.Error as err:
-        response_summary = response.text
-        error_length_limit = 100
-        if len(response_summary) > error_length_limit:
-            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
-        logger.error(f"Error decoding JSON from /groups/{group_id}: {response_summary}")
-        raise ValueError from err
+        response = make_request(HTTPMethod.GET, url, config, headers=headers)
+    except requests.exceptions.HTTPError as err:
+        logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
+        raise requests.exceptions.HTTPError from err
 
-    return entries
+    return GroupDetails.model_validate_json(response.json()).group
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:

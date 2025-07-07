@@ -1211,7 +1211,7 @@
           "type": "string",
           "groups": ["general"],
           "enum": ["website", "backend", "s3"],
-          "description": "Whether the backend should supply file URLs as links using the website, or directly to the S3 objects."
+          "description": "Whether the backend should supply file URLs as links to the website, the backend itself, or directly to the S3 server objects."
         }
       },
       "required": ["outputFileUrlType"],

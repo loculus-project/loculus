@@ -51,6 +51,8 @@ lineageSystemDefinitions:
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
   mpox:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/mpox/lineages.yaml
+  alternativeLineage:
+    4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1505,65 +1507,6 @@ defaultOrganisms:
     referenceGenomes:
       nucleotideSequences: []
       genes: []
-  dummy-organism-without-seqs:
-    schema:
-      image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
-      organismName: "Test organism (without consensus sequences)"
-      nucleotideSequences: []
-      submissionDataTypes:
-        consensusSequences: false
-      metadata:
-        - name: date
-          type: date
-          initiallyVisible: true
-          header: "Collection Details"
-          required: true
-          preprocessing:
-            function: parse_and_assert_past_date
-            inputs:
-              date: date
-        - name: region
-          type: string
-          initiallyVisible: true
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: country
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: division
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: host
-          initiallyVisible: true
-          type: string
-          autocomplete: true
-          header: "Collection Details"
-      website:
-        tableColumns:
-          - country
-          - division
-          - date
-        defaultOrder: descending
-        defaultOrderBy: date
-    preprocessing:
-      - version: 3
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - "prepro"
-        configFile:
-          log_level: DEBUG
-          genes: []
-          batch_size: 100
-    referenceGenomes:
-      nucleotideSequences: []
-      genes: []
   not-aligned-organism:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
@@ -1578,6 +1521,13 @@ defaultOrganisms:
             function: parse_and_assert_past_date
             inputs:
               date: date
+        - name: lineage
+          initiallyVisible: true
+          displayName: "Lineage"
+          autocomplete: true
+          required: true
+          type: string
+          lineageSystem: alternativeLineage
         - name: region
           type: string
           initiallyVisible: true

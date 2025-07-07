@@ -38,7 +38,10 @@ def get_insdc_accessions(db_conn_pool: SimpleConnectionPool) -> dict[str, list[s
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
-            query = "SELECT accession, result FROM assembly_table WHERE STATUS IN ('SUBMITTED', 'WAITING')"
+            query = (
+                "SELECT accession, result FROM assembly_table "
+                "WHERE STATUS IN ('SUBMITTED', 'WAITING')"
+            )
             cur.execute(query)
             results = cur.fetchall()
     finally:
@@ -78,7 +81,7 @@ def submitted_insdc_accessions():
         }
     except Exception as e:
         logger.error("Failed to fetch submitted accessions: %s", str(e))
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 def start_api(config: Config, stop_event: threading.Event):

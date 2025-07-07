@@ -45,6 +45,10 @@ describe('LineageField', () => {
                     parents: ['A.1'],
                     aliases: ['B'],
                 },
+                'B.1': {
+                    parents: ['A.1.1'],
+                    aliases: ['A.1.1.1'],
+                },
                 'A.2': {
                     parents: ['A'],
                     aliases: ['C'],
@@ -60,8 +64,8 @@ describe('LineageField', () => {
             data: {
                 data: [
                     { lineage: 'A.1', count: 10 },
-                    { lineage: 'A.1.1', count: 20 },
-                    { lineage: 'B', count: 15 },
+                    { lineage: 'A.1.1.1', count: 20 },
+                    { lineage: 'B.1', count: 15 },
                     { lineage: 'A.2', count: 8 },
                 ],
             },
@@ -121,12 +125,11 @@ describe('LineageField', () => {
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        expect(options.length).toBe(6);
+        expect(options.length).toBe(5);
         expect(options[0].textContent).toBe('A');
         expect(options[1].textContent).toBe('A.1(10)');
-        // A.1.1 and B are aliases -> should have same, aggregated count
-        expect(options[2].textContent).toBe('A.1.1(35)');
-        expect(options[4].textContent).toBe('B(35)');
+        // A.1.1.1 and B.1 are aliases -> B.1 should have aggregated count
+        expect(options[4].textContent).toBe('B.1(35)');
     });
 
     it('aggregates counts for sublineages correctly', async () => {
@@ -146,12 +149,11 @@ describe('LineageField', () => {
         await userEvent.click(screen.getByLabelText('My Lineage'));
 
         const options = await screen.findAllByRole('option');
-        expect(options.length).toBe(6);
+        expect(options.length).toBe(5);
         expect.soft(options[0].textContent).toBe('A(53)');
         expect.soft(options[1].textContent).toBe('A.1(45)');
         expect.soft(options[2].textContent).toBe('A.1.1(35)');
         expect.soft(options[3].textContent).toBe('A.2(8)');
-        expect.soft(options[4].textContent).toBe('B(35)');
     });
 
     it('handles input changes and calls setSomeFieldValues', async () => {

@@ -235,6 +235,7 @@ class SubmissionDatabaseService(
         val reader = BufferedReader(InputStreamReader(inputStream))
 
         val processedAccessionVersions = mutableListOf<String>()
+        val processedFiles = mutableMapOf<AccessionVersion, Set<FileId>>()
         val processingResultCounts = mutableMapOf<ProcessingResult, Int>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
@@ -247,6 +248,8 @@ class SubmissionDatabaseService(
                     .validateFilenamesAreUnique(fileMapping)
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
                     .validateFilesExist(fileMapping.fileIds)
+                val av = AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
+                processedFiles[av] = fileMapping.fileIds
             }
 
             val processingResult = submittedProcessedData.processingResult()
@@ -255,6 +258,21 @@ class SubmissionDatabaseService(
             processedAccessionVersions.add(submittedProcessedData.displayAccessionVersion())
             processingResultCounts.merge(processingResult, 1, Int::plus)
         }
+
+        if (processedFiles.isNotEmpty()) {
+            val releasedEntries = getReleasedAt(processedFiles.keys.toList())
+                .filter { it.value != null }
+                .keys
+            val releasedFiles = mutableSetOf<FileId>()
+            for (entry in releasedEntries) {
+                for (fileId in processedFiles[entry]!!) {
+                    s3Service.setFileToPublic(fileId)
+                    releasedFiles.add(fileId)
+                }
+            }
+            filesDatabaseService.release(releasedFiles)
+        }
+
         log.info {
             "Updated ${processedAccessionVersions.size} sequences to $PROCESSED. " +
                 "Processing result counts: " +
@@ -381,15 +399,31 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun selectFilesForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+    /**
+     * Returns all files associated with the given AccessionVersions.
+     * Note: Also returns files from 'future' preprocessing versions!
+     */
+    private fun selectFilesToPublishForAccessionVersions(sequences: List<AccessionVersion>): List<FileId> {
+        val preproData = SequenceEntriesPreprocessedDataTable
+        val sequenceEntries = SequenceEntriesView
         val result = mutableListOf<FileId>()
         for (accessionVersionsChunk in sequences.chunked(1000)) {
-            SequenceEntriesView.select(SequenceEntriesView.processedDataColumn, SequenceEntriesView.groupIdColumn)
+            preproData
+                .join(
+                    sequenceEntries,
+                    JoinType.INNER,
+                    additionalConstraint = {
+                        (preproData.accessionColumn eq sequenceEntries.accessionColumn) and
+                            (preproData.versionColumn eq sequenceEntries.versionColumn) and
+                            (preproData.pipelineVersionColumn greaterEq sequenceEntries.pipelineVersionColumn)
+                    },
+                )
+                .select(preproData.processedDataColumn)
                 .where {
-                    SequenceEntriesView.accessionVersionIsIn(accessionVersionsChunk)
+                    sequenceEntries.accessionVersionIsIn(accessionVersionsChunk)
                 }
                 .flatMap {
-                    it[SequenceEntriesView.processedDataColumn]?.files?.values.orEmpty()
+                    it[preproData.processedDataColumn]?.files?.values.orEmpty()
                 }
                 .flatten()
                 .forEach { result.add(it.fileId) }
@@ -601,7 +635,7 @@ class SubmissionDatabaseService(
             }
         }
 
-        val filesToPublish = this.selectFilesForAccessionVersions(accessionVersionsToUpdate)
+        val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
@@ -1282,6 +1316,26 @@ class SubmissionDatabaseService(
             .map {
                 it[SequenceEntriesView.processedDataColumn]
             }.firstOrNull()?.files?.getFileId(fileCategory, fileName)
+
+    fun getReleasedAt(accessionVersions: List<AccessionVersion>): Map<AccessionVersion, LocalDateTime?> =
+        accessionVersions
+            .chunked(32767) // PostgreSQL allows up to 65,535 query parameters, allowing for max 32767 entries
+            .flatMap { chunk ->
+                SequenceEntriesView
+                    .select(
+                        SequenceEntriesView.accessionColumn,
+                        SequenceEntriesView.versionColumn,
+                        SequenceEntriesView.releasedAtTimestampColumn,
+                    )
+                    .where(SequenceEntriesView.accessionVersionIsIn(chunk))
+                    .map {
+                        AccessionVersion(
+                            it[SequenceEntriesView.accessionColumn],
+                            it[SequenceEntriesView.versionColumn],
+                        ) to it[SequenceEntriesView.releasedAtTimestampColumn]
+                    }
+            }
+            .toMap()
 }
 
 private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): Long? {

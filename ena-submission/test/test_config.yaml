@@ -1,12 +1,17 @@
 submit_to_ena_prod: false
 db_name: Loculus
-is_broker: false
+is_broker: true
 unique_project_suffix: Loculus
 backend_url: http://localhost:8079
 keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 slack_hook: fake_hook
 slack_token: fake_token
 slack_channel_id: fake_channel
+
+# Deflake commonly timed-out requests
+ena_http_post_retry_attempts: 3
+ena_http_get_retry_attempts: 3
+ena_http_timeout_seconds: 60
 
 organisms:
   cchf:

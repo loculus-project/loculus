@@ -98,3 +98,9 @@ jobs:
           for TAG in "${TAGS[@]}"; do
             docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
           done
+      # Run smoke test to ensure the image is functional
+      - name: Run smoke test (unit tests in docker)
+        run: |
+          docker run \
+            --rm ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} \
+            pytest scripts/test_ena_submission.py

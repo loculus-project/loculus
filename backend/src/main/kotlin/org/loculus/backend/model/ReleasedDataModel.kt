@@ -83,6 +83,7 @@ open class ReleasedDataModel(
                     latestVersions,
                     latestRevocationVersions,
                     finder,
+                    organism,
                 )
             }
     }
@@ -112,6 +113,7 @@ open class ReleasedDataModel(
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
         earliestReleaseDateFinder: EarliestReleaseDateFinder?,
+        organism: Organism,
     ): ReleasedData {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
@@ -131,7 +133,9 @@ open class ReleasedDataModel(
             }
         }
 
-        var metadata = rawProcessedData.processedData.metadata +
+        val filesFieldNames = backendConfig.getInstanceConfig(organism).schema.files.map { it.name }
+
+        val metadata = rawProcessedData.processedData.metadata +
             mapOf(
                 ("accession" to TextNode(rawProcessedData.accession)),
                 ("version" to LongNode(rawProcessedData.version)),
@@ -182,15 +186,16 @@ open class ReleasedDataModel(
                 },
             ) +
             conditionalMetadata(
-                rawProcessedData.processedData.files != null,
+                filesFieldNames.isNotEmpty(),
                 {
-                    filesMapWithUrls(
-                        rawProcessedData.accession,
-                        rawProcessedData.version,
-                        rawProcessedData.processedData.files!!,
-                    )
-                        .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
-                        .toMap()
+                    filesFieldNames.associateWith { NullNode.instance } +
+                        filesMapWithUrls(
+                            rawProcessedData.accession,
+                            rawProcessedData.version,
+                            rawProcessedData.processedData.files ?: emptyMap(),
+                        )
+                            .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
+                            .toMap()
                 },
             )
 

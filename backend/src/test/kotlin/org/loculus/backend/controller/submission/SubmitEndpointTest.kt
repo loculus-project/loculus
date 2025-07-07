@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit.Companion.DAY
 import kotlinx.datetime.DateTimeUnit.Companion.YEAR
 import kotlinx.datetime.minus
@@ -39,6 +38,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
+import kotlin.time.Clock
 
 @EndpointTest
 class SubmitEndpointTest(
