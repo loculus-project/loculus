@@ -1,6 +1,6 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableIngest }}
-{{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- range $key, $value := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- if $value.ingest }}
 ---
 apiVersion: apps/v1

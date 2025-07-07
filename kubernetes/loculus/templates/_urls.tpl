@@ -53,7 +53,7 @@
 
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
-  {{ range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
+  {{ range $key, $_ := (include "loculus.enabledOrganisms" . | fromJson) }}
     "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
   {{ end }}
 {{ end }}
@@ -61,8 +61,10 @@
 {{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $lapisUrlTemplate := .lapisUrlTemplate }}
-{{ range $key, $_ := (.config.organisms | default .config.defaultOrganisms) }}
+{{ range $key, $organism := (.config.organisms | default .config.defaultOrganisms) }}
+{{- if ne ($organism.enabled | default true) false }}
 "{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
+{{- end }}
 {{ end }}
 {{ end }}
 
