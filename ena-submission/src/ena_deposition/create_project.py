@@ -3,7 +3,6 @@ import logging
 import threading
 import time
 from datetime import datetime
-from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
