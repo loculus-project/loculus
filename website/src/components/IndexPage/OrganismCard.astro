@@ -24,7 +24,7 @@ const { key, image, displayName, longDisplayName, organismStatistics, numberDays
     hover:no-underline
     transition-all duration-200 ease-in-out
     mx-auto sm:mx-0'
-    title={longDisplayName ?? displayName}
+    title={longDisplayName}
 >
     {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[8px]' alt={displayName} />}
     <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>
