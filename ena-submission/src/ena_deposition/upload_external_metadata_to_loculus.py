@@ -87,17 +87,42 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
 def get_external_metadata_and_send_to_loculus(
     db_config: SimpleConnectionPool, config: Config, retry_number=3
 ):
-    # Get external metadata
-    conditions = {"status_all": StatusAll.SUBMITTED_ALL}
-    submitted_all = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
+    # Collect entries that may have new external metadata available
+    submitted_all = []
+    for status in (
+        StatusAll.SUBMITTED_SAMPLE,
+        StatusAll.SUBMITTING_ASSEMBLY,
+        StatusAll.SUBMITTED_ALL,
+        StatusAll.SENT_TO_LOCULUS,
+    ):
+        submitted_all.extend(
+            find_conditions_in_db(
+                db_config,
+                table_name=TableName.SUBMISSION_TABLE,
+                conditions={"status_all": status},
+            )
+        )
+
     for entry in submitted_all:
         accession = entry["accession"]
         data = get_external_metadata(db_config, entry)
         seq_key = {"accession": accession, "version": entry["version"]}
 
         try:
+            merged_metadata = {}
+            if entry["external_metadata"]:
+                merged_metadata.update(json.loads(entry["external_metadata"]))
+            changed = False
+            for key, value in data["externalMetadata"].items():
+                if merged_metadata.get(key) != value:
+                    merged_metadata[key] = value
+                    changed = True
+
+            if not changed:
+                continue
+
+            data["externalMetadata"] = merged_metadata
+
             submit_external_metadata(
                 data,
                 config,
@@ -106,7 +131,7 @@ def get_external_metadata_and_send_to_loculus(
             update_values = {
                 "status_all": StatusAll.SENT_TO_LOCULUS,
                 "finished_at": datetime.now(tz=pytz.utc),
-                "external_metadata": json.dumps(data["externalMetadata"]),
+                "external_metadata": json.dumps(merged_metadata),
             }
             number_rows_updated = 0
             tries = 0
