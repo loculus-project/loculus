@@ -1261,7 +1261,6 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "West Nile Virus"
-      longDisplayName: "West Nile Virus (Flavivirus)"
       image: "/images/organisms/wnv_small.jpg"
       linkOuts:
         - name: "Nextclade"
