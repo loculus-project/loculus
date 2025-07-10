@@ -1,0 +1,72 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "loculus-cli"
+version = "0.1.0"
+description = "Command line interface for Loculus"
+authors = ["Loculus Team <info@loculus.org>"]
+readme = "README.md"
+packages = [{include = "loculus_cli", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^8.1"
+httpx = "^0.25"
+pydantic = "^2.0"
+keyring = "^24.0"
+rich = "^13.0"
+tabulate = "^0.9"
+biopython = "^1.81"
+pyyaml = "^6.0"
+python-dateutil = "^2.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4"
+pytest-asyncio = "^0.21"
+pytest-mock = "^3.11"
+black = "^23.0"
+mypy = "^1.5"
+ruff = "^0.1"
+
+[tool.poetry.scripts]
+loculus = "loculus_cli.cli:cli"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "N",       # pep8-naming
+    "UP",      # pyupgrade
+    "B",       # flake8-bugbear
+    "A",       # flake8-builtins
+    "C4",      # flake8-comprehensions
+    "T20",     # flake8-print
+]
+ignore = [
+    "T201",    # Allow print statements in CLI
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.mypy]
+python_version = "3.9"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

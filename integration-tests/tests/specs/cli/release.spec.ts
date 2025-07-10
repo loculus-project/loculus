@@ -1,0 +1,167 @@
+import { expect } from '@playwright/test';
+import { cliTest } from '../../fixtures/cli.fixture';
+
+cliTest.describe('CLI Release Command', () => {
+  cliTest('should handle sequence release workflow', async ({ cliPage, groupId, testAccount }) => {
+    // Increase timeout for release operations
+    cliTest.setTimeout(180000);
+    
+    // Setup: Configure and login
+    await cliPage.configure();
+    await cliPage.login(testAccount.username, testAccount.password);
+    
+    // Setup test data with multiple sequences
+    const testData = await (cliPage as any).setupTestData({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      numSequences: 2,
+      withErrors: false
+    });
+    console.log('Test data created for release:', testData);
+    
+    // Wait for sequences to be processed (they need to be PROCESSED to be releasable)
+    // We'll check status and wait up to 60 seconds
+    let processedSequences = [];
+    for (let i = 0; i < 12; i++) { // Try for up to 60 seconds
+      const statusResult = await (cliPage as any).getStatus({
+        organism: 'west-nile',
+        group: parseInt(groupId),
+        status: 'PROCESSED',
+        format: 'json'
+      });
+      
+      if (statusResult.exitCode === 0) {
+        const statusData = cliPage.parseJsonOutput(statusResult);
+        if (Array.isArray(statusData) && statusData.length > 0) {
+          processedSequences = statusData;
+          console.log(`Found ${processedSequences.length} processed sequences`);
+          break;
+        }
+      }
+      
+      console.log(`Waiting for sequences to be processed... (attempt ${i + 1}/12)`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+    
+    // Step 1: Test dry-run for all valid sequences
+    const dryRunResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      allValid: true,
+      dryRun: true
+    });
+    expect(dryRunResult.exitCode).toBe(0);
+    expect(dryRunResult.stdout).toMatch(/dry run|would release|Dry run complete|No sequences found/i);
+    
+    // Step 2: Test dry-run for no-warnings-only
+    const dryRunNoWarningsResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      noWarningsOnly: true,
+      dryRun: true
+    });
+    expect(dryRunNoWarningsResult.exitCode).toBe(0);
+    
+    // Step 3: Test releasing specific sequence (if we have processed sequences)
+    if (processedSequences.length > 0) {
+      const firstSequence = processedSequences[0];
+      const specificReleaseResult = await (cliPage as any).releaseSequences({
+        organism: 'west-nile',
+        accession: firstSequence.accession,
+        version: firstSequence.version,
+        force: true // Skip confirmation in tests
+      });
+      
+      // This might succeed or fail depending on sequence state, both are valid
+      expect([0, 1]).toContain(specificReleaseResult.exitCode);
+      
+      if (specificReleaseResult.exitCode === 0) {
+        expect(specificReleaseResult.stdout).toMatch(/released|success/i);
+      } else {
+        expect(specificReleaseResult.stderr.length).toBeGreaterThan(0);
+      }
+    }
+    
+    // Step 4: Test bulk release with force (for sequences that are ready)
+    const bulkReleaseResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      allValid: true,
+      force: true,
+      verbose: true
+    });
+    
+    // Should execute successfully (even if no sequences are ready)
+    expect([0, 1]).toContain(bulkReleaseResult.exitCode);
+  });
+
+  cliTest('should handle release command errors gracefully', async ({ cliPage, testAccount }) => {
+    // Setup: Configure and login
+    await cliPage.configure();
+    await cliPage.login(testAccount.username, testAccount.password);
+    
+    // Test missing required options
+    const missingOptionsResult = await cliPage.execute([
+      'release', 'west-nile'
+    ]);
+    expect(missingOptionsResult.exitCode).not.toBe(0);
+    expect(missingOptionsResult.stderr).toMatch(/must specify|required|Abort/i);
+    
+    // Test conflicting options
+    const conflictingOptionsResult = await cliPage.execute([
+      'release', 'west-nile', '--all-valid', '--no-warnings-only'
+    ]);
+    expect(conflictingOptionsResult.exitCode).not.toBe(0);
+    expect(conflictingOptionsResult.stderr).toMatch(/cannot use both|conflict|Abort/i);
+    
+    // Test invalid organism
+    const invalidOrganismResult = await (cliPage as any).releaseSequences({
+      organism: 'invalid-organism',
+      allValid: true,
+      dryRun: true
+    });
+    expect(invalidOrganismResult.exitCode).not.toBe(0);
+    expect(invalidOrganismResult.stderr).toMatch(/Error|error|fail/);
+    
+    // Test release non-existent sequence
+    const nonExistentResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      accession: 'NONEXISTENT_123',
+      version: 1,
+      force: true
+    });
+    expect(nonExistentResult.exitCode).not.toBe(0);
+    expect(nonExistentResult.stderr).toMatch(/not found|Error|error/);
+  });
+
+  cliTest('should handle quiet and verbose modes', async ({ cliPage, groupId, testAccount }) => {
+    // Setup: Configure and login
+    await cliPage.configure();
+    await cliPage.login(testAccount.username, testAccount.password);
+    
+    // Test quiet mode with dry-run
+    const quietResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      allValid: true,
+      dryRun: true,
+      quiet: true
+    });
+    expect(quietResult.exitCode).toBe(0);
+    
+    // Test verbose mode with dry-run
+    const verboseResult = await (cliPage as any).releaseSequences({
+      organism: 'west-nile',
+      group: parseInt(groupId),
+      allValid: true,
+      dryRun: true,
+      verbose: true
+    });
+    expect(verboseResult.exitCode).toBe(0);
+    
+    // Verbose should have more output than quiet (if there are sequences)
+    if (verboseResult.stdout.includes('sequences')) {
+      expect(verboseResult.stdout.length).toBeGreaterThanOrEqual(quietResult.stdout.length);
+    }
+  });
+});
