@@ -1,10 +1,12 @@
 """Configuration commands for Loculus CLI."""
 
+from typing import Optional
+
 import click
 from rich.console import Console
 from rich.table import Table
 
-from ..config import get_config_value, load_config, save_config, set_config_value, InstanceConfig
+from ..config import get_config_value, load_config, save_config, set_config_value, InstanceConfig, get_instance_config
 from ..instance_info import InstanceInfo
 
 console = Console()
@@ -74,134 +76,109 @@ def list() -> None:
         raise click.ClickException(str(e))
 
 
-@config_group.command()
-@click.argument("instance_url")
-@click.option("--set-default", is_flag=True, help="Set as default instance")
-@click.option("--keycloak-realm", default="loculus", help="Keycloak realm")
-@click.option("--keycloak-client-id", default="backend-client", help="Keycloak client ID")
-def configure(
-    instance_url: str,
-    set_default: bool,
-    keycloak_realm: str,
-    keycloak_client_id: str,
-) -> None:
-    """Auto-configure CLI from instance URL using loculus-info endpoint."""
+
+@config_group.command(name="organism")
+@click.argument("organism", required=False)
+@click.option("--none", is_flag=True, help="Clear the default organism")
+@click.pass_context
+def set_default_organism(ctx: click.Context, organism: Optional[str], none: bool) -> None:
+    """Set or show default organism for commands."""
     try:
-        # Validate instance by fetching info
-        console.print(f"Connecting to {instance_url}...")
-        instance_info = InstanceInfo(instance_url)
-        info = instance_info.get_info()
-        
-        console.print(f"[green]✓[/green] Connected to {info['title']}")
-        if info.get('version'):
-            console.print(f"Version: {info['version']}")
-        
-        organisms = instance_info.get_organisms()
-        console.print(f"Available organisms: {', '.join(organisms[:5])}{'...' if len(organisms) > 5 else ''}")
-        
-        # Extract instance name from URL
-        instance_name = instance_url.replace("https://", "").replace("http://", "")
-        
-        # Save configuration
-        config = load_config()
-        config.instances[instance_name] = InstanceConfig(
-            instance_url=instance_url,
-            keycloak_realm=keycloak_realm,
-            keycloak_client_id=keycloak_client_id
-        )
-        
-        if set_default or not config.default_instance:
-            config.default_instance = instance_name
-            console.print(f"[green]✓[/green] Set as default instance")
-        
-        save_config(config)
-        console.print(f"[green]✓[/green] Configured instance '{instance_name}'")
-        
-    except Exception as e:
-        console.print(f"[red]Error: Failed to configure instance: {e}[/red]")
-        raise click.ClickException(str(e))
-
-
-@config_group.command()
-@click.argument("instance")
-@click.argument("instance_url")
-@click.option("--keycloak-realm", default="loculus", help="Keycloak realm")
-@click.option("--keycloak-client-id", default="backend-client", help="Keycloak client ID")
-def add_instance(
-    instance: str,
-    instance_url: str,
-    keycloak_realm: str,
-    keycloak_client_id: str,
-) -> None:
-    """Add a new instance configuration (legacy command - use 'configure' instead)."""
-    try:
-        set_config_value(f"instances.{instance}.instance_url", instance_url)
-        set_config_value(f"instances.{instance}.keycloak_realm", keycloak_realm)
-        set_config_value(f"instances.{instance}.keycloak_client_id", keycloak_client_id)
-        
-        console.print(f"✓ Added instance [bold green]{instance}[/bold green]")
-        console.print("[dim]Note: Use 'loculus config configure' for automatic setup[/dim]")
-        
-    except Exception as e:
-        console.print(f"[bold red]✗ Failed to add instance:[/bold red] {e}")
-        raise click.ClickException(str(e))
-
-
-@config_group.command()
-@click.argument("instance")
-def remove_instance(instance: str) -> None:
-    """Remove an instance configuration."""
-    try:
-        config = load_config()
-        if instance in config.instances:
-            del config.instances[instance]
-            from ..config import save_config
-            save_config(config)
-            console.print(f"✓ Removed instance [bold green]{instance}[/bold green]")
+        if none:
+            set_config_value("defaults.organism", None)
+            console.print("[green]✓[/green] Cleared default organism")
+        elif organism:
+            set_config_value("defaults.organism", organism)
+            console.print(f"[green]✓[/green] Set default organism to [bold]{organism}[/bold]")
         else:
-            console.print(f"[bold yellow]Instance '{instance}' not found[/bold yellow]")
-        
-    except Exception as e:
-        console.print(f"[bold red]✗ Failed to remove instance:[/bold red] {e}")
-        raise click.ClickException(str(e))
-
-
-@config_group.command()
-def list_instances() -> None:
-    """List all configured instances."""
-    try:
-        config = load_config()
-        
-        if not config.instances:
-            console.print("[bold yellow]No instances configured[/bold yellow]")
-            return
-        
-        table = Table(title="Configured Instances")
-        table.add_column("Instance", style="green")
-        table.add_column("Instance URL", style="blue")
-        table.add_column("Status", style="yellow")
-        
-        for name, instance_config in config.instances.items():
-            # Try to check if instance is accessible
-            status = "Unknown"
-            try:
-                if hasattr(instance_config, 'instance_url'):
-                    instance_info = InstanceInfo(instance_config.instance_url)
-                    info = instance_info.get_info()
-                    status = f"✓ {info.get('title', 'Connected')}"
-                else:
-                    status = "Legacy config"
-            except:
-                status = "✗ Unreachable"
+            # Show available organisms and current default
+            instance = ctx.obj.get("instance")
+            instance_config = get_instance_config(instance)
             
-            instance_url = getattr(instance_config, 'instance_url', 'Legacy config')
-            table.add_row(name, instance_url, status)
-        
-        console.print(table)
-        
-        if config.default_instance:
-            console.print(f"\nDefault instance: [bold green]{config.default_instance}[/bold green]")
-        
+            current = get_config_value("defaults.organism")
+            if current:
+                console.print(f"Current default organism: [bold green]{current}[/bold green]\n")
+            else:
+                console.print("No default organism set\n")
+            
+            # List available organisms
+            try:
+                organisms = instance_config.get_organisms()
+                console.print("[bold]Available organisms:[/bold]")
+                for org in sorted(organisms):
+                    if org == current:
+                        console.print(f"  • {org} [dim](current default)[/dim]")
+                    else:
+                        console.print(f"  • {org}")
+                console.print("\n[dim]Usage: loculus config organism <name>[/dim]")
+                console.print("[dim]       loculus config organism --none  (to clear)[/dim]")
+            except Exception as e:
+                console.print(f"[yellow]Could not fetch available organisms: {e}[/yellow]")
     except Exception as e:
-        console.print(f"[bold red]✗ Failed to list instances:[/bold red] {e}")
+        console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
+
+
+@config_group.command(name="group")
+@click.argument("group", type=int, required=False)
+@click.option("--none", is_flag=True, help="Clear the default group")
+@click.pass_context
+def set_default_group(ctx: click.Context, group: Optional[int], none: bool) -> None:
+    """Set or show default group for commands."""
+    try:
+        if none:
+            set_config_value("defaults.group", None)
+            console.print("[green]✓[/green] Cleared default group")
+        elif group is not None:
+            set_config_value("defaults.group", group)
+            console.print(f"[green]✓[/green] Set default group to [bold]{group}[/bold]")
+        else:
+            # Show available groups and current default
+            instance = ctx.obj.get("instance")
+            instance_config = get_instance_config(instance)
+            
+            current = get_config_value("defaults.group")
+            if current is not None:
+                console.print(f"Current default group: [bold green]{current}[/bold green]\n")
+            else:
+                console.print("No default group set\n")
+            
+            # List available groups
+            try:
+                from ..auth.client import AuthClient
+                from ..api.backend import BackendClient
+                
+                auth_client = AuthClient(instance_config)
+                current_user = auth_client.get_current_user()
+                
+                if not current_user:
+                    console.print("[yellow]Not logged in. Please run 'loculus auth login' first[/yellow]")
+                    return
+                
+                backend_client = BackendClient(instance_config, auth_client)
+                groups = backend_client.get_groups(current_user)
+                
+                if groups:
+                    console.print("[bold]Available groups:[/bold]")
+                    table = Table(show_header=True, header_style="bold")
+                    table.add_column("ID", style="cyan", width=10)
+                    table.add_column("Name", style="green")
+                    table.add_column("Status", style="dim")
+                    
+                    for g in groups:
+                        status = "[dim](current default)[/dim]" if g.groupId == current else ""
+                        table.add_row(str(g.groupId), g.groupName, status)
+                    
+                    console.print(table)
+                    console.print("\n[dim]Usage: loculus config group <id>[/dim]")
+                    console.print("[dim]       loculus config group --none  (to clear)[/dim]")
+                else:
+                    console.print("[yellow]No groups found. Contact an administrator to be added to a group.[/yellow]")
+                    
+            except Exception as e:
+                console.print(f"[yellow]Could not fetch available groups: {e}[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise click.ClickException(str(e))
+
+

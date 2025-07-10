@@ -76,6 +76,13 @@ class SubmissionConfig(BaseModel):
     validate_before_submit: bool = Field(default=True, description="Validate before submitting")
 
 
+class DefaultsConfig(BaseModel):
+    """Default values for commands."""
+    
+    organism: Optional[str] = Field(default=None, description="Default organism")
+    group: Optional[int] = Field(default=None, description="Default group ID")
+
+
 class Config(BaseModel):
     """Main configuration model."""
     
@@ -83,6 +90,7 @@ class Config(BaseModel):
     instances: Dict[str, InstanceConfig] = Field(default_factory=dict, description="Instance configurations")
     output: OutputConfig = Field(default_factory=OutputConfig, description="Output configuration")
     submission: SubmissionConfig = Field(default_factory=SubmissionConfig, description="Submission configuration")
+    defaults: DefaultsConfig = Field(default_factory=DefaultsConfig, description="Default values for commands")
 
 
 def get_config_dir() -> Path:

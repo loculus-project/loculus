@@ -1,10 +1,13 @@
 """Schema discovery commands for Loculus CLI."""
 
+from typing import Optional
+
 import click
 from rich.console import Console
 from rich.table import Table
 
 from ..config import get_instance_config
+from ..utils.defaults import get_organism_with_default
 
 console = Console()
 
@@ -41,12 +44,15 @@ def organisms(ctx: click.Context) -> None:
 
 
 @schema_group.command()
-@click.option("--organism", required=True, help="Organism name")
+@click.option("--organism", "-o", help="Organism name")
 @click.pass_context
-def show(ctx: click.Context, organism: str) -> None:
+def show(ctx: click.Context, organism: Optional[str]) -> None:
     """Show metadata schema for organism."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for schema)
+    organism = get_organism_with_default(organism, required=True)
     
     try:
         schema = instance_config.get_organism_schema(organism)
@@ -126,13 +132,16 @@ def show(ctx: click.Context, organism: str) -> None:
 
 
 @schema_group.command()
-@click.option("--organism", required=True, help="Organism name")
+@click.option("--organism", "-o", help="Organism name")
 @click.option("--field", help="Show details for specific field")
 @click.pass_context
-def fields(ctx: click.Context, organism: str, field: str = None) -> None:
+def fields(ctx: click.Context, organism: Optional[str], field: str = None) -> None:
     """Show detailed field information."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for schema)
+    organism = get_organism_with_default(organism, required=True)
     
     try:
         schema = instance_config.get_organism_schema(organism)

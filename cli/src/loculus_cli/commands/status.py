@@ -10,6 +10,7 @@ from rich.live import Live
 
 from ..auth.client import AuthClient
 from ..config import get_instance_config
+from ..utils.defaults import get_organism_with_default, get_group_with_default
 from ..utils.review_utils import (
     ProcessingResult,
     ReviewApiClient,
@@ -23,7 +24,10 @@ console = Console()
 
 
 @click.command(name="status")
-@click.argument("organism")
+@click.option(
+    "--organism",
+    help="Organism name (e.g., 'Mpox', 'H5N1')",
+)
 @click.option(
     "--status",
     type=click.Choice([s.value for s in SequenceStatus]),
@@ -34,7 +38,7 @@ console = Console()
     type=click.Choice([r.value for r in ProcessingResult]),
     help="Filter by processing result",
 )
-@click.option("--group", type=int, help="Filter by specific group ID")
+@click.option("--group", "-g", type=int, help="Filter by specific group ID")
 @click.option("--accession", help="Show specific sequence by accession")
 @click.option("--version", type=int, help="Specify version (used with --accession)")
 @click.option("--summary", is_flag=True, help="Show only summary counts")
@@ -57,7 +61,7 @@ console = Console()
 @click.pass_context
 def status(
     ctx: click.Context,
-    organism: str,
+    organism: Optional[str],
     status: Optional[str],
     result: Optional[str],
     group: Optional[int],
@@ -80,6 +84,12 @@ def status(
     config = get_instance_config(instance)
     auth_client = AuthClient(config)
     console = Console()
+    
+    # Get organism with default (required for status)
+    organism = get_organism_with_default(organism, required=True)
+    
+    # Get group with default (optional)
+    group = get_group_with_default(group)
     
     # Validate options
     if accession and not version:
