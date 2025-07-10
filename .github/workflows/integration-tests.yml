@@ -68,6 +68,16 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
         run: cd integration-tests && npm ci
+      - name: Install Python and Poetry
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 'latest'
+      - name: Install CLI
+        run: cd cli && poetry install
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
