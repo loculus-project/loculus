@@ -47,12 +47,12 @@ export const test = authTest.extend<GroupFixtures>({
     groupId: async ({ pageWithACreatedUser, groupName }, use) => {
         const groupPage = new GroupPage(pageWithACreatedUser);
         const testGroup = createTestGroup(groupName);
-        
+
         const groupId = await groupPage.getOrCreateGroup(testGroup);
         await use(groupId);
     },
 
-    pageWithGroup: async ({ pageWithACreatedUser, groupId }, use) => {
+    pageWithGroup: async ({ pageWithACreatedUser }, use) => {
         await use(pageWithACreatedUser);
     },
 });
