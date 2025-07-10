@@ -229,4 +229,198 @@ export class CliPage {
       throw new Error(`Failed to parse JSON output: ${result.stdout}`);
     }
   }
+
+  /**
+   * Get status of sequences
+   */
+  async getStatus(options: {
+    organism: string;
+    status?: string;
+    result?: string;
+    group?: number;
+    accession?: string;
+    version?: number;
+    summary?: boolean;
+    detailed?: boolean;
+    format?: string;
+    limit?: number;
+    page?: number;
+    errorsOnly?: boolean;
+    warningsOnly?: boolean;
+    ready?: boolean;
+    pending?: boolean;
+  }): Promise<CliResult> {
+    const args = ['status', options.organism];
+    
+    if (options.status) {
+      args.push('--status', options.status);
+    }
+    
+    if (options.result) {
+      args.push('--result', options.result);
+    }
+    
+    if (options.group) {
+      args.push('--group', options.group.toString());
+    }
+    
+    if (options.accession) {
+      args.push('--accession', options.accession);
+    }
+    
+    if (options.version) {
+      args.push('--version', options.version.toString());
+    }
+    
+    if (options.summary) {
+      args.push('--summary');
+    }
+    
+    if (options.detailed) {
+      args.push('--detailed');
+    }
+    
+    if (options.format) {
+      args.push('--format', options.format);
+    }
+    
+    if (options.limit) {
+      args.push('--limit', options.limit.toString());
+    }
+    
+    if (options.page) {
+      args.push('--page', options.page.toString());
+    }
+    
+    if (options.errorsOnly) {
+      args.push('--errors-only');
+    }
+    
+    if (options.warningsOnly) {
+      args.push('--warnings-only');
+    }
+    
+    if (options.ready) {
+      args.push('--ready');
+    }
+    
+    if (options.pending) {
+      args.push('--pending');
+    }
+    
+    return this.execute(args);
+  }
+
+  /**
+   * Release sequences
+   */
+  async releaseSequences(options: {
+    organism: string;
+    accession?: string;
+    version?: number;
+    group?: number;
+    allValid?: boolean;
+    noWarningsOnly?: boolean;
+    filterStatus?: string;
+    filterResult?: string;
+    dryRun?: boolean;
+    force?: boolean;
+    quiet?: boolean;
+    verbose?: boolean;
+  }): Promise<CliResult> {
+    const args = ['release', options.organism];
+    
+    if (options.accession) {
+      args.push('--accession', options.accession);
+    }
+    
+    if (options.version) {
+      args.push('--version', options.version.toString());
+    }
+    
+    if (options.group) {
+      args.push('--group', options.group.toString());
+    }
+    
+    if (options.allValid) {
+      args.push('--all-valid');
+    }
+    
+    if (options.noWarningsOnly) {
+      args.push('--no-warnings-only');
+    }
+    
+    if (options.filterStatus) {
+      args.push('--filter-status', options.filterStatus);
+    }
+    
+    if (options.filterResult) {
+      args.push('--filter-result', options.filterResult);
+    }
+    
+    if (options.dryRun) {
+      args.push('--dry-run');
+    }
+    
+    if (options.force) {
+      args.push('--force');
+    }
+    
+    if (options.quiet) {
+      args.push('--quiet');
+    }
+    
+    if (options.verbose) {
+      args.push('--verbose');
+    }
+    
+    return this.execute(args);
+  }
+
+  /**
+   * Setup test data by submitting sequences
+   */
+  async setupTestData(options: {
+    organism: string;
+    group: number;
+    numSequences?: number;
+    withErrors?: boolean;
+  }): Promise<{submissionIds: string[], accessions: string[]}> {
+    const { organism, group, numSequences = 2, withErrors = false } = options;
+    
+    const timestamp = Date.now();
+    const submissionIds = [];
+    const accessions = [];
+    
+    for (let i = 1; i <= numSequences; i++) {
+      const submissionId = `test_${timestamp}_${String(i).padStart(3, '0')}`;
+      submissionIds.push(submissionId);
+      
+      // Create metadata
+      const metadata = withErrors && i === numSequences 
+        ? `submissionId\tinvalid_field\ncollection_date\tlocation\thost\n${submissionId}\tinvalid_value\t2024-01-01\tUSA\thuman`
+        : `submissionId\tsample_name\tcollection_date\tlocation\thost\n${submissionId}\tsample${i}\t2024-01-${String(i).padStart(2, '0')}\tUSA\thuman`;
+      
+      // Create sequence
+      const sequences = `>${submissionId}\nATCGATCGATCGATCGATCGATCG`;
+      
+      // Submit
+      const submitResult = await this.submitSequences({
+        organism,
+        metadata,
+        sequences,
+        group
+      });
+      
+      if (submitResult.exitCode === 0) {
+        // Try to extract accession from output, or use predictable format
+        accessions.push(`LOC_${String(timestamp).slice(-6)}_${String(i).padStart(3, '0')}`);
+      }
+    }
+    
+    // Wait a bit for processing to start
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return { submissionIds, accessions };
+  }
 }
