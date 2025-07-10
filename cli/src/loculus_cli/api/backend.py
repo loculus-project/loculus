@@ -257,7 +257,7 @@ class BackendClient:
         headers = self._get_headers(username)
         
         try:
-            response = self.client.get("/groups", headers=headers)
+            response = self.client.get("/user/groups", headers=headers)
             response.raise_for_status()
             
             groups = []

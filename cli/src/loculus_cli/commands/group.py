@@ -65,7 +65,7 @@ def group_command(ctx: click.Context, group: Optional[int], none: bool) -> None:
                     console.print("\n[dim]Usage: loculus group <id>[/dim]")
                     console.print("[dim]       loculus group --none  (to clear)[/dim]")
                 else:
-                    console.print("[yellow]No groups found. Contact an administrator to be added to a group.[/yellow]")
+                    console.print("[yellow]No groups found. You can create a group through the website or ask a group administrator to add you to their existing group.[/yellow]")
                     
             except Exception as e:
                 console.print(f"[yellow]Could not fetch available groups: {e}[/yellow]")
