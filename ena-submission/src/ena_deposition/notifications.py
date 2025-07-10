@@ -1,12 +1,10 @@
 import json
 import logging
 import os
-import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import requests
-from slack_sdk import WebClient, web
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +32,6 @@ def notify(config: SlackConfig, text: str):
     """Send slack notification using slack hook"""
     if config.slack_hook:
         requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
-
-
-def upload_file_with_comment(
-    config: SlackConfig, file_path: str, comment: str
-) -> web.SlackResponse:
-    """Upload file with comment to slack channel"""
-    client = WebClient(token=config.slack_token)
-    with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        zipf.write(file_path, arcname=os.path.basename(file_path))
-    return client.files_upload_v2(
-        file=file_path,
-        title=file_path,
-        channel=config.slack_channel_id,
-        initial_comment=comment,
-    )
 
 
 def send_slack_notification(

@@ -1,8 +1,9 @@
 import json
 import logging
+import zipfile
 from collections.abc import Iterator
 from dataclasses import dataclass
-from pathlib import Path
+from io import BytesIO
 from typing import Any
 
 import click
@@ -12,7 +13,6 @@ from ena_deposition.notifications import (
     SlackConfig,
     notify,
     slack_conn_init,
-    upload_file_with_comment,
 )
 from ena_deposition.submission_db_helper import (
     Accession,
@@ -21,6 +21,7 @@ from ena_deposition.submission_db_helper import (
     highest_version_in_submission_table,
 )
 from psycopg2.pool import SimpleConnectionPool
+from slack_sdk import WebClient
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -115,18 +116,32 @@ def send_slack_notification_with_file(
     slack_config: SlackConfig,
     message: str,
     entries_to_submit: dict[AccessionVersion, dict[str, Any]],
-    output_file,
+    output_file_name: str,
 ) -> None:
     len_entries = len(entries_to_submit)
-    logger.info(f"Writing {len_entries} sequences to {output_file}")
-    Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
+    logger.info(f"Writing {len_entries} sequences to {output_file_name}")
+
+    json_content = json.dumps(entries_to_submit, indent=2)
+
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.writestr(output_file_name, json_content)
+    zip_buffer.seek(0)
 
     logger.info("Sending slack notification with file")
     if not slack_config.slack_hook:
         logger.info("Could not find slack hook, cannot send message")
         return
+
+    client = WebClient(token=slack_config.slack_token)
     try:
-        response = upload_file_with_comment(slack_config, output_file, message)
+        response = client.files_upload_v2(
+            filename=output_file_name + ".zip",
+            file=zip_buffer,
+            title=output_file_name + ".zip",
+            channel=slack_config.slack_channel_id,
+            initial_comment=message,
+        )
         if not response.get("ok", False):
             raise Exception
     except Exception as e:
@@ -184,9 +199,9 @@ def get_ena_submission_list(config_file) -> None:
                 f"{config.backend_url}: {organism} - ENA Submission pipeline wants to submit "
                 f"{len(submission_results.entries_to_submit)} sequences"
             )
-            output_file = f"{organism}_{output_file_suffix}"
+            output_file_name = f"{organism}_{output_file_suffix}"
             send_slack_notification_with_file(
-                slack_config, message, submission_results.entries_to_submit, output_file
+                slack_config, message, submission_results.entries_to_submit, output_file_name
             )
         if submission_results.entries_with_ext_metadata_to_submit:
             message = (
@@ -198,12 +213,12 @@ def get_ena_submission_list(config_file) -> None:
                 " Bioprojects should be public and SRA accessions should also include bioprojects"
                 " and biosamples."
             )
-            output_file = f"{organism}_with_ena_fields_{output_file_suffix}"
+            output_file_name = f"{organism}_with_ena_fields_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config,
                 message,
                 submission_results.entries_with_ext_metadata_to_submit,
-                output_file,
+                output_file_name,
             )
         all_entries_to_submit.update(submission_results.entries_to_submit)
 
