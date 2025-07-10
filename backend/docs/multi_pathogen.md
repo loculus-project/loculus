@@ -184,7 +184,7 @@ Mutation and lineage search should only show up once the search has been narrowe
 
 Mutation filter: Also strip the suborganism name for the user?
 User inputs `A123T`, we send `suborganism1:A123T` to LAPIS.
-(Similar for amino acid mutations).
+(Similar for amino acid mutations and insertions).
 
 Do we still show the segments in the download modal?
 ![img.png](downloadModal.png)
