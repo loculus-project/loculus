@@ -12,6 +12,7 @@ from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.defaults import get_organism_with_default, get_group_with_default
+from ..utils.console import print_error, handle_cli_error, check_authentication
 
 console = Console()
 
@@ -78,11 +79,8 @@ def sequences(
     
     try:
         # Check authentication
+        check_authentication(auth_client)
         current_user = auth_client.get_current_user()
-        if not current_user:
-            console.print("[bold red]✗ Not logged in[/bold red]")
-            console.print("Please run 'loculus auth login' first")
-            raise click.ClickException("Not authenticated")
         
         # Get user's groups if group not specified
         if group is None:
@@ -90,13 +88,13 @@ def sequences(
                 try:
                     groups = backend_client.get_groups(current_user)
                 except Exception as e:
-                    console.print(f"[bold red]✗ Failed to get groups:[/bold red] {e}")
+                    print_error("Failed to get groups", e)
                     console.print("This may indicate permission issues or that the test user")
                     console.print("doesn't have access to any submission groups.")
                     raise click.ClickException("Cannot access groups for submission")
             
             if not groups:
-                console.print("[bold red]✗ No groups found[/bold red]")
+                print_error("No groups found")
                 console.print("Please contact an administrator to be added to a group")
                 raise click.ClickException("No groups available")
             
@@ -148,8 +146,7 @@ def sequences(
     except click.ClickException:
         raise
     except Exception as e:
-        console.print(f"[bold red]✗ Submission failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Submission failed", e)
     finally:
         backend_client.close()
 
@@ -210,5 +207,4 @@ def template(
     except click.ClickException:
         raise
     except Exception as e:
-        console.print(f"[bold red]✗ Template generation failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Template generation failed", e)

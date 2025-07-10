@@ -6,6 +6,7 @@ from rich.prompt import Prompt
 
 from ..auth.client import AuthClient
 from ..config import get_instance_config
+from ..utils.console import print_error, handle_cli_error, print_success
 
 console = Console()
 
@@ -47,8 +48,7 @@ def login(ctx: click.Context, username: str, password: str) -> None:
         console.print(f"Token expires in {token_info.expires_in // 60} minutes")
         
     except Exception as e:
-        console.print(f"[bold red]✗ Login failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Login failed", e)
 
 
 @auth_group.command()
@@ -70,8 +70,7 @@ def logout(ctx: click.Context) -> None:
             console.print("No user currently logged in")
             
     except Exception as e:
-        console.print(f"[bold red]✗ Logout failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Logout failed", e)
 
 
 @auth_group.command()
@@ -97,11 +96,10 @@ def status(ctx: click.Context) -> None:
             else:
                 console.print(f"[bold yellow]! {current_user} is not authenticated[/bold yellow]")
         else:
-            console.print("[bold red]✗ Not logged in[/bold red]")
+            print_error("Not logged in")
             
     except Exception as e:
-        console.print(f"[bold red]✗ Failed to check status:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Failed to check status", e)
 
 
 @auth_group.command()
@@ -116,12 +114,12 @@ def token(ctx: click.Context) -> None:
     try:
         current_user = auth_client.get_current_user()
         if not current_user:
-            console.print("[bold red]✗ Not logged in[/bold red]")
+            print_error("Not logged in")
             raise click.ClickException("Not logged in")
         
         token_info = auth_client.get_valid_token(current_user)
         if not token_info:
-            console.print("[bold red]✗ No valid token available[/bold red]")
+            print_error("No valid token available")
             raise click.ClickException("No valid token available")
         
         console.print(f"Access token: {token_info.access_token}")
@@ -131,5 +129,4 @@ def token(ctx: click.Context) -> None:
     except click.ClickException:
         raise
     except Exception as e:
-        console.print(f"[bold red]✗ Failed to get token:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Failed to get token", e)

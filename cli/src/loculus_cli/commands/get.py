@@ -14,6 +14,7 @@ from ..api.models import AccessionVersion
 from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.metadata_filter import MetadataFilter
+from ..utils.console import get_stderr_console, print_error, handle_cli_error
 
 console = Console()
 
@@ -150,7 +151,7 @@ def sequences(
         
         # Query LAPIS
         if output_format == "fasta":
-            stderr_console = Console(stderr=True)
+            stderr_console = get_stderr_console()
             with stderr_console.status("Fetching sequences..."):
                 if aligned:
                     result = lapis_client.get_aligned_sequences(
@@ -169,7 +170,7 @@ def sequences(
             
             _output_fasta(result.data, output)
         else:
-            stderr_console = Console(stderr=True)
+            stderr_console = get_stderr_console()
             with stderr_console.status("Searching sequences..."):
                 result = lapis_client.get_sample_details(
                     organism=organism,
@@ -182,8 +183,7 @@ def sequences(
             _output_data(result.data, output_format, output, fields)
         
     except Exception as e:
-        console.print(f"[bold red]✗ Search failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Search failed", e)
     finally:
         if lapis_client:
             lapis_client.close()
@@ -231,7 +231,7 @@ def details(
         else:
             filters = {"accession": accession}
         
-        stderr_console = Console(stderr=True)
+        stderr_console = get_stderr_console()
         with stderr_console.status("Fetching sequence details..."):
             result = lapis_client.get_sample_details(
                 organism=organism,
@@ -240,7 +240,7 @@ def details(
             )
         
         if not result.data:
-            console.print(f"[bold red]✗ Sequence not found:[/bold red] {accession}")
+            print_error(f"Sequence not found: {accession}")
             raise click.ClickException(f"Sequence not found: {accession}")
         
         sequence_data = result.data[0]
@@ -253,8 +253,7 @@ def details(
     except click.ClickException:
         raise
     except Exception as e:
-        console.print(f"[bold red]✗ Failed to get details:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Failed to get details", e)
     finally:
         if lapis_client:
             lapis_client.close()
@@ -323,7 +322,7 @@ def stats(
         if group_by:
             group_by_list = [f.strip() for f in group_by.split(",")]
         
-        stderr_console = Console(stderr=True)
+        stderr_console = get_stderr_console()
         with stderr_console.status("Fetching statistics..."):
             result = lapis_client.get_aggregated_data(
                 organism=organism,
@@ -334,8 +333,7 @@ def stats(
         _output_data(result.data, output_format, output, None)
         
     except Exception as e:
-        console.print(f"[bold red]✗ Stats query failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        handle_cli_error("Stats query failed", e)
     finally:
         if lapis_client:
             lapis_client.close()
@@ -383,7 +381,7 @@ def all(
     backend_client = BackendClient(instance_config, auth_client)
     
     try:
-        stderr_console = Console(stderr=True)
+        stderr_console = get_stderr_console()
         with stderr_console.status("Downloading all data..."):
             data = backend_client.get_released_data(
                 organism=organism,
@@ -414,7 +412,17 @@ def _output_data(
 ) -> None:
     """Output data in the specified format."""
     if not data:
-        console.print("[bold yellow]No data found[/bold yellow]")
+        # For JSON formats, return empty array instead of text message
+        if output_format in ["json", "ndjson"]:
+            output_text = "[]" if output_format == "json" else ""
+            if output:
+                with open(output, "w") as f:
+                    f.write(output_text)
+                console.print(f"✓ Data saved to [bold green]{output}[/bold green]")
+            else:
+                click.echo(output_text)
+        else:
+            console.print("[bold yellow]No data found[/bold yellow]")
         return
     
     # Filter fields if specified

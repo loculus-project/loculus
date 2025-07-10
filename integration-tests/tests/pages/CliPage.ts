@@ -120,9 +120,6 @@ export class CliPage {
 
         // Add the instance using new command structure
         await this.execute(['instance', 'add', instanceUrl, '--set-default']);
-
-        // Set output format to JSON for easier testing
-        await this.execute(['config', 'set', 'output.format', 'json']);
     }
 
     /**
