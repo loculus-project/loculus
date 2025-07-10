@@ -86,28 +86,22 @@ TODO: Minimizer index, etc?
   "data": {
     "metadata": {...},
     "unalignedNucleotideSequences": {
-      "main": "ACTG"
-      // TODO: or do we also need multiple segments here?
+      "matchingSuborganism": "ACTG",
+      // omit the non-matching suborganisms
     },
     "alignedNucleotideSequences": {
-      "matchingSuborganism": "ACTG",
-      "otherSuborganism": null
+      "matchingSuborganism": "ACTG"
     },
     "nucleotideInsertions": {
       "matchingSuborganism": [...],
-      "otherSuborganism": []
     },
     "alignedAminoAcidSequences": {
       "matchingSuborganism_gene1": "NRNR*",
-      "matchingSuborganism_gene2": "MRGTNF*",
-      "otherSuborganism_gene1": null,
-      "otherSuborganism_gene2": null
+      "matchingSuborganism_gene2": "MRGTNF*"
     },
     "aminoAcidInsertions": {
       "matchingSuborganism_gene1": [...],
-      "matchingSuborganism_gene2": [...],
-      "otherSuborganism_gene1": [],
-      "otherSuborganism_gene2": []
+      "matchingSuborganism_gene2": [...]
     },
     "files": {
       "raw_reads": [
