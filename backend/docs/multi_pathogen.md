@@ -165,12 +165,15 @@ Don't show sequences that are not there anyway.
 Only show the "segments" of the relevant suborganism.
 Only show the relevant genes.
 Strip the suborganism name for the sequence names.
+
 ![img.png](sequenceDisplay.png)
 
-Do we need all the references here?
+Only show the reference of the relevant suborganism in the mutations header:
+
 ![img_1.png](mutationReferences.png)
 
 Mutations should not show the suborganism name:
+
 ![img_2.png](mutations.png)
 
 TODO: Is there more?
