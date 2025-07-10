@@ -41,6 +41,9 @@ export class CliPage {
       LOCULUS_INSTANCE: this.baseUrl.replace(/https?:\/\//, ''),
       // Use unique keyring service for test isolation (stable per test instance)
       LOCULUS_CLI_KEYRING_SERVICE: this.keyringService,
+      // Disable interactive features like spinners
+      CI: 'true',
+      NO_COLOR: '1',
     };
     
     const command = `loculus ${args.join(' ')}`;
@@ -101,16 +104,58 @@ export class CliPage {
    * Configure the CLI for testing
    */
   async configure(instance?: string): Promise<void> {
-    const instanceUrl = instance || this.baseUrl.replace(/https?:\/\//, '');
+    const instanceUrl = instance || this.baseUrl;
     
     // Clear any existing authentication state first
     await this.cleanup();
     
-    // Set default instance
-    await this.execute(['config', 'set', 'default_instance', instanceUrl]);
+    // Add the instance using new command structure
+    await this.execute(['instance', 'add', instanceUrl, '--set-default']);
     
     // Set output format to JSON for easier testing
     await this.execute(['config', 'set', 'output.format', 'json']);
+  }
+
+  /**
+   * Set default organism
+   */
+  async setDefaultOrganism(organism: string): Promise<CliResult> {
+    return this.execute(['organism', organism]);
+  }
+
+  /**
+   * Set default group
+   */
+  async setDefaultGroup(groupId: number): Promise<CliResult> {
+    return this.execute(['group', groupId.toString()]);
+  }
+
+  /**
+   * Clear default organism
+   */
+  async clearDefaultOrganism(): Promise<CliResult> {
+    return this.execute(['organism', '--none']);
+  }
+
+  /**
+   * Clear default group
+   */
+  async clearDefaultGroup(): Promise<CliResult> {
+    return this.execute(['group', '--none']);
+  }
+
+  /**
+   * Get available organisms
+   */
+  async getAvailableOrganisms(): Promise<CliResult> {
+    return this.execute(['organism']);
+  }
+
+  /**
+   * Get available groups
+   */
+  async getAvailableGroups(): Promise<CliResult> {
+    return this.execute(['group']);
   }
 
   /**
@@ -250,7 +295,7 @@ export class CliPage {
     ready?: boolean;
     pending?: boolean;
   }): Promise<CliResult> {
-    const args = ['status', options.organism];
+    const args = ['status', '--organism', options.organism];
     
     if (options.status) {
       args.push('--status', options.status);
@@ -328,7 +373,7 @@ export class CliPage {
     quiet?: boolean;
     verbose?: boolean;
   }): Promise<CliResult> {
-    const args = ['release', options.organism];
+    const args = ['release', '--organism', options.organism];
     
     if (options.accession) {
       args.push('--accession', options.accession);

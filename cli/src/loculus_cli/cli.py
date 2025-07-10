@@ -6,7 +6,9 @@ from rich.console import Console
 from .commands.auth import auth_group
 from .commands.config import config_group
 from .commands.get import get_group
+from .commands.group import group_command
 from .commands.instance import instance_group
+from .commands.organism import organism_command
 from .commands.release import release
 from .commands.revise import revise_group
 from .commands.schema import schema_group
@@ -62,6 +64,8 @@ cli.add_command(get_group)
 cli.add_command(revise_group)
 cli.add_command(config_group)
 cli.add_command(instance_group)
+cli.add_command(organism_command)
+cli.add_command(group_command)
 cli.add_command(schema_group)
 cli.add_command(status)
 cli.add_command(release)

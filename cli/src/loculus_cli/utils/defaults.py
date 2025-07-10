@@ -34,7 +34,7 @@ def get_organism_with_default(organism: Optional[str], required: bool = True) ->
         return default_organism
     
     if required:
-        console.print("[red]Error: --organism is required (or set default with 'loculus config organism <name>')[/red]")
+        console.print("[red]Error: --organism is required (or set default with 'loculus organism <name>')[/red]")
         raise click.Abort()
     
     return None

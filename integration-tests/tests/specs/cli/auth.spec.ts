@@ -7,11 +7,11 @@ cliTest.describe('CLI Authentication', () => {
     await cliPage.configure();
     
     // Check configuration
-    const configResult = await cliPage.execute(['config', 'get', 'default_instance']);
+    const configResult = await cliPage.execute(['instance']);
     expect(configResult.exitCode).toBe(0);
-    // Should contain the instance URL from PLAYWRIGHT_TEST_BASE_URL (without protocol)
-    const expectedInstance = (process.env.PLAYWRIGHT_TEST_BASE_URL || 'localhost:3000').replace(/https?:\/\//, '');
-    expect(configResult.stdout).toContain(expectedInstance);
+    // Should contain the instance URL from PLAYWRIGHT_TEST_BASE_URL
+    const expectedUrl = (process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000');
+    expect(configResult.stdout).toContain(expectedUrl);
 
     // Step 2: Show not logged in status initially
     const initialStatusResult = await cliPage.authStatus();

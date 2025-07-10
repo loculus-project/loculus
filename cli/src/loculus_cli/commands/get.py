@@ -150,7 +150,8 @@ def sequences(
         
         # Query LAPIS
         if output_format == "fasta":
-            with console.status("Fetching sequences..."):
+            stderr_console = Console(stderr=True)
+            with stderr_console.status("Fetching sequences..."):
                 if aligned:
                     result = lapis_client.get_aligned_sequences(
                         organism=organism,
@@ -168,7 +169,8 @@ def sequences(
             
             _output_fasta(result.data, output)
         else:
-            with console.status("Searching sequences..."):
+            stderr_console = Console(stderr=True)
+            with stderr_console.status("Searching sequences..."):
                 result = lapis_client.get_sample_details(
                     organism=organism,
                     filters=filter_params,
@@ -229,7 +231,8 @@ def details(
         else:
             filters = {"accession": accession}
         
-        with console.status("Fetching sequence details..."):
+        stderr_console = Console(stderr=True)
+        with stderr_console.status("Fetching sequence details..."):
             result = lapis_client.get_sample_details(
                 organism=organism,
                 filters=filters,
@@ -320,7 +323,8 @@ def stats(
         if group_by:
             group_by_list = [f.strip() for f in group_by.split(",")]
         
-        with console.status("Fetching statistics..."):
+        stderr_console = Console(stderr=True)
+        with stderr_console.status("Fetching statistics..."):
             result = lapis_client.get_aggregated_data(
                 organism=organism,
                 filters=filter_params,
@@ -379,7 +383,8 @@ def all(
     backend_client = BackendClient(instance_config, auth_client)
     
     try:
-        with console.status("Downloading all data..."):
+        stderr_console = Console(stderr=True)
+        with stderr_console.status("Downloading all data..."):
             data = backend_client.get_released_data(
                 organism=organism,
                 compression=compression,
