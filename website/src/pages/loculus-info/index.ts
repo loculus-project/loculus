@@ -14,10 +14,8 @@ export const GET: APIRoute = async ({ request }) => {
             keycloak: keycloakUrl,
             website: new URL(request.url).origin,
         },
-        version: process.env.LOCULUS_VERSION ?? '',
         minCliVersion: '0.0.0',
         title: website.name,
-        description: website.welcomeMessageHTML ?? null,
         organisms: website.organisms,
     };
     return new Response(JSON.stringify(response), {
