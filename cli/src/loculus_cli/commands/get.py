@@ -15,6 +15,7 @@ from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.metadata_filter import MetadataFilter
 from ..utils.console import get_stderr_console, print_error, handle_cli_error
+from ..utils.defaults import get_organism_with_default
 
 console = Console()
 
@@ -29,7 +30,6 @@ def get_group() -> None:
 @click.option(
     "--organism",
     "-o",
-    required=True,
     help="Organism name (use 'loculus schema organisms' to see available)",
 )
 @click.option(
@@ -79,7 +79,7 @@ def get_group() -> None:
 @click.pass_context
 def sequences(
     ctx: click.Context,
-    organism: str,
+    organism: Optional[str],
     filters: List[str],
     accessions: Optional[str],
     limit: int,
@@ -92,6 +92,9 @@ def sequences(
     """Search and retrieve sequences."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for get)
+    organism = get_organism_with_default(organism, required=True)
     
     auth_client = AuthClient(instance_config)
     lapis_client = None
@@ -193,7 +196,6 @@ def sequences(
 @click.option(
     "--organism",
     "-o",
-    required=True,
     help="Organism name (e.g., 'Mpox', 'H5N1')",
 )
 @click.option(
@@ -212,13 +214,16 @@ def sequences(
 @click.pass_context
 def details(
     ctx: click.Context,
-    organism: str,
+    organism: Optional[str],
     accession: str,
     output_format: str,
 ) -> None:
     """Get detailed information about a specific sequence."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for details)
+    organism = get_organism_with_default(organism, required=True)
     
     lapis_url = instance_config.get_lapis_url(organism)
     lapis_client = LapisClient(lapis_url)
@@ -263,7 +268,6 @@ def details(
 @click.option(
     "--organism",
     "-o",
-    required=True,
     help="Organism name (use 'loculus schema organisms' to see available)",
 )
 @click.option(
@@ -292,7 +296,7 @@ def details(
 @click.pass_context
 def stats(
     ctx: click.Context,
-    organism: str,
+    organism: Optional[str],
     group_by: Optional[str],
     filters: List[str],
     output_format: str,
@@ -301,6 +305,9 @@ def stats(
     """Get aggregated statistics."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for stats)
+    organism = get_organism_with_default(organism, required=True)
     
     try:
         # Get LAPIS URL for this organism
@@ -343,7 +350,6 @@ def stats(
 @click.option(
     "--organism",
     "-o",
-    required=True,
     help="Organism name (e.g., 'Mpox', 'H5N1')",
 )
 @click.option(
@@ -368,7 +374,7 @@ def stats(
 @click.pass_context
 def all(
     ctx: click.Context,
-    organism: str,
+    organism: Optional[str],
     output_format: str,
     output: Optional[Path],
     compression: str,
@@ -376,6 +382,9 @@ def all(
     """Download all released data for an organism."""
     instance = ctx.obj.get("instance")
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for all)
+    organism = get_organism_with_default(organism, required=True)
     
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
@@ -507,18 +516,73 @@ def _display_data_table(data: List[Dict[str, Any]]) -> None:
     if not data:
         return
     
-    table = Table()
+    table = Table(show_lines=False)
     
-    # Add columns
-    for key in data[0].keys():
-        table.add_column(key, style="cyan")
+    # Get terminal width for intelligent column sizing
+    terminal_width = console.size.width
     
-    # Add rows
+    # Define key columns that should always be shown
+    key_columns = ['accession', 'version', 'submissionId', 'status', 'geoLocCountry', 'sampleCollectionDate']
+    
+    # Get all available columns
+    all_columns = list(data[0].keys())
+    
+    # Prioritize key columns, then add others
+    columns_to_show = []
+    for col in key_columns:
+        if col in all_columns:
+            columns_to_show.append(col)
+    
+    # Add remaining columns
+    for col in all_columns:
+        if col not in columns_to_show:
+            columns_to_show.append(col)
+    
+    # Calculate maximum width per column (rough estimate)
+    max_columns = max(1, terminal_width // 15)  # Assume ~15 chars per column minimum
+    
+    # Limit the number of columns to show
+    if len(columns_to_show) > max_columns:
+        shown_columns = columns_to_show[:max_columns]
+        hidden_count = len(columns_to_show) - max_columns
+        console.print(f"[dim]Showing {len(shown_columns)} of {len(all_columns)} columns. Use --fields to specify columns or --format json for all data.[/dim]")
+    else:
+        shown_columns = columns_to_show
+        hidden_count = 0
+    
+    # Add columns with intelligent width limits
+    for key in shown_columns:
+        # Calculate max content width for this column
+        max_content_width = max(len(str(item.get(key, ""))) for item in data)
+        max_content_width = max(max_content_width, len(key))  # Include header width
+        
+        # Set reasonable width limits
+        if max_content_width > 30:
+            # For very wide columns, truncate
+            table.add_column(key, style="cyan", max_width=30, overflow="ellipsis")
+        elif max_content_width > 20:
+            # For moderately wide columns, set a reasonable limit
+            table.add_column(key, style="cyan", max_width=25, overflow="ellipsis")
+        else:
+            # For narrow columns, use natural width
+            table.add_column(key, style="cyan")
+    
+    # Add rows with truncation for very long values
     for item in data:
-        row = [str(item.get(key, "")) for key in data[0].keys()]
+        row = []
+        for key in shown_columns:
+            value = str(item.get(key, ""))
+            # Truncate extremely long values
+            if len(value) > 100:
+                value = value[:97] + "..."
+            row.append(value)
         table.add_row(*row)
     
     console.print(table)
+    
+    # Show hint if columns were hidden
+    if hidden_count > 0:
+        console.print(f"[dim]Use --format json to see all {len(all_columns)} columns[/dim]")
 
 
 def _display_details_table(data: Dict[str, Any]) -> None:
