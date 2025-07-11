@@ -116,7 +116,8 @@ def safe_update_project(
         retry_number=retry_number,
         subject=subject,
         success_log_fmt="{subject} for group_id {group_id} organism {organism} and DB updated!",
-        error_log_fmt="{subject} for group_id {group_id} organism {organism} but DB update failed after {retry_number} attempts.",
+        error_log_fmt=("{subject} for group_id {group_id} organism {organism} but DB update failed"
+                       " after {retry_number} attempts."),
     )
 
 
