@@ -848,7 +848,11 @@ class ProcessingFunctions:
                         AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
                         for field in input_fields
                     ],
-                    message=f"Invalid regex pattern: {pattern}. Expected a string.",
+                    message=(
+                            f"Internal Error: Function check_regex did not receive valid "
+                            f"regex pattern, with input {input_data} and args {args}, "
+                            "please contact the administrator."
+                        ),
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
