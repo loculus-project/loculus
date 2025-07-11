@@ -7,11 +7,12 @@ interface Props {
     key: string;
     image: string | undefined;
     displayName: string;
+    longDisplayName: string | undefined;
     organismStatistics: OrganismStatistics;
     numberDaysAgoStatistics: number;
 }
 
-const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
+const { key, image, displayName, longDisplayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
 ---
 
 <a
@@ -23,6 +24,7 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
     hover:no-underline
     transition-all duration-200 ease-in-out
     mx-auto sm:mx-0'
+    title={longDisplayName}
 >
     {image !== undefined && <img src={image} class='h-40 w-full object-cover rounded-t-[8px]' alt={displayName} />}
     <div class='my-4 mx-4 h-28 flex flex-col justify-between text-slate-900'>

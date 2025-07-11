@@ -187,6 +187,9 @@ organisms:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
+      {{- if .longDisplayName }}
+      longDisplayName: {{ quote .longDisplayName }}
+      {{- end }}
       {{ if .linkOuts }}
       linkOuts:
         {{- range $linkOut := .linkOuts }}
