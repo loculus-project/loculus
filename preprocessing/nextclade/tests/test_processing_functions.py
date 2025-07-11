@@ -241,9 +241,13 @@ test_case_definitions = [
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": None,
         },
-        expected_errors=[ProcessingAnnotationTestCase(
-                ["regex_field"], ["regex_field"], "The value 'EPIISL_123456' does not match the expected regex pattern: '^EPI_ISL_[0-9]+$'."
-            ),],
+        expected_errors=[
+            ProcessingAnnotationTestCase(
+                ["regex_field"],
+                ["regex_field"],
+                "The value 'EPIISL_123456' does not match the expected regex pattern: '^EPI_ISL_[0-9]+$'.",
+            ),
+        ],
         expected_warnings=[],
     ),
     Case(
@@ -547,7 +551,7 @@ def test_preprocessing_without_consensus_sequences():
             submitter="test_submitter",
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name
+                "name_required": sequence_name,
             },
             unalignedNucleotideSequences={},
         ),
