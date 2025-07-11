@@ -14,6 +14,7 @@ from .commands.revise import revise_group
 from .commands.schema import schema_group
 from .commands.status import status
 from .commands.submit import submit_group
+from .config import check_and_show_warning
 
 console = Console()
 
@@ -64,6 +65,9 @@ def cli(
     no_color: bool,
 ) -> None:
     """Loculus CLI - Command line interface for Loculus."""
+    # Check and show warning if CLI hasn't been run for 5+ minutes
+    check_and_show_warning()
+
     # Ensure context object exists
     ctx.ensure_object(dict)
 

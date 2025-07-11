@@ -180,9 +180,7 @@ def fields(ctx: click.Context, field: str = None) -> None:
 
         else:
             # Show searchable fields only
-            [
-                f["name"] for f in metadata_fields if not f.get("notSearchable")
-            ]
+            [f["name"] for f in metadata_fields if not f.get("notSearchable")]
             console.print(f"[bold]Searchable fields for {organism}:[/bold]")
 
             # Group by category

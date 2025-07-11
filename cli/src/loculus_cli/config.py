@@ -1,11 +1,14 @@
 """Configuration management for Loculus CLI."""
 
 import os
+import sys
+import time
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
 from pydantic import BaseModel, Field
+from rich.console import Console
 
 from .instance_info import InstanceInfo
 
@@ -105,6 +108,9 @@ class Config(BaseModel):
     )
     defaults: DefaultsConfig = Field(
         default_factory=DefaultsConfig, description="Default values for commands"
+    )
+    last_run_timestamp: Optional[float] = Field(
+        default=None, description="Timestamp of last CLI run"
     )
 
 
@@ -224,3 +230,25 @@ def get_config_value(key: str) -> Any:
         current = current[k]
 
     return current
+
+
+def check_and_show_warning() -> None:
+    """Check if CLI hasn't been run for 5+ minutes and show warning."""
+    config = load_config()
+    current_time = time.time()
+
+    # Check if last run was more than 5 minutes ago (300 seconds)
+    if (
+        config.last_run_timestamp is None
+        or (current_time - config.last_run_timestamp) > 300
+    ):
+        console = Console(file=sys.stderr)
+        console.print(
+            "WARNING: THE LOCULUS CLI IS STILL UNDER DEVELOPMENT AND IS "
+            "NOT READY FOR PRODUCTION USE\n",
+            style="yellow",
+        )
+
+    # Update timestamp
+    config.last_run_timestamp = current_time
+    save_config(config)

@@ -71,9 +71,13 @@ pip install -e .
 pytest
 
 # Run linting
-ruff check
-black --check .
-mypy .
+poetry run ruff check .
+poetry run black --check .
+poetry run mypy .
+
+# Format code
+poetry run black .
+poetry run ruff check . --fix
 
 # Integration tests (from the integration-tests directory)
 cd ../integration-tests
