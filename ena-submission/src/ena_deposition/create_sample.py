@@ -4,6 +4,7 @@ import re
 import threading
 import time
 from datetime import datetime
+from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -38,6 +39,7 @@ from .submission_db_helper import (
     find_errors_in_db,
     is_revision,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -193,6 +195,33 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         )
 
 
+def safe_update_sample(
+    db_config: SimpleConnectionPool,
+    condition: dict[str, str],
+    update_values: dict[str, Any],
+    retry_number: int = 3,
+    subject: str = "Sample update",
+) -> None:
+    try:
+        update_with_retry(
+            db_config=db_config,
+            conditions=condition,
+            update_values=update_values,
+            table_name=TableName.SAMPLE_TABLE,
+            retry_number=retry_number,
+        )
+        logger.info(
+            f"{subject} for accession {condition['accession']} "
+            f"version {condition['version']} and DB updated!"
+        )
+    except Exception:
+        error_msg = (
+            f"{subject} for accession {condition['accession']} version "
+            f"{condition['version']} but DB update failed after {retry_number} attempts."
+        )
+        logger.error(error_msg)
+
+
 def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
@@ -293,21 +322,13 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "errors": json.dumps(["Revision version is not the latest version"]),
             "started_at": datetime.now(tz=pytz.utc),
         }
-        number_rows_updated = 0
-        tries = 0
-        while number_rows_updated != 1 and tries < retry_number:
-            if tries > 0:
-                # If state not correctly added retry
-                logger.warning(
-                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                )
-            number_rows_updated = update_db_where_conditions(
-                db_config,
-                table_name=TableName.SAMPLE_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-            tries += 1
+        safe_update_sample(
+            db_config=db_config,
+            condition=seq_key,
+            update_values=update_values,
+            retry_number=retry_number,
+            subject="Sample creation failure documentation",
+        )
         return True
     return False
 
@@ -370,47 +391,22 @@ def sample_table_create(
                 "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"Sample created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Sample creation for accession {row['accession']} "
-                    f"succeeded with: {sample_creation_results.result}"
-                )
+            subject = "Sample creation"
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            subject = "Sample creation failure documentation"
+        safe_update_sample(
+            db_config=db_config,
+            condition=seq_key,
+            update_values=update_values,
+            retry_number=retry_number,
+            subject=subject,
+        )
+
 
 
 def sample_table_handle_errors(
