@@ -18,8 +18,9 @@ ATCGATCGATCGATCGATCGATCG`;
         await cliPage.configure();
         await cliPage.login(testAccount.username, testAccount.password);
 
-        // Step 1: Generate metadata template
-        const templateResult = await cliPage.generateTemplate('west-nile');
+        // Step 1: Generate metadata template to temp directory
+        const templatePath = '/tmp/metadata_template.tsv';
+        const templateResult = await cliPage.generateTemplate('west-nile', templatePath);
         cliPage.assertSuccess(templateResult, 'Generate metadata template');
         expect(templateResult.stdout).toContain('Template generated');
 

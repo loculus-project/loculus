@@ -89,36 +89,6 @@ def sequence(
                     console.print(f"  {g.groupId}: {g.groupName}")
                 group = click.prompt("Select group ID", type=int)
 
-        # Validate files first
-        console.print("Validating files...")
-        try:
-            validation_result = backend_client.validate_sequences(
-                organism=organism,
-                metadata_file=metadata,
-                sequence_file=sequences,
-            )
-
-            if not validation_result.valid:
-                console.print("[bold red]✗ Validation failed[/bold red]")
-                for error in validation_result.errors:
-                    console.print(f"  • {error.message}")
-                    if error.field:
-                        console.print(f"    Field: {error.field}")
-                    if error.line_number:
-                        console.print(f"    Line: {error.line_number}")
-                raise click.ClickException("Validation failed")
-
-            if validation_result.warnings:
-                console.print("[bold yellow]⚠ Validation warnings:[/bold yellow]")
-                for warning in validation_result.warnings:
-                    console.print(f"  • {warning}")
-
-            console.print("✓ Files validated successfully")
-
-        except Exception as e:
-            console.print(f"[bold red]✗ Validation failed:[/bold red] {e}")
-            raise click.ClickException(f"Validation failed: {e}")
-
         # Revise sequences
         with console.status("Revising sequences..."):
             result = backend_client.revise_sequences(

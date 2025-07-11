@@ -37,34 +37,6 @@ def print_error(
         console.print(f"[bold red]✗ {message}[/bold red]")
 
 
-def print_success(message: str, console: Optional[Console] = None) -> None:
-    """
-    Print a formatted success message to console.
-
-    Args:
-        message: The success message to display
-        console: Optional console instance to use (defaults to stdout console)
-    """
-    if console is None:
-        console = Console()
-
-    console.print(f"[bold green]✓ {message}[/bold green]")
-
-
-def print_warning(message: str, console: Optional[Console] = None) -> None:
-    """
-    Print a formatted warning message to console.
-
-    Args:
-        message: The warning message to display
-        console: Optional console instance to use (defaults to stdout console)
-    """
-    if console is None:
-        console = Console()
-
-    console.print(f"[bold yellow]⚠ {message}[/bold yellow]")
-
-
 def handle_cli_error(
     message: str, exception: Exception, console: Optional[Console] = None
 ) -> None:

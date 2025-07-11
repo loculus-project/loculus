@@ -32,17 +32,6 @@ class UnprocessedData(BaseModel):
     processing_status: ProcessingStatus
 
 
-class ProcessedData(BaseModel):
-    """Processed sequence data."""
-
-    accession_version: AccessionVersion
-    data: dict[str, Any]
-    submit_time: datetime
-    submitter: str
-    group_id: int
-    processing_status: ProcessingStatus
-
-
 class SubmissionResponse(BaseModel):
     """Response from submission endpoint."""
 

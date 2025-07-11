@@ -98,34 +98,6 @@ def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
         raise click.ClickException("No default instance set")
 
 
-def get_instance_with_guard(ctx: click.Context, instance: Optional[str] = None) -> str:
-    """
-    Get instance with guard check and return the instance name.
-    This is a convenience wrapper around require_instance.
-    """
-    return require_instance(ctx, instance)
-
-
-def validate_instance_connection(instance_url: str) -> bool:
-    """
-    Validate that we can connect to the instance.
-
-    Args:
-        instance_url: The instance URL to validate
-
-    Returns:
-        True if connection successful, False otherwise
-    """
-    try:
-        # Try to get instance config - this will test connectivity
-        instance_config = get_instance_config(instance_url)
-        # Try to fetch basic info
-        instance_config.get_organisms()
-        return True
-    except Exception:
-        return False
-
-
 def require_organism(instance: str, organism: Optional[str] = None) -> str:
     """
     Ensure an organism is selected, providing helpful guidance if not.
@@ -258,30 +230,3 @@ def require_group(instance: str, group: Optional[int] = None) -> int:
     console.print("  [cyan]loculus group[/cyan]")
 
     raise click.ClickException("No default group set")
-
-
-def suggest_instance_setup(console: Console) -> None:
-    """Show helpful suggestions for setting up instances."""
-    console.print("[bold]💡 Getting Started with Loculus CLI[/bold]")
-    console.print()
-    console.print("[bold]Common Loculus instances:[/bold]")
-    console.print(
-        "  • [cyan]https://main.loculus.org[/cyan]     - Main production instance"
-    )
-    console.print(
-        "  • [cyan]https://cli.loculus.org[/cyan]      - CLI testing instance"
-    )
-    console.print(
-        "  • [cyan]https://dev.loculus.org[/cyan]      - Development instance"
-    )
-    console.print()
-    console.print("[bold]Add an instance:[/bold]")
-    console.print("  [cyan]loculus instance add https://main.loculus.org[/cyan]")
-    console.print()
-    console.print("[bold]Set as default:[/bold]")
-    console.print("  [cyan]loculus instance use main.loculus.org[/cyan]")
-    console.print()
-    console.print("[bold]Or use directly:[/bold]")
-    console.print(
-        "  [cyan]loculus --instance https://main.loculus.org auth login[/cyan]"
-    )

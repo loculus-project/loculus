@@ -302,13 +302,6 @@ def format_sequence_summary(response: SequencesResponse) -> str:
     return "\n".join(lines)
 
 
-def get_user_groups(instance_config, organism: str) -> list[int]:
-    """Get groups accessible to the current user."""
-    # For now, we'll implement this as needed
-    # This could call a user info API endpoint to get group memberships
-    return []
-
-
 def filter_sequences(
     sequences: list[SequenceEntry],
     status_filter: Optional[SequenceStatus] = None,
