@@ -210,8 +210,10 @@ def safe_update_sample(
         retry_number=retry_number,
         subject=subject,
         success_log_fmt="{subject} for accession {accession} version {version} and DB updated!",
-        error_log_fmt=("{subject} for accession {accession} version {version} but DB update failed"
-                       " after {retry_number} attempts."),
+        error_log_fmt=(
+            "{subject} for accession {accession} version {version} but DB update failed"
+            " after {retry_number} attempts."
+        ),
     )
 
 
