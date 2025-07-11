@@ -412,7 +412,10 @@ def update_with_retry(
     conditions: dict[str, str],
     table_name: TableName,
     update_values: dict[str, Any],
+    subject: str,
     retry_number: int = 3,
+    success_log_fmt: str = "",
+    error_log_fmt: str = "",
 ) -> int:
     def _do_update():
         number_rows_updated = update_db_where_conditions(
@@ -422,8 +425,7 @@ def update_with_retry(
             update_values=update_values,
         )
         if number_rows_updated != 1:
-            msg = f"{table_name} update failed"
-            raise ValueError(msg)
+            raise ValueError(f"{table_name} update failed")
         return number_rows_updated
 
     retryer = Retrying(
@@ -434,7 +436,14 @@ def update_with_retry(
         before_sleep=before_sleep_log(logger, logging.WARNING),
     )
 
-    return retryer(_do_update)
+    try:
+        result = retryer(_do_update)
+        logger.info(success_log_fmt.format(**conditions, subject=subject))
+        return result
+    except Exception:
+        error_msg = error_log_fmt.format(**conditions, subject=subject, retry_number=retry_number)
+        logger.error(error_msg)
+        raise
 
 
 def add_to_project_table(

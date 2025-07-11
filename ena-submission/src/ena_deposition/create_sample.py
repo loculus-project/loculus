@@ -202,24 +202,16 @@ def safe_update_sample(
     retry_number: int = 3,
     subject: str = "Sample update",
 ) -> None:
-    try:
-        update_with_retry(
-            db_config=db_config,
-            conditions=condition,
-            update_values=update_values,
-            table_name=TableName.SAMPLE_TABLE,
-            retry_number=retry_number,
-        )
-        logger.info(
-            f"{subject} for accession {condition['accession']} "
-            f"version {condition['version']} and DB updated!"
-        )
-    except Exception:
-        error_msg = (
-            f"{subject} for accession {condition['accession']} version "
-            f"{condition['version']} but DB update failed after {retry_number} attempts."
-        )
-        logger.error(error_msg)
+    update_with_retry(
+        db_config=db_config,
+        conditions=condition,
+        update_values=update_values,
+        table_name=TableName.SAMPLE_TABLE,
+        retry_number=retry_number,
+        subject=subject,
+        success_log_fmt="{subject} for accession {accession} version {version} and DB updated!",
+        error_log_fmt="{subject} for accession {accession} version {version} but DB update failed after {retry_number} attempts.",
+    )
 
 
 def submission_table_start(db_config: SimpleConnectionPool, config: Config):
