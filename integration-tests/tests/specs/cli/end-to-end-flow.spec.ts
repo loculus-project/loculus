@@ -231,11 +231,12 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             // STEP 9: Test different status views
             console.log('Step 9: Testing various status views...');
 
-            // Test convenience filters
+            // Test convenience filters with explicit group
             const readySequencesResult = await cliPage.getStatus({
                 organism: 'cchf',
                 ready: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(readySequencesResult.exitCode).toBe(0);
 
@@ -243,6 +244,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 organism: 'cchf',
                 errorsOnly: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(errorsOnlyResult.exitCode).toBe(0);
 
@@ -254,6 +256,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             const tableStatusResult = await cliPage.getStatus({
                 organism: 'cchf',
                 limit: 5,
+                group: parseInt(groupId),
             });
             expect(tableStatusResult.exitCode).toBe(0);
             expect(tableStatusResult.stdout.length).toBeGreaterThan(0);

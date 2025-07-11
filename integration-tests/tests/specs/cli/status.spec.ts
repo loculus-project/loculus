@@ -21,10 +21,11 @@ cliTest.describe('CLI Status Command', () => {
             });
             console.log('Test data created:', testData);
 
-            // Step 1: Get basic status
+            // Step 1: Get basic status with explicit group
             const basicStatusResult = await cliPage.getStatus({
                 organism: 'west-nile',
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(basicStatusResult.exitCode).toBe(0);
 
@@ -33,6 +34,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 summary: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(summaryResult.exitCode).toBe(0);
 
@@ -49,6 +51,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 status: 'PROCESSED',
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(filteredResult.exitCode).toBe(0);
 
@@ -57,6 +60,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 ready: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(readyResult.exitCode).toBe(0);
 
@@ -64,6 +68,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 pending: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(pendingResult.exitCode).toBe(0);
 
@@ -71,6 +76,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 errorsOnly: true,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(errorsOnlyResult.exitCode).toBe(0);
 
@@ -80,6 +86,7 @@ cliTest.describe('CLI Status Command', () => {
                 limit: 10,
                 page: 1,
                 format: 'json',
+                group: parseInt(groupId),
             });
             expect(paginatedResult.exitCode).toBe(0);
 
@@ -87,6 +94,7 @@ cliTest.describe('CLI Status Command', () => {
             const tableResult = await cliPage.getStatus({
                 organism: 'west-nile',
                 limit: 5,
+                group: parseInt(groupId),
             });
             expect(tableResult.exitCode).toBe(0);
             // Table format should not be JSON

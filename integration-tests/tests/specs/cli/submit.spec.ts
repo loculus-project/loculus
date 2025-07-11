@@ -31,7 +31,11 @@ ATCGATCGATCGATCGATCGATCG`;
             group: parseInt(groupId),
         });
 
-        console.log('Submit result:', { exitCode: submitResult.exitCode, stdout: submitResult.stdout, stderr: submitResult.stderr });
+        console.log('Submit result:', {
+            exitCode: submitResult.exitCode,
+            stdout: submitResult.stdout,
+            stderr: submitResult.stderr,
+        });
         expect(submitResult.exitCode).toBe(0);
         expect(submitResult.stdout).toContain('Submission successful');
 
