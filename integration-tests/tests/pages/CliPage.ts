@@ -128,7 +128,10 @@ export class CliPage {
         await this.cleanup();
 
         // Add the instance using new command structure
-        await this.execute(['instance', 'add', instanceUrl, '--set-default']);
+        await this.executeAndAssertSuccess(
+            ['instance', 'add', instanceUrl, '--set-default'],
+            `Configure CLI instance: ${instanceUrl}`,
+        );
     }
 
     /**
@@ -286,8 +289,80 @@ export class CliPage {
         try {
             return JSON.parse(result.stdout);
         } catch {
-            throw new Error(`Failed to parse JSON output: ${result.stdout}`);
+            const errorMessage = this.formatCliError('Failed to parse JSON output', result);
+            throw new Error(errorMessage);
         }
+    }
+
+    /**
+     * Format CLI error information for debugging
+     */
+    formatCliError(message: string, result: CliResult): string {
+        const parts = [message];
+
+        if (result.exitCode !== 0) {
+            parts.push(`Exit code: ${result.exitCode}`);
+        }
+
+        if (result.stdout) {
+            parts.push(`STDOUT:\n${result.stdout}`);
+        }
+
+        if (result.stderr) {
+            parts.push(`STDERR:\n${result.stderr}`);
+        }
+
+        return parts.join('\n\n');
+    }
+
+    /**
+     * Assert CLI command succeeded and format error if it didn't
+     */
+    assertSuccess(result: CliResult, operation: string = 'CLI operation'): void {
+        if (result.exitCode !== 0) {
+            const errorMessage = this.formatCliError(`${operation} failed`, result);
+            throw new Error(errorMessage);
+        }
+    }
+
+    /**
+     * Execute command and assert success
+     */
+    async executeAndAssertSuccess(
+        args: string[],
+        operation: string,
+        options?: {
+            cwd?: string;
+            env?: Record<string, string>;
+            timeout?: number;
+        },
+    ): Promise<CliResult> {
+        const result = await this.execute(args, options);
+        this.assertSuccess(result, operation);
+        return result;
+    }
+
+    /**
+     * Log CLI result for debugging (always includes stderr if present)
+     */
+    logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
+        const parts = [`${operation}:`];
+
+        if (result.exitCode !== 0) {
+            parts.push(`❌ Exit code: ${result.exitCode}`);
+        } else {
+            parts.push(`✅ Success`);
+        }
+
+        if (logStdout && result.stdout) {
+            parts.push(`STDOUT: ${result.stdout}`);
+        }
+
+        if (result.stderr) {
+            parts.push(`STDERR: ${result.stderr}`);
+        }
+
+        console.log(parts.join('\n'));
     }
 
     /**
@@ -480,6 +555,13 @@ export class CliPage {
             if (submitResult.exitCode === 0) {
                 // Try to extract accession from output, or use predictable format
                 accessions.push(`LOC_${String(timestamp).slice(-6)}_${String(i).padStart(3, '0')}`);
+            } else {
+                // Log detailed error information for debugging
+                const errorMessage = this.formatCliError(
+                    `Failed to submit sequence ${i}/${numSequences}`,
+                    submitResult,
+                );
+                throw new Error(errorMessage);
             }
         }
 
