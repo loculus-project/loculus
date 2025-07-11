@@ -146,6 +146,8 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
             value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
             value = get_authors(str(value))
+        if not config.is_broker and (key in {"authors", "address"}):
+            continue
         assembly_values[key] = value
     return assembly_values
 
