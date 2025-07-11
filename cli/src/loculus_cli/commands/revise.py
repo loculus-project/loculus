@@ -11,6 +11,7 @@ from rich.table import Table
 from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
+from ..utils.instance_guard import require_instance
 
 console = Console()
 
@@ -57,7 +58,7 @@ def sequence(
     group: Optional[int],
 ) -> None:
     """Revise sequences in Loculus."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     auth_client = AuthClient(instance_config)
@@ -206,7 +207,7 @@ def batch(
     batch_size: int,
 ) -> None:
     """Revise sequences in batches."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     auth_client = AuthClient(instance_config)

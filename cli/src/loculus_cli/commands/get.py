@@ -16,6 +16,7 @@ from ..config import get_instance_config
 from ..utils.metadata_filter import MetadataFilter
 from ..utils.console import get_stderr_console, print_error, handle_cli_error
 from ..utils.defaults import get_organism_with_default
+from ..utils.instance_guard import require_instance
 
 console = Console()
 
@@ -90,7 +91,7 @@ def sequences(
     aligned: bool,
 ) -> None:
     """Search and retrieve sequences."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for get)
@@ -219,7 +220,7 @@ def details(
     output_format: str,
 ) -> None:
     """Get detailed information about a specific sequence."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for details)
@@ -303,7 +304,7 @@ def stats(
     output: Optional[Path],
 ) -> None:
     """Get aggregated statistics."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for stats)
@@ -380,7 +381,7 @@ def all(
     compression: str,
 ) -> None:
     """Download all released data for an organism."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for all)

@@ -10,6 +10,7 @@ from rich.table import Table
 from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.defaults import get_organism_with_default, get_group_with_default
+from ..utils.instance_guard import require_instance
 from ..utils.review_utils import (
     ProcessingResult,
     ReviewApiClient,
@@ -62,7 +63,7 @@ def release(
     verbose: bool,
 ):
     """Release sequences for public access."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     config = get_instance_config(instance)
     auth_client = AuthClient(config)
     console = Console()

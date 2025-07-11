@@ -13,6 +13,7 @@ from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.defaults import get_organism_with_default, get_group_with_default
 from ..utils.console import print_error, handle_cli_error, check_authentication
+from ..utils.instance_guard import require_instance
 
 console = Console()
 
@@ -65,7 +66,7 @@ def sequences(
     data_use_terms: str,
 ) -> None:
     """Submit sequences to Loculus."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for submit)
@@ -173,7 +174,7 @@ def template(
     output: Optional[Path],
 ) -> None:
     """Generate metadata template for an organism."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     try:

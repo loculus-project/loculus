@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..config import get_config_value, get_instance_config, set_config_value
+from ..utils.instance_guard import require_instance
 
 console = Console()
 
@@ -26,7 +27,7 @@ def group_command(ctx: click.Context, group: Optional[int], none: bool) -> None:
             console.print(f"[green]✓[/green] Set default group to [bold]{group}[/bold]")
         else:
             # Show available groups and current default
-            instance = ctx.obj.get("instance")
+            instance = require_instance(ctx, ctx.obj.get("instance"))
             instance_config = get_instance_config(instance)
             
             current = get_config_value("defaults.group")

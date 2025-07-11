@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..config import get_instance_config
+from ..utils.instance_guard import require_instance
 from ..utils.defaults import get_organism_with_default
 
 console = Console()
@@ -22,7 +23,7 @@ def schema_group() -> None:
 @click.pass_context
 def organisms(ctx: click.Context) -> None:
     """List available organisms."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     try:
@@ -48,7 +49,7 @@ def organisms(ctx: click.Context) -> None:
 @click.pass_context
 def show(ctx: click.Context, organism: Optional[str]) -> None:
     """Show metadata schema for organism."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for schema)
@@ -137,7 +138,7 @@ def show(ctx: click.Context, organism: Optional[str]) -> None:
 @click.pass_context
 def fields(ctx: click.Context, organism: Optional[str], field: str = None) -> None:
     """Show detailed field information."""
-    instance = ctx.obj.get("instance")
+    instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for schema)
