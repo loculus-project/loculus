@@ -1,8 +1,7 @@
 """Backend API client for Loculus."""
 
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import httpx
 from pydantic import ValidationError
@@ -13,7 +12,6 @@ from .models import (
     AccessionVersion,
     GroupInfo,
     InstanceInfo,
-    ProcessedData,
     RevisionResponse,
     SubmissionResponse,
     UnprocessedData,
@@ -22,7 +20,7 @@ from .models import (
 
 class BackendClient:
     """Client for Loculus backend API."""
-    
+
     def __init__(self, instance_config: InstanceConfig, auth_client: AuthClient):
         self.instance_config = instance_config
         self.auth_client = auth_client
@@ -31,20 +29,20 @@ class BackendClient:
             timeout=30.0,
             follow_redirects=True,
         )
-    
-    def _get_headers(self, username: str) -> Dict[str, str]:
+
+    def _get_headers(self, username: str) -> dict[str, str]:
         """Get headers for authenticated requests."""
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        
+
         if username:
             auth_headers = self.auth_client.get_auth_headers(username)
             headers.update(auth_headers)
-        
+
         return headers
-    
+
     def get_info(self) -> InstanceInfo:
         """Get information about the Loculus instance."""
         try:
@@ -52,17 +50,19 @@ class BackendClient:
             response.raise_for_status()
             return InstanceInfo.model_validate(response.json())
         except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"Failed to get instance info: HTTP {e.response.status_code}")
+            raise RuntimeError(
+                f"Failed to get instance info: HTTP {e.response.status_code}"
+            )
         except ValidationError as e:
             raise RuntimeError(f"Invalid response format: {e}")
         except Exception as e:
             raise RuntimeError(f"Failed to get instance info: {e}")
-    
-    def get_organisms(self) -> List[str]:
+
+    def get_organisms(self) -> list[str]:
         """Get list of available organisms."""
         info = self.get_info()
         return [organism.name for organism in info.organisms]
-    
+
     def submit_sequences(
         self,
         username: str,
@@ -74,30 +74,34 @@ class BackendClient:
     ) -> SubmissionResponse:
         """Submit sequences to Loculus."""
         headers = self._get_headers(username)
-        
+
         # Read files
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata_content = f.read()
-            with open(sequence_file, "r") as f:
+            with open(sequence_file) as f:
                 sequence_content = f.read()
         except Exception as e:
             raise RuntimeError(f"Failed to read input files: {e}")
-        
+
         # Prepare multipart form data
         files = {
-            "metadataFile": ("metadata.tsv", metadata_content, "text/tab-separated-values"),
+            "metadataFile": (
+                "metadata.tsv",
+                metadata_content,
+                "text/tab-separated-values",
+            ),
             "sequenceFile": ("sequences.fasta", sequence_content, "text/plain"),
         }
-        
+
         data = {
             "groupId": str(group_id),
             "dataUseTermsType": data_use_terms,
         }
-        
+
         # Remove Content-Type header to let httpx set it for multipart
         auth_headers = self.auth_client.get_auth_headers(username)
-        
+
         try:
             response = self.client.post(
                 f"/{organism}/submit",
@@ -106,7 +110,7 @@ class BackendClient:
                 headers=auth_headers,
             )
             response.raise_for_status()
-            
+
             # Parse response - API returns a list of submissions
             response_data = response.json()
             if isinstance(response_data, list):
@@ -114,17 +118,20 @@ class BackendClient:
                 accession_versions = []
                 for item in response_data:
                     if "accession" in item and "version" in item:
-                        accession_versions.append(AccessionVersion(
-                            accession=item["accession"],
-                            version=item["version"]
-                        ))
+                        accession_versions.append(
+                            AccessionVersion(
+                                accession=item["accession"], version=item["version"]
+                            )
+                        )
                 return SubmissionResponse(accession_versions=accession_versions)
             else:
                 return SubmissionResponse.model_validate(response_data)
         except httpx.HTTPStatusError as e:
             try:
                 error_data = e.response.json()
-                error_message = error_data.get("message", f"HTTP {e.response.status_code}")
+                error_message = error_data.get(
+                    "message", f"HTTP {e.response.status_code}"
+                )
                 # Include more details for debugging
                 if "detail" in error_data:
                     error_message += f" - {error_data['detail']}"
@@ -137,7 +144,7 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}")
         except Exception as e:
             raise RuntimeError(f"Submission failed: {e}")
-    
+
     def revise_sequences(
         self,
         username: str,
@@ -148,29 +155,33 @@ class BackendClient:
     ) -> RevisionResponse:
         """Revise sequences in Loculus."""
         headers = self._get_headers(username)
-        
+
         # Read files
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata_content = f.read()
-            with open(sequence_file, "r") as f:
+            with open(sequence_file) as f:
                 sequence_content = f.read()
         except Exception as e:
             raise RuntimeError(f"Failed to read input files: {e}")
-        
+
         # Prepare multipart form data
         files = {
-            "metadataFile": ("metadata.tsv", metadata_content, "text/tab-separated-values"),
+            "metadataFile": (
+                "metadata.tsv",
+                metadata_content,
+                "text/tab-separated-values",
+            ),
             "sequenceFile": ("sequences.fasta", sequence_content, "text/plain"),
         }
-        
+
         data = {
             "groupId": str(group_id),
         }
-        
+
         # Remove Content-Type header to let httpx set it for multipart
         auth_headers = self.auth_client.get_auth_headers(username)
-        
+
         try:
             response = self.client.post(
                 f"/{organism}/revise",
@@ -183,7 +194,9 @@ class BackendClient:
         except httpx.HTTPStatusError as e:
             try:
                 error_data = e.response.json()
-                error_message = error_data.get("message", f"HTTP {e.response.status_code}")
+                error_message = error_data.get(
+                    "message", f"HTTP {e.response.status_code}"
+                )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
             raise RuntimeError(f"Revision failed: {error_message}")
@@ -191,18 +204,17 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}")
         except Exception as e:
             raise RuntimeError(f"Revision failed: {e}")
-    
-    
+
     def get_sequences(
         self,
         username: str,
         organism: str,
         group_id: Optional[int] = None,
-        accession_versions: Optional[List[AccessionVersion]] = None,
-    ) -> List[UnprocessedData]:
+        accession_versions: Optional[list[AccessionVersion]] = None,
+    ) -> list[UnprocessedData]:
         """Get sequences from Loculus."""
         headers = self._get_headers(username)
-        
+
         params = {"organism": organism}
         if group_id is not None:
             params["groupId"] = str(group_id)
@@ -210,20 +222,24 @@ class BackendClient:
             params["accessionVersions"] = ",".join(
                 f"{av.accession}.{av.version}" for av in accession_versions
             )
-        
+
         try:
-            response = self.client.get(f"/{organism}/get-sequences", params=params, headers=headers)
+            response = self.client.get(
+                f"/{organism}/get-sequences", params=params, headers=headers
+            )
             response.raise_for_status()
-            
+
             sequences = []
             for item in response.json():
                 sequences.append(UnprocessedData.model_validate(item))
-            
+
             return sequences
         except httpx.HTTPStatusError as e:
             try:
                 error_data = e.response.json()
-                error_message = error_data.get("message", f"HTTP {e.response.status_code}")
+                error_message = error_data.get(
+                    "message", f"HTTP {e.response.status_code}"
+                )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
             raise RuntimeError(f"Failed to get sequences: {error_message}")
@@ -231,7 +247,7 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}")
         except Exception as e:
             raise RuntimeError(f"Failed to get sequences: {e}")
-    
+
     def get_released_data(
         self,
         organism: str,
@@ -242,33 +258,37 @@ class BackendClient:
             "organism": organism,
             "compression": compression,
         }
-        
+
         try:
             response = self.client.get(f"/{organism}/get-released-data", params=params)
             response.raise_for_status()
             return response.content
         except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"Failed to get released data: HTTP {e.response.status_code}")
+            raise RuntimeError(
+                f"Failed to get released data: HTTP {e.response.status_code}"
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to get released data: {e}")
-    
-    def get_groups(self, username: str) -> List[GroupInfo]:
+
+    def get_groups(self, username: str) -> list[GroupInfo]:
         """Get groups for the authenticated user."""
         headers = self._get_headers(username)
-        
+
         try:
             response = self.client.get("/user/groups", headers=headers)
             response.raise_for_status()
-            
+
             groups = []
             for item in response.json():
                 groups.append(GroupInfo.model_validate(item))
-            
+
             return groups
         except httpx.HTTPStatusError as e:
             try:
                 error_data = e.response.json()
-                error_message = error_data.get("message", f"HTTP {e.response.status_code}")
+                error_message = error_data.get(
+                    "message", f"HTTP {e.response.status_code}"
+                )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
             raise RuntimeError(f"Failed to get groups: {error_message}")
@@ -276,7 +296,7 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}")
         except Exception as e:
             raise RuntimeError(f"Failed to get groups: {e}")
-    
+
     def close(self) -> None:
         """Close the HTTP client."""
         self.client.close()

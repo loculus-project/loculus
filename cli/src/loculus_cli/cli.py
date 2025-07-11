@@ -54,11 +54,19 @@ console = Console()
     help="Disable colored output",
 )
 @click.pass_context
-def cli(ctx: click.Context, instance: str, organism: str, group: int, config: str, verbose: bool, no_color: bool) -> None:
+def cli(
+    ctx: click.Context,
+    instance: str,
+    organism: str,
+    group: int,
+    config: str,
+    verbose: bool,
+    no_color: bool,
+) -> None:
     """Loculus CLI - Command line interface for Loculus."""
     # Ensure context object exists
     ctx.ensure_object(dict)
-    
+
     # Store global options in context
     ctx.obj["instance"] = instance
     ctx.obj["organism"] = organism
@@ -66,7 +74,7 @@ def cli(ctx: click.Context, instance: str, organism: str, group: int, config: st
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
     ctx.obj["no_color"] = no_color
-    
+
     # Configure console
     if no_color:
         console.no_color = True

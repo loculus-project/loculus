@@ -38,7 +38,11 @@ console = Console()
 @click.option("--accession", help="Show specific sequence by accession")
 @click.option("--version", type=int, help="Specify version (used with --accession)")
 @click.option("--summary", is_flag=True, help="Show only summary counts")
-@click.option("--detailed", is_flag=True, help="Show detailed information including errors/warnings")
+@click.option(
+    "--detailed",
+    is_flag=True,
+    help="Show detailed information including errors/warnings",
+)
 @click.option(
     "--format",
     "output_format",
@@ -79,34 +83,36 @@ def status(
     config = get_instance_config(instance)
     auth_client = AuthClient(config)
     console = Console()
-    
+
     # Get organism with default (required for status)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     # Get group with default (optional)
     # Group is optional for status command - use if provided via top-level param
     group = ctx.obj.get("group")
-    
+
     # Validate options
     if accession and not version:
         version = 1  # Default to version 1 if not specified
-    
+
     if accession and (summary or watch):
         console.print("[red]Cannot use --accession with --summary or --watch[/red]")
         raise click.Abort()
-    
+
     # Convert string options to enums
     status_filter = SequenceStatus(status) if status else None
     result_filter = ProcessingResult(result) if result else None
-    
+
     api_client = ReviewApiClient(config, auth_client)
-    
+
     def fetch_and_display():
         """Fetch and display sequence data."""
         try:
             if accession:
                 # Show detailed info for specific sequence
-                return show_sequence_details(api_client, organism, accession, version, console)
+                return show_sequence_details(
+                    api_client, organism, accession, version, console
+                )
             else:
                 # Show list of sequences
                 return show_sequences_list(
@@ -129,13 +135,13 @@ def status(
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             return False
-    
+
     if watch:
         # Watch mode with live updates
         console.print(f"[blue]Monitoring {organism} sequences (Ctrl+C to stop)[/blue]")
         console.print(f"[dim]Refreshing every {watch_interval} seconds[/dim]")
         console.print()
-        
+
         with Live(refresh_per_second=1) as live:
             while True:
                 try:
@@ -179,39 +185,45 @@ def show_sequence_details(
     """Show detailed information for a specific sequence."""
     try:
         details = api_client.get_sequence_details(organism, accession, version)
-        
+
         console.print(f"[bold]Sequence: {accession}.{version}[/bold]")
         console.print(f"Status: {details['status']}")
         console.print(f"Submission ID: {details['submissionId']}")
         console.print(f"Group ID: {details['groupId']}")
         console.print()
-        
+
         # Show errors if present
         if details.get("errors"):
             console.print("[red bold]Errors:[/red bold]")
             for error in details["errors"]:
-                field_names = ", ".join(field["name"] for field in error["processedFields"])
+                field_names = ", ".join(
+                    field["name"] for field in error["processedFields"]
+                )
                 console.print(f"  [red]{field_names}: {error['message']}[/red]")
             console.print()
-        
+
         # Show warnings if present
         if details.get("warnings"):
             console.print("[yellow bold]Warnings:[/yellow bold]")
             for warning in details["warnings"]:
-                field_names = ", ".join(field["name"] for field in warning["processedFields"])
+                field_names = ", ".join(
+                    field["name"] for field in warning["processedFields"]
+                )
                 console.print(f"  [yellow]{field_names}: {warning['message']}[/yellow]")
             console.print()
-        
+
         # Show metadata
         if details.get("processedData", {}).get("metadata"):
             console.print("[bold]Metadata:[/bold]")
             for key, value in details["processedData"]["metadata"].items():
                 if value is not None:
                     console.print(f"  {key}: {value}")
-        
+
         return True
     except Exception as e:
-        console.print(f"[red]Failed to fetch details for {accession}.{version}: {e}[/red]")
+        console.print(
+            f"[red]Failed to fetch details for {accession}.{version}: {e}[/red]"
+        )
         return False
 
 
@@ -238,7 +250,7 @@ def show_sequences_list(
         statuses = [status_filter] if status_filter else None
         results = [result_filter] if result_filter else None
         group_ids = [group] if group else None
-        
+
         # Fetch sequences
         response = api_client.get_sequences(
             organism=organism,
@@ -248,7 +260,7 @@ def show_sequences_list(
             page=page - 1,  # Convert to 0-indexed
             size=limit,
         )
-        
+
         # Apply client-side filters
         filtered_sequences = filter_sequences(
             response.sequence_entries,
@@ -257,7 +269,7 @@ def show_sequences_list(
             ready_only=ready,
             pending_only=pending,
         )
-        
+
         if summary:
             # Show summary
             summary_text = format_sequence_summary(response)
@@ -278,33 +290,39 @@ def show_sequences_list(
             if output_format == "json":
                 sequences_data = []
                 for seq in filtered_sequences:
-                    sequences_data.append({
-                        "accession": seq.accession,
-                        "version": seq.version,
-                        "status": seq.status.value,
-                        "processing_result": seq.processing_result.value if seq.processing_result else None,
-                        "submission_id": seq.submission_id,
-                        "submitter": seq.submitter,
-                        "group_id": seq.group_id,
-                        "data_use_terms": seq.data_use_terms,
-                        "is_revocation": seq.is_revocation,
-                    })
+                    sequences_data.append(
+                        {
+                            "accession": seq.accession,
+                            "version": seq.version,
+                            "status": seq.status.value,
+                            "processing_result": seq.processing_result.value
+                            if seq.processing_result
+                            else None,
+                            "submission_id": seq.submission_id,
+                            "submitter": seq.submitter,
+                            "group_id": seq.group_id,
+                            "data_use_terms": seq.data_use_terms,
+                            "is_revocation": seq.is_revocation,
+                        }
+                    )
                 # Print JSON without rich formatting to avoid color codes
                 print(json.dumps(sequences_data, indent=2))
             else:
                 if not filtered_sequences:
-                    console.print("[yellow]No sequences found matching the criteria[/yellow]")
+                    console.print(
+                        "[yellow]No sequences found matching the criteria[/yellow]"
+                    )
                 else:
                     table = format_sequence_table(filtered_sequences, detailed=detailed)
                     console.print(table)
-                    
+
                     # Show summary line
                     console.print()
                     console.print(
                         f"[dim]Showing {len(filtered_sequences)} sequences "
                         f"(page {page}, limit {limit})[/dim]"
                     )
-        
+
         return True
     except Exception as e:
         console.print(f"[red]Failed to fetch sequences: {e}[/red]")
@@ -332,7 +350,7 @@ def get_display_content(
         statuses = [status_filter] if status_filter else None
         results = [result_filter] if result_filter else None
         group_ids = [group] if group else None
-        
+
         # Fetch sequences
         response = api_client.get_sequences(
             organism=organism,
@@ -342,7 +360,7 @@ def get_display_content(
             page=page - 1,
             size=limit,
         )
-        
+
         # Apply client-side filters
         filtered_sequences = filter_sequences(
             response.sequence_entries,
@@ -351,7 +369,7 @@ def get_display_content(
             ready_only=ready,
             pending_only=pending,
         )
-        
+
         if summary:
             return format_sequence_summary(response)
         else:

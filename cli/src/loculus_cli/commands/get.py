@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 from rich.console import Console
@@ -13,9 +13,9 @@ from ..api.lapis import LapisClient
 from ..api.models import AccessionVersion
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.metadata_filter import MetadataFilter
-from ..utils.console import get_stderr_console, print_error, handle_cli_error
+from ..utils.console import get_stderr_console, handle_cli_error, print_error
 from ..utils.guards import require_instance, require_organism
+from ..utils.metadata_filter import MetadataFilter
 
 console = Console()
 
@@ -74,7 +74,7 @@ def get_group() -> None:
 @click.pass_context
 def sequences(
     ctx: click.Context,
-    filters: List[str],
+    filters: list[str],
     accessions: Optional[str],
     limit: int,
     offset: int,
@@ -86,18 +86,18 @@ def sequences(
     """Search and retrieve sequences."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with guard (required for get)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     auth_client = AuthClient(instance_config)
     lapis_client = None
-    
+
     try:
         # Get LAPIS URL for this organism
         lapis_url = instance_config.get_lapis_url(organism)
         lapis_client = LapisClient(lapis_url)
-        
+
         # Parse and validate filters using schema
         filter_params = {}
         if filters:
@@ -107,9 +107,13 @@ def sequences(
             except ValueError as e:
                 console.print(f"[red]Filter error: {e}[/red]")
                 console.print()
-                console.print("Use 'loculus schema show --organism {} --help' to see available fields".format(organism))
+                console.print(
+                    "Use 'loculus schema show --organism {} --help' to see available fields".format(
+                        organism
+                    )
+                )
                 raise click.ClickException(str(e))
-        
+
         # Handle accessions
         if accessions:
             accession_list = []
@@ -117,35 +121,37 @@ def sequences(
                 acc = acc.strip()
                 if "." in acc:
                     accession, version = acc.split(".", 1)
-                    accession_list.append(AccessionVersion(accession=accession, version=int(version)))
+                    accession_list.append(
+                        AccessionVersion(accession=accession, version=int(version))
+                    )
                 else:
                     accession_list.append(AccessionVersion(accession=acc, version=1))
-            
+
             # For accessions, we might want to use the backend API instead
             if accession_list:
                 backend_client = BackendClient(instance_config, auth_client)
                 current_user = auth_client.get_current_user()
-                
+
                 sequences_data = backend_client.get_sequences(
                     username=current_user,
                     organism=organism,
                     accession_versions=accession_list,
                 )
-                
+
                 # Convert to LAPIS-like format
                 data = []
                 for seq in sequences_data:
                     data.append(seq.data)
-                
+
                 _output_data(data, output_format, output, fields)
                 backend_client.close()
                 return
-        
+
         # Parse fields
         field_list = None
         if fields:
             field_list = [f.strip() for f in fields.split(",")]
-        
+
         # Query LAPIS
         if output_format == "fasta":
             stderr_console = get_stderr_console()
@@ -164,7 +170,7 @@ def sequences(
                         limit=limit,
                         offset=offset,
                     )
-            
+
             _output_fasta(result.data, output)
         else:
             stderr_console = get_stderr_console()
@@ -176,9 +182,9 @@ def sequences(
                     offset=offset,
                     fields=field_list,
                 )
-            
+
             _output_data(result.data, output_format, output, fields)
-        
+
     except Exception as e:
         handle_cli_error("Search failed", e)
     finally:
@@ -209,13 +215,13 @@ def details(
     """Get detailed information about a specific sequence."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with guard (required for details)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     lapis_url = instance_config.get_lapis_url(organism)
     lapis_client = LapisClient(lapis_url)
-    
+
     try:
         # Parse accession
         if "." in accession:
@@ -223,7 +229,7 @@ def details(
             filters = {"accession": acc, "version": version}
         else:
             filters = {"accession": accession}
-        
+
         stderr_console = get_stderr_console()
         with stderr_console.status("Fetching sequence details..."):
             result = lapis_client.get_sample_details(
@@ -231,18 +237,18 @@ def details(
                 filters=filters,
                 limit=1,
             )
-        
+
         if not result.data:
             print_error(f"Sequence not found: {accession}")
             raise click.ClickException(f"Sequence not found: {accession}")
-        
+
         sequence_data = result.data[0]
-        
+
         if output_format == "json":
             console.print(json.dumps(sequence_data, indent=2))
         else:
             _display_details_table(sequence_data)
-        
+
     except click.ClickException:
         raise
     except Exception as e:
@@ -280,22 +286,22 @@ def details(
 def stats(
     ctx: click.Context,
     group_by: Optional[str],
-    filters: List[str],
+    filters: list[str],
     output_format: str,
     output: Optional[Path],
 ) -> None:
     """Get aggregated statistics."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with guard (required for stats)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     try:
         # Get LAPIS URL for this organism
         lapis_url = instance_config.get_lapis_url(organism)
         lapis_client = LapisClient(lapis_url)
-        
+
         # Parse and validate filters using schema
         filter_params = {}
         if filters:
@@ -305,12 +311,12 @@ def stats(
             except ValueError as e:
                 console.print(f"[red]Filter error: {e}[/red]")
                 raise click.ClickException(str(e))
-        
+
         # Parse group by
         group_by_list = None
         if group_by:
             group_by_list = [f.strip() for f in group_by.split(",")]
-        
+
         stderr_console = get_stderr_console()
         with stderr_console.status("Fetching statistics..."):
             result = lapis_client.get_aggregated_data(
@@ -318,9 +324,9 @@ def stats(
                 filters=filter_params,
                 group_by=group_by_list,
             )
-        
+
         _output_data(result.data, output_format, output, None)
-        
+
     except Exception as e:
         handle_cli_error("Stats query failed", e)
     finally:
@@ -358,13 +364,13 @@ def all(
     """Download all released data for an organism."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with guard (required for all)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
-    
+
     try:
         stderr_console = get_stderr_console()
         with stderr_console.status("Downloading all data..."):
@@ -372,7 +378,7 @@ def all(
                 organism=organism,
                 compression=compression,
             )
-        
+
         # Write to file or stdout
         if output:
             with open(output, "wb") as f:
@@ -381,7 +387,7 @@ def all(
         else:
             # Write to stdout
             click.echo(data.decode("utf-8"))
-        
+
     except Exception as e:
         console.print(f"[bold red]✗ Download failed:[/bold red] {e}")
         raise click.ClickException(str(e))
@@ -390,7 +396,7 @@ def all(
 
 
 def _output_data(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     output_format: str,
     output: Optional[Path],
     fields: Optional[str],
@@ -409,7 +415,7 @@ def _output_data(
         else:
             console.print("[bold yellow]No data found[/bold yellow]")
         return
-    
+
     # Filter fields if specified
     if fields:
         field_list = [f.strip() for f in fields.split(",")]
@@ -418,7 +424,7 @@ def _output_data(
             filtered_item = {k: v for k, v in item.items() if k in field_list}
             filtered_data.append(filtered_item)
         data = filtered_data
-    
+
     if output_format == "json":
         output_text = json.dumps(data, indent=2)
     elif output_format == "ndjson":
@@ -429,9 +435,11 @@ def _output_data(
         else:
             import csv
             import io
-            
+
             output_buffer = io.StringIO()
-            writer = csv.DictWriter(output_buffer, fieldnames=data[0].keys(), delimiter="\t")
+            writer = csv.DictWriter(
+                output_buffer, fieldnames=data[0].keys(), delimiter="\t"
+            )
             writer.writeheader()
             writer.writerows(data)
             output_text = output_buffer.getvalue()
@@ -440,9 +448,11 @@ def _output_data(
             # For file output, use TSV format
             import csv
             import io
-            
+
             output_buffer = io.StringIO()
-            writer = csv.DictWriter(output_buffer, fieldnames=data[0].keys(), delimiter="\t")
+            writer = csv.DictWriter(
+                output_buffer, fieldnames=data[0].keys(), delimiter="\t"
+            )
             writer.writeheader()
             writer.writerows(data)
             output_text = output_buffer.getvalue()
@@ -450,7 +460,7 @@ def _output_data(
             # Display table in console
             _display_data_table(data)
             return
-    
+
     # Write to file or stdout
     if output:
         with open(output, "w") as f:
@@ -460,25 +470,29 @@ def _output_data(
         click.echo(output_text)
 
 
-def _output_fasta(data: List[Dict[str, str]], output: Optional[Path]) -> None:
+def _output_fasta(data: list[dict[str, str]], output: Optional[Path]) -> None:
     """Output sequence data in FASTA format."""
     if not data:
         console.print("[bold yellow]No sequences found[/bold yellow]")
         return
-    
+
     fasta_lines = []
     for item in data:
         # Look for sequence fields
-        sequence = item.get("sequence") or item.get("alignedNucleotideSequence") or item.get("unalignedNucleotideSequence")
+        sequence = (
+            item.get("sequence")
+            or item.get("alignedNucleotideSequence")
+            or item.get("unalignedNucleotideSequence")
+        )
         if sequence:
             accession = item.get("accession", "unknown")
             version = item.get("version", "1")
             header = f">{accession}.{version}"
             fasta_lines.append(header)
             fasta_lines.append(sequence)
-    
+
     output_text = "\n".join(fasta_lines)
-    
+
     if output:
         with open(output, "w") as f:
             f.write(output_text)
@@ -487,51 +501,60 @@ def _output_fasta(data: List[Dict[str, str]], output: Optional[Path]) -> None:
         click.echo(output_text)
 
 
-def _display_data_table(data: List[Dict[str, Any]]) -> None:
+def _display_data_table(data: list[dict[str, Any]]) -> None:
     """Display data as a table in the console."""
     if not data:
         return
-    
+
     table = Table(show_lines=False)
-    
+
     # Get terminal width for intelligent column sizing
     terminal_width = console.size.width
-    
+
     # Define key columns that should always be shown
-    key_columns = ['accession', 'version', 'submissionId', 'status', 'geoLocCountry', 'sampleCollectionDate']
-    
+    key_columns = [
+        "accession",
+        "version",
+        "submissionId",
+        "status",
+        "geoLocCountry",
+        "sampleCollectionDate",
+    ]
+
     # Get all available columns
     all_columns = list(data[0].keys())
-    
+
     # Prioritize key columns, then add others
     columns_to_show = []
     for col in key_columns:
         if col in all_columns:
             columns_to_show.append(col)
-    
+
     # Add remaining columns
     for col in all_columns:
         if col not in columns_to_show:
             columns_to_show.append(col)
-    
+
     # Calculate maximum width per column (rough estimate)
     max_columns = max(1, terminal_width // 15)  # Assume ~15 chars per column minimum
-    
+
     # Limit the number of columns to show
     if len(columns_to_show) > max_columns:
         shown_columns = columns_to_show[:max_columns]
         hidden_count = len(columns_to_show) - max_columns
-        console.print(f"[dim]Showing {len(shown_columns)} of {len(all_columns)} columns. Use --fields to specify columns or --format json for all data.[/dim]")
+        console.print(
+            f"[dim]Showing {len(shown_columns)} of {len(all_columns)} columns. Use --fields to specify columns or --format json for all data.[/dim]"
+        )
     else:
         shown_columns = columns_to_show
         hidden_count = 0
-    
+
     # Add columns with intelligent width limits
     for key in shown_columns:
         # Calculate max content width for this column
         max_content_width = max(len(str(item.get(key, ""))) for item in data)
         max_content_width = max(max_content_width, len(key))  # Include header width
-        
+
         # Set reasonable width limits
         if max_content_width > 30:
             # For very wide columns, truncate
@@ -542,7 +565,7 @@ def _display_data_table(data: List[Dict[str, Any]]) -> None:
         else:
             # For narrow columns, use natural width
             table.add_column(key, style="cyan")
-    
+
     # Add rows with truncation for very long values
     for item in data:
         row = []
@@ -553,21 +576,23 @@ def _display_data_table(data: List[Dict[str, Any]]) -> None:
                 value = value[:97] + "..."
             row.append(value)
         table.add_row(*row)
-    
+
     console.print(table)
-    
+
     # Show hint if columns were hidden
     if hidden_count > 0:
-        console.print(f"[dim]Use --format json to see all {len(all_columns)} columns[/dim]")
+        console.print(
+            f"[dim]Use --format json to see all {len(all_columns)} columns[/dim]"
+        )
 
 
-def _display_details_table(data: Dict[str, Any]) -> None:
+def _display_details_table(data: dict[str, Any]) -> None:
     """Display detailed information as a table."""
     table = Table(title="Sequence Details")
     table.add_column("Field", style="green")
     table.add_column("Value", style="blue")
-    
+
     for key, value in data.items():
         table.add_row(key, str(value))
-    
+
     console.print(table)

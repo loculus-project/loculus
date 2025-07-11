@@ -72,11 +72,11 @@ export class GroupPage {
         // Extract and return the group ID from the URL
         const url = this.page.url();
         const groupId = url.split('/').pop();
-        
+
         if (!groupId) {
             throw new Error(`Could not determine group ID for group: ${groupData.name}`);
         }
-        
+
         return groupId;
     }
 

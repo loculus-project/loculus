@@ -53,13 +53,13 @@ def sequence(
     """Revise sequences in Loculus."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with default (required for revision)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
-    
+
     try:
         # Check authentication
         current_user = auth_client.get_current_user()
@@ -67,26 +67,28 @@ def sequence(
             console.print("[bold red]✗ Not logged in[/bold red]")
             console.print("Please run 'loculus auth login' first")
             raise click.ClickException("Not authenticated")
-        
+
         # Get user's groups if group not specified
         if group is None:
             with console.status("Getting user groups..."):
                 groups = backend_client.get_groups(current_user)
-            
+
             if not groups:
                 console.print("[bold red]✗ No groups found[/bold red]")
                 console.print("Please contact an administrator to be added to a group")
                 raise click.ClickException("No groups available")
-            
+
             if len(groups) == 1:
                 group = groups[0].groupId
-                console.print(f"Using group: [bold green]{groups[0].groupName}[/bold green]")
+                console.print(
+                    f"Using group: [bold green]{groups[0].groupName}[/bold green]"
+                )
             else:
                 console.print("Available groups:")
                 for g in groups:
                     console.print(f"  {g.groupId}: {g.groupName}")
                 group = click.prompt("Select group ID", type=int)
-        
+
         # Validate files first
         console.print("Validating files...")
         try:
@@ -95,7 +97,7 @@ def sequence(
                 metadata_file=metadata,
                 sequence_file=sequences,
             )
-            
+
             if not validation_result.valid:
                 console.print("[bold red]✗ Validation failed[/bold red]")
                 for error in validation_result.errors:
@@ -105,18 +107,18 @@ def sequence(
                     if error.line_number:
                         console.print(f"    Line: {error.line_number}")
                 raise click.ClickException("Validation failed")
-            
+
             if validation_result.warnings:
                 console.print("[bold yellow]⚠ Validation warnings:[/bold yellow]")
                 for warning in validation_result.warnings:
                     console.print(f"  • {warning}")
-            
+
             console.print("✓ Files validated successfully")
-            
+
         except Exception as e:
             console.print(f"[bold red]✗ Validation failed:[/bold red] {e}")
             raise click.ClickException(f"Validation failed: {e}")
-        
+
         # Revise sequences
         with console.status("Revising sequences..."):
             result = backend_client.revise_sequences(
@@ -126,31 +128,31 @@ def sequence(
                 sequence_file=sequences,
                 group_id=group,
             )
-        
+
         # Display results
         console.print("✓ Revision successful!")
         console.print(f"Revised {len(result.accession_versions)} sequences")
-        
+
         if result.accession_versions:
             table = Table(title="Revised Sequences")
             table.add_column("Accession", style="green")
             table.add_column("Version", style="blue")
-            
+
             for av in result.accession_versions:
                 table.add_row(av.accession, str(av.version))
-            
+
             console.print(table)
-        
+
         if result.warnings:
             console.print("\n[bold yellow]⚠ Warnings:[/bold yellow]")
             for warning in result.warnings:
                 console.print(f"  • {warning}")
-        
+
         if result.errors:
             console.print("\n[bold red]✗ Errors:[/bold red]")
             for error in result.errors:
                 console.print(f"  • {error}")
-        
+
     except click.ClickException:
         raise
     except Exception as e:
@@ -198,13 +200,13 @@ def batch(
     """Revise sequences in batches."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
-    
+
     # Get organism with default (required for revision)
     organism = require_organism(instance, ctx.obj.get("organism"))
-    
+
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
-    
+
     try:
         # Check authentication
         current_user = auth_client.get_current_user()
@@ -212,41 +214,43 @@ def batch(
             console.print("[bold red]✗ Not logged in[/bold red]")
             console.print("Please run 'loculus auth login' first")
             raise click.ClickException("Not authenticated")
-        
+
         # Get user's groups if group not specified
         if group is None:
             with console.status("Getting user groups..."):
                 groups = backend_client.get_groups(current_user)
-            
+
             if not groups:
                 console.print("[bold red]✗ No groups found[/bold red]")
                 console.print("Please contact an administrator to be added to a group")
                 raise click.ClickException("No groups available")
-            
+
             if len(groups) == 1:
                 group = groups[0].groupId
-                console.print(f"Using group: [bold green]{groups[0].groupName}[/bold green]")
+                console.print(
+                    f"Using group: [bold green]{groups[0].groupName}[/bold green]"
+                )
             else:
                 console.print("Available groups:")
                 for g in groups:
                     console.print(f"  {g.groupId}: {g.groupName}")
                 group = click.prompt("Select group ID", type=int)
-        
+
         # Read and split files into batches
         console.print("Reading input files...")
-        
+
         # Read metadata
         metadata_rows = []
-        with open(metadata, "r") as f:
+        with open(metadata) as f:
             reader = csv.DictReader(f, delimiter="\t")
             metadata_rows = list(reader)
-        
+
         # Read sequences
         sequences_dict = {}
-        with open(sequences, "r") as f:
+        with open(sequences) as f:
             current_header = None
             current_sequence = []
-            
+
             for line in f:
                 line = line.strip()
                 if line.startswith(">"):
@@ -256,43 +260,53 @@ def batch(
                     current_sequence = []
                 else:
                     current_sequence.append(line)
-            
+
             if current_header:
                 sequences_dict[current_header] = "\n".join(current_sequence)
-        
+
         total_sequences = len(metadata_rows)
-        console.print(f"Processing {total_sequences} sequences in batches of {batch_size}")
-        
+        console.print(
+            f"Processing {total_sequences} sequences in batches of {batch_size}"
+        )
+
         # Process in batches
         all_results = []
         for i in range(0, total_sequences, batch_size):
             batch_end = min(i + batch_size, total_sequences)
             batch_metadata = metadata_rows[i:batch_end]
-            
-            console.print(f"Processing batch {i // batch_size + 1} ({i + 1}-{batch_end} of {total_sequences})")
-            
+
+            console.print(
+                f"Processing batch {i // batch_size + 1} ({i + 1}-{batch_end} of {total_sequences})"
+            )
+
             # Create temporary files for this batch
             temp_metadata = Path(f"temp_metadata_batch_{i}.tsv")
             temp_sequences = Path(f"temp_sequences_batch_{i}.fasta")
-            
+
             try:
                 # Write batch metadata
                 with open(temp_metadata, "w", newline="") as f:
                     if batch_metadata:
-                        writer = csv.DictWriter(f, fieldnames=batch_metadata[0].keys(), delimiter="\t")
+                        writer = csv.DictWriter(
+                            f, fieldnames=batch_metadata[0].keys(), delimiter="\t"
+                        )
                         writer.writeheader()
                         writer.writerows(batch_metadata)
-                
+
                 # Write batch sequences
                 with open(temp_sequences, "w") as f:
                     for row in batch_metadata:
                         # Look for sequence identifier in metadata
-                        seq_id = row.get("sequence_name") or row.get("accession") or row.get("id")
+                        seq_id = (
+                            row.get("sequence_name")
+                            or row.get("accession")
+                            or row.get("id")
+                        )
                         if seq_id and seq_id in sequences_dict:
                             f.write(f">{seq_id}\n")
                             f.write(sequences_dict[seq_id])
                             f.write("\n")
-                
+
                 # Revise this batch
                 with console.status(f"Revising batch {i // batch_size + 1}..."):
                     result = backend_client.revise_sequences(
@@ -302,30 +316,32 @@ def batch(
                         sequence_file=temp_sequences,
                         group_id=group,
                     )
-                
+
                 all_results.append(result)
-                console.print(f"✓ Batch {i // batch_size + 1} completed: {len(result.accession_versions)} sequences")
-                
+                console.print(
+                    f"✓ Batch {i // batch_size + 1} completed: {len(result.accession_versions)} sequences"
+                )
+
             finally:
                 # Clean up temporary files
                 temp_metadata.unlink(missing_ok=True)
                 temp_sequences.unlink(missing_ok=True)
-        
+
         # Summarize results
         total_revised = sum(len(result.accession_versions) for result in all_results)
         total_warnings = sum(len(result.warnings) for result in all_results)
         total_errors = sum(len(result.errors) for result in all_results)
-        
-        console.print(f"\n✓ Batch revision completed!")
+
+        console.print("\n✓ Batch revision completed!")
         console.print(f"Total sequences revised: {total_revised}")
-        
+
         if total_warnings > 0:
             console.print(f"Total warnings: {total_warnings}")
-        
+
         if total_errors > 0:
             console.print(f"Total errors: {total_errors}")
             console.print("\nCheck individual batch results for details")
-        
+
     except click.ClickException:
         raise
     except Exception as e:

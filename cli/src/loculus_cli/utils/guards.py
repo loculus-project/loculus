@@ -1,43 +1,44 @@
 """Guard utilities for instance and organism selection."""
 
-import click
-from rich.console import Console
 from typing import Optional
 
-from ..config import load_config, get_instance_config
+import click
+from rich.console import Console
+
+from ..config import get_instance_config, load_config
 
 
 def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
     """
     Ensure an instance is selected, providing helpful guidance if not.
-    
+
     Args:
         ctx: Click context
         instance: Instance name/URL from command line
-        
+
     Returns:
         The selected instance name/URL
-        
+
     Raises:
         click.ClickException: If no instance can be determined
     """
     console = Console()
-    
+
     # If instance provided via command line, use it
     if instance:
         return instance
-    
+
     # Load config to check for default instance and available instances
     config = load_config()
-    
+
     # Check if there's a default instance
     if config.default_instance:
         console.print(f"[dim]Using default instance: {config.default_instance}[/dim]")
         return config.default_instance
-    
+
     # No default instance - check what instances are available
     available_instances = list(config.instances.keys())
-    
+
     if not available_instances:
         # No instances configured at all
         console.print("[red]✗ No Loculus instance configured[/red]")
@@ -47,28 +48,32 @@ def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
         console.print("  [cyan]loculus instance add https://cli.loculus.org[/cyan]")
         console.print()
         console.print("[bold]Or use the --instance flag:[/bold]")
-        console.print("  [cyan]loculus --instance https://main.loculus.org <command>[/cyan]")
+        console.print(
+            "  [cyan]loculus --instance https://main.loculus.org <command>[/cyan]"
+        )
         console.print()
         console.print("[dim]See 'loculus instance --help' for more options[/dim]")
-        
+
         raise click.ClickException("No instance configured")
-    
+
     elif len(available_instances) == 1:
         # One instance available - suggest setting it as default
         instance_name = available_instances[0]
-        console.print(f"[yellow]⚠ No default instance set[/yellow]")
+        console.print("[yellow]⚠ No default instance set[/yellow]")
         console.print()
         console.print(f"[bold]You have one instance configured: {instance_name}[/bold]")
-        console.print(f"  [cyan]loculus instance use {instance_name}[/cyan]  [dim]# Set as default[/dim]")
+        console.print(
+            f"  [cyan]loculus instance use {instance_name}[/cyan]  [dim]# Set as default[/dim]"
+        )
         console.print()
         console.print("[bold]Or use the --instance flag:[/bold]")
         console.print(f"  [cyan]loculus --instance {instance_name} <command>[/cyan]")
         console.print()
         console.print("[bold]Or add another instance:[/bold]")
         console.print("  [cyan]loculus instance add https://cli.loculus.org[/cyan]")
-        
+
         raise click.ClickException("No default instance set")
-    
+
     else:
         # Multiple instances available - suggest selecting one
         console.print("[yellow]⚠ No default instance set[/yellow]")
@@ -81,11 +86,15 @@ def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
         console.print(f"  [cyan]loculus instance use {available_instances[0]}[/cyan]")
         console.print()
         console.print("[bold]Or use the --instance flag:[/bold]")
-        console.print(f"  [cyan]loculus --instance {available_instances[0]} <command>[/cyan]")
+        console.print(
+            f"  [cyan]loculus --instance {available_instances[0]} <command>[/cyan]"
+        )
         console.print()
         console.print("[bold]Or add a new instance:[/bold]")
-        console.print("  [cyan]loculus instance add https://new-instance.loculus.org[/cyan]")
-        
+        console.print(
+            "  [cyan]loculus instance add https://new-instance.loculus.org[/cyan]"
+        )
+
         raise click.ClickException("No default instance set")
 
 
@@ -100,10 +109,10 @@ def get_instance_with_guard(ctx: click.Context, instance: Optional[str] = None) 
 def validate_instance_connection(instance_url: str) -> bool:
     """
     Validate that we can connect to the instance.
-    
+
     Args:
         instance_url: The instance URL to validate
-        
+
     Returns:
         True if connection successful, False otherwise
     """
@@ -120,31 +129,31 @@ def validate_instance_connection(instance_url: str) -> bool:
 def require_organism(instance: str, organism: Optional[str] = None) -> str:
     """
     Ensure an organism is selected, providing helpful guidance if not.
-    
+
     Args:
         instance: Instance name/URL (required to fetch available organisms)
         organism: Organism name from command line
-        
+
     Returns:
         The selected organism name
-        
+
     Raises:
         click.ClickException: If no organism can be determined
     """
     console = Console()
-    
+
     # If organism provided via command line, use it
     if organism:
         return organism
-    
+
     # Load config to check for default organism
     config = load_config()
-    
+
     # Check if there's a default organism
     if config.defaults.organism:
         console.print(f"[dim]Using default organism: {config.defaults.organism}[/dim]")
         return config.defaults.organism
-    
+
     # No default organism - check what organisms are available
     try:
         instance_config = get_instance_config(instance)
@@ -152,29 +161,31 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
     except Exception as e:
         console.print(f"[red]✗ Could not fetch organisms from instance: {e}[/red]")
         raise click.ClickException("Could not fetch organisms from instance")
-    
+
     if not available_organisms:
         # No organisms available
         console.print("[red]✗ No organisms found on this instance[/red]")
         console.print()
         console.print("[bold]Check organisms available:[/bold]")
         console.print("  [cyan]loculus organism[/cyan]")
-        
+
         raise click.ClickException("No organisms available")
-    
+
     elif len(available_organisms) == 1:
         # One organism available - suggest setting it as default
         organism_name = available_organisms[0]
-        console.print(f"[yellow]⚠ No default organism set[/yellow]")
+        console.print("[yellow]⚠ No default organism set[/yellow]")
         console.print()
         console.print(f"[bold]You have one organism available: {organism_name}[/bold]")
-        console.print(f"  [cyan]loculus organism {organism_name}[/cyan]  [dim]# Set as default[/dim]")
+        console.print(
+            f"  [cyan]loculus organism {organism_name}[/cyan]  [dim]# Set as default[/dim]"
+        )
         console.print()
         console.print("[bold]Or use the --organism flag:[/bold]")
         console.print(f"  [cyan]loculus --organism {organism_name} <command>[/cyan]")
-        
+
         raise click.ClickException("No default organism set")
-    
+
     else:
         # Multiple organisms available - suggest selecting one
         console.print("[yellow]⚠ No default organism set[/yellow]")
@@ -187,30 +198,32 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         console.print(f"  [cyan]loculus organism {available_organisms[0]}[/cyan]")
         console.print()
         console.print("[bold]Or use the --organism flag:[/bold]")
-        console.print(f"  [cyan]loculus --organism {available_organisms[0]} <command>[/cyan]")
+        console.print(
+            f"  [cyan]loculus --organism {available_organisms[0]} <command>[/cyan]"
+        )
         console.print()
         console.print("[bold]See available organisms:[/bold]")
         console.print("  [cyan]loculus organism[/cyan]")
-        
+
         raise click.ClickException("No default organism set")
 
 
 def require_group(instance: str, group: Optional[int] = None) -> int:
     """
     Ensure a group is selected, providing helpful guidance if not.
-    
+
     Args:
         instance: Instance name/URL (required to validate group exists)
         group: Group ID from command line
-        
+
     Returns:
         The selected group ID
-        
+
     Raises:
         click.ClickException: If no group can be determined
     """
     console = Console()
-    
+
     # If group provided via command line, validate it exists
     if group is not None:
         try:
@@ -221,15 +234,15 @@ def require_group(instance: str, group: Optional[int] = None) -> int:
         except Exception as e:
             console.print(f"[red]✗ Could not validate group with instance: {e}[/red]")
             raise click.ClickException("Could not validate group with instance")
-    
+
     # Load config to check for default group
     config = load_config()
-    
+
     # Check if there's a default group
     if config.defaults.group is not None:
         console.print(f"[dim]Using default group: {config.defaults.group}[/dim]")
         return config.defaults.group
-    
+
     # No group specified and no default - provide helpful guidance
     console.print("[yellow]⚠ No default group set[/yellow]")
     console.print()
@@ -243,7 +256,7 @@ def require_group(instance: str, group: Optional[int] = None) -> int:
     console.print()
     console.print("[bold]See available groups:[/bold]")
     console.print("  [cyan]loculus group[/cyan]")
-    
+
     raise click.ClickException("No default group set")
 
 
@@ -252,9 +265,15 @@ def suggest_instance_setup(console: Console) -> None:
     console.print("[bold]💡 Getting Started with Loculus CLI[/bold]")
     console.print()
     console.print("[bold]Common Loculus instances:[/bold]")
-    console.print("  • [cyan]https://main.loculus.org[/cyan]     - Main production instance")
-    console.print("  • [cyan]https://cli.loculus.org[/cyan]      - CLI testing instance")
-    console.print("  • [cyan]https://dev.loculus.org[/cyan]      - Development instance")
+    console.print(
+        "  • [cyan]https://main.loculus.org[/cyan]     - Main production instance"
+    )
+    console.print(
+        "  • [cyan]https://cli.loculus.org[/cyan]      - CLI testing instance"
+    )
+    console.print(
+        "  • [cyan]https://dev.loculus.org[/cyan]      - Development instance"
+    )
     console.print()
     console.print("[bold]Add an instance:[/bold]")
     console.print("  [cyan]loculus instance add https://main.loculus.org[/cyan]")
@@ -263,4 +282,6 @@ def suggest_instance_setup(console: Console) -> None:
     console.print("  [cyan]loculus instance use main.loculus.org[/cyan]")
     console.print()
     console.print("[bold]Or use directly:[/bold]")
-    console.print("  [cyan]loculus --instance https://main.loculus.org auth login[/cyan]")
+    console.print(
+        "  [cyan]loculus --instance https://main.loculus.org auth login[/cyan]"
+    )

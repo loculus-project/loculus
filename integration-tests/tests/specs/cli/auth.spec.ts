@@ -12,8 +12,8 @@ cliTest.describe('CLI Authentication', () => {
             'Check instance configuration',
         );
         // Should contain the instance URL from PLAYWRIGHT_TEST_BASE_URL
-       
-        expect(configResult.stdout).toContain("Accessible");
+
+        expect(configResult.stdout).toContain('Accessible');
 
         // Step 2: Show not logged in status initially
         const initialStatusResult = await cliPage.executeAndAssertSuccess(

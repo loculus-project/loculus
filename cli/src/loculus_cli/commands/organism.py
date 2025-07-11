@@ -26,7 +26,7 @@ def organism_command(ctx: click.Context, organism: Optional[str], none: bool) ->
             instance = require_instance(ctx, ctx.obj.get("instance"))
             instance_config = get_instance_config(instance)
             available_organisms = instance_config.get_organisms()
-            
+
             if organism not in available_organisms:
                 console.print(f"[red]Error: Organism '{organism}' not found.[/red]")
                 console.print()
@@ -34,20 +34,24 @@ def organism_command(ctx: click.Context, organism: Optional[str], none: bool) ->
                 for org in sorted(available_organisms):
                     console.print(f"  • {org}")
                 raise click.ClickException(f"Organism '{organism}' not found")
-            
+
             set_config_value("defaults.organism", organism)
-            console.print(f"[green]✓[/green] Set default organism to [bold]{organism}[/bold]")
+            console.print(
+                f"[green]✓[/green] Set default organism to [bold]{organism}[/bold]"
+            )
         else:
             # Show available organisms and current default
             instance = require_instance(ctx, ctx.obj.get("instance"))
             instance_config = get_instance_config(instance)
-            
+
             current = get_config_value("defaults.organism")
             if current:
-                console.print(f"Current default organism: [bold green]{current}[/bold green]\n")
+                console.print(
+                    f"Current default organism: [bold green]{current}[/bold green]\n"
+                )
             else:
                 console.print("No default organism set\n")
-            
+
             # List available organisms
             try:
                 organisms = instance_config.get_organisms()
@@ -60,7 +64,9 @@ def organism_command(ctx: click.Context, organism: Optional[str], none: bool) ->
                 console.print("\n[dim]Usage: loculus organism <name>[/dim]")
                 console.print("[dim]       loculus organism --none  (to clear)[/dim]")
             except Exception as e:
-                console.print(f"[yellow]Could not fetch available organisms: {e}[/yellow]")
+                console.print(
+                    f"[yellow]Could not fetch available organisms: {e}[/yellow]"
+                )
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
