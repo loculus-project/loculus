@@ -11,6 +11,13 @@ import psycopg2
 import pytz
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -398,6 +405,36 @@ def update_db_where_conditions(
     finally:
         db_conn_pool.putconn(con)
     return updated_row_count
+
+
+def update_with_retry(
+    db_config: SimpleConnectionPool,
+    conditions: dict[str, str],
+    table_name: TableName,
+    update_values: dict[str, Any],
+    retry_number: int = 3,
+) -> int:
+    def _do_update():
+        number_rows_updated = update_db_where_conditions(
+            db_config,
+            table_name=table_name,
+            conditions=conditions,
+            update_values=update_values,
+        )
+        if number_rows_updated != 1:
+            msg = f"{table_name} update failed"
+            raise ValueError(msg)
+        return number_rows_updated
+
+    retryer = Retrying(
+        stop=stop_after_attempt(retry_number),
+        wait=wait_fixed(2),
+        retry=retry_if_exception_type(ValueError),
+        reraise=True,
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+    )
+
+    return retryer(_do_update)
 
 
 def add_to_project_table(
