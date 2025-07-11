@@ -538,8 +538,8 @@ export class CliPage {
             // Create metadata
             const metadata =
                 withErrors && i === numSequences
-                    ? `submissionId\tinvalid_field\ncollection_date\tlocation\thost\n${submissionId}\tinvalid_value\t2024-01-01\tUSA\thuman`
-                    : `submissionId\tsample_name\tcollection_date\tlocation\thost\n${submissionId}\tsample${i}\t2024-01-${String(i).padStart(2, '0')}\tUSA\thuman`;
+                    ? `id\tsampleCollectionDate\tgeoLocCountry\thostNameScientific\tauthors\tinvalid_field\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John\tinvalid_value`
+                    : `id\tsampleCollectionDate\tgeoLocCountry\thostNameScientific\tauthors\n${submissionId}\t2024-01-${String(i).padStart(2, '0')}\tUSA\tHomo sapiens\tSmith, John`;
 
             // Create sequence
             const sequences = `>${submissionId}\nATCGATCGATCGATCGATCGATCG`;
