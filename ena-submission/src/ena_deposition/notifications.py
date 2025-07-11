@@ -41,11 +41,13 @@ def upload_file_with_comment(
 ) -> web.SlackResponse:
     """Upload file with comment to slack channel"""
     client = WebClient(token=config.slack_token)
-    with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        zipf.write(file_path, arcname=os.path.basename(file_path))
+    output_file_zip = os.path.basename(file_path) + ".zip"
+    zip = zipfile.ZipFile(output_file_zip, "w", zipfile.ZIP_DEFLATED)
+    zip.write(file_path)
+    zip.close()
     return client.files_upload_v2(
-        file=file_path,
-        title=file_path,
+        file=output_file_zip,
+        title=output_file_zip,
         channel=config.slack_channel_id,
         initial_comment=comment,
     )
