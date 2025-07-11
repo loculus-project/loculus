@@ -425,7 +425,8 @@ def update_with_retry(
             update_values=update_values,
         )
         if number_rows_updated != 1:
-            raise ValueError(f"{table_name} update failed")
+            msg = f"{table_name} update failed"
+            raise ValueError(msg)
         return number_rows_updated
 
     retryer = Retrying(
