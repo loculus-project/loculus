@@ -12,7 +12,7 @@ cliTest.describe('CLI Authentication', () => {
             'Check instance configuration',
         );
         // Should contain the instance URL from PLAYWRIGHT_TEST_BASE_URL
-        const expectedUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+        const expectedUrl = process.env.PLAYWRIGHT_TEST_BASE_URL.replace("http://", "").replace("https://", "");
         expect(configResult.stdout).toContain(expectedUrl);
 
         // Step 2: Show not logged in status initially
