@@ -41,8 +41,8 @@ cliTest.describe('CLI Release Command', () => {
                         break;
                     }
                 } else {
-                    console.error(`Error checking status: ${statusResult.stderr}`);
-                    expect(statusResult.exitCode).toBe(0);
+                    cliPage.logCliResult(`Error checking status (attempt ${i + 1})`, statusResult);
+                    cliPage.assertSuccess(statusResult, 'Status check for processed sequences');
                 }
 
                 console.log(`Waiting for sequences to be processed... (attempt ${i + 1}/12)`);

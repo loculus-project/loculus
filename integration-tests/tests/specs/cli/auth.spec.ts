@@ -7,15 +7,19 @@ cliTest.describe('CLI Authentication', () => {
         await cliPage.configure();
 
         // Check configuration
-        const configResult = await cliPage.execute(['instance']);
-        expect(configResult.exitCode).toBe(0);
+        const configResult = await cliPage.executeAndAssertSuccess(
+            ['instance'],
+            'Check instance configuration',
+        );
         // Should contain the instance URL from PLAYWRIGHT_TEST_BASE_URL
         const expectedUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
         expect(configResult.stdout).toContain(expectedUrl);
 
         // Step 2: Show not logged in status initially
-        const initialStatusResult = await cliPage.authStatus();
-        expect(initialStatusResult.exitCode).toBe(0);
+        const initialStatusResult = await cliPage.executeAndAssertSuccess(
+            ['auth', 'status'],
+            'Check initial auth status',
+        );
         expect(initialStatusResult.stdout).toContain('Not logged in');
 
         // Step 3: Fail login with invalid credentials
@@ -23,24 +27,31 @@ cliTest.describe('CLI Authentication', () => {
         expect(invalidLoginResult.exitCode).not.toBe(0);
         expect(invalidLoginResult.stderr).toContain('Invalid username or password');
 
+        // Log the failed login attempt for debugging
+        cliPage.logCliResult('Failed login attempt (expected)', invalidLoginResult);
+
         // Step 4: Login with valid credentials
         const validLoginResult = await cliPage.login('testuser', 'testuser');
-        expect(validLoginResult.exitCode).toBe(0);
+        cliPage.assertSuccess(validLoginResult, 'Valid login');
         expect(validLoginResult.stdout).toContain('Successfully logged in');
 
         // Check that we're now authenticated
-        const loggedInStatusResult = await cliPage.authStatus();
-        expect(loggedInStatusResult.exitCode).toBe(0);
+        const loggedInStatusResult = await cliPage.executeAndAssertSuccess(
+            ['auth', 'status'],
+            'Check logged in status',
+        );
         expect(loggedInStatusResult.stdout).toContain('Logged in as');
 
         // Step 5: Logout successfully
         const logoutResult = await cliPage.logout();
-        expect(logoutResult.exitCode).toBe(0);
+        cliPage.assertSuccess(logoutResult, 'Logout');
         expect(logoutResult.stdout).toContain('Successfully logged out');
 
         // Check that we're no longer authenticated
-        const finalStatusResult = await cliPage.authStatus();
-        expect(finalStatusResult.exitCode).toBe(0);
+        const finalStatusResult = await cliPage.executeAndAssertSuccess(
+            ['auth', 'status'],
+            'Check final auth status',
+        );
         expect(finalStatusResult.stdout).toContain('Not logged in');
     });
 });

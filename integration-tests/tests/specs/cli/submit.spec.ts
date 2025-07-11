@@ -20,7 +20,7 @@ ATCGATCGATCGATCGATCGATCG`;
 
         // Step 1: Generate metadata template
         const templateResult = await cliPage.generateTemplate('west-nile');
-        expect(templateResult.exitCode).toBe(0);
+        cliPage.assertSuccess(templateResult, 'Generate metadata template');
         expect(templateResult.stdout).toContain('Template generated');
 
         // Step 2: Submit sequences successfully using the test group
@@ -31,12 +31,8 @@ ATCGATCGATCGATCGATCGATCG`;
             group: parseInt(groupId),
         });
 
-        console.log('Submit result:', {
-            exitCode: submitResult.exitCode,
-            stdout: submitResult.stdout,
-            stderr: submitResult.stderr,
-        });
-        expect(submitResult.exitCode).toBe(0);
+        cliPage.logCliResult('Submit sequences', submitResult, true);
+        cliPage.assertSuccess(submitResult, 'Submit sequences');
         expect(submitResult.stdout).toContain('Submission successful');
     });
 });

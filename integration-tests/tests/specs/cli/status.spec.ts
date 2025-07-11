@@ -27,7 +27,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(basicStatusResult.exitCode).toBe(0);
+            cliPage.assertSuccess(basicStatusResult, 'Basic status check');
 
             // Step 2: Get status summary
             const summaryResult = await cliPage.getStatus({
@@ -36,7 +36,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(summaryResult.exitCode).toBe(0);
+            cliPage.assertSuccess(summaryResult, 'Status summary');
 
             // Parse summary to check structure
             const summaryData = cliPage.parseJsonOutput(summaryResult);
@@ -53,7 +53,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(filteredResult.exitCode).toBe(0);
+            cliPage.assertSuccess(filteredResult, 'Filtered status check');
 
             // Step 4: Test convenience filters
             const readyResult = await cliPage.getStatus({
@@ -62,7 +62,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(readyResult.exitCode).toBe(0);
+            cliPage.assertSuccess(readyResult, 'Ready sequences status');
 
             const pendingResult = await cliPage.getStatus({
                 organism: 'west-nile',
@@ -70,7 +70,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(pendingResult.exitCode).toBe(0);
+            cliPage.assertSuccess(pendingResult, 'Pending sequences status');
 
             const errorsOnlyResult = await cliPage.getStatus({
                 organism: 'west-nile',
@@ -78,7 +78,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(errorsOnlyResult.exitCode).toBe(0);
+            cliPage.assertSuccess(errorsOnlyResult, 'Errors-only status');
 
             // Step 5: Test pagination
             const paginatedResult = await cliPage.getStatus({
@@ -88,7 +88,7 @@ cliTest.describe('CLI Status Command', () => {
                 format: 'json',
                 group: parseInt(groupId),
             });
-            expect(paginatedResult.exitCode).toBe(0);
+            cliPage.assertSuccess(paginatedResult, 'Paginated status');
 
             // Step 6: Test table format (default)
             const tableResult = await cliPage.getStatus({
@@ -96,7 +96,7 @@ cliTest.describe('CLI Status Command', () => {
                 limit: 5,
                 group: parseInt(groupId),
             });
-            expect(tableResult.exitCode).toBe(0);
+            cliPage.assertSuccess(tableResult, 'Table format status');
             // Table format should not be JSON
             expect(() => JSON.parse(tableResult.stdout) as unknown).toThrow();
         },
@@ -114,6 +114,7 @@ cliTest.describe('CLI Status Command', () => {
         });
         expect(invalidOrganismResult.exitCode).not.toBe(0);
         expect(invalidOrganismResult.stderr).toMatch(/Error|error|fail|Abort/);
+        cliPage.logCliResult('Invalid organism (expected failure)', invalidOrganismResult);
 
         // Test invalid status filter
         const invalidStatusResult = await cliPage.execute([
@@ -124,6 +125,7 @@ cliTest.describe('CLI Status Command', () => {
         ]);
         expect(invalidStatusResult.exitCode).not.toBe(0);
         expect(invalidStatusResult.stderr).toMatch(/Invalid value|Error/);
+        cliPage.logCliResult('Invalid status filter (expected failure)', invalidStatusResult);
 
         // Test invalid result filter
         const invalidResultResult = await cliPage.execute([

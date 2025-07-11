@@ -13,7 +13,7 @@ cliTest.describe('CLI Get/Search', () => {
             limit: 5,
             format: 'json',
         });
-        expect(basicSearchResult.exitCode).toBe(0);
+        cliPage.assertSuccess(basicSearchResult, 'Basic sequence search');
 
         // Step 2: Get sequences with location filter
         const locationFilterResult = await cliPage.getSequences({
@@ -22,7 +22,7 @@ cliTest.describe('CLI Get/Search', () => {
             limit: 3,
             format: 'json',
         });
-        expect(locationFilterResult.exitCode).toBe(0);
+        cliPage.assertSuccess(locationFilterResult, 'Location-filtered search');
 
         // Step 3: Get sequences with basic limit (skip date filter for now)
         const limitFilterResult = await cliPage.getSequences({
@@ -30,7 +30,7 @@ cliTest.describe('CLI Get/Search', () => {
             limit: 2,
             format: 'json',
         });
-        expect(limitFilterResult.exitCode).toBe(0);
+        cliPage.assertSuccess(limitFilterResult, 'Limited search');
 
         // Step 4: Test different output formats
         // JSON format
@@ -39,7 +39,7 @@ cliTest.describe('CLI Get/Search', () => {
             limit: 1,
             format: 'json',
         });
-        expect(jsonResult.exitCode).toBe(0);
+        cliPage.assertSuccess(jsonResult, 'JSON format search');
 
         // TSV format
         const tsvResult = await cliPage.getSequences({
@@ -47,7 +47,7 @@ cliTest.describe('CLI Get/Search', () => {
             limit: 1,
             format: 'tsv',
         });
-        expect(tsvResult.exitCode).toBe(0);
+        cliPage.assertSuccess(tsvResult, 'TSV format search');
 
         // Step 5: Handle no results gracefully
         const noResultsResult = await cliPage.getSequences({
@@ -55,7 +55,7 @@ cliTest.describe('CLI Get/Search', () => {
             filters: ['geoLocCountry=NonexistentLocation99999'],
             limit: 10,
         });
-        expect(noResultsResult.exitCode).toBe(0);
+        cliPage.assertSuccess(noResultsResult, 'No results search');
 
         // Step 6: Handle invalid organism gracefully
         const invalidOrganismResult = await cliPage.getSequences({
@@ -64,5 +64,6 @@ cliTest.describe('CLI Get/Search', () => {
         });
         expect(invalidOrganismResult.exitCode).not.toBe(0);
         expect(invalidOrganismResult.stderr).toMatch(/LAPIS not available|failed|not found/);
+        cliPage.logCliResult('Invalid organism (expected failure)', invalidOrganismResult);
     });
 });
