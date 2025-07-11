@@ -161,9 +161,9 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             // Release should succeed since dry-run succeeded and we have processed sequences
             cliPage.assertSuccess(releaseResult, 'Release sequences');
-            
+
             console.log('✓ Release command completed successfully');
-            
+
             // Since we have processed sequences and dry-run succeeded, we should have released sequences
             expect(releaseResult.stdout).toMatch(/released|Released \d+ sequence/i);
             console.log('  - Sequences were released as expected');

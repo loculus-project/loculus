@@ -157,8 +157,8 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         # No organisms available
         console.print("[red]✗ No organisms found on this instance[/red]")
         console.print()
-        console.print("[bold]Check instance configuration:[/bold]")
-        console.print("  [cyan]loculus organism list[/cyan]")
+        console.print("[bold]Check organisms available:[/bold]")
+        console.print("  [cyan]loculus organism[/cyan]")
         
         raise click.ClickException("No organisms available")
     
@@ -190,7 +190,7 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         console.print(f"  [cyan]loculus --organism {available_organisms[0]} <command>[/cyan]")
         console.print()
         console.print("[bold]See available organisms:[/bold]")
-        console.print("  [cyan]loculus organism list[/cyan]")
+        console.print("  [cyan]loculus organism[/cyan]")
         
         raise click.ClickException("No default organism set")
 
@@ -242,7 +242,7 @@ def require_group(instance: str, group: Optional[int] = None) -> int:
     console.print("  [cyan]loculus --group <group-id> <command>[/cyan]")
     console.print()
     console.print("[bold]See available groups:[/bold]")
-    console.print("  [cyan]loculus group list[/cyan]")
+    console.print("  [cyan]loculus group[/cyan]")
     
     raise click.ClickException("No default group set")
 
