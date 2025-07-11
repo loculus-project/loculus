@@ -108,24 +108,16 @@ def safe_update_project(
     retry_number: int = 3,
     subject: str = "Project update",
 ) -> None:
-    try:
-        update_with_retry(
-            db_config=db_config,
-            conditions=condition,
-            update_values=update_values,
-            table_name=TableName.PROJECT_TABLE,
-            retry_number=retry_number,
-        )
-        logger.info(
-            f"{subject} for group_id {condition['group_id']} "
-            f"organism {condition['organism']} and DB updated!"
-        )
-    except Exception:
-        error_msg = (
-            f"{subject} for group_id {condition['group_id']} organism "
-            f"{condition['organism']} but DB update failed after {retry_number} attempts."
-        )
-        logger.error(error_msg)
+    update_with_retry(
+        db_config=db_config,
+        conditions=condition,
+        update_values=update_values,
+        table_name=TableName.PROJECT_TABLE,
+        retry_number=retry_number,
+        subject=subject,
+        success_log_fmt="{subject} for group_id {group_id} organism {organism} and DB updated!",
+        error_log_fmt="{subject} for group_id {group_id} organism {organism} but DB update failed after {retry_number} attempts.",
+    )
 
 
 def set_project_table_entry(db_config, config, row):
