@@ -78,3 +78,9 @@ processing_spec:
     function: check_authors
     inputs:
       authors: authors
+  regex_field:
+    function: check_regex
+    args:
+      pattern: "^EPI_ISL_[0-9]+$"
+    inputs:
+      regex_field: regex_field
