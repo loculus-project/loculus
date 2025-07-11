@@ -92,6 +92,11 @@ metadata_mapping_mandatory_field_defaults:
   "host health state": "not provided"
   "host subject id": "not provided"
   "host common name": "not provided"
+embl_property_metadata_fields:
+    country_property: "geoLocCountry"
+    admin_level_properties: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    collection_date_property: "sampleCollectionDate"
+    authors_property: "authors"
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

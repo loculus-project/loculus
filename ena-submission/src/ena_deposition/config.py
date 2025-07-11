@@ -8,6 +8,13 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class EmblPropertyFields:
+    country_property: str | None = None
+    admin_level_properties: list[str] = field(default_factory=list)
+    collection_date_property: str | None = None
+    authors_property: str | None = None
+
 
 @dataclass
 class Config:
@@ -35,6 +42,7 @@ class Config:
     metadata_mapping: dict[str, dict[str, str | list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
+    embl_property_fields: EmblPropertyFields
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
     ena_deposition_port: int
@@ -101,5 +109,10 @@ def get_config(config_file: str) -> Config:
     relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
 
     config = Config(**relevant_config)
+    for key, value in defaults.items():
+        if key == "embl_property_metadata_fields" and isinstance(value, dict):
+            for embl_key, embl_value in value.items():
+                if hasattr(config.embl_property_fields, embl_key) and embl_value is not None:
+                    setattr(config.embl_property_fields, embl_key, embl_value)
     secure_ena_connection(config)
     return config
