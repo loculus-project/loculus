@@ -817,6 +817,44 @@ class ProcessingFunctions:
             warnings=warnings,
         )
 
+
+    @staticmethod
+    def check_regex(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """
+        Validates that the field regex_field matches the regex expression.
+        If not return error
+        """
+        regex_field = input_data["regex_field"]
+
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        pattern = args["pattern"]
+
+        if not regex_field:
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+
+        if re.match(pattern, regex_field):
+            return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
+        errors.append(
+            ProcessingAnnotation(
+                processedFields=[
+                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                ],
+                unprocessedFields=[
+                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                    for field in input_fields
+                ],
+                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
+            )
+        )
+        return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+
     @staticmethod
     def identity(  # noqa: C901, PLR0912
         input_data: InputMetadata, output_field: str, input_fields: list[str], args: FunctionArgs
