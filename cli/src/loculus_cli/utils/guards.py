@@ -63,7 +63,8 @@ def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
         console.print()
         console.print(f"[bold]You have one instance configured: {instance_name}[/bold]")
         console.print(
-            f"  [cyan]loculus instance use {instance_name}[/cyan]  [dim]# Set as default[/dim]"
+            f"  [cyan]loculus instance use {instance_name}[/cyan]  "
+            f"[dim]# Set as default[/dim]"
         )
         console.print()
         console.print("[bold]Or use the --instance flag:[/bold]")
@@ -132,7 +133,7 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         available_organisms = instance_config.get_organisms()
     except Exception as e:
         console.print(f"[red]✗ Could not fetch organisms from instance: {e}[/red]")
-        raise click.ClickException("Could not fetch organisms from instance")
+        raise click.ClickException("Could not fetch organisms from instance") from e
 
     if not available_organisms:
         # No organisms available
@@ -150,7 +151,8 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         console.print()
         console.print(f"[bold]You have one organism available: {organism_name}[/bold]")
         console.print(
-            f"  [cyan]loculus organism {organism_name}[/cyan]  [dim]# Set as default[/dim]"
+            f"  [cyan]loculus organism {organism_name}[/cyan]  "
+            f"[dim]# Set as default[/dim]"
         )
         console.print()
         console.print("[bold]Or use the --organism flag:[/bold]")
@@ -199,13 +201,13 @@ def require_group(instance: str, group: Optional[int] = None) -> int:
     # If group provided via command line, validate it exists
     if group is not None:
         try:
-            instance_config = get_instance_config(instance)
+            get_instance_config(instance)
             # TODO: Add group validation when backend API supports it
             # For now, just return the group as-is
             return group
         except Exception as e:
             console.print(f"[red]✗ Could not validate group with instance: {e}[/red]")
-            raise click.ClickException("Could not validate group with instance")
+            raise click.ClickException("Could not validate group with instance") from e
 
     # Load config to check for default group
     config = load_config()

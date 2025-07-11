@@ -44,7 +44,7 @@ class AuthClient:
                 token_info.model_dump_json(),
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to store token: {e}")
+            raise RuntimeError(f"Failed to store token: {e}") from e
 
     def _load_token(self, username: str) -> Optional[TokenInfo]:
         """Load token from keyring."""
@@ -78,7 +78,10 @@ class AuthClient:
 
     def login(self, username: str, password: str) -> TokenInfo:
         """Login with username and password."""
-        token_url = f"{self.instance_config.keycloak_url}/realms/{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+        token_url = (
+            f"{self.instance_config.keycloak_url}/realms/"
+            f"{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+        )
 
         data = {
             "grant_type": "password",
@@ -109,7 +112,7 @@ class AuthClient:
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
-                raise RuntimeError("Invalid username or password")
+                raise RuntimeError("Invalid username or password") from e
             elif e.response.status_code == 400:
                 # Try to get more specific error message
                 try:
@@ -117,15 +120,17 @@ class AuthClient:
                     error_description = error_data.get(
                         "error_description", "Bad request"
                     )
-                    raise RuntimeError(f"Authentication failed: {error_description}")
+                    raise RuntimeError(
+                        f"Authentication failed: {error_description}"
+                    ) from e
                 except Exception:
-                    raise RuntimeError("Authentication failed: Bad request")
+                    raise RuntimeError("Authentication failed: Bad request") from e
             else:
                 raise RuntimeError(
                     f"Authentication failed: HTTP {e.response.status_code}"
-                )
+                ) from e
         except Exception as e:
-            raise RuntimeError(f"Authentication failed: {e}")
+            raise RuntimeError(f"Authentication failed: {e}") from e
 
     def refresh_token(self, username: str) -> Optional[TokenInfo]:
         """Refresh access token using refresh token."""
@@ -138,7 +143,10 @@ class AuthClient:
             self._delete_token(username)
             return None
 
-        token_url = f"{self.instance_config.keycloak_url}/realms/{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+        token_url = (
+            f"{self.instance_config.keycloak_url}/realms/"
+            f"{self.instance_config.keycloak_realm}/protocol/openid-connect/token"
+        )
 
         data = {
             "grant_type": "refresh_token",
@@ -230,7 +238,7 @@ class AuthClient:
         try:
             keyring.set_password(self._service_name, "current_user", username)
         except Exception as e:
-            raise RuntimeError(f"Failed to store current user: {e}")
+            raise RuntimeError(f"Failed to store current user: {e}") from e
 
     def clear_current_user(self) -> None:
         """Clear current authenticated user."""

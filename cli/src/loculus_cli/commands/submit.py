@@ -80,7 +80,9 @@ def sequences(
                         "This may indicate permission issues or that the test user"
                     )
                     console.print("doesn't have access to any submission groups.")
-                    raise click.ClickException("Cannot access groups for submission")
+                    raise click.ClickException(
+                        "Cannot access groups for submission"
+                    ) from e
 
             if not groups:
                 print_error("No groups found")

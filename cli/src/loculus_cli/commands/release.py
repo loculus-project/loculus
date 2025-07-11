@@ -88,7 +88,8 @@ def release(
 
     if not accession and not all_valid and not no_warnings_only:
         console.print(
-            "[red]Must specify either --accession, --all-valid, or --no-warnings-only[/red]"
+            "[red]Must specify either --accession, --all-valid, "
+            "or --no-warnings-only[/red]"
         )
         raise click.Abort()
 
@@ -134,7 +135,7 @@ def release(
             raise click.Abort()
     except Exception as e:
         console.print(f"[red]Release failed: {e}[/red]")
-        raise click.Abort()
+        raise click.Abort() from e
 
 
 def release_specific_sequence(
@@ -190,7 +191,8 @@ def release_specific_sequence(
 
         if group and target_seq.group_id != group:
             console.print(
-                f"[red]Sequence {accession}.{version} belongs to group {target_seq.group_id}, not {group}[/red]"
+                f"[red]Sequence {accession}.{version} belongs to group "
+                f"{target_seq.group_id}, not {group}[/red]"
             )
             return False
 
@@ -200,7 +202,8 @@ def release_specific_sequence(
 
         if dry_run:
             console.print(
-                "[blue]Dry run complete. Use --confirm or remove --dry-run to proceed.[/blue]"
+                "[blue]Dry run complete. Use --confirm or remove "
+                "--dry-run to proceed.[/blue]"
             )
             return True
 
@@ -214,7 +217,7 @@ def release_specific_sequence(
         group_ids = [target_seq.group_id]
         accession_versions = [{"accession": accession, "version": version}]
 
-        result = api_client.approve_sequences(
+        api_client.approve_sequences(
             organism=organism,
             group_ids=group_ids,
             accession_versions=accession_versions,
@@ -298,7 +301,8 @@ def release_bulk_sequences(
 
         if dry_run:
             console.print(
-                f"[blue]Dry run complete. Would release {len(releasable)} sequences.[/blue]"
+                f"[blue]Dry run complete. Would release "
+                f"{len(releasable)} sequences.[/blue]"
             )
             console.print(
                 "[blue]Remove --dry-run to proceed with actual release.[/blue]"
@@ -336,24 +340,28 @@ def release_bulk_sequences(
 
                 if verbose:
                     console.print(
-                        f"[green]✓ Released {released_count} sequences from group {group_id}[/green]"
+                        f"[green]✓ Released {released_count} sequences "
+                        f"from group {group_id}[/green]"
                     )
 
             except Exception as e:
                 total_failed += len(group_sequences)
                 console.print(
-                    f"[red]✗ Failed to release sequences from group {group_id}: {e}[/red]"
+                    f"[red]✗ Failed to release sequences from group "
+                    f"{group_id}: {e}[/red]"
                 )
 
         # Summary
         if not quiet:
             if total_failed == 0:
                 console.print(
-                    f"[green]✓ Successfully released all {total_released} sequences[/green]"
+                    f"[green]✓ Successfully released all "
+                    f"{total_released} sequences[/green]"
                 )
             else:
                 console.print(
-                    f"[yellow]Released {total_released} sequences, {total_failed} failed[/yellow]"
+                    f"[yellow]Released {total_released} sequences, "
+                    f"{total_failed} failed[/yellow]"
                 )
 
         return total_failed == 0

@@ -55,7 +55,7 @@ def _show_instances_list() -> None:
                 info = instance_info.get_info()
                 title = info.get("title", "N/A")
                 status = "✓ Accessible"
-            except:
+            except Exception:
                 status = "✗ Unreachable"
 
             # Mark default instance
@@ -70,7 +70,8 @@ def _show_instances_list() -> None:
 
         if config.default_instance:
             console.print(
-                f"\nDefault instance: [bold green]{config.default_instance}[/bold green]"
+                f"\nDefault instance: "
+                f"[bold green]{config.default_instance}[/bold green]"
             )
         else:
             console.print("\n[yellow]No default instance set[/yellow]")
@@ -80,7 +81,7 @@ def _show_instances_list() -> None:
 
     except Exception as e:
         console.print(f"[bold red]✗ Failed to list instances:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @instance_group.command(name="add")
@@ -115,7 +116,8 @@ def add_instance(
 
         organisms = instance_info.get_organisms()
         console.print(
-            f"Available organisms: {', '.join(organisms[:5])}{'...' if len(organisms) > 5 else ''}"
+            f"Available organisms: {', '.join(organisms[:5])}"
+            f"{'...' if len(organisms) > 5 else ''}"
         )
 
         # Derive instance name from URL if not provided
@@ -139,7 +141,7 @@ def add_instance(
 
     except Exception as e:
         console.print(f"[red]Error: Failed to add instance: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @instance_group.command(name="remove")
@@ -162,7 +164,7 @@ def remove_instance(name: str) -> None:
 
     except Exception as e:
         console.print(f"[bold red]✗ Failed to remove instance:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @instance_group.command(name="use")
@@ -196,7 +198,7 @@ def use_instance(name: Optional[str], none: bool) -> None:
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @instance_group.command(name="show")
@@ -254,4 +256,4 @@ def show_instance(name: Optional[str]) -> None:
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e

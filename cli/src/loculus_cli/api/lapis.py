@@ -53,11 +53,13 @@ class LapisClient:
             response.raise_for_status()
             return LapisResponse.model_validate(response.json())
         except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"LAPIS query failed: HTTP {e.response.status_code}")
+            raise RuntimeError(
+                f"LAPIS query failed: HTTP {e.response.status_code}"
+            ) from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}")
+            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"LAPIS query failed: {e}")
+            raise RuntimeError(f"LAPIS query failed: {e}") from e
 
     def get_aggregated_data(
         self,
@@ -84,11 +86,11 @@ class LapisClient:
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"LAPIS aggregated query failed: HTTP {e.response.status_code}"
-            )
+            ) from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}")
+            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"LAPIS aggregated query failed: {e}")
+            raise RuntimeError(f"LAPIS aggregated query failed: {e}") from e
 
     def get_aligned_sequences(
         self,
@@ -118,11 +120,11 @@ class LapisClient:
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
-            )
+            ) from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}")
+            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"LAPIS sequence query failed: {e}")
+            raise RuntimeError(f"LAPIS sequence query failed: {e}") from e
 
     def get_unaligned_sequences(
         self,
@@ -152,11 +154,11 @@ class LapisClient:
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
-            )
+            ) from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}")
+            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"LAPIS sequence query failed: {e}")
+            raise RuntimeError(f"LAPIS sequence query failed: {e}") from e
 
     def close(self) -> None:
         """Close the HTTP client."""

@@ -49,7 +49,7 @@ def handle_cli_error(
         console: Optional console instance to use (defaults to stdout console)
     """
     print_error(message, exception, console)
-    raise click.ClickException(str(exception))
+    raise click.ClickException(str(exception)) from exception
 
 
 def check_authentication(auth_client, console: Optional[Console] = None) -> None:

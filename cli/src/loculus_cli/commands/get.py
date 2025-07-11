@@ -31,7 +31,11 @@ def get_group() -> None:
     "--filter",
     "filters",
     multiple=True,
-    help="Filter by metadata field (e.g., 'geoLocCountry=USA', 'sampleCollectionDateRangeLower>=2024-01-01'). Use 'loculus schema show --organism NAME' to see available fields.",
+    help=(
+        "Filter by metadata field (e.g., 'geoLocCountry=USA', "
+        "'sampleCollectionDateRangeLower>=2024-01-01'). "
+        "Use 'loculus schema show --organism NAME' to see available fields."
+    ),
 )
 @click.option(
     "--accessions",
@@ -108,11 +112,10 @@ def sequences(
                 console.print(f"[red]Filter error: {e}[/red]")
                 console.print()
                 console.print(
-                    "Use 'loculus schema show --organism {} --help' to see available fields".format(
-                        organism
-                    )
+                    f"Use 'loculus schema show --organism {organism} --help' "
+                    "to see available fields"
                 )
-                raise click.ClickException(str(e))
+                raise click.ClickException(str(e)) from e
 
         # Handle accessions
         if accessions:
@@ -310,7 +313,7 @@ def stats(
                 filter_params = metadata_filter.parse_filters(filters)
             except ValueError as e:
                 console.print(f"[red]Filter error: {e}[/red]")
-                raise click.ClickException(str(e))
+                raise click.ClickException(str(e)) from e
 
         # Parse group by
         group_by_list = None
@@ -390,7 +393,7 @@ def all(
 
     except Exception as e:
         console.print(f"[bold red]✗ Download failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
     finally:
         backend_client.close()
 
@@ -543,7 +546,8 @@ def _display_data_table(data: list[dict[str, Any]]) -> None:
         shown_columns = columns_to_show[:max_columns]
         hidden_count = len(columns_to_show) - max_columns
         console.print(
-            f"[dim]Showing {len(shown_columns)} of {len(all_columns)} columns. Use --fields to specify columns or --format json for all data.[/dim]"
+            f"[dim]Showing {len(shown_columns)} of {len(all_columns)} columns. "
+            f"Use --fields to specify columns or --format json for all data.[/dim]"
         )
     else:
         shown_columns = columns_to_show

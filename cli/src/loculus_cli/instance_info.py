@@ -37,10 +37,11 @@ class InstanceInfo:
 
         except httpx.HTTPError as e:
             raise RuntimeError(
-                f"Failed to fetch instance info from {self.instance_url}/loculus-info: {e}"
-            )
+                f"Failed to fetch instance info from "
+                f"{self.instance_url}/loculus-info: {e}"
+            ) from e
         except Exception as e:
-            raise RuntimeError(f"Error fetching instance info: {e}")
+            raise RuntimeError(f"Error fetching instance info: {e}") from e
 
     def get_hosts(self) -> dict[str, str]:
         """Get host URLs for backend, keycloak, website."""

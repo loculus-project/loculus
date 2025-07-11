@@ -69,4 +69,4 @@ def organism_command(ctx: click.Context, organism: Optional[str], none: bool) ->
                 )
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e

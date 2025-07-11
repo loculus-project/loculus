@@ -110,7 +110,8 @@ def status(ctx: click.Context) -> None:
                     console.print(f"Token expires in {expires_in_minutes} minutes")
                 else:
                     console.print(
-                        f"[bold yellow]! Token for {current_user} is invalid[/bold yellow]"
+                        f"[bold yellow]! Token for {current_user} is invalid"
+                        "[/bold yellow]"
                     )
             else:
                 console.print(

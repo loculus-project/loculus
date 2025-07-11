@@ -127,7 +127,7 @@ def sequence(
         raise
     except Exception as e:
         console.print(f"[bold red]✗ Revision failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
     finally:
         backend_client.close()
 
@@ -246,7 +246,8 @@ def batch(
             batch_metadata = metadata_rows[i:batch_end]
 
             console.print(
-                f"Processing batch {i // batch_size + 1} ({i + 1}-{batch_end} of {total_sequences})"
+                f"Processing batch {i // batch_size + 1} "
+                f"({i + 1}-{batch_end} of {total_sequences})"
             )
 
             # Create temporary files for this batch
@@ -289,7 +290,8 @@ def batch(
 
                 all_results.append(result)
                 console.print(
-                    f"✓ Batch {i // batch_size + 1} completed: {len(result.accession_versions)} sequences"
+                    f"✓ Batch {i // batch_size + 1} completed: "
+                    f"{len(result.accession_versions)} sequences"
                 )
 
             finally:
@@ -316,6 +318,6 @@ def batch(
         raise
     except Exception as e:
         console.print(f"[bold red]✗ Batch revision failed:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
     finally:
         backend_client.close()

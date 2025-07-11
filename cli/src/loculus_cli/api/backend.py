@@ -52,11 +52,11 @@ class BackendClient:
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"Failed to get instance info: HTTP {e.response.status_code}"
-            )
+            ) from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}")
+            raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"Failed to get instance info: {e}")
+            raise RuntimeError(f"Failed to get instance info: {e}") from e
 
     def get_organisms(self) -> list[str]:
         """Get list of available organisms."""
@@ -73,7 +73,7 @@ class BackendClient:
         data_use_terms: str = "OPEN",
     ) -> SubmissionResponse:
         """Submit sequences to Loculus."""
-        headers = self._get_headers(username)
+        self._get_headers(username)
 
         # Read files
         try:
@@ -82,7 +82,7 @@ class BackendClient:
             with open(sequence_file) as f:
                 sequence_content = f.read()
         except Exception as e:
-            raise RuntimeError(f"Failed to read input files: {e}")
+            raise RuntimeError(f"Failed to read input files: {e}") from e
 
         # Prepare multipart form data
         files = {
@@ -139,11 +139,11 @@ class BackendClient:
                     error_message += f" - Errors: {error_data['errors']}"
             except Exception:
                 error_message = f"HTTP {e.response.status_code} - {e.response.text}"
-            raise RuntimeError(f"Submission failed: {error_message}")
+            raise RuntimeError(f"Submission failed: {error_message}") from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}")
+            raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"Submission failed: {e}")
+            raise RuntimeError(f"Submission failed: {e}") from e
 
     def revise_sequences(
         self,
@@ -154,7 +154,7 @@ class BackendClient:
         group_id: int,
     ) -> RevisionResponse:
         """Revise sequences in Loculus."""
-        headers = self._get_headers(username)
+        self._get_headers(username)
 
         # Read files
         try:
@@ -163,7 +163,7 @@ class BackendClient:
             with open(sequence_file) as f:
                 sequence_content = f.read()
         except Exception as e:
-            raise RuntimeError(f"Failed to read input files: {e}")
+            raise RuntimeError(f"Failed to read input files: {e}") from e
 
         # Prepare multipart form data
         files = {
@@ -199,11 +199,11 @@ class BackendClient:
                 )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
-            raise RuntimeError(f"Revision failed: {error_message}")
+            raise RuntimeError(f"Revision failed: {error_message}") from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}")
+            raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"Revision failed: {e}")
+            raise RuntimeError(f"Revision failed: {e}") from e
 
     def get_sequences(
         self,
@@ -242,11 +242,11 @@ class BackendClient:
                 )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
-            raise RuntimeError(f"Failed to get sequences: {error_message}")
+            raise RuntimeError(f"Failed to get sequences: {error_message}") from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}")
+            raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"Failed to get sequences: {e}")
+            raise RuntimeError(f"Failed to get sequences: {e}") from e
 
     def get_released_data(
         self,
@@ -266,9 +266,9 @@ class BackendClient:
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"Failed to get released data: HTTP {e.response.status_code}"
-            )
+            ) from e
         except Exception as e:
-            raise RuntimeError(f"Failed to get released data: {e}")
+            raise RuntimeError(f"Failed to get released data: {e}") from e
 
     def get_groups(self, username: str) -> list[GroupInfo]:
         """Get groups for the authenticated user."""
@@ -291,11 +291,11 @@ class BackendClient:
                 )
             except Exception:
                 error_message = f"HTTP {e.response.status_code}"
-            raise RuntimeError(f"Failed to get groups: {error_message}")
+            raise RuntimeError(f"Failed to get groups: {error_message}") from e
         except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}")
+            raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
-            raise RuntimeError(f"Failed to get groups: {e}")
+            raise RuntimeError(f"Failed to get groups: {e}") from e
 
     def close(self) -> None:
         """Close the HTTP client."""

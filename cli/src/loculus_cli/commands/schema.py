@@ -36,12 +36,13 @@ def organisms(ctx: click.Context) -> None:
 
         console.print()
         console.print(
-            "[dim]Use 'loculus schema show --organism <name>' to see metadata fields[/dim]"
+            "[dim]Use 'loculus schema show --organism <name>' "
+            "to see metadata fields[/dim]"
         )
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @schema_group.command()
@@ -124,7 +125,7 @@ def show(ctx: click.Context) -> None:
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @schema_group.command()
@@ -179,7 +180,7 @@ def fields(ctx: click.Context, field: str = None) -> None:
 
         else:
             # Show searchable fields only
-            searchable = [
+            [
                 f["name"] for f in metadata_fields if not f.get("notSearchable")
             ]
             console.print(f"[bold]Searchable fields for {organism}:[/bold]")
@@ -200,4 +201,4 @@ def fields(ctx: click.Context, field: str = None) -> None:
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e

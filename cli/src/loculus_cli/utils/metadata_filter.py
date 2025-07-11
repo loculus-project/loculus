@@ -55,7 +55,8 @@ class MetadataFilter:
                 if field not in searchable_fields:
                     available = ", ".join(sorted(searchable_fields))
                     raise ValueError(
-                        f"Field '{field}' is not searchable for organism '{self.organism}'. "
+                        f"Field '{field}' is not searchable for organism "
+                        f"'{self.organism}'. "
                         f"Available fields: {available}"
                     )
 
@@ -92,7 +93,7 @@ class MetadataFilter:
             field = parsed["field"]
             operator = parsed["operator"]
             value = parsed["value"]
-            field_info = parsed["field_info"]
+            parsed["field_info"]
 
             # Convert to LAPIS parameter format
             if operator == "=":

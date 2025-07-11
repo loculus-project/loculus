@@ -296,7 +296,8 @@ def format_sequence_summary(response: SequencesResponse) -> str:
 
     lines.append("")
     lines.append(
-        f"Summary: {response.ready_count} ready for release, {response.error_count} need fixes"
+        f"Summary: {response.ready_count} ready for release, "
+        f"{response.error_count} need fixes"
     )
 
     return "\n".join(lines)

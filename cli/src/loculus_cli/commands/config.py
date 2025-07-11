@@ -28,7 +28,7 @@ def set(key: str, value: str) -> None:
         )
     except Exception as e:
         console.print(f"[bold red]✗ Failed to set config:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @config_group.command()
@@ -47,7 +47,7 @@ def get(key: str) -> None:
             )
     except Exception as e:
         console.print(f"[bold red]✗ Failed to get config:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @config_group.command()
@@ -79,4 +79,4 @@ def list() -> None:
 
     except Exception as e:
         console.print(f"[bold red]✗ Failed to list config:[/bold red] {e}")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
