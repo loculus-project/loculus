@@ -241,20 +241,14 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
                     "center_name": corresponding_project[0]["center_name"],
                     "project_id": corresponding_project[0]["project_id"],
                 }
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
             else:
                 update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+            update_db_where_conditions(
+                db_config,
+                table_name=TableName.SUBMISSION_TABLE,
+                conditions=seq_key,
+                update_values=update_values,
+            )
             continue
         # If not: create project_entry, change status to SUBMITTING_PROJECT
         entry = {
