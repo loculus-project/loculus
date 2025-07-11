@@ -78,6 +78,8 @@ jobs:
           poetry-version: 'latest'
       - name: Install CLI
         run: cd cli && poetry install && poetry build && pip install dist/*.whl
+      - name: Install keyring backend for CLI
+        run: pip install keyrings.alt
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
