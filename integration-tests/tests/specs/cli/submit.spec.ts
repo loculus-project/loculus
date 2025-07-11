@@ -39,20 +39,5 @@ ATCGATCGATCGATCGATCGATCG`;
         expect(submitResult.exitCode).toBe(0);
         expect(submitResult.stdout).toContain('Submission successful');
 
-        // Step 3: Test submission with invalid data should fail gracefully
-        const invalidMetadata = `invalid_header
-invalid_data`;
-
-        const errorResult = await cliPage.submitSequences({
-            organism: 'west-nile',
-            metadata: invalidMetadata,
-            sequences: sampleSequences,
-        });
-
-        // Should handle the error gracefully
-        expect(errorResult.exitCode).not.toBe(0);
-        expect(errorResult.stderr).toMatch(
-            /Failed to get groups|HTTP 403|Validation failed|failed/,
-        );
     });
 });

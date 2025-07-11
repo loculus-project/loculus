@@ -15,12 +15,15 @@ export interface CliResult {
 export class CliPage {
     private baseUrl: string;
     private keyringService: string;
+    private configFile: string;
 
     constructor() {
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
         // Generate a unique keyring service name for this test instance
         this.keyringService = `loculus-cli-test-${process.pid}-${Date.now()}`;
+        // Generate a unique config file for this test instance
+        this.configFile = join(tmpdir(), `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`);
     }
 
     /**
@@ -44,6 +47,8 @@ export class CliPage {
             LOCULUS_INSTANCE: this.baseUrl.replace(/https?:\/\//, ''),
             // Use unique keyring service for test isolation (stable per test instance)
             LOCULUS_CLI_KEYRING_SERVICE: this.keyringService,
+            // Use unique config file for test isolation
+            LOCULUS_CONFIG: this.configFile,
             // Disable interactive features like spinners
             CI: 'true',
             NO_COLOR: '1',
@@ -106,7 +111,8 @@ export class CliPage {
         // Clear authentication state (ignore errors)
         await this.logout();
 
-        // Could also clear config if needed, but we'll reconfigure anyway
+        // Clean up unique config file
+        await this.cleanupFile(this.configFile);
     }
 
     /**
