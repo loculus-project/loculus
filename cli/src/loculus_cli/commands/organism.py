@@ -6,6 +6,7 @@ import click
 from rich.console import Console
 
 from ..config import get_config_value, get_instance_config, set_config_value
+from ..utils.guards import require_instance
 
 console = Console()
 
@@ -21,11 +22,24 @@ def organism_command(ctx: click.Context, organism: Optional[str], none: bool) ->
             set_config_value("defaults.organism", None)
             console.print("[green]✓[/green] Cleared default organism")
         elif organism:
+            # Validate organism exists before setting it
+            instance = require_instance(ctx, ctx.obj.get("instance"))
+            instance_config = get_instance_config(instance)
+            available_organisms = instance_config.get_organisms()
+            
+            if organism not in available_organisms:
+                console.print(f"[red]Error: Organism '{organism}' not found.[/red]")
+                console.print()
+                console.print("[bold]Available organisms:[/bold]")
+                for org in sorted(available_organisms):
+                    console.print(f"  • {org}")
+                raise click.ClickException(f"Organism '{organism}' not found")
+            
             set_config_value("defaults.organism", organism)
             console.print(f"[green]✓[/green] Set default organism to [bold]{organism}[/bold]")
         else:
             # Show available organisms and current default
-            instance = ctx.obj.get("instance")
+            instance = require_instance(ctx, ctx.obj.get("instance"))
             instance_config = get_instance_config(instance)
             
             current = get_config_value("defaults.organism")

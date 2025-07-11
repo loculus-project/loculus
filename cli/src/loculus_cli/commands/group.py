@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..config import get_config_value, get_instance_config, set_config_value
-from ..utils.instance_guard import require_instance
+from ..utils.guards import require_instance
 
 console = Console()
 

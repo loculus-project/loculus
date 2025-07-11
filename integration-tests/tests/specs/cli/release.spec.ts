@@ -41,6 +41,10 @@ cliTest.describe('CLI Release Command', () => {
                         break;
                     }
                 }
+                else{
+                    console.error(`Error checking status: ${statusResult.stderr}`);
+                    expect(statusResult.exitCode).toBe(0);
+                }
 
                 console.log(`Waiting for sequences to be processed... (attempt ${i + 1}/12)`);
                 await new Promise((resolve) => setTimeout(resolve, 5000));

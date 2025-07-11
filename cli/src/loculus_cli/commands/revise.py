@@ -11,7 +11,7 @@ from rich.table import Table
 from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.instance_guard import require_instance
+from ..utils.guards import require_instance
 
 console = Console()
 

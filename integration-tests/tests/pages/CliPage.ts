@@ -195,7 +195,7 @@ export class CliPage {
         group?: number;
         dataUseTerms?: string;
     }): Promise<CliResult> {
-        const args = ['submit', 'sequences'];
+        const args = ['--organism', options.organism, 'submit', 'sequences'];
 
         // Create temporary files
         const metadataFile = await this.createTempFile(options.metadata, '.tsv');
@@ -204,7 +204,6 @@ export class CliPage {
         try {
             args.push('--metadata', metadataFile);
             args.push('--sequences', sequencesFile);
-            args.push('--organism', options.organism);
 
             if (options.group) {
                 args.push('--group', options.group.toString());
@@ -232,7 +231,7 @@ export class CliPage {
         format?: string;
         output?: string;
     }): Promise<CliResult> {
-        const args = ['get', 'sequences', '--organism', options.organism];
+        const args = ['--organism', options.organism, 'get', 'sequences'];
 
         // Add filters
         if (options.filters) {
@@ -260,7 +259,7 @@ export class CliPage {
      * Generate metadata template
      */
     async generateTemplate(organism: string, output?: string): Promise<CliResult> {
-        const args = ['submit', 'template', '--organism', organism];
+        const args = ['--organism', organism, 'submit', 'template'];
 
         if (output) {
             args.push('--output', output);
@@ -300,7 +299,7 @@ export class CliPage {
         ready?: boolean;
         pending?: boolean;
     }): Promise<CliResult> {
-        const args = ['status', '--organism', options.organism];
+        const args = ['--organism', options.organism, 'status'];
 
         if (options.status) {
             args.push('--status', options.status);
@@ -378,7 +377,7 @@ export class CliPage {
         quiet?: boolean;
         verbose?: boolean;
     }): Promise<CliResult> {
-        const args = ['release', '--organism', options.organism];
+        const args = ['--organism', options.organism, 'release'];
 
         if (options.accession) {
             args.push('--accession', options.accession);

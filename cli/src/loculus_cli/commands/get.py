@@ -16,7 +16,7 @@ from ..config import get_instance_config
 from ..utils.metadata_filter import MetadataFilter
 from ..utils.console import get_stderr_console, print_error, handle_cli_error
 from ..utils.defaults import get_organism_with_default
-from ..utils.instance_guard import require_instance
+from ..utils.guards import require_instance, require_organism
 
 console = Console()
 
@@ -28,11 +28,6 @@ def get_group() -> None:
 
 
 @get_group.command()
-@click.option(
-    "--organism",
-    "-o",
-    help="Organism name (use 'loculus schema organisms' to see available)",
-)
 @click.option(
     "--filter",
     "filters",
@@ -80,7 +75,6 @@ def get_group() -> None:
 @click.pass_context
 def sequences(
     ctx: click.Context,
-    organism: Optional[str],
     filters: List[str],
     accessions: Optional[str],
     limit: int,
@@ -94,8 +88,8 @@ def sequences(
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
-    # Get organism with default (required for get)
-    organism = get_organism_with_default(organism, required=True)
+    # Get organism with guard (required for get)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     auth_client = AuthClient(instance_config)
     lapis_client = None
@@ -369,7 +363,7 @@ def stats(
 @click.option(
     "--compression",
     type=click.Choice(["zstd", "gzip", "none"]),
-    default="zstd",
+    default="none",
     help="Compression format",
 )
 @click.pass_context

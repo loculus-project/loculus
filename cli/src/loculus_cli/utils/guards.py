@@ -1,4 +1,4 @@
-"""Instance selection guard utilities."""
+"""Guard utilities for instance and organism selection."""
 
 import click
 from rich.console import Console
@@ -115,6 +115,84 @@ def validate_instance_connection(instance_url: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def require_organism(instance: str, organism: Optional[str] = None) -> str:
+    """
+    Ensure an organism is selected, providing helpful guidance if not.
+    
+    Args:
+        instance: Instance name/URL (required to fetch available organisms)
+        organism: Organism name from command line
+        
+    Returns:
+        The selected organism name
+        
+    Raises:
+        click.ClickException: If no organism can be determined
+    """
+    console = Console()
+    
+    # If organism provided via command line, use it
+    if organism:
+        return organism
+    
+    # Load config to check for default organism
+    config = load_config()
+    
+    # Check if there's a default organism
+    if config.defaults.organism:
+        console.print(f"[dim]Using default organism: {config.defaults.organism}[/dim]")
+        return config.defaults.organism
+    
+    # No default organism - check what organisms are available
+    try:
+        instance_config = get_instance_config(instance)
+        available_organisms = instance_config.get_organisms()
+    except Exception as e:
+        console.print(f"[red]✗ Could not fetch organisms from instance: {e}[/red]")
+        raise click.ClickException("Could not fetch organisms from instance")
+    
+    if not available_organisms:
+        # No organisms available
+        console.print("[red]✗ No organisms found on this instance[/red]")
+        console.print()
+        console.print("[bold]Check instance configuration:[/bold]")
+        console.print("  [cyan]loculus organism list[/cyan]")
+        
+        raise click.ClickException("No organisms available")
+    
+    elif len(available_organisms) == 1:
+        # One organism available - suggest setting it as default
+        organism_name = available_organisms[0]
+        console.print(f"[yellow]⚠ No default organism set[/yellow]")
+        console.print()
+        console.print(f"[bold]You have one organism available: {organism_name}[/bold]")
+        console.print(f"  [cyan]loculus organism {organism_name}[/cyan]  [dim]# Set as default[/dim]")
+        console.print()
+        console.print("[bold]Or use the --organism flag:[/bold]")
+        console.print(f"  [cyan]loculus --organism {organism_name} <command>[/cyan]")
+        
+        raise click.ClickException("No default organism set")
+    
+    else:
+        # Multiple organisms available - suggest selecting one
+        console.print("[yellow]⚠ No default organism set[/yellow]")
+        console.print()
+        console.print("[bold]Available organisms:[/bold]")
+        for i, organism_name in enumerate(available_organisms, 1):
+            console.print(f"  {i}. {organism_name}")
+        console.print()
+        console.print("[bold]Set a default organism:[/bold]")
+        console.print(f"  [cyan]loculus organism {available_organisms[0]}[/cyan]")
+        console.print()
+        console.print("[bold]Or use the --organism flag:[/bold]")
+        console.print(f"  [cyan]loculus --organism {available_organisms[0]} <command>[/cyan]")
+        console.print()
+        console.print("[bold]See available organisms:[/bold]")
+        console.print("  [cyan]loculus organism list[/cyan]")
+        
+        raise click.ClickException("No default organism set")
 
 
 def suggest_instance_setup(console: Console) -> None:

@@ -13,7 +13,7 @@ from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.defaults import get_organism_with_default, get_group_with_default
 from ..utils.console import print_error, handle_cli_error, check_authentication
-from ..utils.instance_guard import require_instance
+from ..utils.guards import require_instance
 
 console = Console()
 
