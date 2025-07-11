@@ -195,7 +195,13 @@ export class CliPage {
         group?: number;
         dataUseTerms?: string;
     }): Promise<CliResult> {
-        const args = ['--organism', options.organism, 'submit', 'sequences'];
+        const args = ['--organism', options.organism];
+        
+        if (options.group) {
+            args.push('--group', options.group.toString());
+        }
+        
+        args.push('submit', 'sequences');
 
         // Create temporary files
         const metadataFile = await this.createTempFile(options.metadata, '.tsv');
@@ -204,10 +210,6 @@ export class CliPage {
         try {
             args.push('--metadata', metadataFile);
             args.push('--sequences', sequencesFile);
-
-            if (options.group) {
-                args.push('--group', options.group.toString());
-            }
 
             if (options.dataUseTerms) {
                 args.push('--data-use-terms', options.dataUseTerms);
@@ -299,7 +301,13 @@ export class CliPage {
         ready?: boolean;
         pending?: boolean;
     }): Promise<CliResult> {
-        const args = ['--organism', options.organism, 'status'];
+        const args = ['--organism', options.organism];
+        
+        if (options.group) {
+            args.push('--group', options.group.toString());
+        }
+        
+        args.push('status');
 
         if (options.status) {
             args.push('--status', options.status);
@@ -307,10 +315,6 @@ export class CliPage {
 
         if (options.result) {
             args.push('--result', options.result);
-        }
-
-        if (options.group) {
-            args.push('--group', options.group.toString());
         }
 
         if (options.accession) {
@@ -377,7 +381,13 @@ export class CliPage {
         quiet?: boolean;
         verbose?: boolean;
     }): Promise<CliResult> {
-        const args = ['--organism', options.organism, 'release'];
+        const args = ['--organism', options.organism];
+        
+        if (options.group) {
+            args.push('--group', options.group.toString());
+        }
+        
+        args.push('release');
 
         if (options.accession) {
             args.push('--accession', options.accession);
@@ -385,10 +395,6 @@ export class CliPage {
 
         if (options.version) {
             args.push('--version', options.version.toString());
-        }
-
-        if (options.group) {
-            args.push('--group', options.group.toString());
         }
 
         if (options.allValid) {

@@ -195,6 +195,58 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         raise click.ClickException("No default organism set")
 
 
+def require_group(instance: str, group: Optional[int] = None) -> int:
+    """
+    Ensure a group is selected, providing helpful guidance if not.
+    
+    Args:
+        instance: Instance name/URL (required to validate group exists)
+        group: Group ID from command line
+        
+    Returns:
+        The selected group ID
+        
+    Raises:
+        click.ClickException: If no group can be determined
+    """
+    console = Console()
+    
+    # If group provided via command line, validate it exists
+    if group is not None:
+        try:
+            instance_config = get_instance_config(instance)
+            # TODO: Add group validation when backend API supports it
+            # For now, just return the group as-is
+            return group
+        except Exception as e:
+            console.print(f"[red]✗ Could not validate group with instance: {e}[/red]")
+            raise click.ClickException("Could not validate group with instance")
+    
+    # Load config to check for default group
+    config = load_config()
+    
+    # Check if there's a default group
+    if config.defaults.group is not None:
+        console.print(f"[dim]Using default group: {config.defaults.group}[/dim]")
+        return config.defaults.group
+    
+    # No group specified and no default - provide helpful guidance
+    console.print("[yellow]⚠ No default group set[/yellow]")
+    console.print()
+    console.print("[bold]You need to specify a group for this operation.[/bold]")
+    console.print()
+    console.print("[bold]Set a default group:[/bold]")
+    console.print("  [cyan]loculus group <group-id>[/cyan]")
+    console.print()
+    console.print("[bold]Or use the --group flag:[/bold]")
+    console.print("  [cyan]loculus --group <group-id> <command>[/cyan]")
+    console.print()
+    console.print("[bold]See available groups:[/bold]")
+    console.print("  [cyan]loculus group list[/cyan]")
+    
+    raise click.ClickException("No default group set")
+
+
 def suggest_instance_setup(console: Console) -> None:
     """Show helpful suggestions for setting up instances."""
     console.print("[bold]💡 Getting Started with Loculus CLI[/bold]")

@@ -15,7 +15,6 @@ from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.metadata_filter import MetadataFilter
 from ..utils.console import get_stderr_console, print_error, handle_cli_error
-from ..utils.defaults import get_organism_with_default
 from ..utils.guards import require_instance, require_organism
 
 console = Console()
@@ -189,11 +188,6 @@ def sequences(
 
 @get_group.command()
 @click.option(
-    "--organism",
-    "-o",
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
     "--accession",
     "-a",
     required=True,
@@ -209,7 +203,6 @@ def sequences(
 @click.pass_context
 def details(
     ctx: click.Context,
-    organism: Optional[str],
     accession: str,
     output_format: str,
 ) -> None:
@@ -217,8 +210,8 @@ def details(
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
-    # Get organism with default (required for details)
-    organism = get_organism_with_default(organism, required=True)
+    # Get organism with guard (required for details)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     lapis_url = instance_config.get_lapis_url(organism)
     lapis_client = LapisClient(lapis_url)
@@ -261,11 +254,6 @@ def details(
 
 @get_group.command()
 @click.option(
-    "--organism",
-    "-o",
-    help="Organism name (use 'loculus schema organisms' to see available)",
-)
-@click.option(
     "--group-by",
     help="Fields to group by (comma-separated)",
 )
@@ -291,7 +279,6 @@ def details(
 @click.pass_context
 def stats(
     ctx: click.Context,
-    organism: Optional[str],
     group_by: Optional[str],
     filters: List[str],
     output_format: str,
@@ -301,8 +288,8 @@ def stats(
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
-    # Get organism with default (required for stats)
-    organism = get_organism_with_default(organism, required=True)
+    # Get organism with guard (required for stats)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     try:
         # Get LAPIS URL for this organism
@@ -343,11 +330,6 @@ def stats(
 
 @get_group.command()
 @click.option(
-    "--organism",
-    "-o",
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
     "--format",
     "output_format",
     type=click.Choice(["ndjson", "json"]),
@@ -369,7 +351,6 @@ def stats(
 @click.pass_context
 def all(
     ctx: click.Context,
-    organism: Optional[str],
     output_format: str,
     output: Optional[Path],
     compression: str,
@@ -378,8 +359,8 @@ def all(
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
-    # Get organism with default (required for all)
-    organism = get_organism_with_default(organism, required=True)
+    # Get organism with guard (required for all)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)

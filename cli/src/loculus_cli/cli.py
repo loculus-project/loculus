@@ -31,6 +31,13 @@ console = Console()
     help="Organism name (e.g., 'Mpox', 'H5N1')",
 )
 @click.option(
+    "--group",
+    "-g",
+    type=int,
+    envvar="LOCULUS_GROUP",
+    help="Group ID for operations",
+)
+@click.option(
     "--config",
     envvar="LOCULUS_CONFIG",
     help="Path to configuration file",
@@ -47,7 +54,7 @@ console = Console()
     help="Disable colored output",
 )
 @click.pass_context
-def cli(ctx: click.Context, instance: str, organism: str, config: str, verbose: bool, no_color: bool) -> None:
+def cli(ctx: click.Context, instance: str, organism: str, group: int, config: str, verbose: bool, no_color: bool) -> None:
     """Loculus CLI - Command line interface for Loculus."""
     # Ensure context object exists
     ctx.ensure_object(dict)
@@ -55,6 +62,7 @@ def cli(ctx: click.Context, instance: str, organism: str, config: str, verbose: 
     # Store global options in context
     ctx.obj["instance"] = instance
     ctx.obj["organism"] = organism
+    ctx.obj["group"] = group
     ctx.obj["config"] = config
     ctx.obj["verbose"] = verbose
     ctx.obj["no_color"] = no_color

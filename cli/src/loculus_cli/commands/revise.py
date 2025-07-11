@@ -11,7 +11,7 @@ from rich.table import Table
 from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.guards import require_instance
+from ..utils.guards import require_instance, require_organism
 
 console = Console()
 
@@ -38,12 +38,6 @@ def revise_group() -> None:
     help="Path to sequences file (FASTA format)",
 )
 @click.option(
-    "--organism",
-    "-o",
-    required=True,
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
     "--group",
     "-g",
     type=int,
@@ -54,12 +48,14 @@ def sequence(
     ctx: click.Context,
     metadata: Path,
     sequences: Path,
-    organism: str,
     group: Optional[int],
 ) -> None:
     """Revise sequences in Loculus."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for revision)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
@@ -180,12 +176,6 @@ def sequence(
     help="Path to sequences file (FASTA format)",
 )
 @click.option(
-    "--organism",
-    "-o",
-    required=True,
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
     "--group",
     "-g",
     type=int,
@@ -202,13 +192,15 @@ def batch(
     ctx: click.Context,
     metadata: Path,
     sequences: Path,
-    organism: str,
     group: Optional[int],
     batch_size: int,
 ) -> None:
     """Revise sequences in batches."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
+    
+    # Get organism with default (required for revision)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)

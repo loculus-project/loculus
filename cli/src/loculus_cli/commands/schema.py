@@ -7,8 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..config import get_instance_config
-from ..utils.guards import require_instance
-from ..utils.defaults import get_organism_with_default
+from ..utils.guards import require_instance, require_organism
 
 console = Console()
 
@@ -45,15 +44,14 @@ def organisms(ctx: click.Context) -> None:
 
 
 @schema_group.command()
-@click.option("--organism", "-o", help="Organism name")
 @click.pass_context
-def show(ctx: click.Context, organism: Optional[str]) -> None:
+def show(ctx: click.Context) -> None:
     """Show metadata schema for organism."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for schema)
-    organism = get_organism_with_default(organism, required=True)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     try:
         schema = instance_config.get_organism_schema(organism)
@@ -133,16 +131,15 @@ def show(ctx: click.Context, organism: Optional[str]) -> None:
 
 
 @schema_group.command()
-@click.option("--organism", "-o", help="Organism name")
 @click.option("--field", help="Show details for specific field")
 @click.pass_context
-def fields(ctx: click.Context, organism: Optional[str], field: str = None) -> None:
+def fields(ctx: click.Context, field: str = None) -> None:
     """Show detailed field information."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
     # Get organism with default (required for schema)
-    organism = get_organism_with_default(organism, required=True)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     try:
         schema = instance_config.get_organism_schema(organism)

@@ -9,8 +9,7 @@ from rich.table import Table
 
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.defaults import get_organism_with_default, get_group_with_default
-from ..utils.guards import require_instance
+from ..utils.guards import require_instance, require_organism
 from ..utils.review_utils import (
     ProcessingResult,
     ReviewApiClient,
@@ -22,11 +21,6 @@ console = Console()
 
 
 @click.command(name="release")
-@click.option(
-    "--organism",
-    "-o",
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
 @click.option("--accession", help="Release specific sequence by accession")
 @click.option("--version", type=int, help="Sequence version (default: 1)")
 @click.option("--group", "-g", type=int, help="Release sequences from specific group only")
@@ -49,7 +43,6 @@ console = Console()
 @click.pass_context
 def release(
     ctx: click.Context,
-    organism: Optional[str],
     accession: Optional[str],
     version: Optional[int],
     group: Optional[int],
@@ -69,10 +62,11 @@ def release(
     console = Console()
     
     # Get organism with default (required for release)
-    organism = get_organism_with_default(organism, required=True)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     # Get group with default (optional)
-    group = get_group_with_default(group)
+    # Group is optional for release command - use if provided via top-level param
+    group = ctx.obj.get("group")
     
     # Validate options
     if accession and not version:

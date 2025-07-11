@@ -10,8 +10,7 @@ from rich.live import Live
 
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.defaults import get_organism_with_default, get_group_with_default
-from ..utils.guards import require_instance
+from ..utils.guards import require_instance, require_organism
 from ..utils.review_utils import (
     ProcessingResult,
     ReviewApiClient,
@@ -25,10 +24,6 @@ console = Console()
 
 
 @click.command(name="status")
-@click.option(
-    "--organism",
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
 @click.option(
     "--status",
     type=click.Choice([s.value for s in SequenceStatus]),
@@ -62,7 +57,6 @@ console = Console()
 @click.pass_context
 def status(
     ctx: click.Context,
-    organism: Optional[str],
     status: Optional[str],
     result: Optional[str],
     group: Optional[int],
@@ -87,10 +81,11 @@ def status(
     console = Console()
     
     # Get organism with default (required for status)
-    organism = get_organism_with_default(organism, required=True)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     # Get group with default (optional)
-    group = get_group_with_default(group)
+    # Group is optional for status command - use if provided via top-level param
+    group = ctx.obj.get("group")
     
     # Validate options
     if accession and not version:

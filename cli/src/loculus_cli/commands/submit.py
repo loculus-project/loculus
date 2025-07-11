@@ -11,9 +11,8 @@ from rich.table import Table
 from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.defaults import get_organism_with_default, get_group_with_default
 from ..utils.console import print_error, handle_cli_error, check_authentication
-from ..utils.guards import require_instance
+from ..utils.guards import require_instance, require_organism, require_group
 
 console = Console()
 
@@ -40,17 +39,6 @@ def submit_group() -> None:
     help="Path to sequences file (FASTA format)",
 )
 @click.option(
-    "--organism",
-    "-o",
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
-    "--group",
-    "-g",
-    type=int,
-    help="Group ID for submission",
-)
-@click.option(
     "--data-use-terms",
     type=click.Choice(["OPEN", "RESTRICTED"]),
     default="OPEN",
@@ -61,19 +49,17 @@ def sequences(
     ctx: click.Context,
     metadata: Path,
     sequences: Path,
-    organism: Optional[str],
-    group: Optional[int],
     data_use_terms: str,
 ) -> None:
     """Submit sequences to Loculus."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
     
-    # Get organism with default (required for submit)
-    organism = get_organism_with_default(organism, required=True)
+    # Get organism with guard (required for submit)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
-    # Get group with default (optional)
-    group = get_group_with_default(group)
+    # Get group with guard (required for submit)
+    group = require_group(instance, ctx.obj.get("group"))
     
     auth_client = AuthClient(instance_config)
     backend_client = BackendClient(instance_config, auth_client)
@@ -156,12 +142,6 @@ def sequences(
 
 @submit_group.command()
 @click.option(
-    "--organism",
-    "-o",
-    required=True,
-    help="Organism name (e.g., 'Mpox', 'H5N1')",
-)
-@click.option(
     "--output",
     "-f",
     type=click.Path(path_type=Path),
@@ -170,12 +150,14 @@ def sequences(
 @click.pass_context
 def template(
     ctx: click.Context,
-    organism: str,
     output: Optional[Path],
 ) -> None:
     """Generate metadata template for an organism."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
+    
+    # Get organism with guard (required for template)
+    organism = require_organism(instance, ctx.obj.get("organism"))
     
     try:
         with console.status("Getting organism schema..."):
