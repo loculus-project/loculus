@@ -44,32 +44,29 @@ def _show_instances_list() -> None:
             return
         
         table = Table(title="Configured Instances")
-        table.add_column("Name", style="green")
-        table.add_column("URL", style="blue")
+        table.add_column("Instance", style="green")
+        table.add_column("Name", style="blue")
         table.add_column("Status", style="yellow")
         
         for name, instance_config in config.instances.items():
             # Try to check if instance is accessible
             status = "Unknown"
             try:
-                if hasattr(instance_config, 'instance_url'):
                     instance_info = InstanceInfo(instance_config.instance_url)
                     info = instance_info.get_info()
-                    status = f"✓ {info.get('title', 'Connected')}"
-                else:
-                    status = "Legacy config"
+                    title = info.get('title', 'N/A')
+                    status = "✓ Accessible"
             except:
                 status = "✗ Unreachable"
             
-            instance_url = getattr(instance_config, 'instance_url', 'Legacy config')
-            
+      
             # Mark default instance
             if name == config.default_instance:
                 name_display = f"{name} [bold green](default)[/bold green]"
             else:
                 name_display = name
                 
-            table.add_row(name_display, instance_url, status)
+            table.add_row(name_display, title, status)
         
         console.print(table)
         
