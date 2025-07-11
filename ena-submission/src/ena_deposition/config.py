@@ -10,6 +10,14 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class EmblPropertyFields:
+    country_property: str | None = None
+    admin_level_properties: list[str] = field(default_factory=list)
+    collection_date_property: str | None = None
+    authors_property: str | None = None
+
+
+@dataclass
 class Config:
     test: bool
     organisms: dict[str, dict[str, Any]]
@@ -53,6 +61,7 @@ class Config:
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    embl_property_fields: EmblPropertyFields = field(default_factory=EmblPropertyFields)
 
 
 def secure_ena_connection(config: Config):
