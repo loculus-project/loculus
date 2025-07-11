@@ -242,7 +242,7 @@ test_case_definitions = [
             "regex_field": None,
         },
         expected_errors=[ProcessingAnnotationTestCase(
-                ["regex_field"], ["regex_field"], "The value 'EPIISL_123456' does not match the expected regex pattern: '^EPI_ISL_\d+$'."  # type: ignore[arg-type]
+                ["regex_field"], ["regex_field"], r"The value 'EPIISL_123456' does not match the expected regex pattern: '^EPI_ISL_\d+$'."
             ),],
         expected_warnings=[],
     ),
