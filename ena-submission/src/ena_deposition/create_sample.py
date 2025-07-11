@@ -401,7 +401,6 @@ def sample_table_create(
         )
 
 
-
 def sample_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
