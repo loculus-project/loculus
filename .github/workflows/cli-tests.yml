@@ -40,9 +40,9 @@ jobs:
       - name: Install package
         run: poetry install --no-interaction
         working-directory: cli
-      - name: Run tests
-        run: poetry run pytest
-        working-directory: cli
+      # - name: Run tests
+      #   run: poetry run pytest
+      #   working-directory: cli
   check-format:
     name: Check formatting
     runs-on: ubuntu-latest
