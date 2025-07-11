@@ -838,6 +838,20 @@ class ProcessingFunctions:
 
         if not regex_field:
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(pattern, str):
+            errors.append(
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=f"Invalid regex pattern: {pattern}. Expected a string.",
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
 
         if re.match(pattern, regex_field):
             return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
