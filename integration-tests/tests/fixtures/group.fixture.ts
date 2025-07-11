@@ -54,6 +54,7 @@ export const test = authTest.extend<GroupFixtures>({
 
     pageWithGroup: async ({ pageWithACreatedUser, groupId }, use) => {
         // Ensure group is created by depending on groupId
+        _ = groupId; // This line is to ensure groupId is used in the fixture
         await use(pageWithACreatedUser);
     },
 });
