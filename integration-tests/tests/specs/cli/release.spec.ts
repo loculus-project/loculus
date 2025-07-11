@@ -40,8 +40,7 @@ cliTest.describe('CLI Release Command', () => {
                         console.log(`Found ${processedSequences.length} processed sequences`);
                         break;
                     }
-                }
-                else{
+                } else {
                     console.error(`Error checking status: ${statusResult.stderr}`);
                     expect(statusResult.exitCode).toBe(0);
                 }

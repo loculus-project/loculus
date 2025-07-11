@@ -23,7 +23,10 @@ export class CliPage {
         // Generate a unique keyring service name for this test instance
         this.keyringService = `loculus-cli-test-${process.pid}-${Date.now()}`;
         // Generate a unique config file for this test instance
-        this.configFile = join(tmpdir(), `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`);
+        this.configFile = join(
+            tmpdir(),
+            `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`,
+        );
     }
 
     /**
@@ -202,11 +205,11 @@ export class CliPage {
         dataUseTerms?: string;
     }): Promise<CliResult> {
         const args = ['--organism', options.organism];
-        
+
         if (options.group) {
             args.push('--group', options.group.toString());
         }
-        
+
         args.push('submit', 'sequences');
 
         // Create temporary files
@@ -308,11 +311,11 @@ export class CliPage {
         pending?: boolean;
     }): Promise<CliResult> {
         const args = ['--organism', options.organism];
-        
+
         if (options.group) {
             args.push('--group', options.group.toString());
         }
-        
+
         args.push('status');
 
         if (options.status) {
@@ -388,11 +391,11 @@ export class CliPage {
         verbose?: boolean;
     }): Promise<CliResult> {
         const args = ['--organism', options.organism];
-        
+
         if (options.group) {
             args.push('--group', options.group.toString());
         }
-        
+
         args.push('release');
 
         if (options.accession) {

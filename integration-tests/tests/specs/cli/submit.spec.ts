@@ -38,6 +38,5 @@ ATCGATCGATCGATCGATCGATCG`;
         });
         expect(submitResult.exitCode).toBe(0);
         expect(submitResult.stdout).toContain('Submission successful');
-
     });
 });
