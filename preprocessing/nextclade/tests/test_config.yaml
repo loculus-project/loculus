@@ -81,6 +81,6 @@ processing_spec:
   regex_field:
     function: check_regex
     args:
-      pattern: ^EPI_ISL_\d+$
+      pattern: ^EPI_ISL_[0-9]+$
     inputs:
       regex_field: regex_field

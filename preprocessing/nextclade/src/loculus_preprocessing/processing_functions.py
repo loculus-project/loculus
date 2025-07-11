@@ -850,7 +850,7 @@ class ProcessingFunctions:
                     AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
                     for field in input_fields
                 ],
-                message=f"The value '{regex_field}' does not match the expected regex pattern: r'{pattern}'.",
+                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
             )
         )
         return ProcessingResult(datum=None, warnings=warnings, errors=errors)
