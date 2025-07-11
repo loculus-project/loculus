@@ -21,7 +21,7 @@ export class GroupPage {
         await this.page.getByRole('link', { name: 'Create a new submitting group' }).click();
     }
 
-    async createGroup(groupData: GroupData) {
+    async createGroup(groupData: GroupData): Promise<string> {
         await this.navigateToCreateGroupPage();
 
         await this.page.getByLabel('Group name*').click();
@@ -68,6 +68,16 @@ export class GroupPage {
         await expect(this.page.getByRole('cell', { name: fullAddress })).toBeVisible();
 
         await expect(this.page.getByRole('heading', { name: groupData.name })).toBeVisible();
+
+        // Extract and return the group ID from the URL
+        const url = this.page.url();
+        const groupId = url.split('/').pop();
+        
+        if (!groupId) {
+            throw new Error(`Could not determine group ID for group: ${groupData.name}`);
+        }
+        
+        return groupId;
     }
 
     async getOrCreateGroup(groupData: GroupData): Promise<string> {
@@ -84,9 +94,7 @@ export class GroupPage {
             const href = await groupLink.getAttribute('href');
             groupId = href?.split('/').pop();
         } else {
-            await this.createGroup(groupData);
-            const url = this.page.url();
-            groupId = url.split('/').pop();
+            groupId = await this.createGroup(groupData);
         }
 
         if (!groupId) {
