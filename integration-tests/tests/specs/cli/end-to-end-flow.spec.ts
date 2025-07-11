@@ -159,23 +159,14 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 verbose: true,
             });
 
-            // Release might succeed or fail depending on sequence state
-            expect([0, 1]).toContain(releaseResult.exitCode);
-
-            if (releaseResult.exitCode === 0) {
-                console.log('✓ Release command completed successfully');
-                // Check if sequences were actually released or if none were found
-                if (releaseResult.stdout.match(/released|success/i)) {
-                    console.log('  - Sequences were released');
-                } else if (releaseResult.stdout.match(/No sequences found/i)) {
-                    console.log(
-                        '  - No sequences found to release (may have been released already)',
-                    );
-                }
-            } else {
-                console.log('⚠ Release failed (may be expected if sequences have errors)');
-                // This is OK - sequences might have validation errors in test environment
-            }
+            // Release should succeed since dry-run succeeded and we have processed sequences
+            cliPage.assertSuccess(releaseResult, 'Release sequences');
+            
+            console.log('✓ Release command completed successfully');
+            
+            // Since we have processed sequences and dry-run succeeded, we should have released sequences
+            expect(releaseResult.stdout).toMatch(/released|Released \d+ sequence/i);
+            console.log('  - Sequences were released as expected');
 
             // STEP 6: Verify status change after release attempt
             console.log('Step 6: Verifying post-release status...');
@@ -324,25 +315,26 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
         expect(invalidSearchResult.exitCode).not.toBe(0);
         console.log('✓ Search command properly handles invalid organism');
 
-        // 4. Invalid filters
+        // 4. Invalid filters - should fail with validation error, not succeed with empty results
         const invalidFilterResult = await cliPage.getSequences({
             organism: 'cchf',
             filters: ['invalidField=invalidValue'],
             format: 'json',
         });
-        // This might succeed with empty results, which is OK
-        expect([0, 1]).toContain(invalidFilterResult.exitCode);
-        console.log('✓ Search command handles invalid filters gracefully');
+        expect(invalidFilterResult.exitCode).not.toBe(0);
+        expect(invalidFilterResult.stderr).toMatch(/Field .* is not searchable/i);
+        console.log('✓ Search command properly rejects invalid filters');
 
-        // 5. Non-existent sequence details
+        // 5. Non-existent sequence details - should fail when sequence doesn't exist
         const nonExistentSeqResult = await cliPage.getStatus({
             organism: 'cchf',
             accession: 'NONEXISTENT_12345',
             version: 1,
             detailed: true,
         });
-        expect([0, 1]).toContain(nonExistentSeqResult.exitCode);
-        console.log('✓ Status command handles non-existent sequences gracefully');
+        expect(nonExistentSeqResult.exitCode).not.toBe(0);
+        expect(nonExistentSeqResult.stderr).toMatch(/Aborted|not found|does not exist|No.*found/i);
+        console.log('✓ Status command properly rejects non-existent sequences');
 
         console.log('🎉 CLI error handling test completed successfully!');
     });

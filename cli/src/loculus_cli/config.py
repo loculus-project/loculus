@@ -1,5 +1,6 @@
 """Configuration management for Loculus CLI."""
 
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -102,6 +103,11 @@ def get_config_dir() -> Path:
 
 def get_config_file() -> Path:
     """Get the configuration file path."""
+    # Check if LOCULUS_CONFIG environment variable is set
+    config_env = os.environ.get("LOCULUS_CONFIG")
+    if config_env:
+        return Path(config_env)
+    
     return get_config_dir() / "config.yml"
 
 
