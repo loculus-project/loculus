@@ -92,30 +92,30 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_address(config: Config, entry: dict[str, Any]) -> str:
-    address_string = entry["center_name"]
-    if config.is_broker:
-        try:
-            group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
-        except Exception as e:
-            logger.error(
-                f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
-                f"{traceback.format_exc()}"
-            )
-            msg = (
-                "Failed to fetch group info from Loculus for group: "
-                f"{entry['metadata']['groupId']}, {e}"
-            )
-            raise RuntimeError(msg) from e
-        address = group_details.address
-        address_list = [
-            entry["center_name"],  # corresponds to Loculus' "Institution" group field
-            address.city,
-            address.state,
-            address.country,
-        ]
-        address_string = ", ".join([x for x in address_list if x])
-        logger.debug("Created address from group_info")
+def get_address(config: Config, entry: dict[str, Any]) -> str | None:
+    if not config.is_broker:
+        return None
+    try:
+        group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
+            f"{traceback.format_exc()}"
+        )
+        msg = (
+            "Failed to fetch group info from Loculus for group: "
+            f"{entry['metadata']['groupId']}, {e}"
+        )
+        raise RuntimeError(msg) from e
+    address = group_details.address
+    address_list = [
+        entry["center_name"],  # corresponds to Loculus' "Institution" group field
+        address.city,
+        address.state,
+        address.country,
+    ]
+    address_string = ", ".join([x for x in address_list if x])
+    logger.debug("Created address from group_info")
     return address_string
 
 
@@ -146,7 +146,7 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
             value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
             value = get_authors(str(value))
-        if not config.is_broker and (key in {"authors", "address"}):
+        if not config.is_broker and key == "authors":
             continue
         assembly_values[key] = value
     return assembly_values
