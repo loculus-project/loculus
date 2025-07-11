@@ -31,7 +31,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from ena_deposition.config import Config
+from ena_deposition.config import Config, EmblPropertyFields
 
 from .ena_types import (
     Action,
@@ -398,9 +398,10 @@ def get_authors(authors: str) -> str:
     return authors
 
 
-def get_country(metadata: dict[str, str]) -> str:
-    country = metadata.get("geoLocCountry", "Unknown")
-    admin_levels = ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+def get_country(metadata: dict[str, str], properties: EmblPropertyFields) -> str:
+    country_field = properties.country_property or ""
+    country = metadata.get(country_field, "Unknown")
+    admin_levels = properties.admin_level_properties or []
     admin_values = [val for level in admin_levels if (val := metadata.get(level))]
     admin = ", ".join(admin_values)
     return f"{country}: {admin}" if admin else country
@@ -409,12 +410,11 @@ def get_country(metadata: dict[str, str]) -> str:
 def create_flatfile(
     config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
 ):
-    collection_date = metadata.get("sampleCollectionDate", "Unknown")
-    country = get_country(metadata)
-    organism = organism_metadata.get("scientific_name", "Unknown")
+    collection_date = metadata.get(config.embl_property_fields.collection_date_property, "Unknown")
+    authors = get_authors(metadata.get(config.embl_property_fields.authors_property) or "")
+    country = get_country(metadata, config.embl_property_fields)
     accession = metadata["accession"]
     description = get_description(config, metadata)
-    authors = get_authors(metadata.get("authors", ""))
     moleculetype = get_molecule_type(organism_metadata)
 
     if dir:
@@ -447,7 +447,7 @@ def create_flatfile(
                 "organism": organism,
                 "topology": organism_metadata.get("topology", "linear"),
                 "references": [reference],
-            },
+            },  # type: ignore
             description=description,
         )
 
