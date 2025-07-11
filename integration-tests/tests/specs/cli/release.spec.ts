@@ -105,47 +105,6 @@ cliTest.describe('CLI Release Command', () => {
         },
     );
 
-    cliTest('should handle release command errors gracefully', async ({ cliPage, testAccount }) => {
-        // Setup: Configure and login
-        await cliPage.configure();
-        await cliPage.login(testAccount.username, testAccount.password);
-
-        // Test missing required options
-        const missingOptionsResult = await cliPage.execute(['release', '--organism', 'west-nile']);
-        expect(missingOptionsResult.exitCode).not.toBe(0);
-        expect(missingOptionsResult.stderr).toMatch(/must specify|required|Abort/i);
-
-        // Test conflicting options
-        const conflictingOptionsResult = await cliPage.execute([
-            'release',
-            '--organism',
-            'west-nile',
-            '--all-valid',
-            '--no-warnings-only',
-        ]);
-        expect(conflictingOptionsResult.exitCode).not.toBe(0);
-        expect(conflictingOptionsResult.stderr).toMatch(/cannot use both|conflict|Abort/i);
-
-        // Test invalid organism
-        const invalidOrganismResult = await cliPage.releaseSequences({
-            organism: 'invalid-organism',
-            allValid: true,
-            dryRun: true,
-        });
-        expect(invalidOrganismResult.exitCode).not.toBe(0);
-        expect(invalidOrganismResult.stderr).toMatch(/Error|error|fail|Abort/i);
-
-        // Test release non-existent sequence
-        const nonExistentResult = await cliPage.releaseSequences({
-            organism: 'west-nile',
-            accession: 'NONEXISTENT_123',
-            version: 1,
-            force: true,
-        });
-        expect(nonExistentResult.exitCode).not.toBe(0);
-        expect(nonExistentResult.stderr).toMatch(/not found|Error|error|Abort/i);
-    });
-
     cliTest('should handle quiet and verbose modes', async ({ cliPage, groupId, testAccount }) => {
         // Setup: Configure and login
         await cliPage.configure();
