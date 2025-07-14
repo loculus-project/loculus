@@ -5,7 +5,7 @@ A command-line interface for interacting with Loculus, a platform for pathogen s
 ## Installation
 
 ```bash
-pip install -e .
+poetry install
 ```
 
 ## Quick Start
