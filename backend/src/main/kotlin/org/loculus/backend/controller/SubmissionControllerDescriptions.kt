@@ -4,10 +4,10 @@ import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
 
 const val SUBMIT_RESPONSE_DESCRIPTION = """
 Returns a list of accession, version and submissionId of the submitted sequence entries. 
-The submissionId is the (locally unique) id provided by the submitter as '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' in the metadata file. 
+The submissionId is the (locally unique) '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' provided by the submitter in the metadata file. 
 The version will be 1 for every sequence. 
 The accession is the (globally unique) id that the system assigned to the sequence entry. 
-You can use this response to associate the user provided submissionId with the system assigned accession.
+You can use this response to associate the user provided $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES with the system assigned accession.
 """
 
 const val SUBMIT_ERROR_RESPONSE = """
@@ -108,7 +108,7 @@ The version will increase by one in respect to the original accession version.
 
 const val REVISED_METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the revised data.
-The first row must contain the column names. The column 'submissionId' is required and must be unique within the 
+The first row must contain the column names. The column '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' is required and must be unique within the 
 provided dataset. It is used to associate metadata to the sequences in the sequences fasta file.
 Additionally, the column 'accession' is required and must match the accession of the original sequence entry.
 """
