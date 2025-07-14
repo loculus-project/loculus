@@ -11,13 +11,13 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from ena_deposition.config import EmblPropertyFields
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
 )
 from ena_deposition.create_project import construct_project_set_object
 from ena_deposition.create_sample import construct_sample_set_object
-from ena_deposition.config import EmblPropertyFields
 from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
     create_ena_project,
