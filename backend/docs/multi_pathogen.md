@@ -10,6 +10,94 @@ It should roughly work as follows:
 
 TODO: how do we make an organism multi-pathogen?
 
+```yaml
+defaultOrganisms:
+  evs:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "Enterovirus"
+      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68] # TODO how do we configure those?
+      image: "/images/organisms/enterovirus.jpg"
+      linkOuts:
+        # TODO: how to reference the correct sequence here?
+        - name: "Nextclade (CV-A16)"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+        # ...
+      metadataAdd:
+        - name: clade_cv_a16
+          displayName: Clade CV-A16
+          header: "Clade"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          preprocessing:
+            args:
+              segment: CV-A16
+            inputs: {input: nextclade.clade}
+#       more clades... Do we want to make it easier to configure metadata for every suborganism?
+        - name: genotype
+          displayName: Genotype
+          header: "Genotype"
+          noInput: true
+          generateIndex: true
+          autocomplete: true
+          ingest: segment # TODO where should this come from instead?
+          initiallyVisible: true
+          # TODO we probably need a way to say that this is the discriminating field for the suborganism
+      website:
+        <<: *website
+        tableColumns: [sampleCollectionDate, ...]
+    preprocessing:
+      - <<: *preprocessing
+        configFile:
+          <<: *preprocessingConfigFile
+          log_level: DEBUG
+#          TODO what do we need here? This is what was used in #4570:
+#          nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
+#          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
+#          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+#          require_nextclade_sort_match: true
+#          genes: ["CVA16-VP4", "CVA16-VP2", "CVA16-VP3", "CVA16-VP1", "CVA16-2A", "CVA16-2B", "CVA16-2C", "CVA16-3A", "CVA16-3B", "CVA16-3C", "CVA16-3D", "CVA10-VP4", "CVA10-VP2", "CVA10-VP3", "CVA10-VP1", "CVA10-2A", "CVA10-2B", "CVA10-2C", "CVA10-3A", "CVA10-3B", "CVA10-3C", "CVA10-3D", "EVA71-VP4", "EVA71-VP2", "EVA71-VP3", "EVA71-VP1", "EVA71-2A", "EVA71-2B", "EVA71-2C", "EVA71-3A", "EVA71-3B", "EVA71-3C", "EVA71-3D", "EVD68-VP4", "EVD68-VP2", "EVD68-VP3", "EVD68-VP1", "EVD68-2A", "EVD68-2B", "EVD68-2C", "EVD68-3A", "EVD68-3B", "EVD68-3C", "EVD68-3D"]
+    ingest:
+      <<: *ingest
+      configFile:
+        <<: *ingestConfigFile
+        taxon_id: 12059 # EVs A (All EVs = 12059)
+        #          TODO what do we need here? This is what was used in #4570:
+#        segment_identification:
+#          method: "minimizer"
+#          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+#          minimizer_parser:
+#            - segment
+#        #  method: "align"
+#        #  nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
+#        #  nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
+    enaDeposition:
+      configFile:
+        #          TODO what do we need here? This is what was used in #4570:
+#        taxon_id: 12059 # All EVs A = 138948
+#        scientific_name: "Enterovirus"
+#        molecule_type: "genomic RNA"
+    referenceGenomes:
+      CV-A10:
+        nucleotideSequences:
+          - name: main
+            sequence: "..."
+            insdcAccessionFull: ...
+        genes: [...]
+      EV-A71:
+        nucleotideSequences:
+          - name: main
+            sequence: "..."
+            insdcAccessionFull: ...
+        genes: [...]
+      # ...
+
+```
+
 ## Submission
 
 Metadata: as usual, nothing special here. (To be confirmed, is that true?)
