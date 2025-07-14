@@ -5,7 +5,7 @@ A command-line interface for interacting with Loculus, a platform for pathogen s
 ## Installation
 
 ```bash
-pip install loculus-cli
+pip install -e .
 ```
 
 ## Quick Start
