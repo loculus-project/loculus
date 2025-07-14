@@ -1,7 +1,5 @@
 """Release command for approving sequences for public access."""
 
-from typing import Optional
-
 import click
 from rich.console import Console
 from rich.prompt import Confirm
@@ -49,13 +47,13 @@ console = Console()
 @click.pass_context
 def release(
     ctx: click.Context,
-    accession: Optional[str],
-    version: Optional[int],
-    group: Optional[int],
+    accession: str | None,
+    version: int | None,
+    group: int | None,
     all_valid: bool,
     no_warnings_only: bool,
-    filter_status: Optional[str],
-    filter_result: Optional[str],
+    filter_status: str | None,
+    filter_result: str | None,
     dry_run: bool,
     force: bool,
     quiet: bool,
@@ -143,7 +141,7 @@ def release_specific_sequence(
     organism: str,
     accession: str,
     version: int,
-    group: Optional[int],
+    group: int | None,
     dry_run: bool,
     force: bool,
     quiet: bool,
@@ -239,11 +237,11 @@ def release_specific_sequence(
 def release_bulk_sequences(
     api_client: ReviewApiClient,
     organism: str,
-    group: Optional[int],
+    group: int | None,
     all_valid: bool,
     no_warnings_only: bool,
-    status_filter: Optional[SequenceStatus],
-    result_filter: Optional[ProcessingResult],
+    status_filter: SequenceStatus | None,
+    result_filter: ProcessingResult | None,
     dry_run: bool,
     force: bool,
     quiet: bool,

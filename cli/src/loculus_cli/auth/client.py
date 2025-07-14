@@ -2,7 +2,6 @@
 
 import os
 import time
-from typing import Optional
 
 import httpx
 import keyring
@@ -29,7 +28,7 @@ class AuthClient:
         self.instance_config = instance_config
         self.client = httpx.Client(timeout=30.0)
         self._service_name = os.getenv("LOCULUS_CLI_KEYRING_SERVICE", "loculus-cli")
-        self._token_cache: Optional[TokenInfo] = None
+        self._token_cache: TokenInfo | None = None
 
     def _get_keyring_key(self, username: str) -> str:
         """Get keyring key for storing tokens."""
@@ -46,7 +45,7 @@ class AuthClient:
         except Exception as e:
             raise RuntimeError(f"Failed to store token: {e}") from e
 
-    def _load_token(self, username: str) -> Optional[TokenInfo]:
+    def _load_token(self, username: str) -> TokenInfo | None:
         """Load token from keyring."""
         try:
             token_data = keyring.get_password(
@@ -132,7 +131,7 @@ class AuthClient:
         except Exception as e:
             raise RuntimeError(f"Authentication failed: {e}") from e
 
-    def refresh_token(self, username: str) -> Optional[TokenInfo]:
+    def refresh_token(self, username: str) -> TokenInfo | None:
         """Refresh access token using refresh token."""
         token_info = self._load_token(username)
         if not token_info:
@@ -181,7 +180,7 @@ class AuthClient:
             self._delete_token(username)
             return None
 
-    def get_valid_token(self, username: str) -> Optional[TokenInfo]:
+    def get_valid_token(self, username: str) -> TokenInfo | None:
         """Get a valid access token, refreshing if necessary."""
         # Try cache first
         if self._token_cache and not self._is_token_expired(self._token_cache):
@@ -221,7 +220,7 @@ class AuthClient:
         """Check if user is authenticated."""
         return self.get_valid_token(username) is not None
 
-    def get_current_user(self) -> Optional[str]:
+    def get_current_user(self) -> str | None:
         """Get current authenticated user."""
         # For now, we'll need to store the username separately
         # This is a limitation of the current design

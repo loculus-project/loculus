@@ -37,6 +37,8 @@ dev = [
 [tool.ruff]
 target-version = "py313"
 line-length = 88
+
+[tool.ruff.lint]
 select = [
     "E", "W",  # pycodestyle
     "F",       # pyflakes
@@ -50,6 +52,7 @@ select = [
 ]
 ignore = [
     "T201",    # Allow print statements in CLI
+    "N815",    # Allow mixedCase for API models (external data)
 ]
 
 [tool.black]

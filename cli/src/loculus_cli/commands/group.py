@@ -1,7 +1,5 @@
 """Group management commands for Loculus CLI."""
 
-from typing import Optional
-
 import click
 from rich.console import Console
 from rich.table import Table
@@ -16,7 +14,7 @@ console = Console()
 @click.argument("group", type=int, required=False)
 @click.option("--none", is_flag=True, help="Clear the default group")
 @click.pass_context
-def group_command(ctx: click.Context, group: Optional[int], none: bool) -> None:
+def group_command(ctx: click.Context, group: int | None, none: bool) -> None:
     """Set or show default group for commands."""
     try:
         if none:

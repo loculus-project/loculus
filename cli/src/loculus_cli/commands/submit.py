@@ -2,7 +2,6 @@
 
 import csv
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -153,7 +152,7 @@ def sequences(
 @click.pass_context
 def template(
     ctx: click.Context,
-    output: Optional[Path],
+    output: Path | None,
 ) -> None:
     """Generate metadata template for an organism."""
     instance = require_instance(ctx, ctx.obj.get("instance"))

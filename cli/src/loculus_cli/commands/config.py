@@ -1,6 +1,5 @@
 """Configuration commands for Loculus CLI."""
 
-
 import click
 from rich.console import Console
 from rich.table import Table
@@ -19,7 +18,7 @@ def config_group() -> None:
 @config_group.command()
 @click.argument("key")
 @click.argument("value")
-def set(key: str, value: str) -> None:
+def set_value(key: str, value: str) -> None:
     """Set a configuration value."""
     try:
         set_config_value(key, value)
@@ -51,7 +50,7 @@ def get(key: str) -> None:
 
 
 @config_group.command()
-def list() -> None:
+def list_values() -> None:
     """List all configuration values."""
     try:
         config = load_config()

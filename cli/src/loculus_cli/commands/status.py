@@ -2,7 +2,6 @@
 
 import json
 import time
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -61,11 +60,11 @@ console = Console()
 @click.pass_context
 def status(
     ctx: click.Context,
-    status: Optional[str],
-    result: Optional[str],
-    group: Optional[int],
-    accession: Optional[str],
-    version: Optional[int],
+    status: str | None,
+    result: str | None,
+    group: int | None,
+    accession: str | None,
+    version: int | None,
     summary: bool,
     detailed: bool,
     output_format: str,
@@ -230,9 +229,9 @@ def show_sequence_details(
 def show_sequences_list(
     api_client: ReviewApiClient,
     organism: str,
-    status_filter: Optional[SequenceStatus],
-    result_filter: Optional[ProcessingResult],
-    group: Optional[int],
+    status_filter: SequenceStatus | None,
+    result_filter: ProcessingResult | None,
+    group: int | None,
     summary: bool,
     detailed: bool,
     output_format: str,
@@ -295,9 +294,11 @@ def show_sequences_list(
                             "accession": seq.accession,
                             "version": seq.version,
                             "status": seq.status.value,
-                            "processing_result": seq.processing_result.value
-                            if seq.processing_result
-                            else None,
+                            "processing_result": (
+                                seq.processing_result.value
+                                if seq.processing_result
+                                else None
+                            ),
                             "submission_id": seq.submission_id,
                             "submitter": seq.submitter,
                             "group_id": seq.group_id,
@@ -332,9 +333,9 @@ def show_sequences_list(
 def get_display_content(
     api_client: ReviewApiClient,
     organism: str,
-    status_filter: Optional[SequenceStatus],
-    result_filter: Optional[ProcessingResult],
-    group: Optional[int],
+    status_filter: SequenceStatus | None,
+    result_filter: ProcessingResult | None,
+    group: int | None,
     summary: bool,
     output_format: str,
     limit: int,

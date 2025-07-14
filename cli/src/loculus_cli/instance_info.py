@@ -1,7 +1,6 @@
 """Instance information client for fetching configuration from loculus-info endpoint."""
 
 import time
-from typing import Optional
 
 import httpx
 
@@ -11,8 +10,8 @@ class InstanceInfo:
 
     def __init__(self, instance_url: str):
         self.instance_url = instance_url.rstrip("/")
-        self._cache: Optional[dict] = None
-        self._cache_expiry: Optional[float] = None
+        self._cache: dict | None = None
+        self._cache_expiry: float | None = None
         self.cache_ttl = 300  # 5 minutes
 
     def _is_cache_valid(self) -> bool:

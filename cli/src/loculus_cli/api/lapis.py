@@ -1,6 +1,6 @@
 """LAPIS API client for Loculus."""
 
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from pydantic import ValidationError
@@ -27,11 +27,11 @@ class LapisClient:
     def get_sample_details(
         self,
         organism: str,
-        filters: Optional[dict[str, Any]] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        order_by: Optional[str] = None,
-        fields: Optional[list[str]] = None,
+        filters: dict[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: str | None = None,
+        fields: list[str] | None = None,
     ) -> LapisResponse:
         """Get sample details from LAPIS."""
         url = self._build_url(organism, "/sample/details")
@@ -64,9 +64,9 @@ class LapisClient:
     def get_aggregated_data(
         self,
         organism: str,
-        filters: Optional[dict[str, Any]] = None,
-        group_by: Optional[list[str]] = None,
-        order_by: Optional[str] = None,
+        filters: dict[str, Any] | None = None,
+        group_by: list[str] | None = None,
+        order_by: str | None = None,
     ) -> LapisAggregatedResponse:
         """Get aggregated data from LAPIS."""
         url = self._build_url(organism, "/sample/aggregated")
@@ -95,10 +95,10 @@ class LapisClient:
     def get_aligned_sequences(
         self,
         organism: str,
-        filters: Optional[dict[str, Any]] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        order_by: Optional[str] = None,
+        filters: dict[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get aligned sequences from LAPIS."""
         url = self._build_url(organism, "/sample/alignedNucleotideSequences")
@@ -129,10 +129,10 @@ class LapisClient:
     def get_unaligned_sequences(
         self,
         organism: str,
-        filters: Optional[dict[str, Any]] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        order_by: Optional[str] = None,
+        filters: dict[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get unaligned sequences from LAPIS."""
         url = self._build_url(organism, "/sample/unalignedNucleotideSequences")

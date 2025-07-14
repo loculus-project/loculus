@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import click
 from rich.console import Console
@@ -79,12 +79,12 @@ def get_group() -> None:
 def sequences(
     ctx: click.Context,
     filters: list[str],
-    accessions: Optional[str],
+    accessions: str | None,
     limit: int,
     offset: int,
     output_format: str,
-    output: Optional[Path],
-    fields: Optional[str],
+    output: Path | None,
+    fields: str | None,
     aligned: bool,
 ) -> None:
     """Search and retrieve sequences."""
@@ -288,10 +288,10 @@ def details(
 @click.pass_context
 def stats(
     ctx: click.Context,
-    group_by: Optional[str],
+    group_by: str | None,
     filters: list[str],
     output_format: str,
-    output: Optional[Path],
+    output: Path | None,
 ) -> None:
     """Get aggregated statistics."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
@@ -358,10 +358,10 @@ def stats(
     help="Compression format",
 )
 @click.pass_context
-def all(
+def all_sequences(
     ctx: click.Context,
     output_format: str,
-    output: Optional[Path],
+    output: Path | None,
     compression: str,
 ) -> None:
     """Download all released data for an organism."""
@@ -401,8 +401,8 @@ def all(
 def _output_data(
     data: list[dict[str, Any]],
     output_format: str,
-    output: Optional[Path],
-    fields: Optional[str],
+    output: Path | None,
+    fields: str | None,
 ) -> None:
     """Output data in the specified format."""
     if not data:
@@ -473,7 +473,7 @@ def _output_data(
         click.echo(output_text)
 
 
-def _output_fasta(data: list[dict[str, str]], output: Optional[Path]) -> None:
+def _output_fasta(data: list[dict[str, str]], output: Path | None) -> None:
     """Output sequence data in FASTA format."""
     if not data:
         console.print("[bold yellow]No sequences found[/bold yellow]")

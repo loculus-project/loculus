@@ -1,7 +1,5 @@
 """Instance management commands for Loculus CLI."""
 
-from typing import Optional
-
 import click
 from rich.console import Console
 from rich.table import Table
@@ -94,7 +92,7 @@ def _show_instances_list() -> None:
 )
 def add_instance(
     url: str,
-    name: Optional[str],
+    name: str | None,
     set_default: bool,
     keycloak_realm: str,
     keycloak_client_id: str,
@@ -170,7 +168,7 @@ def remove_instance(name: str) -> None:
 @instance_group.command(name="use")
 @click.argument("name", required=False)
 @click.option("--none", is_flag=True, help="Clear the default instance")
-def use_instance(name: Optional[str], none: bool) -> None:
+def use_instance(name: str | None, none: bool) -> None:
     """Set or show default instance."""
     try:
         config = load_config()
@@ -203,7 +201,7 @@ def use_instance(name: Optional[str], none: bool) -> None:
 
 @instance_group.command(name="show")
 @click.argument("name", required=False)
-def show_instance(name: Optional[str]) -> None:
+def show_instance(name: str | None) -> None:
     """Show details for an instance."""
     try:
         config = load_config()

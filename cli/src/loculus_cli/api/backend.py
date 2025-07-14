@@ -1,7 +1,6 @@
 """Backend API client for Loculus."""
 
 from pathlib import Path
-from typing import Optional
 
 import httpx
 from pydantic import ValidationError
@@ -209,8 +208,8 @@ class BackendClient:
         self,
         username: str,
         organism: str,
-        group_id: Optional[int] = None,
-        accession_versions: Optional[list[AccessionVersion]] = None,
+        group_id: int | None = None,
+        accession_versions: list[AccessionVersion] | None = None,
     ) -> list[UnprocessedData]:
         """Get sequences from Loculus."""
         headers = self._get_headers(username)

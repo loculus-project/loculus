@@ -1,7 +1,5 @@
 """Organism management commands for Loculus CLI."""
 
-from typing import Optional
-
 import click
 from rich.console import Console
 
@@ -15,7 +13,7 @@ console = Console()
 @click.argument("organism", required=False)
 @click.option("--none", is_flag=True, help="Clear the default organism")
 @click.pass_context
-def organism_command(ctx: click.Context, organism: Optional[str], none: bool) -> None:
+def organism_command(ctx: click.Context, organism: str | None, none: bool) -> None:
     """Set or show default organism for commands."""
     try:
         if none:

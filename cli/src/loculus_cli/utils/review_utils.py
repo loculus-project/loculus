@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from rich.table import Table
@@ -35,7 +35,7 @@ class SequenceEntry:
     accession: str
     version: int
     status: SequenceStatus
-    processing_result: Optional[ProcessingResult]
+    processing_result: ProcessingResult | None
     submission_id: str
     submitter: str
     group_id: int
@@ -49,9 +49,11 @@ class SequenceEntry:
             accession=data["accession"],
             version=data["version"],
             status=SequenceStatus(data["status"]),
-            processing_result=ProcessingResult(data["processingResult"])
-            if data.get("processingResult")
-            else None,
+            processing_result=(
+                ProcessingResult(data["processingResult"])
+                if data.get("processingResult")
+                else None
+            ),
             submission_id=data["submissionId"],
             submitter=data["submitter"],
             group_id=data["groupId"],
@@ -145,9 +147,9 @@ class ReviewApiClient:
     def get_sequences(
         self,
         organism: str,
-        group_ids: Optional[list[int]] = None,
-        statuses: Optional[list[SequenceStatus]] = None,
-        results: Optional[list[ProcessingResult]] = None,
+        group_ids: list[int] | None = None,
+        statuses: list[SequenceStatus] | None = None,
+        results: list[ProcessingResult] | None = None,
         page: int = 0,
         size: int = 50,
     ) -> SequencesResponse:
@@ -197,7 +199,7 @@ class ReviewApiClient:
         self,
         organism: str,
         group_ids: list[int],
-        accession_versions: Optional[list[dict[str, Any]]] = None,
+        accession_versions: list[dict[str, Any]] | None = None,
         scope: str = "ALL",
     ) -> list[dict[str, Any]]:
         """Approve sequences for release."""
@@ -305,8 +307,8 @@ def format_sequence_summary(response: SequencesResponse) -> str:
 
 def filter_sequences(
     sequences: list[SequenceEntry],
-    status_filter: Optional[SequenceStatus] = None,
-    result_filter: Optional[ProcessingResult] = None,
+    status_filter: SequenceStatus | None = None,
+    result_filter: ProcessingResult | None = None,
     errors_only: bool = False,
     warnings_only: bool = False,
     ready_only: bool = False,

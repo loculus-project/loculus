@@ -1,7 +1,7 @@
 """Data models for Loculus API."""
 
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -65,7 +65,7 @@ class LapisSequenceResponse(BaseModel):
 class LapisAggregatedResponse(BaseModel):
     """LAPIS aggregated response."""
 
-    data: list[dict[str, Union[str, int]]]
+    data: list[dict[str, str | int]]
     info: dict[str, Any]
 
 

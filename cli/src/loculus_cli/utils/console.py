@@ -1,7 +1,6 @@
 """
 Shared console utilities for the Loculus CLI.
 """
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -17,8 +16,8 @@ def get_stderr_console() -> Console:
 
 def print_error(
     message: str,
-    exception: Optional[Exception] = None,
-    console: Optional[Console] = None,
+    exception: Exception | None = None,
+    console: Console | None = None,
 ) -> None:
     """
     Print a formatted error message to console.
@@ -38,7 +37,7 @@ def print_error(
 
 
 def handle_cli_error(
-    message: str, exception: Exception, console: Optional[Console] = None
+    message: str, exception: Exception, console: Console | None = None
 ) -> None:
     """
     Handle CLI errors with consistent formatting and exit behavior.
@@ -52,7 +51,7 @@ def handle_cli_error(
     raise click.ClickException(str(exception)) from exception
 
 
-def check_authentication(auth_client, console: Optional[Console] = None) -> None:
+def check_authentication(auth_client, console: Console | None = None) -> None:
     """
     Check if user is authenticated and raise appropriate error if not.
 

@@ -2,7 +2,6 @@
 
 import csv
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -48,7 +47,7 @@ def sequence(
     ctx: click.Context,
     metadata: Path,
     sequences: Path,
-    group: Optional[int],
+    group: int | None,
 ) -> None:
     """Revise sequences in Loculus."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
@@ -164,7 +163,7 @@ def batch(
     ctx: click.Context,
     metadata: Path,
     sequences: Path,
-    group: Optional[int],
+    group: int | None,
     batch_size: int,
 ) -> None:
     """Revise sequences in batches."""

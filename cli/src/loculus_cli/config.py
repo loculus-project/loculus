@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ class InstanceConfig(BaseModel):
     # lapis_url: str = Field(description="LAPIS API URL")      # REMOVED
     # keycloak_url: str = Field(description="Keycloak URL")    # REMOVED
 
-    _instance_info: Optional[InstanceInfo] = None
+    _instance_info: InstanceInfo | None = None
 
     @property
     def instance_info(self) -> InstanceInfo:
@@ -87,16 +87,14 @@ class SubmissionConfig(BaseModel):
 class DefaultsConfig(BaseModel):
     """Default values for commands."""
 
-    organism: Optional[str] = Field(default=None, description="Default organism")
-    group: Optional[int] = Field(default=None, description="Default group ID")
+    organism: str | None = Field(default=None, description="Default organism")
+    group: int | None = Field(default=None, description="Default group ID")
 
 
 class Config(BaseModel):
     """Main configuration model."""
 
-    default_instance: Optional[str] = Field(
-        default=None, description="Default instance"
-    )
+    default_instance: str | None = Field(default=None, description="Default instance")
     instances: dict[str, InstanceConfig] = Field(
         default_factory=dict, description="Instance configurations"
     )
@@ -109,7 +107,7 @@ class Config(BaseModel):
     defaults: DefaultsConfig = Field(
         default_factory=DefaultsConfig, description="Default values for commands"
     )
-    last_run_timestamp: Optional[float] = Field(
+    last_run_timestamp: float | None = Field(
         default=None, description="Timestamp of last CLI run"
     )
 
@@ -131,7 +129,7 @@ def get_config_file() -> Path:
     return get_config_dir() / "config.yml"
 
 
-def load_config(config_file: Optional[str] = None) -> Config:
+def load_config(config_file: str | None = None) -> Config:
     """Load configuration from file."""
     if config_file:
         config_path = Path(config_file)
@@ -147,7 +145,7 @@ def load_config(config_file: Optional[str] = None) -> Config:
     return Config(**data)
 
 
-def save_config(config: Config, config_file: Optional[str] = None) -> None:
+def save_config(config: Config, config_file: str | None = None) -> None:
     """Save configuration to file."""
     if config_file:
         config_path = Path(config_file)
@@ -163,7 +161,7 @@ def save_config(config: Config, config_file: Optional[str] = None) -> None:
         )
 
 
-def get_instance_config(instance: Optional[str] = None) -> InstanceConfig:
+def get_instance_config(instance: str | None = None) -> InstanceConfig:
     """Get configuration for a specific instance."""
     config = load_config()
 

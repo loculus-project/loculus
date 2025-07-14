@@ -1,14 +1,12 @@
 """Guard utilities for instance and organism selection."""
 
-from typing import Optional
-
 import click
 from rich.console import Console
 
 from ..config import get_instance_config, load_config
 
 
-def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
+def require_instance(ctx: click.Context, instance: str | None = None) -> str:
     """
     Ensure an instance is selected, providing helpful guidance if not.
 
@@ -99,7 +97,7 @@ def require_instance(ctx: click.Context, instance: Optional[str] = None) -> str:
         raise click.ClickException("No default instance set")
 
 
-def require_organism(instance: str, organism: Optional[str] = None) -> str:
+def require_organism(instance: str, organism: str | None = None) -> str:
     """
     Ensure an organism is selected, providing helpful guidance if not.
 
@@ -182,7 +180,7 @@ def require_organism(instance: str, organism: Optional[str] = None) -> str:
         raise click.ClickException("No default organism set")
 
 
-def require_group(instance: str, group: Optional[int] = None) -> int:
+def require_group(instance: str, group: int | None = None) -> int:
     """
     Ensure a group is selected, providing helpful guidance if not.
 
