@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -117,7 +116,7 @@ class UploadDatabaseService(
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
         .select(
             uploadIdColumn,
-            submissionIdColumn
+            submissionIdColumn,
         )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
