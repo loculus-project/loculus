@@ -452,11 +452,13 @@ def no_change(config: Config, db_config: SimpleConnectionPool, entry: dict[str, 
         new_entry = entry["metadata"].get(field)
         if last_entry != new_entry:
             logger.debug(
-                f"Field {field} has changed from {last_entry} to {new_entry} for {entry['accession']}"
+                f"Field {field} has changed from {last_entry} to {new_entry} "
+                f"for {entry['accession']}"
             )
             return False
     logger.debug(
-        f"No changes detected for {entry['accession']} from version {version_to_revise} to {entry['version']}"
+        f"No changes detected for {entry['accession']} from version {version_to_revise} "
+        f"to {entry['version']}"
     )
     return True
 

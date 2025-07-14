@@ -413,6 +413,7 @@ def create_flatfile(
     collection_date = metadata.get(config.embl_property_fields.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(config.embl_property_fields.authors_property) or "")
     country = get_country(metadata, config.embl_property_fields)
+    organism = organism_metadata.get("scientific_name", "Unknown")
     accession = metadata["accession"]
     description = get_description(config, metadata)
     moleculetype = get_molecule_type(organism_metadata)

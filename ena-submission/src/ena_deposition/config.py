@@ -8,6 +8,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class EmblPropertyFields:
     country_property: str | None = None
