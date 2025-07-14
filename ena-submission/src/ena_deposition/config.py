@@ -43,7 +43,6 @@ class Config:
     metadata_mapping: dict[str, dict[str, str | list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
-    embl_property_fields: EmblPropertyFields
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
     ena_deposition_port: int
@@ -62,6 +61,7 @@ class Config:
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    embl_property_fields: EmblPropertyFields = field(default_factory=EmblPropertyFields)
 
 
 def secure_ena_connection(config: Config):
@@ -99,6 +99,7 @@ def get_config(config_file: str) -> Config:
         if key not in full_config:
             full_config[key] = value
     relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+    relevant_config.pop("embl_property_fields", None)
 
     dotenv.load_dotenv()  # Load environment variables from .env file
     relevant_config["ena_submission_username"] = os.getenv(
@@ -110,10 +111,12 @@ def get_config(config_file: str) -> Config:
     relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
 
     config = Config(**relevant_config)
-    for key, value in defaults.items():
-        if key == "embl_property_metadata_fields" and isinstance(value, dict):
-            for embl_key, embl_value in value.items():
-                if hasattr(config.embl_property_fields, embl_key) and embl_value is not None:
-                    setattr(config.embl_property_fields, embl_key, embl_value)
+    if defaults.get("embl_property_metadata_fields") and isinstance(
+        defaults["embl_property_metadata_fields"], dict
+    ):
+        for embl_key, embl_value in defaults["embl_property_metadata_fields"].items():
+            logger.debug(f"Setting EMBL property field {embl_key} to {embl_value}")
+            if embl_key in EmblPropertyFields.__annotations__ and embl_value is not None:
+                setattr(config.embl_property_fields, embl_key, embl_value)
     secure_ena_connection(config)
     return config
