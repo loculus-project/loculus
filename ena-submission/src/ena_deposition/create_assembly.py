@@ -526,7 +526,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(
+def assembly_table_create(  # noqa: PLR0912
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
     """
