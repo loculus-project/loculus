@@ -1,8 +1,38 @@
 """Metadata filtering utilities for schema-aware filtering."""
 
-from typing import Any
+from typing import Any, TypedDict
 
 from ..config import InstanceConfig
+
+
+class SchemaFieldRequired(TypedDict):
+    """Required schema field properties."""
+
+    name: str
+    type: str
+
+
+class SchemaFieldOptional(TypedDict, total=False):
+    """Optional schema field properties."""
+
+    displayName: str
+    notSearchable: bool
+    rangeSearch: bool
+    header: str
+    autocomplete: bool
+    substringSearch: bool
+
+
+class SchemaField(SchemaFieldRequired, SchemaFieldOptional):
+    """Complete schema field definition."""
+
+    pass
+
+
+class Schema(TypedDict):
+    """Schema definition."""
+
+    metadata: list[SchemaField]
 
 
 class MetadataFilter:
@@ -11,10 +41,10 @@ class MetadataFilter:
     def __init__(self, instance_config: InstanceConfig, organism: str):
         self.instance_config = instance_config
         self.organism = organism
-        self._schema: dict[str, Any] | None = None
+        self._schema: Schema | None = None
 
     @property
-    def schema(self) -> dict[str, Any]:
+    def schema(self) -> Schema:
         """Get organism schema (cached)."""
         if self._schema is None:
             self._schema = self.instance_config.get_organism_schema(self.organism)
@@ -28,7 +58,7 @@ class MetadataFilter:
                 searchable.add(field["name"])
         return searchable
 
-    def get_field_info(self, field_name: str) -> dict[str, Any]:
+    def get_field_info(self, field_name: str) -> SchemaField:
         """Get information about a specific field."""
         for field in self.schema["metadata"]:
             if field["name"] == field_name:

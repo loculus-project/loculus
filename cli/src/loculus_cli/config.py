@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from rich.console import Console
 
 from .instance_info import InstanceInfo
+from .utils.metadata_filter import Schema
 
 
 class InstanceConfig(BaseModel):
@@ -59,7 +60,7 @@ class InstanceConfig(BaseModel):
         """Get list of available organisms."""
         return self.instance_info.get_organisms()
 
-    def get_organism_schema(self, organism: str) -> dict[str, Any]:
+    def get_organism_schema(self, organism: str) -> Schema:
         """Get metadata schema for organism."""
         return self.instance_info.get_organism_schema(organism)
 
