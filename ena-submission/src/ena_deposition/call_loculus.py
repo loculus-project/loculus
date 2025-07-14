@@ -133,8 +133,8 @@ def get_group_info(config: Config, group_id: int) -> Group:
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
-
-    return GroupDetails.model_validate_json(response.json()).group
+    # response.json() returns python dict
+    return GroupDetails.model_validate(response.json()).group
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
