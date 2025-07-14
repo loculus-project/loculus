@@ -214,7 +214,7 @@ class BackendClient:
         """Get sequences from Loculus."""
         headers = self._get_headers(username)
 
-        params = {"organism": organism}
+        params: dict[str, str] = {}
         if group_id is not None:
             params["groupId"] = str(group_id)
         if accession_versions:
