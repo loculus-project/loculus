@@ -115,12 +115,18 @@ class UploadDatabaseService(
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
-        .selectAll()
+        .select(
+            uploadIdColumn,
+            submissionIdColumn
+        )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
 
     fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
-        .selectAll()
+        .select(
+            sequenceUploadIdColumn,
+            sequenceSubmissionIdColumn,
+        )
         .where { sequenceUploadIdColumn eq uploadId }
         .map {
             it[sequenceSubmissionIdColumn]
