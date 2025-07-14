@@ -93,7 +93,6 @@ class MetadataFilter:
             field = parsed["field"]
             operator = parsed["operator"]
             value = parsed["value"]
-            parsed["field_info"]
 
             # Convert to LAPIS parameter format
             if operator == "=":
