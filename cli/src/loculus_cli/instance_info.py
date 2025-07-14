@@ -1,6 +1,7 @@
 """Instance information client for fetching configuration from loculus-info endpoint."""
 
 import time
+from typing import Any
 
 import httpx
 
@@ -10,7 +11,7 @@ class InstanceInfo:
 
     def __init__(self, instance_url: str):
         self.instance_url = instance_url.rstrip("/")
-        self._cache: dict | None = None
+        self._cache: dict[str, Any] | None = None
         self._cache_expiry: float | None = None
         self.cache_ttl = 300  # 5 minutes
 
@@ -20,9 +21,10 @@ class InstanceInfo:
             return False
         return time.time() < self._cache_expiry
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Fetch instance info with caching."""
         if self._is_cache_valid():
+            assert self._cache is not None  # Cache is valid, so it can't be None
             return self._cache
 
         try:
@@ -56,7 +58,7 @@ class InstanceInfo:
             raise RuntimeError("Instance info missing 'organisms' section")
         return list(info["organisms"].keys())
 
-    def get_organism_schema(self, organism: str) -> dict:
+    def get_organism_schema(self, organism: str) -> dict[str, Any]:
         """Get metadata schema for specific organism."""
         info = self.get_info()
         if "organisms" not in info:
@@ -78,7 +80,10 @@ class InstanceInfo:
         hosts = self.get_hosts()
         if "lapis" not in hosts:
             raise RuntimeError("LAPIS URLs not found in instance info")
-        return hosts["lapis"]
+        lapis_hosts = hosts["lapis"]
+        if not isinstance(lapis_hosts, dict):
+            raise RuntimeError("LAPIS hosts must be a dictionary")
+        return lapis_hosts
 
     def get_lapis_url(self, organism: str) -> str:
         """Get LAPIS URL for specific organism."""

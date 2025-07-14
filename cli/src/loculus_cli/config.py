@@ -59,7 +59,7 @@ class InstanceConfig(BaseModel):
         """Get list of available organisms."""
         return self.instance_info.get_organisms()
 
-    def get_organism_schema(self, organism: str) -> dict:
+    def get_organism_schema(self, organism: str) -> dict[str, Any]:
         """Get metadata schema for organism."""
         return self.instance_info.get_organism_schema(organism)
 

@@ -130,7 +130,7 @@ def show(ctx: click.Context) -> None:
 @schema_group.command()
 @click.option("--field", help="Show details for specific field")
 @click.pass_context
-def fields(ctx: click.Context, field: str = None) -> None:
+def fields(ctx: click.Context, field: str | None = None) -> None:
     """Show detailed field information."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     instance_config = get_instance_config(instance)
@@ -183,7 +183,7 @@ def fields(ctx: click.Context, field: str = None) -> None:
             console.print(f"[bold]Searchable fields for {organism}:[/bold]")
 
             # Group by category
-            by_category = {}
+            by_category: dict[str, list[str]] = {}
             for f in metadata_fields:
                 if not f.get("notSearchable"):
                     category = f.get("header", "Other")

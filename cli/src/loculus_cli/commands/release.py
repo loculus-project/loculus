@@ -58,7 +58,7 @@ def release(
     force: bool,
     quiet: bool,
     verbose: bool,
-):
+) -> None:
     """Release sequences for public access."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     config = get_instance_config(instance)
@@ -100,6 +100,8 @@ def release(
     try:
         if accession:
             # Release specific sequence
+            if version is None:
+                version = 1  # Default version
             success = release_specific_sequence(
                 api_client,
                 organism,
@@ -287,7 +289,7 @@ def release_bulk_sequences(
             return True
 
         # Group sequences by group_id for API calls
-        sequences_by_group = {}
+        sequences_by_group: dict[int, list[SequenceEntry]] = {}
         for seq in releasable:
             if seq.group_id not in sequences_by_group:
                 sequences_by_group[seq.group_id] = []
@@ -369,7 +371,7 @@ def release_bulk_sequences(
         return False
 
 
-def show_release_preview(sequences: list[SequenceEntry], console: Console):
+def show_release_preview(sequences: list[SequenceEntry], console: Console) -> None:
     """Show preview of sequences to be released."""
     # Group by processing result
     no_issues = [

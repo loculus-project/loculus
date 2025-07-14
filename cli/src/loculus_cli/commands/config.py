@@ -1,5 +1,7 @@
 """Configuration commands for Loculus CLI."""
 
+from typing import Any
+
 import click
 from rich.console import Console
 from rich.table import Table
@@ -60,7 +62,7 @@ def list_values() -> None:
         table.add_column("Key", style="green")
         table.add_column("Value", style="blue")
 
-        def add_config_items(data: dict, prefix: str = "") -> None:
+        def add_config_items(data: dict[str, Any], prefix: str = "") -> None:
             for key, value in data.items():
                 full_key = f"{prefix}.{key}" if prefix else key
 

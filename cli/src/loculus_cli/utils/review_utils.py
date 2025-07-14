@@ -9,6 +9,7 @@ from rich.table import Table
 from rich.text import Text
 
 from ..auth.client import AuthClient
+from ..config import InstanceConfig
 
 
 class SequenceStatus(str, Enum):
@@ -131,7 +132,7 @@ class SequencesResponse:
 class ReviewApiClient:
     """API client for review-related operations."""
 
-    def __init__(self, instance_config, auth_client: AuthClient):
+    def __init__(self, instance_config: InstanceConfig, auth_client: AuthClient):
         self.instance_config = instance_config
         self.auth_client = auth_client
 
@@ -162,15 +163,15 @@ class ReviewApiClient:
         }
 
         if group_ids:
-            params["groupIdsFilter"] = ",".join(map(str, group_ids))
+            params["groupIdsFilter"] = ",".join(map(str, group_ids))  # type: ignore[assignment]
 
         if statuses:
-            params["statusesFilter"] = ",".join(status.value for status in statuses)
+            params["statusesFilter"] = ",".join(status.value for status in statuses)  # type: ignore[assignment]
 
         if results:
             params["processingResultFilter"] = ",".join(
                 result.value for result in results
-            )
+            )  # type: ignore[assignment]
 
         response = httpx.get(
             f"{backend_url}/{organism}/get-sequences",
@@ -248,11 +249,15 @@ def format_sequence_table(
 
         # Result styling
         result_text = seq.processing_result.value if seq.processing_result else "-"
-        result_style = {
-            ProcessingResult.NO_ISSUES: "green",
-            ProcessingResult.HAS_WARNINGS: "yellow",
-            ProcessingResult.HAS_ERRORS: "red",
-        }.get(seq.processing_result, "dim")
+        result_style = (
+            {
+                ProcessingResult.NO_ISSUES: "green",
+                ProcessingResult.HAS_WARNINGS: "yellow",
+                ProcessingResult.HAS_ERRORS: "red",
+            }.get(seq.processing_result, "dim")
+            if seq.processing_result
+            else "dim"
+        )
 
         # Data use terms display
         data_use = seq.data_use_terms.get("type", "UNKNOWN")

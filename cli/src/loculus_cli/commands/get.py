@@ -134,6 +134,8 @@ def sequences(
             if accession_list:
                 backend_client = BackendClient(instance_config, auth_client)
                 current_user = auth_client.get_current_user()
+                if not current_user:
+                    raise click.ClickException("Not authenticated")
 
                 sequences_data = backend_client.get_sequences(
                     username=current_user,
@@ -160,25 +162,25 @@ def sequences(
             stderr_console = get_stderr_console()
             with stderr_console.status("Fetching sequences..."):
                 if aligned:
-                    result = lapis_client.get_aligned_sequences(
+                    seq_result = lapis_client.get_aligned_sequences(
                         organism=organism,
                         filters=filter_params,
                         limit=limit,
                         offset=offset,
                     )
                 else:
-                    result = lapis_client.get_unaligned_sequences(
+                    seq_result = lapis_client.get_unaligned_sequences(
                         organism=organism,
                         filters=filter_params,
                         limit=limit,
                         offset=offset,
                     )
 
-            _output_fasta(result.data, output)
+            _output_fasta(seq_result.data, output)
         else:
             stderr_console = get_stderr_console()
             with stderr_console.status("Searching sequences..."):
-                result = lapis_client.get_sample_details(
+                data_result = lapis_client.get_sample_details(
                     organism=organism,
                     filters=filter_params,
                     limit=limit,
@@ -186,7 +188,7 @@ def sequences(
                     fields=field_list,
                 )
 
-            _output_data(result.data, output_format, output, fields)
+            _output_data(data_result.data, output_format, output, fields)
 
     except Exception as e:
         handle_cli_error("Search failed", e)

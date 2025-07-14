@@ -5,6 +5,8 @@ Shared console utilities for the Loculus CLI.
 import click
 from rich.console import Console
 
+from ..auth.client import AuthClient
+
 
 def get_stderr_console() -> Console:
     """
@@ -51,7 +53,9 @@ def handle_cli_error(
     raise click.ClickException(str(exception)) from exception
 
 
-def check_authentication(auth_client, console: Console | None = None) -> None:
+def check_authentication(
+    auth_client: AuthClient, console: Console | None = None
+) -> None:
     """
     Check if user is authenticated and raise appropriate error if not.
 

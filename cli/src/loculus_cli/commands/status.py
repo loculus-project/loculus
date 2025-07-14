@@ -1,5 +1,6 @@
 """Status command for monitoring sequence submissions."""
 
+import io
 import json
 import time
 
@@ -76,7 +77,7 @@ def status(
     warnings_only: bool,
     ready: bool,
     pending: bool,
-):
+) -> None:
     """Show status of submitted sequences."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
     config = get_instance_config(instance)
@@ -104,17 +105,19 @@ def status(
 
     api_client = ReviewApiClient(config, auth_client)
 
-    def fetch_and_display():
+    def fetch_and_display() -> bool:
         """Fetch and display sequence data."""
         try:
             if accession:
                 # Show detailed info for specific sequence
-                return show_sequence_details(
-                    api_client, organism, accession, version, console
+                seq_version = version if version is not None else 1
+                show_sequence_details(
+                    api_client, organism, accession, seq_version, console
                 )
+                return True
             else:
                 # Show list of sequences
-                return show_sequences_list(
+                show_sequences_list(
                     api_client=api_client,
                     organism=organism,
                     status_filter=status_filter,
@@ -131,6 +134,7 @@ def status(
                     pending=pending,
                     console=console,
                 )
+                return True
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             return False
@@ -344,7 +348,7 @@ def get_display_content(
     warnings_only: bool,
     ready: bool,
     pending: bool,
-):
+) -> str:
     """Get display content for watch mode."""
     try:
         # Build filters for API
@@ -377,6 +381,10 @@ def get_display_content(
             if not filtered_sequences:
                 return "[yellow]No sequences found matching the criteria[/yellow]"
             else:
-                return format_sequence_table(filtered_sequences, detailed=False)
+                table = format_sequence_table(filtered_sequences, detailed=False)
+                console = Console(file=io.StringIO(), width=120)
+                with console.capture() as capture:
+                    console.print(table)
+                return capture.get()
     except Exception as e:
         return f"[red]Error: {e}[/red]"

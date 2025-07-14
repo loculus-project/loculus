@@ -218,7 +218,7 @@ def batch(
         sequences_dict = {}
         with open(sequences) as f:
             current_header = None
-            current_sequence = []
+            current_sequence: list[str] = []
 
             for line in f:
                 line = line.strip()

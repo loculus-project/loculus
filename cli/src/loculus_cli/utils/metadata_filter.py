@@ -11,10 +11,10 @@ class MetadataFilter:
     def __init__(self, instance_config: InstanceConfig, organism: str):
         self.instance_config = instance_config
         self.organism = organism
-        self._schema = None
+        self._schema: dict[str, Any] | None = None
 
     @property
-    def schema(self) -> dict:
+    def schema(self) -> dict[str, Any]:
         """Get organism schema (cached)."""
         if self._schema is None:
             self._schema = self.instance_config.get_organism_schema(self.organism)
@@ -28,7 +28,7 @@ class MetadataFilter:
                 searchable.add(field["name"])
         return searchable
 
-    def get_field_info(self, field_name: str) -> dict:
+    def get_field_info(self, field_name: str) -> dict[str, Any]:
         """Get information about a specific field."""
         for field in self.schema["metadata"]:
             if field["name"] == field_name:
@@ -74,7 +74,7 @@ class MetadataFilter:
                     "field": field,
                     "operator": op,
                     "value": value,
-                    "field_info": field_info,
+                    "field_info": field_info,  # type: ignore[dict-item]
                 }
 
         raise ValueError(
@@ -106,7 +106,7 @@ class MetadataFilter:
 
         return params
 
-    def suggest_fields(self, category: str = None) -> list[str]:
+    def suggest_fields(self, category: str | None = None) -> list[str]:
         """Suggest searchable fields, optionally filtered by category."""
         fields = []
         for field in self.schema["metadata"]:
@@ -122,7 +122,7 @@ class MetadataFilter:
 
     def get_field_categories(self) -> dict[str, list[str]]:
         """Get searchable fields grouped by category."""
-        categories = {}
+        categories: dict[str, list[str]] = {}
         for field in self.schema["metadata"]:
             if field.get("notSearchable", False):
                 continue

@@ -67,6 +67,8 @@ def sequences(
         # Check authentication
         check_authentication(auth_client)
         current_user = auth_client.get_current_user()
+        if not current_user:
+            raise click.ClickException("Not authenticated")
 
         # Get user's groups if group not specified
         if group is None:
