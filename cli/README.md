@@ -5,7 +5,14 @@ A command-line interface for interacting with Loculus, a platform for pathogen s
 ## Installation
 
 ```bash
-poetry install
+# Install uv if you haven't already
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment and install dependencies
+uv sync
+
+# Or install the package directly
+uv pip install -e .
 ```
 
 
@@ -19,13 +26,13 @@ pip install -e .
 pytest
 
 # Run linting
-poetry run ruff check .
-poetry run black --check .
-poetry run mypy .
+uv run ruff check .
+uv run black --check .
+uv run mypy .
 
 # Format code
-poetry run black .
-poetry run ruff check . --fix
+uv run black .
+uv run ruff check . --fix
 
 # Integration tests (from the integration-tests directory)
 cd ../integration-tests

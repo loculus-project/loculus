@@ -68,16 +68,14 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
         run: cd integration-tests && npm ci
-      - name: Install Python and Poetry
+      - name: Install Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: 'latest'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install CLI
-        run: cd cli && poetry install && poetry build && pip install dist/*.whl
+        run: cd cli && uv sync && uv build && pip install dist/*.whl
       - name: Install keyring backend for CLI
         run: pip install keyrings.alt
       - name: Get Installed Playwright Version
