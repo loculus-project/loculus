@@ -98,8 +98,16 @@ def get_config(config_file: str) -> Config:
     for key, value in defaults.items():
         if key not in full_config:
             full_config[key] = value
-    relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
-    relevant_config.pop("embl_property_fields", None)
+    embl_properties = EmblPropertyFields()
+    if full_config.get("embl_property_metadata_fields") and isinstance(
+        full_config["embl_property_metadata_fields"], dict
+    ):
+        for embl_key, embl_value in full_config["embl_property_metadata_fields"].items():
+            if embl_key in EmblPropertyFields.__annotations__ and embl_value is not None:
+                setattr(embl_properties, embl_key, embl_value)
+    full_config["embl_property_fields"] = embl_properties
+
+    relevant_config = {key: full_config.get(key) for key in Config.__annotations__}
 
     dotenv.load_dotenv()  # Load environment variables from .env file
     relevant_config["ena_submission_username"] = os.getenv(
@@ -111,12 +119,5 @@ def get_config(config_file: str) -> Config:
     relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
 
     config = Config(**relevant_config)
-    if defaults.get("embl_property_metadata_fields") and isinstance(
-        defaults["embl_property_metadata_fields"], dict
-    ):
-        for embl_key, embl_value in defaults["embl_property_metadata_fields"].items():
-            logger.debug(f"Setting EMBL property field {embl_key} to {embl_value}")
-            if embl_key in EmblPropertyFields.__annotations__ and embl_value is not None:
-                setattr(config.embl_property_fields, embl_key, embl_value)
     secure_ena_connection(config)
     return config
