@@ -352,6 +352,7 @@ def _test_successful_assembly_submission_no_wait(
 
     # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
     assembly_table_create(db_config, config, test=config.test)
+    create_assembly_submission_table_update(db_config)
     check_assembly_submission_submitted(db_config, sequences_to_upload)
 
 
