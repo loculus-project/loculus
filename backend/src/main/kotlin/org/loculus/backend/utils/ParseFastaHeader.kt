@@ -3,7 +3,7 @@ package org.loculus.backend.utils
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT
+import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
 import org.loculus.backend.model.SegmentName
 import org.loculus.backend.model.SubmissionId
 import org.springframework.stereotype.Service
@@ -23,7 +23,7 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
         if (lastDelimiter == -1) {
             throw BadRequestException(
                 "The FASTA header $submissionId does not contain the segment name. Please provide the" +
-                    " segment name in the format <$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT>_<segment name>",
+                    " segment name in the format <$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES>_<segment name>",
             )
         }
         val isolateId = submissionId.substring(0, lastDelimiter)
