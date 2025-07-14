@@ -11,7 +11,7 @@ cliTest.describe('CLI End-to-End Submission Flow', () => {
             // Setup: Configure and login
             await cliPage.configure();
             await cliPage.login(testAccount.username, testAccount.password);
-        
+
             // Generate unique test data
             const timestamp = Date.now();
             const submissionId1 = `cli_e2e_${timestamp}_001`;
@@ -34,7 +34,6 @@ GTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTATGCAGTTTTCTGCTTGCAGC
 >${submissionId2}_S
 GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTCACAAACTCNTATTCCTTTTGTGAAAGCGTNCCAAATCTGGACAGNTTTGTNTTCCAGATGGCNAGTGCCACTGATGATGCACAAAANGANTCCATCTACGCATCTGCNCTGGTGGANGCAACCAAATTTTGTGCACCTATATACGAGTGTGCTTGGGCTAGCTCCACTGGCATTGTTAAAAAGGGACTGGAGTGGTTCGAGAAAAATGCAGGAACCATTAAATCCTGGGATGAGAGTTATACTGAGCTTAAAGTTGAAGTTCCCAAAATAGAACAACTCTCCAACTACCAGCAGGCTGCTCTCAAATGGAGAAAAGACATAGGCTTCCGTGTCAATGCAAATACGGCAGCTTTGAGTAACAAAGTCCTAGCAGAGTACAAAGTTCCTGGCGAGATTGTAATGTCTGTCAAAGAGATGTTGTCAGATATGATTAGAAGNAGGAACCTGATTCTCAACAGAGGTGGTGATGAGAACCCACGCGGCCCAGTTAGCCGTGAACATGTGGAGTGGTGC`;
 
-
             const submitResult = await cliPage.submitSequences({
                 organism: 'cchf',
                 metadata: testMetadata,
@@ -44,7 +43,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             expect(submitResult.exitCode).toBe(0);
             expect(submitResult.stdout).toMatch(/Submission successful|success/i);
-        
+
             let processedSequences: {
                 length: number;
                 submission_id: string;
@@ -57,7 +56,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             while (attempts < maxAttempts) {
                 attempts++;
-           
+
                 // Check overall status
                 const statusResult = await cliPage.getStatus({
                     organism: 'cchf',
@@ -97,7 +96,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 }
             }
 
-      
             expect(processedSequences.length).toBeGreaterThan(0);
 
             for (const seq of processedSequences.slice(0, 1)) {
@@ -122,7 +120,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
 
             expect(dryRunResult.exitCode).toBe(0);
-           
+
             const releaseResult = await cliPage.releaseSequences({
                 organism: 'cchf',
                 group: parseInt(groupId),
@@ -136,7 +134,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             // Since we have processed sequences and dry-run succeeded, we should have released sequences
             expect(releaseResult.stdout).toMatch(/released|Released \d+ sequence/i);
-      
+
             const postReleaseStatusResult = await cliPage.getStatus({
                 organism: 'cchf',
                 group: parseInt(groupId),
@@ -145,7 +143,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
 
             expect(postReleaseStatusResult.exitCode).toBe(0);
-            const postReleaseData = cliPage.parseJsonOutput(postReleaseStatusResult) as {
+            cliPage.parseJsonOutput(postReleaseStatusResult) as {
                 total?: number;
                 ready?: number;
                 errors?: number;
@@ -158,8 +156,8 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
 
             expect(searchResult.exitCode).toBe(0);
-            const searchData = cliPage.parseJsonOutput(searchResult);
-    
+            cliPage.parseJsonOutput(searchResult);
+
             // STEP 8: Test filtering in search
             console.log('Step 8: Testing search filters...');
 
@@ -171,7 +169,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
 
             expect(filteredSearchResult.exitCode).toBe(0);
-    
+
             // Test convenience filters with explicit group
             const readySequencesResult = await cliPage.getStatus({
                 organism: 'cchf',
@@ -189,7 +187,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
             expect(errorsOnlyResult.exitCode).toBe(0);
 
-           
             const tableStatusResult = await cliPage.getStatus({
                 organism: 'cchf',
                 limit: 5,
@@ -204,7 +201,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             });
             expect(tableSearchResult.exitCode).toBe(0);
             expect(tableSearchResult.stdout.length).toBeGreaterThan(0);
-
         },
     );
 
