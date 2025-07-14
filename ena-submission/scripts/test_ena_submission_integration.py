@@ -342,6 +342,19 @@ def _test_successful_assembly_submission(
     check_assembly_submission_submitted(db_config, sequences_to_upload)
 
 
+def _test_successful_assembly_submission_no_wait(
+    db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
+) -> None:
+    create_assembly_submission_table_start(db_config)
+    check_assembly_submission_started(db_config, sequences_to_upload)
+
+    assert config.test, "Not submitting to dev - stopping"
+
+    # IMPORTANT: set test=true below or this script may submit sequences to ENA prod
+    assembly_table_create(db_config, config, test=config.test)
+    check_assembly_submission_submitted(db_config, sequences_to_upload)
+
+
 def _test_assembly_submission_errored(
     db_config: SimpleConnectionPool,
     config: Config,
@@ -394,7 +407,7 @@ def get_sequences() -> dict[str, Any]:
         return sequences
 
 
-def get_revisions(modify_manifest: bool = False) -> dict[str, Any]:
+def get_revisions(modify_manifest: bool = False, modify_assembly: bool = True) -> dict[str, Any]:
     with open(INPUT_FILE, encoding="utf-8") as json_file:
         sequences: dict[str, Any] = json.load(json_file)
         revised_sequences: dict[str, Any] = {}
@@ -404,7 +417,10 @@ def get_revisions(modify_manifest: bool = False) -> dict[str, Any]:
             accession_version = accession + ".2"
             new_value["metadata"]["version"] = 2
             new_value["metadata"]["accessionVersion"] = accession_version
-            new_value["metadata"]["geoLocAdmin1"] = "revised location"
+            if modify_assembly:
+                new_value["metadata"]["geoLocAdmin1"] = "revised location"
+            else:
+                new_value["metadata"]["hostAge"] = "revised host age"
             if modify_manifest:
                 new_value["metadata"]["authors"] = "Author, Revised;"
             revised_sequences[accession_version] = new_value
@@ -602,7 +618,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         mock_notify.assert_called_once_with(self.slack_config, msg)
 
 
-class TestSimpleRevisionTests(TestSubmission):
+class TestRevisionAssemblyModificationTests(TestSubmission):
     @patch(
         "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
     )
@@ -627,6 +643,39 @@ class TestSimpleRevisionTests(TestSubmission):
         check_project_submission_submitted(self.db_config, sequences_to_upload)
         _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
         _test_successful_assembly_submission(self.db_config, self.config, sequences_to_upload)
+
+        # send to loculus
+        get_external_metadata_and_send_to_loculus(self.db_config, self.config)
+        check_sent_to_loculus(self.db_config, sequences_to_upload)
+
+
+class TestRevisionNoAssemblyModificationTests(TestSubmission):
+    @patch(
+        "ena_deposition.upload_external_metadata_to_loculus.submit_external_metadata", autospec=True
+    )
+    @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
+    def test_revise(self, mock_get_group_info: Mock, mock_submit_external_metadata: Mock) -> None:
+        self.config.set_alias_suffix = "revision" + str(uuid.uuid4())
+        simple_submission(
+            self.db_config, self.config, mock_get_group_info, mock_submit_external_metadata
+        )
+
+        # get data
+        mock_get_group_info.return_value = TEST_GROUP
+        mock_submit_external_metadata.return_value = mock_requests_post()
+        sequences_to_upload = get_revisions(modify_assembly=False)
+
+        # upload sequences
+        upload_sequences(self.db_config, sequences_to_upload)
+        check_sequences_uploaded(self.db_config, sequences_to_upload)
+
+        # submit
+        create_project_submission_table_start(self.db_config, self.config)
+        check_project_submission_submitted(self.db_config, sequences_to_upload)
+        _test_successful_sample_submission(self.db_config, self.config, sequences_to_upload)
+        _test_successful_assembly_submission_no_wait(
+            self.db_config, self.config, sequences_to_upload
+        )
 
         # send to loculus
         get_external_metadata_and_send_to_loculus(self.db_config, self.config)
