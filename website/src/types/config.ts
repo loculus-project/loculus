@@ -130,6 +130,7 @@ export type SubmissionDataTypes = z.infer<typeof submissionDataTypesSchema>;
 
 export const schema = z.object({
     organismName: z.string(),
+    longDisplayName: z.string().optional(),
     image: z.string().optional(),
     files: z.array(fileCategory).optional(),
     metadata: z.array(metadata),
