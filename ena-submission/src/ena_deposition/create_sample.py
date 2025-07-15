@@ -195,7 +195,7 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         )
 
 
-def safe_update_sample(
+def update_sample_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
@@ -208,11 +208,10 @@ def safe_update_sample(
         update_values=update_values,
         table_name=TableName.SAMPLE_TABLE,
         retry_number=retry_number,
-        subject=subject,
-        success_log_fmt="{subject} for accession {accession} version {version} and DB updated!",
-        error_log_fmt=(
-            "{subject} for accession {accession} version {version} but DB update failed"
-            " after {retry_number} attempts."
+        success_log_tmpl_str=f"{subject} for accession {{accession}} version {{version}} and DB updated!",
+        error_log_tmpl_str=(
+            f"{subject} for accession {{accession}} version {{version}} but DB update failed"
+            f" after {{retry_number}} attempts."
         ),
     )
 
@@ -317,7 +316,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "errors": json.dumps(["Revision version is not the latest version"]),
             "started_at": datetime.now(tz=pytz.utc),
         }
-        safe_update_sample(
+        update_sample_with_retry(
             db_config=db_config,
             condition=seq_key,
             update_values=update_values,
@@ -394,7 +393,7 @@ def sample_table_create(
                 "started_at": datetime.now(tz=pytz.utc),
             }
             subject = "Sample creation failure documentation"
-        safe_update_sample(
+        update_sample_with_retry(
             db_config=db_config,
             condition=seq_key,
             update_values=update_values,

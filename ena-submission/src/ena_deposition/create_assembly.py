@@ -230,7 +230,7 @@ def create_manifest_object(
     return manifest
 
 
-def safe_update_assembly(
+def update_assembly_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
@@ -243,10 +243,9 @@ def safe_update_assembly(
         update_values=update_values,
         table_name=TableName.ASSEMBLY_TABLE,
         retry_number=retry_number,
-        subject=subject,
-        success_log_fmt="{subject} for accession {accession} version {version} and DB updated!",
-        error_log_fmt=(
-            "{subject} for accession {accession} version {version} but DB update failed"
+        success_log_tmpl_str=f"{subject} for accession {{accession}} version {{version}} and DB updated!",
+        error_log_tmpl_str=(
+            f"{subject} for accession {{accession}} version {{version}} but DB update failed"
             " after {retry_number} attempts."
         ),
     )
@@ -345,7 +344,7 @@ def update_assembly_error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
-    safe_update_assembly(
+    update_assembly_with_retry(
         db_config=db_config,
         condition={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
@@ -537,7 +536,7 @@ def assembly_table_create(
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.result),
             }
-            safe_update_assembly(
+            update_assembly_with_retry(
                 db_config=db_config,
                 condition=seq_key,
                 update_values=update_values,
@@ -602,7 +601,7 @@ def assembly_table_update(
             else:
                 status = Status.SUBMITTED
                 subject = "Assembly partially accessioned by ENA"
-            safe_update_assembly(
+            update_assembly_with_retry(
                 db_config=db_config,
                 condition=seq_key,
                 update_values={

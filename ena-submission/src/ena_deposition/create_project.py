@@ -101,7 +101,7 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def safe_update_project(
+def update_project_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
@@ -114,10 +114,9 @@ def safe_update_project(
         update_values=update_values,
         table_name=TableName.PROJECT_TABLE,
         retry_number=retry_number,
-        subject=subject,
-        success_log_fmt="{subject} for group_id {group_id} organism {organism} and DB updated!",
-        error_log_fmt=(
-            "{subject} for group_id {group_id} organism {organism} but DB update failed"
+        success_log_tmpl_str=f"{subject} for group_id {{group_id}} organism {{organism}} and DB updated!",
+        error_log_tmpl_str=(
+            f"{subject} for group_id {{group_id}} organism {{organism}} but DB update failed"
             " after {retry_number} attempts."
         ),
     )
@@ -376,7 +375,7 @@ def project_table_create(
                 "started_at": datetime.now(tz=pytz.utc),
             }
             subject = "Project creation failure documentation"
-        safe_update_project(
+        update_project_with_retry(
             db_config=db_config,
             condition=group_key,
             update_values=update_values,
