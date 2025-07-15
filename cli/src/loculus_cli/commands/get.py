@@ -8,10 +8,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from ..api.backend import BackendClient
 from ..api.lapis import LapisClient
-from ..api.models import AccessionVersion
-from ..auth.client import AuthClient
 from ..config import get_instance_config
 from ..utils.console import get_stderr_console, handle_cli_error, print_error
 from ..utils.guards import require_instance, require_organism
@@ -94,7 +91,6 @@ def sequences(
     # Get organism with guard (required for get)
     organism = require_organism(instance, ctx.obj.get("organism"))
 
-    auth_client = AuthClient(instance_config)
     lapis_client = None
 
     try:
@@ -119,38 +115,29 @@ def sequences(
 
         # Handle accessions
         if accessions:
-            accession_list = []
+            accession_filters = []
             for acc in accessions.split(","):
                 acc = acc.strip()
                 if "." in acc:
                     accession, version = acc.split(".", 1)
-                    accession_list.append(
-                        AccessionVersion(accession=accession, version=int(version))
-                    )
+                    accession_filters.append({"accession": accession, "version": version})
                 else:
-                    accession_list.append(AccessionVersion(accession=acc, version=1))
+                    accession_filters.append({"accession": acc})
 
-            # For accessions, we might want to use the backend API instead
-            if accession_list:
-                backend_client = BackendClient(instance_config, auth_client)
-                current_user = auth_client.get_current_user()
-                if not current_user:
-                    raise click.ClickException("Not authenticated")
+            # Query LAPIS for each accession
+            all_data = []
+            stderr_console = get_stderr_console()
+            with stderr_console.status("Fetching sequences..."):
+                for acc_filter in accession_filters:
+                    result = lapis_client.get_sample_details(
+                        organism=organism,
+                        filters=acc_filter,
+                        limit=1000,  # Should be enough for all versions of one accession
+                    )
+                    all_data.extend(result.data)
 
-                sequences_data = backend_client.get_sequences(
-                    username=current_user,
-                    organism=organism,
-                    accession_versions=accession_list,
-                )
-
-                # Convert to LAPIS-like format
-                data = []
-                for seq in sequences_data:
-                    data.append(seq.data)
-
-                _output_data(data, output_format, output, fields)
-                backend_client.close()
-                return
+            _output_data(all_data, output_format, output, fields)
+            return
 
         # Parse fields
         field_list = None
@@ -338,66 +325,6 @@ def stats(
         if lapis_client:
             lapis_client.close()
 
-
-@get_group.command()
-@click.option(
-    "--format",
-    "output_format",
-    type=click.Choice(["ndjson", "json"]),
-    default="ndjson",
-    help="Output format",
-)
-@click.option(
-    "--output",
-    "-f",
-    type=click.Path(path_type=Path),
-    help="Output file path (default: stdout)",
-)
-@click.option(
-    "--compression",
-    type=click.Choice(["zstd", "gzip", "none"]),
-    default="none",
-    help="Compression format",
-)
-@click.pass_context
-def all_sequences(
-    ctx: click.Context,
-    output_format: str,
-    output: Path | None,
-    compression: str,
-) -> None:
-    """Download all released data for an organism."""
-    instance = require_instance(ctx, ctx.obj.get("instance"))
-    instance_config = get_instance_config(instance)
-
-    # Get organism with guard (required for all)
-    organism = require_organism(instance, ctx.obj.get("organism"))
-
-    auth_client = AuthClient(instance_config)
-    backend_client = BackendClient(instance_config, auth_client)
-
-    try:
-        stderr_console = get_stderr_console()
-        with stderr_console.status("Downloading all data..."):
-            data = backend_client.get_released_data(
-                organism=organism,
-                compression=compression,
-            )
-
-        # Write to file or stdout
-        if output:
-            with open(output, "wb") as f:
-                f.write(data)
-            console.print(f"✓ Data saved to [bold green]{output}[/bold green]")
-        else:
-            # Write to stdout
-            click.echo(data.decode("utf-8"))
-
-    except Exception as e:
-        console.print(f"[bold red]✗ Download failed:[/bold red] {e}")
-        raise click.ClickException(str(e)) from e
-    finally:
-        backend_client.close()
 
 
 def _output_data(

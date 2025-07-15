@@ -241,11 +241,9 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
         expect(invalidFilterResult.stderr).toMatch(/Field .* is not searchable/i);
 
         // 5. Non-existent sequence details - should fail when sequence doesn't exist
-        const nonExistentSeqResult = await cliPage.getStatus({
+        const nonExistentSeqResult = await cliPage.getDetails({
             organism: 'cchf',
-            accession: 'NONEXISTENT_12345',
-            version: 1,
-            detailed: true,
+            accession: 'NONEXISTENT_12345.1',
         });
         expect(nonExistentSeqResult.exitCode).not.toBe(0);
         expect(nonExistentSeqResult.stderr).toMatch(/Aborted|not found|does not exist|No.*found/i);

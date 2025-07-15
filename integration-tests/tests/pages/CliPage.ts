@@ -283,6 +283,25 @@ export class CliPage {
     }
 
     /**
+     * Get details for a specific sequence
+     */
+    async getDetails(options: {
+        organism: string;
+        accession: string;
+        format?: string;
+    }): Promise<CliResult> {
+        const args = ['--organism', options.organism, 'get', 'details'];
+
+        args.push('--accession', options.accession);
+
+        if (options.format) {
+            args.push('--format', options.format);
+        }
+
+        return this.execute(args);
+    }
+
+    /**
      * Parse JSON output from CLI
      */
     parseJsonOutput(result: CliResult): unknown {

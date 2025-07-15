@@ -113,8 +113,33 @@ def require_organism(instance: str, organism: str | None = None) -> str:
     """
     console = Console()
 
-    # If organism provided via command line, use it
+    # If organism provided via command line, validate it exists
     if organism:
+        try:
+            instance_config = get_instance_config(instance)
+            available_organisms = instance_config.get_organisms()
+            
+            if organism not in available_organisms:
+                console.print(f"[red]✗ Organism '{organism}' not found on this instance[/red]")
+                console.print()
+                console.print("[bold]Available organisms:[/bold]")
+                for org in sorted(available_organisms):
+                    console.print(f"  • {org}")
+                console.print()
+                console.print("[bold]Set a default organism:[/bold]")
+                console.print(f"  [cyan]loculus organism select {available_organisms[0]}[/cyan]")
+                console.print()
+                console.print("[bold]Or use the --organism flag:[/bold]")
+                console.print(f"  [cyan]loculus --organism {available_organisms[0]} <command>[/cyan]")
+                
+                raise click.ClickException(f"Organism '{organism}' not found")
+                
+        except Exception as e:
+            if "not found" in str(e):
+                raise  # Re-raise organism not found errors
+            console.print(f"[red]✗ Could not fetch organisms from instance: {e}[/red]")
+            raise click.ClickException("Could not fetch organisms from instance") from e
+        
         return organism
 
     # Load config to check for default organism
