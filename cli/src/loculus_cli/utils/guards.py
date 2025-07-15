@@ -232,8 +232,7 @@ def require_group(instance: str, group: int | None = None) -> int:
     if group is not None:
         try:
             get_instance_config(instance)
-            # TODO: Add group validation when backend API supports it
-            # For now, just return the group as-is
+            # TODO: Add group validation
             return group
         except Exception as e:
             console.print(f"[red]✗ Could not validate group with instance: {e}[/red]")
