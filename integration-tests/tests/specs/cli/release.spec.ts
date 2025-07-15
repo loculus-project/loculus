@@ -13,13 +13,12 @@ cliTest.describe('CLI Release Command', () => {
             await cliPage.login(testAccount.username, testAccount.password);
 
             // Setup test data with multiple sequences
-            const testData = await cliPage.setupTestData({
+            await cliPage.setupTestData({
                 organism: 'west-nile',
                 group: parseInt(groupId),
                 numSequences: 2,
                 withErrors: false,
             });
-            console.log('Test data created for release:', testData);
 
             // Wait for sequences to be processed (they need to be PROCESSED to be releasable)
             // We'll check status and wait up to 60 seconds
@@ -37,7 +36,6 @@ cliTest.describe('CLI Release Command', () => {
                     const statusData = cliPage.parseJsonOutput(statusResult);
                     if (Array.isArray(statusData) && statusData.length > 0) {
                         processedSequences = statusData as { accession: string; version: number }[];
-                        console.log(`Found ${processedSequences.length} processed sequences`);
                         break;
                     }
                 } else {
@@ -45,7 +43,6 @@ cliTest.describe('CLI Release Command', () => {
                     cliPage.assertSuccess(statusResult, 'Status check for processed sequences');
                 }
 
-                console.log(`Waiting for sequences to be processed... (attempt ${i + 1}/12)`);
                 await new Promise((resolve) => setTimeout(resolve, 5000));
             }
 

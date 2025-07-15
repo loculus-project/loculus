@@ -14,7 +14,7 @@ console = Console()
 def organism_command(ctx: click.Context) -> None:
     """Manage organisms."""
     if ctx.invoked_subcommand is None:
-        ctx.invoke(list_organisms, ctx)
+        ctx.invoke(list_organisms)
 
 
 @organism_command.command(name="list")

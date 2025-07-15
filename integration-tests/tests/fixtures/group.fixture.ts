@@ -52,9 +52,7 @@ export const test = authTest.extend<GroupFixtures>({
         await use(groupId);
     },
 
-    pageWithGroup: async ({ pageWithACreatedUser, groupId }, use) => {
-        console.log(`Using group ID: ${groupId}`);
-
+    pageWithGroup: async ({ pageWithACreatedUser }, use) => {
         await use(pageWithACreatedUser);
     },
 });

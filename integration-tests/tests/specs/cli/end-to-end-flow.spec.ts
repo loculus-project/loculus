@@ -79,19 +79,15 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                             seq.submission_id === submissionId1 ||
                             seq.submission_id === submissionId2,
                     );
-                    console.log(`My sequences: ${mySequences.length}/2 found`);
 
                     processedSequences = mySequences.filter((seq) => seq.status === 'PROCESSED');
-                    console.log(`Processed: ${processedSequences.length}/2 ready`);
 
                     if (processedSequences.length >= 2) {
-                        console.log('✓ Both sequences are now processed');
                         break;
                     }
                 }
 
                 if (attempts < maxAttempts) {
-                    console.log('Waiting 5 seconds before next status check...');
                     await new Promise((resolve) => setTimeout(resolve, 5000));
                 }
             }
@@ -109,7 +105,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
                 expect(detailedStatusResult.exitCode).toBe(0);
                 expect(detailedStatusResult.stdout.length).toBeGreaterThan(0);
-                console.log(`✓ Detailed status retrieved for ${seq.accession}.${seq.version}`);
             }
 
             const dryRunResult = await cliPage.releaseSequences({
@@ -159,7 +154,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             cliPage.parseJsonOutput(searchResult);
 
             // STEP 8: Test filtering in search
-            console.log('Step 8: Testing search filters...');
 
             const filteredSearchResult = await cliPage.getSequences({
                 organism: 'cchf',
@@ -208,8 +202,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
         // Test that CLI handles errors gracefully throughout the workflow
         cliTest.setTimeout(120000);
 
-        console.log('Starting CLI error handling workflow test...');
-
         // Setup: Configure and login
         await cliPage.configure();
         await cliPage.login(testAccount.username, testAccount.password);
@@ -222,7 +214,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             format: 'json',
         });
         expect(invalidStatusResult.exitCode).not.toBe(0);
-        console.log('✓ Status command properly handles invalid organism');
 
         // 2. Invalid organism in release
         const invalidReleaseResult = await cliPage.releaseSequences({
@@ -231,7 +222,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             dryRun: true,
         });
         expect(invalidReleaseResult.exitCode).not.toBe(0);
-        console.log('✓ Release command properly handles invalid organism');
 
         // 3. Invalid organism in search
         const invalidSearchResult = await cliPage.getSequences({
@@ -240,7 +230,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
             format: 'json',
         });
         expect(invalidSearchResult.exitCode).not.toBe(0);
-        console.log('✓ Search command properly handles invalid organism');
 
         // 4. Invalid filters - should fail with validation error, not succeed with empty results
         const invalidFilterResult = await cliPage.getSequences({
@@ -250,7 +239,6 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
         });
         expect(invalidFilterResult.exitCode).not.toBe(0);
         expect(invalidFilterResult.stderr).toMatch(/Field .* is not searchable/i);
-        console.log('✓ Search command properly rejects invalid filters');
 
         // 5. Non-existent sequence details - should fail when sequence doesn't exist
         const nonExistentSeqResult = await cliPage.getStatus({
@@ -261,8 +249,5 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
         });
         expect(nonExistentSeqResult.exitCode).not.toBe(0);
         expect(nonExistentSeqResult.stderr).toMatch(/Aborted|not found|does not exist|No.*found/i);
-        console.log('✓ Status command properly rejects non-existent sequences');
-
-        console.log('🎉 CLI error handling test completed successfully!');
     });
 });

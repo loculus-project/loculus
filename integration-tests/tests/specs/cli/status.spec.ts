@@ -13,13 +13,12 @@ cliTest.describe('CLI Status Command', () => {
             await cliPage.login(testAccount.username, testAccount.password);
 
             // Setup test data
-            const testData = await cliPage.setupTestData({
+            await cliPage.setupTestData({
                 organism: 'west-nile',
                 group: parseInt(groupId),
                 numSequences: 3,
                 withErrors: true,
             });
-            console.log('Test data created:', testData);
 
             // Step 1: Get basic status with explicit group
             const basicStatusResult = await cliPage.getStatus({
