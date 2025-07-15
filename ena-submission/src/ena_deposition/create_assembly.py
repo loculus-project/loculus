@@ -234,7 +234,6 @@ def update_assembly_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
-    subject: str,
     retry_number: int = 3,
 ) -> None:
     update_with_retry(
@@ -243,13 +242,6 @@ def update_assembly_with_retry(
         update_values=update_values,
         table_name=TableName.ASSEMBLY_TABLE,
         retry_number=retry_number,
-        success_log_tmpl_str=(
-            f"{subject} for accession {{accession}} version {{version}} and DB updated!"
-        ),
-        error_log_tmpl_str=(
-            f"{subject} for accession {{accession}} version {{version}} but DB update failed"
-            " after {retry_number} attempts."
-        ),
     )
 
 
@@ -355,7 +347,6 @@ def update_assembly_error(
             "started_at": datetime.now(tz=pytz.utc),
         },
         retry_number=retry_number,
-        subject=f"Assembly {update_type} failed",
     )
 
 
@@ -538,12 +529,14 @@ def assembly_table_create(
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.result),
             }
+            logger.info(
+                f"Assembly creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+            )
             update_assembly_with_retry(
                 db_config=db_config,
                 condition=seq_key,
                 update_values=update_values,
                 retry_number=retry_number,
-                subject="Assembly creation succeeded",
             )
         else:
             update_assembly_error(
@@ -599,10 +592,14 @@ def assembly_table_update(
                 if previous_result == new_result.result:
                     continue
                 status = Status.WAITING
-                subject = "Assembly partially accessioned by ENA"
+                logger.info(
+                    f"Assembly partially accessioned by ENA for {seq_key['accession']} version {seq_key['version']}"
+                )
             else:
                 status = Status.SUBMITTED
-                subject = "Assembly accessioned by ENA"
+                logger.info(
+                    f"Assembly accessioned by ENA for {seq_key['accession']} version {seq_key['version']}"
+                )
             update_assembly_with_retry(
                 db_config=db_config,
                 condition=seq_key,
@@ -612,7 +609,6 @@ def assembly_table_update(
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 retry_number=retry_number,
-                subject=subject,
             )
 
 

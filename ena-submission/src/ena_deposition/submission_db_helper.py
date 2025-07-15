@@ -413,12 +413,11 @@ def update_with_retry(
     table_name: TableName,
     update_values: dict[str, Any],
     retry_number: int = 3,
-    success_log_tmpl_str: str = "",
-    error_log_tmpl_str: str = "",
 ) -> int:
     """Update the database with retry logic.
-    the success and error log templates should contain
-    the keys of the conditions dict."""
+    the conditions and update_values are dictionaries where
+    keys are column names and values are the new values to set.
+    they will be added to the log message."""
 
     def _do_update():
         number_rows_updated = update_db_where_conditions(
@@ -442,10 +441,13 @@ def update_with_retry(
 
     try:
         result = retryer(_do_update)
-        logger.info(success_log_tmpl_str.format(**conditions))
+        logger.info(f"{table_name} update succeeded for {conditions} with values {update_values}")
         return result
     except Exception:
-        error_msg = error_log_tmpl_str.format(**conditions, retry_number=retry_number)
+        error_msg = (
+            f"{table_name} update failed for {conditions} with values {update_values} "
+            f"after {retry_number} attempts."
+        )
         logger.error(error_msg)
         raise
 

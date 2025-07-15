@@ -199,7 +199,6 @@ def update_sample_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
-    subject: str,
     retry_number: int = 3,
 ) -> None:
     update_with_retry(
@@ -208,13 +207,6 @@ def update_sample_with_retry(
         update_values=update_values,
         table_name=TableName.SAMPLE_TABLE,
         retry_number=retry_number,
-        success_log_tmpl_str=(
-            f"{subject} for accession {{accession}} version {{version}} and DB updated!"
-        ),
-        error_log_tmpl_str=(
-            f"{subject} for accession {{accession}} version {{version}} but DB update failed"
-            f" after {{retry_number}} attempts."
-        ),
     )
 
 
@@ -318,12 +310,14 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "errors": json.dumps(["Revision version is not the latest version"]),
             "started_at": datetime.now(tz=pytz.utc),
         }
+        logger.error(
+            f"Sample creation failed for {seq_key['accession']} version {version} as it is not the latest version."
+        )
         update_sample_with_retry(
             db_config=db_config,
             condition=seq_key,
             update_values=update_values,
             retry_number=retry_number,
-            subject="Sample creation failed as version is not the latest",
         )
         return True
     return False
@@ -387,20 +381,23 @@ def sample_table_create(
                 "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Sample creation succeeded"
+            logger.info(
+                f"Sample creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+            )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Sample creation failed"
+            logger.error(
+                f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
+            )
         update_sample_with_retry(
             db_config=db_config,
             condition=seq_key,
             update_values=update_values,
             retry_number=retry_number,
-            subject=subject,
         )
 
 
