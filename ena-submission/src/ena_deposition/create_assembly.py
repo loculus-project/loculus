@@ -234,8 +234,8 @@ def update_assembly_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
+    subject: str,
     retry_number: int = 3,
-    subject: str = "Assembly update",
 ) -> None:
     update_with_retry(
         db_config=db_config,
@@ -353,7 +353,7 @@ def update_assembly_error(
             "started_at": datetime.now(tz=pytz.utc),
         },
         retry_number=retry_number,
-        subject=f"Assembly {update_type} error documentation",
+        subject=f"Assembly {update_type} failed",
     )
 
 
@@ -541,7 +541,7 @@ def assembly_table_create(
                 condition=seq_key,
                 update_values=update_values,
                 retry_number=retry_number,
-                subject="Assembly creation",
+                subject="Assembly creation succeeded",
             )
         else:
             update_assembly_error(
@@ -600,7 +600,7 @@ def assembly_table_update(
                 subject = "Assembly partially accessioned by ENA"
             else:
                 status = Status.SUBMITTED
-                subject = "Assembly partially accessioned by ENA"
+                subject = "Assembly accessioned by ENA"
             update_assembly_with_retry(
                 db_config=db_config,
                 condition=seq_key,

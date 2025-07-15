@@ -199,8 +199,8 @@ def update_sample_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
+    subject: str,
     retry_number: int = 3,
-    subject: str = "Sample update",
 ) -> None:
     update_with_retry(
         db_config=db_config,
@@ -321,7 +321,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             condition=seq_key,
             update_values=update_values,
             retry_number=retry_number,
-            subject="Sample creation failure documentation",
+            subject="Sample creation failed as version is not the latest",
         )
         return True
     return False
@@ -385,14 +385,14 @@ def sample_table_create(
                 "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Sample creation"
+            subject = "Sample creation succeeded"
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Sample creation failure documentation"
+            subject = "Sample creation failed"
         update_sample_with_retry(
             db_config=db_config,
             condition=seq_key,

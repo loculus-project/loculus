@@ -105,8 +105,8 @@ def update_project_with_retry(
     db_config: SimpleConnectionPool,
     condition: dict[str, str],
     update_values: dict[str, Any],
+    subject: str,
     retry_number: int = 3,
-    subject: str = "Project update",
 ) -> None:
     update_with_retry(
         db_config=db_config,
@@ -367,14 +367,14 @@ def project_table_create(
                 "result": json.dumps(project_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Project creation"
+            subject = "Project creation succeeded"
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(project_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            subject = "Project creation failure documentation"
+            subject = "Project creation failed"
         update_project_with_retry(
             db_config=db_config,
             condition=group_key,
