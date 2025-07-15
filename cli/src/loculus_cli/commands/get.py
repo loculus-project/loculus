@@ -72,6 +72,10 @@ def get_group() -> None:
     is_flag=True,
     help="Get aligned sequences (for FASTA format)",
 )
+@click.option(
+    "--segment",
+    help="Segment name for multisegmented viruses (e.g., 'L', 'M', 'S' for CCHF)",
+)
 @click.pass_context
 def sequences(
     ctx: click.Context,
@@ -83,6 +87,7 @@ def sequences(
     output: Path | None,
     fields: str | None,
     aligned: bool,
+    segment: str | None,
 ) -> None:
     """Search and retrieve sequences."""
     instance = require_instance(ctx, ctx.obj.get("instance"))
@@ -148,13 +153,46 @@ def sequences(
         if fields:
             field_list = [f.strip() for f in fields.split(",")]
 
-        # Query LAPIS
+        # Get organism schema to check for segments
+        schema = instance_config.get_organism_schema(organism)
+        
+        # Get nucleotideSequences from referenceGenomes 
+        instance_info = instance_config.instance_info.get_info()
+        organism_info = instance_info["organisms"].get(organism, {})
+        ref_genomes = organism_info.get("referenceGenomes", {})
+        
+        if "nucleotideSequences" in ref_genomes:
+            nucleotide_sequences = [seq["name"] for seq in ref_genomes["nucleotideSequences"]]
+        else:
+            # Fallback to schema if referenceGenomes not available
+            nucleotide_sequences = schema.get("nucleotideSequences", ["main"])
+        
+        # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":
+            # Check if organism has multiple segments
+            if len(nucleotide_sequences) > 1 and not segment:
+                available_segments = ", ".join(nucleotide_sequences)
+                console.print(f"[red]Error: Organism '{organism}' has multiple segments. Please specify --segment option.[/red]")
+                console.print(f"[yellow]Available segments: {available_segments}[/yellow]")
+                raise click.ClickException(f"Segment required for multisegmented organism '{organism}'")
+            
+            # Validate segment if provided
+            if segment:
+                if segment not in nucleotide_sequences:
+                    available_segments = ", ".join(nucleotide_sequences)
+                    console.print(f"[red]Error: Segment '{segment}' not found for organism '{organism}'.[/red]")
+                    console.print(f"[yellow]Available segments: {available_segments}[/yellow]")
+                    raise click.ClickException(f"Invalid segment '{segment}' for organism '{organism}'")
+            
+            # Use the segment or default to 'main' for single-segment organisms
+            segment_name = segment or "main"
+            
             stderr_console = get_stderr_console()
             with stderr_console.status("Fetching sequences..."):
                 if aligned:
                     seq_result = lapis_client.get_aligned_sequences(
                         organism=organism,
+                        segment=segment_name,
                         filters=filter_params,
                         limit=limit,
                         offset=offset,
@@ -162,6 +200,7 @@ def sequences(
                 else:
                     seq_result = lapis_client.get_unaligned_sequences(
                         organism=organism,
+                        segment=segment_name,
                         filters=filter_params,
                         limit=limit,
                         offset=offset,
@@ -179,8 +218,7 @@ def sequences(
                     fields=field_list,
                 )
 
-            # Get schema for table display
-            schema = instance_config.get_organism_schema(organism)
+            # Use schema already retrieved above
             _output_data(data_result.data, output_format, output, fields, schema)
 
     except Exception as e:

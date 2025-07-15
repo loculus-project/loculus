@@ -95,13 +95,14 @@ class LapisClient:
     def get_aligned_sequences(
         self,
         organism: str,
+        segment: str = "main",
         filters: dict[str, Any] | None = None,
         limit: int | None = None,
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get aligned sequences from LAPIS."""
-        url = self._build_url(organism, "/sample/alignedNucleotideSequences")
+        url = self._build_url(organism, f"/sample/alignedNucleotideSequences/{segment}")
 
         params = {}
         if filters:
@@ -114,28 +115,57 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            response = self.client.get(url, params=params)
+            # Request FASTA format
+            headers = {"Accept": "text/x-fasta"}
+            response = self.client.get(url, params=params, headers=headers)
             response.raise_for_status()
-            return LapisSequenceResponse.model_validate(response.json())
+            
+            # Parse FASTA response
+            fasta_data = []
+            if response.text.strip():
+                lines = response.text.strip().split('\n')
+                current_header = None
+                current_sequence = []
+                
+                for line in lines:
+                    if line.startswith('>'):
+                        if current_header:
+                            # Save previous sequence
+                            fasta_data.append({
+                                'accessionVersion': current_header,
+                                'alignedNucleotideSequence': ''.join(current_sequence)
+                            })
+                        current_header = line[1:]  # Remove '>'
+                        current_sequence = []
+                    else:
+                        current_sequence.append(line)
+                
+                # Save last sequence
+                if current_header:
+                    fasta_data.append({
+                        'accessionVersion': current_header,
+                        'alignedNucleotideSequence': ''.join(current_sequence)
+                    })
+            
+            return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
             ) from e
-        except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
             raise RuntimeError(f"LAPIS sequence query failed: {e}") from e
 
     def get_unaligned_sequences(
         self,
         organism: str,
+        segment: str = "main",
         filters: dict[str, Any] | None = None,
         limit: int | None = None,
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get unaligned sequences from LAPIS."""
-        url = self._build_url(organism, "/sample/unalignedNucleotideSequences")
+        url = self._build_url(organism, f"/sample/unalignedNucleotideSequences/{segment}")
 
         params = {}
         if filters:
@@ -148,15 +178,43 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            response = self.client.get(url, params=params)
+            # Request FASTA format
+            headers = {"Accept": "text/x-fasta"}
+            response = self.client.get(url, params=params, headers=headers)
             response.raise_for_status()
-            return LapisSequenceResponse.model_validate(response.json())
+            
+            # Parse FASTA response
+            fasta_data = []
+            if response.text.strip():
+                lines = response.text.strip().split('\n')
+                current_header = None
+                current_sequence = []
+                
+                for line in lines:
+                    if line.startswith('>'):
+                        if current_header:
+                            # Save previous sequence
+                            fasta_data.append({
+                                'accessionVersion': current_header,
+                                'unalignedNucleotideSequence': ''.join(current_sequence)
+                            })
+                        current_header = line[1:]  # Remove '>'
+                        current_sequence = []
+                    else:
+                        current_sequence.append(line)
+                
+                # Save last sequence
+                if current_header:
+                    fasta_data.append({
+                        'accessionVersion': current_header,
+                        'unalignedNucleotideSequence': ''.join(current_sequence)
+                    })
+            
+            return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
             ) from e
-        except ValidationError as e:
-            raise RuntimeError(f"Invalid LAPIS response format: {e}") from e
         except Exception as e:
             raise RuntimeError(f"LAPIS sequence query failed: {e}") from e
 
