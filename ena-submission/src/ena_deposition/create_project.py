@@ -362,7 +362,8 @@ def project_table_create(
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Project creation succeeded for group_id {row['group_id']} organism {row['organism']}"
+                f"Project creation succeeded for group_id {row['group_id']} "
+                f"organism {row['organism']}"
             )
         else:
             update_values = {

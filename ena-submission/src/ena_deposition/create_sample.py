@@ -311,7 +311,8 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "started_at": datetime.now(tz=pytz.utc),
         }
         logger.error(
-            f"Sample creation failed for {seq_key['accession']} version {version} as it is not the latest version."
+            f"Sample creation failed for {seq_key['accession']} version {version} "
+            "as it is not the latest version."
         )
         update_sample_with_retry(
             db_config=db_config,

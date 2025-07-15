@@ -530,7 +530,8 @@ def assembly_table_create(
                 "result": json.dumps(assembly_creation_results.result),
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+                f"Assembly creation succeeded for {seq_key['accession']} "
+                f"version {seq_key['version']}"
             )
             update_assembly_with_retry(
                 db_config=db_config,
@@ -593,12 +594,14 @@ def assembly_table_update(
                     continue
                 status = Status.WAITING
                 logger.info(
-                    f"Assembly partially accessioned by ENA for {seq_key['accession']} version {seq_key['version']}"
+                    f"Assembly partially accessioned by ENA for {seq_key['accession']} "
+                    f"version {seq_key['version']}"
                 )
             else:
                 status = Status.SUBMITTED
                 logger.info(
-                    f"Assembly accessioned by ENA for {seq_key['accession']} version {seq_key['version']}"
+                    f"Assembly accessioned by ENA for {seq_key['accession']} version "
+                    f"{seq_key['version']}"
                 )
             update_assembly_with_retry(
                 db_config=db_config,
