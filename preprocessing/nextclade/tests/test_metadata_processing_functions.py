@@ -375,7 +375,7 @@ test_case_definitions = [
             "submissionId": "non_latin_characters_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Møller, Anäis; Pérez, José; 汉",
+            "authors": "Pérez, José; François Bailley; 汉",
         },
         accession_id="13",
         expected_metadata={
