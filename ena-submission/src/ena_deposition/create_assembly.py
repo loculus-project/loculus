@@ -92,30 +92,30 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_address(config: Config, entry: dict[str, Any]) -> str:
-    address_string = entry["center_name"]
-    if config.is_broker:
-        try:
-            group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
-        except Exception as e:
-            logger.error(
-                f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
-                f"{traceback.format_exc()}"
-            )
-            msg = (
-                "Failed to fetch group info from Loculus for group: "
-                f"{entry['metadata']['groupId']}, {e}"
-            )
-            raise RuntimeError(msg) from e
-        address = group_details.address
-        address_list = [
-            entry["center_name"],  # corresponds to Loculus' "Institution" group field
-            address.city,
-            address.state,
-            address.country,
-        ]
-        address_string = ", ".join([x for x in address_list if x])
-        logger.debug("Created address from group_info")
+def get_address(config: Config, entry: dict[str, Any]) -> str | None:
+    if not config.is_broker:
+        return None
+    try:
+        group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
+            f"{traceback.format_exc()}"
+        )
+        msg = (
+            "Failed to fetch group info from Loculus for group: "
+            f"{entry['metadata']['groupId']}, {e}"
+        )
+        raise RuntimeError(msg) from e
+    address = group_details.address
+    address_list = [
+        entry["center_name"],  # corresponds to Loculus' "Institution" group field
+        address.city,
+        address.state,
+        address.country,
+    ]
+    address_string = ", ".join([x for x in address_list if x])
+    logger.debug("Created address from group_info")
     return address_string
 
 
@@ -146,6 +146,8 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
             value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
             value = get_authors(str(value))
+        if not config.is_broker and key == "authors":
+            continue
         assembly_values[key] = value
     return assembly_values
 
@@ -250,35 +252,23 @@ def submission_table_start(db_config: SimpleConnectionPool):
         corresponding_assembly = find_conditions_in_db(
             db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
         )
+        status_all = None
         if len(corresponding_assembly) == 1:
             if corresponding_assembly[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_ALL}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTED_ALL
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTING_ASSEMBLY
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            assembly_table_entry = AssemblyTableEntry(**seq_key)
-            succeeded = add_to_assembly_table(db_config, assembly_table_entry)
-            if succeeded:
-                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+            if not add_to_assembly_table(db_config, AssemblyTableEntry(**seq_key)):
+                continue
+            status_all = StatusAll.SUBMITTING_ASSEMBLY
+        update_db_where_conditions(
+            db_config,
+            table_name=TableName.SUBMISSION_TABLE,
+            conditions=seq_key,
+            update_values={"status_all": status_all},
+        )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
