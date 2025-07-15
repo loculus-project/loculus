@@ -14,12 +14,12 @@ Here are some current guiding principles for these tests:
 The integration tests are organized as follows:
 
 - **tests/fixtures/** - Reusable test fixtures for common setup operations
-  - `auth.fixture.ts` - Authentication-related fixtures
-  - `group.fixture.ts` - Group creation and management fixtures
-  - `sequence.fixture.ts` - Sequence submission fixtures
+    - `auth.fixture.ts` - Authentication-related fixtures
+    - `group.fixture.ts` - Group creation and management fixtures
+    - `sequence.fixture.ts` - Sequence submission fixtures
 
 - **tests/pages/** - Page Object Models (POMs) for interacting with application pages
-  - Each file (e.g., `auth.page.ts`, `group.page.ts`) encapsulates interactions with a specific page
+    - Each file (e.g., `auth.page.ts`, `group.page.ts`) encapsulates interactions with a specific page
 
 - **tests/specs/** - The actual test specifications, organized by feature area
 
