@@ -1,6 +1,6 @@
 # Loculus CLI
 
-A command-line interface for interacting with Loculus, a platform for pathogen sequence submission and retrieval.
+A command-line interface for interacting with Loculus. The CLI is currently an unstable work in progress.
 
 ## Installation
 
