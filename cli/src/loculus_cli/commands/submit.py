@@ -10,7 +10,7 @@ from rich.table import Table
 from ..api.backend import BackendClient
 from ..auth.client import AuthClient
 from ..config import get_instance_config
-from ..utils.console import check_authentication, handle_cli_error, print_error
+from ..utils.console import check_authentication, handle_cli_error
 from ..utils.guards import require_group, require_instance, require_organism
 
 console = Console()
@@ -69,37 +69,6 @@ def sequences(
         current_user = auth_client.get_current_user()
         if not current_user:
             raise click.ClickException("Not authenticated")
-
-        # Get user's groups if group not specified
-        if group is None:
-            with console.status("Getting user groups..."):
-                try:
-                    groups = backend_client.get_groups(current_user)
-                except Exception as e:
-                    print_error("Failed to get groups", e)
-                    console.print(
-                        "This may indicate permission issues or that the test user"
-                    )
-                    console.print("doesn't have access to any submission groups.")
-                    raise click.ClickException(
-                        "Cannot access groups for submission"
-                    ) from e
-
-            if not groups:
-                print_error("No groups found")
-                console.print("Please contact an administrator to be added to a group")
-                raise click.ClickException("No groups available")
-
-            if len(groups) == 1:
-                group = groups[0].groupId
-                console.print(
-                    f"Using group: [bold green]{groups[0].groupName}[/bold green]"
-                )
-            else:
-                console.print("Available groups:")
-                for g in groups:
-                    console.print(f"  {g.groupId}: {g.groupName}")
-                group = click.prompt("Select group ID", type=int)
 
         # Submit sequences
         with console.status("Submitting sequences..."):

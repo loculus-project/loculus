@@ -23,7 +23,6 @@ class InstanceConfig(BaseModel):
         default="backend-client", description="Keycloak client ID"
     )
 
-
     _instance_info: InstanceInfo | None = None
 
     @property

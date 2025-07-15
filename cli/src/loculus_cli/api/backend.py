@@ -11,7 +11,6 @@ from .models import (
     AccessionVersion,
     GroupInfo,
     InstanceInfo,
-    RevisionResponse,
     SubmissionResponse,
     UnprocessedData,
 )
@@ -143,66 +142,6 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
             raise RuntimeError(f"Submission failed: {e}") from e
-
-    def revise_sequences(
-        self,
-        username: str,
-        organism: str,
-        metadata_file: Path,
-        sequence_file: Path,
-        group_id: int,
-    ) -> RevisionResponse:
-        """Revise sequences in Loculus."""
-        self._get_headers(username)
-
-        # Read files
-        try:
-            with open(metadata_file) as f:
-                metadata_content = f.read()
-            with open(sequence_file) as f:
-                sequence_content = f.read()
-        except Exception as e:
-            raise RuntimeError(f"Failed to read input files: {e}") from e
-
-        # Prepare multipart form data
-        files = {
-            "metadataFile": (
-                "metadata.tsv",
-                metadata_content,
-                "text/tab-separated-values",
-            ),
-            "sequenceFile": ("sequences.fasta", sequence_content, "text/plain"),
-        }
-
-        data = {
-            "groupId": str(group_id),
-        }
-
-        # Remove Content-Type header to let httpx set it for multipart
-        auth_headers = self.auth_client.get_auth_headers(username)
-
-        try:
-            response = self.client.post(
-                f"/{organism}/revise",
-                files=files,
-                data=data,
-                headers=auth_headers,
-            )
-            response.raise_for_status()
-            return RevisionResponse.model_validate(response.json())
-        except httpx.HTTPStatusError as e:
-            try:
-                error_data = e.response.json()
-                error_message = error_data.get(
-                    "message", f"HTTP {e.response.status_code}"
-                )
-            except Exception:
-                error_message = f"HTTP {e.response.status_code}"
-            raise RuntimeError(f"Revision failed: {error_message}") from e
-        except ValidationError as e:
-            raise RuntimeError(f"Invalid response format: {e}") from e
-        except Exception as e:
-            raise RuntimeError(f"Revision failed: {e}") from e
 
     def get_sequences(
         self,

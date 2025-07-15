@@ -10,7 +10,6 @@ from .commands.group import group_command
 from .commands.instance import instance_group
 from .commands.organism import organism_command
 from .commands.release import release
-from .commands.revise import revise_group
 from .commands.schema import schema_group
 from .commands.status import status
 from .commands.submit import submit_group
@@ -88,7 +87,6 @@ def cli(
 cli.add_command(auth_group)
 cli.add_command(submit_group)
 cli.add_command(get_group)
-cli.add_command(revise_group)
 cli.add_command(config_group)
 cli.add_command(instance_group)
 cli.add_command(organism_command)

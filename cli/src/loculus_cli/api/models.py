@@ -40,14 +40,6 @@ class SubmissionResponse(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-class RevisionResponse(BaseModel):
-    """Response from revision endpoint."""
-
-    accession_versions: list[AccessionVersion]
-    warnings: list[str] = Field(default_factory=list)
-    errors: list[str] = Field(default_factory=list)
-
-
 class LapisResponse(BaseModel):
     """Generic LAPIS response."""
 
