@@ -456,7 +456,7 @@ def create_sample(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_sample stopped due to exception in another task")
+            logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
         submission_table_start(db_config, config=config)
