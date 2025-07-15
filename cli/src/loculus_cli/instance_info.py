@@ -51,7 +51,7 @@ class InstanceInfo:
         info = self.get_info()
         if "hosts" not in info:
             raise RuntimeError("Instance info missing 'hosts' section")
-        return info["hosts"]
+        return info["hosts"]  # type: ignore[no-any-return]
 
     def get_organisms(self) -> list[str]:
         """Get list of available organisms."""
@@ -75,7 +75,7 @@ class InstanceInfo:
         if "schema" not in organism_data:
             raise RuntimeError(f"Schema not found for organism '{organism}'")
 
-        return organism_data["schema"]
+        return organism_data["schema"]  # type: ignore[no-any-return]
 
     def get_lapis_urls(self) -> dict[str, str]:
         """Get LAPIS URLs for all organisms."""

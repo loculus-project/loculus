@@ -120,7 +120,9 @@ def sequences(
                 acc = acc.strip()
                 if "." in acc:
                     accession, version = acc.split(".", 1)
-                    accession_filters.append({"accession": accession, "version": version})
+                    accession_filters.append(
+                        {"accession": accession, "version": version}
+                    )
                 else:
                     accession_filters.append({"accession": acc})
 
@@ -132,7 +134,7 @@ def sequences(
                     result = lapis_client.get_sample_details(
                         organism=organism,
                         filters=acc_filter,
-                        limit=1000,  # Should be enough for all versions of one accession
+                        limit=1000,  # Should be enough for all versions
                     )
                     all_data.extend(result.data)
 
@@ -324,7 +326,6 @@ def stats(
     finally:
         if lapis_client:
             lapis_client.close()
-
 
 
 def _output_data(
