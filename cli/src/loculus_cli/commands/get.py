@@ -170,7 +170,9 @@ def sequences(
             # Fallback to schema if referenceGenomes not available
             schema_dict = dict(schema)
             sequences = schema_dict.get("nucleotideSequences", ["main"])
-            nucleotide_sequences = sequences if isinstance(sequences, list) else ["main"]
+            nucleotide_sequences = (
+                sequences if isinstance(sequences, list) else ["main"]
+            )
 
         # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":
