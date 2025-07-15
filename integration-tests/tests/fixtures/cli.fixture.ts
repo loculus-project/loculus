@@ -11,7 +11,7 @@ export const cliTest = test.extend<{
 
         // Store test info for CLI tests to use
         cliPage.testGroupName = groupName;
-        cliPage.testGroupId = parseInt(groupId);
+        cliPage.testGroupId = groupId;
         cliPage.testAccount = testAccount;
 
         // Clean up any existing state before the test

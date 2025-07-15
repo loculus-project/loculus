@@ -15,7 +15,7 @@ cliTest.describe('CLI Release Command', () => {
             // Setup test data with multiple sequences
             await cliPage.setupTestData({
                 organism: 'west-nile',
-                group: parseInt(groupId),
+                group: groupId,
                 numSequences: 2,
                 withErrors: false,
             });
@@ -27,7 +27,7 @@ cliTest.describe('CLI Release Command', () => {
                 // Try for up to 60 seconds
                 const statusResult = await cliPage.getStatus({
                     organism: 'west-nile',
-                    group: parseInt(groupId),
+                    group: groupId,
                     status: 'PROCESSED',
                     format: 'json',
                 });
@@ -49,7 +49,7 @@ cliTest.describe('CLI Release Command', () => {
             // Step 1: Test dry-run for all valid sequences
             const dryRunResult = await cliPage.releaseSequences({
                 organism: 'west-nile',
-                group: parseInt(groupId),
+                group: groupId,
                 allValid: true,
                 dryRun: true,
             });
@@ -61,7 +61,7 @@ cliTest.describe('CLI Release Command', () => {
             // Step 2: Test dry-run for no-warnings-only
             const dryRunNoWarningsResult = await cliPage.releaseSequences({
                 organism: 'west-nile',
-                group: parseInt(groupId),
+                group: groupId,
                 noWarningsOnly: true,
                 dryRun: true,
             });
@@ -90,7 +90,7 @@ cliTest.describe('CLI Release Command', () => {
             // Step 4: Test bulk release with force (for sequences that are ready)
             const bulkReleaseResult = await cliPage.releaseSequences({
                 organism: 'west-nile',
-                group: parseInt(groupId),
+                group: groupId,
                 allValid: true,
                 force: true,
                 verbose: true,
@@ -109,7 +109,7 @@ cliTest.describe('CLI Release Command', () => {
         // Test quiet mode with dry-run
         const quietResult = await cliPage.releaseSequences({
             organism: 'west-nile',
-            group: parseInt(groupId),
+            group: groupId,
             allValid: true,
             dryRun: true,
             quiet: true,
@@ -119,7 +119,7 @@ cliTest.describe('CLI Release Command', () => {
         // Test verbose mode with dry-run
         const verboseResult = await cliPage.releaseSequences({
             organism: 'west-nile',
-            group: parseInt(groupId),
+            group: groupId,
             allValid: true,
             dryRun: true,
             verbose: true,

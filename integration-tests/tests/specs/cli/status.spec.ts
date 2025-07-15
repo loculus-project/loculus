@@ -15,7 +15,7 @@ cliTest.describe('CLI Status Command', () => {
             // Setup test data
             await cliPage.setupTestData({
                 organism: 'west-nile',
-                group: parseInt(groupId),
+                group: groupId,
                 numSequences: 3,
                 withErrors: true,
             });
@@ -24,7 +24,7 @@ cliTest.describe('CLI Status Command', () => {
             const basicStatusResult = await cliPage.getStatus({
                 organism: 'west-nile',
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(basicStatusResult, 'Basic status check');
 
@@ -33,7 +33,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 summary: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(summaryResult, 'Status summary');
 
@@ -50,7 +50,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 status: 'PROCESSED',
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(filteredResult, 'Filtered status check');
 
@@ -59,7 +59,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 ready: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(readyResult, 'Ready sequences status');
 
@@ -67,7 +67,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 pending: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(pendingResult, 'Pending sequences status');
 
@@ -75,7 +75,7 @@ cliTest.describe('CLI Status Command', () => {
                 organism: 'west-nile',
                 errorsOnly: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(errorsOnlyResult, 'Errors-only status');
 
@@ -85,7 +85,7 @@ cliTest.describe('CLI Status Command', () => {
                 limit: 10,
                 page: 1,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(paginatedResult, 'Paginated status');
 
@@ -93,7 +93,7 @@ cliTest.describe('CLI Status Command', () => {
             const tableResult = await cliPage.getStatus({
                 organism: 'west-nile',
                 limit: 5,
-                group: parseInt(groupId),
+                group: groupId,
             });
             cliPage.assertSuccess(tableResult, 'Table format status');
             // Table format should not be JSON
@@ -172,7 +172,7 @@ cliTest.describe('CLI Status Command', () => {
         // Test group filtering
         const groupFilterResult = await cliPage.getStatus({
             organism: 'west-nile',
-            group: parseInt(groupId),
+            group: groupId,
             format: 'json',
         });
         expect(groupFilterResult.exitCode).toBe(0);

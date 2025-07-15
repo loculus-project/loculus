@@ -36,7 +36,7 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
             collectionCountry: 'France',
             collectionDate: '2021-05-12',
             authorAffiliations: 'Patho Institute, Paris',
-            groupId: groupId,
+            groupId: groupId.toString(),
         },
         {
             main:

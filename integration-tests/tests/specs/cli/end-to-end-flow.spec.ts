@@ -38,7 +38,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 organism: 'cchf',
                 metadata: testMetadata,
                 sequences: testSequences,
-                group: parseInt(groupId),
+                group: groupId,
             });
 
             expect(submitResult.exitCode).toBe(0);
@@ -60,7 +60,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 // Check overall status
                 const statusResult = await cliPage.getStatus({
                     organism: 'cchf',
-                    group: parseInt(groupId),
+                    group: groupId,
                     format: 'json',
                 });
 
@@ -109,7 +109,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             const dryRunResult = await cliPage.releaseSequences({
                 organism: 'cchf',
-                group: parseInt(groupId),
+                group: groupId,
                 allValid: true,
                 dryRun: true,
             });
@@ -118,7 +118,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             const releaseResult = await cliPage.releaseSequences({
                 organism: 'cchf',
-                group: parseInt(groupId),
+                group: groupId,
                 allValid: true,
                 force: true, // Skip confirmation in automated test
                 verbose: true,
@@ -132,7 +132,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
 
             const postReleaseStatusResult = await cliPage.getStatus({
                 organism: 'cchf',
-                group: parseInt(groupId),
+                group: groupId,
                 summary: true,
                 format: 'json',
             });
@@ -169,7 +169,7 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 organism: 'cchf',
                 ready: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             expect(readySequencesResult.exitCode).toBe(0);
 
@@ -177,14 +177,14 @@ GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAG
                 organism: 'cchf',
                 errorsOnly: true,
                 format: 'json',
-                group: parseInt(groupId),
+                group: groupId,
             });
             expect(errorsOnlyResult.exitCode).toBe(0);
 
             const tableStatusResult = await cliPage.getStatus({
                 organism: 'cchf',
                 limit: 5,
-                group: parseInt(groupId),
+                group: groupId,
             });
             expect(tableStatusResult.exitCode).toBe(0);
             expect(tableStatusResult.stdout.length).toBeGreaterThan(0);

@@ -36,7 +36,7 @@ export const createTestGroup = (name = `test_group_${uuidv4().slice(0, 8)}`): Te
 type GroupFixtures = {
     pageWithGroup: Page;
     groupName: string;
-    groupId: string;
+    groupId: number;
 };
 
 export const test = authTest.extend<GroupFixtures>({

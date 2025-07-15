@@ -29,7 +29,7 @@ ATCGATCGATCGATCGATCGATCG`;
             organism: 'west-nile',
             metadata: sampleMetadata,
             sequences: sampleSequences,
-            group: parseInt(groupId),
+            group: groupId,
         });
 
         cliPage.logCliResult('Submit sequences', submitResult, true);
