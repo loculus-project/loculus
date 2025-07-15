@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from rich.console import Console
 
 from .instance_info import InstanceInfo
-from .utils.metadata_filter import Schema
+from .types import Schema
 
 
 class InstanceConfig(BaseModel):
@@ -23,10 +23,6 @@ class InstanceConfig(BaseModel):
         default="backend-client", description="Keycloak client ID"
     )
 
-    # Remove hardcoded URLs - these will be fetched dynamically
-    # backend_url: str = Field(description="Backend API URL")  # REMOVED
-    # lapis_url: str = Field(description="LAPIS API URL")      # REMOVED
-    # keycloak_url: str = Field(description="Keycloak URL")    # REMOVED
 
     _instance_info: InstanceInfo | None = None
 

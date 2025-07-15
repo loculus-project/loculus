@@ -1,38 +1,9 @@
 """Metadata filtering utilities for schema-aware filtering."""
 
-from typing import Any, TypedDict
+from typing import Any
 
 from ..config import InstanceConfig
-
-
-class SchemaFieldRequired(TypedDict):
-    """Required schema field properties."""
-
-    name: str
-    type: str
-
-
-class SchemaFieldOptional(TypedDict, total=False):
-    """Optional schema field properties."""
-
-    displayName: str
-    notSearchable: bool
-    rangeSearch: bool
-    header: str
-    autocomplete: bool
-    substringSearch: bool
-
-
-class SchemaField(SchemaFieldRequired, SchemaFieldOptional):
-    """Complete schema field definition."""
-
-    pass
-
-
-class Schema(TypedDict):
-    """Schema definition."""
-
-    metadata: list[SchemaField]
+from ..types import Schema, SchemaField
 
 
 class MetadataFilter:

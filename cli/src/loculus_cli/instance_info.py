@@ -1,12 +1,11 @@
 """Instance information client for fetching configuration from loculus-info endpoint."""
 
 import time
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import httpx
 
-if TYPE_CHECKING:
-    from .utils.metadata_filter import Schema
+from .types import Schema
 
 
 class InstanceInfo:
@@ -61,7 +60,7 @@ class InstanceInfo:
             raise RuntimeError("Instance info missing 'organisms' section")
         return list(info["organisms"].keys())
 
-    def get_organism_schema(self, organism: str) -> "Schema":
+    def get_organism_schema(self, organism: str) -> Schema:
         """Get metadata schema for specific organism."""
         info = self.get_info()
         if "organisms" not in info:
