@@ -194,7 +194,7 @@ class ReviewApiClient:
         )
         response.raise_for_status()
 
-        return response.json()  # type: ignore[no-any-return]
+        return response.json()
 
     def approve_sequences(
         self,
@@ -221,7 +221,7 @@ class ReviewApiClient:
         )
         response.raise_for_status()
 
-        return response.json()  # type: ignore[no-any-return]
+        return response.json()
 
 
 def format_sequence_table(

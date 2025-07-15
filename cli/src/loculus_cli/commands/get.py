@@ -145,7 +145,7 @@ def sequences(
 
             # Get schema for table display
             schema = instance_config.get_organism_schema(organism)
-            _output_data(all_data, output_format, output, fields, schema)
+            _output_data(all_data, output_format, output, fields, dict(schema))
             return
 
         # Parse fields
@@ -161,13 +161,16 @@ def sequences(
         organism_info = instance_info["organisms"].get(organism, {})
         ref_genomes = organism_info.get("referenceGenomes", {})
 
+        nucleotide_sequences: list[str]
         if "nucleotideSequences" in ref_genomes:
             nucleotide_sequences = [
-                seq["name"] for seq in ref_genomes["nucleotideSequences"]  # type: ignore
+                seq["name"] for seq in ref_genomes["nucleotideSequences"]
             ]
         else:
             # Fallback to schema if referenceGenomes not available
-            nucleotide_sequences = schema.get("nucleotideSequences", ["main"])
+            schema_dict = dict(schema)
+            sequences = schema_dict.get("nucleotideSequences", ["main"])
+            nucleotide_sequences = sequences if isinstance(sequences, list) else ["main"]
 
         # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":
@@ -235,7 +238,7 @@ def sequences(
                 )
 
             # Use schema already retrieved above
-            _output_data(data_result.data, output_format, output, fields, schema)
+            _output_data(data_result.data, output_format, output, fields, dict(schema))
 
     except Exception as e:
         handle_cli_error("Search failed", e)
@@ -379,7 +382,7 @@ def stats(
 
         # Get schema for table display
         schema = instance_config.get_organism_schema(organism)
-        _output_data(result.data, output_format, output, None, schema)
+        _output_data(result.data, output_format, output, None, dict(schema))
 
     except Exception as e:
         handle_cli_error("Stats query failed", e)
