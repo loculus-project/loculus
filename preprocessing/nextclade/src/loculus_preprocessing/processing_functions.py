@@ -106,7 +106,7 @@ def check_latin_characters(
                         for field in input_fields
                     ],
                     message=(
-                        f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})"
+                        f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."
                     ),
                 )
             ]

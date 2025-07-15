@@ -370,12 +370,12 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="non_ascii_authors",
+        name="non_latin_characters_authors",
         input_metadata={
-            "submissionId": "non_ascii_authors",
+            "submissionId": "non_latin_characters_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Møller, Anäis; Pérez, José",
+            "authors": "Møller, Anäis; Pérez, José; 汉",
         },
         accession_id="13",
         expected_metadata={
@@ -387,18 +387,32 @@ test_case_definitions = [
             ProcessingAnnotationHelper(
                 ["authors"],
                 ["authors"],
-                (
-                    "The authors list contains non-ASCII characters. "
-                    "Please ensure that authors are separated by semi-colons. Each author's name "
-                    "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
-                    "a comma is mandatory to separate first names/initials from last name. "
-                    "Only ASCII alphabetical characters A-Z are allowed. For example: "
-                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
-                    "unknown."
-                ),
+                "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
         ],
     ),
+#    Case(
+#        name="non_ascii_authors",
+#        metadata={
+#            "submissionId": "non_ascii_authors",
+#            "name_required": "name",
+#            "ncbi_required_collection_date": "2022-11-01",
+#            "authors": "Møller, Anäis; Pérez, José",
+#        },
+#        accession_id="13",
+#        expected_metadata={
+#            "name_required": "name",
+#            "required_collection_date": "2022-11-01",
+#            "concatenated_string": "LOC_13.1/2022-11-01",
+#        },
+#        expected_errors=[
+#            ProcessingAnnotationTestCase(
+#                ["authors"],
+#                ["authors"],
+#                "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
+#            ),
+#        ],
+#    ),
     Case(
         name="nan_float",
         input_metadata={
