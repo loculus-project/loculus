@@ -417,7 +417,9 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     return True
 
 
-def is_flatfile_data_changed(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
+def is_flatfile_data_changed(
+    config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]
+) -> bool:
     """
     Check if no change in sequence or flatfile metadata has occurred since last version.
     """
@@ -527,7 +529,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(  # noqa: PLR0912
+def assembly_table_create(
     db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
 ):
     """
