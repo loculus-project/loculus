@@ -417,7 +417,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     return True
 
 
-def no_change(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
+def is_flatfile_data_changed(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
     """
     Check if no change in sequence or flatfile metadata has occurred since last version.
     """
@@ -438,6 +438,7 @@ def no_change(config: Config, db_config: SimpleConnectionPool, entry: dict[str, 
         logger.debug(
             f"Unaligned nucleotide sequences have changed for {entry['accession']}, "
             f"from {version_to_revise} to {entry['version']} - should be revised"
+            "(Metadata maybe also changed.)"
         )
         return False
 
@@ -453,7 +454,7 @@ def no_change(config: Config, db_config: SimpleConnectionPool, entry: dict[str, 
         if last_entry != new_entry:
             logger.debug(
                 f"Field {field} has changed from {last_entry} to {new_entry} "
-                f"for {entry['accession']}"
+                f"for {entry['accession']}. (Maybe other fields changed as well)"
             )
             return False
     logger.debug(
@@ -565,7 +566,7 @@ def assembly_table_create(  # noqa: PLR0912
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
                 continue
-            if no_change(config, db_config, sample_data_in_submission_table[0]):
+            if is_flatfile_data_changed(config, db_config, sample_data_in_submission_table[0]):
                 update_assembly_results_with_latest_version(
                     db_config, seq_key, retry_number=retry_number
                 )
