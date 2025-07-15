@@ -51,7 +51,7 @@ def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input
 
     while True:
         if stop_event.is_set():
-            print("trigger_submission_to_ena stopped due to exception in another task")
+            logger.warning("trigger_submission_to_ena stopped due to exception in another task")
             return
         logger.debug("Checking for new sequences to upload to submission_table")
         # In a loop get approved sequences uploaded to Github and upload to submission_table

@@ -191,7 +191,7 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("upload_external_metadata stopped due to exception in another task")
+            logger.warning("upload_external_metadata stopped due to exception in another task")
             return
         logger.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)

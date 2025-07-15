@@ -432,7 +432,7 @@ def create_project(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_project stopped due to exception in another task")
+            logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
         submission_table_start(db_config, config)
