@@ -4,16 +4,73 @@ A command-line interface for interacting with Loculus, a platform for pathogen s
 
 ## Installation
 
+### Prerequisites
+
+- Python 3.10 or higher
+- pip (Python package manager)
+
+### Install from source
+
 ```bash
-# Install uv if you haven't already
-# curl -LsSf https://astral.sh/uv/install.sh | sh
+# Clone the repository
+git clone https://github.com/loculus-project/loculus.git
+cd loculus/cli
+
+# Option 1: Install using uv (recommended)
+# First install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Create virtual environment and install dependencies
 uv sync
 
-# Or install the package directly
+# Install the CLI
 uv pip install -e .
+
+# Option 2: Install using pip
+# Create a virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install the package in development mode
+pip install -e .
 ```
+
+### Verify installation
+
+```bash
+loculus --help
+```
+
+## Usage
+
+### Basic Command Structure
+
+```bash
+loculus [GLOBAL OPTIONS] COMMAND [COMMAND OPTIONS]
+```
+
+### Global Options
+
+- `--instance TEXT`: Loculus instance URL (e.g., main.loculus.org)
+- `-o, --organism TEXT`: Organism name (e.g., 'Mpox', 'H5N1')
+- `-g, --group INTEGER`: Group ID for operations
+- `--config TEXT`: Path to configuration file
+- `-v, --verbose`: Enable verbose output
+- `--no-color`: Disable colored output
+
+### Available Commands
+
+- `auth`: Authentication commands
+- `config`: Configuration management
+- `get`: Search and retrieve sequences
+- `group`: Manage groups
+- `instance`: Manage Loculus instances
+- `organism`: Manage organisms
+- `release`: Release sequences for public access
+- `schema`: Schema discovery
+- `status`: Show status of submitted sequences
+- `submit`: Submit sequences
+
 
 
 ## Development
