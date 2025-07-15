@@ -1,6 +1,7 @@
 """Main CLI entry point."""
 
 import sys
+
 import click
 from rich.console import Console
 
@@ -19,27 +20,37 @@ from .config import check_and_show_warning
 console = Console()
 
 
-def preprocess_args(args):
+def preprocess_args(args: list[str]) -> list[str]:
     """Reorder command line arguments to put global options first."""
     # Global options that should be moved to the front
-    global_options = ['--organism', '-o', '--instance', '--group', '-g', '--config', '--verbose', '-v', '--no-color']
-    
+    global_options = [
+        "--organism",
+        "-o",
+        "--instance",
+        "--group",
+        "-g",
+        "--config",
+        "--verbose",
+        "-v",
+        "--no-color",
+    ]
+
     # Find positions of global options and their values
     global_args = []
     other_args = []
     i = 0
-    
+
     while i < len(args):
         if args[i] in global_options:
             global_args.append(args[i])
             # Check if this option takes a value
-            if i + 1 < len(args) and not args[i + 1].startswith('-'):
+            if i + 1 < len(args) and not args[i + 1].startswith("-"):
                 i += 1
                 global_args.append(args[i])
         else:
             other_args.append(args[i])
         i += 1
-    
+
     return global_args + other_args
 
 
@@ -121,7 +132,7 @@ cli.add_command(status)
 cli.add_command(release)
 
 
-def main():
+def main() -> None:
     """Main entry point with argument preprocessing."""
     # Preprocess arguments to move global options to the front
     preprocessed_args = preprocess_args(sys.argv[1:])

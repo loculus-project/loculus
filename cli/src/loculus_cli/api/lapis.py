@@ -119,34 +119,40 @@ class LapisClient:
             headers = {"Accept": "text/x-fasta"}
             response = self.client.get(url, params=params, headers=headers)
             response.raise_for_status()
-            
+
             # Parse FASTA response
             fasta_data = []
             if response.text.strip():
-                lines = response.text.strip().split('\n')
+                lines = response.text.strip().split("\n")
                 current_header = None
-                current_sequence = []
-                
+                current_sequence: list[str] = []
+
                 for line in lines:
-                    if line.startswith('>'):
+                    if line.startswith(">"):
                         if current_header:
                             # Save previous sequence
-                            fasta_data.append({
-                                'accessionVersion': current_header,
-                                'alignedNucleotideSequence': ''.join(current_sequence)
-                            })
+                            fasta_data.append(
+                                {
+                                    "accessionVersion": current_header,
+                                    "alignedNucleotideSequence": "".join(
+                                        current_sequence
+                                    ),
+                                }
+                            )
                         current_header = line[1:]  # Remove '>'
                         current_sequence = []
                     else:
                         current_sequence.append(line)
-                
+
                 # Save last sequence
                 if current_header:
-                    fasta_data.append({
-                        'accessionVersion': current_header,
-                        'alignedNucleotideSequence': ''.join(current_sequence)
-                    })
-            
+                    fasta_data.append(
+                        {
+                            "accessionVersion": current_header,
+                            "alignedNucleotideSequence": "".join(current_sequence),
+                        }
+                    )
+
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             raise RuntimeError(
@@ -165,7 +171,9 @@ class LapisClient:
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get unaligned sequences from LAPIS."""
-        url = self._build_url(organism, f"/sample/unalignedNucleotideSequences/{segment}")
+        url = self._build_url(
+            organism, f"/sample/unalignedNucleotideSequences/{segment}"
+        )
 
         params = {}
         if filters:
@@ -182,34 +190,40 @@ class LapisClient:
             headers = {"Accept": "text/x-fasta"}
             response = self.client.get(url, params=params, headers=headers)
             response.raise_for_status()
-            
+
             # Parse FASTA response
             fasta_data = []
             if response.text.strip():
-                lines = response.text.strip().split('\n')
+                lines = response.text.strip().split("\n")
                 current_header = None
-                current_sequence = []
-                
+                current_sequence: list[str] = []
+
                 for line in lines:
-                    if line.startswith('>'):
+                    if line.startswith(">"):
                         if current_header:
                             # Save previous sequence
-                            fasta_data.append({
-                                'accessionVersion': current_header,
-                                'unalignedNucleotideSequence': ''.join(current_sequence)
-                            })
+                            fasta_data.append(
+                                {
+                                    "accessionVersion": current_header,
+                                    "unalignedNucleotideSequence": "".join(
+                                        current_sequence
+                                    ),
+                                }
+                            )
                         current_header = line[1:]  # Remove '>'
                         current_sequence = []
                     else:
                         current_sequence.append(line)
-                
+
                 # Save last sequence
                 if current_header:
-                    fasta_data.append({
-                        'accessionVersion': current_header,
-                        'unalignedNucleotideSequence': ''.join(current_sequence)
-                    })
-            
+                    fasta_data.append(
+                        {
+                            "accessionVersion": current_header,
+                            "unalignedNucleotideSequence": "".join(current_sequence),
+                        }
+                    )
+
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
             raise RuntimeError(

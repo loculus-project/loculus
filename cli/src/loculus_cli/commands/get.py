@@ -155,38 +155,54 @@ def sequences(
 
         # Get organism schema to check for segments
         schema = instance_config.get_organism_schema(organism)
-        
-        # Get nucleotideSequences from referenceGenomes 
+
+        # Get nucleotideSequences from referenceGenomes
         instance_info = instance_config.instance_info.get_info()
         organism_info = instance_info["organisms"].get(organism, {})
         ref_genomes = organism_info.get("referenceGenomes", {})
-        
+
         if "nucleotideSequences" in ref_genomes:
-            nucleotide_sequences = [seq["name"] for seq in ref_genomes["nucleotideSequences"]]
+            nucleotide_sequences = [
+                seq["name"] for seq in ref_genomes["nucleotideSequences"]  # type: ignore
+            ]
         else:
             # Fallback to schema if referenceGenomes not available
             nucleotide_sequences = schema.get("nucleotideSequences", ["main"])
-        
+
         # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":
             # Check if organism has multiple segments
             if len(nucleotide_sequences) > 1 and not segment:
                 available_segments = ", ".join(nucleotide_sequences)
-                console.print(f"[red]Error: Organism '{organism}' has multiple segments. Please specify --segment option.[/red]")
-                console.print(f"[yellow]Available segments: {available_segments}[/yellow]")
-                raise click.ClickException(f"Segment required for multisegmented organism '{organism}'")
-            
+                console.print(
+                    f"[red]Error: Organism '{organism}' has multiple segments. "
+                    f"Please specify --segment option.[/red]"
+                )
+                console.print(
+                    f"[yellow]Available segments: {available_segments}[/yellow]"
+                )
+                raise click.ClickException(
+                    f"Segment required for multisegmented organism '{organism}'"
+                )
+
             # Validate segment if provided
             if segment:
                 if segment not in nucleotide_sequences:
                     available_segments = ", ".join(nucleotide_sequences)
-                    console.print(f"[red]Error: Segment '{segment}' not found for organism '{organism}'.[/red]")
-                    console.print(f"[yellow]Available segments: {available_segments}[/yellow]")
-                    raise click.ClickException(f"Invalid segment '{segment}' for organism '{organism}'")
-            
+                    console.print(
+                        f"[red]Error: Segment '{segment}' not found for organism "
+                        f"'{organism}'.[/red]"
+                    )
+                    console.print(
+                        f"[yellow]Available segments: {available_segments}[/yellow]"
+                    )
+                    raise click.ClickException(
+                        f"Invalid segment '{segment}' for organism '{organism}'"
+                    )
+
             # Use the segment or default to 'main' for single-segment organisms
             segment_name = segment or "main"
-            
+
             stderr_console = get_stderr_console()
             with stderr_console.status("Fetching sequences..."):
                 if aligned:
@@ -497,11 +513,11 @@ def _display_data_table(data: list[dict[str, Any]], schema: dict[str, Any]) -> N
 
     # Prioritize columns: accessionVersion first, then tableColumns, then others
     columns_to_show = []
-    
+
     # Always show accessionVersion first if it exists
     if "accessionVersion" in all_columns:
         columns_to_show.append("accessionVersion")
-    
+
     # Add key columns from schema (skip accessionVersion if already added)
     for col in key_columns:
         if col in all_columns and col not in columns_to_show:
