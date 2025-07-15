@@ -243,7 +243,9 @@ def update_assembly_with_retry(
         update_values=update_values,
         table_name=TableName.ASSEMBLY_TABLE,
         retry_number=retry_number,
-        success_log_tmpl_str=f"{subject} for accession {{accession}} version {{version}} and DB updated!",
+        success_log_tmpl_str=(
+            f"{subject} for accession {{accession}} version {{version}} and DB updated!"
+        ),
         error_log_tmpl_str=(
             f"{subject} for accession {{accession}} version {{version}} but DB update failed"
             " after {retry_number} attempts."
