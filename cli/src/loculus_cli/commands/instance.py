@@ -19,17 +19,12 @@ console = Console()
 def instance_group(ctx: click.Context) -> None:
     """Manage Loculus instances."""
     if ctx.invoked_subcommand is None:
-        _show_instances_list()
+        ctx.invoke(list_instances)
 
 
 @instance_group.command(name="list")
 def list_instances() -> None:
     """List all configured instances."""
-    _show_instances_list()
-
-
-def _show_instances_list() -> None:
-    """Internal function to show instances list."""
     try:
         config = load_config()
 
@@ -74,11 +69,51 @@ def _show_instances_list() -> None:
         else:
             console.print("\n[yellow]No default instance set[/yellow]")
 
-        console.print("\n[dim]Usage: loculus instance use <name>[/dim]")
-        console.print("[dim]       loculus instance use --none  (to clear)[/dim]")
+        console.print("\n[dim]Usage: loculus instance select <name>[/dim]")
+        console.print("[dim]       loculus instance select --none  (to clear)[/dim]")
 
     except Exception as e:
         console.print(f"[bold red]✗ Failed to list instances:[/bold red] {e}")
+        raise click.ClickException(str(e)) from e
+
+
+@instance_group.command(name="select")
+@click.argument("name", required=False)
+@click.option("--none", is_flag=True, help="Clear the default instance")
+def select_instance(name: str | None, none: bool) -> None:
+    """Select a default instance."""
+    try:
+        config = load_config()
+
+        if none:
+            config.default_instance = None
+            save_config(config)
+            console.print("[green]✓[/green] Cleared default instance")
+        elif name:
+            if name not in config.instances:
+                console.print(f"[red]Instance '{name}' not found[/red]")
+                console.print("Available instances:")
+                for instance_name in config.instances:
+                    console.print(f"  • {instance_name}")
+                raise click.Abort()
+
+            config.default_instance = name
+            save_config(config)
+            console.print(
+                f"[green]✓[/green] Set default instance to [bold]{name}[/bold]"
+            )
+        else:
+            console.print(
+                "[red]Error: Please specify an instance name or use --none[/red]"
+            )
+            console.print("[dim]Usage: loculus instance select <name>[/dim]")
+            console.print(
+                "[dim]       loculus instance select --none  (to clear)[/dim]"
+            )
+            raise click.ClickException("Instance name required")
+
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e)) from e
 
 
@@ -162,40 +197,6 @@ def remove_instance(name: str) -> None:
 
     except Exception as e:
         console.print(f"[bold red]✗ Failed to remove instance:[/bold red] {e}")
-        raise click.ClickException(str(e)) from e
-
-
-@instance_group.command(name="use")
-@click.argument("name", required=False)
-@click.option("--none", is_flag=True, help="Clear the default instance")
-def use_instance(name: str | None, none: bool) -> None:
-    """Set or show default instance."""
-    try:
-        config = load_config()
-
-        if none:
-            config.default_instance = None
-            save_config(config)
-            console.print("[green]✓[/green] Cleared default instance")
-        elif name:
-            if name not in config.instances:
-                console.print(f"[red]Instance '{name}' not found[/red]")
-                console.print("Available instances:")
-                for instance_name in config.instances:
-                    console.print(f"  • {instance_name}")
-                raise click.Abort()
-
-            config.default_instance = name
-            save_config(config)
-            console.print(
-                f"[green]✓[/green] Set default instance to [bold]{name}[/bold]"
-            )
-        else:
-            # Show current default and available instances
-            _show_instances_list()
-
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e)) from e
 
 

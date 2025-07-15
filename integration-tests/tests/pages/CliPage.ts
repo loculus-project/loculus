@@ -138,42 +138,42 @@ export class CliPage {
      * Set default organism
      */
     async setDefaultOrganism(organism: string): Promise<CliResult> {
-        return this.execute(['organism', organism]);
+        return this.execute(['organism', 'select', organism]);
     }
 
     /**
      * Set default group
      */
     async setDefaultGroup(groupId: number): Promise<CliResult> {
-        return this.execute(['group', groupId.toString()]);
+        return this.execute(['group', 'select', groupId.toString()]);
     }
 
     /**
      * Clear default organism
      */
     async clearDefaultOrganism(): Promise<CliResult> {
-        return this.execute(['organism', '--none']);
+        return this.execute(['organism', 'select', '--none']);
     }
 
     /**
      * Clear default group
      */
     async clearDefaultGroup(): Promise<CliResult> {
-        return this.execute(['group', '--none']);
+        return this.execute(['group', 'select', '--none']);
     }
 
     /**
      * Get available organisms
      */
     async getAvailableOrganisms(): Promise<CliResult> {
-        return this.execute(['organism']);
+        return this.execute(['organism', 'list']);
     }
 
     /**
      * Get available groups
      */
     async getAvailableGroups(): Promise<CliResult> {
-        return this.execute(['group']);
+        return this.execute(['group', 'list']);
     }
 
     /**
