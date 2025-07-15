@@ -481,27 +481,20 @@ def update_assembly_results_with_latest_version(
     if len(last_version_data) == 0:
         error_msg = f"Last version {version_to_revise} not found in assembly_table"
         raise RuntimeError(error_msg)
-    update_values = {
-        "status": Status.SUBMITTED,
-        "result": json.dumps(last_version_data[0]["result"]),
-    }
-    number_rows_updated = 0
-    tries = 0
-    while number_rows_updated != 1 and tries < retry_number:
-        if tries > 0:
-            logger.warning(f"Assembly created but DB update failed - reentry DB update #{tries}.")
-        number_rows_updated = update_db_where_conditions(
-            db_config,
-            table_name=TableName.ASSEMBLY_TABLE,
-            conditions=seq_key,
-            update_values=update_values,
-        )
-        tries += 1
-    if number_rows_updated == 1:
-        logger.info(
-            f"Assembly submission for accession {seq_key['accession']} succeeded with: "
-            f"{last_version_data[0]['result']}"
-        )
+    logger.info(
+        f"Updating assembly results for accession {seq_key['accession']} version "
+        f"{seq_key['version']} using results from version {version_to_revise} as there was no"
+        "change in flatfile data."
+    )
+    update_assembly_with_retry(
+        db_config=db_config,
+        condition=seq_key,
+        update_values={
+            "status": Status.SUBMITTED,
+            "result": json.dumps(last_version_data[0]["result"]),
+        },
+        retry_number=retry_number,
+    )
 
 
 def get_project_and_sample_results(
