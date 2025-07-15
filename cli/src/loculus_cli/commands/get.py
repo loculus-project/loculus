@@ -138,7 +138,9 @@ def sequences(
                     )
                     all_data.extend(result.data)
 
-            _output_data(all_data, output_format, output, fields)
+            # Get schema for table display
+            schema = instance_config.get_organism_schema(organism)
+            _output_data(all_data, output_format, output, fields, schema)
             return
 
         # Parse fields
@@ -177,7 +179,9 @@ def sequences(
                     fields=field_list,
                 )
 
-            _output_data(data_result.data, output_format, output, fields)
+            # Get schema for table display
+            schema = instance_config.get_organism_schema(organism)
+            _output_data(data_result.data, output_format, output, fields, schema)
 
     except Exception as e:
         handle_cli_error("Search failed", e)
@@ -319,7 +323,9 @@ def stats(
                 group_by=group_by_list,
             )
 
-        _output_data(result.data, output_format, output, None)
+        # Get schema for table display
+        schema = instance_config.get_organism_schema(organism)
+        _output_data(result.data, output_format, output, None, schema)
 
     except Exception as e:
         handle_cli_error("Stats query failed", e)
@@ -333,6 +339,7 @@ def _output_data(
     output_format: str,
     output: Path | None,
     fields: str | None,
+    schema: dict[str, Any],
 ) -> None:
     """Output data in the specified format."""
     if not data:
@@ -391,7 +398,7 @@ def _output_data(
             output_text = output_buffer.getvalue()
         else:
             # Display table in console
-            _display_data_table(data)
+            _display_data_table(data, schema)
             return
 
     # Write to file or stdout
@@ -434,7 +441,7 @@ def _output_fasta(data: list[dict[str, str]], output: Path | None) -> None:
         click.echo(output_text)
 
 
-def _display_data_table(data: list[dict[str, Any]]) -> None:
+def _display_data_table(data: list[dict[str, Any]], schema: dict[str, Any]) -> None:
     """Display data as a table in the console."""
     if not data:
         return
@@ -444,23 +451,22 @@ def _display_data_table(data: list[dict[str, Any]]) -> None:
     # Get terminal width for intelligent column sizing
     terminal_width = console.size.width
 
-    # Define key columns that should always be shown
-    key_columns = [
-        "accession",
-        "version",
-        "submissionId",
-        "status",
-        "geoLocCountry",
-        "sampleCollectionDate",
-    ]
-
     # Get all available columns
     all_columns = list(data[0].keys())
 
-    # Prioritize key columns, then add others
+    # Use tableColumns from schema
+    key_columns = schema["tableColumns"]
+
+    # Prioritize columns: accessionVersion first, then tableColumns, then others
     columns_to_show = []
+    
+    # Always show accessionVersion first if it exists
+    if "accessionVersion" in all_columns:
+        columns_to_show.append("accessionVersion")
+    
+    # Add key columns from schema (skip accessionVersion if already added)
     for col in key_columns:
-        if col in all_columns:
+        if col in all_columns and col not in columns_to_show:
             columns_to_show.append(col)
 
     # Add remaining columns
@@ -506,8 +512,8 @@ def _display_data_table(data: list[dict[str, Any]]) -> None:
         for key in shown_columns:
             value = str(item.get(key, ""))
             # Truncate extremely long values
-            if len(value) > 100:
-                value = value[:97] + "..."
+            if len(value) > 20:
+                value = value[:17] + "..."
             row.append(value)
         table.add_row(*row)
 

@@ -33,3 +33,4 @@ class Schema(TypedDict):
     metadata: list[SchemaField]
     organismName: str
     primaryKey: str
+    tableColumns: list[str]
