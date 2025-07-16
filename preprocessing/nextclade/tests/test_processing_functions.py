@@ -457,9 +457,9 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="non_ascii_authors",
+        name="and_in authors",
         metadata={
-            "submissionId": "non_ascii_authors",
+            "submissionId": "and_in authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Smith, Anna; Perez, Tom J. and Xu, X.L.",
@@ -475,7 +475,7 @@ test_case_definitions = [
             ProcessingAnnotationTestCase(
                 ["authors"],
                 ["authors"],
-                "Authors list 'Smith, Anna; Perez, Tom J. and Xu, X.L.' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`.",
+                "Authors list 'Smith, Anna; Perez, Tom J. and Xu X.L.' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`.",
             ),
         ],
     ),
