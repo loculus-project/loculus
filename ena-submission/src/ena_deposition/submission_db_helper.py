@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
-from typing import Any
+from typing import Any, Final
 
 import psycopg2
 import pytz
@@ -412,7 +412,6 @@ def update_with_retry(
     conditions: dict[str, str],
     table_name: TableName,
     update_values: dict[str, Any],
-    retry_number: int = 3,
 ) -> int:
     """Update the database with retry logic.
     the conditions and update_values are dictionaries where
@@ -431,8 +430,9 @@ def update_with_retry(
             raise ValueError(msg)
         return number_rows_updated
 
+    number_of_retries: Final = 3
     retryer = Retrying(
-        stop=stop_after_attempt(retry_number),
+        stop=stop_after_attempt(number_of_retries),
         wait=wait_fixed(2),
         retry=retry_if_exception_type(ValueError),
         reraise=True,
@@ -440,16 +440,19 @@ def update_with_retry(
     )
 
     try:
+        logger.debug(
+            f"Updating {table_name} with conditions {conditions} and values {update_values}"
+        )
         result = retryer(_do_update)
         logger.info(f"{table_name} update succeeded for {conditions} with values {update_values}")
         return result
-    except Exception:
+    except Exception as e:
         error_msg = (
             f"{table_name} update failed for {conditions} with values {update_values} "
-            f"after {retry_number} attempts."
+            f"after {number_of_retries} attempts."
         )
         logger.error(error_msg)
-        raise
+        raise ValueError(error_msg) from e
 
 
 def add_to_project_table(

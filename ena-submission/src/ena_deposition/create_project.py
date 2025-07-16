@@ -3,7 +3,6 @@ import logging
 import threading
 import time
 from datetime import datetime
-from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -99,21 +98,6 @@ def construct_project_set_object(
         ),
     )
     return ProjectSet(project=[project_type])
-
-
-def update_project_with_retry(
-    db_config: SimpleConnectionPool,
-    condition: dict[str, str],
-    update_values: dict[str, Any],
-    retry_number: int = 3,
-) -> None:
-    update_with_retry(
-        db_config=db_config,
-        conditions=condition,
-        update_values=update_values,
-        table_name=TableName.PROJECT_TABLE,
-        retry_number=retry_number,
-    )
 
 
 def set_project_table_entry(db_config, config, row):
@@ -302,7 +286,6 @@ def submission_table_update(db_config: SimpleConnectionPool):
 def project_table_create(
     db_config: SimpleConnectionPool,
     config: Config,
-    retry_number: int = 3,
     test: bool = False,
 ):
     """
@@ -374,11 +357,11 @@ def project_table_create(
             logger.error(
                 f"Project creation failed for group_id {row['group_id']} organism {row['organism']}"
             )
-        update_project_with_retry(
+        update_with_retry(
             db_config=db_config,
-            condition=group_key,
+            conditions=group_key,
             update_values=update_values,
-            retry_number=retry_number,
+            table_name=TableName.PROJECT_TABLE,
         )
 
 

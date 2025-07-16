@@ -230,21 +230,6 @@ def create_manifest_object(
     return manifest
 
 
-def update_assembly_with_retry(
-    db_config: SimpleConnectionPool,
-    condition: dict[str, str],
-    update_values: dict[str, Any],
-    retry_number: int = 3,
-) -> None:
-    update_with_retry(
-        db_config=db_config,
-        conditions=condition,
-        update_values=update_values,
-        table_name=TableName.ASSEMBLY_TABLE,
-        retry_number=retry_number,
-    )
-
-
 def submission_table_start(db_config: SimpleConnectionPool):
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
@@ -332,21 +317,20 @@ def update_assembly_error(
     error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
-    retry_number: int = 3,
 ):
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
-    update_assembly_with_retry(
+    update_with_retry(
         db_config=db_config,
-        condition={"accession": seq_key["accession"], "version": seq_key["version"]},
+        conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
             "status": Status.HAS_ERRORS,
             "errors": json.dumps(error),
             "started_at": datetime.now(tz=pytz.utc),
         },
-        retry_number=retry_number,
+        table_name=TableName.ASSEMBLY_TABLE,
     )
 
 
@@ -442,9 +426,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
@@ -533,11 +515,11 @@ def assembly_table_create(
                 f"Assembly creation succeeded for {seq_key['accession']} "
                 f"version {seq_key['version']}"
             )
-            update_assembly_with_retry(
+            update_with_retry(
                 db_config=db_config,
-                condition=seq_key,
+                conditions=seq_key,
                 update_values=update_values,
-                retry_number=retry_number,
+                table_name=TableName.ASSEMBLY_TABLE,
             )
         else:
             update_assembly_error(
@@ -551,9 +533,7 @@ def assembly_table_create(
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, time_threshold: int = 5
-):
+def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_threshold: int = 5):
     """
     - time_threshold (minutes)
     1. Find all entries in assembly_table in state WAITING
@@ -603,15 +583,15 @@ def assembly_table_update(
                     f"Assembly accessioned by ENA for {seq_key['accession']} version "
                     f"{seq_key['version']}"
                 )
-            update_assembly_with_retry(
+            update_with_retry(
                 db_config=db_config,
-                condition=seq_key,
+                conditions=seq_key,
                 update_values={
                     "status": status,
                     "result": json.dumps(new_result.result),
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
-                retry_number=retry_number,
+                table_name=TableName.ASSEMBLY_TABLE,
             )
 
 
@@ -681,7 +661,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3, test=config.test)
+        assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
