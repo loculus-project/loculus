@@ -836,7 +836,7 @@ class ProcessingFunctions:
                         for field in input_fields
                     ],
                     message=(
-                        f"Authors list '{authors}' contains 'and' or '&'. This may indicate multiple authors are listed in a single entry."
+                        f"Authors list '{authors}' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                     ),
                 )
             )
