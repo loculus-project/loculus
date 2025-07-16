@@ -11,7 +11,6 @@ from unittest import mock
 
 import xmltodict
 import yaml
-from ena_deposition.config import EmblPropertyFields
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -61,10 +60,6 @@ def mock_config():
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"
     ]
-    config.embl_property_fields = EmblPropertyFields()
-    for embl_key, embl_value in defaults["embl_property_metadata_fields"].items():
-        if hasattr(config.embl_property_fields, embl_key) and embl_value is not None:
-            setattr(config.embl_property_fields, embl_key, embl_value)
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
