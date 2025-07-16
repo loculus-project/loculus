@@ -58,7 +58,7 @@ preprocessed_args = preprocess_args(sys.argv[1:])
 sys.argv = [sys.argv[0]] + preprocessed_args
 
 
-@click.group()
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
     "--instance",
     envvar="LOCULUS_INSTANCE",
