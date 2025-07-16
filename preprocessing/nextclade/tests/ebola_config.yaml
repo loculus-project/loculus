@@ -14,7 +14,7 @@ nextclade_dataset_name: nextstrain/ebola/sudan
 nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
 nucleotideSequences:
 - main
-organism: ebola-test
+organism: ebola-test2
 processing_spec:
   continent:
     args:
@@ -97,3 +97,9 @@ processing_spec:
       pattern: "^EPI_ISL_[0-9]+$"
     inputs:
       regex_field: regex_field
+  completeness:
+    args:
+      type: float
+    function: identity
+    inputs:
+      input: nextclade.coverage
