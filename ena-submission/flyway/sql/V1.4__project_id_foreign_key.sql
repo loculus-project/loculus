@@ -1,5 +1,5 @@
 -- All entries without a project_id were submitted by us and thus have an ena_submission_accession
--- We also create new projects based on the group_id and organism
+-- Projects we submitted were created based on the group_id and organism
 
 UPDATE submission_table s
 SET project_id = p.project_id
