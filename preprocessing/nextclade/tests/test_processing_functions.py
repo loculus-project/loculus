@@ -41,7 +41,7 @@ def ts_from_ymd(year: int, month: int, day: int) -> str:
 @dataclass
 class Case:
     name: str
-    metadata: dict[str, str | None]
+    input_metadata: dict[str, str | None]
     expected_metadata: dict[str, ProcessedMetadataValue]
     expected_errors: list[ProcessingAnnotationTestCase]
     expected_warnings: list[ProcessingAnnotationTestCase] | None = None
@@ -49,7 +49,7 @@ class Case:
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
-            metadata_dict=self.metadata,
+            metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
         )
         expected_output = factory_custom.create_processed_entry(
@@ -66,7 +66,7 @@ class Case:
 test_case_definitions = [
     Case(
         name="missing_required_fields",
-        metadata={"submissionId": "missing_required_fields"},
+        input_metadata={"submissionId": "missing_required_fields"},
         accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=[
@@ -82,7 +82,7 @@ test_case_definitions = [
     ),
     Case(
         name="missing_one_required_field",
-        metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
         accession_id="1",
         expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
         expected_errors=[
@@ -95,7 +95,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_option",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_option",
             "continent": "Afrika",
             "name_required": "name",
@@ -117,7 +117,7 @@ test_case_definitions = [
     ),
     Case(
         name="collection_date_in_future",
-        metadata={
+        input_metadata={
             "submissionId": "collection_date_in_future",
             "collection_date": "2088-12-01",
             "name_required": "name",
@@ -140,7 +140,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_collection_date",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_collection_date",
             "collection_date": "01-02-2024",
             "name_required": "name",
@@ -162,7 +162,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_timestamp",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_timestamp",
             "sequenced_timestamp": " 2022-11-01Europe",
             "name_required": "name",
@@ -187,7 +187,7 @@ test_case_definitions = [
     ),
     Case(
         name="date_only_year",
-        metadata={
+        input_metadata={
             "submissionId": "date_only_year",
             "collection_date": "2023",
             "name_required": "name",
@@ -214,7 +214,7 @@ test_case_definitions = [
     ),
     Case(
         name="regex_match",
-        metadata={
+        input_metadata={
             "submissionId": "date_only_year",
             "collection_date": "2023-01-01",
             "name_required": "name",
@@ -234,7 +234,7 @@ test_case_definitions = [
     ),
     Case(
         name="regex_match",
-        metadata={
+        input_metadata={
             "submissionId": "date_only_year",
             "collection_date": "2023-01-01",
             "name_required": "name",
@@ -260,7 +260,7 @@ test_case_definitions = [
     ),
     Case(
         name="date_no_day",
-        metadata={
+        input_metadata={
             "submissionId": "date_no_day",
             "collection_date": "2023-12",
             "name_required": "name",
@@ -284,7 +284,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_int",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_int",
             "age_int": "asdf",
             "name_required": "name",
@@ -304,7 +304,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_float",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_float",
             "percentage_float": "asdf",
             "name_required": "name",
@@ -326,7 +326,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_date",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_date",
             "name_required": "name",
             "other_date": "01-02-2024",
@@ -351,7 +351,7 @@ test_case_definitions = [
     ),
     Case(
         name="invalid_boolean",
-        metadata={
+        input_metadata={
             "submissionId": "invalid_boolean",
             "name_required": "name",
             "is_lab_host_bool": "maybe",
@@ -373,7 +373,7 @@ test_case_definitions = [
     ),
     Case(
         name="warn_potential_author_error",
-        metadata={
+        input_metadata={
             "submissionId": "warn_potential_author_error",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -397,7 +397,7 @@ test_case_definitions = [
     ),
     Case(
         name="non_ascii_authors",
-        metadata={
+        input_metadata={
             "submissionId": "non_ascii_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -419,7 +419,7 @@ test_case_definitions = [
     ),
     Case(
         name="nan_float",
-        metadata={
+        input_metadata={
             "submissionId": "nan_float",
             "percentage_float": "NaN",
             "name_required": "name",
@@ -436,7 +436,7 @@ test_case_definitions = [
     ),
     Case(
         name="infinity_float",
-        metadata={
+        input_metadata={
             "submissionId": "infinity_float",
             "percentage_float": "Infinity",
             "name_required": "name",
@@ -458,7 +458,7 @@ test_case_definitions = [
     ),
     Case(
         name="and_in_authors",
-        metadata={
+        input_metadata={
             "submissionId": "and_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
@@ -469,6 +469,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J. and Xu X.L.",
         },
         expected_errors=[],
         expected_warnings=[
