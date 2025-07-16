@@ -229,8 +229,8 @@ def handle_helm():  # noqa: C901
     ]
 
     if args.values:
-        for vf in args.values:
-            parameters += ["-f", vf]
+        for values_file in args.values:
+            parameters += ["-f", values_file]
 
     parameters += [
         "--set",
