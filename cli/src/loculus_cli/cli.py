@@ -57,6 +57,7 @@ def preprocess_args(args: list[str]) -> list[str]:
 preprocessed_args = preprocess_args(sys.argv[1:])
 sys.argv = [sys.argv[0]] + preprocessed_args
 
+
 @click.group()
 @click.option(
     "--instance",
@@ -134,3 +135,7 @@ cli.add_command(schema_group)
 cli.add_command(status)
 cli.add_command(release)
 
+
+def main() -> None:
+    """Main entry point for the CLI."""
+    cli()
