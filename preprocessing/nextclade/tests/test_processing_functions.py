@@ -456,6 +456,29 @@ test_case_definitions = [
             ),
         ],
     ),
+    Case(
+        name="non_ascii_authors",
+        metadata={
+            "submissionId": "non_ascii_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J. and Xu, X.L.",
+        },
+        accession_id="16",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_16.1/2022-11-01",
+        },
+        expected_errors=[],
+        expected_warnings=[
+            ProcessingAnnotationTestCase(
+                ["authors"],
+                ["authors"],
+                "Authors list 'Smith, Anna; Perez, Tom J. and Xu, X.L.' contains 'and' or '&'. This may indicate multiple authors are listed in a single entry.",
+            ),
+        ],
+    ),
 ]
 
 accepted_authors = {

@@ -55,6 +55,10 @@ def invalid_value_annotation(
     )
 
 
+def warn_if_and_in_authors(authors: str) -> bool:
+    return bool(" and " in authors or " & " in authors)
+
+
 def valid_authors(authors: str) -> bool:
     alpha = r"\s*[a-zA-Z]"
     name_chars = r"[a-zA-Z\s\.\-\']*"
@@ -821,7 +825,21 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-
+        if warn_if_and_in_authors(authors):
+            warnings.append(
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=(
+                        f"Authors list '{authors}' contains 'and' or '&'. This may indicate multiple authors are listed in a single entry."
+                    ),
+                )
+            )
         error_message = (
             f"The authors list '{authors}' is not in a recognized format. "
             + author_format_description
