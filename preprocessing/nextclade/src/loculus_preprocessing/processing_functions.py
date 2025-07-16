@@ -82,6 +82,11 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
 
 
+def reformat_authors_from_latin_to_ascii(authors: str) -> str:
+    ascii_authors = unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
+    return ascii_authors
+
+
 def check_latin_characters(
     authors: str, input_fields: list[str], output_field: str
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -126,7 +131,7 @@ def check_latin_characters(
                     for field in input_fields
                 ],
                 message=(
-                    f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition."
+                    f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition. The 'authors' field will be reformatted to: {reformat_authors_from_latin_to_ascii(authors)}"
                 ),
             )
         ]
