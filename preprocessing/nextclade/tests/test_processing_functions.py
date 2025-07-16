@@ -535,9 +535,18 @@ not_accepted_authors = [
 ]
 
 
-@pytest.fixture(scope="module")
-def factory_custom(config: Config):
-    return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+CONFIGS = {
+    "no_alignment": NO_ALIGNMENT_CONFIG,
+    "nextclade": SINGLE_SEGMENT_CONFIG,
+}
+
+
+@pytest.fixture(scope="function")
+def factory_custom(request):
+    config_key = getattr(request, "param", "no_alignment")
+    config_val = CONFIGS[config_key]
+    config = get_config(config_val)
+    return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys())), config
 
 
 def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
@@ -591,17 +600,10 @@ def verify_processed_entry(
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
-def test_preprocessing(test_case_def: Case, factory_custom: ProcessedEntryFactory):
-    test_case = test_case_def.create_test_case(factory_custom)
-    config = get_config(NO_ALIGNMENT_CONFIG)
-    processed_entry = process_single_entry(test_case, config)
-    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
-
-
-@pytest.mark.parametrize("nextclade_case_def", test_case_definitions, ids=lambda tc: tc.name)
-def test_preprocessing_nextclade(nextclade_case_def: Case, factory_custom: ProcessedEntryFactory):
-    test_case = nextclade_case_def.create_test_case(factory_custom)
-    config = get_config(SINGLE_SEGMENT_CONFIG, dataset_dir="ebola-test-dataset")
+@pytest.mark.parametrize("factory_custom", ["no_alignment"], indirect=True)
+def test_preprocessing(test_case_def: Case, factory_custom):
+    factory, config = factory_custom
+    test_case = test_case_def.create_test_case(factory)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
@@ -650,14 +652,13 @@ def test_preprocessing_with_single_sequences():
                 "ncbi_required_collection_date": "2024-01-01",
                 "name_required": sequence_name,
             },
-            unalignedNucleotideSequences={sequence},
+            unalignedNucleotideSequences={"main": sequence},
         ),
     )
 
     config = get_config(SINGLE_SEGMENT_CONFIG)
-    config.nucleotideSequences = []
-
-    result = process_all([sequence_entry_data], "temp_dataset_dir", config)
+    result = process_all([sequence_entry_data], "tests/ebola-test-dataset", config)
+    print(f"Result: {result}")
     processed_entry = result[0]
 
     assert processed_entry.errors == []
@@ -665,8 +666,18 @@ def test_preprocessing_with_single_sequences():
     assert processed_entry.data.metadata["name_required"] == sequence_name
     assert processed_entry.data.unalignedNucleotideSequences == {"main": sequence}
     assert processed_entry.data.alignedNucleotideSequences == {"main": sequence}
-    assert processed_entry.data.nucleotideInsertions == {}
-    assert processed_entry.data.alignedAminoAcidSequences == {}
+    assert processed_entry.data.nucleotideInsertions == {"main": []}
+    assert processed_entry.data.alignedAminoAcidSequences.keys() == {
+        "NP",
+        "VP35",
+        "VP40",
+        "GP",
+        "sGP",
+        "ssGP",
+        "VP30",
+        "VP24",
+        "L",
+    }
     assert processed_entry.data.aminoAcidInsertions == {}
 
 
