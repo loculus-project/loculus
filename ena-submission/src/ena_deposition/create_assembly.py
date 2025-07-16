@@ -24,6 +24,7 @@ from .ena_submission_helper import (
     get_molecule_type,
 )
 from .ena_types import (
+    DEFAULT_EMBL_PROPERTY_FIELDS,
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
@@ -401,9 +402,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     return True
 
 
-def is_flatfile_data_changed(
-    config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]
-) -> bool:
+def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
     """
     Check if no change in sequence or flatfile metadata has occurred since last version.
     """
@@ -429,10 +428,10 @@ def is_flatfile_data_changed(
         return False
 
     fields = [
-        config.embl_property_fields.country_property,
-        config.embl_property_fields.collection_date_property,
-        config.embl_property_fields.authors_property,
-        *config.embl_property_fields.admin_level_properties,
+        DEFAULT_EMBL_PROPERTY_FIELDS.country_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.authors_property,
+        *DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties,
     ]
     for field in fields:
         last_entry = last_version_data[0]["metadata"].get(field)
@@ -543,7 +542,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
                 continue
-            if is_flatfile_data_changed(config, db_config, sample_data_in_submission_table[0]):
+            if is_flatfile_data_changed(db_config, sample_data_in_submission_table[0]):
                 update_assembly_results_with_latest_version(db_config, seq_key)
                 continue
 

@@ -10,14 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class EmblPropertyFields:
-    country_property: str | None = None
-    admin_level_properties: list[str] = field(default_factory=list)
-    collection_date_property: str | None = None
-    authors_property: str | None = None
-
-
-@dataclass
 class Config:
     test: bool
     organisms: dict[str, dict[str, Any]]
@@ -61,7 +53,6 @@ class Config:
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
-    embl_property_fields: EmblPropertyFields = field(default_factory=EmblPropertyFields)
 
 
 def secure_ena_connection(config: Config):
@@ -98,14 +89,6 @@ def get_config(config_file: str) -> Config:
     for key, value in defaults.items():
         if key not in full_config:
             full_config[key] = value
-    embl_properties = EmblPropertyFields()
-    if full_config.get("embl_property_metadata_fields") and isinstance(
-        full_config["embl_property_metadata_fields"], dict
-    ):
-        for embl_key, embl_value in full_config["embl_property_metadata_fields"].items():
-            if embl_key in EmblPropertyFields.__annotations__ and embl_value is not None:
-                setattr(embl_properties, embl_key, embl_value)
-    full_config["embl_property_fields"] = embl_properties
 
     relevant_config = {key: full_config.get(key) for key in Config.__annotations__}
 

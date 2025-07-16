@@ -31,9 +31,10 @@ from tenacity import (
     wait_fixed,
 )
 
-from ena_deposition.config import Config, EmblPropertyFields
+from ena_deposition.config import Config
 
 from .ena_types import (
+    DEFAULT_EMBL_PROPERTY_FIELDS,
     Action,
     Actions,
     AssemblyChromosomeListFile,
@@ -398,21 +399,20 @@ def get_authors(authors: str) -> str:
     return authors
 
 
-def get_country(metadata: dict[str, str], properties: EmblPropertyFields) -> str:
-    country_field = properties.country_property or ""
-    country = metadata.get(country_field, "Unknown")
-    admin_levels = properties.admin_level_properties or []
-    admin_values = [val for level in admin_levels if (val := metadata.get(level))]
-    admin = ", ".join(admin_values)
-    return f"{country}: {admin}" if admin else country
+def get_country(metadata: dict[str, str]) -> str:
+    country = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.country_property, "Unknown")
+    admin_values = ", ".join(
+        filter(None, map(metadata.get, DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties))
+    )
+    return f"{country}: {admin_values}" if admin_values else country
 
 
 def create_flatfile(
     config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
 ):
-    collection_date = metadata.get(config.embl_property_fields.collection_date_property, "Unknown")
-    authors = get_authors(metadata.get(config.embl_property_fields.authors_property) or "")
-    country = get_country(metadata, config.embl_property_fields)
+    collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
+    authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
+    country = get_country(metadata)
     organism = organism_metadata.get("scientific_name", "Unknown")
     accession = metadata["accession"]
     description = get_description(config, metadata)
