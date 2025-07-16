@@ -404,7 +404,7 @@ def get_country(metadata: dict[str, str]) -> str:
     admin = ", ".join(
         filter(None, map(metadata.get, DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties))
     )
-    return f"{country}: {admin}" if admin_values else country
+    return f"{country}: {admin}" if admin else country
 
 
 def create_flatfile(
