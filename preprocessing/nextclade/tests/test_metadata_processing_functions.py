@@ -390,6 +390,13 @@ test_case_definitions = [
                 "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
         ],
+        expected_warnings=[
+            ProcessingAnnotationTestCase(
+                ["authors"],
+                ["authors"],
+                "Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition.",
+            ),
+        ],
     ),
 #    Case(
 #        name="non_ascii_authors",

@@ -111,6 +111,22 @@ def check_latin_characters(
                 )
             ]
             return (errors, warnings)
+        if ascii_equiv:
+            warnings = [
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=(
+                        f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition."
+                    ),
+                )
+            ]
+            return (errors, warnings)
     return (errors, warnings)
 
 
