@@ -61,18 +61,19 @@ sys.argv = [sys.argv[0]] + preprocessed_args
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
     "--instance",
+    "-I",
     envvar="LOCULUS_INSTANCE",
     help="Loculus instance URL (e.g., main.loculus.org)",
 )
 @click.option(
     "--organism",
-    "-o",
+    "-O",
     envvar="LOCULUS_ORGANISM",
     help="Organism name (e.g., 'Mpox', 'H5N1')",
 )
 @click.option(
     "--group",
-    "-g",
+    "-G",
     type=int,
     envvar="LOCULUS_GROUP",
     help="Group ID for operations",
