@@ -821,7 +821,10 @@ class ProcessingFunctions:
                     errors=errors,
                 )
             if warn_if_and_in_authors(authors):
-                warnings.append(
+                warning_message = (
+                    f"Authors list '{authors}' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+                warnings = [
                     ProcessingAnnotation(
                         processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -830,11 +833,9 @@ class ProcessingFunctions:
                             AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
                             for field in input_fields
                         ],
-                        message=(
-                            f"Authors list '{authors}' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
-                        ),
+                        message=warning_message,
                     )
-                )
+                ]
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
