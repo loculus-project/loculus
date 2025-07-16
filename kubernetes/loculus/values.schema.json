@@ -602,16 +602,18 @@
           "description": "TODO"
         },
         "referenceGenomes": {
+          "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "The reference genome by the suborganism name (or the organism name if there are no suborganisms)",
+          "description": "An object where the keys are the suborganism names (or the organism name if there are no suborganisms) and the values are a [Reference Genome (type)](#reference-genome)",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
                 "nucleotideSequences": {
-                  "groups": ["organism"],
+                  "groups": ["reference-genome"],
+                  "docsIncludePrefix": false,
                   "type": "array",
                   "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
                   "items": {
@@ -640,7 +642,8 @@
                   }
                 },
                 "genes": {
-                  "groups": ["organism"],
+                  "groups": ["reference-genome"],
+                  "docsIncludePrefix": false,
                   "type": "array",
                   "description": "Array of [Gene (type)](#gene-type)",
                   "items": {
