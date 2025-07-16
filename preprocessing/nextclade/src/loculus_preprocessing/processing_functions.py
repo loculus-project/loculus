@@ -95,6 +95,8 @@ def check_latin_characters(
         # Normalize the character (NFKD) and attempt to encode to ASCII, ignoring diacritics.
         decomposed = unicodedata.normalize("NFKD", char)
         ascii_equiv = decomposed.encode("ascii", "ignore").decode("ascii")
+        counter = 0
+        # Not ASCII, not Latin
         if char.isalpha() and not ascii_equiv:
             errors = [
                 ProcessingAnnotation(
@@ -111,22 +113,23 @@ def check_latin_characters(
                 )
             ]
             return (errors, warnings)
-        if ascii_equiv:
-            warnings = [
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
-                    message=(
-                        f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition."
-                    ),
-                )
-            ]
-            return (errors, warnings)
+        if char.isalpha() and ascii_equiv:
+            counter += 1
+    if counter > 0:
+        warnings = [
+            ProcessingAnnotation(
+                processedFields=[
+                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                ],
+                unprocessedFields=[
+                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                    for field in input_fields
+                ],
+                message=(
+                    f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition."
+                ),
+            )
+        ]
     return (errors, warnings)
 
 
