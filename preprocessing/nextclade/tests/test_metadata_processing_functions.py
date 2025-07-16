@@ -410,7 +410,7 @@ test_case_definitions = [
             ProcessingAnnotationTestCase(
                 ["authors"],
                 ["authors"],
-                "Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition.",
+                "Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition. The authors field will be reformatted to: Perez, Jose; Bailley, Francois",
             ),
         ],
     ),
