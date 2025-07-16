@@ -599,8 +599,8 @@ def test_preprocessing(test_case_def: Case, factory_custom: ProcessedEntryFactor
 
 
 @pytest.mark.parametrize("nextclade_case_def", test_case_definitions, ids=lambda tc: tc.name)
-def test_preprocessing_nextclade(test_case_def: Case, factory_custom: ProcessedEntryFactory):
-    test_case = test_case_def.create_test_case(factory_custom)
+def test_preprocessing_nextclade(nextclade_case_def: Case, factory_custom: ProcessedEntryFactory):
+    test_case = nextclade_case_def.create_test_case(factory_custom)
     config = get_config(SINGLE_SEGMENT_CONFIG, dataset_dir="ebola-test-dataset")
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
