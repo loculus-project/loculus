@@ -401,10 +401,10 @@ def get_authors(authors: str) -> str:
 
 def get_country(metadata: dict[str, str]) -> str:
     country = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.country_property, "Unknown")
-    admin_values = ", ".join(
+    admin = ", ".join(
         filter(None, map(metadata.get, DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties))
     )
-    return f"{country}: {admin_values}" if admin_values else country
+    return f"{country}: {admin}" if admin_values else country
 
 
 def create_flatfile(
