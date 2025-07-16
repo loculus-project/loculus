@@ -1,0 +1,68 @@
+{
+  "alignmentParams": {
+    "excessBandwidth": 100,
+    "terminalBandwidth": 300,
+    "allowedMismatches": 10,
+    "windowSize": 40,
+    "minSeedCover": 0.03,
+    "gapAlignmentSide": "left"
+  },
+  "attributes": {
+    "name": "Ebolavirus Sudan",
+    "reference accession": "NC_006432.1",
+    "reference name": "UGA/2000/Gulu-808892"
+  },
+  "compatibility": {
+    "cli": "3.0.0-alpha.0",
+    "web": "3.0.0-alpha.0"
+  },
+  "deprecated": false,
+  "enabled": true,
+  "experimental": true,
+  "files": {
+    "genomeAnnotation": "genome_annotation.gff3",
+    "pathogenJson": "pathogen.json",
+    "reference": "reference.fasta"
+  },
+  "official": true,
+  "qc": {
+    "frameShifts": {
+      "enabled": true,
+      "ignoredFrameShifts": [
+      ],
+      "scoreWeight": 20
+    },
+    "missingData": {
+      "enabled": true,
+      "missingDataThreshold": 3000,
+      "scoreBias": 500
+    },
+    "mixedSites": {
+      "enabled": true,
+      "mixedSitesThreshold": 40
+    },
+    "privateMutations": {
+      "cutoff": 300,
+      "enabled": true,
+      "typical": 50,
+      "weightLabeledSubstitutions": 6,
+      "weightReversionSubstitutions": 6,
+      "weightUnlabeledSubstitutions": 1
+    },
+    "snpClusters": {
+      "clusterCutOff": 10,
+      "enabled": false,
+      "scoreWeight": 10,
+      "windowSize": 100
+    },
+    "stopCodons": {
+      "enabled": true,
+      "ignoredStopCodons": [
+      ],
+      "scoreWeight": 20
+    }
+  },
+  "schemaVersion": "3.0.0",
+  "shortcuts": [
+  ]
+}
