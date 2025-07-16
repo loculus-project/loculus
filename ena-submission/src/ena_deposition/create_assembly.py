@@ -451,7 +451,7 @@ def is_flatfile_data_changed(
 
 
 def update_assembly_results_with_latest_version(
-    db_config: SimpleConnectionPool, seq_key: dict[str, Any], retry_number: int = 3
+    db_config: SimpleConnectionPool, seq_key: dict[str, Any]
 ):
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
@@ -470,14 +470,14 @@ def update_assembly_results_with_latest_version(
         f"{seq_key['version']} using results from version {version_to_revise} as there was no"
         "change in flatfile data."
     )
-    update_assembly_with_retry(
+    update_with_retry(
         db_config=db_config,
-        condition=seq_key,
+        conditions=seq_key,
         update_values={
             "status": Status.SUBMITTED,
             "result": json.dumps(last_version_data[0]["result"]),
         },
-        retry_number=retry_number,
+        table_name=TableName.ASSEMBLY_TABLE,
     )
 
 
@@ -544,9 +544,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
                 continue
             if is_flatfile_data_changed(config, db_config, sample_data_in_submission_table[0]):
-                update_assembly_results_with_latest_version(
-                    db_config, seq_key, retry_number=retry_number
-                )
+                update_assembly_results_with_latest_version(db_config, seq_key)
                 continue
 
         try:
