@@ -715,7 +715,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_assembly stopped due to exception in another task")
+            logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
         submission_table_start(db_config)

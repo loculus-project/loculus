@@ -26,8 +26,12 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--input-file",
     type=click.Path(exists=True),
+    help=(
+        "(for debugging) Path to a file containing submission data. "
+        "If provided, the script will trigger submission from this file."
+    ),
 )
-def run(config_file: str, input_file: str) -> None:
+def run(config_file: str, input_file: str | None) -> None:
     logging.basicConfig(
         encoding="utf-8",
         level=logging.INFO,
@@ -37,7 +41,7 @@ def run(config_file: str, input_file: str) -> None:
 
     config: Config = get_config(config_file)
     logging.getLogger().setLevel(config.log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
+    logging.getLogger("requests").setLevel(logging.INFO)  # For requests, debug level is too verbose
     logger.info(f"Config: {config}")
 
     if input_file:
@@ -57,8 +61,10 @@ def run(config_file: str, input_file: str) -> None:
         for future in concurrent.futures.as_completed(futures):
             try:
                 future.result()
-            except Exception as e:
-                print(f"Task generated an exception: {e}")
+            except concurrent.futures.CancelledError:
+                logger.debug("A task was cancelled")
+            except Exception:
+                logger.exception("Task generated an exception")
                 stop_event.set()  # Set the stop_event to notify other threads
                 for f in futures:
                     if not f.done():
