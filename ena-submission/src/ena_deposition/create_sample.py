@@ -4,7 +4,6 @@ import re
 import threading
 import time
 from datetime import datetime
-from typing import Any
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
@@ -195,21 +194,6 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
         )
 
 
-def update_sample_with_retry(
-    db_config: SimpleConnectionPool,
-    condition: dict[str, str],
-    update_values: dict[str, Any],
-    retry_number: int = 3,
-) -> None:
-    update_with_retry(
-        db_config=db_config,
-        conditions=condition,
-        update_values=update_values,
-        table_name=TableName.SAMPLE_TABLE,
-        retry_number=retry_number,
-    )
-
-
 def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     """
     1. Find all entries in submission_table in state SUBMITTED_PROJECT
@@ -295,7 +279,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = int(seq_key["version"])
     accession = {"accession": seq_key["accession"]}
@@ -314,19 +298,17 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             f"Sample creation failed for {seq_key['accession']} version {version} "
             "as it is not the latest version."
         )
-        update_sample_with_retry(
+        update_with_retry(
             db_config=db_config,
-            condition=seq_key,
+            conditions=seq_key,
             update_values=update_values,
-            retry_number=retry_number,
+            table_name=TableName.SAMPLE_TABLE,
         )
         return True
     return False
 
 
-def sample_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -349,7 +331,7 @@ def sample_table_create(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
 
-        if is_old_version(db_config, seq_key, retry_number=3):
+        if is_old_version(db_config, seq_key):
             continue
 
         sample_set = construct_sample_set_object(
@@ -394,11 +376,11 @@ def sample_table_create(
             logger.error(
                 f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
             )
-        update_sample_with_retry(
+        update_with_retry(
             db_config=db_config,
-            condition=seq_key,
+            conditions=seq_key,
             update_values=update_values,
-            retry_number=retry_number,
+            table_name=TableName.SAMPLE_TABLE,
         )
 
 

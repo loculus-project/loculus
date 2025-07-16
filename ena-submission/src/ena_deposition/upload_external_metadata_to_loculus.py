@@ -20,7 +20,7 @@ from .submission_db_helper import (
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
-    update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -82,9 +82,7 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
     return data
 
 
-def get_external_metadata_and_send_to_loculus(
-    db_config: SimpleConnectionPool, config: Config, retry_number=3
-):
+def get_external_metadata_and_send_to_loculus(db_config: SimpleConnectionPool, config: Config):
     # Get external metadata
     conditions = {"status_all": StatusAll.SUBMITTED_ALL}
     submitted_all = find_conditions_in_db(
@@ -101,50 +99,27 @@ def get_external_metadata_and_send_to_loculus(
                 config,
                 entry["organism"],
             )
-            update_values = {
-                "status_all": StatusAll.SENT_TO_LOCULUS,
-                "finished_at": datetime.now(tz=pytz.utc),
-                "external_metadata": json.dumps(data["externalMetadata"]),
-            }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"External Metadata Update succeeded but db update failed - "
-                        f"reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(f"External metadata update for {entry['accession']} succeeded!")
-        except Exception:
-            logger.error(f"ExternalMetadata update failed for {accession}")
-            update_values = {
-                "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
-                "started_at": datetime.now(tz=pytz.utc),
-            }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"External metadata update creation failed and DB update failed - "
-                        f"reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            update_with_retry(
+                db_config,
+                conditions=seq_key,
+                update_values={
+                    "status_all": StatusAll.SENT_TO_LOCULUS,
+                    "finished_at": datetime.now(tz=pytz.utc),
+                    "external_metadata": json.dumps(data["externalMetadata"]),
+                },
+                table_name=TableName.SUBMISSION_TABLE,
+            )
+        except Exception as e:
+            logger.exception(f"Error submitting external metadata for {accession}: {e}")
+            update_with_retry(
+                db_config=db_config,
+                conditions=seq_key,
+                update_values={
+                    "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
+                    "started_at": datetime.now(tz=pytz.utc),
+                },
+                table_name=TableName.SUBMISSION_TABLE,
+            )
             continue
 
 
