@@ -38,6 +38,7 @@ from .submission_db_helper import (
     find_errors_in_db,
     is_revision,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -278,7 +279,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = int(seq_key["version"])
     accession = {"accession": seq_key["accession"]}
@@ -293,28 +294,21 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "errors": json.dumps(["Revision version is not the latest version"]),
             "started_at": datetime.now(tz=pytz.utc),
         }
-        number_rows_updated = 0
-        tries = 0
-        while number_rows_updated != 1 and tries < retry_number:
-            if tries > 0:
-                # If state not correctly added retry
-                logger.warning(
-                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                )
-            number_rows_updated = update_db_where_conditions(
-                db_config,
-                table_name=TableName.SAMPLE_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-            tries += 1
+        logger.error(
+            f"Sample creation failed for {seq_key['accession']} version {version} "
+            "as it is not the latest version."
+        )
+        update_with_retry(
+            db_config=db_config,
+            conditions=seq_key,
+            update_values=update_values,
+            table_name=TableName.SAMPLE_TABLE,
+        )
         return True
     return False
 
 
-def sample_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -337,7 +331,7 @@ def sample_table_create(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
 
-        if is_old_version(db_config, seq_key, retry_number=3):
+        if is_old_version(db_config, seq_key):
             continue
 
         sample_set = construct_sample_set_object(
@@ -370,47 +364,24 @@ def sample_table_create(
                 "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"Sample created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Sample creation for accession {row['accession']} "
-                    f"succeeded with: {sample_creation_results.result}"
-                )
+            logger.info(
+                f"Sample creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+            )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            logger.error(
+                f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
+            )
+        update_with_retry(
+            db_config=db_config,
+            conditions=seq_key,
+            update_values=update_values,
+            table_name=TableName.SAMPLE_TABLE,
+        )
 
 
 def sample_table_handle_errors(

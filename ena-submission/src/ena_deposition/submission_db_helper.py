@@ -5,12 +5,19 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
-from typing import Any
+from typing import Any, Final
 
 import psycopg2
 import pytz
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -398,6 +405,54 @@ def update_db_where_conditions(
     finally:
         db_conn_pool.putconn(con)
     return updated_row_count
+
+
+def update_with_retry(
+    db_config: SimpleConnectionPool,
+    conditions: dict[str, str],
+    table_name: TableName,
+    update_values: dict[str, Any],
+) -> int:
+    """Update the database with retry logic.
+    the conditions and update_values are dictionaries where
+    keys are column names and values are the new values to set.
+    they will be added to the log message."""
+
+    def _do_update():
+        number_rows_updated = update_db_where_conditions(
+            db_config,
+            table_name=table_name,
+            conditions=conditions,
+            update_values=update_values,
+        )
+        if number_rows_updated != 1:
+            msg = f"{table_name} update failed"
+            raise ValueError(msg)
+        return number_rows_updated
+
+    number_of_retries: Final = 3
+    retryer = Retrying(
+        stop=stop_after_attempt(number_of_retries),
+        wait=wait_fixed(2),
+        retry=retry_if_exception_type(ValueError),
+        reraise=True,
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+    )
+
+    try:
+        logger.debug(
+            f"Updating {table_name} with conditions {conditions} and values {update_values}"
+        )
+        result = retryer(_do_update)
+        logger.info(f"{table_name} update succeeded for {conditions} with values {update_values}")
+        return result
+    except Exception as e:
+        error_msg = (
+            f"{table_name} update failed for {conditions} with values {update_values} "
+            f"after {number_of_retries} attempts."
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
 
 
 def add_to_project_table(

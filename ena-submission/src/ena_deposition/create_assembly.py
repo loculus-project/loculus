@@ -44,6 +44,7 @@ from .submission_db_helper import (
     is_revision,
     last_version,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -316,40 +317,21 @@ def update_assembly_error(
     error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
-    retry_number: int = 3,
 ):
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
-    update_values = {
-        "status": Status.HAS_ERRORS,
-        "errors": json.dumps(error),
-        "started_at": datetime.now(tz=pytz.utc),
-    }
-    number_rows_updated = 0
-    tries = 0
-    while number_rows_updated != 1 and tries < retry_number:
-        if tries > 0:
-            # If state not correctly added retry
-            logger.warning(
-                f"While writing assembly creation error to db: DB update failed - "
-                f"reentry DB update Retry attempt: #{tries}."
-            )
-        number_rows_updated = update_db_where_conditions(
-            db_config,
-            table_name=TableName.ASSEMBLY_TABLE,
-            conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
-            update_values=update_values,
-        )
-        tries += 1
-
-    if number_rows_updated != 1:
-        error_msg = (
-            f"Assembly {update_type} failed for accession {seq_key['accession']} "
-            f"version {seq_key['version']}. DB update failed after {retry_number} attempts."
-        )
-        logger.error(error_msg)
+    update_with_retry(
+        db_config=db_config,
+        conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
+        update_values={
+            "status": Status.HAS_ERRORS,
+            "errors": json.dumps(error),
+            "started_at": datetime.now(tz=pytz.utc),
+        },
+        table_name=TableName.ASSEMBLY_TABLE,
+    )
 
 
 def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
@@ -444,9 +426,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
@@ -531,25 +511,16 @@ def assembly_table_create(
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.result),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"Assembly created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.ASSEMBLY_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded with: "
-                    f"{assembly_creation_results.result}"
-                )
+            logger.info(
+                f"Assembly creation succeeded for {seq_key['accession']} "
+                f"version {seq_key['version']}"
+            )
+            update_with_retry(
+                db_config=db_config,
+                conditions=seq_key,
+                update_values=update_values,
+                table_name=TableName.ASSEMBLY_TABLE,
+            )
         else:
             update_assembly_error(
                 db_config,
@@ -562,9 +533,7 @@ def assembly_table_create(
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, time_threshold: int = 5
-):
+def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_threshold: int = 5):
     """
     - time_threshold (minutes)
     1. Find all entries in assembly_table in state WAITING
@@ -603,56 +572,27 @@ def assembly_table_update(
             if not (result_contains_gca_accession and result_contains_insdc_accession):
                 if previous_result == new_result.result:
                     continue
-                update_values = {
-                    "status": Status.WAITING,
+                status = Status.WAITING
+                logger.info(
+                    f"Assembly partially accessioned by ENA for {seq_key['accession']} "
+                    f"version {seq_key['version']}"
+                )
+            else:
+                status = Status.SUBMITTED
+                logger.info(
+                    f"Assembly accessioned by ENA for {seq_key['accession']} version "
+                    f"{seq_key['version']}"
+                )
+            update_with_retry(
+                db_config=db_config,
+                conditions=seq_key,
+                update_values={
+                    "status": status,
                     "result": json.dumps(new_result.result),
                     "finished_at": datetime.now(tz=pytz.utc),
-                }
-                number_rows_updated = 0
-                tries = 0
-                while number_rows_updated != 1 and tries < retry_number:
-                    if tries > 0:
-                        logger.warning(
-                            f"Assembly partially in ENA but DB update failed - "
-                            f"reentry DB update #{tries}."
-                        )
-                    number_rows_updated = update_db_where_conditions(
-                        db_config,
-                        table_name=TableName.ASSEMBLY_TABLE,
-                        conditions=seq_key,
-                        update_values=update_values,
-                    )
-                    tries += 1
-                if number_rows_updated == 1:
-                    logger.info(
-                        f"Partial results of assembly submission for accession "
-                        f"{row['accession']} returned!"
-                    )
-                continue
-            update_values = {
-                "status": Status.SUBMITTED,
-                "result": json.dumps(new_result.result),
-                "finished_at": datetime.now(tz=pytz.utc),
-            }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"Assembly in ENA but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.ASSEMBLY_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded "
-                    f"and accession returned: {update_values}!"
-                )
+                },
+                table_name=TableName.ASSEMBLY_TABLE,
+            )
 
 
 def assembly_table_handle_errors(
@@ -721,7 +661,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3, test=config.test)
+        assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)
