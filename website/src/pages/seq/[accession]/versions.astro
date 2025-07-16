@@ -3,15 +3,10 @@ import { getVersionsData } from './getVersionsData';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { routes } from '../../../routes/routes';
-import {
-    extractAccessionVersion,
-    getAccessionVersionString,
-    parseAccessionVersionFromString,
-} from '../../../utils/extractAccessionVersion';
+import { extractAccessionVersion, getAccessionVersionString } from '../../../utils/extractAccessionVersion';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../../utils/getVersionStatusColor';
 
-const accessionVersion = Astro.params.accessionVersion!;
-const { accession } = parseAccessionVersionFromString(accessionVersion);
+const accession = Astro.params.accession!;
 const { organism, versionListResult } = await getVersionsData(accession);
 ---
 
