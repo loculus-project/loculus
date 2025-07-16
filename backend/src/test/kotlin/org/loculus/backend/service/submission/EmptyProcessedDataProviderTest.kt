@@ -35,14 +35,16 @@ class EmptyProcessedDataProviderTest {
                             Metadata(name = SECOND_METADATA_FIELD, type = MetadataType.DATE, required = false),
                         ),
                     ),
-                    referenceGenomes = ReferenceGenome(
-                        listOf(
-                            ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                            ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                        ),
-                        listOf(
-                            ReferenceSequence(FIRST_AMINO_ACID_SEQUENCE, "the sequence"),
-                            ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
+                    referenceGenomes = mapOf(
+                        DEFAULT_ORGANISM to ReferenceGenome(
+                            listOf(
+                                ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
+                                ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
+                            ),
+                            listOf(
+                                ReferenceSequence(FIRST_AMINO_ACID_SEQUENCE, "the sequence"),
+                                ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
+                            ),
                         ),
                     ),
                 ),
