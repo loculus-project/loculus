@@ -13,8 +13,8 @@ WHERE s.project_id IS NULL
 -- SELECT project_id FROM submission_table WHERE project_id !~ '^\d+$';
 
 ALTER TABLE submission_table
-ALTER COLUMN project_id TYPE BIGINT USING CAST(project_id AS BIGINT),
-ALTER COLUMN project_id SET NOT NULL;
+ALTER COLUMN project_id TYPE BIGINT
+USING CAST(project_id AS BIGINT);
 
 ALTER TABLE submission_table
 ADD CONSTRAINT fk_submission_project
