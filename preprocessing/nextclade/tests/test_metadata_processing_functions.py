@@ -375,7 +375,7 @@ test_case_definitions = [
             "submissionId": "non_latin_characters_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Pérez, José; François Bailley; 汉",
+            "authors": "Pérez, José; Bailley, François; 汉",
         },
         accession_id="13",
         expected_metadata={
@@ -389,7 +389,23 @@ test_case_definitions = [
                 ["authors"],
                 "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
-        ],
+        ]
+    ),
+    Case(
+        name="non_latin_characters_authors",
+        metadata={
+            "submissionId": "non_latin_characters_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Pérez, José; Bailley, François",
+        },
+        accession_id="13",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_13.1/2022-11-01",
+        },
+        expected_errors=[],
         expected_warnings=[
             ProcessingAnnotationTestCase(
                 ["authors"],
