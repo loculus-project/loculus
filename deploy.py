@@ -445,8 +445,8 @@ def generate_config(
     ]
 
     if values_files:
-        for vf in values_files:
-            helm_template_cmd.extend(["-f", vf])
+        for values_file in values_files:
+            helm_template_cmd.extend(["-f", values_file])
 
     helm_template_cmd.append("--skip-schema-validation")
 
