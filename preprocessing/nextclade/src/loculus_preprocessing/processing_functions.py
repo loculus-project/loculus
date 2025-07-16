@@ -131,7 +131,7 @@ def check_latin_characters(
                     for field in input_fields
                 ],
                 message=(
-                    f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition. The 'authors' field will be reformatted to: {reformat_authors_from_latin_to_ascii(authors)}"
+                    f"Latin non-ASCII characters detected; they will be converted to ASCII characters for ENA deposition. The authors field will be reformatted to: {reformat_authors_from_latin_to_ascii(authors)}"
                 ),
             )
         ]
