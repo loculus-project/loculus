@@ -401,7 +401,7 @@ def update_db_where_conditions(
             con.commit()
     except (Exception, psycopg2.DatabaseError) as e:
         con.rollback()
-        print(f"update_db_where_conditions errored with: {e}")
+        logger.warning(f"update_db_where_conditions errored with: {e}")
     finally:
         db_conn_pool.putconn(con)
     return updated_row_count
@@ -485,7 +485,7 @@ def add_to_project_table(
         return project_id[0] if project_id else None
     except Exception as e:
         con.rollback()
-        print(f"add_to_project_table errored with: {e}")
+        logger.warning(f"add_to_project_table errored with: {e}")
         return None
     finally:
         db_conn_pool.putconn(con)
@@ -516,7 +516,7 @@ def add_to_sample_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_sample_table errored with: {e}")
+        logger.warning(f"add_to_sample_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)
@@ -547,7 +547,7 @@ def add_to_assembly_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_assembly_table errored with: {e}")
+        logger.warning(f"add_to_assembly_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)
@@ -606,7 +606,7 @@ def add_to_submission_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_submission_table errored with: {e}")
+        logger.warning(f"add_to_submission_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)

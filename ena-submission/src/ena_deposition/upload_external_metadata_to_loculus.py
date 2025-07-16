@@ -61,9 +61,11 @@ def get_external_metadata(db_config: SimpleConnectionPool, entry: dict[str, Any]
         db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
     )
     if len(corresponding_assembly) == 1:
-        data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
-            "gca_accession"
-        ]
+        # TODO(https://github.com/loculus-project/loculus/issues/2945):
+        # Add gcaAccession to values.yaml
+        # data["externalMetadata"]["gcaAccession"] = corresponding_assembly[0]["result"][
+        #     "gca_accession"
+        # ]
         insdc_accession_keys = [
             key
             for key in corresponding_assembly[0]["result"]
@@ -166,7 +168,7 @@ def upload_external_metadata(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("upload_external_metadata stopped due to exception in another task")
+            logger.warning("upload_external_metadata stopped due to exception in another task")
             return
         logger.debug("Checking for external metadata to upload to Loculus")
         get_external_metadata_and_send_to_loculus(db_config, config)

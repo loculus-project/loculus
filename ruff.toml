@@ -25,6 +25,7 @@ extend-select = [
     "RUF",
     "S",
     "SIM",
+    "T",
     "UP",
     "W",
 ]
