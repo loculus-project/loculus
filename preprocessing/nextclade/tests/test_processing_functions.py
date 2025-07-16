@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pytest
 import pytz
+from Bio import SeqIO
 from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
@@ -29,7 +30,14 @@ from loculus_preprocessing.processing_functions import (
 )
 
 # Config file used for testing
-test_config_file = "tests/test_config.yaml"
+NO_ALIGNMENT_CONFIG = "tests/test_config.yaml"
+SINGLE_SEGMENT_CONFIG = "tests/ebola_config.yaml"
+SINGLE_SEGMENT_CONSENSUS_CONFIG = "tests/ebola-test-dataset/reference.fasta"
+
+
+def get_consensus_sequence():
+    record = next(SeqIO.parse(SINGLE_SEGMENT_CONSENSUS_CONFIG, "fasta"))  # noqa: F821
+    return str(record.seq)
 
 
 def ts_from_ymd(year: int, month: int, day: int) -> str:
@@ -528,12 +536,7 @@ not_accepted_authors = [
 
 
 @pytest.fixture(scope="module")
-def config():
-    return get_config(test_config_file)
-
-
-@pytest.fixture(scope="module")
-def factory_custom(config):
+def factory_custom(config: Config):
     return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
 
 
@@ -544,8 +547,9 @@ def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[Processing
     )
 
 
-def process_single_entry(test_case: ProcessingTestCase, config: Config) -> ProcessedEntry:
-    dataset_dir = "temp"  # This is not used as we do not align sequences
+def process_single_entry(
+    test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
+) -> ProcessedEntry:
     result = process_all([test_case.input], dataset_dir, config)
     return result[0]
 
@@ -587,15 +591,24 @@ def verify_processed_entry(
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
-def test_preprocessing(test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory):
+def test_preprocessing(test_case_def: Case, factory_custom: ProcessedEntryFactory):
     test_case = test_case_def.create_test_case(factory_custom)
+    config = get_config(NO_ALIGNMENT_CONFIG)
+    processed_entry = process_single_entry(test_case, config)
+    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+@pytest.mark.parametrize("nextclade_case_def", test_case_definitions, ids=lambda tc: tc.name)
+def test_preprocessing_nextclade(test_case_def: Case, factory_custom: ProcessedEntryFactory):
+    test_case = test_case_def.create_test_case(factory_custom)
+    config = get_config(SINGLE_SEGMENT_CONFIG, dataset_dir="ebola-test-dataset")
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
 def test_preprocessing_without_consensus_sequences():
     sequence_name = "entry without sequences"
-    sequence_entery_data = UnprocessedEntry(
+    sequence_entry_data = UnprocessedEntry(
         accessionVersion=f"LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
@@ -608,10 +621,10 @@ def test_preprocessing_without_consensus_sequences():
         ),
     )
 
-    config = get_config(test_config_file)
+    config = get_config(NO_ALIGNMENT_CONFIG)
     config.nucleotideSequences = []
 
-    result = process_all([sequence_entery_data], "temp_dataset_dir", config)
+    result = process_all([sequence_entry_data], "temp_dataset_dir", config)
     processed_entry = result[0]
 
     assert processed_entry.errors == []
@@ -619,6 +632,39 @@ def test_preprocessing_without_consensus_sequences():
     assert processed_entry.data.metadata["name_required"] == sequence_name
     assert processed_entry.data.unalignedNucleotideSequences == {}
     assert processed_entry.data.alignedNucleotideSequences == {}
+    assert processed_entry.data.nucleotideInsertions == {}
+    assert processed_entry.data.alignedAminoAcidSequences == {}
+    assert processed_entry.data.aminoAcidInsertions == {}
+
+
+def test_preprocessing_with_single_sequences():
+    sequence_name = "entry with one mutation"
+    sequence = get_consensus_sequence()
+    sequence = sequence[0] + "A" + sequence[2:]
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion=f"LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={
+                "ncbi_required_collection_date": "2024-01-01",
+                "name_required": sequence_name,
+            },
+            unalignedNucleotideSequences={sequence},
+        ),
+    )
+
+    config = get_config(SINGLE_SEGMENT_CONFIG)
+    config.nucleotideSequences = []
+
+    result = process_all([sequence_entry_data], "temp_dataset_dir", config)
+    processed_entry = result[0]
+
+    assert processed_entry.errors == []
+    assert processed_entry.warnings == []
+    assert processed_entry.data.metadata["name_required"] == sequence_name
+    assert processed_entry.data.unalignedNucleotideSequences == {"main": sequence}
+    assert processed_entry.data.alignedNucleotideSequences == {"main": sequence}
     assert processed_entry.data.nucleotideInsertions == {}
     assert processed_entry.data.alignedAminoAcidSequences == {}
     assert processed_entry.data.aminoAcidInsertions == {}
