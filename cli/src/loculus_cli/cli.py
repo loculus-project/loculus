@@ -25,10 +25,11 @@ def preprocess_args(args: list[str]) -> list[str]:
     # Global options that should be moved to the front
     global_options = [
         "--organism",
-        "-o",
+        "-O",
         "--instance",
+        "-I",
         "--group",
-        "-g",
+        "-G",
         "--config",
         "--verbose",
         "-v",
