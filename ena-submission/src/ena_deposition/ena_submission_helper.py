@@ -447,8 +447,8 @@ def create_flatfile(
                 "molecule_type": seq_io_moleculetype[moleculetype],
                 "organism": organism,
                 "topology": organism_metadata.get("topology", "linear"),
-                "references": [reference],
-            },  # type: ignore
+                "references": [reference],  # type: ignore
+            },
             description=description,
         )
 
@@ -464,13 +464,15 @@ def create_flatfile(
         )
         sequence.features.append(source_feature)
 
+        # This is really convoluted, will be fixed by using improvements
+        # from annotations PR in the future
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
             SeqIO.write(sequence, temp_seq_file.name, "embl")
 
-        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
+        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:  # type: ignore
             embl_content.append(temp_seq_file.read())
 
-    final_content = "\n".join(embl_content)
+    final_content = "\n".join(embl_content)  # type: ignore
 
     gzip_filename = filename + ".gz"
 
@@ -844,7 +846,7 @@ def set_error_if_accession_not_exists(
     succeeded: bool | int | None
     if accession_type == "BIOSAMPLE":
         sample_table_entry = SampleTableEntry(
-            **conditions,
+            **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
             errors=json.dumps([error_text]),
             result={"ena_sample_accession": accession, "biosample_accession": accession},
@@ -852,7 +854,7 @@ def set_error_if_accession_not_exists(
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
     else:
         project_table_entry = ProjectTableEntry(
-            **conditions,
+            **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
             errors=json.dumps([error_text]),
             result={"bioproject_accession": accession},

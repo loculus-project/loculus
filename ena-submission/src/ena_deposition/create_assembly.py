@@ -217,7 +217,7 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=get_molecule_type(organism_metadata),
-            **assembly_values,
+            **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
     except Exception as e:
@@ -231,7 +231,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def submission_table_start(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -273,7 +273,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -318,7 +318,7 @@ def update_assembly_error(
     error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
-):
+) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
