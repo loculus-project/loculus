@@ -820,25 +820,25 @@ class ProcessingFunctions:
                     warnings=warnings,
                     errors=errors,
                 )
+            if warn_if_and_in_authors(authors):
+                warnings.append(
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=(
+                            f"Authors list '{authors}' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                        ),
+                    )
+                )
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
                 errors=errors,
-            )
-        if warn_if_and_in_authors(authors):
-            warnings.append(
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
-                    message=(
-                        f"Authors list '{authors}' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
-                    ),
-                )
             )
         error_message = (
             f"The authors list '{authors}' is not in a recognized format. "

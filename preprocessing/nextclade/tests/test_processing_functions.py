@@ -475,7 +475,7 @@ test_case_definitions = [
             ProcessingAnnotationTestCase(
                 ["authors"],
                 ["authors"],
-                "Authors list 'Smith, Anna; Perez, Tom J. and Xu, X.L.' contains 'and' or '&'. This may indicate multiple authors are listed in a single entry.",
+                "Authors list 'Smith, Anna; Perez, Tom J. and Xu, X.L.' contains 'and' or '&'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`.",
             ),
         ],
     ),
