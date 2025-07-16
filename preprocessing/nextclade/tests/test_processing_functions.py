@@ -416,7 +416,6 @@ test_case_definitions = [
                 "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
         ],
-        expected_warnings=[],
     ),
     Case(
         name="non_latin_characters_authors",
