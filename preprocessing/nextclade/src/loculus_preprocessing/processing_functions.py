@@ -836,6 +836,11 @@ class ProcessingFunctions:
                         message=warning_message,
                     )
                 ]
+                return ProcessingResult(
+                    datum=formatted_authors,
+                    warnings=warnings,
+                    errors=errors,
+                )
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
