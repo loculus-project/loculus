@@ -87,6 +87,7 @@ def check_latin_characters(
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     warnings: list[ProcessingAnnotation] = []
     errors: list[ProcessingAnnotation] = []
+    counter = 0
     # Check if all characters in the authors string are Latin letters or spaces (transformable to ASCII)
     for char in authors:
         # If character is already ASCII, skip
@@ -95,7 +96,6 @@ def check_latin_characters(
         # Normalize the character (NFKD) and attempt to encode to ASCII, ignoring diacritics.
         decomposed = unicodedata.normalize("NFKD", char)
         ascii_equiv = decomposed.encode("ascii", "ignore").decode("ascii")
-        counter = 0
         # Not ASCII, not Latin
         if char.isalpha() and not ascii_equiv:
             errors = [
