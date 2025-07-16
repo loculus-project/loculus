@@ -55,10 +55,6 @@ def invalid_value_annotation(
     )
 
 
-def warn_if_and_in_authors(authors: str) -> bool:
-    return bool(" and " in authors)
-
-
 def valid_authors(authors: str) -> bool:
     alpha = r"\s*[a-zA-Z]"
     name_chars = r"[a-zA-Z\s\.\-\']*"
@@ -820,7 +816,7 @@ class ProcessingFunctions:
                     warnings=warnings,
                     errors=errors,
                 )
-            if warn_if_and_in_authors(authors):
+            if " and " in authors:
                 warning_message = (
                     f"Authors list '{authors}' contains 'and'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
