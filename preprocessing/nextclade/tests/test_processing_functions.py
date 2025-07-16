@@ -457,12 +457,12 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="and_in authors",
+        name="and_in_authors",
         metadata={
-            "submissionId": "and_in authors",
+            "submissionId": "and_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith, Anna; Perez, Tom J. and Xu, X.L.",
+            "authors": "Smith, Anna; Perez, Tom J. and Xu X.L.",
         },
         accession_id="16",
         expected_metadata={
