@@ -5,17 +5,17 @@ import type { z, ZodError } from 'zod';
 
 import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
+    type InputField,
     type InstanceConfig,
     type Schema,
+    type SequenceFlaggingConfig,
     type WebsiteConfig,
     websiteConfig,
-    type InputField,
-    type SequenceFlaggingConfig,
 } from './types/config.ts';
 import {
     type NamedSequence,
     type ReferenceAccession,
-    type ReferenceGenomes,
+    type ReferenceGenome,
     type ReferenceGenomesSequenceNames,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
@@ -226,8 +226,8 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomes {
-    return getConfig(organism).referenceGenomes;
+export function getReferenceGenomes(organism: string): ReferenceGenome {
+    return Object.values(getConfig(organism).referenceGenomes)[0];
 }
 
 const getAccession = (n: NamedSequence): ReferenceAccession => {
