@@ -11,15 +11,16 @@ import org.springframework.stereotype.Component
 class EmptyProcessedDataProvider(private val backendConfig: BackendConfig) {
     fun provide(organism: Organism): ProcessedData<GeneticSequence> {
         val (schema, referenceGenomes) = backendConfig.getInstanceConfig(organism)
+        val referenceGenome = referenceGenomes.values.first()
 
-        val nucleotideSequences = referenceGenomes.nucleotideSequences.map { it.name }.associateWith { null }
+        val nucleotideSequences = referenceGenome.nucleotideSequences.map { it.name }.associateWith { null }
         return ProcessedData(
             metadata = schema.metadata.map { it.name }.associateWith { NullNode.instance },
             unalignedNucleotideSequences = nucleotideSequences,
             alignedNucleotideSequences = nucleotideSequences,
-            alignedAminoAcidSequences = referenceGenomes.genes.map { it.name }.associateWith { null },
-            nucleotideInsertions = referenceGenomes.nucleotideSequences.map { it.name }.associateWith { emptyList() },
-            aminoAcidInsertions = referenceGenomes.genes.map { it.name }.associateWith { emptyList() },
+            alignedAminoAcidSequences = referenceGenome.genes.map { it.name }.associateWith { null },
+            nucleotideInsertions = referenceGenome.nucleotideSequences.map { it.name }.associateWith { emptyList() },
+            aminoAcidInsertions = referenceGenome.genes.map { it.name }.associateWith { emptyList() },
             files = null,
         )
     }
