@@ -9,7 +9,7 @@ WHERE s.project_id IS NULL
   AND s.organism = p.organism
   AND p.result ? 'ena_submission_accession';
 
--- The case will fail if there are any project_ids that are not numeric
+-- The cast will fail if there are any project_ids that are not numeric
 -- SELECT project_id FROM submission_table WHERE project_id !~ '^\d+$';
 
 ALTER TABLE submission_table
