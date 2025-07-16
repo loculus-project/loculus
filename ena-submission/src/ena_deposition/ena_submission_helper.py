@@ -31,7 +31,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from ena_deposition.config import Config, EmblPropertyFields
+from ena_deposition.config import Config
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
