@@ -675,6 +675,7 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 table_name=TableName.ASSEMBLY_TABLE,
+                reraise=False,
             )
 
 

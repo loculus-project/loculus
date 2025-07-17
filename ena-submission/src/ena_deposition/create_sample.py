@@ -303,6 +303,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
             conditions=seq_key,
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
+            reraise=False
         )
         return True
     return False
