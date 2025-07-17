@@ -124,8 +124,8 @@ def get_external_metadata_and_send_to_loculus(db_config: SimpleConnectionPool, c
                 },
                 table_name=TableName.SUBMISSION_TABLE,
             )
-        except Exception:
-            logger.info(f"Partial external metadata update failed for {accession}")
+        except Exception as e:
+            logger.info(f"Partial external metadata update failed for {accession}: {e}")
             continue
 
     # Collect entries that have all external metadata available
