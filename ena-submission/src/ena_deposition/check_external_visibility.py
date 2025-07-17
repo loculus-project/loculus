@@ -51,7 +51,6 @@ class ColumnCheckConfig:
     visibility_column: str
     accession_field: str  # Field prefix in the result dict (e.g., "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
-    check_all_segments: bool = False  # Whether to check all keys starting with accession_field
 
 
 class VisibilityChecker(ABC):
@@ -82,9 +81,9 @@ GcaCacheKey = tuple[str] | tuple[str, str] | tuple[str, str, str]
 gca_cache: dict[GcaCacheKey, bool] = {}
 
 
-def _check_and_cache_gca(config: Config, path_segments: GcaCacheKey) -> bool:
+def _check_and_cache_ncbi_gca(config: Config, path_segments: GcaCacheKey) -> bool:
     """
-    Helper function to check ENA for a GCA accession part and cache the result.
+    Helper function to check NCBI for a GCA accession part and cache the result.
     Returns True if found and caches True, False if not found and caches False.
     """
     cache_key = path_segments
@@ -108,7 +107,7 @@ def _check_and_cache_gca(config: Config, path_segments: GcaCacheKey) -> bool:
 
 def check_gca_cached(config: "Config", accession: str) -> datetime | None:
     """
-    Checks if a GCA accession exists by querying ENA's API, with caching.
+    Checks if a GCA accession exists on NCBI by querying NCBI's API, with caching.
     It attempts to validate parts of the accession from longest to shortest.
     """
     _prefix, numbers = accession.split("_")
@@ -116,13 +115,13 @@ def check_gca_cached(config: "Config", accession: str) -> datetime | None:
     second_three = numbers[3:6]
     third_three = numbers[6:9]
 
-    if not _check_and_cache_gca(config, (first_three,)):
+    if not _check_and_cache_ncbi_gca(config, (first_three,)):
         return None
 
-    if not _check_and_cache_gca(config, (first_three, second_three)):
+    if not _check_and_cache_ncbi_gca(config, (first_three, second_three)):
         return None
 
-    if not _check_and_cache_gca(config, (first_three, second_three, third_three)):
+    if not _check_and_cache_ncbi_gca(config, (first_three, second_three, third_three)):
         return None
 
     return datetime.now(pytz.UTC)
@@ -193,7 +192,6 @@ COLUMN_CONFIGS = {
         visibility_column="ena_nucleotide_first_publicly_visible",
         accession_field="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=ENAVisibilityChecker,
-        check_all_segments=True,  # Check all segments for multi-segmented assemblies
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
@@ -202,7 +200,6 @@ COLUMN_CONFIGS = {
         visibility_column="ncbi_nucleotide_first_publicly_visible",
         accession_field="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=NCBIVisibilityChecker,
-        check_all_segments=True,  # Check all segments for multi-segmented assemblies
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
@@ -261,17 +258,9 @@ def get_accessions_to_check(
         )
         raise TypeError(msg)
 
-    if column_config.check_all_segments:
-        # Look for all keys that start with the accession_field prefix
-        # e.g., "insdc_accession_full", "insdc_accession_full_seg2", "insdc_accession_full_seg3"
-        for key, value in entity.result.items():
-            if key.startswith(column_config.accession_field) and value:
-                accessions.add(value)
-    else:
-        # Single accession field
-        accession_value = entity.result.get(column_config.accession_field)
-        if accession_value:
-            accessions.add(accession_value)
+    for key, value in entity.result.items():
+        if key.startswith(column_config.accession_field) and value:
+            accessions.add(value)
 
     return accessions
 
