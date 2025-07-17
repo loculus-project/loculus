@@ -1,5 +1,5 @@
 # Glossary
 
 See glossary on the documentation page:
-* https://loculus.org/introduction/glossary/
-* [source file](../docs/src/content/docs/introduction/glossary.md)
+* https://loculus.org/reference/glossary/
+* [source file](../docs/src/content/docs/reference/glossary.md)

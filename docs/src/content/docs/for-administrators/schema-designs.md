@@ -3,7 +3,7 @@ title: Schema designs
 description: Different ways to design the schema of a Loculus instance
 ---
 
-Loculus is very flexible in its data model and there are different ways to design the [schema](../../introduction/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
+Loculus is very flexible in its data model and there are different ways to design the [schema](../../reference/glossary#schema). Technically, a Loculus instance can have one or multiple organisms and each organism has
 
 - a set of metadata fields
 - a set of unaligned nucleotide sequences

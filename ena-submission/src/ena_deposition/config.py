@@ -89,7 +89,7 @@ def get_config(config_file: str) -> Config:
     for key, value in defaults.items():
         if key not in full_config:
             full_config[key] = value
-    relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+    relevant_config = {key: full_config.get(key) for key in Config.__annotations__}
 
     dotenv.load_dotenv()  # Load environment variables from .env file
     relevant_config["ena_submission_username"] = os.getenv(

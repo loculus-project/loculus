@@ -281,3 +281,19 @@ class Actions:
 @dataclass
 class Submission:
     actions: Actions
+
+
+@dataclass(frozen=True)
+class EmblPropertyFields:
+    country_property: str
+    admin_level_properties: list[str]
+    collection_date_property: str
+    authors_property: str
+
+
+DEFAULT_EMBL_PROPERTY_FIELDS = EmblPropertyFields(
+    country_property="geoLocCountry",
+    admin_level_properties=["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"],
+    collection_date_property="sampleCollectionDate",
+    authors_property="authors",
+)

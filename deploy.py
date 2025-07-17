@@ -32,7 +32,6 @@ ROOT_DIR = script_path.parent
 CLUSTER_NAME = "testCluster"
 HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
-HELM_VALUES_FILE = HELM_CHART_DIR / "values.yaml"
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
@@ -88,16 +87,24 @@ helm_parser.add_argument(
     "--enableIngest", action="store_true", help="Include deployment of ingest pipelines"
 )
 
-helm_parser.add_argument("--values", help="Values file for helm chart", default=HELM_VALUES_FILE)
+helm_parser.add_argument(
+    "--values",
+    action="append",
+    help="Values file for helm chart (can be specified multiple times)",
+)
 helm_parser.add_argument(
     "--template",
     help="Just template and print out the YAML produced",
     action="store_true",
 )
-helm_parser.add_argument("--for-e2e", action="store_true",
-                         help="Use the E2E values file, skip schema validation")
-helm_parser.add_argument("--use-localhost-ip", action="store_true",
-                         help="Use the local IP address instead of 'localhost' in the config files")
+helm_parser.add_argument(
+    "--for-e2e", action="store_true", help="Use the E2E values file, skip schema validation"
+)
+helm_parser.add_argument(
+    "--use-localhost-ip",
+    action="store_true",
+    help="Use the local IP address instead of 'localhost' in the config files",
+)
 
 upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade helm installation")
 
@@ -107,13 +114,19 @@ config_parser.add_argument(
     "--from-live",
     action="store_true",
     help="Generate config files to point to the live cluster "
-         "so we don't need to run the cluster locally, only the website",
+    "so we don't need to run the cluster locally, only the website",
 )
 
 config_parser.add_argument(
     "--live-host",
     default="main.loculus.org",
     help="The live server that should be pointed to, if --from-live is set",
+)
+
+config_parser.add_argument(
+    "--values",
+    action="append",
+    help="Values file for helm chart (can be specified multiple times)",
 )
 
 
@@ -143,7 +156,12 @@ def main():
     elif args.subcommand == "upgrade":
         handle_helm_upgrade()
     elif args.subcommand == "config":
-        generate_configs(args.from_live, args.live_host, args.enableEnaSubmission)
+        generate_configs(
+            args.from_live,
+            args.live_host,
+            args.enableEnaSubmission,
+            args.values,
+        )
 
 
 def handle_cluster():
@@ -208,8 +226,13 @@ def handle_helm():  # noqa: C901
         "template" if args.template else "install",
         HELM_RELEASE_NAME,
         HELM_CHART_DIR,
-        "-f",
-        args.values,
+    ]
+
+    if args.values:
+        for values_file in args.values:
+            parameters += ["-f", values_file]
+
+    parameters += [
         "--set",
         "environment=local",
         "--set",
@@ -301,7 +324,7 @@ def get_codespace_name():
     return os.environ.get("CODESPACE_NAME", None)
 
 
-def generate_configs(from_live, live_host, enable_ena):
+def generate_configs(from_live, live_host, enable_ena, values_files=None):
     temp_dir_path = Path(tempfile.mkdtemp())
 
     print(f"Unprocessed config available in temp dir: {temp_dir_path}")
@@ -319,6 +342,7 @@ def generate_configs(from_live, live_host, enable_ena):
         codespace_name,
         from_live,
         live_host,
+        values_files=values_files,
     )
 
     website_config_path = temp_dir_path / "website_config.json"
@@ -329,6 +353,7 @@ def generate_configs(from_live, live_host, enable_ena):
         codespace_name,
         from_live,
         live_host,
+        values_files=values_files,
     )
 
     runtime_config_path = temp_dir_path / "runtime_config.json"
@@ -339,6 +364,7 @@ def generate_configs(from_live, live_host, enable_ena):
         codespace_name,
         from_live,
         live_host,
+        values_files=values_files,
     )
 
     if enable_ena:
@@ -352,6 +378,8 @@ def generate_configs(from_live, live_host, enable_ena):
             from_live,
             live_host,
             ena_submission_configout_path,
+            values_files=values_files,
+            enableEnaSubmission=True,
         )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
@@ -365,6 +393,7 @@ def generate_configs(from_live, live_host, enable_ena):
         from_live,
         live_host,
         ingest_configout_path,
+        values_files=values_files,
     )
 
     prepro_configmap_path = temp_dir_path / "preprocessing-config.yaml"
@@ -378,6 +407,7 @@ def generate_configs(from_live, live_host, enable_ena):
         from_live,
         live_host,
         prepro_configout_path,
+        values_files=values_files,
     )
 
     run_command(
@@ -399,6 +429,8 @@ def generate_config(
     from_live=False,
     live_host=None,
     output_path=None,
+    values_files=None,
+    enableEnaSubmission=False,
 ):
     if from_live and live_host:
         number_of_dots = live_host.count(".")
@@ -412,8 +444,13 @@ def generate_config(
         helm_chart,
         "--show-only",
         template,
-        "--skip-schema-validation"
     ]
+
+    if values_files:
+        for values_file in values_files:
+            helm_template_cmd.extend(["-f", values_file])
+
+    helm_template_cmd.append("--skip-schema-validation")
 
     if not output_path:
         output_path = configmap_path
@@ -430,6 +467,8 @@ def generate_config(
     else:
         helm_template_cmd.extend(["--set", "environment=local"])
         helm_template_cmd.extend(["--set", "testconfig=true"])
+    if enableEnaSubmission:
+        helm_template_cmd.extend(["--set", "disableEnaSubmission=false"])
     helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
     if args.dry_run:
         return
@@ -445,7 +484,7 @@ def generate_config(
     elif any(substring in template for substring in ["ingest", "preprocessing"]):
         for doc in parsed_yaml:
             config_data = yaml.safe_load(doc["data"][configmap_path.name])
-            with open(output_path.with_suffix(f'.{config_data["organism"]}.yaml'), "w") as f:
+            with open(output_path.with_suffix(f".{config_data['organism']}.yaml"), "w") as f:
                 yaml.dump(config_data, f)
                 print(f"Wrote config to {f.name}")
 
