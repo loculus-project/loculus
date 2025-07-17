@@ -639,10 +639,6 @@ class TestFirstPublicUpdate(TestSubmission):
             f"{column_name} should be updated to current timestamp for valid accessions. "
             f"Got: {visibility_value}"
         )
-        logger.info(
-            f"✓ {entity_type.value}.{column_name} test passed: "
-            f"timestamp = {visibility_value}, conditions = {conditions}"
-        )
 
 
 class TestSimpleSubmission(TestSubmission):
