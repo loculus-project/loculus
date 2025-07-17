@@ -371,17 +371,12 @@ organisms:
       {{- end }}
       {{- end }}
     referenceGenomes:
-      {{ $referenceGenomes:= include "loculus.generateReferenceGenomes" $instance.referenceGenomes | fromYaml }}
-      {{ $referenceGenomes | toYaml | nindent 8}}
+      {{- range $subOrganismName, $referenceGenome := $instance.referenceGenomes }}
+      {{ $subOrganismName }}:
+        {{ $referenceGenomes := include "loculus.generateReferenceGenome" $referenceGenome | fromYaml }}
+        {{ $referenceGenomes | toYaml | nindent 10 }}
+      {{- end }}
   {{- end }}
-{{- end }}
-
-{{- define "loculus.generateReferenceGenomes" }}
-{{- range $subOrganismName, $referenceGenome := . }}
-{{ $subOrganismName }}:
-  {{ $referenceGenomes := include "loculus.generateReferenceGenome" $referenceGenome | fromYaml }}
-  {{ $referenceGenomes | toYaml | nindent 2 }}
-{{- end }}
 {{- end }}
 
 {{- define "loculus.generateReferenceGenome" }}
