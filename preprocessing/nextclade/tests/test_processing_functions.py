@@ -469,7 +469,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "authors": "Smith, Anna; Perez, Tom J. and Xu X.L.",
+            "authors": "Smith, Anna; Perez, Tom J. and Xu X. L.",
         },
         expected_errors=[],
         expected_warnings=[
