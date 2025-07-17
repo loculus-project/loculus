@@ -1,0 +1,30 @@
+batch_size: 100
+genes:
+- NPEbolaSudan
+- VP35EbolaSudan
+- VP24EbolaZaire
+- LEbolaZaire
+log_level: DEBUG
+nextclade_dataset_name_map:
+  ebola-sudan: ebola-sudan-test-dataset
+  ebola-zaire: ebola-zaire-test-dataset
+nextclade_dataset_server: fake_url
+nucleotideSequences:
+- ebola-sudan
+- ebola-zaire
+organism: multi-ebola-test
+processing_spec:
+  length_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-sudan
+  length_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-zaire

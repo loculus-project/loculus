@@ -1,0 +1,9 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_002549.1 1 18959
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=186538
+NC_002549.1	RefSeq	gene	9885	11518	.	+	.	ID=gene-ZEBOVgp6;Dbxref=GeneID:911828;Name=VP24EbolaZaire;Note=putative;gbkey=Gene;gene=VP24;gene_biotype=protein_coding;locus_tag=ZEBOVgp6
+NC_002549.1	RefSeq	CDS	10345	11100	.	+	0	ID=cds-NP_066250.1;Parent=rna-ZEBOVgp6;Dbxref=GenBank:NP_066250.1,GeneID:911828;Name=VP24EbolaZaire;gbkey=CDS;gene=VP24;locus_tag=ZEBOVgp6;product=membrane-associated protein;protein_id=NP_066250.1
+NC_002549.1	RefSeq	gene	11501	18282	.	+	.	ID=gene-ZEBOVgp7;Dbxref=GeneID:911824;Name=LEbolaZaire;gbkey=Gene;gene=L;gene_biotype=protein_coding;locus_tag=ZEBOVgp7
+NC_002549.1	RefSeq	CDS	11581	18219	.	+	0	ID=cds-NP_066251.1;Parent=rna-ZEBOVgp7;Dbxref=GenBank:NP_066251.1,GeneID:911824;Name=LEbolaZaire;gbkey=CDS;gene=L;locus_tag=ZEBOVgp7;product=RNA-dependent RNA polymerase;protein_id=NP_066251.1

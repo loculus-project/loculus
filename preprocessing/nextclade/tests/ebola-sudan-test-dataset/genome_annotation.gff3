@@ -1,0 +1,8 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_006432.1 1 18875
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=186540
+NC_006432.1	RefSeq	gene	56	3007	.	+	.	ID=gene-SEVgp1;Dbxref=GeneID:3160777;Name=NPEbolaSudan;gbkey=Gene;gene=NP;gene_biotype=protein_coding;locus_tag=SEVgp1
+NC_006432.1	RefSeq	CDS	458	2674	.	+	0	ID=cds-YP_138520.1;Parent=rna-SEVgp1;Dbxref=GenBank:YP_138520.1,GeneID:3160777;Name=NPEbolaSudan;Note=predominant component of nucleocapsid;gbkey=CDS;gene=NP;locus_tag=SEVgp1;product=nucleoprotein;protein_id=YP_138520.1
+NC_006432.1	RefSeq	CDS	3138	4127	.	+	0	ID=cds-YP_138521.1;Parent=rna-SEVgp2;Dbxref=GenBank:YP_138521.1,GeneID:3160776;Name=VP35EbolaSudan;Note=cofactor in polymerase complex%3B type I IFN antagonist;gbkey=CDS;gene=VP35;locus_tag=SEVgp2;product=polymerase complex protein;protein_id=YP_138521.1
