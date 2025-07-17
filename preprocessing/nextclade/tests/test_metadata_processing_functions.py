@@ -392,6 +392,24 @@ test_case_definitions = [
         ],
     ),
     Case(
+        name="non_latin_characters_authors",
+        metadata={
+            "submissionId": "non_latin_characters_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Pérez, José; Bailley, François",
+        },
+        accession_id="13",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_13.1/2022-11-01",
+            "authors": "Pérez, José; Bailley, François",
+        },
+        expected_errors=[],
+        expected_warnings=[],
+    ),
+    Case(
         name="nan_float",
         input_metadata={
             "submissionId": "nan_float",
