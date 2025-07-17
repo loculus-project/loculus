@@ -393,7 +393,7 @@ test_case_definitions = [
     ),
     Case(
         name="accents_in_authors",
-        metadata={
+        input_metadata={
             "submissionId": "accents_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
