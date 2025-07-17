@@ -31,8 +31,8 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/test_config.yaml"
-SINGLE_SEGMENT_CONFIG = "tests/ebola_config.yaml"
-SINGLE_SEGMENT_CONSENSUS_CONFIG = "tests/ebola-test-dataset/reference.fasta"
+SINGLE_SEGMENT_CONFIG = "tests/single_segment_config.yaml"
+SINGLE_SEGMENT_CONSENSUS_CONFIG = "tests/ebola-sudan-test-dataset/reference.fasta"
 
 
 def get_consensus_sequence():
@@ -668,15 +668,8 @@ def test_preprocessing_with_single_sequences():
     assert processed_entry.data.alignedNucleotideSequences == {"main": sequence}
     assert processed_entry.data.nucleotideInsertions == {"main": []}
     assert processed_entry.data.alignedAminoAcidSequences.keys() == {
-        "NP",
-        "VP35",
-        "VP40",
-        "GP",
-        "sGP",
-        "ssGP",
-        "VP30",
-        "VP24",
-        "L",
+        "NPEbolaSudan",
+        "VPVP35EbolaSudan",
     }
     assert processed_entry.data.aminoAcidInsertions == {}
 

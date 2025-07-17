@@ -1,0 +1,54 @@
+batch_size: 100
+genes:
+- NPEbolaSudan
+- VP35EbolaSudan
+log_level: DEBUG
+nextclade_dataset_name: ebola-sudan-test-dataset
+nextclade_dataset_server: fake_url
+nucleotideSequences:
+- main
+organism: ebola-sudan-test
+processing_spec:
+  continent:
+    args:
+      options:
+        - Africa
+        - Antarctica
+        - Asia
+        - Europe
+        - North America
+        - South America
+        - Oceania
+    function: process_options
+    inputs:
+      input: continent
+  collection_date:
+    args:
+      type: date
+    function: parse_and_assert_past_date
+    inputs:
+      date: collection_date
+  completeness:
+    args:
+      type: float
+    function: identity
+    inputs:
+      input: nextclade.coverage
+  totalInsertedNucs:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalInsertions
+  totalSnps:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
+  totalDeletedNucs:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalDeletions
