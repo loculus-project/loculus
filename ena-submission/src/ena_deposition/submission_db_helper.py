@@ -142,7 +142,7 @@ class SubmissionTableEntry:
     project_id: int | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ProjectTableEntry:
     group_id: int
     organism: str
@@ -154,9 +154,11 @@ class ProjectTableEntry:
     finished_at: datetime | None = None
     center_name: str | None = None
     result: dict[str, str] | str | None = None
+    ena_first_publicly_visible: datetime | None = None
+    ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SampleTableEntry:
     accession: str
     version: int
@@ -166,9 +168,11 @@ class SampleTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: dict[str, str] | str | None = None
+    ena_first_publicly_visible: datetime | None = None
+    ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AssemblyTableEntry:
     accession: str
     version: int
@@ -178,6 +182,10 @@ class AssemblyTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: str | None = None
+    ena_nucleotide_first_publicly_visible: datetime | None = None
+    ncbi_nucleotide_first_publicly_visible: datetime | None = None
+    ena_gca_first_publicly_visible: datetime | None = None
+    ncbi_gca_first_publicly_visible: datetime | None = None
 
 
 type Accession = str
@@ -279,17 +287,21 @@ def find_conditions_in_db(
 
             query = f"SELECT * FROM {table_name}"  # noqa: S608
 
-            where_clause = " AND ".join([f"{key}=%s" for key in conditions])
-            query += f" WHERE {where_clause}"
+            where_conditions, params = [], []
 
-            cur.execute(
-                query,
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                ),
-            )
+            for key, value in conditions.items():
+                if value is None:
+                    where_conditions.append(f"{key} IS NULL")
+                else:
+                    where_conditions.append(f"{key} = %s")
+                    if isinstance(value, (Status, StatusAll)):
+                        params.append(str(value))
+                    else:
+                        params.append(value)
+            if where_conditions:
+                query += " WHERE " + " AND ".join(where_conditions)
 
+            cur.execute(query, params)
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
@@ -369,7 +381,7 @@ def find_waiting_in_db(
 def update_db_where_conditions(
     db_conn_pool: SimpleConnectionPool,
     table_name: TableName,
-    conditions: dict[str, str],
+    conditions: dict[str, str | int],
     update_values: dict[str, Any],
 ) -> int:
     updated_row_count = 0
