@@ -2,9 +2,9 @@
 title: Revise sequences
 ---
 
-Sequences can be corrected or updated after they have been submitted to Loculus. Submitting these changes ("revisions") will cause the [version](../../introduction/glossary/#version) of the sequence to be incremented, and previous versions of the metadata and sequence data can always be accessed via previous version numbers.
+Sequences can be corrected or updated after they have been submitted to Loculus. Submitting these changes ("revisions") will cause the [version](../../reference/glossary/#version) of the sequence to be incremented, and previous versions of the metadata and sequence data can always be accessed via previous version numbers.
 
-The process of submitting revisions is very similar to original submission. The main difference is that you must provide an `accession` column in the metadata file, which contains the Loculus [accession number(s)](../../introduction/glossary/#accession) assigned when the sequences were submitted originally.
+The process of submitting revisions is very similar to original submission. The main difference is that you must provide an `accession` column in the metadata file, which contains the Loculus [accession number(s)](../../reference/glossary/#accession) assigned when the sequences were submitted originally.
 
 ## Preparing the metadata file
 

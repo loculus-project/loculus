@@ -14,7 +14,7 @@ To call the backend, the preprocessing pipeline needs to use an account with the
 
 ## Preprocessing pipeline specification
 
-The [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) describes the interface between a pipeline and the [Loculus backend server](../introduction/glossary.md#backend).
+The [preprocessing pipeline specification](https://github.com/loculus-project/loculus/blob/main/preprocessing/specification.md) describes the interface between a pipeline and the [Loculus backend server](../../reference/glossary.md#backend).
 
 ## Deployment with Kubernetes and Helm
 
