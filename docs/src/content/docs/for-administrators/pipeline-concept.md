@@ -2,7 +2,7 @@
 title: What is a preprocessing pipeline?
 ---
 
-Before submitted user data is available for review and release, it is first processed by a [preprocessing pipeline](../../introduction/glossary/#preprocessing-pipeline). The preprocessing pipelines hold most of the organism- and domain-specific logic within a Loculus instance. They take the submitted input data and, as a minimum, validate them to ensure that the submitted data follow the defined format. Additionally, they can clean the data and enrich them by adding annotations and sequence alignments.
+Before submitted user data is available for review and release, it is first processed by a [preprocessing pipeline](../../reference/glossary/#preprocessing-pipeline). The preprocessing pipelines hold most of the organism- and domain-specific logic within a Loculus instance. They take the submitted input data and, as a minimum, validate them to ensure that the submitted data follow the defined format. Additionally, they can clean the data and enrich them by adding annotations and sequence alignments.
 
 Using an [existing pipeline](../existing-preprocessing-pipelines/) is the fastest way to get started with Loculus, but it is also easy to develop new pipelines that use custom tooling and logic. For a very brief guide on how to build a new pipeline, please see [here](../build-new-preprocessing-pipeline/).
 

@@ -35,7 +35,7 @@ export default defineConfig({
                     items: [
                         { label: 'What is Loculus?', link: '/introduction/what-is-loculus/' },
                         { label: 'Current state and roadmap', link: '/introduction/current-state-and-roadmap/' },
-                        { label: 'Glossary', link: '/introduction/glossary/' },
+                        { label: 'Glossary', link: '/reference/glossary/' },
                         { label: 'System overview', link: '/introduction/system-overview/' },
                         { label: 'API overview', link: '/introduction/api-overview/' },
                     ],
