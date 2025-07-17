@@ -15,6 +15,12 @@ from loculus_preprocessing.datatypes import (
 )
 
 
+def ts_from_ymd(year: int, month: int, day: int) -> str:
+    """Convert a year, month, and day into a UTC timestamp string."""
+    dt = datetime(year, month, day, tzinfo=pytz.UTC)
+    return str(dt.timestamp())
+
+
 @dataclass
 class ProcessingTestCase:
     name: str
