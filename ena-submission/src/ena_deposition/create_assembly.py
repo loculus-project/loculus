@@ -24,6 +24,7 @@ from .ena_submission_helper import (
     get_molecule_type,
 )
 from .ena_types import (
+    DEFAULT_EMBL_PROPERTY_FIELDS,
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
@@ -216,7 +217,7 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=get_molecule_type(organism_metadata),
-            **assembly_values,
+            **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
     except Exception as e:
@@ -230,7 +231,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def submission_table_start(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -272,7 +273,7 @@ def submission_table_start(db_config: SimpleConnectionPool):
         )
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -317,7 +318,7 @@ def update_assembly_error(
     error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
-):
+) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
@@ -401,6 +402,85 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     return True
 
 
+def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
+    """
+    Check if change in sequence or flatfile metadata has occurred since last version.
+    """
+    version_to_revise = last_version(db_config, entry)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name=TableName.SUBMISSION_TABLE,
+        conditions={"accession": entry["accession"], "version": version_to_revise},
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+
+    if (
+        entry["unaligned_nucleotide_sequences"]
+        != last_version_data[0]["unaligned_nucleotide_sequences"]
+    ):
+        logger.debug(
+            f"Unaligned nucleotide sequences have changed for {entry['accession']}, "
+            f"from {version_to_revise} to {entry['version']} - should be revised"
+            "(Metadata maybe also changed.)"
+        )
+        return True
+
+    fields = [
+        DEFAULT_EMBL_PROPERTY_FIELDS.country_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.authors_property,
+        *DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties,
+    ]
+    for field in fields:
+        last_entry = last_version_data[0]["metadata"].get(field)
+        new_entry = entry["metadata"].get(field)
+        if last_entry != new_entry:
+            logger.debug(
+                f"Field {field} has changed from {last_entry} to {new_entry} "
+                f"for {entry['accession']}. (Maybe other fields changed as well)"
+            )
+            return True
+    logger.debug(
+        f"No changes detected for {entry['accession']} from version {version_to_revise} "
+        f"to {entry['version']}"
+    )
+    return False
+
+
+def update_assembly_results_with_latest_version(
+    db_config: SimpleConnectionPool, seq_key: dict[str, Any]
+):
+    version_to_revise = last_version(db_config, seq_key)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name=TableName.ASSEMBLY_TABLE,
+        conditions={
+            "accession": seq_key["accession"],
+            "version": version_to_revise,
+        },
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in assembly_table"
+        raise RuntimeError(error_msg)
+    logger.info(
+        f"Updating assembly results for accession {seq_key['accession']} version "
+        f"{seq_key['version']} using results from version {version_to_revise} as there was no"
+        "change in flatfile data."
+    )
+    update_with_retry(
+        db_config=db_config,
+        conditions=seq_key,
+        update_values={
+            "status": Status.SUBMITTED,
+            "result": json.dumps(last_version_data[0]["result"]),
+        },
+        table_name=TableName.ASSEMBLY_TABLE,
+        reraise=False,
+    )
+
+
 def get_project_and_sample_results(
     db_config: SimpleConnectionPool, entry: dict[str, str]
 ) -> tuple[str, str]:
@@ -462,6 +542,9 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
         if is_revision(db_config, seq_key):
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
+                continue
+            if not is_flatfile_data_changed(db_config, sample_data_in_submission_table[0]):
+                update_assembly_results_with_latest_version(db_config, seq_key)
                 continue
 
         try:
@@ -592,6 +675,7 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 table_name=TableName.ASSEMBLY_TABLE,
+                reraise=False,
             )
 
 
