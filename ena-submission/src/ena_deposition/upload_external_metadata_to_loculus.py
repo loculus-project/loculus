@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 def get_results(
     db_config: SimpleConnectionPool, conditions: dict[str, Any], table_name: TableName
 ) -> dict[str, Any]:
-    entry = find_conditions_in_db(
-        db_config, table_name=table_name, conditions=conditions
-    )
+    entry = find_conditions_in_db(db_config, table_name=table_name, conditions=conditions)
     if len(entry) == 1 and table_name == TableName.PROJECT_TABLE:
         return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
     if len(entry) == 1 and table_name == TableName.SAMPLE_TABLE:
@@ -40,15 +38,11 @@ def get_results(
         data = {}
         data["gcaAccession"] = entry[0]["result"]["gca_accession"]
         insdc_accession_keys = [
-            key
-            for key in entry[0]["result"]
-            if key.startswith("insdc_accession_full")
+            key for key in entry[0]["result"] if key.startswith("insdc_accession_full")
         ]
         segments = [key[len("insdc_accession_full") :] for key in insdc_accession_keys]
         for segment in segments:
-            data["insdcAccessionBase" + segment] = entry[0]["result"][
-                "insdc_accession" + segment
-            ]
+            data["insdcAccessionBase" + segment] = entry[0]["result"]["insdc_accession" + segment]
             data["insdcAccessionFull" + segment] = entry[0]["result"][
                 "insdc_accession_full" + segment
             ]
@@ -69,7 +63,7 @@ def get_external_metadata(
     project_id = {"project_id": entry["project_id"]}
     seq_key = {"accession": accession, "version": entry["version"]}
 
-    for (table_name, key) in [
+    for table_name, key in [
         (TableName.PROJECT_TABLE, project_id),
         (TableName.SAMPLE_TABLE, seq_key),
         (TableName.ASSEMBLY_TABLE, seq_key),
@@ -160,7 +154,7 @@ def get_external_metadata_and_send_to_loculus(db_config: SimpleConnectionPool, c
                     "external_metadata": json.dumps(data["externalMetadata"]),
                 },
                 table_name=TableName.SUBMISSION_TABLE,
-                reraise=False
+                reraise=False,
             )
         except Exception as e:
             logger.exception(f"Error submitting external metadata for {accession}: {e}")
