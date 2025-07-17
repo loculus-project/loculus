@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from http import HTTPStatus
-from typing import Any
 
 import pytz
 import requests
@@ -47,7 +46,7 @@ class ColumnCheckConfig:
     """Configuration for checking a specific table column"""
 
     table_name: TableName
-    entry_class: type
+    entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
     id_fields: list[str]
     visibility_column: str
     accession_field: str  # Field prefix in the result dict (e.g., "insdc_accession_full")
@@ -227,8 +226,9 @@ COLUMN_CONFIGS = {
 
 def get_entities_needing_column_check(
     pool: SimpleConnectionPool, column_config: ColumnCheckConfig
-) -> list[Any]:
-    """Get entities that don't have a timestamp for a specific visibility column"""
+) -> list[SampleTableEntry | ProjectTableEntry | AssemblyTableEntry]:
+    """Get entities (db rows for Project/Sample/Assembly) that don't have a timestamp
+    for a specific visibility column"""
 
     data_in_submission_table: list[dict] = find_conditions_in_db(
         pool,
@@ -242,42 +242,38 @@ def get_entities_needing_column_check(
     return [column_config.entry_class(**row) for row in data_in_submission_table]
 
 
-def get_accessions_to_check(entity: Any, column_config: ColumnCheckConfig) -> list[str]:
+def get_accessions_to_check(
+    entity: SampleTableEntry | ProjectTableEntry | AssemblyTableEntry,
+    column_config: ColumnCheckConfig,
+) -> set[str]:
     """
     Get all accessions to check for a specific entity and column config
 
     Returns:
-        List of accession strings to check
+        Set of accessions to check
     """
-    accessions = []
+    accessions = set()
+
+    if not isinstance(entity.result, dict):
+        msg = (
+            f"Expected dict for {column_config.entry_class.__name__} result, "
+            f"got {type(entity.result)}"
+        )
+        raise TypeError(msg)
 
     if column_config.check_all_segments:
         # Look for all keys that start with the accession_field prefix
         # e.g., "insdc_accession_full", "insdc_accession_full_seg2", "insdc_accession_full_seg3"
         for key, value in entity.result.items():
             if key.startswith(column_config.accession_field) and value:
-                if isinstance(value, list):
-                    accessions.extend(value)
-                else:
-                    accessions.append(value)
+                accessions.add(value)
     else:
         # Single accession field
         accession_value = entity.result.get(column_config.accession_field)
         if accession_value:
-            if isinstance(accession_value, list):
-                accessions.extend(accession_value)
-            else:
-                accessions.append(accession_value)
+            accessions.add(accession_value)
 
-    # Remove any None/empty values and duplicates while preserving order
-    seen = set()
-    clean_accessions = []
-    for acc in accessions:
-        if acc and acc not in seen:
-            clean_accessions.append(acc)
-            seen.add(acc)
-
-    return clean_accessions
+    return accessions
 
 
 def check_and_update_visibility_for_column(
@@ -384,7 +380,7 @@ def check_and_update_visibility(config: Config, stop_event: threading.Event):
     while True:
         start_time = time.time()
         if stop_event.is_set():
-            print("check_and_update_visibility stopped due to exception in another task")
+            logger.info("check_and_update_visibility stopped due to exception in another task")
             return
 
         check_and_update_visibility_all_columns(config, pool)
