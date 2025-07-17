@@ -197,11 +197,19 @@ python3 scripts/test_ena_submission.py
 
 You can also use the `deposition_dry_run.py` script to produce the same output files/XMLs that the pipeline would produce in order to submit to ENA. This is a good test if you would like to first verify what your submission to ENA will look like. Make sure that you have the same `config.yaml` that will be used in production (use `../deploy.py` to generate this). Also note that the generator can only produce output for one submission at a time.
 
-TODO: Explain how to get the production config file
-
 ```sh
 python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/approved_ena_submission_list.json --mode=assembly --center-name="Yale" --config-file=config/config.yaml
 ```
+
+> **_NOTE:_**
+> If you want to run the ena deposition pod with the [Pathoplexus](https://github.com/pathoplexus/pathoplexus) staging or production config you can create the config locally by running:
+>
+> ```bash
+> cd ..
+> python deploy.py --enableEnaSubmission config --values kubernetes/loculus/values.yaml --values {PATH_TO_LOCAL_PATHOPLEXUS_REPO}/loculus_values/values.yaml --values {PATH_TO_LOCAL_PATHOPLEXUS_REPO}/loculus_values/environment_specific_values/staging.yaml
+> ```
+
+
 
 #### Integration tests
 
