@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 import pytz
@@ -36,6 +36,19 @@ class ProcessingAnnotationTestCase:
 
 
 @dataclass
+class ProcessedAlignment:
+    unalignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
+        default_factory=lambda: {"main": ""}
+    )
+    alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
+        default_factory=lambda: {"main": None}
+    )
+    nucleotideInsertions: dict[str, list[str]] = field(default_factory=lambda: {"main": []})  # noqa: N815
+    alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
+    aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
+
+
+@dataclass
 class UnprocessedEntryFactory:
     @staticmethod
     def create_unprocessed_entry(
@@ -69,6 +82,7 @@ class ProcessedEntryFactory:
         accession: str,
         metadata_errors: list[ProcessingAnnotationTestCase] | None = None,
         metadata_warnings: list[ProcessingAnnotationTestCase] | None = None,
+        processed_alignment: ProcessedAlignment | None = None,
     ) -> ProcessedEntry:
         if metadata_errors is None:
             metadata_errors = []
@@ -78,17 +92,19 @@ class ProcessedEntryFactory:
             self.all_metadata_fields = []
         base_metadata_dict = dict.fromkeys(self.all_metadata_fields)
         base_metadata_dict.update(metadata_dict)
+        if not processed_alignment:
+            processed_alignment = ProcessedAlignment()
 
         return ProcessedEntry(
             accession=accession,
             version=1,
             data=ProcessedData(
                 metadata=base_metadata_dict,
-                unalignedNucleotideSequences={"main": ""},
-                alignedNucleotideSequences={"main": None},
-                nucleotideInsertions={"main": []},
-                alignedAminoAcidSequences={},
-                aminoAcidInsertions={},
+                unalignedNucleotideSequences=processed_alignment.unalignedNucleotideSequences,
+                alignedNucleotideSequences=processed_alignment.alignedNucleotideSequences,
+                nucleotideInsertions=processed_alignment.nucleotideInsertions,
+                alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
+                aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
             ),
             errors=[
                 ProcessingAnnotation(

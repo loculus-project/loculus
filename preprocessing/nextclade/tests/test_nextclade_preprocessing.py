@@ -7,6 +7,7 @@ from typing import Literal
 import pytest
 from Bio import SeqIO
 from factory_methods import (
+    ProcessedAlignment,
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
     ProcessingTestCase,
@@ -32,19 +33,8 @@ from loculus_preprocessing.processing_functions import (
 SINGLE_SEGMENT_CONFIG = "tests/single_segment_config.yaml"
 MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
 
-EBOLA_SUDAN_CONSENSUS_SEQ = "tests/ebola-sudan-test-dataset/reference.fasta"
-EBOLA_ZAIRE_CONSENSUS_SEQ = "tests/ebola-zaire-test-dataset/reference.fasta"
-
-
-def get_consensus_sequence(
-    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
-) -> str:
-    if type in {"single", "ebola-sudan"}:
-        record = next(SeqIO.parse(EBOLA_SUDAN_CONSENSUS_SEQ, "fasta"))
-    elif type == "ebola-zaire":
-        record = next(SeqIO.parse(EBOLA_ZAIRE_CONSENSUS_SEQ, "fasta"))
-    return str(record.seq)
-
+EBOLA_SUDAN_DATASET = "tests/ebola-sudan-test-dataset"
+EBOLA_ZAIRE_DATASET = "tests/ebola-zaire-test-dataset"
 
 CONFIGS = {
     "single": SINGLE_SEGMENT_CONFIG,
@@ -52,12 +42,60 @@ CONFIGS = {
 }
 
 
+def get_consensus_sequence(
+    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+) -> str:
+    if type in {"single", "ebola-sudan"}:
+        record = next(SeqIO.parse(EBOLA_SUDAN_DATASET + "/reference.fasta", "fasta"))
+    elif type == "ebola-zaire":
+        record = next(SeqIO.parse(EBOLA_ZAIRE_DATASET + "/reference.fasta", "fasta"))
+    return str(record.seq)
+
+
+def get_sequence_with_mutation(
+    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+) -> str:
+    record = next(SeqIO.parse(type, "fasta"))
+    if type in {"single", "ebola-sudan"}:
+        pos = 458 + 3  # start of second AA in NP gene, convert G to A (AA D to N)
+    elif type == "ebola-zaire":
+        pos = 10345 + 3  # start of second AA in VP24 gene, convert G to A (AA A to T)
+    return str(record.seq[: pos - 1]) + "A" + str(record.seq[pos:])
+
+
+def get_sequence_with_deletion(
+    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+) -> str:
+    record = next(SeqIO.parse(type, "fasta"))
+    if type in {"single", "ebola-sudan"}:
+        pos = 2674 - 6  # start of second last AA in NP gene, remove H
+    elif type == "ebola-zaire":
+        pos = 11100 - 6  # start of second last AA in VP24 gene, remove I
+    return str(record.seq[: pos - 1]) + str(record.seq[pos + 2 :])
+
+
+def get_sequence_with_insertion(
+    type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+) -> str:
+    record = next(SeqIO.parse(type, "fasta"))
+    if type in {"single", "ebola-sudan"}:
+        pos = 2674 - 3  # start of last AA in NP gene
+    elif type == "ebola-zaire":
+        pos = 11100 - 3  # start of last AA in VP24 gene
+    return str(record.seq[: pos - 1]) + "GAC" + str(record.seq[pos - 1 :])  # insert D AA
+
+
+def get_invalid_sequence():
+    return "ATGCGTACGTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGC"  # Invalid sequence for testing
+
+
 @dataclass
 class Case:
     name: str
     metadata: dict[str, str | None]
+    processed_alignment: ProcessedAlignment
     expected_metadata: dict[str, ProcessedMetadataValue]
-    expected_errors: list[ProcessingAnnotationTestCase]
+    expected_errors: list[ProcessingAnnotationTestCase] | None = None
     expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
 
@@ -69,8 +107,9 @@ class Case:
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
             accession=unprocessed_entry.accessionVersion.split(".")[0],
-            metadata_errors=self.expected_errors,
+            metadata_errors=self.expected_errors or [],
             metadata_warnings=self.expected_warnings or [],
+            processed_alignment=self.processed_alignment,
         )
         return ProcessingTestCase(
             name=self.name, input=unprocessed_entry, expected_output=expected_output
@@ -165,8 +204,7 @@ def test_preprocessing_with_single_sequences():
     )
 
     config = get_config(SINGLE_SEGMENT_CONFIG)
-    result = process_all([sequence_entry_data], "tests/ebola-test-dataset", config)
-    print(f"Result: {result}")
+    result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
     processed_entry = result[0]
 
     assert processed_entry.errors == []
