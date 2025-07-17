@@ -366,7 +366,7 @@ def check_and_update_visibility_for_column(
 def check_and_update_visibility_all_columns(config: Config, pool: SimpleConnectionPool):
     """Check and update visibility for all configured (entity_type, column) combinations"""
 
-    for (entity_type, column_name), _config in COLUMN_CONFIGS.items():
+    for entity_type, column_name in COLUMN_CONFIGS:
         try:
             check_and_update_visibility_for_column(config, pool, entity_type, column_name)
         except Exception as e:
