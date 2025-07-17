@@ -586,6 +586,9 @@ class TestFirstPublicUpdate(TestSubmission):
             raise ValueError(msg)
 
         # Build conditions dict for composite keys
+        # add_to_project_table returns the project_id of that entry or None if the request failed,
+        # the other add functions return True is add succeeded else false
+        # Hence the 2 branches below
         if add_function == add_to_project_table:
             # Single key (like project_id)
             conditions = {config.id_fields[0]: entity_id}
