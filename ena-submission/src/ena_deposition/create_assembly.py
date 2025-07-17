@@ -477,6 +477,7 @@ def update_assembly_results_with_latest_version(
             "result": json.dumps(last_version_data[0]["result"]),
         },
         table_name=TableName.ASSEMBLY_TABLE,
+        reraise=False
     )
 
 

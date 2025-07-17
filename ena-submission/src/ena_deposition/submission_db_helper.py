@@ -412,6 +412,7 @@ def update_with_retry(
     conditions: dict[str, str],
     table_name: TableName,
     update_values: dict[str, Any],
+    reraise: bool = True,
 ) -> int:
     """Update the database with retry logic.
     the conditions and update_values are dictionaries where
@@ -452,7 +453,10 @@ def update_with_retry(
             f"after {number_of_retries} attempts."
         )
         logger.error(error_msg)
-        raise ValueError(error_msg) from e
+        if reraise:
+            logger.error("Raising exception after retries failed")
+            raise ValueError(error_msg) from e
+        return 0
 
 
 def add_to_project_table(
