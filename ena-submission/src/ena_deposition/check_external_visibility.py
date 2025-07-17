@@ -49,7 +49,7 @@ class ColumnCheckConfig:
     entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
     id_fields: list[str]
     visibility_column: str
-    accession_field: str  # Field prefix in the result dict (e.g., "insdc_accession_full")
+    accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
 
 
@@ -157,7 +157,7 @@ COLUMN_CONFIGS = {
         entry_class=ProjectTableEntry,
         id_fields=["project_id"],
         visibility_column="ena_first_publicly_visible",
-        accession_field="bioproject_accession",
+        accession_field_name_prefix="bioproject_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
@@ -165,7 +165,7 @@ COLUMN_CONFIGS = {
         entry_class=ProjectTableEntry,
         id_fields=["project_id"],
         visibility_column="ncbi_first_publicly_visible",
-        accession_field="bioproject_accession",
+        accession_field_name_prefix="bioproject_accession",
         checker_class=NCBIVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
@@ -173,7 +173,7 @@ COLUMN_CONFIGS = {
         entry_class=SampleTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ena_first_publicly_visible",
-        accession_field="biosample_accession",
+        accession_field_name_prefix="biosample_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
@@ -181,7 +181,7 @@ COLUMN_CONFIGS = {
         entry_class=SampleTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ncbi_first_publicly_visible",
-        accession_field="biosample_accession",
+        accession_field_name_prefix="biosample_accession",
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA nucleotide accessions
@@ -190,7 +190,7 @@ COLUMN_CONFIGS = {
         entry_class=AssemblyTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ena_nucleotide_first_publicly_visible",
-        accession_field="insdc_accession_full",  # Prefix for multi-segment accessions
+        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
@@ -198,7 +198,7 @@ COLUMN_CONFIGS = {
         entry_class=AssemblyTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ncbi_nucleotide_first_publicly_visible",
-        accession_field="insdc_accession_full",  # Prefix for multi-segment accessions
+        accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=NCBIVisibilityChecker,
     ),
     # Assemblies - ENA GCA accessions
@@ -207,7 +207,7 @@ COLUMN_CONFIGS = {
         entry_class=AssemblyTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ena_gca_first_publicly_visible",
-        accession_field="gca_accession",
+        accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
     ),
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
@@ -215,7 +215,7 @@ COLUMN_CONFIGS = {
         entry_class=AssemblyTableEntry,
         id_fields=["accession", "version"],
         visibility_column="ncbi_gca_first_publicly_visible",
-        accession_field="gca_accession",
+        accession_field_name_prefix="gca_accession",
         checker_class=NCBIVisibilityChecker,
     ),
 }
@@ -259,7 +259,7 @@ def get_accessions_to_check(
         raise TypeError(msg)
 
     for key, value in entity.result.items():
-        if key.startswith(column_config.accession_field) and value:
+        if key.startswith(column_config.accession_field_name_prefix) and value:
             accessions.add(value)
 
     return accessions
@@ -298,7 +298,7 @@ def check_and_update_visibility_for_column(
         if not accessions:
             logger.debug(
                 f"No accessions found for {entity_type.value} {entity_id} "
-                f"(looking for keys starting with '{column_config.accession_field}')"
+                f"(looking for keys starting with '{column_config.accession_field_name_prefix}')"
             )
             continue
 
