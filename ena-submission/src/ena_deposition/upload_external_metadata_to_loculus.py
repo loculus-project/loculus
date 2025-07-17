@@ -100,12 +100,13 @@ def get_external_metadata_and_send_to_loculus(db_config: SimpleConnectionPool, c
         seq_key = {"accession": accession, "version": entry["version"]}
 
         try:
-            changed = False
             if not entry["external_metadata"] and data["externalMetadata"]:
                 changed = True
-            for key, value in data["externalMetadata"].items():
-                if entry["external_metadata"].get(key) != value:
-                    changed = True
+            else:
+                changed = any(
+                    entry["external_metadata"].get(key) != value
+                    for key, value in data["externalMetadata"].items()
+                )
 
             if not changed:
                 continue
