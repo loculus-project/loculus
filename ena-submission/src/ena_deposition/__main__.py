@@ -4,6 +4,8 @@ import threading
 
 import click
 
+from ena_deposition.check_external_visibility import check_and_update_visibility
+
 from .api import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
@@ -55,6 +57,7 @@ def run(config_file: str, input_file: str | None) -> None:
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
             executor.submit(start_api, config, stop_event),
+            executor.submit(check_and_update_visibility, config, stop_event),
         ]
         if not input_file:
             futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))
