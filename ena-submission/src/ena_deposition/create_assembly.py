@@ -404,7 +404,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
 
 def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
     """
-    Check if no change in sequence or flatfile metadata has occurred since last version.
+    Check if change in sequence or flatfile metadata has occurred since last version.
     """
     version_to_revise = last_version(db_config, entry)
     last_version_data = find_conditions_in_db(
@@ -425,7 +425,7 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
             f"from {version_to_revise} to {entry['version']} - should be revised"
             "(Metadata maybe also changed.)"
         )
-        return False
+        return True
 
     fields = [
         DEFAULT_EMBL_PROPERTY_FIELDS.country_property,
@@ -441,12 +441,12 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
                 f"Field {field} has changed from {last_entry} to {new_entry} "
                 f"for {entry['accession']}. (Maybe other fields changed as well)"
             )
-            return False
+            return True
     logger.debug(
         f"No changes detected for {entry['accession']} from version {version_to_revise} "
         f"to {entry['version']}"
     )
-    return True
+    return False
 
 
 def update_assembly_results_with_latest_version(
@@ -542,7 +542,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
                 continue
-            if is_flatfile_data_changed(db_config, sample_data_in_submission_table[0]):
+            if not is_flatfile_data_changed(db_config, sample_data_in_submission_table[0]):
                 update_assembly_results_with_latest_version(db_config, seq_key)
                 continue
 
