@@ -799,7 +799,7 @@ class ProcessingFunctions:
                     f"The authors list '{authors}' might not be using the Loculus format. "
                     + author_format_description
                 )
-                warnings = [
+                warnings.append(
                     ProcessingAnnotation(
                         processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -810,17 +810,15 @@ class ProcessingFunctions:
                         ],
                         message=warning_message,
                     )
-                ]
+                )
                 return ProcessingResult(
                     datum=formatted_authors,
                     warnings=warnings,
                     errors=errors,
                 )
             if " and " in authors:
-                warning_message = (
-                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
-                )
-                warnings = [
+                warning_message = f"Authors list '{authors}' contains 'and'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                warnings.append(
                     ProcessingAnnotation(
                         processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -831,11 +829,6 @@ class ProcessingFunctions:
                         ],
                         message=warning_message,
                     )
-                ]
-                return ProcessingResult(
-                    datum=formatted_authors,
-                    warnings=warnings,
-                    errors=errors,
                 )
             return ProcessingResult(
                 datum=formatted_authors,
