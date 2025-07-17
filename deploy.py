@@ -379,6 +379,7 @@ def generate_configs(from_live, live_host, enable_ena, values_files=None):
             live_host,
             ena_submission_configout_path,
             values_files=values_files,
+            enableEnaSubmission=True,
         )
 
     ingest_configmap_path = temp_dir_path / "config.yaml"
@@ -429,6 +430,7 @@ def generate_config(
     live_host=None,
     output_path=None,
     values_files=None,
+    enableEnaSubmission=False,
 ):
     if from_live and live_host:
         number_of_dots = live_host.count(".")
@@ -465,6 +467,8 @@ def generate_config(
     else:
         helm_template_cmd.extend(["--set", "environment=local"])
         helm_template_cmd.extend(["--set", "testconfig=true"])
+    if enableEnaSubmission:
+        helm_template_cmd.extend(["--set", "disableEnaSubmission=false"])
     helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
     if args.dry_run:
         return
