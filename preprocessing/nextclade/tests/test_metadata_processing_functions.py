@@ -392,9 +392,9 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="non_latin_characters_authors",
+        name="accents_in_authors",
         metadata={
-            "submissionId": "non_latin_characters_authors",
+            "submissionId": "accents_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
             "authors": "Pérez, José; Bailley, François",
