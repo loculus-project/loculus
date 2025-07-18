@@ -5,7 +5,7 @@ import { getTestSequences } from '../util/testSequenceProvider.ts';
 test.describe('The sequences endpoint', () => {
     const testSequenceEntry = getTestSequences().testSequenceEntry;
 
-    test('should have usable logout button', async ({ request }) => {
+    test('should return pipe-separated header fields', async ({ request }) => {
         const query = new URLSearchParams([
             ['headerFields', 'accessionVersion'],
             ['headerFields', 'country'],
