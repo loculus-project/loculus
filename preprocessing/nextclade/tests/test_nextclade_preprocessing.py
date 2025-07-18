@@ -101,7 +101,6 @@ def get_invalid_sequence():
     return "ATGCGTACGTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGC"  # Invalid sequence for testing
 
 
-
 single_segment_case_definitions = [
     Case(
         name="with mutation",
@@ -350,6 +349,47 @@ multi_segment_case_definitions = [
                 ),
             },
             aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="with one succeeded and one not uploaded",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": None,
+            "ebola-zaire": get_sequence_with_mutation("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": 0,
+            "totalInsertedNucs_ebola-zaire": 0,
+            "totalSnps_ebola-zaire": 1,
+            "totalDeletedNucs_ebola-zaire": 0,
+            "length_ebola-zaire": len(get_consensus_sequence("ebola-zaire")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-sudan": None,
+                "ebola-zaire": get_sequence_with_mutation("ebola-zaire"),
+            },
+            alignedNucleotideSequences={
+                "ebola-sudan": None,
+                "ebola-zaire": get_sequence_with_mutation("ebola-zaire"),
+            },
+            nucleotideInsertions={"ebola-zaire": []},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": None,
+                "VP35EbolaSudan": None,
+                "VP24EbolaZaire": get_ebola_zaire_aa(
+                    get_sequence_with_mutation("ebola-zaire"), "VP24"
+                ),
+                "LEbolaZaire": get_ebola_zaire_aa(get_sequence_with_mutation("ebola-zaire"), "L"),
+            },
+            aminoAcidInsertions={},  # TODO: this is odd, should be the same as empty nuc insertions
         ),
     ),
     Case(
