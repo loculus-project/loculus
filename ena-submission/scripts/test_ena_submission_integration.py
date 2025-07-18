@@ -11,6 +11,8 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 # ruff: noqa: S101 (allow asserts in tests))
 import json
 import logging
+import pprint
+import re
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Final
@@ -456,20 +458,82 @@ def simple_submission(
     sequences_to_upload: Final = get_sequences()
 
     get_external_metadata_and_send_to_loculus(db_config, config)
+    mock_submit_external_metadata.assert_not_called()
 
     upload_sequences(db_config, sequences_to_upload)
     check_sequences_uploaded(db_config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
+    mock_submit_external_metadata.assert_not_called()
 
     _test_successful_project_submission(db_config, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
+    args = mock_submit_external_metadata.call_args_list
+
+    assert len(args) == 1
+    payload = args[0][0][0]  # first positional argument of first call
+    assert payload["accession"] == "LOC_0001TLY"
+    assert payload["version"] == 1
+    assert list(payload["externalMetadata"]) == ["bioprojectAccession"]
+    assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
+    assert mock_submit_external_metadata.call_args[0][0]["accession"] == "LOC_0001TLY"
+    assert mock_submit_external_metadata.call_args[0][0]["version"] == 1
 
     _test_successful_sample_submission(db_config, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
+    args = mock_submit_external_metadata.call_args_list
+    assert len(args) == 2  # noqa: PLR2004
+    payload = args[1][0][0]  # first positional argument of second call
+    assert payload["accession"] == "LOC_0001TLY"
+    assert payload["version"] == 1
+    assert list(payload["externalMetadata"]) == ["bioprojectAccession", "biosampleAccession"]
+    assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
+    assert payload["externalMetadata"]["biosampleAccession"].startswith("SAMEA")
 
     _test_successful_assembly_submission(db_config, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
     check_sent_to_loculus(db_config, sequences_to_upload)
+    args = mock_submit_external_metadata.call_args_list
+    assert len(args) == 3  # noqa: PLR2004
+    payload = args[2][0][0]  # first positional argument of third call
+    logger.info(f"Payload: {pprint.pformat(payload)}")
+    assert payload["accession"] == "LOC_0001TLY"
+    assert payload["version"] == 1
+    assert set(payload["externalMetadata"]) == {
+        "bioprojectAccession",
+        "biosampleAccession",
+        "gcaAccession",
+        "insdcAccessionBase_L",
+        "insdcAccessionBase_M",
+        "insdcAccessionFull_L",
+        "insdcAccessionFull_M",
+    }
+    assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
+    assert payload["externalMetadata"]["biosampleAccession"].startswith("SAMEA")
+
+    insdc_full_pattern = r"^[A-Z]{2}[0-9]{6}\.[0-9]+$"
+    insdc_base_pattern = r"^[A-Z]{2}[0-9]{6}$"
+    gca_pattern = r"^GCA_[0-9]{9}\.[0-9]+$"
+
+    assert re.match(insdc_full_pattern, payload["externalMetadata"]["insdcAccessionFull_L"]), (
+        f"insdcAccessionFull_L '{payload['externalMetadata']['insdcAccessionFull_L']}' "
+        f"does not match INSDC full pattern {insdc_full_pattern}"
+    )
+    assert re.match(insdc_full_pattern, payload["externalMetadata"]["insdcAccessionFull_M"]), (
+        f"insdcAccessionFull_M '{payload['externalMetadata']['insdcAccessionFull_M']}' "
+        f"does not match INSDC full pattern {insdc_full_pattern}"
+    )
+    assert re.match(insdc_base_pattern, payload["externalMetadata"]["insdcAccessionBase_L"]), (
+        f"insdcAccessionBase_L '{payload['externalMetadata']['insdcAccessionBase_L']}' "
+        f"does not match INSDC base pattern {insdc_base_pattern}"
+    )
+    assert re.match(insdc_base_pattern, payload["externalMetadata"]["insdcAccessionBase_M"]), (
+        f"insdcAccessionBase_M '{payload['externalMetadata']['insdcAccessionBase_M']}' "
+        f"does not match INSDC base pattern {insdc_base_pattern}"
+    )
+    assert re.match(gca_pattern, payload["externalMetadata"]["gcaAccession"]), (
+        f"gcaAccession '{payload['externalMetadata']['gcaAccession']}' "
+        f"does not match GCA pattern {gca_pattern}"
+    )
 
 
 class TestSubmission:
