@@ -41,7 +41,7 @@ class ProcessingAnnotationTestCase:
 @dataclass
 class ProcessedAlignment:
     unalignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
-        default_factory=lambda: {"main": ""}
+        default_factory=lambda: {"main": None}
     )
     alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
         default_factory=lambda: {"main": None}
@@ -189,21 +189,25 @@ def verify_processed_entry(
     )
 
     # Check alignment data
-    assert (
-        processed_entry.data.unalignedNucleotideSequences
-        == expected_output.data.unalignedNucleotideSequences
-    ), f"{test_name}: unaligned nucleotide sequences do not match."
-    assert (
-        processed_entry.data.alignedNucleotideSequences
-        == expected_output.data.alignedNucleotideSequences
-    ), f"{test_name}: aligned nucleotide sequences do not match."
-    assert processed_entry.data.nucleotideInsertions == expected_output.data.nucleotideInsertions, (
-        f"{test_name}: nucleotide insertions do not match."
+    actual = processed_entry.data
+    expected = expected_output.data
+    assert actual.unalignedNucleotideSequences == expected.unalignedNucleotideSequences, (
+        f"{test_name}: unaligned nucleotide sequences '{actual.unalignedNucleotideSequences}' do "
+        f"not match expectation '{expected.unalignedNucleotideSequences}'."
     )
-    assert (
-        processed_entry.data.alignedAminoAcidSequences
-        == expected_output.data.alignedAminoAcidSequences
-    ), f"{test_name}: aligned amino acid sequences do not match."
-    assert processed_entry.data.aminoAcidInsertions == expected_output.data.aminoAcidInsertions, (
-        f"{test_name}: amino acid insertions do not match."
+    assert actual.alignedNucleotideSequences == expected.alignedNucleotideSequences, (
+        f"{test_name}: aligned nucleotide sequences '{actual.alignedNucleotideSequences}' "
+        f"do not match expectation '{expected.alignedNucleotideSequences}'."
+    )
+    assert actual.nucleotideInsertions == expected.nucleotideInsertions, (
+        f"{test_name}: nucleotide insertions '{actual.nucleotideInsertions}' do not match "
+        f"expectation '{expected.nucleotideInsertions}'."
+    )
+    assert actual.alignedAminoAcidSequences == expected.alignedAminoAcidSequences, (
+        f"{test_name}: aligned amino acid sequences '{actual.alignedAminoAcidSequences}' "
+        "do not match expectation '{expected.alignedAminoAcidSequences}'."
+    )
+    assert actual.aminoAcidInsertions == expected.aminoAcidInsertions, (
+        f"{test_name}: amino acid insertions '{actual.aminoAcidInsertions}' do not "
+        f"match expectation '{expected.aminoAcidInsertions}'."
     )

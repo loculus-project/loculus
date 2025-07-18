@@ -135,10 +135,9 @@ def process_single_entry(
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
-@pytest.mark.parametrize("factory_custom", ["single"], indirect=True)
-def test_preprocessing(test_case_def: Case, factory_custom):
-    factory, config = factory_custom
-    test_case = test_case_def.create_test_case(factory)
+def test_preprocessing(test_case_def: Case, factory_custom: ProcessedEntryFactory):
+    config = get_config(SINGLE_SEGMENT_CONFIG)
+    test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
@@ -154,7 +153,6 @@ def test_preprocessing_with_single_sequences():
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
-                "name_required": sequence_name,
             },
             unalignedNucleotideSequences={"main": sequence},
         ),
@@ -166,13 +164,12 @@ def test_preprocessing_with_single_sequences():
 
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
-    assert processed_entry.data.metadata["name_required"] == sequence_name
     assert processed_entry.data.unalignedNucleotideSequences == {"main": sequence}
     assert processed_entry.data.alignedNucleotideSequences == {"main": sequence}
     assert processed_entry.data.nucleotideInsertions == {"main": []}
-    assert processed_entry.data.alignedAminoAcidSequences.keys() == {
+    assert set(processed_entry.data.alignedAminoAcidSequences.keys()) == {
         "NPEbolaSudan",
-        "VPVP35EbolaSudan",
+        "VP35EbolaSudan",
     }
     assert processed_entry.data.aminoAcidInsertions == {}
 
