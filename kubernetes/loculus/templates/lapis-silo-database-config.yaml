@@ -4,7 +4,8 @@
 
 {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
 
-{{- $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
+{{- $firstReferenceGenome := first (values $instance.referenceGenomes) }}
+{{- $referenceGenomes:= include "loculus.generateReferenceGenome" $firstReferenceGenome | fromYaml }}
 {{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: v1
