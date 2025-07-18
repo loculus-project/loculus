@@ -34,8 +34,14 @@ def get_bioproject_accession_from_db(
         table_name=TableName.PROJECT_TABLE,
         conditions={"project_id": project_id},
     )
-    if len(entry) != 1:
+    if not entry:
         return {}
+    if len(entry) > 1:
+        msg = (
+            f"Expected 1 record in {TableName.PROJECT_TABLE} for "
+            f"project_id: {project_id}, but found {len(entry)} records."
+        )
+        raise ValueError(msg)
     if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
         "bioproject_accession"
     ):
@@ -51,8 +57,14 @@ def get_biosample_accession_from_db(
         table_name=TableName.SAMPLE_TABLE,
         conditions={"accession": accession, "version": version},
     )
-    if len(entry) != 1:
+    if not entry:
         return {}
+    if len(entry) > 1:
+        msg = (
+            f"Expected 1 record in {TableName.SAMPLE_TABLE} for "
+            f"{accession}.{version}, but found {len(entry)} records."
+        )
+        raise ValueError(msg)
     if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
         "biosample_accession"
     ):
@@ -68,10 +80,12 @@ def get_assembly_accessions_from_db(
         table_name=TableName.ASSEMBLY_TABLE,
         conditions={"accession": accession, "version": version},
     )
-    if len(entry) != 1:
+    if not entry:
+        return {}, False
+    if len(entry) > 1:
         msg = (
             f"Expected 1 record in {TableName.ASSEMBLY_TABLE} for "
-            f"conditions: {entry[0]['conditions']}, but found {len(entry)} records."
+            f"{accession}.{version}, but found {len(entry)} records."
         )
         raise ValueError(msg)
 
