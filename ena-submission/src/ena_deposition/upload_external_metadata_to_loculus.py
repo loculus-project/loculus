@@ -71,8 +71,11 @@ def get_assembly_accessions_from_db(
         )
         raise ValueError(msg)
 
-    data = {}
     result = entry[0]["result"]
+    if not result:
+        return {}, False
+
+    data = {}
     all_present = True
 
     gca = result.get("gca_accession")
