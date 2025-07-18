@@ -6,22 +6,21 @@ from typing import Literal
 
 import pytest
 from Bio import SeqIO
+from Bio.Seq import Seq
 from factory_methods import (
     ProcessedAlignment,
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
     ProcessingTestCase,
     UnprocessedEntryFactory,
-    ts_from_ymd,
     verify_processed_entry,
 )
 
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
+    AnnotationSourceType,
     ProcessedEntry,
     ProcessedMetadataValue,
-    UnprocessedData,
-    UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
@@ -35,11 +34,6 @@ MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-sudan-test-dataset"
 EBOLA_ZAIRE_DATASET = "tests/ebola-zaire-test-dataset"
-
-CONFIGS = {
-    "single": SINGLE_SEGMENT_CONFIG,
-    "multi": MULTI_SEGMENT_CONFIG,
-}
 
 
 def get_consensus_sequence(
@@ -55,34 +49,52 @@ def get_consensus_sequence(
 def get_sequence_with_mutation(
     type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
 ) -> str:
-    record = next(SeqIO.parse(type, "fasta"))
+    seq = get_consensus_sequence(type)
     if type in {"single", "ebola-sudan"}:
         pos = 458 + 3  # start of second AA in NP gene, convert G to A (AA D to N)
     elif type == "ebola-zaire":
         pos = 10345 + 3  # start of second AA in VP24 gene, convert G to A (AA A to T)
-    return str(record.seq[: pos - 1]) + "A" + str(record.seq[pos:])
+    return str(seq[: pos - 1]) + "A" + str(seq[pos:])
+
+
+def get_ebola_sudan_aa(nuc: str, gene: Literal["VP35", "NP"], with_deletion: bool = False) -> str:
+    if gene == "NP":
+        return str(Seq(nuc[(458 - 1) : 2674]).translate(to_stop=False))
+    start = 3138 if not with_deletion else 3135
+    stop = 4127 if not with_deletion else 4124
+    return str(Seq(nuc[(start - 1) : stop]).translate(to_stop=False))
+
+
+def get_ebola_zaire_aa(nuc: str, gene: Literal["VP24", "L"]) -> str:
+    if gene == "VP24":
+        return str(Seq(nuc[(10345 - 1) : 11100]).translate())
+    return str(Seq(nuc[(11581 - 1) : 18219]).translate())
 
 
 def get_sequence_with_deletion(
     type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
+    aligned: bool = False,
 ) -> str:
-    record = next(SeqIO.parse(type, "fasta"))
+    record = get_consensus_sequence(type)
     if type in {"single", "ebola-sudan"}:
         pos = 2674 - 6  # start of second last AA in NP gene, remove H
     elif type == "ebola-zaire":
         pos = 11100 - 6  # start of second last AA in VP24 gene, remove I
-    return str(record.seq[: pos - 1]) + str(record.seq[pos + 2 :])
+    if aligned:
+        # If aligned, we need to remove the last two nucleotides of the codon
+        return str(record[:pos]) + "---" + str(record[pos + 3 :])
+    return str(record[:pos]) + str(record[pos + 3 :])
 
 
 def get_sequence_with_insertion(
     type: Literal["single"] | Literal["ebola-sudan"] | Literal["ebola-zaire"],
 ) -> str:
-    record = next(SeqIO.parse(type, "fasta"))
+    record = get_consensus_sequence(type)
     if type in {"single", "ebola-sudan"}:
         pos = 2674 - 3  # start of last AA in NP gene
     elif type == "ebola-zaire":
         pos = 11100 - 3  # start of last AA in VP24 gene
-    return str(record.seq[: pos - 1]) + "GAC" + str(record.seq[pos - 1 :])  # insert D AA
+    return str(record[:pos]) + "GAC" + str(record[pos:])  # insert D AA
 
 
 def get_invalid_sequence():
@@ -92,7 +104,8 @@ def get_invalid_sequence():
 @dataclass
 class Case:
     name: str
-    metadata: dict[str, str | None]
+    input_metadata: dict[str, str | None]
+    input_sequence: dict[str, str | None]
     processed_alignment: ProcessedAlignment
     expected_metadata: dict[str, ProcessedMetadataValue]
     expected_errors: list[ProcessingAnnotationTestCase] | None = None
@@ -101,8 +114,9 @@ class Case:
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
-            metadata_dict=self.metadata,
+            metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
+            sequences=self.input_sequence,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
@@ -116,15 +130,131 @@ class Case:
         )
 
 
-test_case_definitions = []
+test_case_definitions = [
+    Case(
+        name="single segment with mutation",
+        input_metadata={},
+        input_sequence={"main": get_sequence_with_mutation("single")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 0,
+            "totalSnps": 1,
+            "totalDeletedNucs": 0,
+            "length": len(get_consensus_sequence("single")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": get_sequence_with_mutation("single")},
+            alignedNucleotideSequences={"main": get_sequence_with_mutation("single")},
+            nucleotideInsertions={"main": []},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": get_ebola_sudan_aa(get_sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": get_ebola_sudan_aa(get_sequence_with_mutation("single"), "VP35"),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="single segment with insertion",
+        input_metadata={},
+        input_sequence={"main": get_sequence_with_insertion("single")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 3,
+            "totalSnps": 0,
+            "totalDeletedNucs": 0,
+            "length": len(get_sequence_with_insertion("single")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": get_sequence_with_insertion("single")},
+            alignedNucleotideSequences={"main": get_consensus_sequence("single")},
+            nucleotideInsertions={"main": ["2671:GAC"]},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": get_ebola_sudan_aa(get_consensus_sequence("single"), "NP"),
+                "VP35EbolaSudan": get_ebola_sudan_aa(get_consensus_sequence("single"), "VP35"),
+            },
+            aminoAcidInsertions={"NPEbolaSudan": ["738:D"]},
+        ),
+    ),
+    Case(
+        name="single segment with deletion",
+        input_metadata={},
+        input_sequence={"main": get_sequence_with_deletion("single")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 0,
+            "totalSnps": 0,
+            "totalDeletedNucs": 3,
+            "length": len(get_consensus_sequence("single")) - 3,
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": get_sequence_with_deletion("single")},
+            alignedNucleotideSequences={"main": get_sequence_with_deletion("single", aligned=True)},
+            nucleotideInsertions={"main": []},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": get_ebola_sudan_aa(
+                    get_sequence_with_deletion("single", aligned=True), "NP", with_deletion=True
+                ),
+                "VP35EbolaSudan": get_ebola_sudan_aa(
+                    get_sequence_with_deletion("single"), "VP35", with_deletion=True
+                ),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="single segment with failed alignment",
+        input_metadata={},
+        input_sequence={"main": get_invalid_sequence()},
+        accession_id="1",
+        expected_metadata={
+            "completeness": None,
+            "totalInsertedNucs": None,
+            "totalSnps": None,
+            "totalDeletedNucs": None,
+            "length": 53,
+        },
+        expected_errors=[
+            ProcessingAnnotationTestCase(
+                ["alignment"],
+                ["alignment"],
+                "No segment aligned.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+            ProcessingAnnotationTestCase(
+                ["main"],
+                ["main"],
+                "Nucleotide sequence failed to align",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+        ],
+        expected_warnings=[],
+        processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": get_invalid_sequence()},
+            alignedNucleotideSequences={"main": None},
+            nucleotideInsertions={"main": []},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": None,
+                "VP35EbolaSudan": None,
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
+]
 
 
-@pytest.fixture(scope="function")
-def factory_custom(request):
-    config_key = getattr(request, "param", "single")
-    config_val = CONFIGS[config_key]
-    config = get_config(config_val)
-    return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys())), config
+@pytest.fixture(scope="module")
+def factory_custom():
+    config = get_config(SINGLE_SEGMENT_CONFIG)
+    return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
 
 
 def process_single_entry(
@@ -138,40 +268,8 @@ def process_single_entry(
 def test_preprocessing(test_case_def: Case, factory_custom: ProcessedEntryFactory):
     config = get_config(SINGLE_SEGMENT_CONFIG)
     test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config)
+    processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
-
-
-def test_preprocessing_with_single_sequences():
-    sequence_name = "entry with one mutation"
-    sequence = get_consensus_sequence("single")
-    sequence = sequence[0] + "A" + sequence[2:]
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion=f"LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={
-                "ncbi_required_collection_date": "2024-01-01",
-            },
-            unalignedNucleotideSequences={"main": sequence},
-        ),
-    )
-
-    config = get_config(SINGLE_SEGMENT_CONFIG)
-    result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
-    processed_entry = result[0]
-
-    assert processed_entry.errors == []
-    assert processed_entry.warnings == []
-    assert processed_entry.data.unalignedNucleotideSequences == {"main": sequence}
-    assert processed_entry.data.alignedNucleotideSequences == {"main": sequence}
-    assert processed_entry.data.nucleotideInsertions == {"main": []}
-    assert set(processed_entry.data.alignedAminoAcidSequences.keys()) == {
-        "NPEbolaSudan",
-        "VP35EbolaSudan",
-    }
-    assert processed_entry.data.aminoAcidInsertions == {}
 
 
 def test_format_frameshift():

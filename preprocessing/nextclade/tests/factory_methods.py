@@ -9,10 +9,12 @@ import pytz
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    SegmentName,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -36,6 +38,7 @@ class ProcessingAnnotationTestCase:
     unprocessedFieldsName: list[str]  # noqa: N815
     processedFieldsName: list[str]  # noqa: N815
     message: str
+    type: AnnotationSourceType = AnnotationSourceType.METADATA
 
 
 @dataclass
@@ -57,6 +60,7 @@ class UnprocessedEntryFactory:
     def create_unprocessed_entry(
         metadata_dict: dict[str, str | None],
         accession_id: str,
+        sequences: dict[SegmentName, NucleotideSequence | None] = {"main": ""},
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -66,7 +70,7 @@ class UnprocessedEntryFactory:
                     datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
                 ),
                 metadata=metadata_dict,
-                unalignedNucleotideSequences={"main": ""},
+                unalignedNucleotideSequences=sequences,
             ),
         )
 
@@ -98,18 +102,7 @@ class ProcessedEntryFactory:
         if not processed_alignment:
             processed_alignment = ProcessedAlignment()
 
-        return ProcessedEntry(
-            accession=accession,
-            version=1,
-            data=ProcessedData(
-                metadata=base_metadata_dict,
-                unalignedNucleotideSequences=processed_alignment.unalignedNucleotideSequences,
-                alignedNucleotideSequences=processed_alignment.alignedNucleotideSequences,
-                nucleotideInsertions=processed_alignment.nucleotideInsertions,
-                alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
-                aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
-            ),
-            errors=[
+        errors = [
                 ProcessingAnnotation(
                     unprocessedFields=[
                         AnnotationSource(
@@ -124,8 +117,39 @@ class ProcessedEntryFactory:
                     ],
                     message=error.message,
                 )
-                for error in metadata_errors
-            ],
+                for error in metadata_errors if error.type == AnnotationSourceType.METADATA
+            ]
+        errors.extend(
+            [
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=field,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                        for field in error.unprocessedFieldsName
+                    ],
+                    processedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                        for field in error.processedFieldsName
+                    ],
+                    message=error.message,
+                )
+                for error in metadata_errors if error.type == AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+            ])
+
+        return ProcessedEntry(
+            accession=accession,
+            version=1,
+            data=ProcessedData(
+                metadata=base_metadata_dict,
+                unalignedNucleotideSequences=processed_alignment.unalignedNucleotideSequences,
+                alignedNucleotideSequences=processed_alignment.alignedNucleotideSequences,
+                nucleotideInsertions=processed_alignment.nucleotideInsertions,
+                alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
+                aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
+            ),
+            errors=errors,
             warnings=[
                 ProcessingAnnotation(
                     unprocessedFields=[
@@ -205,7 +229,7 @@ def verify_processed_entry(
     )
     assert actual.alignedAminoAcidSequences == expected.alignedAminoAcidSequences, (
         f"{test_name}: aligned amino acid sequences '{actual.alignedAminoAcidSequences}' "
-        "do not match expectation '{expected.alignedAminoAcidSequences}'."
+        f"do not match expectation '{expected.alignedAminoAcidSequences}'."
     )
     assert actual.aminoAcidInsertions == expected.aminoAcidInsertions, (
         f"{test_name}: amino acid insertions '{actual.aminoAcidInsertions}' do not "

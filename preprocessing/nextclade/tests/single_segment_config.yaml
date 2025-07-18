@@ -9,25 +9,6 @@ nucleotideSequences:
 - main
 organism: ebola-sudan-test
 processing_spec:
-  continent:
-    args:
-      options:
-        - Africa
-        - Antarctica
-        - Asia
-        - Europe
-        - North America
-        - South America
-        - Oceania
-    function: process_options
-    inputs:
-      input: continent
-  collection_date:
-    args:
-      type: date
-    function: parse_and_assert_past_date
-    inputs:
-      date: collection_date
   completeness:
     args:
       type: float
@@ -52,3 +33,9 @@ processing_spec:
     function: identity
     inputs:
       input: nextclade.totalDeletions
+  length:
+    args:
+      type: int
+    function: identity
+    inputs:
+      input: length
