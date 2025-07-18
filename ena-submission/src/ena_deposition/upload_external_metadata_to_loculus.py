@@ -36,6 +36,8 @@ def get_bioproject_accession_from_db(
     )
     if len(entry) != 1:
         return {}
+    if "bioproject_accession" not in entry[0]["result"]:
+        return {}
     return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
 
 
@@ -48,6 +50,8 @@ def get_biosample_accession_from_db(
         conditions={"accession": accession, "version": version},
     )
     if len(entry) != 1:
+        return {}
+    if "biosample_accession" not in entry[0]["result"]:
         return {}
     return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
 
