@@ -1,0 +1,70 @@
+batch_size: 100
+genes:
+- NPEbolaSudan
+- VP35EbolaSudan
+- VP24EbolaZaire
+- LEbolaZaire
+log_level: DEBUG
+nextclade_dataset_name: ebola-dataset
+nextclade_dataset_server: fake_url
+nucleotideSequences:
+- ebola-sudan
+- ebola-zaire
+organism: multi-ebola-test
+processing_spec:
+  totalInsertedNucs_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalInsertions
+  totalSnps_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
+  totalDeletedNucs_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalDeletions
+  totalInsertedNucs_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalInsertions
+  totalSnps_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
+  totalDeletedNucs_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalDeletions
+  length_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-sudan
+  length_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-zaire
