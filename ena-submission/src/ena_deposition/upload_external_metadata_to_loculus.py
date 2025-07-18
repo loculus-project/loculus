@@ -30,12 +30,12 @@ def _get_results_of_single_db_record(
     db_config: SimpleConnectionPool,
     table_name: TableName,
     conditions: dict[str, Any],
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Helper to get a single record from database with validation."""
     entries = find_conditions_in_db(db_config, table_name=table_name, conditions=conditions)
 
     if not entries:
-        return None
+        return {}
 
     if len(entries) > 1:
         msg = (
