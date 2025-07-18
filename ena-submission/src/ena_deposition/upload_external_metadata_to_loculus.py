@@ -141,7 +141,7 @@ def get_external_metadata_and_send_to_loculus(
             data, all_present = get_external_metadata(db_config, entry)
             seq_key = {"accession": accession, "version": version}
 
-            if any(
+            if "external_metadata" in entry and any(
                 entry["external_metadata"].get(key) != value
                 for key, value in data.get("externalMetadata", {}).items()
             ):
