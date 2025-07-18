@@ -141,41 +141,38 @@ def get_external_metadata_and_send_to_loculus(
             data, all_present = get_external_metadata(db_config, entry)
             seq_key = {"accession": accession, "version": version}
 
-            if not any(
+            if any(
                 entry["external_metadata"].get(key) != value
                 for key, value in data.get("externalMetadata", {}).items()
             ):
-                # If nothing has changed in external metadata, skip submission
-                continue
-
-            try:
-                submit_external_metadata(
-                    data,
-                    config,
-                    entry["organism"],
-                )
-                logger.info(f"Partial external metadata update for {accession_version} succeeded")
-            except Exception as e:
-                logger.exception(
-                    f"Submitting partial external metadata to backend failed for "
-                    f"{accession_version}: {e}"
-                )
-                continue
-            try:
-                update_with_retry(
-                    db_config,
-                    conditions=seq_key,
-                    update_values={
-                        "external_metadata": json.dumps(data["externalMetadata"]),
-                    },
-                    table_name=TableName.SUBMISSION_TABLE,
-                )
-            except Exception as e:
-                logger.exception(
-                    f"Failed to add new state of submitted external metadata to db for "
-                    f"{accession_version}: {e}"
-                )
-                continue
+                try:
+                    submit_external_metadata(
+                        data,
+                        config,
+                        entry["organism"],
+                    )
+                    logger.info(f"External metadata update for {accession_version} succeeded")
+                except Exception as e:
+                    logger.exception(
+                        f"Submitting external metadata to backend failed for "
+                        f"{accession_version}: {e}"
+                    )
+                    continue
+                try:
+                    update_with_retry(
+                        db_config,
+                        conditions=seq_key,
+                        update_values={
+                            "external_metadata": json.dumps(data["externalMetadata"]),
+                        },
+                        table_name=TableName.SUBMISSION_TABLE,
+                    )
+                except Exception as e:
+                    logger.exception(
+                        f"Failed to add new state of submitted external metadata to db for "
+                        f"{accession_version}: {e}"
+                    )
+                    continue
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
                     update_with_retry(
@@ -192,7 +189,6 @@ def get_external_metadata_and_send_to_loculus(
                         f"Failed to update status_all for {accession_version} to "
                         f"{StatusAll.SENT_TO_LOCULUS}: {e}"
                     )
-                    continue
 
 
 def upload_handle_errors(
