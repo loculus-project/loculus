@@ -536,10 +536,8 @@ def process_single_entry(
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
-@pytest.mark.parametrize("factory_custom", ["no_alignment"], indirect=True)
-def test_preprocessing(test_case_def: Case, factory_custom):
-    factory, config = factory_custom
-    test_case = test_case_def.create_test_case(factory)
+def test_preprocessing(test_case_def: Case, config: Config, factory_custom: ProcessedEntryFactory):
+    test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
