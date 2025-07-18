@@ -26,149 +26,175 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def get_results(
-    db_config: SimpleConnectionPool, conditions: dict[str, Any], table_name: TableName
-) -> dict[str, Any]:
-    entry = find_conditions_in_db(db_config, table_name=table_name, conditions=conditions)
-    if len(entry) == 1 and table_name == TableName.PROJECT_TABLE:
-        return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
-    if len(entry) == 1 and table_name == TableName.SAMPLE_TABLE:
-        return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
-    if len(entry) == 1 and table_name == TableName.ASSEMBLY_TABLE:
-        data = {}
-        data["gcaAccession"] = entry[0]["result"]["gca_accession"]
-        insdc_accession_keys = [
-            key for key in entry[0]["result"] if key.startswith("insdc_accession_full")
-        ]
-        segments = [key[len("insdc_accession_full") :] for key in insdc_accession_keys]
-        for segment in segments:
-            data["insdcAccessionBase" + segment] = entry[0]["result"]["insdc_accession" + segment]
-            data["insdcAccessionFull" + segment] = entry[0]["result"][
-                "insdc_accession_full" + segment
-            ]
-        return data
-    msg = f"Expected 1 record in {table_name}, but found {len(entry)} records."
-    raise ValueError(msg)
+def get_bioproject_accession_from_db(
+    db_config: SimpleConnectionPool, project_id: str
+) -> tuple[dict[str, str], bool]:
+    entry = find_conditions_in_db(
+        db_config,
+        table_name=TableName.PROJECT_TABLE,
+        conditions={"project_id": project_id},
+    )
+    if len(entry) != 1:
+        return {}, False
+    return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}, True
+
+
+def get_biosample_accession_from_db(
+    db_config: SimpleConnectionPool, accession: str, version: str
+) -> tuple[dict[str, str], bool]:
+    entry = find_conditions_in_db(
+        db_config,
+        table_name=TableName.SAMPLE_TABLE,
+        conditions={"accession": accession, "version": version},
+    )
+    if len(entry) != 1:
+        return {}, False
+    return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}, True
+
+
+def get_assembly_accessions_from_db(  # noqa: PLR0912
+    db_config: SimpleConnectionPool, accession: str, version: str
+) -> tuple[dict[str, str], bool]:
+    entry = find_conditions_in_db(
+        db_config,
+        table_name=TableName.ASSEMBLY_TABLE,
+        conditions={"accession": accession, "version": version},
+    )
+    if len(entry) != 1:
+        msg = f"Expected 1 record in {TableName.ASSEMBLY_TABLE}, but found {len(entry)} records."
+        raise ValueError(msg)
+
+    data = {}
+    result = entry[0]["result"]
+    gca = result.get("gca_accession")
+    if gca is not None:
+        data["gcaAccession"] = gca
+        all_present = True
+    if len(result["segment_order"]) == 1:
+        if "insdc_accession_base" in result:
+            data["insdcAccessionBase"] = result["insdc_accession_base"]
+        else:
+            all_present = False
+        if "insdc_accession_full" in result:
+            data["insdcAccessionFull"] = result["insdc_accession_full"]
+        else:
+            all_present = False
+    else:
+        # Multiple segments case
+        segment_names = result["segment_order"]
+        for segment in segment_names:
+            base_key = f"insdc_accession_base{segment}"
+            full_key = f"insdc_accession_full{segment}"
+            if base_key in result:
+                data[base_key] = result[base_key]
+            else:
+                all_present = False
+            if full_key in result:
+                data[full_key] = result[full_key]
+            else:
+                all_present = False
+    return data, all_present
 
 
 def get_external_metadata(
-    db_config: SimpleConnectionPool, entry: dict[str, Any], strict: bool = False
-) -> dict[str, Any]:
+    db_config: SimpleConnectionPool, entry: dict[str, Any]
+) -> tuple[dict[str, Any], bool]:
     accession = entry["accession"]
-    data = {
+    version = entry["version"]
+
+    bioproject_accession, bioproject_present = get_bioproject_accession_from_db(
+        db_config, entry["project_id"]
+    )
+    biosample_accession, biosample_present = get_biosample_accession_from_db(
+        db_config, accession, version
+    )
+    assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
+        db_config, accession, version
+    )
+
+    return {
         "accession": accession,
-        "version": entry["version"],
-        "externalMetadata": {},
-    }
-    project_id = {"project_id": entry["project_id"]}
-    seq_key = {"accession": accession, "version": entry["version"]}
-
-    for table_name, key in [
-        (TableName.PROJECT_TABLE, project_id),
-        (TableName.SAMPLE_TABLE, seq_key),
-        (TableName.ASSEMBLY_TABLE, seq_key),
-    ]:
-        try:
-            data["externalMetadata"].update(get_results(db_config, key, table_name))
-        except Exception as e:
-            if strict:
-                msg = f"Failed to get {table_name} results for {accession}"
-                logger.error(msg)
-                raise ValueError(msg) from e
-    return data
+        "version": version,
+        "externalMetadata": {
+            **bioproject_accession,
+            **biosample_accession,
+            **assembly_accession,
+        },
+    }, all([bioproject_present, biosample_present, all_assemblies_present])
 
 
-def get_external_metadata_and_send_to_loculus(db_config: SimpleConnectionPool, config: Config):
-    # Collect entries that may have new external metadata available
-    submitted_some = []
+def get_external_metadata_and_send_to_loculus(
+    db_config: SimpleConnectionPool, config: Config
+) -> None:
     for status in (
         StatusAll.SUBMITTED_PROJECT,
         StatusAll.SUBMITTED_SAMPLE,
         StatusAll.SUBMITTING_ASSEMBLY,
+        StatusAll.SUBMITTED_ALL,
     ):
-        submitted_some.extend(
-            find_conditions_in_db(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions={"status_all": status},
-            )
-        )
+        for entry in find_conditions_in_db(
+            db_config,
+            table_name=TableName.SUBMISSION_TABLE,
+            conditions={"status_all": status},
+        ):
+            accession = entry["accession"]
+            version = entry["version"]
+            accession_version = f"{accession}.{version}"
+            data, all_present = get_external_metadata(db_config, entry)
+            seq_key = {"accession": accession, "version": version}
 
-    for entry in submitted_some:
-        accession = entry["accession"]
-        data = get_external_metadata(db_config, entry)
-        seq_key = {"accession": accession, "version": entry["version"]}
-
-        try:
-            if not entry["external_metadata"] and data["externalMetadata"]:
-                changed = True
-            else:
-                changed = any(
-                    entry["external_metadata"].get(key) != value
-                    for key, value in data["externalMetadata"].items()
-                )
-
-            if not changed:
+            if not any(
+                entry["external_metadata"].get(key) != value
+                for key, value in data.get("externalMetadata", {}).items()
+            ):
+                # If nothing has changed in external metadata, skip submission
                 continue
 
-            submit_external_metadata(
-                data,
-                config,
-                entry["organism"],
-            )
-            logger.info(f"Partial external metadata update for {accession} succeeded")
-            update_with_retry(
-                db_config,
-                conditions=seq_key,
-                update_values={
-                    "external_metadata": json.dumps(data["externalMetadata"]),
-                },
-                table_name=TableName.SUBMISSION_TABLE,
-            )
-        except Exception as e:
-            logger.exception(f"Partial external metadata update failed for {accession}: {e}")
-            continue
-
-    # Collect entries that have all external metadata available
-    conditions = {"status_all": StatusAll.SUBMITTED_ALL}
-    submitted_all = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
-
-    for entry in submitted_all:
-        accession = entry["accession"]
-        data = get_external_metadata(db_config, entry, strict=True)
-        seq_key = {"accession": accession, "version": entry["version"]}
-
-        try:
-            submit_external_metadata(
-                data,
-                config,
-                entry["organism"],
-            )
-            update_with_retry(
-                db_config,
-                conditions=seq_key,
-                update_values={
-                    "status_all": StatusAll.SENT_TO_LOCULUS,
-                    "finished_at": datetime.now(tz=pytz.utc),
-                    "external_metadata": json.dumps(data["externalMetadata"]),
-                },
-                table_name=TableName.SUBMISSION_TABLE,
-                reraise=False,
-            )
-        except Exception as e:
-            logger.exception(f"Error submitting external metadata for {accession}: {e}")
-            update_with_retry(
-                db_config=db_config,
-                conditions=seq_key,
-                update_values={
-                    "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
-                    "started_at": datetime.now(tz=pytz.utc),
-                },
-                table_name=TableName.SUBMISSION_TABLE,
-            )
-            continue
+            try:
+                submit_external_metadata(
+                    data,
+                    config,
+                    entry["organism"],
+                )
+                logger.info(f"Partial external metadata update for {accession_version} succeeded")
+            except Exception as e:
+                logger.exception(
+                    f"Submitting partial external metadata to backend failed for "
+                    f"{accession_version}: {e}"
+                )
+                continue
+            try:
+                update_with_retry(
+                    db_config,
+                    conditions=seq_key,
+                    update_values={
+                        "external_metadata": json.dumps(data["externalMetadata"]),
+                    },
+                    table_name=TableName.SUBMISSION_TABLE,
+                )
+            except Exception as e:
+                logger.exception(
+                    f"Failed to add new state of submitted external metadata to db for "
+                    f"{accession_version}: {e}"
+                )
+                continue
+            if status == StatusAll.SUBMITTED_ALL and all_present:
+                try:
+                    update_with_retry(
+                        db_config,
+                        conditions=seq_key,
+                        update_values={
+                            "status_all": StatusAll.SENT_TO_LOCULUS,
+                            "finished_at": datetime.now(tz=pytz.utc),
+                        },
+                        table_name=TableName.SUBMISSION_TABLE,
+                    )
+                except Exception as e:
+                    logger.exception(
+                        f"Failed to update status_all for {accession_version} to "
+                        f"{StatusAll.SENT_TO_LOCULUS}: {e}"
+                    )
+                    continue
 
 
 def upload_handle_errors(
