@@ -84,7 +84,7 @@ def format_authors(authors: str) -> str:
                 first_names.append(f"{name.upper()}.")
             elif len(name) == 2 and name[1] == ".":  # e.g., "J."
                 first_names.append(f"{name.upper()}")
-            elif len(name) <= 4 and name.isupper() and "." not in name:  # e.g., "JD"
+            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():  # e.g., "JD"
                 initials = " ".join(f"{char}." for char in name)
                 first_names.append(initials)
             elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]\.?", name): # e.g., "J.D." or "J.D.K." or "J.D.K"
