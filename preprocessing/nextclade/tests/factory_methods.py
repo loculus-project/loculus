@@ -60,7 +60,7 @@ class UnprocessedEntryFactory:
     def create_unprocessed_entry(
         metadata_dict: dict[str, str | None],
         accession_id: str,
-        sequences: dict[SegmentName, NucleotideSequence | None] = {"main": ""},
+        sequences: dict[SegmentName, NucleotideSequence | None],
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -103,22 +103,23 @@ class ProcessedEntryFactory:
             processed_alignment = ProcessedAlignment()
 
         errors = [
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=field,
-                            type=AnnotationSourceType.METADATA,
-                        )
-                        for field in error.unprocessedFieldsName
-                    ],
-                    processedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in error.processedFieldsName
-                    ],
-                    message=error.message,
-                )
-                for error in metadata_errors if error.type == AnnotationSourceType.METADATA
-            ]
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name=field,
+                        type=AnnotationSourceType.METADATA,
+                    )
+                    for field in error.unprocessedFieldsName
+                ],
+                processedFields=[
+                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                    for field in error.processedFieldsName
+                ],
+                message=error.message,
+            )
+            for error in metadata_errors
+            if error.type == AnnotationSourceType.METADATA
+        ]
         errors.extend(
             [
                 ProcessingAnnotation(
@@ -135,8 +136,10 @@ class ProcessedEntryFactory:
                     ],
                     message=error.message,
                 )
-                for error in metadata_errors if error.type == AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-            ])
+                for error in metadata_errors
+                if error.type == AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+            ]
+        )
 
         return ProcessedEntry(
             accession=accession,
@@ -167,6 +170,37 @@ class ProcessedEntryFactory:
                 )
                 for warning in metadata_warnings
             ],
+        )
+
+
+@dataclass
+class Case:
+    name: str
+    input_metadata: dict[str, str | None]
+    expected_metadata: dict[str, ProcessedMetadataValue]
+    input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": ""})
+    expected_errors: list[ProcessingAnnotationTestCase] | None = None
+    expected_warnings: list[ProcessingAnnotationTestCase] | None = None
+    accession_id: str = "000999"
+    processed_alignment: ProcessedAlignment | None = None
+
+    def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
+        if not self.processed_alignment:
+            self.processed_alignment = ProcessedAlignment()
+        unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
+            metadata_dict=self.input_metadata,
+            accession_id=self.accession_id,
+            sequences=self.input_sequence,
+        )
+        expected_output = factory_custom.create_processed_entry(
+            metadata_dict=self.expected_metadata,
+            accession=unprocessed_entry.accessionVersion.split(".")[0],
+            metadata_errors=self.expected_errors or [],
+            metadata_warnings=self.expected_warnings or [],
+            processed_alignment=self.processed_alignment,
+        )
+        return ProcessingTestCase(
+            name=self.name, input=unprocessed_entry, expected_output=expected_output
         )
 
 

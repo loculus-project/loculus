@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import pytest
 from factory_methods import (
+    Case,
     ProcessedEntryFactory,
     ProcessingAnnotationTestCase,
     ProcessingTestCase,
@@ -27,31 +28,6 @@ from loculus_preprocessing.processing_functions import (
 
 # Config file used for testing
 NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
-
-
-@dataclass
-class Case:
-    name: str
-    input_metadata: dict[str, str | None]
-    expected_metadata: dict[str, ProcessedMetadataValue]
-    expected_errors: list[ProcessingAnnotationTestCase]
-    expected_warnings: list[ProcessingAnnotationTestCase] | None = None
-    accession_id: str = "000999"
-
-    def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
-        unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
-            metadata_dict=self.input_metadata,
-            accession_id=self.accession_id,
-        )
-        expected_output = factory_custom.create_processed_entry(
-            metadata_dict=self.expected_metadata,
-            accession=unprocessed_entry.accessionVersion.split(".")[0],
-            metadata_errors=self.expected_errors,
-            metadata_warnings=self.expected_warnings or [],
-        )
-        return ProcessingTestCase(
-            name=self.name, input=unprocessed_entry, expected_output=expected_output
-        )
 
 
 test_case_definitions = [
