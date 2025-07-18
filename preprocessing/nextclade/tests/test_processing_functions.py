@@ -401,7 +401,7 @@ test_case_definitions = [
             "submissionId": "non_ascii_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Møller, Anäis; Pérez, José",
+            "authors": "Pérez, José; Bailley, François; 汉",
         },
         accession_id="13",
         expected_metadata={
@@ -413,9 +413,27 @@ test_case_definitions = [
             ProcessingAnnotationTestCase(
                 ["authors"],
                 ["authors"],
-                "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
+                "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
         ],
+    ),
+    Case(
+        name="accents_in_authors",
+        input_metadata={
+            "submissionId": "accents_in_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Pérez, José; Bailley, François",
+        },
+        accession_id="13",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_13.1/2022-11-01",
+            "authors": "Pérez, José; Bailley, François",
+        },
+        expected_errors=[],
+        expected_warnings=[],
     ),
     Case(
         name="nan_float",
