@@ -11,7 +11,6 @@ flyway -url=jdbc:postgresql://localhost:5432/loculus -schemas=ena_deposition_sch
 # ruff: noqa: S101 (allow asserts in tests))
 import json
 import logging
-import pprint
 import re
 import uuid
 from datetime import datetime, timedelta
@@ -495,7 +494,6 @@ def simple_submission(
     args = mock_submit_external_metadata.call_args_list
     assert len(args) == 3  # noqa: PLR2004
     payload = args[2][0][0]  # first positional argument of third call
-    logger.info(f"Payload: {pprint.pformat(payload)}")
     assert payload["accession"] == "LOC_0001TLY"
     assert payload["version"] == 1
     assert set(payload["externalMetadata"]) == {
