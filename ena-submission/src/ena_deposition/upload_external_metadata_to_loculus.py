@@ -28,28 +28,28 @@ logger = logging.getLogger(__name__)
 
 def get_bioproject_accession_from_db(
     db_config: SimpleConnectionPool, project_id: str
-) -> tuple[dict[str, str], bool]:
+) -> dict[str, str]:
     entry = find_conditions_in_db(
         db_config,
         table_name=TableName.PROJECT_TABLE,
         conditions={"project_id": project_id},
     )
     if len(entry) != 1:
-        return {}, False
-    return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}, True
+        return {}
+    return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
 
 
 def get_biosample_accession_from_db(
     db_config: SimpleConnectionPool, accession: str, version: str
-) -> tuple[dict[str, str], bool]:
+) -> dict[str, str]:
     entry = find_conditions_in_db(
         db_config,
         table_name=TableName.SAMPLE_TABLE,
         conditions={"accession": accession, "version": version},
     )
     if len(entry) != 1:
-        return {}, False
-    return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}, True
+        return {}
+    return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
 
 
 def get_assembly_accessions_from_db(  # noqa: PLR0912
@@ -102,12 +102,8 @@ def get_external_metadata(
     accession = entry["accession"]
     version = entry["version"]
 
-    bioproject_accession, bioproject_present = get_bioproject_accession_from_db(
-        db_config, entry["project_id"]
-    )
-    biosample_accession, biosample_present = get_biosample_accession_from_db(
-        db_config, accession, version
-    )
+    bioproject_accession = get_bioproject_accession_from_db(db_config, entry["project_id"])
+    biosample_accession = get_biosample_accession_from_db(db_config, accession, version)
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
         db_config, accession, version
     )
@@ -120,7 +116,7 @@ def get_external_metadata(
             **biosample_accession,
             **assembly_accession,
         },
-    }, all([bioproject_present, biosample_present, all_assemblies_present])
+    }, all([bioproject_accession, biosample_accession, all_assemblies_present])
 
 
 def get_external_metadata_and_send_to_loculus(
