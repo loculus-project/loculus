@@ -26,7 +26,7 @@ from loculus_preprocessing.processing_functions import (
 )
 
 # Config file used for testing
-NO_ALIGNMENT_CONFIG = "tests/test_config.yaml"
+NO_ALIGNMENT_CONFIG = "tests/no_alignment_config.yaml"
 
 
 @dataclass
