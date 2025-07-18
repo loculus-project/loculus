@@ -455,13 +455,19 @@ def simple_submission(
     mock_submit_external_metadata.return_value = mock_requests_post()
     sequences_to_upload: Final = get_sequences()
 
+    get_external_metadata_and_send_to_loculus(db_config, config)
+
     upload_sequences(db_config, sequences_to_upload)
     check_sequences_uploaded(db_config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_config, config)
 
     _test_successful_project_submission(db_config, config, sequences_to_upload)
-    _test_successful_sample_submission(db_config, config, sequences_to_upload)
-    _test_successful_assembly_submission(db_config, config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_config, config)
 
+    _test_successful_sample_submission(db_config, config, sequences_to_upload)
+    get_external_metadata_and_send_to_loculus(db_config, config)
+
+    _test_successful_assembly_submission(db_config, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
     check_sent_to_loculus(db_config, sequences_to_upload)
 
