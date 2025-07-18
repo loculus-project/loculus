@@ -121,7 +121,7 @@ def get_assembly_accessions_from_db(
     return data, all_present
 
 
-def get_external_metadata(
+def get_external_metadata_to_upload(
     db_config: SimpleConnectionPool, entry: dict[str, Any]
 ) -> tuple[dict[str, Any], bool]:
     accession = entry["accession"]
@@ -161,17 +161,17 @@ def get_external_metadata_and_send_to_loculus(
             accession = entry["accession"]
             version = entry["version"]
             accession_version = f"{accession}.{version}"
-            data, all_present = get_external_metadata(db_config, entry)
+            data, all_present = get_external_metadata_to_upload(db_config, entry)
             seq_key = {"accession": accession, "version": version}
 
-            # Is there something to submit?
-            # a) there must be external metadata to submit
-            # b) the external metadata must differ from what is already in the database
-            if data.get("externalMetadata") is not None and (
-                not entry.get("external_metadata")
+            previously_uploaded: dict[str, Any] = entry.get("external_metadata", {})
+            new_external_metadata: dict[str, Any] = data.get("externalMetadata", {})
+
+            if new_external_metadata and (
+                not previously_uploaded
                 or any(
-                    entry["external_metadata"].get(key) != value
-                    for key, value in data.get("externalMetadata", {}).items()
+                    previously_uploaded.get(key) != value
+                    for key, value in new_external_metadata.items()
                 )
             ):
                 try:
@@ -182,8 +182,8 @@ def get_external_metadata_and_send_to_loculus(
                     )
                     logger.info(
                         f"External metadata update for {accession_version} succeeded. "
-                        f"Old data: {entry.get('external_metadata')}, "
-                        f"new data: {data['externalMetadata']}"
+                        f"Old data: {previously_uploaded}, "
+                        f"new data: {new_external_metadata}"
                     )
                 except Exception as e:
                     logger.exception(
@@ -196,7 +196,7 @@ def get_external_metadata_and_send_to_loculus(
                         db_config,
                         conditions=seq_key,
                         update_values={
-                            "external_metadata": json.dumps(data["externalMetadata"]),
+                            "external_metadata": json.dumps(new_external_metadata),
                         },
                         table_name=TableName.SUBMISSION_TABLE,
                     )
@@ -206,12 +206,6 @@ def get_external_metadata_and_send_to_loculus(
                         f"{accession_version}: {e}"
                     )
                     continue
-            else:
-                logger.info(
-                    f"No external metadata to submit for {accession_version} "
-                    f"or no changes detected. "
-                    f"data: {data}, entry: {entry}"
-                )
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
                     update_with_retry(
