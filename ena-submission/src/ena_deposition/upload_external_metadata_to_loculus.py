@@ -26,90 +26,94 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
+def _get_results_of_single_db_record(
+    db_config: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Helper to get a single record from database with validation."""
+    entries = find_conditions_in_db(db_config, table_name=table_name, conditions=conditions)
+
+    if not entries:
+        return None
+
+    if len(entries) > 1:
+        msg = (
+            f"Expected 1 record in {table_name} for conditions: {conditions}, "
+            f"but found {len(entries)} records."
+        )
+        raise ValueError(msg)
+
+    if not isinstance(entries[0], dict) or "result" not in entries[0]:
+        msg = (
+            f"Expected a single record with 'result' in {table_name} for conditions: {conditions}, "
+            f"but found: {entries[0]}"
+        )
+        raise ValueError(msg)
+
+    return entries[0]["result"]
+
+
 def get_bioproject_accession_from_db(
     db_config: SimpleConnectionPool, project_id: str
 ) -> dict[str, str]:
-    entry = find_conditions_in_db(
-        db_config,
-        table_name=TableName.PROJECT_TABLE,
-        conditions={"project_id": project_id},
+    result = _get_results_of_single_db_record(
+        db_config, TableName.PROJECT_TABLE, {"project_id": project_id}
     )
-    if not entry:
+
+    if not result or "bioproject_accession" not in result:
         return {}
-    if len(entry) > 1:
-        msg = (
-            f"Expected 1 record in {TableName.PROJECT_TABLE} for "
-            f"project_id: {project_id}, but found {len(entry)} records."
-        )
-        raise ValueError(msg)
-    if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
-        "bioproject_accession"
-    ):
-        return {}
-    return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
+
+    return {"bioprojectAccession": result["bioproject_accession"]}
 
 
 def get_biosample_accession_from_db(
     db_config: SimpleConnectionPool, accession: str, version: str
 ) -> dict[str, str]:
-    entry = find_conditions_in_db(
+    result = _get_results_of_single_db_record(
         db_config,
-        table_name=TableName.SAMPLE_TABLE,
-        conditions={"accession": accession, "version": version},
+        TableName.SAMPLE_TABLE,
+        {"accession": accession, "version": version},
     )
-    if not entry:
+
+    if not result or "biosample_accession" not in result:
         return {}
-    if len(entry) > 1:
-        msg = (
-            f"Expected 1 record in {TableName.SAMPLE_TABLE} for "
-            f"{accession}.{version}, but found {len(entry)} records."
-        )
-        raise ValueError(msg)
-    if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
-        "biosample_accession"
-    ):
-        return {}
-    return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
+
+    return {"biosampleAccession": result["biosample_accession"]}
 
 
 def get_assembly_accessions_from_db(
     db_config: SimpleConnectionPool, accession: str, version: str
 ) -> tuple[dict[str, str], bool]:
-    entry = find_conditions_in_db(
+    result = _get_results_of_single_db_record(
         db_config,
-        table_name=TableName.ASSEMBLY_TABLE,
-        conditions={"accession": accession, "version": version},
+        TableName.ASSEMBLY_TABLE,
+        {"accession": accession, "version": version},
     )
-    if not entry:
-        return {}, False
-    if len(entry) > 1:
-        msg = (
-            f"Expected 1 record in {TableName.ASSEMBLY_TABLE} for "
-            f"{accession}.{version}, but found {len(entry)} records."
-        )
-        raise ValueError(msg)
 
-    result = entry[0].get("result")
-    if not isinstance(result, dict) or not result:
+    if not result:
         return {}, False
 
     data = {}
     all_present = True
 
-    gca = result.get("gca_accession")
-    if gca is not None:
+    if gca := result.get("gca_accession"):
         data["gcaAccession"] = gca
     else:
         all_present = False
 
-    segment_names = result["segment_order"]
+    segment_names = result.get("segment_order", [])
     for segment in segment_names:
         segment_suffix = f"_{segment}" if len(segment_names) > 1 else ""
-        if (base_key := f"insdc_accession{segment_suffix}") in result:
+
+        base_key = f"insdc_accession{segment_suffix}"
+        if base_key in result:
             data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
         else:
             all_present = False
-        if (full_key := f"insdc_accession_full{segment_suffix}") in result:
+
+        full_key = f"insdc_accession_full{segment_suffix}"
+        if full_key in result:
             data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
         else:
             all_present = False
