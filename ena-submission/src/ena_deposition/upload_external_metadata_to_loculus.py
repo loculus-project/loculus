@@ -52,7 +52,7 @@ def get_biosample_accession_from_db(
     return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
 
 
-def get_assembly_accessions_from_db(  # noqa: PLR0912
+def get_assembly_accessions_from_db(
     db_config: SimpleConnectionPool, accession: str, version: str
 ) -> tuple[dict[str, str], bool]:
     entry = find_conditions_in_db(
@@ -66,35 +66,26 @@ def get_assembly_accessions_from_db(  # noqa: PLR0912
 
     data = {}
     result = entry[0]["result"]
+    all_present = True
+
     gca = result.get("gca_accession")
     if gca is not None:
         data["gcaAccession"] = gca
-        all_present = True
     else:
         all_present = False
-    if len(result["segment_order"]) == 1:
-        if "insdc_accession_base" in result:
-            data["insdcAccessionBase"] = result["insdc_accession"]
+
+    segment_names = result["segment_order"]
+    for segment in segment_names:
+        segment_suffix = f"_{segment}" if len(segment_names) > 1 else ""
+        if base_key := f"insdc_accession_base{segment_suffix}" in result:
+            data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
         else:
             all_present = False
-        if "insdc_accession_full" in result:
-            data["insdcAccessionFull"] = result["insdc_accession_full"]
+        if full_key := f"insdc_accession_full{segment_suffix}" in result:
+            data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
         else:
             all_present = False
-    else:
-        # Multiple segments case
-        segment_names = result["segment_order"]
-        for segment in segment_names:
-            base_key = f"insdc_accession_{segment}"
-            full_key = f"insdc_accession_full_{segment}"
-            if base_key in result:
-                data[base_key] = result[base_key]
-            else:
-                all_present = False
-            if full_key in result:
-                data[full_key] = result[full_key]
-            else:
-                all_present = False
+
     return data, all_present
 
 
