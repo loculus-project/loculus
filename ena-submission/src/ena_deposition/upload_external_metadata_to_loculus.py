@@ -36,7 +36,9 @@ def get_bioproject_accession_from_db(
     )
     if len(entry) != 1:
         return {}
-    if "bioproject_accession" not in entry[0]["result"]:
+    if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
+        "bioproject_accession"
+    ):
         return {}
     return {"bioprojectAccession": entry[0]["result"]["bioproject_accession"]}
 
@@ -51,7 +53,9 @@ def get_biosample_accession_from_db(
     )
     if len(entry) != 1:
         return {}
-    if "biosample_accession" not in entry[0]["result"]:
+    if not isinstance(entry[0].get("result"), dict) or not entry[0]["result"].get(
+        "biosample_accession"
+    ):
         return {}
     return {"biosampleAccession": entry[0]["result"]["biosample_accession"]}
 
@@ -71,8 +75,8 @@ def get_assembly_accessions_from_db(
         )
         raise ValueError(msg)
 
-    result = entry[0]["result"]
-    if not result:
+    result = entry[0].get("result")
+    if not isinstance(result, dict) or not result:
         return {}, False
 
     data = {}
