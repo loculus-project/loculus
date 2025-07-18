@@ -3,6 +3,17 @@
 #!processor NCBI annotwriter
 ##sequence-region NC_006432.1 1 18875
 ##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=186540
-NC_006432.1	RefSeq	gene	56	3007	.	+	.	ID=gene-SEVgp1;Dbxref=GeneID:3160777;Name=NPEbolaSudan;gbkey=Gene;gene=NP;gene_biotype=protein_coding;locus_tag=SEVgp1
-NC_006432.1	RefSeq	CDS	458	2674	.	+	0	ID=cds-YP_138520.1;Dbxref=GenBank:YP_138520.1,GeneID:3160777;Name=NPEbolaSudan;Note=predominant component of nucleocapsid;gbkey=CDS;gene=NP;locus_tag=SEVgp1;product=nucleoprotein;protein_id=YP_138520.1
-NC_006432.1	RefSeq	CDS	3138	4127	.	+	0	ID=cds-YP_138521.1;Dbxref=GenBank:YP_138521.1,GeneID:3160776;Name=VP35EbolaSudan;Note=cofactor in polymerase complex%3B type I IFN antagonist;gbkey=CDS;gene=VP35;locus_tag=SEVgp2;product=polymerase complex protein;protein_id=YP_138521.1
+NC_006432.1	RefSeq	region	1	18875	.	+	.	ID=NC_006432.1:1..18875;Dbxref=taxon:186540;country=Uganda;gbkey=Src;isolate=Sudan virus/H.sapiens-tc/UGA/2000/Gulu-808892;isolation-source=human;mol_type=viral cRNA;note=isolated in 2000
+NC_006432.1	RefSeq	five_prime_UTR	1	55	.	+	.	ID=id-NC_006432.1:1..55;Note=leader region;function=regulation of initiation of RNA replication;gbkey=5'UTR
+NC_006432.1	RefSeq	gene	56	3007	.	+	.	ID=gene-SEVgp1;Dbxref=GeneID:3160777;Name=NPEbolaSudan;gbkey=Gene;gene=NPEbolaSudan;gene_biotype=protein_coding;locus_tag=SEVgp1
+NC_006432.1	RefSeq	mRNA	56	3007	.	+	.	ID=rna-SEVgp1;Parent=gene-SEVgp1;Dbxref=GeneID:3160777;gbkey=mRNA;gene=NPEbolaSudan;locus_tag=SEVgp1;product=nucleoprotein
+NC_006432.1	RefSeq	exon	56	3007	.	+	.	ID=exon-SEVgp1-1;Parent=rna-SEVgp1;Dbxref=GeneID:3160777;gbkey=mRNA;gene=NPEbolaSudan;locus_tag=SEVgp1;product=nucleoprotein
+NC_006432.1	RefSeq	CDS	458	2674	.	+	0	ID=cds-YP_138520.1;Parent=rna-SEVgp1;Dbxref=GenBank:YP_138520.1,GeneID:3160777;Name=NPEbolaSudan;Note=predominant component of nucleocapsid;gbkey=CDS;gene=NPEbolaSudan;locus_tag=SEVgp1;product=nucleoprotein;protein_id=YP_138520.1
+NC_006432.1	RefSeq	regulatory_region	56	67	.	+	.	ID=id-SEVgp1;Parent=gene-SEVgp1;Dbxref=GeneID:3160777;Note=predicted transcription start site;gbkey=regulatory;gene=NPEbolaSudan;locus_tag=SEVgp1;regulatory_class=other
+NC_006432.1	RefSeq	polyA_signal_sequence	2496	3007	.	+	.	ID=id-SEVgp1-2;Parent=gene-SEVgp1;Dbxref=GeneID:3160777;gbkey=regulatory;gene=NPEbolaSudan;locus_tag=SEVgp1;regulatory_class=polyA_signal_sequence
+NC_006432.1	RefSeq	gene	3013	4382	.	+	.	ID=gene-SEVgp2;Dbxref=GeneID:3160776;Name=VP35EbolaSudan;gbkey=Gene;gene=VP35EbolaSudan;gene_biotype=protein_coding;locus_tag=SEVgp2
+NC_006432.1	RefSeq	mRNA	3013	4382	.	+	.	ID=rna-SEVgp2;Parent=gene-SEVgp2;Dbxref=GeneID:3160776;gbkey=mRNA;gene=VP35EbolaSudan;locus_tag=SEVgp2;product=VP35
+NC_006432.1	RefSeq	exon	3013	4382	.	+	.	ID=exon-SEVgp2-1;Parent=rna-SEVgp2;Dbxref=GeneID:3160776;gbkey=mRNA;gene=VP35EbolaSudan;locus_tag=SEVgp2;product=VP35
+NC_006432.1	RefSeq	CDS	3138	4127	.	+	0	ID=cds-YP_138521.1;Parent=rna-SEVgp2;Dbxref=GenBank:YP_138521.1,GeneID:3160776;Name=VP35EbolaSudan;Note=cofactor in polymerase complex%3B type I IFN antagonist;gbkey=CDS;gene=VP35EbolaSudan;locus_tag=SEVgp2;product=polymerase complex protein;protein_id=YP_138521.1
+NC_006432.1	RefSeq	regulatory_region	3013	3024	.	+	.	ID=id-SEVgp2;Parent=gene-SEVgp2;Dbxref=GeneID:3160776;Note=predicted transcription start site;gbkey=regulatory;gene=VP35EbolaSudan;locus_tag=SEVgp2;regulatory_class=other
+NC_006432.1	RefSeq	polyA_signal_sequence	4372	4382	.	+	.	ID=id-SEVgp2-2;Parent=gene-SEVgp2;Dbxref=GeneID:3160776;gbkey=regulatory;gene=VP35EbolaSudan;locus_tag=SEVgp2;regulatory_class=polyA_signal_sequence
