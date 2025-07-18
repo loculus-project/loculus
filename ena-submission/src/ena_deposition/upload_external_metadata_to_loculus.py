@@ -74,7 +74,7 @@ def get_assembly_accessions_from_db(  # noqa: PLR0912
         all_present = False
     if len(result["segment_order"]) == 1:
         if "insdc_accession_base" in result:
-            data["insdcAccessionBase"] = result["insdc_accession_base"]
+            data["insdcAccessionBase"] = result["insdc_accession"]
         else:
             all_present = False
         if "insdc_accession_full" in result:
@@ -85,8 +85,8 @@ def get_assembly_accessions_from_db(  # noqa: PLR0912
         # Multiple segments case
         segment_names = result["segment_order"]
         for segment in segment_names:
-            base_key = f"insdc_accession_base{segment}"
-            full_key = f"insdc_accession_full{segment}"
+            base_key = f"insdc_accession_{segment}"
+            full_key = f"insdc_accession_full_{segment}"
             if base_key in result:
                 data[base_key] = result[base_key]
             else:
@@ -141,9 +141,15 @@ def get_external_metadata_and_send_to_loculus(
             data, all_present = get_external_metadata(db_config, entry)
             seq_key = {"accession": accession, "version": version}
 
-            if "external_metadata" in entry and any(
-                entry["external_metadata"].get(key) != value
-                for key, value in data.get("externalMetadata", {}).items()
+            # Is there something to submit?
+            # a) there must be external metadata to submit
+            # b) the external metadata must differ from what is already in the database
+            if data.get("externalMetadata") is not None and (
+                not entry.get("external_metadata")
+                or any(
+                    entry["external_metadata"].get(key) != value
+                    for key, value in data.get("externalMetadata", {}).items()
+                )
             ):
                 try:
                     submit_external_metadata(
@@ -151,7 +157,11 @@ def get_external_metadata_and_send_to_loculus(
                         config,
                         entry["organism"],
                     )
-                    logger.info(f"External metadata update for {accession_version} succeeded")
+                    logger.info(
+                        f"External metadata update for {accession_version} succeeded. "
+                        f"Old data: {entry.get('external_metadata')}, "
+                        f"new data: {data['externalMetadata']}"
+                    )
                 except Exception as e:
                     logger.exception(
                         f"Submitting external metadata to backend failed for "
@@ -173,6 +183,12 @@ def get_external_metadata_and_send_to_loculus(
                         f"{accession_version}: {e}"
                     )
                     continue
+            else:
+                logger.info(
+                    f"No external metadata to submit for {accession_version} "
+                    f"or no changes detected. "
+                    f"data: {data}, entry: {entry}"
+                )
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
                     update_with_retry(
