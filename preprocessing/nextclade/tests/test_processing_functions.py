@@ -469,7 +469,7 @@ test_case_definitions = [
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "authors": "Smith, Anna; Perez, Tom J. and Xu X.L.",
+            "authors": "Smith, Anna; Perez, Tom J. and Xu X. L.",
         },
         expected_errors=[],
         expected_warnings=[
@@ -479,6 +479,24 @@ test_case_definitions = [
                 "Authors list 'Smith, Anna; Perez, Tom J. and Xu X.L.' contains 'and'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`.",
             ),
         ],
+    ),
+    Case(
+        name="trailing_dots_in_authors",
+        input_metadata={
+            "submissionId": "trailing_dots_in_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J.; Xu, X.L.; SMITH, AMY; Smith, AD",
+        },
+        accession_id="16",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_16.1/2022-11-01",
+            "authors": "Smith, Anna; Perez, Tom J.; Xu, X. L.; SMITH, AMY; Smith, A. D.",
+        },
+        expected_errors=[],
+        expected_warnings=[],
     ),
 ]
 
