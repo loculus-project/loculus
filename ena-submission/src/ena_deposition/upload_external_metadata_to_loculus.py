@@ -61,7 +61,10 @@ def get_assembly_accessions_from_db(
         conditions={"accession": accession, "version": version},
     )
     if len(entry) != 1:
-        msg = f"Expected 1 record in {TableName.ASSEMBLY_TABLE}, but found {len(entry)} records."
+        msg = (
+            f"Expected 1 record in {TableName.ASSEMBLY_TABLE} for "
+            f"conditions: {entry[0]['conditions']}, but found {len(entry)} records."
+        )
         raise ValueError(msg)
 
     data = {}
