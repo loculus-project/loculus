@@ -605,7 +605,7 @@
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "An object where the keys are the suborganism names (or the organism name if there are no suborganisms) and the values are a [Reference Genome (type)](#reference-genome)",
+          "description": "An object where the keys are the suborganism names (or the organism name if there are no suborganisms) and the values are a [Reference Genome](#reference-genome-type). If there is only one suborganism, then the key must be \"singleReference\".",
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",

@@ -155,7 +155,7 @@ organisms:
           genes: []
           batch_size: 100
     referenceGenomes:
-      angelovirus:
+      singleReference:
         nucleotideSequences:
           - name: 'main'
             sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter

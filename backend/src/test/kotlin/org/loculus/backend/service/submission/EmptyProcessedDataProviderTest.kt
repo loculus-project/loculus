@@ -12,6 +12,7 @@ import org.loculus.backend.config.Metadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
+import org.loculus.backend.config.SINGLE_REFERENCE_GENOME_KEY
 import org.loculus.backend.config.Schema
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 
@@ -36,7 +37,7 @@ class EmptyProcessedDataProviderTest {
                         ),
                     ),
                     referenceGenomes = mapOf(
-                        DEFAULT_ORGANISM to ReferenceGenome(
+                        SINGLE_REFERENCE_GENOME_KEY to ReferenceGenome(
                             listOf(
                                 ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
                                 ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
