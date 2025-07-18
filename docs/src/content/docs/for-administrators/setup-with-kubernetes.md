@@ -123,7 +123,7 @@ organisms:
       errors: true
       randomWarnError: true
     referenceGenomes:
-      ebolavirus-sudan:
+      singleReference:
         nucleotideSequences:
           - name: 'main'
             sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'

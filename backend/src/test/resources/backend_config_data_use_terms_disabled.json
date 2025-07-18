@@ -5,7 +5,7 @@
   "organisms": {
     "dummyOrganism": {
       "referenceGenomes": {
-        "dummyOrganism": {
+        "singleReference": {
           "nucleotideSequences": [
             {
               "name": "main",

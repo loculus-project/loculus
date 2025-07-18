@@ -5,7 +5,7 @@
     "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
-                "dummyOrganism": {
+                "singleReference": {
                     "nucleotideSequences": [
                         {
                             "name": "main",
@@ -106,7 +106,7 @@
         },
         "otherOrganism": {
             "referenceGenomes": {
-                "otherOrganism": {
+                "singleReference": {
                     "nucleotideSequences": [
                         {
                             "name": "notOnlySegment",
@@ -192,7 +192,7 @@
         },
         "dummyOrganismWithoutConsensusSequences": {
             "referenceGenomes": {
-                "dummyOrganismWithoutConsensusSequences": {
+                "singleReference": {
                     "nucleotideSequences": [],
                     "genes": []
                 }

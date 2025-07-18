@@ -1214,7 +1214,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       scientific_name: "Sudan ebolavirus"
       molecule_type: "genomic RNA"
   referenceGenomes:
-    ebola-sudan:
+    singleReference:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
@@ -1319,7 +1319,7 @@ defaultOrganisms:
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      west-nile:
+      singleReference:
         nucleotideSequences:
           - name: main
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
@@ -1416,7 +1416,7 @@ defaultOrganisms:
           - "--withErrors"
           - "--randomWarnError"
     referenceGenomes:
-      dummy-organism:
+      singleReference:
         nucleotideSequences:
           - name: "main"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
@@ -1505,7 +1505,7 @@ defaultOrganisms:
           - "--watch"
           - "--disableConsensusSequences"
     referenceGenomes:
-      dummy-organism-with-files:
+      singleReference:
         nucleotideSequences: []
         genes: []
   not-aligned-organism:
@@ -1570,7 +1570,7 @@ defaultOrganisms:
           genes: []
           batch_size: 100
     referenceGenomes:
-      not-aligned-organism:
+      singleReference:
         nucleotideSequences:
           - name: "main"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
@@ -1645,7 +1645,7 @@ defaultOrganisms:
         scientific_name: "Orthonairovirus haemorrhagiae"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      cchf:
+      singleReference:
         nucleotideSequences:
           - name: L
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
