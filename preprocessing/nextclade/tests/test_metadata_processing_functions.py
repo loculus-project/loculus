@@ -8,13 +8,13 @@ from factory_methods import (
     ProcessingTestCase,
     UnprocessedEntryFactory,
     ts_from_ymd,
+    verify_processed_entry,
 )
 
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     ProcessedMetadataValue,
-    ProcessingAnnotation,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -528,54 +528,11 @@ def factory_custom(config):
     return ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
 
 
-def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
-    return sorted(
-        annotations,
-        key=lambda x: (x.unprocessedFields[0].name, x.processedFields[0].name, x.message),
-    )
-
-
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
 ) -> ProcessedEntry:
     result = process_all([test_case.input], dataset_dir, config)
     return result[0]
-
-
-def verify_processed_entry(
-    processed_entry: ProcessedEntry, expected_output: ProcessedEntry, test_name: str
-):
-    # Check accession and version
-    assert (
-        processed_entry.accession == expected_output.accession
-        and processed_entry.version == expected_output.version
-    ), (
-        f"{test_name}: processed entry accessionVersion "
-        f"{processed_entry.accession}.{processed_entry.version} "
-        f"does not match expected output {expected_output.accession}.{expected_output.version}."
-    )
-
-    # Check metadata
-    assert processed_entry.data.metadata == expected_output.data.metadata, (
-        f"{test_name}: processed metadata {processed_entry.data.metadata} "
-        f"does not match expected metadata {expected_output.data.metadata}."
-    )
-
-    # Check errors
-    processed_errors = sort_annotations(processed_entry.errors)
-    expected_errors = sort_annotations(expected_output.errors)
-    assert processed_errors == expected_errors, (
-        f"{test_name}: processed errors: {processed_errors}",
-        f"does not match expected output: {expected_errors}.",
-    )
-
-    # Check warnings
-    processed_warnings = sort_annotations(processed_entry.warnings)
-    expected_warnings = sort_annotations(expected_output.warnings)
-    assert processed_warnings == expected_warnings, (
-        f"{test_name}: processed warnings {processed_warnings}"
-        f"does not match expected output {expected_warnings}."
-    )
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
