@@ -473,7 +473,7 @@ def simple_submission(
     payload = args[0][0][0]  # first positional argument of first call
     assert payload["accession"] == "LOC_0001TLY"
     assert payload["version"] == 1
-    assert list(payload["externalMetadata"]) == ["bioprojectAccession"]
+    assert set(payload["externalMetadata"]) == {"bioprojectAccession"}
     assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
     assert mock_submit_external_metadata.call_args[0][0]["accession"] == "LOC_0001TLY"
     assert mock_submit_external_metadata.call_args[0][0]["version"] == 1
@@ -485,7 +485,7 @@ def simple_submission(
     payload = args[1][0][0]  # first positional argument of second call
     assert payload["accession"] == "LOC_0001TLY"
     assert payload["version"] == 1
-    assert list(payload["externalMetadata"]) == ["bioprojectAccession", "biosampleAccession"]
+    assert set(payload["externalMetadata"]) == {"bioprojectAccession", "biosampleAccession"}
     assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
     assert payload["externalMetadata"]["biosampleAccession"].startswith("SAMEA")
 
