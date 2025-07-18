@@ -70,6 +70,8 @@ def get_assembly_accessions_from_db(  # noqa: PLR0912
     if gca is not None:
         data["gcaAccession"] = gca
         all_present = True
+    else:
+        all_present = False
     if len(result["segment_order"]) == 1:
         if "insdc_accession_base" in result:
             data["insdcAccessionBase"] = result["insdc_accession_base"]
