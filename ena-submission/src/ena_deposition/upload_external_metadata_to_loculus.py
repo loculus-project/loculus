@@ -77,11 +77,11 @@ def get_assembly_accessions_from_db(
     segment_names = result["segment_order"]
     for segment in segment_names:
         segment_suffix = f"_{segment}" if len(segment_names) > 1 else ""
-        if base_key := f"insdc_accession_base{segment_suffix}" in result:
+        if (base_key := f"insdc_accession{segment_suffix}") in result:
             data[f"insdcAccessionBase{segment_suffix}"] = result[base_key]
         else:
             all_present = False
-        if full_key := f"insdc_accession_full{segment_suffix}" in result:
+        if (full_key := f"insdc_accession_full{segment_suffix}") in result:
             data[f"insdcAccessionFull{segment_suffix}"] = result[full_key]
         else:
             all_present = False
