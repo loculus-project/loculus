@@ -17,6 +17,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.MULTI_PATHOGEN_ORGANISM
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -336,6 +337,24 @@ class SubmitEndpointTest(
             metadataFile = DefaultFiles.metadataFile,
             sequencesFile = null,
             organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON))
+            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+    }
+
+    @Test
+    fun `GIVEN submission for multi pathogen THEN is accepted`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = SubmitFiles.sequenceFileWith(
+                content = DefaultFiles.submissionIds.joinToString("\n") { ">$it\nACTG" },
+            ),
+            organism = MULTI_PATHOGEN_ORGANISM,
             groupId = groupId,
         )
             .andExpect(status().isOk)
