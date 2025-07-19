@@ -70,12 +70,19 @@ const config = {
             use: { ...devices['Desktop Firefox'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
+
+        // CLI tests - still need browser for user setup
+        {
+            name: 'cli-tests',
+            use: { ...devices['Desktop Chrome'] },
+            testMatch: /.*\/cli\/.*\.spec\.ts$/,
+        },
     ],
 };
 
 if (browser) {
     config.projects = config.projects.filter(
-        (p) => p.name.startsWith(browser) || p.name === 'readonly setup',
+        (p) => p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
     );
 }
 

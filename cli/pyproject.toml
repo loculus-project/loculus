@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "loculus-cli"
+version = "0.1.0"
+description = "Command line interface for Loculus"
+authors = [{name = "Loculus Team", email = "info@loculus.org"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.1",
+    "httpx>=0.25",
+    "pydantic>=2.0",
+    "keyring>=24.0",
+    "rich>=13.0",
+    "tabulate>=0.9",
+    "biopython>=1.81",
+    "pyyaml>=6.0",
+    "python-dateutil>=2.8",
+]
+
+[project.scripts]
+loculus = "loculus_cli.cli:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.21",
+    "pytest-mock>=3.11",
+    "black>=23.0",
+    "mypy>=1.5",
+    "ruff>=0.1",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "N",       # pep8-naming
+    "UP",      # pyupgrade
+    "B",       # flake8-bugbear
+    "A",       # flake8-builtins
+    "C4",      # flake8-comprehensions
+    "T20",     # flake8-print
+]
+ignore = [
+    "T201",    # Allow print statements in CLI
+    "N815",    # Allow mixedCase for API models (external data)
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20250516",
+]
