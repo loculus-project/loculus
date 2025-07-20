@@ -104,7 +104,7 @@ def get_assembly_accessions_from_db(
 
     segment_names = result.get("segment_order", [])
     for segment in segment_names:
-        segment_suffix = f"_{segment}" if len(segment_names) > 1 else ""
+        segment_suffix = f"_{segment}" if segment_names != ["main"] else ""
 
         base_key = f"insdc_accession{segment_suffix}"
         if base_key in result:
