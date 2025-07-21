@@ -56,7 +56,6 @@ def mock_config():
     }
     config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
-    config.optional_metadata_mapping = defaults["optional_metadata_mapping"]
     config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
     config.metadata_mapping_mandatory_field_defaults = defaults[
         "metadata_mapping_mandatory_field_defaults"

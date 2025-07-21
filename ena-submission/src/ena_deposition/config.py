@@ -33,7 +33,6 @@ class Config:
     slack_token: str
     slack_channel_id: str
     metadata_mapping: dict[str, dict[str, str | list[str]]]
-    optional_metadata_mapping: dict[str, dict[str, str | list[str]]]
     metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str

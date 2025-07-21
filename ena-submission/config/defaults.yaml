@@ -85,8 +85,7 @@ metadata_mapping:
   'geographic location (longitude)':
     loculus_fields: [geoLocLongitude]
     units: DD
-optional_metadata_mapping:
-  'GISAID accession':
+  'GISAID accession': # not in all organisms
     loculus_fields: [gisaidIsolateId]
 metadata_mapping_mandatory_field_defaults:
   isolate: "not provided"
