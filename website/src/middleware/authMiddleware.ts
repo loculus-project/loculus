@@ -117,6 +117,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
+    const decodedToken = jsonwebtoken.decode(token.accessToken, { complete: true })?.payload;
+    const roles = (decodedToken as { realm_access?: { roles: string[] } })?.realm_access?.roles ?? [];
     context.locals.session = {
         isLoggedIn: true,
         user: {
@@ -124,6 +126,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             username: userInfo.value.preferred_username,
             email: userInfo.value.email,
             emailVerified: userInfo.value.email_verified,
+            roles,
         },
         token,
     };
