@@ -13,6 +13,7 @@ type Session = {
         username?: string;
         email?: string;
         emailVerified?: boolean;
+        roles: string[];
     };
     token?: TokenCookie;
 };

@@ -1,4 +1,7 @@
-import { baseUrl, dummyOrganism, test } from '../e2e.fixture';
+import { expect, test } from '@playwright/test';
+import { routes } from '../../src/routes/routes';
+import { login } from '../fixtures/auth.fixture';
+import { baseUrl, dummyOrganism } from '../e2e.fixture';
 
 const organismIndependentNavigationItems = [
     { link: 'My account', title: 'My account' },
@@ -30,5 +33,19 @@ test.describe('Clicking the navigation links', () => {
             await navigationFixture.clickLink(link);
             await navigationFixture.expectTitle(title.replace('[Organism]', dummyOrganism.displayName));
         }
+    });
+});
+
+test.describe('Navigation bar', () => {
+    test('should show the admin link for superusers', async ({ page }) => {
+        await login(page, 'superuser');
+        await page.goto(routes.organismSelectorPage('search'));
+        await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+    });
+
+    test('should not show the admin link for regular users', async ({ page }) => {
+        await login(page, 'regularuser');
+        await page.goto(routes.organismSelectorPage('search'));
+        await expect(page.getByRole('link', { name: 'Admin' })).not.toBeVisible();
     });
 });
