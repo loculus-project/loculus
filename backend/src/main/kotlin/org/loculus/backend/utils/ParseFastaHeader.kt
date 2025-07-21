@@ -10,15 +10,24 @@ import org.springframework.stereotype.Service
 
 @Service
 class ParseFastaHeader(private val backendConfig: BackendConfig) {
-    fun parse(submissionId: String, organism: Organism): Pair<SubmissionId, SegmentName> {
-        val validSegmentIds = backendConfig.getInstanceConfig(organism)
-            .referenceGenomes
-            .values
-            .flatMap { it.nucleotideSequences }
-            .map { it.name }
-            .toSet()
+    private val nucleotideSequenceNamesByOrganism = backendConfig.organisms
+        .mapValues {
+            it.value.referenceGenomes.values
+                .flatMap { referenceGenome -> referenceGenome.nucleotideSequences }
+                .map { referenceSequence -> referenceSequence.name }
+                .toSet()
+        }
+        .mapKeys { Organism(it.key) }
 
-        if (validSegmentIds.size == 1) {
+    fun parse(submissionId: String, organism: Organism): Pair<SubmissionId, SegmentName> {
+        val nucleotideSequenceNames = nucleotideSequenceNamesByOrganism[organism]
+            ?: throw BadRequestException(
+                "Unknown organism: ${organism.name}. Valid organisms: ${
+                    nucleotideSequenceNamesByOrganism.keys.joinToString(", ") { it.name }
+                }",
+            )
+
+        if (nucleotideSequenceNames.size == 1) {
             return Pair(submissionId, "main")
         }
 
@@ -31,12 +40,6 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
         }
         val isolateId = submissionId.substring(0, lastDelimiter)
         val segmentId = submissionId.substring(lastDelimiter + 1)
-        if (!validSegmentIds.contains(segmentId)) {
-            throw BadRequestException(
-                "The FASTA header $submissionId ends with the segment name $segmentId, which is not valid. " +
-                    "Valid segment names: ${validSegmentIds.joinToString(", ")}",
-            )
-        }
 
         return Pair(isolateId, segmentId)
     }
