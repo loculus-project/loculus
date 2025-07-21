@@ -1,5 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
-import { extraTopNavigationItems } from './extraTopNavigationItems.js';
+import { getExtraTopNavigationItems } from './extraTopNavigationItems.ts';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
 
@@ -60,9 +60,10 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
     return [accountItem];
 }
 
-function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
+function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string, isSuperuser: boolean) {
     const sequenceRelatedItems = getSequenceRelatedItems(organism);
     const seqSetsItems = getSeqSetsItems();
+    const extraTopNavigationItems = getExtraTopNavigationItems(isSuperuser);
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
     return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, ...accountItems];
