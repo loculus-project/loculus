@@ -223,6 +223,15 @@ def get_external_metadata_and_send_to_loculus(
                         f"Failed to update status_all for {accession_version} to "
                         f"{StatusAll.SENT_TO_LOCULUS}: {e}"
                     )
+                    update_with_retry(
+                        db_config,
+                        conditions=seq_key,
+                        update_values={
+                            "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
+                            "finished_at": datetime.now(tz=pytz.utc),
+                        },
+                        table_name=TableName.SUBMISSION_TABLE,
+                    )
 
 
 def upload_handle_errors(
