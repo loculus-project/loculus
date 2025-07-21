@@ -226,7 +226,7 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenome {
+export function getReferenceGenome(organism: string): ReferenceGenome {
     return Object.values(getConfig(organism).referenceGenomes)[0];
 }
 
@@ -238,7 +238,7 @@ const getAccession = (n: NamedSequence): ReferenceAccession => {
 };
 
 export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
+    const referenceGenomes = getReferenceGenome(organism);
     return {
         nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
         genes: referenceGenomes.genes.map((n) => n.name),
