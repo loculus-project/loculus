@@ -363,7 +363,7 @@ def set_db_to_known_erz_accession(
                 db_config,
                 TableName.ASSEMBLY_TABLE,
                 {"accession": accession, "version": version},
-                {"result": json.dumps({"erz_accession": "ERZ24908522", "segment_order": ["main"]})},
+                {"result": json.dumps({"erz_accession": "ERZ24985816", "segment_order": ["main"]})},
             )
 
 
