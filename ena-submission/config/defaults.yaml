@@ -57,16 +57,10 @@ metadata_mapping:
     loculus_fields: [purposeOfSampling]
   'host disease outcome':
     loculus_fields: [hostHealthOutcome]
-  'host common name':
-    loculus_fields: [hostNameCommon]
-    default: "not provided"
   'host age':
     loculus_fields: [hostAge]
   'host health state':
     loculus_fields: [hostHealthState]
-    default: "not provided"
-  'host sex':
-    loculus_fields: [hostGender]
     default: "not provided"
   'host scientific name':
     loculus_fields: [hostNameScientific]
@@ -76,9 +70,6 @@ metadata_mapping:
   'collecting institution':
     loculus_fields: [sequencedByOrganization, authorAffiliations]
     default: "not provided"
-  'collector name':
-    loculus_fields: []
-    default: "not provided"
   'receipt date':
     loculus_fields: [sampleReceivedDate]
   'isolation source host-associated':
@@ -87,20 +78,26 @@ metadata_mapping:
     loculus_fields: [environmentalSite, environmentalMaterial]
   'authors':
     loculus_fields: [authors]
+  'collector name':
+    loculus_fields: []
+    default: "not provided"
   'geographic location (latitude)':
     loculus_fields: [geoLocLatitude]
     units: DD
   'geographic location (longitude)':
     loculus_fields: [geoLocLongitude]
     units: DD
+  'host sex':
+    loculus_fields: [hostGender]
+    default: "not provided"
   "host subject id":
     loculus_fields: []
     default: "not provided"
-optional_metadata_mapping:
+  'host common name':
+    loculus_fields: [hostNameCommon]
+    default: "not provided"
   'GISAID accession':
     loculus_fields: [gisaidIsolateId]
-metadata_mapping_mandatory_field_defaults:
-  "host common name": "not provided"
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

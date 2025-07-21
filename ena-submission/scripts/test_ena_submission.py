@@ -56,11 +56,7 @@ def mock_config():
     }
     config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
-    config.optional_metadata_mapping = defaults["optional_metadata_mapping"]
     config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
-    config.metadata_mapping_mandatory_field_defaults = defaults[
-        "metadata_mapping_mandatory_field_defaults"
-    ]
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -172,7 +168,7 @@ class ProjectCreationTests(unittest.TestCase):
         ) == xmltodict.parse(text_project_xml_request)
 
 
-class SampleCreationTests(unittest.TestCase):
+class TestCreateSample:
     @mock.patch("requests.post")
     def test_create_sample_success(self, mock_post):
         mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
@@ -183,7 +179,7 @@ class SampleCreationTests(unittest.TestCase):
             "biosample_accession": "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
-        self.assertEqual(response.result, desired_response)
+        assert response.result == desired_response
 
     def test_sample_set_construction(self):
         config = mock_config()
@@ -192,10 +188,9 @@ class SampleCreationTests(unittest.TestCase):
             sample_data_in_submission_table,
             sample_table_entry,
         )
-        self.assertEqual(
-            xmltodict.parse(dataclass_to_xml(sample_set, root_name="SAMPLE_SET")),
-            xmltodict.parse(test_sample_xml_request),
-        )
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request)
 
     def test_sample_revision(self):
         config = mock_config()
@@ -206,10 +201,7 @@ class SampleCreationTests(unittest.TestCase):
         )
         files = get_sample_xml(sample_set, revision=True)
         revision = files["SUBMISSION"]
-        self.assertEqual(
-            xmltodict.parse(revision),
-            xmltodict.parse(revision_submission_xml_request),
-        )
+        assert xmltodict.parse(revision) == xmltodict.parse(revision_submission_xml_request)
 
 
 class AssemblyCreationTests(unittest.TestCase):
