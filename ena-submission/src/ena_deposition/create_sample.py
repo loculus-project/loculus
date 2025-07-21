@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 
 import pytz
+from attr import dataclass
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
@@ -44,61 +45,73 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):  # noqa: PLR0912
+@dataclass(frozen=True)
+class MetadataMapping:
+    loculus_fields: list[str]
+    default: str | None = None
+    function: str | None = None
+    args: list[str] | None = None
+    units: str | None = None
+
+
+def get_sample_attributes(
+    config: Config, sample_metadata: dict[str, str], row: dict[str, str]
+) -> list[SampleAttribute]:
     list_sample_attributes = []
     mapped_fields = []
-    for field in config.metadata_mapping:
-        loculus_metadata_field_names = config.metadata_mapping[field]["loculus_fields"]
-        loculus_metadata_field_values = [
-            sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
-        ]
-        if (
-            "function" in config.metadata_mapping[field]
-            and "args" in config.metadata_mapping[field]
-        ):
-            function = config.metadata_mapping[field]["function"]
-            args = [i for i in config.metadata_mapping[field]["args"] if i]
-            full_field_values = [i for i in loculus_metadata_field_values if i]
-            if function != "match":
-                logger.warning(
-                    f"Unknown function: {function} with args: {args} for {row['accession']}"
-                )
-                continue
-            if function == "match" and (len(full_field_values) == len(args)):
-                value = "true"
-                for i in range(len(full_field_values)):
-                    if not re.match(
-                        args[i],
-                        full_field_values[i],
-                        re.IGNORECASE,
+    for field_name, field_config in config.metadata_mapping.items():
+        mapping = MetadataMapping(
+            loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
+            default=field_config.get("default"),  # type: ignore[arg-type]
+            function=field_config.get("function"),  # type: ignore[arg-type]
+            args=field_config.get("args"),  # type: ignore[arg-type]
+            units=field_config.get("units"),  # type: ignore[arg-type]
+        )
+
+        loculus_metadata_field_values = list(map(sample_metadata.get, mapping.loculus_fields))
+
+        # Fields with function and args are processed differently
+        if mapping.function and mapping.args:
+            function = mapping.function
+            args = mapping.args
+            match function:
+                case "match":  # Regex match each value against respective arg (as regex)
+                    if len(loculus_metadata_field_values) != len(mapping.args):
+                        logger.error(
+                            f"Function {function} for field {field_name} expects {len(args)} "
+                            f"arguments, but got {len(loculus_metadata_field_values)} values: "
+                            f"{loculus_metadata_field_values}. "
+                            "Will not be added to sample attributes."
+                        )
+                        continue
+                    if all(
+                        value is not None and re.match(pattern, value, re.IGNORECASE)
+                        for pattern, value in zip(args, loculus_metadata_field_values, strict=True)
                     ):
+                        value = "true"
+                    else:
                         value = "false"
-                        break
-            else:
-                continue
+                case _:
+                    logger.error(
+                        f"Unknown function for field {field_name}: {mapping}. "
+                        f"Function: {function} with args: {args} for {row['accession']}. "
+                        "Will not be added to sample attributes."
+                    )
+                    continue
         else:
-            value = "; ".join(
-                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
-            )
-        if value:
+            value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
+        value_or_default = value or mapping.default
+        if value_or_default:
             list_sample_attributes.append(
                 SampleAttribute(
-                    tag=field,
-                    value=value,
-                    units=config.metadata_mapping[field].get("units"),  # type: ignore
+                    tag=field_name,
+                    value=value_or_default,
+                    units=mapping.units,
                 )
             )
-            mapped_fields.append(field)
-    for field, default in config.metadata_mapping_mandatory_field_defaults.items():
-        if field not in mapped_fields:
-            list_sample_attributes.append(
-                SampleAttribute(
-                    tag=field,
-                    value=default,
-                )
-            )
-    for field, loculus in config.optional_metadata_mapping.items():
-        if field not in mapped_fields:
+            mapped_fields.append(field_name)
+    for field_name, loculus in config.optional_metadata_mapping.items():
+        if field_name not in mapped_fields:
             loculus_metadata_field_names = loculus["loculus_fields"]
             loculus_metadata_field_values = [
                 sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
@@ -109,7 +122,7 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
             if value:
                 list_sample_attributes.append(
                     SampleAttribute(
-                        tag=field,
+                        tag=field_name,
                         value=value,
                     )
                 )
