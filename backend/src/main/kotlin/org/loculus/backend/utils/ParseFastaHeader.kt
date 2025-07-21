@@ -17,6 +17,8 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
         if (lastDelimiter == -1) {
             return Pair(submissionId, "main")
         }
+        val isolateId = submissionId.substring(0, lastDelimiter)
+        val segmentId = submissionId.substring(lastDelimiter + 1)
 
         return Pair(isolateId, segmentId)
     }
