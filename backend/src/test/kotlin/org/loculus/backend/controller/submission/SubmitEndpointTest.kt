@@ -20,6 +20,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.MULTI_PATHOGEN_ORGANISM
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.SegmentedMultiPathogenOrganism
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -348,13 +349,65 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission for multi pathogen THEN is accepted`() {
+    fun `GIVEN submission for multi pathogen organism THEN is accepted`() {
         submissionControllerClient.submit(
             metadataFile = DefaultFiles.metadataFile,
             sequencesFile = SubmitFiles.sequenceFileWith(
                 content = DefaultFiles.submissionIds.joinToString("\n") { ">$it\nACTG" },
             ),
             organism = MULTI_PATHOGEN_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON))
+            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+    }
+
+    @Test
+    fun `GIVEN submission for segmented multi pathogen organism THEN is accepted`() {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = SubmitFiles.sequenceFileWith(
+                content = DefaultFiles.submissionIds
+                    .mapIndexed { i, submissionId ->
+                        when (i) {
+                            0 -> """
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.SECOND_SEGMENT}
+                                ACTG
+                            """.trimIndent()
+
+                            1 -> """
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.SECOND_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
+                                ACTG
+                            """.trimIndent()
+
+                            2 -> """
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
+                                ACTG
+                            """.trimIndent()
+
+                            else -> """
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                                ACTG
+                            """.trimIndent()
+                        }
+                    }
+                    .joinToString("\n"),
+            ),
+            organism = SegmentedMultiPathogenOrganism.NAME,
             groupId = groupId,
         )
             .andExpect(status().isOk)
