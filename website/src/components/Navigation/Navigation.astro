@@ -20,7 +20,7 @@ const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
-const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl);
+const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl, Astro.locals.session);
 ---
 
 <div class='flex justify-end relative'>
