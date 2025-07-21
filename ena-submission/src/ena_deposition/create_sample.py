@@ -57,8 +57,7 @@ class MetadataMapping:
 def get_sample_attributes(
     config: Config, sample_metadata: dict[str, str], row: dict[str, str]
 ) -> list[SampleAttribute]:
-    list_sample_attributes = []
-    mapped_fields = []
+    result: list[SampleAttribute] = []
     for field_name, field_config in config.metadata_mapping.items():
         mapping = MetadataMapping(
             loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
@@ -102,31 +101,14 @@ def get_sample_attributes(
             value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
         value_or_default = value or mapping.default
         if value_or_default:
-            list_sample_attributes.append(
+            result.append(
                 SampleAttribute(
                     tag=field_name,
                     value=value_or_default,
                     units=mapping.units,
                 )
             )
-            mapped_fields.append(field_name)
-    for field_name, loculus in config.optional_metadata_mapping.items():
-        if field_name not in mapped_fields:
-            loculus_metadata_field_names = loculus["loculus_fields"]
-            loculus_metadata_field_values = [
-                sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
-            ]
-            value = "; ".join(
-                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
-            )
-            if value:
-                list_sample_attributes.append(
-                    SampleAttribute(
-                        tag=field_name,
-                        value=value,
-                    )
-                )
-    return list_sample_attributes
+    return result
 
 
 def construct_sample_set_object(
