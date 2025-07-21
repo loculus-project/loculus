@@ -203,19 +203,16 @@ class TestCreateSample:
 
     def test_sample_set_with_gisaid(self):
         config = mock_config()
-        sample_data = (
-            sample_data_in_submission_table.deepcopy()
-        )  # Avoid modifying the original data
         sample_data = sample_data_in_submission_table()
         sample_data["metadata"]["gisaidIsolateId"] = "EPI_ISL_12345"
         sample_set = construct_sample_set_object(
             config,
-            sample_data_in_submission_table(),
+            sample_data,
             sample_table_entry,
         )
-        files = get_sample_xml(sample_set, revision=False)
-        submission = files["SUBMISSION"]
-        assert xmltodict.parse(submission) == xmltodict.parse(test_sample_xml_request)
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request_gisaid)
 
     def test_sample_revision(self):
         config = mock_config()
