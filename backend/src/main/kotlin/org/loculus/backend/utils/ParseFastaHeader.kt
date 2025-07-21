@@ -11,13 +11,16 @@ import org.springframework.stereotype.Service
 @Service
 class ParseFastaHeader(private val backendConfig: BackendConfig) {
     fun parse(submissionId: String, organism: Organism): Pair<SubmissionId, SegmentName> {
-        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenomes.values.first()
+        val validSegmentIds = backendConfig.getInstanceConfig(organism)
+            .referenceGenomes
+            .values
+            .flatMap { it.nucleotideSequences }
+            .map { it.name }
+            .toSet()
 
-        if (referenceGenome.nucleotideSequences.size == 1) {
+        if (validSegmentIds.size == 1) {
             return Pair(submissionId, "main")
         }
-
-        val validSegmentIds = referenceGenome.nucleotideSequences.map { it.name }
 
         val lastDelimiter = submissionId.lastIndexOf("_")
         if (lastDelimiter == -1) {
