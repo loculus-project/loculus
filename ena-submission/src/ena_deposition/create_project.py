@@ -38,6 +38,7 @@ from .submission_db_helper import (
     find_conditions_in_db,
     find_errors_in_db,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -285,7 +286,6 @@ def submission_table_update(db_config: SimpleConnectionPool):
 def project_table_create(
     db_config: SimpleConnectionPool,
     config: Config,
-    retry_number: int = 3,
     test: bool = False,
 ):
     """
@@ -344,48 +344,25 @@ def project_table_create(
                 "result": json.dumps(project_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"Project created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.PROJECT_TABLE,
-                    conditions=group_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Project creation for group_id {row['group_id']} organism "
-                    f"{row['organism']} succeeded with: {project_creation_results.result}"
-                )
+            logger.info(
+                f"Project creation succeeded for group_id {row['group_id']} "
+                f"organism {row['organism']}"
+            )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(project_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"Project creation failed and DB update failed - "
-                        f"reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.PROJECT_TABLE,
-                    conditions=group_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            logger.error(
+                f"Project creation failed for group_id {row['group_id']} organism {row['organism']}"
+            )
+        update_with_retry(
+            db_config=db_config,
+            conditions=group_key,
+            update_values=update_values,
+            table_name=TableName.PROJECT_TABLE,
+        )
 
 
 def project_table_handle_errors(
@@ -432,7 +409,7 @@ def create_project(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_project stopped due to exception in another task")
+            logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
         submission_table_start(db_config, config)

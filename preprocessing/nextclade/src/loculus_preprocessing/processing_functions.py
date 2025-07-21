@@ -82,8 +82,15 @@ def format_authors(authors: str) -> str:
         for name in first_name.split():
             if len(name) == 1:
                 first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":  # noqa: PLR2004
+            elif len(name) == 2 and name[1] == ".":  # e.g., "J."
                 first_names.append(f"{name.upper()}")
+            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():  # e.g., "JD"
+                initials = " ".join(f"{char}." for char in name)
+                first_names.append(initials)
+            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]\.?", name): # e.g., "J.D." or "J.D.K." or "J.D.K"
+                letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
+                initials = " ".join(f"{ch}." for ch in letters)
+                first_names.append(initials)
             else:
                 first_names.append(name)
         first_name = " ".join(first_names)
@@ -799,7 +806,7 @@ class ProcessingFunctions:
                     f"The authors list '{authors}' might not be using the Loculus format. "
                     + author_format_description
                 )
-                warnings = [
+                warnings.append(
                     ProcessingAnnotation(
                         processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -810,18 +817,30 @@ class ProcessingFunctions:
                         ],
                         message=warning_message,
                     )
-                ]
-                return ProcessingResult(
-                    datum=formatted_authors,
-                    warnings=warnings,
-                    errors=errors,
+                )
+            if " and " in authors:
+                warning_message = (
+                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted "
+                    "authors list. Authors should always be separated by semi-colons only e.g. "
+                    "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+                warnings.append(
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=warning_message,
+                    )
                 )
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
                 errors=errors,
             )
-
         error_message = (
             f"The authors list '{authors}' is not in a recognized format. "
             + author_format_description

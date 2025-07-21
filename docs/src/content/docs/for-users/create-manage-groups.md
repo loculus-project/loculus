@@ -2,7 +2,7 @@
 title: Creating and managing groups
 ---
 
-If your organization does not yet have a [submitting group](../../introduction/glossary/#submitting-group), you can create one. If they already have a group, you can contact someone within that group, and ask them to add you using your username. Everyone within a group is able to submit, edit, and revoke sequences uploaded by anyone else in that group.
+If your organization does not yet have a [submitting group](../../reference/glossary/#submitting-group), you can create one. If they already have a group, you can contact someone within that group, and ask them to add you using your username. Everyone within a group is able to submit, edit, and revoke sequences uploaded by anyone else in that group.
 
 ## Create a new group
 

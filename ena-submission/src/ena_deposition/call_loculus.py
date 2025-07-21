@@ -90,6 +90,9 @@ def submit_external_metadata(
     organism: str,
 ) -> requests.Response:
     """Submit metadata to Loculus."""
+    logger.debug(
+        f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
+    )
     endpoint: str = "submit-external-metadata"
 
     url = f"{organism_url(config, organism)}/{endpoint}"
@@ -110,6 +113,11 @@ def submit_external_metadata(
         msg = f"External metadata submission failed with: {response.status_code} - {response.text}"
         logger.error(msg)
         raise requests.exceptions.HTTPError(msg)
+
+    logger.debug(
+        "External metadata submitted successfully for "
+        f"organism: {organism}, metadata: {external_metadata}"
+    )
 
     return response
 

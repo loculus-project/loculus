@@ -49,6 +49,7 @@ class Config:
     )
     min_between_github_requests: int = 2
     time_between_iterations: int = 10
+    min_between_publicness_checks: int = 12 * 60  # 12 hours
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
@@ -89,7 +90,7 @@ def get_config(config_file: str) -> Config:
     for key, value in defaults.items():
         if key not in full_config:
             full_config[key] = value
-    relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
+    relevant_config = {key: full_config.get(key) for key in Config.__annotations__}
 
     dotenv.load_dotenv()  # Load environment variables from .env file
     relevant_config["ena_submission_username"] = os.getenv(
