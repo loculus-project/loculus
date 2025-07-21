@@ -112,8 +112,8 @@ To run only the CLI tests:
 cd integration-tests
 npx playwright test --project=cli-tests --reporter=line
 
- PLAYWRIGHT_TEST_BASE_URL=https://cli.loculus.org npx playwright test --project=cli-tests                │
+ PLAYWRIGHT_TEST_BASE_URL=https://main.loculus.org npx playwright test --project=cli-tests                │
 │   --reporter=line        
 ```
 
-(we should often run against cli.loculus.org)
+(you can also run against another preview branch)
