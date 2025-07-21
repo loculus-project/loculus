@@ -120,30 +120,24 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def run_sort(
+def get_hits_nextclade_sort(
     result_file_dir: str,
     input_file: str,
     alerts: Alerts,
     config: Config,
     segment: SegmentName,
     dataset_dir: str,
-) -> Alerts:
+) -> pd.DataFrame:
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
     - assert highest score is in config.accepted_dataset_matches
     (default is nextclade_dataset_name)
     """
-    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
-    if not config.accepted_dataset_matches and not nextclade_dataset_name:
-        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
-        return alerts
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
-
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
@@ -209,6 +203,38 @@ def run_sort(
                 ),
             )
         )
+    return best_hits
+
+
+def run_sort(
+    result_file_dir: str,
+    input_file: str,
+    alerts: Alerts,
+    config: Config,
+    segment: SegmentName,
+    dataset_dir: str,
+) -> Alerts:
+    """
+    Run nextclade
+    - use config.minimizer_url or default minimizer from nextclade server
+    - assert highest score is in config.accepted_dataset_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+    if not config.accepted_dataset_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
+
+    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
+
+    best_hits = get_hits_nextclade_sort(
+        result_file_dir,
+        input_file,
+        alerts,
+        config,
+        segment,
+        dataset_dir,
+    )
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
