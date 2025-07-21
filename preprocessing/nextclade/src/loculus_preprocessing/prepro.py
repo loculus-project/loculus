@@ -131,8 +131,6 @@ def get_hits_nextclade_sort(
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
-    - assert highest score is in config.accepted_dataset_matches
-    (default is nextclade_dataset_name)
     """
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
@@ -305,6 +303,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
+        # TODO: assert only segments in seg_dict or assign using nextclade sort output
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
@@ -375,7 +374,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
-        # TODO: assert only segments in seg_dict or assign using nextclade sort output
         for segment in config.nucleotideSequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
