@@ -7,7 +7,7 @@ import { getConfiguredOrganisms, getLapisUrl, getReferenceGenome, getRuntimeConf
 
 vi.mock('../../../config.ts', () => ({
     getConfiguredOrganisms: vi.fn(),
-    getReferenceGenomes: vi.fn(),
+    getReferenceGenome: vi.fn(),
     getLapisUrl: vi.fn(),
     getSchema: vi.fn(),
     getRuntimeConfig: vi.fn(),
