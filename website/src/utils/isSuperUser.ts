@@ -1,4 +1,17 @@
 /**
+ * JWT payload structure for Keycloak tokens
+ */
+interface JwtPayload {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    realm_access?: {
+        roles?: string[];
+    };
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    preferred_username?: string;
+    exp?: number;
+}
+
+/**
  * Checks if the current user is a superuser by examining their JWT token claims.
  * Superusers have the 'super_user' role in their realm_access.roles claim.
  */
@@ -17,8 +30,9 @@ export function isSuperUser(session: Session | undefined): boolean {
         }
 
         // Decode the base64url-encoded payload
-        const payload = JSON.parse(atob(tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')));
-        
+        const payloadString = atob(tokenParts[1].replace(/-/g, '+').replace(/_/g, '/'));
+        const payload = JSON.parse(payloadString) as JwtPayload;
+
         // Check if the user has the super_user role
         const realmAccess = payload.realm_access;
         if (!realmAccess || !Array.isArray(realmAccess.roles)) {
@@ -26,7 +40,7 @@ export function isSuperUser(session: Session | undefined): boolean {
         }
 
         return realmAccess.roles.includes('super_user');
-    } catch (error) {
+    } catch (_error) {
         // If we can't parse the token, assume not a superuser
         return false;
     }

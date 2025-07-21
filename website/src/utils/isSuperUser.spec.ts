@@ -6,16 +6,18 @@ import { isSuperUser } from './isSuperUser';
 function createJwtToken(roles: string[]): string {
     const header = { alg: 'RS256', typ: 'JWT' };
     const payload = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         realm_access: { roles },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         preferred_username: 'testuser',
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
     };
-    
+
     // Create a mock JWT token (header.payload.signature)
     const headerEncoded = btoa(JSON.stringify(header));
     const payloadEncoded = btoa(JSON.stringify(payload));
     const signature = 'mock-signature';
-    
+
     return `${headerEncoded}.${payloadEncoded}.${signature}`;
 }
 
@@ -47,7 +49,7 @@ describe('isSuperUser', () => {
             isLoggedIn: true,
             token: {
                 refreshToken: 'refresh-token',
-            } as any, // Cast to bypass TypeScript check since we're testing edge case
+            } as Partial<Session['token']>,
         };
         expect(isSuperUser(session)).toBe(false);
     });
