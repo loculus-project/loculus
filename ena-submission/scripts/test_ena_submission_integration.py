@@ -522,8 +522,6 @@ def multi_segment_submission(
     assert payload["version"] == 1
     assert set(payload["externalMetadata"]) == {"bioprojectAccession"}
     assert payload["externalMetadata"]["bioprojectAccession"].startswith("PRJEB")
-    assert mock_submit_external_metadata.call_args[0][0]["accession"] == "LOC_0001TLY"
-    assert mock_submit_external_metadata.call_args[0][0]["version"] == 1
 
     _test_successful_sample_submission(db_config, config, sequences_to_upload)
     get_external_metadata_and_send_to_loculus(db_config, config)
