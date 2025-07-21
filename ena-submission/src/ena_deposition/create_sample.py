@@ -44,7 +44,7 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):  # noqa: PLR0912
+def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
     list_sample_attributes = []
     mapped_fields = []
     for field in config.metadata_mapping:
