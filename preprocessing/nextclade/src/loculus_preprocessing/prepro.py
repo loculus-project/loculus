@@ -375,6 +375,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
+        # TODO: assert only segments in seg_dict or assign using nextclade sort output
         for segment in config.nucleotideSequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
