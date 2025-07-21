@@ -34,8 +34,8 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
         val lastDelimiter = submissionId.lastIndexOf("_")
         if (lastDelimiter == -1) {
             throw BadRequestException(
-                "The FASTA header $submissionId does not contain the segment name. Please provide the" +
-                    " segment name in the format <$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES>_<segment name>",
+                "The FASTA header $submissionId does not contain a segment id. Please provide the" +
+                    " segment name in the format <$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES>_<segment id>",
             )
         }
         val isolateId = submissionId.substring(0, lastDelimiter)
