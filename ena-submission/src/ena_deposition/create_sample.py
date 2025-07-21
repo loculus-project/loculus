@@ -97,6 +97,22 @@ def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: 
                     value=default,
                 )
             )
+    for field, loculus in config.optional_metadata_mapping.items():
+        if field not in mapped_fields:
+            loculus_metadata_field_names = loculus["loculus_fields"]
+            loculus_metadata_field_values = [
+                sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
+            ]
+            value = "; ".join(
+                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
+            )
+            if value:
+                list_sample_attributes.append(
+                    SampleAttribute(
+                        tag=field,
+                        value=value,
+                    )
+                )
     return list_sample_attributes
 
 
