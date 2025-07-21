@@ -223,7 +223,9 @@ def run_sort(
         logger.warning("No nextclade dataset name or accepted dataset match list found in config")
         return alerts
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name.split("/")[-1]]  # type: ignore
+    accepted_dataset_names = config.accepted_dataset_matches or [
+        nextclade_dataset_name.split("/")[-1]  # type: ignore
+    ]
 
     best_hits = get_hits_nextclade_sort(
         result_file_dir,
@@ -303,7 +305,31 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
-        # TODO: assert only segments in seg_dict or assign using nextclade sort output
+        # TODO: assert only segments in entry.data.unalignedNucleotideSequences or
+        # assign to segment using nextclade sort output
+        if not set(entry.data.unalignedNucleotideSequences.keys()).issubset(
+            set(config.nucleotideSequences)
+        ):
+            alerts.errors[id].append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    message=(
+                        "Unaligned nucleotide sequences contain segments not in "
+                        "config.nucleotideSequences"
+                    ),
+                )
+            )
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
