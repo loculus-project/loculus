@@ -52,8 +52,8 @@ loculus [GLOBAL OPTIONS] COMMAND [COMMAND OPTIONS]
 ### Global Options
 
 - `--instance TEXT`: Loculus instance URL (e.g., main.loculus.org)
-- `-o, --organism TEXT`: Organism name (e.g., 'Mpox', 'H5N1')
-- `-g, --group INTEGER`: Group ID for operations
+- `-G, --organism TEXT`: Organism name (e.g., 'Mpox', 'H5N1')
+- `-G, --group INTEGER`: Group ID for operations
 - `--config TEXT`: Path to configuration file
 - `-v, --verbose`: Enable verbose output
 - `--no-color`: Disable colored output
