@@ -334,7 +334,14 @@ def check_project_submission_has_errors(
 def set_db_to_known_erz_accession(
     db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any], single_segment: bool
 ) -> None:
-    """Sets erz-accession to known public accessions"""
+    """
+    Sets erz-accession to known previous values that have received accession
+    Account Webin-66038 (non-broker) submitted (among others):
+    ERZ24985816: single segment, no GCA assigned
+    ERZ24784470: 2 segments, GCA assigned
+    See https://wwwdev.ebi.ac.uk/ena/submit/webin/report/analysisProcess;defaultSearch=true
+    for full list of submissions
+    """
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
         organism = data["organism"]
