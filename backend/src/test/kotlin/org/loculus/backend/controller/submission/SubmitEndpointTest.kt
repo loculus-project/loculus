@@ -359,7 +359,11 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
-                    .value(containsString("Metadata file contains 1 ids that are not present in the sequence file: commonHeader")),
+                    .value(
+                        containsString(
+                            "Metadata file contains 1 ids that are not present in the sequence file: commonHeader",
+                        ),
+                    ),
             )
     }
 
