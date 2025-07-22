@@ -771,7 +771,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostOriginCountry
         ontology_id: GENEPIO:0100438
         definition: The country of origin of the host.
-        guidance: If a sample is from a human or animal host that originated from outside of Canada, provide the the name of the country where the host originated by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: If a sample is from a human or animal host that originated from outside of Canada, provide the name of the country where the host originated by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: South Africa [GAZ:00001094]
         displayName: Host origin country
         header: Host
