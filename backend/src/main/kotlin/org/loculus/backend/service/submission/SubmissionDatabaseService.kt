@@ -1351,12 +1351,12 @@ class SubmissionDatabaseService(
      */
     fun cleanUpOutdatedPreprocessingDataForAllOrganisms() {
         CurrentProcessingPipelineTable.selectAll()
-            .map {
-                it[CurrentProcessingPipelineTable.organismColumn] to it[CurrentProcessingPipelineTable.versionColumn]
-            }
-            .forEach { (organism, version) ->
-                cleanUpOutdatedPreprocessingData(organism, version)
-            }
+        .forEach { row ->
+            cleanUpOutdatedPreprocessingData(
+                organism = row[CurrentProcessingPipelineTable.organismColumn],
+                earliestVersionToKeep = row[CurrentProcessingPipelineTable.versionColumn]
+            )
+        }
     }
 
     /**
