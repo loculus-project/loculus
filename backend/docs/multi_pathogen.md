@@ -217,7 +217,7 @@ TODO: Minimizer index, etc?
     "metadata": {...},
     "unalignedNucleotideSequences": {
       "matchingSuborganism": "ACTG",
-      // omit the non-matching suborganisms
+      "other non matching suborganisms...": null
     },
     "alignedNucleotideSequences": {
       "matchingSuborganism": "ACTG"
@@ -226,12 +226,13 @@ TODO: Minimizer index, etc?
       "matchingSuborganism": [...],
     },
     "alignedAminoAcidSequences": {
-      "matchingSuborganism_gene1": "NRNR*",
-      "matchingSuborganism_gene2": "MRGTNF*"
+      "matchingSuborganism-gene1": "NRNR*",
+      "matchingSuborganism-gene2": "MRGTNF*",
+      "other non matching suborganisms...-gene": null
     },
     "aminoAcidInsertions": {
-      "matchingSuborganism_gene1": [...],
-      "matchingSuborganism_gene2": [...]
+      "matchingSuborganism-gene1": [...],
+      "matchingSuborganism-gene2": [...]
     },
     "files": {
       "raw_reads": [
@@ -249,6 +250,7 @@ similar for multiple segments.
 
 The backend will validate the preprocessing output against the merged reference genome
 since the merged reference genome is used in SILO and the preprocessing result will be fed into SILO.
+In particular all segments and genes for all suborganisms must be present in the preprocessing output.
 
 ## LAPIS / SILO
 
