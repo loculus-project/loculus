@@ -87,16 +87,47 @@ defaultOrganisms:
           - name: main
             sequence: "..."
             insdcAccessionFull: ...
-        genes: [...]
+        genes: 
+          - name: VP4
+            sequence: "..."
+          - ...
       EV-A71:
         nucleotideSequences:
           - name: main
             sequence: "..."
             insdcAccessionFull: ...
-        genes: [...]
+        genes:
+          - name: VP2
+            sequence: "..."
+          - ...
       # ...
-
 ```
+
+The backend and the website will then receive the `referenceGenomes` as configured above.
+LAPIS will receive a "merged" reference genome 
+that merges all suborganisms by prepending the suborganism name to the sequence name 
+(ignoring `main` if there is only a single segment):
+```json
+{
+  "nucleotideSequences": [
+    {"name": "CV-A10", "sequence": "..."},
+    {"name": "EV-A71", "sequence": "..."},
+    // ...
+  ],
+  "genes": [
+    {"name": "CV-A10-VP4", "sequence": "..."},
+    {"name": "EV-A71-VP2", "sequence": "..."},
+    // ...
+  ]
+}
+```
+
+Consequence:
+* In the single-segmented case, the backend will also remain single-segmented for every suborganism. 
+  That case con be recognized by taking a set of all nucleotide sequence names 
+  and checking whether it contains only one element.
+* The reference genomes of the website and the backend will be different from the LAPIS reference genome.
+  (In the single pathogen case, they will still be the same.)
 
 ## Submission
 
