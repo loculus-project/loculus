@@ -55,12 +55,21 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-#          TODO what do we need here? This is what was used in #4570:
-#          nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
-#          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
-#          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-#          require_nextclade_sort_match: true
-#          genes: ["CVA16-VP4", "CVA16-VP2", "CVA16-VP3", "CVA16-VP1", "CVA16-2A", "CVA16-2B", "CVA16-2C", "CVA16-3A", "CVA16-3B", "CVA16-3C", "CVA16-3D", "CVA10-VP4", "CVA10-VP2", "CVA10-VP3", "CVA10-VP1", "CVA10-2A", "CVA10-2B", "CVA10-2C", "CVA10-3A", "CVA10-3B", "CVA10-3C", "CVA10-3D", "EVA71-VP4", "EVA71-VP2", "EVA71-VP3", "EVA71-VP1", "EVA71-2A", "EVA71-2B", "EVA71-2C", "EVA71-3A", "EVA71-3B", "EVA71-3C", "EVA71-3D", "EVD68-VP4", "EVD68-VP2", "EVD68-VP3", "EVD68-VP1", "EVD68-2A", "EVD68-2B", "EVD68-2C", "EVD68-3A", "EVD68-3B", "EVD68-3C", "EVD68-3D"]
+          minimizer_url: ...
+          assign_subtype_with_minimizer: true
+          referenceGenomes:
+            CV-A10:
+              nucleotideSequences:
+                - name: main
+                  nextclade_dataset_name: ...
+                  nextclade_dataset_server: ...
+                  accepted_minimizer_matches_list: [...]
+              genes:
+                - name: VP4
+                - ...
+            EV-A71:
+              nucleotideSequences: [...]
+              genes: [..]
     ingest:
       <<: *ingest
       configFile:
