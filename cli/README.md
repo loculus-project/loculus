@@ -1,5 +1,7 @@
 # Loculus CLI
 
+**The Loculus CLI is in early development ready and is not ready for production use. If you use the CLI you must be aware of and comply with the data use terms on any sequences downloaded through it, which may be restricted.**
+
 A command-line interface for interacting with Loculus. The CLI is currently an unstable work in progress.
 
 ## Installation
