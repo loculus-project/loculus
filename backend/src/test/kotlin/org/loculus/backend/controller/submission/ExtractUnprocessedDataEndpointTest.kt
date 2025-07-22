@@ -27,14 +27,18 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.MULTI_PATHOGEN_ORGANISM
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.SegmentedMultiPathogenOrganism
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -277,5 +281,124 @@ class ExtractUnprocessedDataEndpointTest(
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
         assertThat(response.statusCode(), `is`(200))
         assertThat(response.body(), `is`("Hello, world!"))
+    }
+}
+
+@EndpointTest()
+class MultiPathogenExtractUnprocessedDataEndpointTest(
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val client: SubmissionControllerClient,
+    @Autowired val groupManagementClient: GroupManagementControllerClient,
+) {
+    @Test
+    fun `GIVEN single segmented multi pathogen submission THEN only has main sequence`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        client.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                    submissionId	firstColumn
+                    id1	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                    >id1
+                    A
+                """.trimIndent(),
+            ),
+            organism = MULTI_PATHOGEN_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+
+        val result = client.extractUnprocessedData(
+            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+            organism = MULTI_PATHOGEN_ORGANISM,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+
+        assertThat(responseBody.size, `is`(1))
+        assertThat(
+            responseBody[0].data.unalignedNucleotideSequences,
+            `is`(mapOf("main" to "A")),
+        )
+    }
+
+    @Test
+    fun `GIVEN multi segmented multi pathogen submission THEN the segment names are the keys of the sequences`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        client.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                    id	firstColumn
+                    id1	someValue
+                    id2	someValue
+                    id3	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                    >id1_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                    A
+                    >id2_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                    AAG
+                    >id2_${SegmentedMultiPathogenOrganism.SECOND_SEGMENT}
+                    AAT
+                    >id3_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                    AAAG
+                    >id3_${SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT}
+                    AAAT
+                    >id3_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
+                    AAAC
+                """.trimIndent(),
+            ),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+
+        val result = client.extractUnprocessedData(
+            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+
+        assertThat(responseBody.size, `is`(3))
+
+        val firstEntry = responseBody[0]
+        assertThat(firstEntry.submissionId, `is`("id1"))
+        assertThat(
+            firstEntry.data.unalignedNucleotideSequences,
+            `is`(
+                mapOf(
+                    SegmentedMultiPathogenOrganism.FIRST_SEGMENT to "A",
+                ),
+            ),
+        )
+
+        val secondEntry = responseBody[1]
+        assertThat(secondEntry.submissionId, `is`("id2"))
+        assertThat(
+            secondEntry.data.unalignedNucleotideSequences,
+            `is`(
+                mapOf(
+                    SegmentedMultiPathogenOrganism.FIRST_SEGMENT to "AAG",
+                    SegmentedMultiPathogenOrganism.SECOND_SEGMENT to "AAT",
+                ),
+            ),
+        )
+
+        val thirdEntry = responseBody[2]
+        assertThat(thirdEntry.submissionId, `is`("id3"))
+        assertThat(
+            thirdEntry.data.unalignedNucleotideSequences,
+            `is`(
+                mapOf(
+                    SegmentedMultiPathogenOrganism.FIRST_SEGMENT to "AAAG",
+                    SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT to "AAAT",
+                    SegmentedMultiPathogenOrganism.THIRD_SEGMENT to "AAAC",
+                ),
+            ),
+        )
     }
 }
