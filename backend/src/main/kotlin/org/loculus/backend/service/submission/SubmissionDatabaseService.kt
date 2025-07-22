@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -22,6 +23,7 @@ import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
+import org.jetbrains.exposed.sql.delete
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.extract
@@ -1275,27 +1277,65 @@ class SubmissionDatabaseService(
 
     /**
      * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
-     * the given organism and are older than the earliest preprocessing pipeline version to keep.
+     * the given organism and have a pipelineVersion smaller than earliestVersionToKeep.
+     * Batches deletes to avoid locking the table for a long time.
      */
     fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
-        val sql = """
-        DELETE FROM sequence_entries_preprocessed_data
-        WHERE pipeline_version < ? AND 
-        (accession, version) IN (
-            SELECT sep.accession, sep.version
-            FROM sequence_entries_preprocessed_data sep
-            JOIN sequence_entries se ON sep.accession = se.accession AND sep.version = se.version
-            WHERE se.organism = ?
+        val batchSize = 1000
+        log.debug(
+            "Starting cleanup of outdated preprocessing data for organism '$organism' " +
+                "with earliest version to keep: $earliestVersionToKeep",
         )
-        """.trimIndent()
-        transaction {
-            exec(
-                sql,
-                listOf(
-                    Pair(LongColumnType(), earliestVersionToKeep),
-                    Pair(VarCharColumnType(), organism),
-                ),
-                explicitStatementType = StatementType.DELETE,
+
+        var totalDeletedRows = 0
+        var deletedRowsInLastBatch: Int
+        do {
+            deletedRowsInLastBatch = transaction {
+                val keysToDelete = SequenceEntriesPreprocessedDataTable
+                    .join(SequenceEntriesTable, JoinType.INNER, null, null) {
+                        (
+                            SequenceEntriesPreprocessedDataTable.accessionColumn eq
+                                SequenceEntriesTable.accessionColumn
+                            ) and
+                            (
+                                SequenceEntriesPreprocessedDataTable.versionColumn eq
+                                    SequenceEntriesTable.versionColumn
+                                )
+                    }
+                    .select(
+                        SequenceEntriesPreprocessedDataTable.accessionColumn,
+                        SequenceEntriesPreprocessedDataTable.versionColumn,
+                        SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
+                    )
+                    .where {
+                        (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn less earliestVersionToKeep) and
+                            (SequenceEntriesTable.organismColumn eq organism)
+                    }
+                    .limit(batchSize)
+                    .map {
+                        Triple(
+                            it[SequenceEntriesPreprocessedDataTable.accessionColumn],
+                            it[SequenceEntriesPreprocessedDataTable.versionColumn],
+                            it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn],
+                        )
+                    }
+                SequenceEntriesPreprocessedDataTable.deleteWhere {
+                    Triple(
+                        SequenceEntriesPreprocessedDataTable.accessionColumn,
+                        SequenceEntriesPreprocessedDataTable.versionColumn,
+                        SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
+                    ) inList keysToDelete
+                }
+            }
+        } while (deletedRowsInLastBatch == batchSize)
+        if (totalDeletedRows > 0) {
+            log.info(
+                "Finished cleanup of outdated preprocessing data for organism '$organism', " +
+                    "with version < $earliestVersionToKeep. Total deleted rows: $totalDeletedRows.",
+            )
+        } else {
+            log.info(
+                "No outdated preprocessing data found for organism '$organism' with version < $earliestVersionToKeep.",
             )
         }
     }
