@@ -1355,7 +1355,7 @@ class SubmissionDatabaseService(
                 it[CurrentProcessingPipelineTable.organismColumn] to it[CurrentProcessingPipelineTable.versionColumn]
             }
             .forEach { (organism, version) ->
-                cleanUpOutdatedPreprocessingData(organism, earliestVersionToKeep = 1)
+                cleanUpOutdatedPreprocessingData(organism, version)
             }
     }
 
