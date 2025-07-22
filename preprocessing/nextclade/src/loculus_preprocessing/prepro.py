@@ -120,30 +120,22 @@ def parse_nextclade_json(
     return nextclade_metadata
 
 
-def run_sort(
+def get_hits_nextclade_sort(
     result_file_dir: str,
     input_file: str,
     alerts: Alerts,
     config: Config,
     segment: SegmentName,
     dataset_dir: str,
-) -> Alerts:
+) -> pd.DataFrame:
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
-    - assert highest score is in config.accepted_dataset_matches
-    (default is nextclade_dataset_name)
     """
-    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
-    if not config.accepted_dataset_matches and not nextclade_dataset_name:
-        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
-        return alerts
     nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
 
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
-
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     command = [
@@ -209,6 +201,40 @@ def run_sort(
                 ),
             )
         )
+    return best_hits
+
+
+def run_sort(
+    result_file_dir: str,
+    input_file: str,
+    alerts: Alerts,
+    config: Config,
+    segment: SegmentName,
+    dataset_dir: str,
+) -> Alerts:
+    """
+    Run nextclade
+    - use config.minimizer_url or default minimizer from nextclade server
+    - assert highest score is in config.accepted_dataset_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
+    if not config.accepted_dataset_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
+
+    accepted_dataset_names = config.accepted_dataset_matches or [
+        nextclade_dataset_name.split("/")[-1]  # type: ignore
+    ]
+
+    best_hits = get_hits_nextclade_sort(
+        result_file_dir,
+        input_file,
+        alerts,
+        config,
+        segment,
+        dataset_dir,
+    )
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
@@ -229,7 +255,7 @@ def run_sort(
                     message=(
                         f"This sequence best matches {row['dataset']}, "
                         "a different organism than the one you are submitting to: "
-                        f"{config.organism}. It is therefore not possible to release. "
+                        f"{segment}. It is therefore not possible to release. "
                         "Contact the administrator if you think this message is an error."
                     ),
                 )
@@ -279,6 +305,31 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
+        # TODO: assert only segments in entry.data.unalignedNucleotideSequences or
+        # assign to segment using nextclade sort output
+        if not set(entry.data.unalignedNucleotideSequences.keys()).issubset(
+            set(config.nucleotideSequences)
+        ):
+            alerts.errors[id].append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name="alignment",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    message=(
+                        "Unaligned nucleotide sequences contain segments not in "
+                        "config.nucleotideSequences"
+                    ),
+                )
+            )
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
