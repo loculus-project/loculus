@@ -167,6 +167,35 @@ class SubmitEndpointTest(
     }
 
     @Test
+    fun `GIVEN fasta data with unknown segment THEN data is not accepted`() {
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        commonHeader	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >commonHeader_nonExistingSegmentName
+                        AC
+                """.trimIndent(),
+            ),
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
+                ),
+            )
+    }
+
+    @Test
     fun `GIVEN fasta data with empty segment THEN data is not accepted`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
