@@ -1327,6 +1327,10 @@ class SubmissionDatabaseService(
                     ) inList keysToDelete
                 }
             }
+            log.debug {
+                "Deleted $deletedRowsInLastBatch rows in this batch for organism '$organism' " +
+                    "with version < $earliestVersionToKeep"
+            }
         } while (deletedRowsInLastBatch == batchSize)
         if (totalDeletedRows > 0) {
             log.info(
@@ -1341,7 +1345,22 @@ class SubmissionDatabaseService(
     }
 
     /**
-     * Returns a map from organism names to new versions or null if version wasn't ugraded.
+     * Garbage collects outdated preprocessed entries for all organisms.
+     * This is a convenience method that iterates over all distinct organisms in the database
+     * and calls [cleanUpOutdatedPreprocessingData] for each organism.
+     */
+    fun cleanUpOutdatedPreprocessingDataForAllOrganisms() {
+        CurrentProcessingPipelineTable.selectAll()
+            .map {
+                it[CurrentProcessingPipelineTable.organismColumn] to it[CurrentProcessingPipelineTable.versionColumn]
+            }
+            .forEach { (organism, version) ->
+                cleanUpOutdatedPreprocessingData(organism, earliestVersionToKeep = 1)
+            }
+    }
+
+    /**
+     * Returns a map from organism names to new versions or null if version wasn't upgraded.
      */
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
         SequenceEntriesTable.distinctOrganisms().map { organismName ->
