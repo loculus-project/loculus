@@ -1327,6 +1327,7 @@ class SubmissionDatabaseService(
                     ) inList keysToDelete
                 }
             }
+            totalDeletedRows += deletedRowsInLastBatch
             log.debug {
                 "Deleted $deletedRowsInLastBatch rows in this batch for organism '$organism' " +
                     "with version < $earliestVersionToKeep"
