@@ -131,8 +131,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         useNewerProcessingPipelineVersionTask.task()
 
         transaction {
-            // check that nothing got deleted yet
-            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(1L, 2L)))
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
 
@@ -143,7 +142,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         transaction {
-            // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
+            // check that v1 and v2 for DEFAULT_ORGANISM are deleted, but not for OTHER_ORGANISM
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(3L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
