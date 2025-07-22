@@ -16,7 +16,10 @@ class UseNewerProcessingPipelineVersionTask(
 
 ) {
 
-    @Scheduled(fixedRateString = "\${${BackendSpringProperty.USE_NEWER_PIPELINE_RUN_EVERY_SECONDS}}", timeUnit = TimeUnit.SECONDS)
+    @Scheduled(
+        fixedRateString = "\${${BackendSpringProperty.USE_NEWER_PIPELINE_RUN_EVERY_SECONDS}}",
+        timeUnit = TimeUnit.SECONDS,
+    )
     fun task() {
         submissionDatabaseService.useNewerProcessingPipelineIfPossible()
         submissionDatabaseService.cleanUpOutdatedPreprocessingDataForAllOrganisms()
