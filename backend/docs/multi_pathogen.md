@@ -122,6 +122,8 @@ that merges all suborganisms by prepending the suborganism name to the sequence 
 }
 ```
 
+The backend will also receive the merged reference genome, since it is required to check the preprocessing output.
+
 Consequence:
 * In the single-segmented case, the backend will also remain single-segmented for every suborganism. 
   That case con be recognized by taking a set of all nucleotide sequence names 
@@ -235,6 +237,9 @@ TODO: Minimizer index, etc?
 ```
 
 similar for multiple segments.
+
+The backend will validate the preprocessing output against the merged reference genome
+since the merged reference genome is used in SILO and the preprocessing result will be fed into SILO.
 
 ## LAPIS / SILO
 
