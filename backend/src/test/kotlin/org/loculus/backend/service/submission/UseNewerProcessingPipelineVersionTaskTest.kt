@@ -144,7 +144,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         transaction {
             // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
-            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(3L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
         }
     }
