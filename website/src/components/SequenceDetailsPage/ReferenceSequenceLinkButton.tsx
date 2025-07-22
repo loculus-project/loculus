@@ -61,7 +61,7 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                             >
                                 <DialogPanel className='w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all'>
                                     <DialogTitle as='h3' className='font-bold text-2xl mb-4 text-primary-700'>
-                                        Reference Sequence
+                                        Reference sequence
                                     </DialogTitle>
                                     <button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />

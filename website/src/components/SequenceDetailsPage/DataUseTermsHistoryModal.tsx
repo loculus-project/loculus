@@ -45,14 +45,14 @@ const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ data
                 <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2'>✕</button>
             </form>
 
-            <h3 className='font-bold text-lg'>Data Use Terms History</h3>
+            <h3 className='font-bold text-lg'>Data use terms history</h3>
 
             <table className='table'>
                 <thead>
                     <tr>
                         <th>Changed</th>
                         <th>User</th>
-                        <th>Data Use Terms</th>
+                        <th>Data use terms</th>
                     </tr>
                 </thead>
                 <tbody>

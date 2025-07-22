@@ -189,7 +189,7 @@ function LinkOutMenuDataUseTermModal(props: {
                         className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
                         onClick={props.onClick1}
                     >
-                        Include Restricted-Use
+                        Include restricted-use
                     </button>
                 </div>
             </div>

@@ -125,14 +125,14 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
                     {seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
-                        <p className='text'>Cited By 0</p>
+                        <p className='text'>Cited by 0</p>
                     ) : (
                         <a
                             className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                             href={getCrossRefUrl()}
                             target='_blank'
                         >
-                            Cited By 0
+                            Cited by 0
                         </a>
                     )}
                 </div>

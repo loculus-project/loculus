@@ -47,7 +47,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     return (
         <>
             <button className='btn btn-sm' onClick={openDialog}>
-                Edit Data Use Terms
+                Edit data use terms
             </button>
             <dialog ref={dialogRef} className='modal-box'>
                 <button
@@ -56,7 +56,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                 >
                     ✕
                 </button>
-                <label className='block text-sm font-medium leading-6 text-gray-900'>Edit Data Use Terms</label>
+                <label className='block text-sm font-medium leading-6 text-gray-900'>Edit data use terms</label>
                 <p className='text-sm text-gray-900 mb-4 py-2'>
                     Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
                 </p>

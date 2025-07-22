@@ -40,7 +40,7 @@ describe('ColumnMappingModal', () => {
         const openButton = screen.getByText(/Add column mapping/i);
         await userEvent.click(openButton);
 
-        expect(await screen.findByText(/Remap Columns/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Remap columns/i)).toBeInTheDocument();
     });
 
     it('loads and displays columns from the input file', async () => {

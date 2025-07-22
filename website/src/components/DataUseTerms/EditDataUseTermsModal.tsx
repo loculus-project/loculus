@@ -200,7 +200,7 @@ const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, c
                     <p>
                         You can release all the {state.restrictedCount} restricted sequences, moving them to the{' '}
                         <a href={routes.datauseTermsPage()} className='text-primary-600'>
-                            Open Data Use Terms
+                            Open data use terms
                         </a>
                         . If you want to pick a date for the restricted sequences, please narrow your selection down to
                         just restricted sequences. You can use the filters to do so.

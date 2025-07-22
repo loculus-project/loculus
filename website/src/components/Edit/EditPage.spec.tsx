@@ -72,14 +72,14 @@ describe('EditPage', () => {
     test('should render without allowed submission of consensus sequences', () => {
         renderEditPage({ allowSubmissionOfConsensusSequences: false });
 
-        expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
+        expect(screen.getByText(/Original data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 
     test('should show original data', () => {
         renderEditPage();
 
-        expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
+        expect(screen.getByText(/Original data/i)).toBeInTheDocument();
         expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 
