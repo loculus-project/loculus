@@ -7,6 +7,7 @@ A command-line interface for interacting with Loculus. The CLI is currently an u
 ### Prerequisites
 
 - Python 3.10 or higher
+- `uv` normally
 - pip (Python package manager)
 
 ### Install from source
@@ -52,7 +53,7 @@ loculus [GLOBAL OPTIONS] COMMAND [COMMAND OPTIONS]
 ### Global Options
 
 - `--instance TEXT`: Loculus instance URL (e.g., main.loculus.org)
-- `-G, --organism TEXT`: Organism name (e.g., 'Mpox', 'H5N1')
+- `-O, --organism TEXT`: Organism name (e.g., 'Mpox', 'H5N1')
 - `-G, --group INTEGER`: Group ID for operations
 - `--config TEXT`: Path to configuration file
 - `-v, --verbose`: Enable verbose output
@@ -98,14 +99,7 @@ npx playwright test --project=cli-tests
 
 ## Testing
 
-The CLI includes comprehensive integration tests that run alongside the existing Playwright test suite. These tests verify:
-
-- Authentication flows
-- Sequence submission and validation
-- Search and retrieval operations
-- Configuration management
-- Error handling
-
+The CLI includes integration tests that run alongside the existing Playwright test suite.
 To run only the CLI tests:
 
 ```bash
