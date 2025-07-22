@@ -338,32 +338,6 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission for multi pathogen organism with segment id THEN is rejected`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_mySegmentId
-                        AC
-                """.trimIndent(),
-            ),
-            organism = MULTI_PATHOGEN_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath("\$.detail")
-                    .value(containsString("Metadata file contains 1 ids that are not present in the sequence file: commonHeader")),
-            )
-    }
-
-    @Test
     fun `GIVEN submission for segmented multi pathogen organism THEN is accepted`() {
         submissionControllerClient.submit(
             metadataFile = DefaultFiles.metadataFile,
@@ -379,6 +353,15 @@ class SubmitEndpointTest(
                             """.trimIndent()
 
                             1 -> """
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.SECOND_SEGMENT}
+                                ACTG
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
+                                ACTG
+                            """.trimIndent()
+
+                            2 -> """
                                 >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
                                 ACTG
                                 >${submissionId}_${SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT}
@@ -404,32 +387,6 @@ class SubmitEndpointTest(
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
             .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
             .andExpect(jsonPath("\$[0].version").value(1))
-    }
-
-    @Test
-    fun `GIVEN submission for segmented multi pathogen organism without segment id THEN is rejected`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader
-                        AC
-                """.trimIndent(),
-            ),
-            organism = SegmentedMultiPathogenOrganism.NAME,
-            groupId = groupId,
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath("\$.detail")
-                    .value(containsString("The FASTA header commonHeader does not contain a segment id.")),
-            )
     }
 
     companion object {
@@ -638,8 +595,8 @@ class SubmitEndpointTest(
                     ),
                     status().isBadRequest,
                     "Bad Request",
-                    "The FASTA header commonHeader does not contain a segment id. Please provide the segment " +
-                        "name in the format <id>_<segment id>",
+                    "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
+                        "name in the format <id>_<segment name>",
                     OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -682,7 +639,7 @@ class SubmitEndpointTest(
                 >custom0
                 ACTG
                 >custom1
-                ACTG<
+                ACTG
             """.trimIndent(),
         )
 

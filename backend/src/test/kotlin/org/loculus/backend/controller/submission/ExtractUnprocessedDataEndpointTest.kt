@@ -35,8 +35,6 @@ import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
-import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
-import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -58,7 +56,6 @@ import java.net.http.HttpResponse
 class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val client: SubmissionControllerClient,
-    @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
 
     @Test
@@ -91,7 +88,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `GIVEN header etag equal etag from last db update THEN respond with 304, ELSE respond with data and etag`() {
-        convenienceClient.submitDefaultFiles()
+        val submissionResult = convenienceClient.submitDefaultFiles()
         val response = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
 
         val initialEtag = response.andReturn().response.getHeader(ETAG)
@@ -280,46 +277,5 @@ class ExtractUnprocessedDataEndpointTest(
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
         assertThat(response.statusCode(), `is`(200))
         assertThat(response.body(), `is`("Hello, world!"))
-    }
-
-    @Test
-    fun `GIVEN multi segmented submission THEN the segment ids are the keys of the sequences`() {
-        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        client.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_mySegmentId
-                        AC
-                        >commonHeader_myOtherSegmentId
-                        TTTT
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isOk)
-
-        val result = client.extractUnprocessedData(
-            numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
-            organism = OTHER_ORGANISM,
-        )
-        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
-
-        assertThat(responseBody.size, `is`(1))
-        assertThat(
-            responseBody[0].data.unalignedNucleotideSequences,
-            `is`(
-                mapOf(
-                    "mySegmentId" to "AC",
-                    "myOtherSegmentId" to "TTTT",
-                ),
-            ),
-        )
     }
 }
