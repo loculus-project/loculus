@@ -226,7 +226,7 @@ function streamFasta(
     const sequenceName = searchParams.segment ?? 'main';
     const ndjsonLineSchema = z.object({
         [ACCESSION_VERSION_FIELD]: z.string(),
-        [sequenceName]: z.string(),
+        [sequenceName]: z.string().nullable(),
     });
 
     let streamEnded = false;
@@ -260,6 +260,11 @@ function streamFasta(
                     try {
                         const data = ndjsonLineSchema.parse(JSON.parse(line));
 
+                        const sequence = data[sequenceName];
+                        if (sequence === null) {
+                            continue;
+                        }
+
                         const fastaHeader = fastaHeaderMap.get(data.accessionVersion as string);
                         if (!fastaHeader) {
                             const reason = `Did not find metadata for accession version ${data.accessionVersion}`;
@@ -268,7 +273,7 @@ function streamFasta(
                             return;
                         }
 
-                        controller.enqueue(encoder.encode(`>${fastaHeader}\n${data[sequenceName]}\n`));
+                        controller.enqueue(encoder.encode(`>${fastaHeader}\n${sequence}\n`));
                     } catch (err) {
                         const reason = `Error processing line: ${err}, ${line}`;
                         controller.enqueue(encoder.encode(`Failed to write fasta - ${reason}`));
