@@ -486,18 +486,18 @@ test_case_definitions = [
             "submissionId": "trailing_dots_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith, Anna; Perez, Tom J.; Xu, X.L.; SMITH, AMY; Smith, AD; Diclaro, J. W. II; Black, W. C. IV; Dantas, Pedro HLF; Diclaro, J.W.II",
+            "authors": "Smith, John II; Doe, A.B.C.; Lee, J D; Smith, Anna; Perez, Tom J.; Xu, X.L.; SMITH, AMY; Smith, AD; Black, W. C. IV; Dantas, Pedro HLF; Diclaro, J.W.II",
         },
         accession_id="16",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "authors": "Smith, Anna; Perez, Tom J.; Xu, X. L.; SMITH, AMY; Smith, A. D.; Diclaro, J. W. II; Black, W. C. IV; Dantas, Pedro H. L. F.; Diclaro, J. W. II",
+            "authors": "Smith, John II; Doe, A. B. C.; Lee, J. D.; Smith, Anna; Perez, Tom J.; Xu, X. L.; SMITH, AMY; Smith, A. D.; Black, W. C. IV; Dantas, Pedro H. L. F.; Diclaro, J. W. II",
         },
         expected_errors=[],
         expected_warnings=[],
-    )
+    ),
 ]
 
 accepted_authors = {
