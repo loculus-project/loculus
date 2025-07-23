@@ -78,7 +78,7 @@ def format_authors(authors: str) -> str:
             author.split(",")[1].strip(),
         )
         # Add dot after initials in first name
-        if re.fullmatch(r"(?:[A-Z]\.\s)+[IVXLCDM]+", first_name):
+        if re.fullmatch(r"(?:[A-Z]\.\s)+[IV]+", first_name):
             formated_first_name = first_name
         else:
             first_names = []
@@ -90,9 +90,15 @@ def format_authors(authors: str) -> str:
                 elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():  # e.g., "JD"
                     initials = " ".join(f"{char}." for char in name)
                     first_names.append(initials)
-                elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]\.?", name): # e.g., "J.D." or "J.D.K." or "J.D.K"
+                elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
                     letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
-                    initials = " ".join(f"{ch}." for ch in letters)
+                    suffix_match = re.search(r"([IV]{2,})$", name, re.IGNORECASE)
+                    if suffix_match:
+                        suffix = suffix_match.group(1).upper()
+                        initials = " ".join(f"{ch}." for ch in letters[:-len(suffix)])
+                        initials = f"{initials} {suffix}"
+                    else:
+                        initials = " ".join(f"{ch}." for ch in letters)
                     first_names.append(initials)
                 else:
                     first_names.append(name)
