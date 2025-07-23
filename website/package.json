@@ -34,7 +34,7 @@
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
         "astro": "^5.9.2",
-        "axios": "^1.10.0",
+        "axios": "^1.11.0",
         "change-case": "~5.3.0",
         "chart.js": "^4.5.0",
         "cookie": "^1.0.2",
