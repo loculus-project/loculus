@@ -5,22 +5,24 @@
   "organisms": {
     "dummyOrganism": {
       "referenceGenomes": {
-        "nucleotideSequences": [
-          {
-            "name": "main",
-            "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
-          }
-        ],
-        "genes": [
-          {
-            "name": "someLongGene",
-            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
-          },
-          {
-            "name": "someShortGene",
-            "sequence": "MADS"
-          }
-        ]
+        "singleReference": {
+          "nucleotideSequences": [
+            {
+              "name": "main",
+              "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+            }
+          ],
+          "genes": [
+            {
+              "name": "someLongGene",
+              "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+            },
+            {
+              "name": "someShortGene",
+              "sequence": "MADS"
+            }
+          ]
+        }
       },
       "schema": {
         "organismName": "Test",

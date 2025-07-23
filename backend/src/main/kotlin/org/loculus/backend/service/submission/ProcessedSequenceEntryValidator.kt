@@ -191,7 +191,10 @@ class ExternalMetadataValidator(private val schema: Schema) {
 class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendConfig) {
     fun create(organism: Organism): ProcessedSequenceEntryValidator {
         val instanceConfig = backendConfig.organisms[organism.name]!!
-        return ProcessedSequenceEntryValidator(instanceConfig.schema, instanceConfig.referenceGenomes)
+        return ProcessedSequenceEntryValidator(
+            schema = instanceConfig.schema,
+            referenceGenome = instanceConfig.referenceGenomes.values.first(),
+        )
     }
 }
 

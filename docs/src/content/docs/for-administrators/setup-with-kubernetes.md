@@ -123,10 +123,11 @@ organisms:
       errors: true
       randomWarnError: true
     referenceGenomes:
-      nucleotideSequences:
-        - name: 'main'
-          sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'
-      genes: []
+      singleReference:
+        nucleotideSequences:
+          - name: 'main'
+            sequence: '[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]'
+        genes: []
 ```
 
 In this example, the configuration for the "ebolavirus-sudan" organism is defined. It includes schema settings, website display options, silo configuration, preprocessing details, and reference genome information.

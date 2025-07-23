@@ -6,7 +6,7 @@ import { err, ok } from 'neverthrow';
 import { z } from 'zod';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
-import { getReferenceGenomes } from '../../../config.ts';
+import { getReferenceGenome } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
@@ -85,7 +85,7 @@ function getSearchParams(url: URL, organism: string) {
     searchParams.delete('headerFields');
     searchParams.delete('downloadFileBasename');
 
-    const nucleotideSequences = getReferenceGenomes(organism).nucleotideSequences;
+    const nucleotideSequences = getReferenceGenome(organism).nucleotideSequences;
     const isMultiSegmented = nucleotideSequences.length > 1;
     if (isMultiSegmented) {
         if (segment === undefined) {
