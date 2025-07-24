@@ -9,7 +9,7 @@ export class ReviewPage {
 
     private viewSequencesButton = () => this.page.getByTestId(/view-sequences-/).first();
     private sequencesDialog = () =>
-        this.page.locator('div:has(> div > h2:text("Processed Sequences"))').first();
+        this.page.locator('div:has(> div > h2:text("Processed sequences"))').first();
     private sequencesDialogCloseButton = () =>
         this.sequencesDialog().getByRole('button', { name: '✕' });
     public sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
