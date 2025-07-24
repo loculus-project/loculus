@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Config:
+    """Configuration for the ENA submission process.
+    See config/defaults.yaml for default values."""
+
     test: bool
     organisms: dict[str, dict[str, Any]]
     backend_url: str
@@ -32,8 +35,13 @@ class Config:
     slack_hook: str
     slack_token: str
     slack_channel_id: str
+    # Map from Biosample key to dict that defines:
+    # - which Loculus field(s) to use as input
+    # - (optional) function: currently only "match" supported
+    # - (optional) args: list of regexes that match against values
+    # - (optional) units: units added to sample attribute
+    # - (optional) default: default value if field not in input data
     metadata_mapping: dict[str, dict[str, str | list[str]]]
-    metadata_mapping_mandatory_field_defaults: dict[str, str]
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str
     ena_deposition_host: str

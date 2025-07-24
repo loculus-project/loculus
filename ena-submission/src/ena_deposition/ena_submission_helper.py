@@ -754,8 +754,7 @@ def get_ena_analysis_process(
 
 
 # TODO: Also pass the full segment list from config so we can handle someone submitting
-# a multi-segmented virus that has a main segment. This will require having one pipeline
-# per organism, not one pipeline for all. Wider changes, thus.
+# a multi-segmented virus that has a main segment.
 def get_chromsome_accessions(
     insdc_accession_range: str, segment_order: list[str]
 ) -> dict[str, str]:

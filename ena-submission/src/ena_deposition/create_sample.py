@@ -4,8 +4,10 @@ import re
 import threading
 import time
 from datetime import datetime
+from typing import Any
 
 import pytz
+from attr import dataclass
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
@@ -44,60 +46,74 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
-    list_sample_attributes = []
-    mapped_fields = []
-    for field in config.metadata_mapping:
-        loculus_metadata_field_names = config.metadata_mapping[field]["loculus_fields"]
-        loculus_metadata_field_values = [
-            sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
-        ]
-        if (
-            "function" in config.metadata_mapping[field]
-            and "args" in config.metadata_mapping[field]
-        ):
-            function = config.metadata_mapping[field]["function"]
-            args = [i for i in config.metadata_mapping[field]["args"] if i]
-            full_field_values = [i for i in loculus_metadata_field_values if i]
-            if function != "match":
-                logger.warning(
-                    f"Unknown function: {function} with args: {args} for {row['accession']}"
-                )
-                continue
-            if function == "match" and (len(full_field_values) == len(args)):
-                value = "true"
-                for i in range(len(full_field_values)):
-                    if not re.match(
-                        args[i],
-                        full_field_values[i],
-                        re.IGNORECASE,
+@dataclass(frozen=True)
+class MetadataMapping:
+    loculus_fields: list[str]
+    default: str | None = None
+    function: str | None = None
+    args: list[str] | None = None
+    units: str | None = None
+
+
+def get_sample_attributes(
+    metadata_mapping: dict[str, dict[str, Any]], sample_metadata: dict[str, str]
+) -> list[SampleAttribute]:
+    """Turn Loculus metadata into ENA sample attributes per metadata_mapping."""
+
+    result: list[SampleAttribute] = []
+
+    for field_name, field_config in metadata_mapping.items():
+        mapping = MetadataMapping(
+            loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
+            default=field_config.get("default"),  # type: ignore[arg-type]
+            function=field_config.get("function"),  # type: ignore[arg-type]
+            args=field_config.get("args"),  # type: ignore[arg-type]
+            units=field_config.get("units"),  # type: ignore[arg-type]
+        )
+
+        loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
+
+        # Fields with function and args are processed differently
+        if mapping.function and mapping.args:
+            function = mapping.function
+            args = mapping.args
+            match function:
+                case "match":  # Regex match each value against respective arg (as regex)
+                    if len(mapping.loculus_fields) != len(mapping.args):
+                        logger.error(
+                            f"Function {function} for field {field_name} expects {len(args)} "
+                            f"arguments, but got {len(mapping.loculus_fields)} values: "
+                            f"{loculus_metadata_field_values}. "
+                            "Will not be added to sample attributes."
+                        )
+                        continue
+                    if all(
+                        value is not None and re.match(pattern, value, re.IGNORECASE)
+                        for pattern, value in zip(args, loculus_metadata_field_values, strict=True)
                     ):
+                        value = "true"
+                    else:
                         value = "false"
-                        break
-            else:
-                continue
+                case _:
+                    logger.error(
+                        f"Unknown function for field {field_name}: {mapping}. "
+                        f"Function: {function} with args: {args}. "
+                        "Will not be added to sample attributes."
+                    )
+                    continue
         else:
-            value = "; ".join(
-                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
-            )
-        if value:
-            list_sample_attributes.append(
+            value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
+
+        if value_or_default := value or mapping.default:
+            result.append(
                 SampleAttribute(
-                    tag=field,
-                    value=value,
-                    units=config.metadata_mapping[field].get("units"),  # type: ignore
+                    tag=field_name,
+                    value=value_or_default,
+                    units=mapping.units,
                 )
             )
-            mapped_fields.append(field)
-    for field, default in config.metadata_mapping_mandatory_field_defaults.items():
-        if field not in mapped_fields:
-            list_sample_attributes.append(
-                SampleAttribute(
-                    tag=field,
-                    value=default,
-                )
-            )
-    return list_sample_attributes
+
+    return result
 
 
 def construct_sample_set_object(
@@ -124,14 +140,14 @@ def construct_sample_set_object(
         test,
         config.set_alias_suffix,
     )
-    list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
+    sample_attributes = get_sample_attributes(config.metadata_mapping, sample_metadata)
     if config.ena_checklist:
         # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
         sample_checklist = SampleAttribute(
             tag="ENA-CHECKLIST",
             value=config.ena_checklist,
         )
-        list_sample_attributes.append(sample_checklist)
+        sample_attributes.append(sample_checklist)
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
@@ -147,7 +163,7 @@ def construct_sample_set_object(
         sample_links=SampleLinks(
             sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]
         ),
-        sample_attributes=SampleAttributes(sample_attribute=list_sample_attributes),
+        sample_attributes=SampleAttributes(sample_attribute=sample_attributes),
     )
     return SampleSetType(sample=[sample_type])
 
@@ -328,12 +344,14 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = {"accession": row["accession"], "version": row["version"]}
+        if is_old_version(db_config, seq_key):
+            logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
+            continue
+
+        logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
-
-        if is_old_version(db_config, seq_key):
-            continue
 
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
