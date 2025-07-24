@@ -77,24 +77,30 @@ def format_authors(authors: str) -> str:
             author_single_white_space.split(",")[0].strip(),
             author.split(",")[1].strip(),
         )
-        # Add dot after initials in first name
+        suffix = ""
+        match_suffix = re.search(r"[ .](II|III|IV|V|VI)$", first_name, re.IGNORECASE)
+        if match_suffix:
+            suffix = match_suffix.group(1).upper()
+            first_name = re.sub(r"[ .](II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
         first_names = []
         for name in first_name.split():
             if len(name) == 1:
                 first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":  # e.g., "J."
+            elif len(name) == 2 and name[1] == ".":
                 first_names.append(f"{name.upper()}")
-            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():  # e.g., "JD"
+            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
                 initials = " ".join(f"{char}." for char in name)
                 first_names.append(initials)
-            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]\.?", name): # e.g., "J.D." or "J.D.K." or "J.D.K"
+            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
                 letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
                 initials = " ".join(f"{ch}." for ch in letters)
                 first_names.append(initials)
             else:
                 first_names.append(name)
-        first_name = " ".join(first_names)
-        loculus_authors.append(f"{last_name}, {first_name}")
+        formated_first_name = " ".join(first_names)
+        if suffix:
+            formated_first_name = f"{formated_first_name} {suffix}"
+        loculus_authors.append(f"{last_name}, {formated_first_name}")
     return "; ".join(loculus_authors).strip()
 
 
