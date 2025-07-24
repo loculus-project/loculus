@@ -87,14 +87,14 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                         className='text-sm text-primary-600 hover:text-primary-900 font-medium mr-4'
                         onClick={handleSelectAll}
                     >
-                        Select All
+                        Select all
                     </button>
                     <button
                         type='button'
                         className='text-sm text-primary-600 hover:text-primary-900 font-medium'
                         onClick={handleSelectNone}
                     >
-                        Select None
+                        Select none
                     </button>
                 </div>
             </div>
