@@ -108,6 +108,21 @@ describe('matchPlaceholders', () => {
         });
     });
 
+    test('finds placeholders with segment that contains dash and rich headers', () => {
+        const template = 'http://example.com/tool?data=[unalignedNucleotideSequences:my-segment+rich]';
+        const matches = matchPlaceholders(template);
+
+        expect(matches).toHaveLength(1);
+        expect(matches[0]).toEqual({
+            fullMatch: '[unalignedNucleotideSequences:my-segment+rich]',
+            dataType: 'unalignedNucleotideSequences',
+            segment: 'my-segment',
+            richHeaders: true,
+            dataFormat: undefined,
+            columns: undefined,
+        });
+    });
+
     test('finds placeholders with segment, rich headers, and format', () => {
         const template = 'http://example.com/tool?data=[unalignedNucleotideSequences:S+rich|json]';
         const matches = matchPlaceholders(template);
