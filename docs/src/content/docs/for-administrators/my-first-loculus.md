@@ -155,10 +155,11 @@ organisms:
           genes: []
           batch_size: 100
     referenceGenomes:
-      nucleotideSequences:
-        - name: 'main'
-          sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
-      genes: []
+      singleReference:
+        nucleotideSequences:
+          - name: 'main'
+            sequence: 'NNN' # We are not performing alignment here, so this sequence doesn't matter
+        genes: []
 createTestAccounts: true
 ```
 <!-- prettier-ignore-end -->

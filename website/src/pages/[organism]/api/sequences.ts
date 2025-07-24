@@ -6,7 +6,7 @@ import { err, ok } from 'neverthrow';
 import { z } from 'zod';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
-import { getReferenceGenomes } from '../../../config.ts';
+import { getReferenceGenome } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
@@ -85,7 +85,7 @@ function getSearchParams(url: URL, organism: string) {
     searchParams.delete('headerFields');
     searchParams.delete('downloadFileBasename');
 
-    const nucleotideSequences = getReferenceGenomes(organism).nucleotideSequences;
+    const nucleotideSequences = getReferenceGenome(organism).nucleotideSequences;
     const isMultiSegmented = nucleotideSequences.length > 1;
     if (isMultiSegmented) {
         if (segment === undefined) {
@@ -226,7 +226,7 @@ function streamFasta(
     const sequenceName = searchParams.segment ?? 'main';
     const ndjsonLineSchema = z.object({
         [ACCESSION_VERSION_FIELD]: z.string(),
-        [sequenceName]: z.string(),
+        [sequenceName]: z.string().nullable(),
     });
 
     let streamEnded = false;
@@ -260,6 +260,11 @@ function streamFasta(
                     try {
                         const data = ndjsonLineSchema.parse(JSON.parse(line));
 
+                        const sequence = data[sequenceName];
+                        if (sequence === null) {
+                            continue;
+                        }
+
                         const fastaHeader = fastaHeaderMap.get(data.accessionVersion as string);
                         if (!fastaHeader) {
                             const reason = `Did not find metadata for accession version ${data.accessionVersion}`;
@@ -268,7 +273,7 @@ function streamFasta(
                             return;
                         }
 
-                        controller.enqueue(encoder.encode(`>${fastaHeader}\n${data[sequenceName]}\n`));
+                        controller.enqueue(encoder.encode(`>${fastaHeader}\n${sequence}\n`));
                     } catch (err) {
                         const reason = `Error processing line: ${err}, ${line}`;
                         controller.enqueue(encoder.encode(`Failed to write fasta - ${reason}`));

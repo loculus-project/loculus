@@ -771,7 +771,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: hostOriginCountry
         ontology_id: GENEPIO:0100438
         definition: The country of origin of the host.
-        guidance: If a sample is from a human or animal host that originated from outside of Canada, provide the the name of the country where the host originated by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
+        guidance: If a sample is from a human or animal host that originated from outside of Canada, provide the name of the country where the host originated by selecting a value from the template pick list. If the information is unknown or cannot be provided, leave blank or provide a null value.
         example: South Africa [GAZ:00001094]
         displayName: Host origin country
         header: Host
@@ -1214,29 +1214,30 @@ defaultOrganismConfig: &defaultOrganismConfig
       scientific_name: "Sudan ebolavirus"
       molecule_type: "genomic RNA"
   referenceGenomes:
-    nucleotideSequences:
-      - name: "main"
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-        insdcAccessionFull: NC_002549.1
-    genes:
-      - name: NP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
-      - name: VP35
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
-      - name: VP40
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
-      - name: GP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
-      - name: ssGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
-      - name: sGP
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
-      - name: VP30
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
-      - name: VP24
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
-      - name: L
-        sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
+    singleReference:
+      nucleotideSequences:
+        - name: "main"
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
+          insdcAccessionFull: NC_002549.1
+      genes:
+        - name: NP
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
+        - name: VP35
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
+        - name: VP40
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
+        - name: GP
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
+        - name: ssGP
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
+        - name: sGP
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
+        - name: VP30
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
+        - name: VP24
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
+        - name: L
+          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -1318,33 +1319,34 @@ defaultOrganisms:
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      nucleotideSequences:
-        - name: main
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
-          insdcAccessionFull: NC_009942.1
-      genes:
-        - name: 2K
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
-        - name: NS1
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
-        - name: NS2A
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
-        - name: NS2B
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
-        - name: NS3
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
-        - name: NS4A
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
-        - name: NS4B
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
-        - name: NS5
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
-        - name: capsid
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
-        - name: env
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
-        - name: prM
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
+      singleReference:
+        nucleotideSequences:
+          - name: main
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
+            insdcAccessionFull: NC_009942.1
+        genes:
+          - name: 2K
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
+          - name: NS1
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
+          - name: NS2A
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
+          - name: NS2B
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
+          - name: NS3
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
+          - name: NS4A
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
+          - name: NS4B
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
+          - name: NS5
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
+          - name: capsid
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
+          - name: env
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
+          - name: prM
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
@@ -1414,34 +1416,35 @@ defaultOrganisms:
           - "--withErrors"
           - "--randomWarnError"
     referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-      genes:
-        - name: "E"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
-        - name: "M"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
-        - name: "N"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
-        - name: "ORF1a"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
-        - name: "ORF1b"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
-        - name: "ORF3a"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
-        - name: "ORF6"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
-        - name: "ORF7a"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
-        - name: "ORF7b"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
-        - name: "ORF8"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
-        - name: "ORF9b"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
-        - name: "S"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
+      singleReference:
+        nucleotideSequences:
+          - name: "main"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+        genes:
+          - name: "E"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/E.fasta]]"
+          - name: "M"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/M.fasta]]"
+          - name: "N"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/N.fasta]]"
+          - name: "ORF1a"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1a.fasta]]"
+          - name: "ORF1b"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF1b.fasta]]"
+          - name: "ORF3a"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF3a.fasta]]"
+          - name: "ORF6"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF6.fasta]]"
+          - name: "ORF7a"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7a.fasta]]"
+          - name: "ORF7b"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF7b.fasta]]"
+          - name: "ORF8"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF8.fasta]]"
+          - name: "ORF9b"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/ORF9b.fasta]]"
+          - name: "S"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/S.fasta]]"
   dummy-organism-with-files:
     schema:
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
@@ -1502,8 +1505,9 @@ defaultOrganisms:
           - "--watch"
           - "--disableConsensusSequences"
     referenceGenomes:
-      nucleotideSequences: []
-      genes: []
+      singleReference:
+        nucleotideSequences: []
+        genes: []
   not-aligned-organism:
     enabled: true
     schema:
@@ -1566,10 +1570,11 @@ defaultOrganisms:
           genes: []
           batch_size: 100
     referenceGenomes:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
-      genes: []
+      singleReference:
+        nucleotideSequences:
+          - name: "main"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+        genes: []
   cchf:
     <<: *defaultOrganismConfig
     schema:
@@ -1640,23 +1645,24 @@ defaultOrganisms:
         scientific_name: "Orthonairovirus haemorrhagiae"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      nucleotideSequences:
-        - name: L
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
-          insdcAccessionFull: NC_005301.3
-        - name: M
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
-          insdcAccessionFull: NC_005300.2
-        - name: S
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
-          insdcAccessionFull: NC_005302.1
-      genes:
-        - name: RdRp
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-        - name: GPC
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-        - name: NP
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+      singleReference:
+        nucleotideSequences:
+          - name: L
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
+            insdcAccessionFull: NC_005301.3
+          - name: M
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
+            insdcAccessionFull: NC_005300.2
+          - name: S
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
+            insdcAccessionFull: NC_005302.1
+        genes:
+          - name: RdRp
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
+          - name: GPC
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
+          - name: NP
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
 auth:
   verifyEmail: false
   resetPasswordAllowed: true
@@ -1668,11 +1674,11 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.6.0"
+    tag: "0.7.4"
     pullPolicy: IfNotPresent
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.3"
+    tag: "0.5.8"
     pullPolicy: IfNotPresent
   website:
     repository: "ghcr.io/loculus-project/website"

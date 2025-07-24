@@ -34,7 +34,7 @@ s3:
 ```
 
 :::note
-Have a look at at the [Helm Chart S3 reference](../../reference/helm-chart-config/#s3-deployments) for more information on these configuration settings.
+Have a look at the [Helm Chart S3 reference](../../reference/helm-chart-config/#s3-deployments) for more information on these configuration settings.
 :::
 
 Configure the credentials using [sealed secrets](https://github.com/bitnami-labs/sealed-secrets):

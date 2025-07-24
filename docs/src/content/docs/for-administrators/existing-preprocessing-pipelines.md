@@ -25,7 +25,7 @@ Additionally the pipeline performs checks on the metadata fields. The checks are
 In the default configuration the pipeline performs:
 
 - **type checks**: Checks that the type of each metadata field corresponds to the expected `type` value seen in the config (default is string).
-- **required value checks**: Checks that if a field is required, e.g. `required` field in config is true, that that field is not None.
+- **required value checks**: Checks that if a field is required, e.g. `required` field in config is true, that this field is not None.
 - **INSDC-accepted country checks**: Using the `process_options` preprocessing function checks that the `geoLocCountry` field is set to an [INSDC-accepted country](https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011) option.
 
 The pipeline also formats metadata fields:

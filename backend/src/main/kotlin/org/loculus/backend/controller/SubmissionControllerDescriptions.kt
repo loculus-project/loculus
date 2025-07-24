@@ -31,7 +31,7 @@ the headers of the fasta file must be of the form '>[$HEADER_TO_CONNECT_METADATA
 """
 
 const val GROUP_ID_DESCRIPTION = """
-The group id of of the submitting group which the user is a member of.
+The group id of the submitting group which the user is a member of.
 A submitting group is a set of users that share access to the same sequence entries.
 """
 
