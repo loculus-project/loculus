@@ -1319,7 +1319,7 @@ defaultOrganisms:
         scientific_name: "West Nile virus"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      east:
+      singleReference:
         nucleotideSequences:
           - name: main
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
@@ -1333,20 +1333,20 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
           - name: NS2B
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
-      west:
-        nucleotideSequences:
-          - name: main
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/reference.fasta]]"
-            insdcAccessionFull: NC_009942.1
-        genes:
-          - name: 2K
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
-          - name: NS1
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
-          - name: NS2A
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
-          - name: NS2B
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
+          - name: NS3
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
+          - name: NS4A
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
+          - name: NS4B
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
+          - name: NS5
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
+          - name: capsid
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
+          - name: env
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
+          - name: prM
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
@@ -1645,7 +1645,7 @@ defaultOrganisms:
         scientific_name: "Orthonairovirus haemorrhagiae"
         molecule_type: "genomic RNA"
     referenceGenomes:
-      sub1:
+      singleReference:
         nucleotideSequences:
           - name: L
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
@@ -1653,21 +1653,6 @@ defaultOrganisms:
           - name: M
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
             insdcAccessionFull: NC_005300.2
-          - name: S
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
-            insdcAccessionFull: NC_005302.1
-        genes:
-          - name: RdRp
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-          - name: GPC
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-          - name: NP
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
-      sub22222:
-        nucleotideSequences:
-          - name: L
-            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_L.fasta]]"
-            insdcAccessionFull: NC_005301.3
           - name: S
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
             insdcAccessionFull: NC_005302.1
