@@ -77,45 +77,27 @@ def format_authors(authors: str) -> str:
             author_single_white_space.split(",")[0].strip(),
             author.split(",")[1].strip(),
         )
-        # Extract suffix (II, III, IV...) from full first_name
         suffix = ""
-        match_suffix = re.search(r"\b(II|III|IV|V|VI)$", first_name, re.IGNORECASE)
+        match_suffix = re.search(r"[ .](II|III|IV|V|VI)$", first_name, re.IGNORECASE)
         if match_suffix:
             suffix = match_suffix.group(1).upper()
-            first_name = re.sub(r"\s+(II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
-        # If already formatted like "A. B. II", leave it alone
-        if re.fullmatch(r"(?:[A-Z]\.\s)+(II|III|IV|V|VI)+", first_name):
-            formated_first_name = first_name
-        else:
-            first_names = []
-            for name in first_name.split():
-                if len(name) == 1:
-                    first_names.append(f"{name.upper()}.")
-                elif len(name) == 2 and name[1] == ".":
-                    first_names.append(f"{name.upper()}")
-                elif (
-                    len(name) <= 4
-                    and name.isupper()
-                    and "." not in name
-                    and not last_name.isupper()
-                ):
-                    initials = " ".join(f"{char}." for char in name)
-                    first_names.append(initials)
-                elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
-                    letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
-                    # Avoid overwriting global suffix here
-                    inner_suffix_match = re.search(r"(II|III|IV|V|VI)$", name, re.IGNORECASE)
-                    if inner_suffix_match:
-                        inner_suffix = inner_suffix_match.group(1).upper()
-                        initials = " ".join(f"{ch}." for ch in letters[: -len(inner_suffix)])
-                    else:
-                        initials = " ".join(f"{ch}." for ch in letters)
-
-                    first_names.append(initials)
-                else:
-                    first_names.append(name)
-            formated_first_name = " ".join(first_names)
-        # Add suffix back at the end
+            first_name = re.sub(r"[ .](II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
+        first_names = []
+        for name in first_name.split():
+            if len(name) == 1:
+                first_names.append(f"{name.upper()}.")
+            elif len(name) == 2 and name[1] == ".":
+                first_names.append(f"{name.upper()}")
+            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
+                initials = " ".join(f"{char}." for char in name)
+                first_names.append(initials)
+            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
+                letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
+                initials = " ".join(f"{ch}." for ch in letters)
+                first_names.append(initials)
+            else:
+                first_names.append(name)
+        formated_first_name = " ".join(first_names)
         if suffix:
             formated_first_name = f"{formated_first_name} {suffix}"
         loculus_authors.append(f"{last_name}, {formated_first_name}")
