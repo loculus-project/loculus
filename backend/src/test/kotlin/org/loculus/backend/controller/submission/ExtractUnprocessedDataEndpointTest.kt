@@ -83,7 +83,7 @@ class ExtractUnprocessedDataEndpointTest(
                 startLatch.await() // Wait for signal to start
                 val response = client.extractUnprocessedData(
                     numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
-                    organism = DEFAULT_ORGANISM
+                    organism = DEFAULT_ORGANISM,
                 )
                 val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
                 client1Results.addAll(responseBody)
@@ -99,7 +99,7 @@ class ExtractUnprocessedDataEndpointTest(
                 startLatch.await() // Wait for signal to start
                 val response = client.extractUnprocessedData(
                     numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
-                    organism = DEFAULT_ORGANISM
+                    organism = DEFAULT_ORGANISM,
                 )
                 val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
                 client2Results.addAll(responseBody)
@@ -133,7 +133,7 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             "No accession should be returned to both clients, but found duplicates: $duplicateAccessions",
             duplicateAccessions,
-            `is`(empty())
+            `is`(empty()),
         )
 
         // Check that all submitted entries were extracted exactly once
@@ -143,14 +143,14 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             "All submitted entries should be extracted exactly once",
             allExtractedAccessions,
-            `is`(expectedAccessions)
+            `is`(expectedAccessions),
         )
 
         // Verify total count
         assertThat(
             "Total extracted entries should equal submitted entries",
             client1Results.size + client2Results.size,
-            `is`(DefaultFiles.NUMBER_OF_SEQUENCES)
+            `is`(DefaultFiles.NUMBER_OF_SEQUENCES),
         )
     }
 
