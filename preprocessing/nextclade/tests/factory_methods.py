@@ -34,9 +34,11 @@ class ProcessingTestCase:
 
 
 @dataclass
-class ProcessingAnnotationTestCase:
-    unprocessedFieldsName: list[str]  # noqa: N815
-    processedFieldsName: list[str]  # noqa: N815
+class ProcessingAnnotationHelper:
+    """Helper class to create ProcessingAnnotation instances easily."""
+
+    unprocessed_field_names: list[str]
+    processed_field_names: list[str]
     message: str
     type: AnnotationSourceType = AnnotationSourceType.METADATA
 
@@ -87,8 +89,8 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
-        metadata_errors: list[ProcessingAnnotationTestCase] | None = None,
-        metadata_warnings: list[ProcessingAnnotationTestCase] | None = None,
+        metadata_errors: list[ProcessingAnnotationHelper] | None = None,
+        metadata_warnings: list[ProcessingAnnotationHelper] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
     ) -> ProcessedEntry:
         if metadata_errors is None:
@@ -109,11 +111,11 @@ class ProcessedEntryFactory:
                         name=field,
                         type=AnnotationSourceType.METADATA,
                     )
-                    for field in error.unprocessedFieldsName
+                    for field in error.unprocessed_field_names
                 ],
                 processedFields=[
                     AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                    for field in error.processedFieldsName
+                    for field in error.processed_field_names
                 ],
                 message=error.message,
             )
@@ -128,11 +130,11 @@ class ProcessedEntryFactory:
                             name=field,
                             type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         )
-                        for field in error.unprocessedFieldsName
+                        for field in error.unprocessed_field_names
                     ],
                     processedFields=[
                         AnnotationSource(name=field, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
-                        for field in error.processedFieldsName
+                        for field in error.processed_field_names
                     ],
                     message=error.message,
                 )
@@ -160,11 +162,11 @@ class ProcessedEntryFactory:
                             name=field,
                             type=AnnotationSourceType.METADATA,
                         )
-                        for field in warning.unprocessedFieldsName
+                        for field in warning.unprocessed_field_names
                     ],
                     processedFields=[
                         AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in warning.processedFieldsName
+                        for field in warning.processed_field_names
                     ],
                     message=warning.message,
                 )
@@ -176,17 +178,17 @@ class ProcessedEntryFactory:
 @dataclass
 class Case:
     name: str
-    input_metadata: dict[str, str | None]
-    expected_metadata: dict[str, ProcessedMetadataValue]
+    input_metadata: dict[str, str | None] = field(default_factory=dict)
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": ""})
-    expected_errors: list[ProcessingAnnotationTestCase] | None = None
-    expected_warnings: list[ProcessingAnnotationTestCase] | None = None
     accession_id: str = "000999"
-    processed_alignment: ProcessedAlignment | None = None
+    expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
+    expected_errors: list[ProcessingAnnotationHelper] | None = None
+    expected_warnings: list[ProcessingAnnotationHelper] | None = None
+    expected_processed_alignment: ProcessedAlignment | None = None
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
-        if not self.processed_alignment:
-            self.processed_alignment = ProcessedAlignment()
+        if not self.expected_processed_alignment:
+            self.expected_processed_alignment = ProcessedAlignment()
         unprocessed_entry = UnprocessedEntryFactory.create_unprocessed_entry(
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
@@ -197,7 +199,7 @@ class Case:
             accession=unprocessed_entry.accessionVersion.split(".")[0],
             metadata_errors=self.expected_errors or [],
             metadata_warnings=self.expected_warnings or [],
-            processed_alignment=self.processed_alignment,
+            processed_alignment=self.expected_processed_alignment,
         )
         return ProcessingTestCase(
             name=self.name, input=unprocessed_entry, expected_output=expected_output

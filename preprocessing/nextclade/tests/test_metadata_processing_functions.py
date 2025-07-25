@@ -1,13 +1,11 @@
 # ruff: noqa: S101
-from dataclasses import dataclass
 
 import pytest
 from factory_methods import (
     Case,
     ProcessedEntryFactory,
-    ProcessingAnnotationTestCase,
+    ProcessingAnnotationHelper,
     ProcessingTestCase,
-    UnprocessedEntryFactory,
     ts_from_ymd,
     verify_processed_entry,
 )
@@ -15,7 +13,6 @@ from factory_methods import (
 from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
-    ProcessedMetadataValue,
     UnprocessedData,
     UnprocessedEntry,
 )
@@ -37,10 +34,10 @@ test_case_definitions = [
         accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["name_required"], ["name_required"], "Metadata field name_required is required."
             ),
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["ncbi_required_collection_date"],
                 ["required_collection_date"],
                 "Metadata field required_collection_date is required.",
@@ -53,7 +50,7 @@ test_case_definitions = [
         accession_id="1",
         expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["ncbi_required_collection_date"],
                 ["required_collection_date"],
                 "Metadata field required_collection_date is required.",
@@ -75,7 +72,7 @@ test_case_definitions = [
             "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["continent"],
                 ["continent"],
                 "Metadata field continent:'Afrika' - not in list of accepted options.",
@@ -98,7 +95,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_3.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["collection_date"],
                 ["collection_date"],
                 "Metadata field collection_date:'2088-12-01' is in the future.",
@@ -120,7 +117,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_4.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["collection_date"],
                 ["collection_date"],
                 "Metadata field collection_date: Date format is not recognized.",
@@ -142,7 +139,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_5.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["sequenced_timestamp"],
                 ["sequenced_timestamp"],
                 (
@@ -169,7 +166,7 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["collection_date"],
                 ["collection_date"],
                 (
@@ -217,10 +214,13 @@ test_case_definitions = [
             "regex_field": None,
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["regex_field"],
                 ["regex_field"],
-                "The value 'EPIISL_123456' does not match the expected regex pattern: '^EPI_ISL_[0-9]+$'.",
+                (
+                    "The value 'EPIISL_123456' does not match the expected regex pattern: "
+                    "'^EPI_ISL_[0-9]+$'."
+                ),
             ),
         ],
         expected_warnings=[],
@@ -242,7 +242,7 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["collection_date"],
                 ["collection_date"],
                 "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
@@ -264,7 +264,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_8.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["age_int"], ["age_int"], "Invalid int value: asdf for field age_int."
             ),
         ],
@@ -284,7 +284,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_9.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["percentage_float"],
                 ["percentage_float"],
                 "Invalid float value: asdf for field percentage_float.",
@@ -306,7 +306,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_10.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["other_date"],
                 ["other_date"],
                 (
@@ -331,7 +331,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_11.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["is_lab_host_bool"],
                 ["is_lab_host_bool"],
                 "Invalid boolean value: maybe for field is_lab_host_bool.",
@@ -355,10 +355,18 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["authors"],
                 ["authors"],
-                "The authors list 'Anna Smith, Cameron Tucker' might not be using the Loculus format. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
+                (
+                    "The authors list 'Anna Smith, Cameron Tucker' might not be using the Loculus "
+                    "format. Please ensure that authors are separated by semi-colons. Each "
+                    "author's name should be in the format 'last name, first name;'. Last name(s) "
+                    "is mandatory, a comma is mandatory to separate first names/initials from last "
+                    "name. Only ASCII alphabetical characters A-Z are allowed. For example: "
+                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
+                    "unknown."
+                ),
             ),
         ],
     ),
@@ -377,10 +385,18 @@ test_case_definitions = [
             "concatenated_string": "LOC_13.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["authors"],
                 ["authors"],
-                "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. Please ensure that authors are separated by semi-colons. Each author's name should be in the format 'last name, first name;'. Last name(s) is mandatory, a comma is mandatory to separate first names/initials from last name. Only ASCII alphabetical characters A-Z are allowed. For example: 'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is unknown.",
+                (
+                    "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. "
+                    "Please ensure that authors are separated by semi-colons. Each author's name "
+                    "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
+                    "a comma is mandatory to separate first names/initials from last name. "
+                    "Only ASCII alphabetical characters A-Z are allowed. For example: "
+                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
+                    "unknown."
+                ),
             ),
         ],
     ),
@@ -416,7 +432,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_15.1/2022-11-01",
         },
         expected_errors=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["percentage_float"],
                 ["percentage_float"],
                 "Invalid float value: Infinity for field percentage_float.",
@@ -440,10 +456,14 @@ test_case_definitions = [
         },
         expected_errors=[],
         expected_warnings=[
-            ProcessingAnnotationTestCase(
+            ProcessingAnnotationHelper(
                 ["authors"],
                 ["authors"],
-                "Authors list 'Smith, Anna; Perez, Tom J. and Xu X.L.' contains 'and'. This may indicate a misformatted authors list. Authors should always be separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`.",
+                (
+                    "Authors list 'Smith, Anna; Perez, Tom J. and Xu X.L.' contains 'and'. "
+                    "This may indicate a misformatted authors list. Authors should always be "
+                    "separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                ),
             ),
         ],
     ),
@@ -496,7 +516,7 @@ not_accepted_authors = [
 
 @pytest.fixture(scope="module")
 def config():
-    return get_config(NO_ALIGNMENT_CONFIG)
+    return get_config(NO_ALIGNMENT_CONFIG, ignore_args=True)
 
 
 @pytest.fixture(scope="module")
@@ -518,10 +538,10 @@ def test_preprocessing(test_case_def: Case, config: Config, factory_custom: Proc
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
-def test_preprocessing_without_consensus_sequences():
+def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     sequence_name = "entry without sequences"
     sequence_entry_data = UnprocessedEntry(
-        accessionVersion=f"LOC_01.1",
+        accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
             submittedAt=ts_from_ymd(2021, 12, 15),
@@ -533,7 +553,6 @@ def test_preprocessing_without_consensus_sequences():
         ),
     )
 
-    config = get_config(NO_ALIGNMENT_CONFIG)
     config.nucleotideSequences = []
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)

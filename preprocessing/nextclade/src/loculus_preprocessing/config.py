@@ -81,7 +81,9 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
     return parser
 
 
-def get_config(config_file: str | None = None) -> Config:
+def get_config(
+    config_file: str | None = None, ignore_args: bool = False
+) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
 
@@ -94,8 +96,11 @@ def get_config(config_file: str | None = None) -> Config:
     if env_log_level:
         logging.basicConfig(level=env_log_level)
 
-    parser = generate_argparse_from_dataclass(Config)
-    args = parser.parse_args()
+    if not ignore_args:
+        parser = generate_argparse_from_dataclass(Config)
+        args = parser.parse_args()
+    else:
+        args = argparse.Namespace()
 
     # Use first config file present in order of precedence
     config_file_path = (
