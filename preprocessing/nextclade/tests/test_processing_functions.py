@@ -498,6 +498,26 @@ test_case_definitions = [
         expected_errors=[],
         expected_warnings=[],
     ),
+    Case(
+        name="strip_spaces_in_metadata",
+        input_metadata={
+            "submissionId": "strip_spaces_in_metadata",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": " Smith, John II; Doe, A.B.C. ",
+            "regex_field": " EPI_ISL_123456 ",
+        },
+        accession_id="16",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_16.1/2022-11-01",
+            "authors": "Smith, John II; Doe, A. B. C.",
+            "regex_field": "EPI_ISL_123456",
+        },
+        expected_errors=[],
+        expected_warnings=[],
+    ),
 ]
 
 accepted_authors = {

@@ -176,6 +176,32 @@ class ProcessingFunctions:
                 ],
             )
         return result
+    
+    @staticmethod
+    def strip_whitespace_from_metadata(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs, 
+    ) -> ProcessingResult:
+        """
+        Removes leading and trailing whitespace from all metadata fields in input_fields.
+        """
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        output_field = {}
+
+        for field in input_fields:
+            value = input_data.get(field)
+            if value is None:
+                continue
+            if not isinstance(value, str):
+                continue
+            output_field[field] = value.strip()
+
+        # Optional: store results under a single dictionary in the output field
+        return ProcessingResult(datum=output_field, warnings=warnings, errors=errors)
 
     @staticmethod
     def check_date(
@@ -1069,7 +1095,6 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
-
 
 def format_frameshift(input: str | None) -> str | None:
     """
