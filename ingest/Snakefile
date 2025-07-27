@@ -191,6 +191,26 @@ rule extract_read_accessions:
         """
 
 
+rule download_reads:
+    """Download reads from ENA SRA using read accessions"""
+    input:
+        read_accessions="results/read_accessions.txt",
+    output:
+        reads=directory("results/reads"),
+    shell:
+        """
+        # Download reads using ftp with curl
+        # ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR170/000/ERR1701760/ERR1701760_1.fastq.gz
+        mkdir -p {output.reads}
+        cd {output.reads}
+        while read -r ACC; do
+            mkdir -p "$ACC"
+            fasterq-dump "$ACC" -O "$ACC" --split-files -e 8 --progress
+            pigz -p 8 "$ACC"/*.fastq 
+        done < ../../{input.read_accessions}
+        """
+
+
 if CHECK_ENA_DEPOSITION:
 
     rule get_loculus_depositions:
