@@ -666,6 +666,26 @@ rule sort_metadata:
         """
 
 
+rule upload_reads:
+    input:
+        reads=directory("results/reads"),
+        script="scripts/upload_reads.py",
+        config="results/config.yaml",
+        metadata_submit="results/submit_metadata_sorted.tsv",
+        metadata_revise="results/revise_metadata_sorted.tsv",
+    output:
+        uploaded_reads="results/uploaded_reads.json",
+    shell:
+        """
+        python {input.script} \
+            --reads-dir {input.reads} \
+            --config-file {input.config} \
+            --metadata-submit {input.metadata_submit} \
+            --metadata-revise {input.metadata_revise} \
+            --output {output.uploaded_reads}
+        """
+
+
 rule submit:
     input:
         script="scripts/call_loculus.py",
