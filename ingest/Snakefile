@@ -172,6 +172,25 @@ rule format_ncbi_dataset_sequences:
         """
 
 
+rule extract_read_accessions:
+    """Extract read accessions from NCBI dataset report"""
+    input:
+        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    output:
+        read_accessions="results/read_accessions.txt",
+    shell:
+        """
+        # Split comma-separated read accessions into newlines
+        # Remove empty lines and header
+        dos2unix -O {input.ncbi_dataset_tsv} \
+        | tsv-select -H -f ncbiSraAccessions \
+        | tr ',' '\n' \
+        | sed '/^$/d' \
+        | tail -n +2 \
+        > {output.read_accessions}
+        """
+
+
 if CHECK_ENA_DEPOSITION:
 
     rule get_loculus_depositions:

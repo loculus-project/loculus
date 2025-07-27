@@ -22,4 +22,5 @@ dependencies:
   - seqkit
   - snakefmt
   - snakemake
+  - tsv-utils
   - unzip
