@@ -131,6 +131,85 @@ private val defaultSuccessfulSubmittedDataMultiSegmented = defaultSuccessfulSubm
     data = defaultProcessedDataMultiSegmented,
 )
 
+val defaultProcessedDataForMultiPathogen = ProcessedData(
+    metadata = mapOf(
+        "date" to TextNode("2002-12-15"),
+        "host" to TextNode("google.com"),
+        "region" to TextNode("Europe"),
+        "country" to TextNode("Spain"),
+        "division" to NullNode.instance,
+    ),
+    unalignedNucleotideSequences = mapOf(
+        "firstSuborganism" to "NNACTGNN",
+        "secondSuborganism" to null,
+    ),
+    alignedNucleotideSequences = mapOf(
+        "firstSuborganism" to "ATTG",
+        "secondSuborganism" to null,
+    ),
+    nucleotideInsertions = mapOf(
+        "firstSuborganism" to listOf(Insertion(123, "ACTG")),
+        "secondSuborganism" to emptyList(),
+    ),
+    alignedAminoAcidSequences = mapOf(
+        "firstSuborganism-someLongGene" to "NNACTGNN",
+        "firstSuborganism-someShortGene" to "MADS",
+        "secondSuborganism-someLongGene" to null,
+        "secondSuborganism-anotherShortGene" to null,
+    ),
+    aminoAcidInsertions = mapOf(
+        "firstSuborganism-someLongGene" to listOf(Insertion(123, "RNRNRN")),
+        "firstSuborganism-someShortGene" to emptyList(),
+        "secondSuborganism-someLongGene" to emptyList(),
+        "secondSuborganism-anotherShortGene" to emptyList(),
+    ),
+    files = null,
+)
+
+val defaultProcessedDataForMultiSegmentMultiPathogen = ProcessedData(
+    metadata = mapOf(
+        "date" to TextNode("2002-12-15"),
+        "host" to TextNode("google.com"),
+        "region" to TextNode("Europe"),
+        "country" to TextNode("Spain"),
+        "division" to NullNode.instance,
+    ),
+    unalignedNucleotideSequences = mapOf(
+        "firstSuborganism-firstSegment" to "NNACTGNN",
+        "firstSuborganism-secondSegment" to "AAAAAAAAAAAAAAAT",
+        "secondSuborganism-firstSegment" to null,
+        "secondSuborganism-differentSecondSegment" to null,
+        "secondSuborganism-thirdSegment" to null,
+    ),
+    alignedNucleotideSequences = mapOf(
+        "firstSuborganism-firstSegment" to "NNACTGNN",
+        "firstSuborganism-secondSegment" to "AAAAAAAAAAAAAAAT",
+        "secondSuborganism-firstSegment" to null,
+        "secondSuborganism-differentSecondSegment" to null,
+        "secondSuborganism-thirdSegment" to null,
+    ),
+    nucleotideInsertions = mapOf(
+        "firstSuborganism-firstSegment" to listOf(Insertion(123, "RNRNRN")),
+        "firstSuborganism-secondSegment" to emptyList(),
+        "secondSuborganism-firstSegment" to emptyList(),
+        "secondSuborganism-differentSecondSegment" to emptyList(),
+        "secondSuborganism-thirdSegment" to emptyList(),
+    ),
+    alignedAminoAcidSequences = mapOf(
+        "firstSuborganism-someLongGene" to "NNACTGNN",
+        "firstSuborganism-someShortGene" to "MADS",
+        "secondSuborganism-someLongGene" to null,
+        "secondSuborganism-anotherShortGene" to null,
+    ),
+    aminoAcidInsertions = mapOf(
+        "firstSuborganism-someLongGene" to listOf(Insertion(123, "RNRNRN")),
+        "firstSuborganism-someShortGene" to emptyList(),
+        "secondSuborganism-someLongGene" to emptyList(),
+        "secondSuborganism-anotherShortGene" to emptyList(),
+    ),
+    files = null,
+)
+
 object PreparedProcessedData {
     fun successfullyProcessed(accession: Accession, version: Long = defaultSuccessfulSubmittedData.version) =
         defaultSuccessfulSubmittedData.copy(
@@ -144,6 +223,30 @@ object PreparedProcessedData {
     ) = defaultSuccessfulSubmittedDataMultiSegmented.copy(
         accession = accession,
         version = version,
+    )
+
+    fun successfullyProcessedMultiPathogenData(
+        accession: Accession,
+        version: Long = 1,
+        data: ProcessedData<GeneticSequence> = defaultProcessedDataForMultiPathogen,
+    ) = SubmittedProcessedData(
+        accession = accession,
+        version = version,
+        data = data,
+        errors = null,
+        warnings = null,
+    )
+
+    fun successfullyProcessedMultiSegmentMultiPathogenData(
+        accession: Accession,
+        version: Long = 1,
+        data: ProcessedData<GeneticSequence> = defaultProcessedDataForMultiSegmentMultiPathogen,
+    ) = SubmittedProcessedData(
+        accession = accession,
+        version = version,
+        data = data,
+        errors = null,
+        warnings = null,
     )
 
     fun withNullForFields(accession: Accession, fields: List<String>) = defaultSuccessfulSubmittedData.copy(

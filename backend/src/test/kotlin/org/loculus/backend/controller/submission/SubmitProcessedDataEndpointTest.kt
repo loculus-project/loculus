@@ -24,8 +24,10 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.MULTI_PATHOGEN_ORGANISM
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
+import org.loculus.backend.controller.SegmentedMultiPathogenOrganism
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
@@ -53,7 +55,7 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -756,6 +758,126 @@ class SubmitProcessedDataEndpointTest(
         val response = client.send(request, HttpResponse.BodyHandlers.ofString())
         assertThat(response.statusCode(), `is`(200))
         assertThat(response.body(), `is`("FileV2"))
+    }
+
+    @Test
+    fun `WHEN I submit data for multi pathogen organism THEN is accepted`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(
+                status = Status.IN_PROCESSING,
+                organism = MULTI_PATHOGEN_ORGANISM,
+            )
+            .first()
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+                accession = accessionVersion.accession,
+                version = accessionVersion.version,
+            ),
+            organism = MULTI_PATHOGEN_ORGANISM,
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            organism = MULTI_PATHOGEN_ORGANISM,
+        )
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `WHEN I submit data for multi pathogen organism with main segment THEN is rejected`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(
+                status = Status.IN_PROCESSING,
+                organism = MULTI_PATHOGEN_ORGANISM,
+            )
+            .first()
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+                accession = accessionVersion.accession,
+                version = accessionVersion.version,
+                data = defaultProcessedDataForMultiPathogen.copy(
+                    alignedNucleotideSequences = mapOf(
+                        "main" to "ATTA",
+                    ),
+                ),
+            ),
+            organism = MULTI_PATHOGEN_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(containsString("TODO.1 is for organism otherOrganism")),
+            )
+
+        convenienceClient.getSequenceEntry(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            organism = MULTI_PATHOGEN_ORGANISM,
+        )
+            .assertStatusIs(Status.IN_PROCESSING)
+    }
+
+    @Test
+    fun `WHEN I submit data for multi segmented multi pathogen organism THEN is accepted`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(
+                status = Status.IN_PROCESSING,
+                organism = SegmentedMultiPathogenOrganism.NAME,
+            )
+            .first()
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+                accession = accessionVersion.accession,
+                version = accessionVersion.version,
+            ),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `WHEN I submit multi segmented multi pathogen organism data with unprefixed segment name THEN is rejected`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(
+                status = Status.IN_PROCESSING,
+                organism = SegmentedMultiPathogenOrganism.NAME,
+            )
+            .first()
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+                accession = accessionVersion.accession,
+                version = accessionVersion.version,
+                data = defaultProcessedDataForMultiSegmentMultiPathogen.copy(
+                    alignedNucleotideSequences = mapOf(
+                        "firstSegment" to "NNACTGNN",
+                        "secondSegment" to "AAAAAAAAAAAAAAAT",
+                    ),
+                )
+            ),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+            .assertStatusIs(Status.PROCESSED)
     }
 
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =
