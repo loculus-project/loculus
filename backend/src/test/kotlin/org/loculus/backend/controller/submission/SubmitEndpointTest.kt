@@ -393,7 +393,7 @@ class SubmitEndpointTest(
                             2 -> """
                                 >${submissionId}_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
                                 ACTG
-                                >${submissionId}_${SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT}
+                                >${submissionId}_${SegmentedMultiPathogenOrganism.DIFFERENT_SECOND_SEGMENT}
                                 ACTG
                                 >${submissionId}_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
                                 ACTG

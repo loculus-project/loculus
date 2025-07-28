@@ -38,7 +38,7 @@ data object SegmentedMultiPathogenOrganism {
     const val NAME = "segmentedMultiPathogenOrganism"
     const val FIRST_SEGMENT = "firstSegment"
     const val SECOND_SEGMENT = "secondSegment"
-    const val DIFFIRENT_SECOND_SEGMENT = "differentSecondSegment"
+    const val DIFFERENT_SECOND_SEGMENT = "differentSecondSegment"
     const val THIRD_SEGMENT = "thirdSegment"
 }
 

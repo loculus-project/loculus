@@ -346,7 +346,7 @@ class MultiPathogenExtractUnprocessedDataEndpointTest(
                     AAT
                     >id3_${SegmentedMultiPathogenOrganism.FIRST_SEGMENT}
                     AAAG
-                    >id3_${SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT}
+                    >id3_${SegmentedMultiPathogenOrganism.DIFFERENT_SECOND_SEGMENT}
                     AAAT
                     >id3_${SegmentedMultiPathogenOrganism.THIRD_SEGMENT}
                     AAAC
@@ -395,7 +395,7 @@ class MultiPathogenExtractUnprocessedDataEndpointTest(
             `is`(
                 mapOf(
                     SegmentedMultiPathogenOrganism.FIRST_SEGMENT to "AAAG",
-                    SegmentedMultiPathogenOrganism.DIFFIRENT_SECOND_SEGMENT to "AAAT",
+                    SegmentedMultiPathogenOrganism.DIFFERENT_SECOND_SEGMENT to "AAAT",
                     SegmentedMultiPathogenOrganism.THIRD_SEGMENT to "AAAC",
                 ),
             ),
