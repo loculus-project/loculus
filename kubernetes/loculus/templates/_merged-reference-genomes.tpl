@@ -4,7 +4,7 @@
 {{- $lapisGenes := list -}}
 
 {{- if len $referenceGenomes | eq 1 }}
-  {{- include "loculus.generateReferenceGenome" (first (values $referenceGenomes)) | toYaml -}}
+  {{- include "loculus.generateReferenceGenome" (first (values $referenceGenomes)) -}}
 {{- else }}
   {{- range $suborganismName, $referenceGenomeRaw := $referenceGenomes -}}
     {{ $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml }}
