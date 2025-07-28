@@ -24,6 +24,16 @@ private const val FIRST_AMINO_ACID_SEQUENCE = "firstAminoAcidSequence"
 private const val SECOND_AMINO_ACID_SEQUENCE = "secondAminoAcidSequence"
 
 class EmptyProcessedDataProviderTest {
+    val referenceGenome = ReferenceGenome(
+        listOf(
+            ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
+            ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
+        ),
+        listOf(
+            ReferenceSequence(FIRST_AMINO_ACID_SEQUENCE, "the sequence"),
+            ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
+        ),
+    )
     private val underTest = EmptyProcessedDataProvider(
         BackendConfig(
             accessionPrefix = "LOC_",
@@ -37,17 +47,9 @@ class EmptyProcessedDataProviderTest {
                         ),
                     ),
                     referenceGenomes = mapOf(
-                        SINGLE_REFERENCE_GENOME_KEY to ReferenceGenome(
-                            listOf(
-                                ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                                ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                            ),
-                            listOf(
-                                ReferenceSequence(FIRST_AMINO_ACID_SEQUENCE, "the sequence"),
-                                ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
-                            ),
-                        ),
+                        SINGLE_REFERENCE_GENOME_KEY to referenceGenome,
                     ),
+                    mergedReferenceGenome = referenceGenome, // TODO ?
                 ),
             ),
             dataUseTerms = DataUseTerms(true, null),

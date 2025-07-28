@@ -189,10 +189,10 @@ internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<Stri
 }
 
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
+    logger.info { "Loading backend config from $configPath" }
     val config = objectMapper
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         .readValue<BackendConfig>(File(configPath))
-    logger.info { "Loaded backend config from $configPath" }
     logger.info { "Config: $config" }
     val validationErrors = validateEarliestReleaseDateFields(config)
     if (validationErrors.isNotEmpty()) {

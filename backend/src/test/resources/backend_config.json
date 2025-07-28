@@ -24,6 +24,24 @@
                     ]
                 }
             },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
@@ -129,6 +147,28 @@
                     ]
                 }
             },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "notOnlySegment",
+                        "sequence": "ATCG"
+                    },
+                    {
+                        "name": "secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
@@ -196,6 +236,10 @@
                     "nucleotideSequences": [],
                     "genes": []
                 }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [],
+                "genes": []
             },
             "schema": {
                 "organismName": "Test without consensus sequences",
@@ -272,6 +316,36 @@
                         }
                     ]
                 }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "firstSuborganism",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "secondSuborganism",
+                        "sequence": "ATTG"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "firstSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "firstSuborganism-someShortGene",
+                        "sequence": "MADS"
+                    },
+                    {
+                        "name": "secondSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-anotherShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
             },
             "schema": {
                 "organismName": "Test with multiple suborganisms",
@@ -358,6 +432,48 @@
                         }
                     ]
                 }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "firstSuborganism-firstSegment",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "firstSuborganism-secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-firstSegment",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "secondSuborganism-differentSecondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-thirdSegment",
+                        "sequence": "TTTTTTTTTTTTTTTT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "firstSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "firstSuborganism-someShortGene",
+                        "sequence": "MADS"
+                    },
+                    {
+                        "name": "secondSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-anotherShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
             },
             "schema": {
                 "organismName": "Test with multiple segmented suborganisms",

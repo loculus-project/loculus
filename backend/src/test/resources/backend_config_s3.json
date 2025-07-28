@@ -24,6 +24,24 @@
                     ]
                 }
             },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
@@ -32,15 +50,25 @@
                     "files": {
                         "enabled": true,
                         "categories": [
-                            {"name": "myFileCategory"},
-                            {"name": "myOtherFileCategory"}
+                            {
+                                "name": "myFileCategory"
+                            },
+                            {
+                                "name": "myOtherFileCategory"
+                            }
                         ]
                     }
                 },
                 "files": [
-                    {"name": "myFileCategory"},
-                    {"name": "myOtherFileCategory"},
-                    {"name": "myProcessedOnlyFileCategory"}
+                    {
+                        "name": "myFileCategory"
+                    },
+                    {
+                        "name": "myOtherFileCategory"
+                    },
+                    {
+                        "name": "myProcessedOnlyFileCategory"
+                    }
                 ],
                 "metadata": [
                     {
@@ -144,6 +172,28 @@
                     ]
                 }
             },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "notOnlySegment",
+                        "sequence": "ATCG"
+                    },
+                    {
+                        "name": "secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
             "schema": {
                 "organismName": "Test",
                 "allowSubmissionOfConsensusSequences": true,
@@ -212,11 +262,247 @@
                     "genes": []
                 }
             },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [],
+                "genes": []
+            },
             "schema": {
                 "organismName": "Test without consensus sequences",
                 "submissionDataTypes": {
                     "consensusSequences": false
                 },
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "region",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
+                    }
+                ]
+            }
+        },
+        "multiPathogenOrganism": {
+            "referenceGenomes": {
+                "firstSuborganism": {
+                    "nucleotideSequences": [
+                        {
+                            "name": "main",
+                            "sequence": "ATTA"
+                        }
+                    ],
+                    "genes": [
+                        {
+                            "name": "someLongGene",
+                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                        },
+                        {
+                            "name": "someShortGene",
+                            "sequence": "MADS"
+                        }
+                    ]
+                },
+                "secondSuborganism": {
+                    "nucleotideSequences": [
+                        {
+                            "name": "main",
+                            "sequence": "ATTG"
+                        }
+                    ],
+                    "genes": [
+                        {
+                            "name": "someLongGene",
+                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                        },
+                        {
+                            "name": "anotherShortGene",
+                            "sequence": "MADS"
+                        }
+                    ]
+                }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "firstSuborganism",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "secondSuborganism",
+                        "sequence": "ATTG"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "firstSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "firstSuborganism-someShortGene",
+                        "sequence": "MADS"
+                    },
+                    {
+                        "name": "secondSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-anotherShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "organismName": "Test with multiple suborganisms",
+                "allowSubmissionOfConsensusSequences": true,
+                "files": [],
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "region",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
+                    }
+                ]
+            }
+        },
+        "segmentedMultiPathogenOrganism": {
+            "referenceGenomes": {
+                "firstSuborganism": {
+                    "nucleotideSequences": [
+                        {
+                            "name": "firstSegment",
+                            "sequence": "ATTA"
+                        },
+                        {
+                            "name": "secondSegment",
+                            "sequence": "AAAAAAAAAAAAAAAA"
+                        }
+                    ],
+                    "genes": [
+                        {
+                            "name": "someLongGene",
+                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                        },
+                        {
+                            "name": "someShortGene",
+                            "sequence": "MADS"
+                        }
+                    ]
+                },
+                "secondSuborganism": {
+                    "nucleotideSequences": [
+                        {
+                            "name": "firstSegment",
+                            "sequence": "ATTA"
+                        },
+                        {
+                            "name": "differentSecondSegment",
+                            "sequence": "AAAAAAAAAAAAAAAA"
+                        },
+                        {
+                            "name": "thirdSegment",
+                            "sequence": "TTTTTTTTTTTTTTTT"
+                        }
+                    ],
+                    "genes": [
+                        {
+                            "name": "someLongGene",
+                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                        },
+                        {
+                            "name": "anotherShortGene",
+                            "sequence": "MADS"
+                        }
+                    ]
+                }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "firstSuborganism-firstSegment",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "firstSuborganism-secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-firstSegment",
+                        "sequence": "ATTA"
+                    },
+                    {
+                        "name": "secondSuborganism-differentSecondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-thirdSegment",
+                        "sequence": "TTTTTTTTTTTTTTTT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "firstSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "firstSuborganism-someShortGene",
+                        "sequence": "MADS"
+                    },
+                    {
+                        "name": "secondSuborganism-someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "secondSuborganism-anotherShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "organismName": "Test with multiple segmented suborganisms",
+                "allowSubmissionOfConsensusSequences": true,
+                "files": [],
                 "metadata": [
                     {
                         "name": "date",

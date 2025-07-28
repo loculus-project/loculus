@@ -47,7 +47,16 @@ const val SINGLE_REFERENCE_GENOME_KEY = "singleReference"
 
 typealias Suborganism = String
 
-data class InstanceConfig(val schema: Schema, val referenceGenomes: Map<Suborganism, ReferenceGenome>)
+data class InstanceConfig(
+    val schema: Schema,
+    val referenceGenomes: Map<Suborganism, ReferenceGenome>,
+    /**
+     * In the single pathogen case, this will be equal to the single entry in `referenceGenomes`.
+     * In the multi-pathogen case, this will a flattened version of the `referenceGenomes` map,
+     * where the sequences of the suborganisms are merged into a list with names prefixed with the suborganism name.
+     */
+    val mergedReferenceGenome: ReferenceGenome,
+)
 
 data class Schema(
     val organismName: String,
