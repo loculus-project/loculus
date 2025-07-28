@@ -1301,7 +1301,7 @@ class SubmissionDatabaseService(
     }
 
     /**
-     * Returns a map from organism names to new versions or null if version wasn't ugraded.
+     * Returns a map from organism names to new versions or null if version wasn't upgraded.
      */
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
         SequenceEntriesTable.distinctOrganisms().map { organismName ->
