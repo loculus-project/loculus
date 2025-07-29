@@ -811,7 +811,11 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
-                    .value(containsString("TODO.1 is for organism otherOrganism")),
+                    .value(
+                        containsString(
+                            "Missing the required segment 'firstSuborganism' in 'alignedNucleotideSequences'",
+                        ),
+                    ),
             )
 
         convenienceClient.getSequenceEntry(
@@ -832,7 +836,7 @@ class SubmitProcessedDataEndpointTest(
             .first()
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+            PreparedProcessedData.successfullyProcessedMultiSegmentMultiPathogenData(
                 accession = accessionVersion.accession,
                 version = accessionVersion.version,
             ),
@@ -858,7 +862,7 @@ class SubmitProcessedDataEndpointTest(
             .first()
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedMultiPathogenData(
+            PreparedProcessedData.successfullyProcessedMultiSegmentMultiPathogenData(
                 accession = accessionVersion.accession,
                 version = accessionVersion.version,
                 data = defaultProcessedDataForMultiSegmentMultiPathogen.copy(
@@ -866,18 +870,27 @@ class SubmitProcessedDataEndpointTest(
                         "firstSegment" to "NNACTGNN",
                         "secondSegment" to "AAAAAAAAAAAAAAAT",
                     ),
-                )
+                ),
             ),
             organism = SegmentedMultiPathogenOrganism.NAME,
         )
-            .andExpect(status().isNoContent)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(
+                        containsString(
+                            "Missing the required segment 'firstSuborganism-firstSegment' in 'alignedNucleotideSequences'",
+                        ),
+                    ),
+            )
 
         convenienceClient.getSequenceEntry(
             accession = accessionVersion.accession,
             version = accessionVersion.version,
             organism = SegmentedMultiPathogenOrganism.NAME,
         )
-            .assertStatusIs(Status.PROCESSED)
+            .assertStatusIs(Status.IN_PROCESSING)
     }
 
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =

@@ -152,7 +152,7 @@ val defaultProcessedDataForMultiPathogen = ProcessedData(
         "secondSuborganism" to emptyList(),
     ),
     alignedAminoAcidSequences = mapOf(
-        "firstSuborganism-someLongGene" to "NNACTGNN",
+        "firstSuborganism-someLongGene" to "AAAAAAAAAAAAAAAAAAAAAAATT",
         "firstSuborganism-someShortGene" to "MADS",
         "secondSuborganism-someLongGene" to null,
         "secondSuborganism-anotherShortGene" to null,
@@ -182,7 +182,7 @@ val defaultProcessedDataForMultiSegmentMultiPathogen = ProcessedData(
         "secondSuborganism-thirdSegment" to null,
     ),
     alignedNucleotideSequences = mapOf(
-        "firstSuborganism-firstSegment" to "NNACTGNN",
+        "firstSuborganism-firstSegment" to "ATTG",
         "firstSuborganism-secondSegment" to "AAAAAAAAAAAAAAAT",
         "secondSuborganism-firstSegment" to null,
         "secondSuborganism-differentSecondSegment" to null,
@@ -196,7 +196,7 @@ val defaultProcessedDataForMultiSegmentMultiPathogen = ProcessedData(
         "secondSuborganism-thirdSegment" to emptyList(),
     ),
     alignedAminoAcidSequences = mapOf(
-        "firstSuborganism-someLongGene" to "NNACTGNN",
+        "firstSuborganism-someLongGene" to "AAAAAAAAAAAAAAAAAAAAAAATT",
         "firstSuborganism-someShortGene" to "MADS",
         "secondSuborganism-someLongGene" to null,
         "secondSuborganism-anotherShortGene" to null,
