@@ -120,6 +120,10 @@ def main(
             )
             record[to_key] = val
 
+        # Keep segment field if segmented and it is in rename
+        if config.segmented and "segment" in config.rename:
+            record["segment"] = record[config.rename["segment"]]
+
     keys_to_keep = set(config.rename.values()) | set(config.keep)
     if config.segmented:
         keys_to_keep.add("segment")
