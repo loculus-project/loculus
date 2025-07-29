@@ -1,27 +1,35 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.SegmentedMultiPathogenOrganism
 import org.loculus.backend.controller.assertHasError
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
@@ -240,6 +248,215 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
         assertThat(releasedDatum.alignedAminoAcidSequences, `is`(anEmptyMap()))
         assertThat(releasedDatum.nucleotideInsertions, `is`(anEmptyMap()))
         assertThat(releasedDatum.aminoAcidInsertions, `is`(anEmptyMap()))
+    }
+
+    @Test
+    fun `Multi pathogen submission flow`() {
+        val accessionVersions = convenienceClient
+            .submitDefaultFiles(organism = SegmentedMultiPathogenOrganism.NAME)
+            .submissionIdMappings
+        val firstAccessionVersion = accessionVersions[0]
+
+        processAndCheckInitialSubmission(accessionVersions, firstAccessionVersion)
+        processAndCheckRevision(firstAccessionVersion)
+        processAndCheckRevocation(firstAccessionVersion)
+    }
+
+    private fun processAndCheckInitialSubmission(
+        accessionVersions: List<SubmissionIdMapping>,
+        firstAccessionVersion: SubmissionIdMapping,
+    ) {
+        convenienceClient.extractUnprocessedData(organism = SegmentedMultiPathogenOrganism.NAME)
+
+        convenienceClient.submitProcessedData(
+            accessionVersions.map {
+                PreparedProcessedData.successfullyProcessedMultiSegmentMultiPathogenData(
+                    accession = it.accession,
+                    version = it.version,
+                )
+            },
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        convenienceClient.approveProcessedSequenceEntries(
+            accessionVersionsFilter = accessionVersions,
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        val releasedData = convenienceClient.getReleasedData(
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        assertReleasedDataLooksAsExpected(releasedData, firstAccessionVersion.accession)
+    }
+
+    private fun processAndCheckRevision(firstAccessionVersion: SubmissionIdMapping) {
+        val revisedAccessionVersion = convenienceClient
+            .revise(
+                accessions = listOf(firstAccessionVersion.accession),
+                sequencesFile = SubmitFiles.sequenceFileWith(
+                    content = """
+                            >custom0_firstSegment
+                            ATTG
+                        """.trimIndent(),
+                ),
+                organism = SegmentedMultiPathogenOrganism.NAME,
+            )
+            .first()
+
+        convenienceClient.extractUnprocessedData(organism = SegmentedMultiPathogenOrganism.NAME)
+
+        convenienceClient.submitProcessedData(
+            listOf(
+                PreparedProcessedData.successfullyProcessedMultiSegmentMultiPathogenData(
+                    accession = revisedAccessionVersion.accession,
+                    version = revisedAccessionVersion.version,
+                ),
+            ),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        convenienceClient.approveProcessedSequenceEntries(
+            accessionVersionsFilter = listOf(revisedAccessionVersion),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        val revisedReleasedData = convenienceClient.getReleasedData(
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+        assertReleasedDataLooksAsExpected(revisedReleasedData, firstAccessionVersion.accession, revision = true)
+    }
+
+    private fun processAndCheckRevocation(firstAccessionVersion: SubmissionIdMapping) {
+        val revokedAccessionVersion = convenienceClient.revokeSequenceEntries(
+            listOfAccessionsToRevoke = listOf(firstAccessionVersion.accession),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        ).first()
+
+        convenienceClient.approveProcessedSequenceEntries(
+            accessionVersionsFilter = listOf(revokedAccessionVersion),
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+
+        val revokedReleasedData = convenienceClient.getReleasedData(
+            organism = SegmentedMultiPathogenOrganism.NAME,
+        )
+        assertReleasedDataLooksAsExpected(revokedReleasedData, firstAccessionVersion.accession, revocation = true)
+    }
+
+    private fun assertReleasedDataLooksAsExpected(
+        releasedData: List<ProcessedData<GeneticSequence>>,
+        accession: Accession,
+        revision: Boolean = false,
+        revocation: Boolean = false,
+    ) {
+        val expectedSize = when {
+            revocation -> DefaultFiles.NUMBER_OF_SEQUENCES + 2
+            revision -> DefaultFiles.NUMBER_OF_SEQUENCES + 1
+            else -> DefaultFiles.NUMBER_OF_SEQUENCES
+        }
+        assertThat(releasedData, hasSize(expectedSize))
+
+        val expectedVersion = when {
+            revocation -> 3
+            revision -> 2
+            else -> 1
+        }
+        val firstReleasedEntry = releasedData.find {
+            it.metadata["accession"] == TextNode(accession) &&
+                it.metadata["version"] == IntNode(expectedVersion)
+        }!!
+        assertThat(
+            firstReleasedEntry.metadata["country"],
+            `is`(
+                when (revocation) {
+                    true -> NullNode.instance
+                    else -> TextNode("Spain")
+                },
+            ),
+        )
+        assertThat(
+            firstReleasedEntry.unalignedNucleotideSequences,
+            `is`(
+                mapOf(
+                    "firstSuborganism-firstSegment" to when (revocation) {
+                        true -> null
+                        else -> "NNACTGNN"
+                    },
+                    "firstSuborganism-secondSegment" to when (revocation) {
+                        true -> null
+                        else -> "AAAAAAAAAAAAAAAT"
+                    },
+                    "secondSuborganism-firstSegment" to null,
+                    "secondSuborganism-thirdSegment" to null,
+                    "secondSuborganism-differentSecondSegment" to null,
+                ),
+            ),
+        )
+        assertThat(
+            firstReleasedEntry.alignedNucleotideSequences,
+            `is`(
+                mapOf(
+                    "firstSuborganism-firstSegment" to when (revocation) {
+                        true -> null
+                        else -> "ATTG"
+                    },
+                    "firstSuborganism-secondSegment" to when (revocation) {
+                        true -> null
+                        else -> "AAAAAAAAAAAAAAAT"
+                    },
+                    "secondSuborganism-firstSegment" to null,
+                    "secondSuborganism-thirdSegment" to null,
+                    "secondSuborganism-differentSecondSegment" to null,
+                ),
+            ),
+        )
+        assertThat(
+            firstReleasedEntry.nucleotideInsertions,
+            `is`(
+                mapOf(
+                    "firstSuborganism-firstSegment" to when (revocation) {
+                        true -> emptyList()
+                        else -> listOf(Insertion(position = 123, sequence = "RNRNRN"))
+                    },
+                    "firstSuborganism-secondSegment" to emptyList(),
+                    "secondSuborganism-firstSegment" to emptyList(),
+                    "secondSuborganism-thirdSegment" to emptyList(),
+                    "secondSuborganism-differentSecondSegment" to emptyList(),
+                ),
+            ),
+        )
+        assertThat(
+            firstReleasedEntry.alignedAminoAcidSequences,
+            `is`(
+                mapOf(
+                    "firstSuborganism-someLongGene" to when (revocation) {
+                        true -> null
+                        else -> "AAAAAAAAAAAAAAAAAAAAAAATT"
+                    },
+                    "firstSuborganism-someShortGene" to when (revocation) {
+                        true -> null
+                        else -> "MADS"
+                    },
+                    "secondSuborganism-someLongGene" to null,
+                    "secondSuborganism-anotherShortGene" to null,
+                ),
+            ),
+        )
+        assertThat(
+            firstReleasedEntry.aminoAcidInsertions,
+            `is`(
+                mapOf(
+                    "firstSuborganism-someLongGene" to when (revocation) {
+                        true -> emptyList()
+                        else -> listOf(Insertion(position = 123, sequence = "RNRNRN"))
+                    },
+                    "firstSuborganism-someShortGene" to emptyList(),
+                    "secondSuborganism-someLongGene" to emptyList(),
+                    "secondSuborganism-anotherShortGene" to emptyList(),
+                ),
+            ),
+        )
     }
 
     private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData<GeneticSequence>>) = processedData
