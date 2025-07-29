@@ -143,7 +143,6 @@ def main(
 
         # rename "id" to "submissionId" for back-compatibility with old hashes
         filtered_record["submissionId"] = filtered_record.pop("id")
-        filtered_record["segment"] = record.get("segment", "")
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
