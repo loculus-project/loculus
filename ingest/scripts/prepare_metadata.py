@@ -114,6 +114,10 @@ def main(
             val = record.pop(from_key)
             record[to_key] = val
 
+        # Keep segment field if segmented and it is in rename
+        if config.segmented and "segment" in config.rename:
+            record["segment"] = record[config.rename["segment"]]
+
     keys_to_keep = set(config.rename.values()) | set(config.keep)
     if config.segmented:
         keys_to_keep.add("segment")
@@ -138,9 +142,8 @@ def main(
         filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
 
         # rename "id" to "submissionId" for back-compatibility with old hashes
-        
         filtered_record["submissionId"] = filtered_record.pop("id")
-        
+        filtered_record["segment"] = record.get("segment", "")
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
