@@ -7,7 +7,7 @@
   {{- include "loculus.generateReferenceGenome" (first (values $referenceGenomes)) -}}
 {{- else }}
   {{- range $suborganismName, $referenceGenomeRaw := $referenceGenomes -}}
-    {{ $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml }}
+    {{- $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml -}}
 
     {{- $nucleotideSequences := $referenceGenome.nucleotideSequences -}}
     {{- if $nucleotideSequences -}}
