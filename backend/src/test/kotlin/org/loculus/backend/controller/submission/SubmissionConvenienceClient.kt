@@ -40,6 +40,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -426,10 +427,20 @@ class SubmissionConvenienceClient(
     fun reviseDefaultProcessedSequenceEntries(
         accessions: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
+    ) = revise(
+        accessions = accessions,
+        sequencesFile = DefaultFiles.sequencesFile,
+        organism = organism,
+    )
+
+    fun revise(
+        accessions: List<Accession>,
+        sequencesFile: MockMultipartFile?,
+        organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
         val result = client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
+            metadataFile = DefaultFiles.getRevisedMetadataFile(accessions),
+            sequencesFile = sequencesFile,
             organism = organism,
         ).andExpect(status().isOk)
 
