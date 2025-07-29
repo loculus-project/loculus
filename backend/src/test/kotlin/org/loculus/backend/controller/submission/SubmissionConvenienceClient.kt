@@ -75,6 +75,8 @@ class SubmissionConvenienceClient(
 
         val instanceConfig = backendConfig.getInstanceConfig(Organism(organism))
 
+        val isMultiPathogen = instanceConfig.referenceGenomes.size > 1
+
         val isMultiSegmented = instanceConfig
             .referenceGenomes
             .values
@@ -118,6 +120,8 @@ class SubmissionConvenienceClient(
             DefaultFiles.metadataFile,
             if (doesNotAllowConsensusSequenceFile) {
                 null
+            } else if (isMultiPathogen && isMultiSegmented) {
+                DefaultFiles.multiSegmentMultiPathogenSequencesFile
             } else if (isMultiSegmented) {
                 DefaultFiles.sequencesFileMultiSegmented
             } else {

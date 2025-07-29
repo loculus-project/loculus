@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class EmptyProcessedDataProvider(private val backendConfig: BackendConfig) {
     fun provide(organism: Organism): ProcessedData<GeneticSequence> {
-        val (schema, referenceGenomes) = backendConfig.getInstanceConfig(organism)
-        val referenceGenome = referenceGenomes.values.first()
+        val (schema, _, mergedReferenceGenome) = backendConfig.getInstanceConfig(organism)
+        val referenceGenome = mergedReferenceGenome
 
         val nucleotideSequences = referenceGenome.nucleotideSequences.map { it.name }.associateWith { null }
         return ProcessedData(

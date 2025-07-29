@@ -25,7 +25,25 @@
                             "sequence": "MADS"
                         }
                     ]
-              }
+                }
+            },
+            "mergedReferenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ACGT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
             },
             "schema": {
                 "organismName": "Test",

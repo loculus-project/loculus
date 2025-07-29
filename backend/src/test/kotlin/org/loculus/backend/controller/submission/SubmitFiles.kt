@@ -18,6 +18,8 @@ private const val DEFAULT_METADATA_FILE_NAME = "metadata.tsv"
 private const val REVISED_METADATA_FILE_NAME = "revised_metadata.tsv"
 private const val DEFAULT_SEQUENCES_FILE_NAME = "sequences.fasta"
 private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
+private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_MULTI_PATHOGEN_FILE_NAME =
+    "sequences_multi_segment_multi_pathogen.fasta"
 
 object SubmitFiles {
 
@@ -69,6 +71,10 @@ object SubmitFiles {
         val sequencesFileMultiSegmented = sequencesFilesMultiSegmented[CompressionAlgorithm.NONE] ?: error(
             "No multi-segment sequences file",
         )
+        val multiSegmentMultiPathogenSequencesFile = sequenceFileWith(
+            content = getFileContent(DEFAULT_MULTI_SEGMENT_SEQUENCES_MULTI_PATHOGEN_FILE_NAME),
+        )
+
         val submissionIds = List(10) { "custom$it" }
 
         const val NUMBER_OF_SEQUENCES = 10

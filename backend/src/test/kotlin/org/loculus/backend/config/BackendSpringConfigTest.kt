@@ -67,6 +67,7 @@ fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestRel
         DEFAULT_ORGANISM to InstanceConfig(
             schema = Schema(DEFAULT_ORGANISM, metadataList, earliestReleaseDate = earliestReleaseDate),
             referenceGenomes = mapOf(SINGLE_REFERENCE_GENOME_KEY to ReferenceGenome(emptyList(), emptyList())),
+            mergedReferenceGenome = ReferenceGenome(emptyList(), emptyList()),
         ),
     ),
     accessionPrefix = "FOO_",

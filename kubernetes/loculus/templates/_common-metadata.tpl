@@ -376,6 +376,8 @@ organisms:
         {{ $referenceGenomes := include "loculus.generateReferenceGenome" $referenceGenome | fromYaml }}
         {{ $referenceGenomes | toYaml | nindent 10 }}
       {{- end }}
+    mergedReferenceGenome:
+      {{- include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | nindent 6 }}
   {{- end }}
 {{- end }}
 
