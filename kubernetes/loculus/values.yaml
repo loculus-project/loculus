@@ -1681,7 +1681,8 @@ defaultOrganisms:
         - name: "Nextclade (EV-D68)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
       metadataAdd:
-        - name: clade_cv_a16
+        - &evMetadataAdd
+          name: clade_cv_a16
           displayName: Clade CV-A16
           header: "Clade"
           noInput: true
@@ -1693,38 +1694,23 @@ defaultOrganisms:
             args:
               segment: CV-A16
             inputs: {input: nextclade.clade}
-        - name: clade_cv_a10
+        - <<: *evMetadataAdd
+          name: clade_cv_a10
           displayName: Clade CV-A10
-          header: "Clade"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          includeInDownloadsByDefault: true
           preprocessing:
             args:
               segment: CV-A10
             inputs: {input: nextclade.clade}
-        - name: clade_ev_a71
+        - <<: *evMetadataAdd
+          name: clade_ev_a71
           displayName: Clade EV-A71
-          header: "Clade"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          includeInDownloadsByDefault: true
           preprocessing:
             args:
               segment: EV-A71
             inputs: {input: nextclade.clade}
-        - name: clade_ev_d68
+        - <<: *evMetadataAdd
+          name: clade_ev_d68
           displayName: Clade EV-D68
-          header: "Clade"
-          noInput: true
-          generateIndex: true
-          autocomplete: true
-          initiallyVisible: true
-          includeInDownloadsByDefault: true
           preprocessing:
             args:
               segment: EV-D68
@@ -1754,7 +1740,6 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          log_level: DEBUG
           nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
@@ -1764,20 +1749,12 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 12059 # EVs A (All EVs = 12059)
+        taxon_id: 12059 # Enterovirus (all EVs)
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           minimizer_parser:
             - segment
-        #  method: "align"
-        #  nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
-        #  nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
-    enaDeposition:
-      configFile:
-        taxon_id: 12059 # All EVs A = 138948
-        scientific_name: "Enterovirus"
-        molecule_type: "genomic RNA"
     referenceGenomes:
       CV-A16:
         nucleotideSequences:
