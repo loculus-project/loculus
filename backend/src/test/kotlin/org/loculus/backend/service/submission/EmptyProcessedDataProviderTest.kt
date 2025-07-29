@@ -49,7 +49,7 @@ class EmptyProcessedDataProviderTest {
                     referenceGenomes = mapOf(
                         SINGLE_REFERENCE_GENOME_KEY to referenceGenome,
                     ),
-                    mergedReferenceGenome = referenceGenome, // TODO ?
+                    mergedReferenceGenome = referenceGenome,
                 ),
             ),
             dataUseTerms = DataUseTerms(true, null),
