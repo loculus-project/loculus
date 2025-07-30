@@ -7,7 +7,7 @@ dependencies:
   - python=3.12
   - biopython=1.84
   - dpath=2.2
-  - nextclade=3.14
+  - nextclade=3.15
   - pip=24.3
   - PyYAML=6.0
   - pyjwt=2.10
