@@ -6,7 +6,7 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 
-from loculus_preprocessing.datatypes import ProcessedMetadata
+from loculus_preprocessing.datatypes import ProcessedMetadata, SegmentName
 
 from .config import Config
 
@@ -203,7 +203,7 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
     accession: str,
     version: int,
     metadata: ProcessedMetadata,
-    unaligned_nucleotide_sequences: dict[str, str],
+    unaligned_nucleotide_sequences: dict[SegmentName, str],
     annotation_object: dict[str, Any] | None = None,
 ) -> str:
     collection_date = metadata.get(config.embl.collection_date_property, "Unknown")
