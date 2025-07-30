@@ -24,7 +24,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile
+from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -746,6 +746,13 @@ def test_format_stop_codon():
     input_zero = '[{"cdsName": "L", "codon": 0}]'
     expected_zero = "L:1"
     assert format_stop_codon(input_zero) == expected_zero
+
+
+def test_reformat_authors_from_loculus_to_embl_style():
+    authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
+    result = reformat_authors_from_loculus_to_embl_style(authors)
+    desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
+    assert result == desired_result
 
 
 def test_create_flatfile():
