@@ -77,9 +77,7 @@ class SubmissionConvenienceClient(
         val instanceConfig = backendConfig.getInstanceConfig(Organism(organism))
 
         val isMultiSegmented = instanceConfig
-            .referenceGenomes
-            .values
-            .first()
+            .referenceGenome
             .nucleotideSequences.size > 1
 
         val doesNotAllowConsensusSequenceFile = !instanceConfig.schema

@@ -25,7 +25,7 @@ data:
     {{- end }}
 
   reference_genomes.json: |
-    {{ include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml | toJson}}
+    {{ include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml | toJson }}
 
   silo_import_job.sh: |
     {{ range $importScriptLines }}
