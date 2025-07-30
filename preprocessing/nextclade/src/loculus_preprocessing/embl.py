@@ -1,12 +1,12 @@
-import io
 import logging
 from enum import Enum
 from typing import Any
 
-from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+
+from loculus_preprocessing.datatypes import ProcessedMetadata
 
 from .config import Config
 
@@ -64,10 +64,10 @@ EMBL_ANNOTATIONS: dict[str, list[str]] = {
 }
 
 
-def get_country(metadata: dict[str, str], config: Config) -> str:
-    country = metadata.get(config.embl.country_property, "Unknown")
+def get_country(metadata: ProcessedMetadata, config: Config) -> str:
+    country: str = str(metadata.get(config.embl.country_property, "Unknown"))
     admin_levels = config.embl.admin_level_properties
-    admin = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])  # type: ignore
+    admin: str = ", ".join([metadata.get(level) for level in admin_levels if metadata.get(level)])  # type: ignore
     return f"{country}: {admin}" if admin else country
 
 
@@ -200,14 +200,14 @@ def get_seq_features(  # noqa: PLR0914
 
 def create_flatfile(  # noqa: PLR0913, PLR0917
     config: Config,
-    accession,
-    version,
-    metadata,
-    unaligned_nucleotide_sequences,
+    accession: str,
+    version: int,
+    metadata: ProcessedMetadata,
+    unaligned_nucleotide_sequences: dict[str, str],
     annotation_object: dict[str, Any] | None = None,
 ) -> str:
     collection_date = metadata.get(config.embl.collection_date_property, "Unknown")
-    authors = get_authors(metadata.get(config.embl.authors_property) or "")
+    authors = get_authors(str(metadata.get(config.embl.authors_property) or ""))
     country = get_country(metadata, config)
     description = get_description(accession, version, config.db_name)
     organism = config.scientific_name

@@ -1,6 +1,7 @@
 # ruff: noqa: S101
 
 
+from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -19,10 +20,11 @@ from factory_methods import (
 from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
-    ProcessedEntry,
+    SubmissionData,
     UnprocessedData,
     UnprocessedEntry,
 )
+from loculus_preprocessing.embl import create_flatfile
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -36,6 +38,8 @@ MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
 EBOLA_ZAIRE_DATASET = "tests/ebola-dataset/ebola-zaire"
 MULTI_EBOLA_DATASET = "tests/ebola-dataset"
+
+SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 
 
 def consensus_sequence(
@@ -590,7 +594,7 @@ multi_segment_case_definitions_any_requirement = [
 
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
-) -> ProcessedEntry:
+) -> SubmissionData:
     result = process_all([test_case.input], dataset_dir, config)
     return result[0]
 
@@ -603,7 +607,9 @@ def test_preprocessing_single_segment(test_case_def: Case):
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
-    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
 
 
 @pytest.mark.parametrize(
@@ -616,7 +622,50 @@ def test_preprocessing_multi_segment_all_requirement(test_case_def: Case):
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions + multi_segment_case_definitions_any_requirement,
+    ids=lambda tc: f"multi segment {tc.name}",
+)
+def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+def test_preprocessing_without_metadata() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    config.processing_spec = {}
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0]
+
+    assert processed_entry.errors == []
+    assert processed_entry.warnings == []
+    assert processed_entry.data.metadata == {}
 
 
 @pytest.mark.parametrize(
@@ -696,6 +745,85 @@ def test_format_stop_codon():
     input_zero = '[{"cdsName": "L", "codon": 0}]'
     expected_zero = "L:1"
     assert format_stop_codon(input_zero) == expected_zero
+
+
+def test_create_flatfile():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    embl_metadata_fields = {
+        "geoLocCountry": {
+            "args": {
+                "type": "string",
+            },
+            "function": "identity",
+            "inputs": {
+                "input": "geoLocCountry",
+            }
+        },
+        "geoLocAdmin1": {
+            "args": {
+                "type": "string",
+            },
+            "function": "identity",
+            "inputs": {
+                "input": "geoLocAdmin1",
+            }
+        },
+        "geoLocCity": {
+            "args": {
+                "type": "string",
+            },
+            "function": "identity",
+            "inputs": {
+                "input": "geoLocCity",
+            },
+        },
+        "authors": {
+            "function": "check_authors",
+            "inputs": {
+                "authors": "authors",
+            },
+        },
+        "sampleCollectionDate": {
+            "args": {
+                "type": "date",
+            },
+            "function": "parse_and_assert_past_date",
+            "inputs": {
+                "date": "sampleCollectionDate",
+            }
+        },
+    }
+    config.processing_spec.update(embl_metadata_fields)
+    config.create_embl_file = True
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            group_id=2,
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={
+                "sampleCollectionDate": "2024-01-01",
+                "geoLocCountry": "Netherlands",
+                "geoLocAdmin1": "North Holland",
+                "geoLocCity": "Amsterdam",
+                "authors": "Smith, Doe A;",
+            },
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+        ),
+    )
+
+    result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
+
+    embl_str = create_flatfile(
+        config,
+        result[0].processed_entry.accession,
+        result[0].processed_entry.version,
+        result[0].processed_entry.data.metadata,
+        result[0].processed_entry.data.unalignedNucleotideSequences,
+        result[0].annotations,
+    )
+    expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
+    assert embl_str == expected_embl
 
 
 if __name__ == "__main__":

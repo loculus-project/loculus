@@ -1,12 +1,5 @@
 # ruff: noqa: S101
-import json
-import os
-from dataclasses import dataclass
-from pathlib import Path
-
-import pandas as pd
 import pytest
-from Bio import SeqIO
 from factory_methods import (
     Case,
     ProcessedEntryFactory,
@@ -22,7 +15,6 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     ProcessingFunctions,
@@ -763,51 +755,6 @@ def test_parse_date_into_range() -> None:
         ).datum
         is None
     ), "dateRangeLower: empty date should be returned as None."
-
-
-@pytest.mark.parametrize(
-    "case_dir",
-    ["cchf_1", "west_nile_1"],
-    ids=["cchf_1", "west_nile_1"],
-)
-def test_create_flatfile(config: Config, case_dir):
-    """Test the creation of an EMBL flatfile from test data.
-    Only one sample can be given (but can be multi-segmented)."""
-    test_data_dir = os.path.join(os.path.dirname(__file__), "test_data", case_dir)
-
-    metadata = (
-        pd.read_csv(Path(test_data_dir) / "metadata.tsv", sep="\t", nrows=1, dtype=str)
-        .fillna("")
-        .iloc[0]
-        .to_dict()
-    )
-
-    with open(os.path.join(test_data_dir, "sequence.fa"), encoding="utf-8") as f:
-        records = list(SeqIO.parse(f, "fasta"))
-        if len(records) == 1:
-            unaligned_nucleotide_sequences = {"main": str(records[0].seq)}
-        else:
-            unaligned_nucleotide_sequences = {}
-            for record in records:
-                key = record.id.split("_")[-1]
-                unaligned_nucleotide_sequences[key] = str(record.seq)
-
-    annotation_object_path = os.path.join(test_data_dir, "annotations.json")
-    with open(annotation_object_path, encoding="utf-8") as f:
-        annotation_object = json.load(f)
-
-    embl_str = create_flatfile(
-        config,
-        metadata["accession"],
-        metadata.get("version", 1),
-        metadata,
-        unaligned_nucleotide_sequences,
-        annotation_object,
-    )
-
-    assert isinstance(embl_str, str)
-    expected_embl = Path(os.path.join(test_data_dir, "result.embl")).read_text(encoding="utf-8")
-    assert embl_str == expected_embl
 
 
 if __name__ == "__main__":
