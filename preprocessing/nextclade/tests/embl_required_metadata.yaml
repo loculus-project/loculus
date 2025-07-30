@@ -1,0 +1,23 @@
+processing_spec:
+  geoLocCountry:
+    function: identity
+    inputs:
+      input: geoLocCountry
+  geoLocAdmin1:
+    function: identity
+    inputs:
+      input: geoLocAdmin1
+  geoLocCity:
+    function: identity
+    inputs:
+      input: geoLocCity
+  authors:
+    function: check_authors
+    inputs:
+      authors: authors
+  sampleCollectionDate:
+    args:
+      type: date
+    function: parse_and_assert_past_date
+    inputs:
+      date: sampleCollectionDate

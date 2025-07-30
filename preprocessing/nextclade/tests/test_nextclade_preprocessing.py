@@ -34,6 +34,7 @@ from loculus_preprocessing.processing_functions import (
 # Config file used for testing
 SINGLE_SEGMENT_CONFIG = "tests/single_segment_config.yaml"
 MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
+EMBL_METADATA = "tests/embl_required_metadata.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
 EBOLA_ZAIRE_DATASET = "tests/ebola-dataset/ebola-zaire"
@@ -749,51 +750,8 @@ def test_format_stop_codon():
 
 def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
-    embl_metadata_fields = {
-        "geoLocCountry": {
-            "args": {
-                "type": "string",
-            },
-            "function": "identity",
-            "inputs": {
-                "input": "geoLocCountry",
-            }
-        },
-        "geoLocAdmin1": {
-            "args": {
-                "type": "string",
-            },
-            "function": "identity",
-            "inputs": {
-                "input": "geoLocAdmin1",
-            }
-        },
-        "geoLocCity": {
-            "args": {
-                "type": "string",
-            },
-            "function": "identity",
-            "inputs": {
-                "input": "geoLocCity",
-            },
-        },
-        "authors": {
-            "function": "check_authors",
-            "inputs": {
-                "authors": "authors",
-            },
-        },
-        "sampleCollectionDate": {
-            "args": {
-                "type": "date",
-            },
-            "function": "parse_and_assert_past_date",
-            "inputs": {
-                "date": "sampleCollectionDate",
-            }
-        },
-    }
-    config.processing_spec.update(embl_metadata_fields)
+    embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
+    config.processing_spec.update(embl_fields)
     config.create_embl_file = True
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
