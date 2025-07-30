@@ -100,11 +100,11 @@ class FileIdAndName:
 @dataclass
 class ProcessedData:
     metadata: ProcessedMetadata
-    unalignedNucleotideSequences: dict[str, Any]  # noqa: N815
-    alignedNucleotideSequences: dict[str, Any]  # noqa: N815
-    nucleotideInsertions: dict[str, Any]  # noqa: N815
-    alignedAminoAcidSequences: dict[str, Any]  # noqa: N815
-    aminoAcidInsertions: dict[str, Any]  # noqa: N815
+    unalignedNucleotideSequences: dict[SegmentName, Any]  # noqa: N815
+    alignedNucleotideSequences: dict[SegmentName, Any]  # noqa: N815
+    nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
+    alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
+    aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 
