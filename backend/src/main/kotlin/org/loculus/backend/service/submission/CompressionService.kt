@@ -180,8 +180,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
     private fun getDictionaryForNucleotideSequenceSegment(segmentName: String, organism: Organism): ByteArray? =
         backendConfig
             .getInstanceConfig(organism)
-            .referenceGenomes
-            .values.first()
+            .referenceGenome
             .getNucleotideSegmentReference(
                 segmentName,
             )
@@ -189,8 +188,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
 
     private fun getDictionaryForAminoAcidSequence(geneName: String, organism: Organism): ByteArray? = backendConfig
         .getInstanceConfig(organism)
-        .referenceGenomes
-        .values.first()
+        .referenceGenome
         .getAminoAcidGeneReference(
             geneName,
         )

@@ -193,7 +193,7 @@ class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendC
         val instanceConfig = backendConfig.organisms[organism.name]!!
         return ProcessedSequenceEntryValidator(
             schema = instanceConfig.schema,
-            referenceGenome = instanceConfig.referenceGenomes.values.first(),
+            referenceGenome = instanceConfig.referenceGenome,
         )
     }
 }
