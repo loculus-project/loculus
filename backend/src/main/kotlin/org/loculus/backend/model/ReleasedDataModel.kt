@@ -14,7 +14,6 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
-import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
@@ -186,16 +185,16 @@ open class ReleasedDataModel(
                 },
             ) +
             conditionalMetadata(
-                filesFieldNames.isNotEmpty(),
+                rawProcessedData.processedData.files != null,
                 {
-                    filesFieldNames.associateWith { NullNode.instance } +
-                        filesMapWithUrls(
-                            rawProcessedData.accession,
-                            rawProcessedData.version,
-                            rawProcessedData.processedData.files ?: emptyMap(),
-                        )
-                            .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
-                            .toMap()
+                    val filesWithUrls = buildFileUrls(
+                        rawProcessedData.accession,
+                        rawProcessedData.version,
+                        rawProcessedData.processedData.files!!,
+                    )
+                    filesWithUrls.mapValues { (_, value) ->
+                        TextNode(objectMapper.writeValueAsString(value))
+                    }
                 },
             )
 
@@ -209,24 +208,19 @@ open class ReleasedDataModel(
         )
     }
 
-    private fun filesMapWithUrls(
+    private fun buildFileUrls(
         accession: Accession,
         version: Version,
         filesMap: FileCategoryFilesMap,
-    ): Map<String, List<FileIdAndNameAndReadUrl>> = filesMap.addUrls {
-            fileCategory,
-            fileId,
-            fileName,
-        ->
-        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-        when (backendConfig.fileSharing.outputFileUrlType) {
-            FileUrlType.WEBSITE -> {
-                "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
+    ): Map<String, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (fileCategory, files) ->
+        files.map { (fileId, fileName) ->
+            val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+            val url = when (backendConfig.fileSharing.outputFileUrlType) {
+                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
+                FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"
+                FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
             }
-            FileUrlType.BACKEND -> {
-                "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"
-            }
-            FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
+            FileIdAndNameAndReadUrl(fileId, fileName, url)
         }
     }
 
