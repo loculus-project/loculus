@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActiveFilters } from './ActiveFilters';
 import { MetadataFilterSchema } from '../../utils/search';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {
@@ -66,7 +67,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,
@@ -86,7 +87,7 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,

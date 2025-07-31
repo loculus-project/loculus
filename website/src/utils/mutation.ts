@@ -89,9 +89,11 @@ export const intoMutationSearchParams = (
 
 const isValidAminoAcidInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
 ): boolean => {
     try {
+        // TODO(#3984) make it multi pathogen aware
+        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -110,9 +112,11 @@ const isValidAminoAcidInsertionQuery = (
 
 const isValidAminoAcidMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
 ): boolean => {
     try {
+        // TODO(#3984) make it multi pathogen aware
+        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
         const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
@@ -127,9 +131,11 @@ const isValidAminoAcidMutationQuery = (
 
 const isValidNucleotideInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
 ): boolean => {
     try {
+        // TODO(#3984) make it multi pathogen aware
+        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
@@ -162,9 +168,11 @@ const isValidNucleotideInsertionQuery = (
 
 const isValidNucleotideMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
 ): boolean => {
     try {
+        // TODO(#3984) make it multi pathogen aware
+        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
