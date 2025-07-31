@@ -1,5 +1,5 @@
 import type { BaseType } from './sequenceTypeHelpers';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -93,7 +93,7 @@ const isValidAminoAcidInsertionQuery = (
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
+        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -116,7 +116,7 @@ const isValidAminoAcidMutationQuery = (
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
+        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
         const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
@@ -135,7 +135,7 @@ const isValidNucleotideInsertionQuery = (
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
+        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
@@ -172,7 +172,7 @@ const isValidNucleotideMutationQuery = (
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = Object.values(referenceGenomesSequenceNames_)[0];
+        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
