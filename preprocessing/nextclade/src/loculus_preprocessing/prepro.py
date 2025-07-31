@@ -975,6 +975,39 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
         logger.info("Nextclade dataset downloaded successfully")
 
 
+def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> None:
+    for submission_data in processed:
+        accession = submission_data.processed_entry.accession
+        version = submission_data.processed_entry.version
+        try:
+            if submission_data.group_id is None:
+                msg = "Group ID is required for EMBL file upload"
+                raise ValueError(msg)
+            file_content = create_flatfile(config, submission_data)
+            file_name = f"{accession}.{version}.embl"
+            upload_info = request_upload(submission_data.group_id, 1, config)[0]
+            file_id = upload_info.fileId
+            url = upload_info.url
+            upload_embl_file_to_presigned_url(file_content, url)
+            submission_data.processed_entry.data.files = {
+                "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
+            }
+        except Exception as e:
+            logger.error("Error creating or uploading EMBL file: %s", e)
+            submission_data.processed_entry.errors.append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
+                    ],
+                    processedFields=[
+                        AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Failed to create or upload EMBL file "
+                    "please contact your administrator.",
+                )
+            )
+
+
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:  # noqa: PLR1702
         if config.nextclade_dataset_name:
@@ -1008,45 +1041,12 @@ def run(config: Config) -> None:
                 continue
 
             if config.create_embl_file:
-                for submission_data in processed:
-                    try:
-                        if submission_data.group_id is None:
-                            msg = "Group ID is required for EMBL file upload"
-                            raise ValueError(msg)
-                        file_content = create_flatfile(
-                            config,
-                            submission_data
-                        )
-                        file_name = f"{submission_data.processed_entry.accession}.{submission_data.processed_entry.version}.embl"  # noqa: E501
-                        upload_info = request_upload(submission_data.group_id, 1, config)[0]
-                        file_id = upload_info.fileId
-                        url = upload_info.url
-                        upload_embl_file_to_presigned_url(file_content, url)
-                        submission_data.processed_entry.data.files = {
-                            "annotations": [
-                                FileIdAndName(fileId=file_id, name=file_name)
-                            ]
-                        }
-                    except Exception as e:
-                        logger.error("Error creating or uploading EMBL file: %s", e)
-                        submission_data.processed_entry.errors.append(
-                                                        ProcessingAnnotation(
-                                unprocessedFields=[
-                                    AnnotationSource(name="embl_upload",
-                                                     type=AnnotationSourceType.METADATA)
-                                ],
-                                processedFields=[
-                                    AnnotationSource(name="embl_upload",
-                                                     type=AnnotationSourceType.METADATA)
-                                ],
-                                message="Failed to create or upload EMBL file "
-                                "please contact your administrator."
-                            )
-                        )
+                upload_flatfiles(processed, config)
 
             try:
-                processed_entries = [submission_data.processed_entry
-                                     for submission_data in processed]
+                processed_entries = [
+                    submission_data.processed_entry for submission_data in processed
+                ]
                 submit_processed_sequences(processed_entries, dataset_dir, config)
             except RuntimeError as e:
                 logger.exception("Submitting processed data failed. Traceback : %s", e)
