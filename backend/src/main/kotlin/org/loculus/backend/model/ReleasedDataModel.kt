@@ -8,13 +8,13 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
-import org.loculus.backend.api.addUrls
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
@@ -188,14 +188,14 @@ open class ReleasedDataModel(
             conditionalMetadata(
                 filesFieldNames.isNotEmpty(),
                 {
-                    filesFieldNames.associateWith { NullNode.instance } +
-                        filesMapWithUrls(
-                            rawProcessedData.accession,
-                            rawProcessedData.version,
-                            rawProcessedData.processedData.files ?: emptyMap(),
-                        )
-                            .map { entry -> entry.key to TextNode(objectMapper.writeValueAsString(entry.value)) }
-                            .toMap()
+                    val filesWithUrls = buildFileUrls(
+                        rawProcessedData.accession,
+                        rawProcessedData.version,
+                        rawProcessedData.processedData.files ?: emptyMap(),
+                    )
+                    filesFieldNames.associateWith { NullNode.instance } + filesWithUrls.mapValues { (_, value) ->
+                        TextNode(objectMapper.writeValueAsString(value))
+                    }
                 },
             )
 
@@ -209,24 +209,19 @@ open class ReleasedDataModel(
         )
     }
 
-    private fun filesMapWithUrls(
+    private fun buildFileUrls(
         accession: Accession,
         version: Version,
         filesMap: FileCategoryFilesMap,
-    ): Map<String, List<FileIdAndNameAndReadUrl>> = filesMap.addUrls {
-            fileCategory,
-            fileId,
-            fileName,
-        ->
-        val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-        when (backendConfig.fileSharing.outputFileUrlType) {
-            FileUrlType.WEBSITE -> {
-                "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
+    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
+        fileIdandName.map { (fileId, name) ->
+            val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
+            val url = when (backendConfig.fileSharing.outputFileUrlType) {
+                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
+                FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
+                FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
             }
-            FileUrlType.BACKEND -> {
-                "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"
-            }
-            FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
+            FileIdAndNameAndReadUrl(fileId, name, url)
         }
     }
 
