@@ -36,6 +36,21 @@ class AlignmentRequirement(StrEnum):
     ALL = "ALL"
 
 
+class AlignmentRequirement(Enum):
+    ANY = "ANY"
+    ALL = "ALL"
+
+
+@dataclass
+class NextcladeSequenceAndDataset:
+    name: str = "main"
+    nextclade_dataset_name: str = "main"
+    nextclade_dataset_tag: str | None = None
+    nextclade_dataset_server: str | None = None
+    accepted_sort_matches: list[str] | None = None
+    gene_prefix: str | None = None
+
+
 @dataclass
 class Config:
     config_file: str | None = None
@@ -61,11 +76,17 @@ class Config:
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
-    nextclade_dataset_server_map: dict[str, str] | None = None
-
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
-    accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
+    nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
+        default_factory=list
+    )
+    genes: list[str] = dataclasses.field(default_factory=list)
+    multi_segment: bool = False
+    classify_with_nextclade_sort: bool = False
+    alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
+    require_nextclade_sort_match: bool = False
+
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
     molecule_type: MoleculeType = MoleculeType.GENOMIC_RNA
@@ -76,6 +97,27 @@ class Config:
         default_factory=EmblInfoMetadataPropertyNames
     )
 
+    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+
+
+def assign_nextclade_sequence_and_dataset(
+    nuc_seq_values: list[dict[str, Any]],
+) -> list[NextcladeSequenceAndDataset]:
+    if not isinstance(nuc_seq_values, list):
+        error_msg = f"nucleotideSequences should be a list of dicts, got: {type(nuc_seq_values)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    nextclade_sequence_and_dataset_list: list[NextcladeSequenceAndDataset] = []
+    for value in nuc_seq_values:
+        if value is None or not isinstance(value, dict):
+            continue
+        seq_and_dataset = NextcladeSequenceAndDataset()
+        for seq_key, seq_value in value.items():
+            if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
+                setattr(seq_and_dataset, seq_key, seq_value)
+        nextclade_sequence_and_dataset_list.append(seq_and_dataset)
+    return nextclade_sequence_and_dataset_list
+
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
     config = Config() if config is None else copy.deepcopy(config)
@@ -84,6 +126,9 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
+            if key == "nucleotideSequences":
+                setattr(config, key, assign_nextclade_sequence_and_dataset(value))
+                continue
             attr = getattr(config, key)
             if isinstance(attr, StrEnum):
                 try:

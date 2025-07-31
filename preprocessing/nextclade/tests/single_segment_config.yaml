@@ -3,14 +3,14 @@ genes:
 - NPEbolaSudan
 - VP35EbolaSudan
 log_level: DEBUG
-nextclade_dataset_name: ebola-sudan-test-dataset
 nextclade_dataset_server: fake_url
 scientific_name: "Test Ebola Sudan Virus"
 molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
 nucleotideSequences:
-- main
+- name: main
+  nextclade_dataset_name: ebola-sudan-test-dataset
 organism: ebola-sudan-test
 processing_spec:
   completeness:
