@@ -19,8 +19,6 @@ updates:
     - dependency-name: "flowbite-react"
     - dependency-name: "@types/node"
       versions: [">=23"] # Increase when we update node version in .nvmrc
-    - dependency-name: "astro"
-    # see https://github.com/loculus-project/loculus/issues/4662
     groups:
       minor:
         update-types:
