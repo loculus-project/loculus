@@ -176,32 +176,6 @@ class ProcessingFunctions:
                 ],
             )
         return result
-    
-    @staticmethod
-    def strip_whitespace_from_metadata(
-        input_data: InputMetadata,
-        output_field: str,
-        input_fields: list[str],
-        args: FunctionArgs, 
-    ) -> ProcessingResult:
-        """
-        Removes leading and trailing whitespace from all metadata fields in input_fields.
-        """
-        warnings: list[ProcessingAnnotation] = []
-        errors: list[ProcessingAnnotation] = []
-
-        output_field = {}
-
-        for field in input_fields:
-            value = input_data.get(field)
-            if value is None:
-                continue
-            if not isinstance(value, str):
-                continue
-            output_field[field] = value.strip()
-
-        # Optional: store results under a single dictionary in the output field
-        return ProcessingResult(datum=output_field, warnings=warnings, errors=errors)
 
     @staticmethod
     def check_date(
@@ -932,7 +906,7 @@ class ProcessingFunctions:
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
-
+        regex_field = regex_field.strip()
         if re.match(pattern, regex_field):
             return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
         errors.append(
@@ -977,6 +951,8 @@ class ProcessingFunctions:
 
         errors: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
+        if isinstance(input_datum, str):
+            input_datum = input_datum.strip()
         if args and "type" in args:
             match args["type"]:
                 case "int":
@@ -1014,7 +990,10 @@ class ProcessingFunctions:
                             )
                         )
                 case _:
-                    output_datum = input_datum
+                    if isinstance(input_datum, str):
+                        output_datum = input_datum.strip()
+                    else:
+                        output_datum = input_datum
         else:
             output_datum = input_datum
         return ProcessingResult(datum=output_datum, warnings=[], errors=errors)
