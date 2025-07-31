@@ -134,6 +134,7 @@ class SubmissionData:
     The processed entry is submitted as usual,
     but the annotations need to be uploaded separately."""
     processed_entry: ProcessedEntry
+    submitter: str | None
     group_id: int | None = None
     annotations: dict[str, Any] | None = None
 

@@ -781,11 +781,7 @@ def test_create_flatfile():
 
     embl_str = create_flatfile(
         config,
-        result[0].processed_entry.accession,
-        result[0].processed_entry.version,
-        result[0].processed_entry.data.metadata,
-        result[0].processed_entry.data.unalignedNucleotideSequences,
-        result[0].annotations,
+        result[0]
     )
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl

@@ -6,7 +6,7 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 
-from loculus_preprocessing.datatypes import ProcessedMetadata, SegmentName
+from loculus_preprocessing.datatypes import ProcessedMetadata, SegmentName, SubmissionData
 
 from .config import Config
 
@@ -71,7 +71,29 @@ def get_country(metadata: ProcessedMetadata, config: Config) -> str:
     return f"{country}: {admin}" if admin else country
 
 
-def get_description(accession, version, db_name) -> str:
+def get_description(  # noqa: PLR0913, PLR0917
+    accession: str,
+    version: int,
+    db_name: str,
+    submitter: str | None,
+    metadata: ProcessedMetadata,
+    segment: str | None,
+) -> str:
+    if submitter and submitter == "insdc_ingest_user":
+        if segment:
+            insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
+        else:
+            insdc_accession = metadata.get("insdcAccessionFull")
+        return (
+            f"Original sequence submitted to the INSDC with accession: {insdc_accession}, "
+            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
+        )
+    if metadata.get("gisaidIsolateId"):
+        gisaid_accession = metadata.get("gisaidIsolateId")
+        return (
+            f"Original sequence submitted to GISAID with accession: {gisaid_accession}, "
+            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
+        )
     return (
         f"Original sequence submitted to {db_name} with accession: {accession}, version: {version}"
     )
@@ -198,18 +220,18 @@ def get_seq_features(  # noqa: PLR0914
     return feature_list
 
 
-def create_flatfile(  # noqa: PLR0913, PLR0917
-    config: Config,
-    accession: str,
-    version: int,
-    metadata: ProcessedMetadata,
-    unaligned_nucleotide_sequences: dict[SegmentName, str],
-    annotation_object: dict[str, Any] | None = None,
+def create_flatfile(  # noqa: PLR0914
+    config: Config, submission_data: SubmissionData
 ) -> str:
+    metadata = submission_data.processed_entry.data.metadata
+    unaligned_nuc_seq = submission_data.processed_entry.data.unalignedNucleotideSequences
+    annotation_object = submission_data.annotations
+    accession = submission_data.processed_entry.accession
+    version = submission_data.processed_entry.version
+
     collection_date = metadata.get(config.embl.collection_date_property, "Unknown")
     authors = get_authors(str(metadata.get(config.embl.authors_property) or ""))
     country = get_country(metadata, config)
-    description = get_description(accession, version, config.db_name)
     organism = config.scientific_name
     molecule_type = get_molecule_type(config.molecule_type)
     topology = config.topology
@@ -222,12 +244,16 @@ def create_flatfile(  # noqa: PLR0913, PLR0917
 
     embl_content = []
 
-    multi_segment = set(unaligned_nucleotide_sequences.keys()) != {"main"}
+    multi_segment = set(unaligned_nuc_seq.keys()) != {"main"}
 
-    for seq_name, sequence_str in unaligned_nucleotide_sequences.items():
+    for seq_name, sequence_str in unaligned_nuc_seq.items():
         if not sequence_str:
             continue
         reference = Reference()
+        segment = seq_name if multi_segment else None
+        description = get_description(
+            accession, version, config.db_name, submission_data.submitter, metadata, segment
+        )
         reference.authors = authors
         sequence = SeqRecord(
             Seq(sequence_str),
