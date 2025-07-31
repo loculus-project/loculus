@@ -275,7 +275,6 @@ CREATE TABLE public.files (
     upload_requested_at timestamp without time zone NOT NULL,
     uploader text NOT NULL,
     group_id integer NOT NULL,
-    released_at timestamp without time zone,
     size bigint
 );
 
