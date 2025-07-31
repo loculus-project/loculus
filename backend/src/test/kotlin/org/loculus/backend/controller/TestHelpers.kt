@@ -32,6 +32,16 @@ import kotlin.time.Clock
 const val DEFAULT_ORGANISM = "dummyOrganism"
 const val OTHER_ORGANISM = "otherOrganism"
 const val ORGANISM_WITHOUT_CONSENSUS_SEQUENCES = "dummyOrganismWithoutConsensusSequences"
+const val MULTI_PATHOGEN_ORGANISM = "multiPathogenOrganism"
+
+data object SegmentedMultiPathogenOrganism {
+    const val NAME = "segmentedMultiPathogenOrganism"
+    const val FIRST_SEGMENT = "firstSegment"
+    const val SECOND_SEGMENT = "secondSegment"
+    const val DIFFERENT_SECOND_SEGMENT = "differentSecondSegment"
+    const val THIRD_SEGMENT = "thirdSegment"
+}
+
 const val DEFAULT_PIPELINE_VERSION = 1L
 const val DEFAULT_EXTERNAL_METADATA_UPDATER = "ena"
 
