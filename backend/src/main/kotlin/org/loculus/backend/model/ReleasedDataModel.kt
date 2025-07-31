@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.MetadataMap
@@ -212,21 +213,16 @@ open class ReleasedDataModel(
         accession: Accession,
         version: Version,
         filesMap: FileCategoryFilesMap,
-    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.entries.associate { entry ->
-        entry.key to
-            entry.value.map { fileIdAndName ->
-                val encodedName = URLEncoder.encode(fileIdAndName.name, StandardCharsets.UTF_8)
-                val url = when (backendConfig.fileSharing.outputFileUrlType) {
-                    FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$entry.key/$encodedName"
-                    FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$entry.key/$encodedName"
-                    FileUrlType.S3 -> s3Service.getPublicUrl(fileIdAndName.fileId)
-                }
-                FileIdAndNameAndReadUrl(
-                    fileIdAndName.fileId,
-                    fileIdAndName.name,
-                    url,
-                )
+    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
+        fileIdandName.map { (fileId, name) ->
+            val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
+            val url = when (backendConfig.fileSharing.outputFileUrlType) {
+                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
+                FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
+                FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
             }
+            FileIdAndNameAndReadUrl(fileId, name, url)
+        }
     }
 
     private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
