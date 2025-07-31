@@ -7,7 +7,7 @@ import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
 
@@ -100,10 +100,13 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         unique <i>submissionId</i> for the full multi-segmented sample, e.g. <b>sample1</b>. Sequence
                         data should be a FASTA file with each header indicating the <i>submissionId</i> and the segment,
                         i.e.{' '}
-                        {referenceGenomeSequenceNames.nucleotideSequences.map((name, index) => (
+                        {getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.map((name, index) => (
                             <span key={index} className='font-bold'>
                                 sample1_{name}
-                                {index !== referenceGenomeSequenceNames.nucleotideSequences.length - 1 ? ', ' : ''}
+                                {index !==
+                                getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.length - 1
+                                    ? ', '
+                                    : ''}
                             </span>
                         ))}
                         .
