@@ -238,7 +238,74 @@ def run_sort(
     return alerts
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def assign_segment(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    errors: list[ProcessingAnnotation],
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    config: Config,
+):
+    # TODO: Add option to assign segment/subtype using nextclade sort
+    num_valid_segments = 0
+    num_duplicate_segments = 0
+    for segment in config.nucleotideSequences:
+        aligned_nucleotide_sequences[segment] = None
+        unaligned_segment = [
+            data
+            for data in input_unaligned_sequences
+            if re.match(segment + "$", data, re.IGNORECASE)
+        ]
+        if len(unaligned_segment) > 1:
+            num_duplicate_segments += len(unaligned_segment)
+            errors.append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    processedFields=[
+                        AnnotationSource(
+                            name=segment,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        ),
+                    ],
+                    message="Found multiple sequences with the same segment name.",
+                )
+            )
+        elif len(unaligned_segment) == 1:
+            num_valid_segments += 1
+            unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
+                unaligned_segment[0]
+            ]
+        else:
+            unaligned_nucleotide_sequences[segment] = None
+    if len(input_unaligned_sequences) - num_valid_segments - num_duplicate_segments > 0:
+        errors.append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    ),
+                ],
+                processedFields=[
+                    AnnotationSource(
+                        name="alignment",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    ),
+                ],
+                message=(
+                    "Found unknown segments in the input data - "
+                    "check your segments are annotated correctly."
+                ),
+            )
+        )
+    return (unaligned_nucleotide_sequences, aligned_nucleotide_sequences, errors)
+
+
+def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -277,67 +344,17 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         alerts.errors[id] = []
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
-        num_valid_segments = 0
-        num_duplicate_segments = 0
-        for segment in config.nucleotideSequences:
-            aligned_nucleotide_sequences[id][segment] = None
-            unaligned_segment = [
-                data
-                for data in entry.data.unalignedNucleotideSequences
-                if re.match(segment + "$", data, re.IGNORECASE)
-            ]
-            if len(unaligned_segment) > 1:
-                num_duplicate_segments += len(unaligned_segment)
-                alerts.errors[id].append(
-                    ProcessingAnnotation(
-                        unprocessedFields=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        ],
-                        processedFields=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        ],
-                        message="Found multiple sequences with the same segment name.",
-                    )
-                )
-            elif len(unaligned_segment) == 1:
-                num_valid_segments += 1
-                unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
-                )
-            else:
-                unaligned_nucleotide_sequences[id][segment] = None
-        if (
-            len(entry.data.unalignedNucleotideSequences)
-            - num_valid_segments
-            - num_duplicate_segments
-            > 0
-        ):
-            alerts.errors[id].append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    message=(
-                        "Found unknown segments in the input data - "
-                        "check your segments are annotated correctly."
-                    ),
-                )
-            )
+        (
+            unaligned_nucleotide_sequences[id],
+            aligned_nucleotide_sequences[id],
+            alerts.errors[id],
+        ) = assign_segment(
+            input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+            unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
+            errors=alerts.errors[id],
+            aligned_nucleotide_sequences=aligned_nucleotide_sequences[id],
+            config=config,
+        )
 
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
@@ -897,6 +914,7 @@ def process_all(
 
 
 def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | None:
+    # TODO: will be changed to no longer have map
     if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
         return config.nextclade_dataset_name_map[segment]
     if not config.nextclade_dataset_name:
@@ -909,6 +927,7 @@ def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | No
 
 
 def get_nextclade_dataset_server(config: Config, segment: SegmentName) -> str:
+    # TODO: will be changed to no longer have map
     if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
         return config.nextclade_dataset_server_map[segment]
     return config.nextclade_dataset_server
