@@ -21,7 +21,13 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C' },
                             {},
-                            { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSequences: ['main'],
+                                    genes: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                 />,
@@ -44,7 +50,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                     removeFilter={mockRemoveFilter}

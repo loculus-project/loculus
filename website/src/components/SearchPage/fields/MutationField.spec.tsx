@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesSequenceNames,
+    type ReferenceAccession,
+    SINGLE_REFERENCE,
+} from '../../../types/referencesGenomes.ts';
 
 const singleAccession: ReferenceAccession = {
     name: 'main',
@@ -11,9 +15,11 @@ const singleAccession: ReferenceAccession = {
 };
 
 const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [singleAccession],
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [singleAccession],
+    },
 };
 
 const multiAccession1: ReferenceAccession = {
@@ -27,9 +33,11 @@ const multiAccession2: ReferenceAccession = {
 };
 
 const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['seg1', 'seg2'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [multiAccession1, multiAccession2],
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: ['seg1', 'seg2'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [multiAccession1, multiAccession2],
+    },
 };
 
 function renderField(

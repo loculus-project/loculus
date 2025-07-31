@@ -6,13 +6,17 @@ import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { type ReferenceAccession } from '../../types/referencesGenomes';
+import {
+    getFirstSequenceNames,
+    type ReferenceAccession,
+    type ReferenceGenomesSequenceNames,
+} from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    reference: ReferenceAccession[];
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -31,8 +35,8 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
     ));
 };
 
-const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
-    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, referenceGenomeSequenceNames }) => {
+    const hasReferenceAccession = getFirstSequenceNames(referenceGenomeSequenceNames).insdcAccessionFull.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>
