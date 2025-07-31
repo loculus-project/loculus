@@ -185,14 +185,14 @@ open class ReleasedDataModel(
                 },
             ) +
             conditionalMetadata(
-                rawProcessedData.processedData.files != null,
+                filesFieldNames.isNotEmpty(),
                 {
                     val filesWithUrls = buildFileUrls(
                         rawProcessedData.accession,
                         rawProcessedData.version,
-                        rawProcessedData.processedData.files!!,
+                        rawProcessedData.processedData.files ?: emptyMap(),
                     )
-                    filesWithUrls.mapValues { (_, value) ->
+                    filesFieldNames.associateWith { NullNode.instance } + filesWithUrls.mapValues { (_, value) ->
                         TextNode(objectMapper.writeValueAsString(value))
                     }
                 },
@@ -212,16 +212,21 @@ open class ReleasedDataModel(
         accession: Accession,
         version: Version,
         filesMap: FileCategoryFilesMap,
-    ): Map<String, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (fileCategory, files) ->
-        files.map { (fileId, fileName) ->
-            val encodedName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-            val url = when (backendConfig.fileSharing.outputFileUrlType) {
-                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$fileCategory/$encodedName"
-                FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$fileCategory/$encodedName"
-                FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
+    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.entries.associate { entry ->
+        entry.key to
+            entry.value.map { fileIdAndName ->
+                val encodedName = URLEncoder.encode(fileIdAndName.name, StandardCharsets.UTF_8)
+                val url = when (backendConfig.fileSharing.outputFileUrlType) {
+                    FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$entry.key/$encodedName"
+                    FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$entry.key/$encodedName"
+                    FileUrlType.S3 -> s3Service.getPublicUrl(fileIdAndName.fileId)
+                }
+                FileIdAndNameAndReadUrl(
+                    fileIdAndName.fileId,
+                    fileIdAndName.name,
+                    url,
+                )
             }
-            FileIdAndNameAndReadUrl(fileId, fileName, url)
-        }
     }
 
     private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
