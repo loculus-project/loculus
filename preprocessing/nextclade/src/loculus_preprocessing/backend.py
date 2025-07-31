@@ -121,7 +121,7 @@ def fetch_unprocessed_sequences(
     response = requests.post(url, data=params, headers=headers, timeout=10)
     logger.info(
         f"Unprocessed data from backend: status code {response.status_code}, "
-        "request id: {response.headers.get('x-request-id')}"
+        f"request id: {response.headers.get('x-request-id')}"
     )
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
