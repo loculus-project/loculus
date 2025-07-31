@@ -703,7 +703,8 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
             ),
             errors=errors,
             warnings=warnings,
-        )
+        ),
+        submitter=unprocessed.submitter,
     )
 
 
@@ -869,7 +870,8 @@ def process_single(  # noqa: C901
     return SubmissionData(
         processed_entry=processed_entry,
         annotations=annotations,
-        group_id=group_id
+        group_id=group_id,
+        submitter=str(submitter),
     )
 
 
@@ -901,7 +903,8 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 )
             ],
             warnings=[],
-        )
+        ),
+        submitter=None,
     )
 
 
@@ -1014,11 +1017,7 @@ def run(config: Config) -> None:
                             raise ValueError(msg)
                         file_content = create_flatfile(
                             config,
-                            submission_data.processed_entry.accession,
-                            submission_data.processed_entry.version,
-                            submission_data.processed_entry.data.metadata,
-                            submission_data.processed_entry.data.unalignedNucleotideSequences,
-                            submission_data.annotations,
+                            submission_data
                         )
                         file_name = f"{submission_data.processed_entry.accession}.{submission_data.processed_entry.version}.embl"  # noqa: E501
                         upload_info = request_upload(submission_data.group_id, 1, config)[0]
