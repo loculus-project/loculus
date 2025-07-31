@@ -112,8 +112,8 @@ defaultOrganisms:
       # ...
 ```
 
-The backend and the website will then receive the `referenceGenomes` as configured above.
-LAPIS will receive a "merged" reference genome 
+The website will then receive the `referenceGenomes` as configured above.
+LAPIS and the backend will receive a "merged" reference genome 
 that merges all suborganisms by prepending the suborganism name to the sequence name 
 (ignoring `main` if there is only a single segment):
 ```json
@@ -131,18 +131,16 @@ that merges all suborganisms by prepending the suborganism name to the sequence 
 }
 ```
 
-The backend will also receive the merged reference genome, since it is required to check the preprocessing output.
-
 Consequence:
-* In the single-segmented case, the backend will also remain single-segmented for every suborganism. 
-  That case con be recognized by taking a set of all nucleotide sequence names 
-  and checking whether it contains only one element.
-* The reference genomes of the website and the backend will be different from the LAPIS reference genome.
+* The backend only knows the merged reference genome and will not know about the individual suborganisms.
+  It should be relatively agnostic to how the organisms are structured.
+  It just needs to make sure that the preprocessing output contains all segments and genes that are required for SILO.
+* The reference genomes of the website will be different from reference genome in LAPIS and the backend.
   (In the single pathogen case, they will still be the same.)
 
 ## Submission
 
-Metadata: as usual, nothing special here. (To be confirmed, is that true?)
+Metadata: as usual, nothing special here.
 
 Sequences: We don't want the user to be forced to put the segment name here.
 
@@ -154,11 +152,17 @@ ACTG
 For multiple segments:
 
 ```
->key1_segment1
+>key1_myFirstSegment
 ACTG
->key1_segment2
+>key1_mySecondSegment
 GTCA
 ```
+
+We will achieve this by removing the requirement to put the segment name in the sequence header.
+We will keep `_` as a separator.
+Independently of how many segments there are, 
+* if there is no `_` in the FASTA header, then the backend will use the full FASTA header for matching in on the metadata (form: `>{id}`).
+* if there is a `_` in the FASTA header, then the backend will use the part before the last `_` for matching in on the metadata (form: `>{id}_{arbitrary segment name}`).
 
 TODO: Is the `fileMapping` relevant here?
 
@@ -168,21 +172,8 @@ No changes here.
 
 ## Storage of unprocessed sequences
 
-```json
-{
-    "submissionId": "key1",
-    "accession": "PP_0EYHTR4",
-    "version": 1,
-    "original_data": {
-        "metadata": {...},
-        "unalignedNucleotideSequences": {
-            "main": "ACTG"
-        }
-    }
-}
-```
-
-Multi-segments:
+The backend will use the FASTA header as the key for the unaligned nucleotide sequences.
+This affects all organisms, not just multi-pathogen organisms!
 
 ```json
 {
@@ -192,12 +183,44 @@ Multi-segments:
     "original_data": {
         "metadata": {...},
         "unalignedNucleotideSequences": {
-            "segment1": "ACTG",
-            "segment2": "GTCA"
+            "key1": "ACTG"
         }
     }
 }
 ```
+
+Multiple segments:
+
+```json
+{
+    "submissionId": "key1",
+    "accession": "PP_0EYHTR4",
+    "version": 1,
+    "original_data": {
+        "metadata": {...},
+        "unalignedNucleotideSequences": {
+            "key1_myFirstSegment": "ACTG",
+            "key1_mySecondSegment": "GTCA"
+        }
+    }
+}
+```
+
+### Problems that need to be solved:
+ 
+The backend compresses the unaligned nucleotide sequences before storing them.
+It uses the reference sequence as dictionary to achieve a good compression ratio.
+This is possible because it knows which segment a sequence is supposed to be.
+
+This will not be possible anymore.
+For single-segment organisms, the backend can still take the only segment as the dictionary.
+
+When there are multiple segments:
+* What should we use as the dictionary? Concatenation of all segments?
+* How do we make sure that after rolling out these changes, 
+  the unaligned nucleotide sequences that are already in the DB can still be decompressed (e.g. CCHF)?
+  This probably requires a non-trivial database migration.
+  The reference sequences are not store in the DB, so the migration cannot be a simple SQL script.
 
 ## preprocessing input
 
@@ -205,7 +228,10 @@ Similar to what is stored in the DB.
 
 ## Preprocessing
 
-TODO: Minimizer index, etc?
+The preprocessing pipeline will need to assign each sequence to a segment, if there are multiple segments
+(including validation and useful error messages for the submitter).
+
+TODO: details how to do that - minimizer index, etc.?
 
 ## Preprocessing output
 
@@ -463,6 +489,8 @@ Do we want to leave all those sequences here?
 ![img.png](processedSequences.png)
 
 Do we need to change this on the edit page?
+Those are unprocessed sequences.
+When there backend doesn't know the segments anymore, what do we display here?
 ![img.png](editSequences.png)
 
 ## ENA Deposition
