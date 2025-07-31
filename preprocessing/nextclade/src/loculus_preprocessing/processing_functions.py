@@ -951,8 +951,6 @@ class ProcessingFunctions:
 
         errors: list[ProcessingAnnotation] = []
         output_datum: ProcessedMetadataValue
-        if isinstance(input_datum, str):
-            input_datum = input_datum.strip()
         if args and "type" in args:
             match args["type"]:
                 case "int":
