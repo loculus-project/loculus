@@ -6,11 +6,12 @@ genes:
 - VP24EbolaZaire
 - LEbolaZaire
 log_level: DEBUG
-nextclade_dataset_name: ebola-dataset
 nextclade_dataset_server: fake_url
 nucleotideSequences:
-- ebola-sudan
-- ebola-zaire
+- name: ebola-sudan
+  nextclade_dataset_name: ebola-dataset/ebola-sudan
+- name: ebola-zaire
+  nextclade_dataset_name: ebola-dataset/ebola-zaire
 organism: multi-ebola-test
 processing_spec:
   totalInsertedNucs_ebola-zaire:
