@@ -51,10 +51,6 @@ export const SequenceDataUI: FC<Props> = ({
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
-    const genes = referenceGenomeSequenceNames.genes;
-    const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
-    const reference = referenceGenomeSequenceNames.insdcAccessionFull;
-
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
     const dataTableData = getDataTableData(tableData);
@@ -64,15 +60,18 @@ export const SequenceDataUI: FC<Props> = ({
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
-            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
+            <DataTable
+                dataTableData={dataTableData}
+                dataUseTermsHistory={dataUseTermsHistory}
+                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+            />
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        genes={genes}
-                        nucleotideSegmentNames={nucleotideSegmentNames}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>
