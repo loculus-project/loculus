@@ -386,7 +386,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 <div className='mb-4 p-3 bg-gray-50 rounded-lg'>
                     <div className='flex justify-between items-center mb-2'>
                         <span className='text-sm font-medium text-gray-700'>
-                            Overall Progress: {overallProgress.uploadedFiles} / {overallProgress.totalFiles} files
+                            Overall progress: {overallProgress.uploadedFiles} / {overallProgress.totalFiles} files
                         </span>
                         <span className='text-sm text-gray-600'>
                             {formatBytes(overallProgress.uploadedBytes)} / {formatBytes(overallProgress.totalBytes)}
