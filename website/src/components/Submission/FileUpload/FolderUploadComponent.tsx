@@ -1,8 +1,9 @@
 import { produce } from 'immer';
-import { useEffect, useState, type Dispatch, type FC, type SetStateAction, useRef } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type FC, type SetStateAction, useRef } from 'react';
 import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
+import { useUploadProgress } from '../../../hooks/useUploadProgress';
 import type { FilesBySubmissionId, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { uploadFile, formatBytes, formatTime, type UploadProgress } from '../../../utils/multipartUpload.ts';
@@ -14,62 +15,22 @@ import LucideUploadCloud from '~icons/lucide/upload-cloud';
 
 type SubmissionId = string;
 
-/**
- * The state that the component is in, right after the user dropped the files.
- * We're awaiting the presigned upload URLs from the backend, to start uploading.
- */
-type ReadyToUploadState = {
-    type: 'readyToUpload';
-    files: Record<SubmissionId, FileInfo[]>;
-};
-
-type UploadInProgressState = {
-    type: 'uploadInProgress';
-    files: Record<SubmissionId, (Pending | Uploading | Uploaded | Error)[]>;
-};
-
-type UploadCompleted = {
-    type: 'uploadCompleted';
-    files: Record<SubmissionId, Uploaded[]>;
-};
-
-type FileUploadState = ReadyToUploadState | UploadInProgressState | UploadCompleted;
-
 type UploadStatus = 'pending' | 'uploading' | 'uploaded' | 'error';
 
-interface FileInfo {
-    file: File;
-    name: string;
-}
-
-type Pending = {
-    type: 'pending';
-    file: File;
+type UploadFile = {
     name: string;
     size: number;
+    file?: File;
+    status: UploadStatus;
+    fileId?: string;
+    progress?: UploadProgress;
+    error?: string;
+    abortController?: AbortController;
 };
 
-type Uploading = {
-    type: 'uploading';
-    fileId: string;
-    name: string;
-    size: number;
-    progress: UploadProgress;
-    abortController: AbortController;
-};
-
-type Uploaded = {
-    type: 'uploaded';
-    fileId: string;
-    name: string;
-    size: number;
-};
-
-type Error = {
-    type: 'error';
-    name: string;
-    size: number;
-    msg: string;
+type FileUploadState = {
+    status: 'idle' | 'ready' | 'uploading' | 'completed';
+    files: Record<SubmissionId, UploadFile[]>;
 };
 
 type FolderUploadComponentProps = {
@@ -94,239 +55,155 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     onUploadStateChange,
 }) => {
     const isClient = useClientFlag();
-    const [fileUploadState, setFileUploadState] = useState<FileUploadState | undefined>(undefined);
+    const [fileUploadState, setFileUploadState] = useState<FileUploadState>({
+        status: 'idle',
+        files: {},
+    });
     const [isDragging, setIsDragging] = useState(false);
-    const [overallProgress, setOverallProgress] = useState<{
-        totalFiles: number;
-        uploadedFiles: number;
-        totalBytes: number;
-        uploadedBytes: number;
-    } | null>(null);
+    const { overallProgress, initializeProgress, updateFileProgress, markFileCompleted, resetProgress } =
+        useUploadProgress();
 
-    // Track individual file progress separately for accurate overall progress
-    const fileProgressRef = useRef<Record<string, number>>({});
-    // Track if we're cancelling to avoid completing uploads
+    // Track active uploads for cancellation
+    const activeUploadsRef = useRef<Map<string, AbortController>>(new Map());
     const isCancellingRef = useRef(false);
 
     // Notify parent component about upload state changes
     useEffect(() => {
-        const isUploading =
-            fileUploadState?.type === 'uploadInProgress' &&
-            Object.values(fileUploadState.files)
-                .flat()
-                .some((f) => f.type === 'uploading');
+        const isUploading = fileUploadState.status === 'uploading';
         onUploadStateChange?.(isUploading);
-    }, [fileUploadState, onUploadStateChange]);
+    }, [fileUploadState.status, onUploadStateChange]);
 
     /**
-     * Takes a map of submission IDs to files that are ready for upload, and triggers uploads for each file.
+     * Uploads files with simplified flow
      */
-    async function startUploading(submissionIdFileMap: Record<SubmissionId, FileInfo[]>) {
-        const allFiles = Object.values(submissionIdFileMap).flat();
-        const totalBytes = allFiles.reduce((sum, file) => sum + file.file.size, 0);
+    const uploadFiles = useCallback(async () => {
+        if (fileUploadState.status !== 'ready') return;
 
-        // Reset progress tracking and cancelling flag
-        fileProgressRef.current = {};
         isCancellingRef.current = false;
+        activeUploadsRef.current.clear();
 
-        setOverallProgress({
-            totalFiles: allFiles.length,
-            uploadedFiles: 0,
-            totalBytes,
-            uploadedBytes: 0,
-        });
+        // Calculate totals for progress tracking
+        const allFiles = Object.values(fileUploadState.files).flat();
+        const totalBytes = allFiles.reduce((sum, file) => sum + file.size, 0);
+        initializeProgress(allFiles.length, totalBytes);
 
-        // First, convert to uploading state with pending files
-        const pendingFiles: Record<SubmissionId, (Pending | Uploading | Uploaded | Error)[]> = {};
-        Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
-            pendingFiles[submissionId] = files.map((fileInfo) => ({
-                type: 'pending' as const,
-                file: fileInfo.file,
-                name: fileInfo.name,
-                size: fileInfo.file.size,
-            }));
-        });
+        // Update state to uploading
+        setFileUploadState((prev) => ({ ...prev, status: 'uploading' }));
 
-        setFileUploadState({
-            type: 'uploadInProgress',
-            files: pendingFiles,
-        });
-
-        for (const [submissionId, files] of Object.entries(submissionIdFileMap)) {
-            for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
-                const fileInfo = files[fileIndex];
-                const abortController = new AbortController();
-                let fileId: string = '';
-
-                // Update to uploading state
-                setFileUploadState((state) => {
-                    if (state?.type === 'uploadInProgress') {
-                        return produce(state, (draft) => {
-                            if (fileIndex < draft.files[submissionId].length) {
-                                draft.files[submissionId][fileIndex] = {
-                                    type: 'uploading',
-                                    fileId: '', // Will be set once upload starts
-                                    name: fileInfo.name,
-                                    size: fileInfo.file.size,
-                                    progress: {
-                                        fileId: '',
-                                        fileName: fileInfo.name,
-                                        totalBytes: fileInfo.file.size,
-                                        uploadedBytes: 0,
-                                        percentage: 0,
-                                        speed: 0,
-                                        remainingTime: 0,
-                                        status: 'uploading',
-                                    },
-                                    abortController,
-                                };
-                            }
-                        });
+        /**
+         * Helper to update individual file status
+         */
+        const updateFileStatus = (submissionId: string, index: number, updates: Partial<UploadFile>) => {
+            setFileUploadState((prev) =>
+                produce(prev, (draft) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (draft.files[submissionId] && index < draft.files[submissionId].length) {
+                        Object.assign(draft.files[submissionId][index], updates);
                     }
-                    return state;
-                });
+                }),
+            );
+        };
+
+        // Process all files
+        for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
+            for (let index = 0; index < files.length; index++) {
+                if (isCancellingRef.current) {
+                    break;
+                }
+
+                const file = files[index];
+                if (!file.file) {
+                    continue;
+                }
+
+                const abortController = new AbortController();
+                const uploadKey = `${submissionId}-${index}`;
+                activeUploadsRef.current.set(uploadKey, abortController);
+
+                // Update file status to uploading
+                updateFileStatus(submissionId, index, { status: 'uploading', abortController });
 
                 try {
                     const result = await uploadFile(
-                        fileInfo.file,
+                        file.file,
                         accessToken,
                         clientConfig,
                         group,
                         (progress) => {
-                            // Store the fileId once we get it
-                            if (!fileId && progress.fileId) {
-                                fileId = progress.fileId;
-                            }
-
-                            setFileUploadState((state) => {
-                                if (state?.type === 'uploadInProgress') {
-                                    return produce(state, (draft) => {
-                                        if (
-                                            fileIndex < draft.files[submissionId].length &&
-                                            draft.files[submissionId][fileIndex].type === 'uploading'
-                                        ) {
-                                            const uploadingFile = draft.files[submissionId][fileIndex] as Uploading;
-                                            uploadingFile.progress = progress;
-                                            uploadingFile.fileId = progress.fileId;
-                                        }
-                                    });
-                                }
-                                return state;
+                            updateFileStatus(submissionId, index, {
+                                progress,
+                                fileId: progress.fileId,
                             });
-
-                            // Update overall progress
-                            fileProgressRef.current[progress.fileId] = progress.uploadedBytes;
-
-                            setOverallProgress((prev) => {
-                                if (!prev) return null;
-
-                                // Calculate total uploaded bytes from all tracked files
-                                const totalUploadedBytes = Object.values(fileProgressRef.current).reduce(
-                                    (sum, bytes) => sum + bytes,
-                                    0,
-                                );
-
-                                return {
-                                    ...prev,
-                                    uploadedBytes: totalUploadedBytes,
-                                };
-                            });
+                            updateFileProgress(progress.fileId, progress.uploadedBytes);
                         },
                         abortController.signal,
                     );
 
-                    fileId = result.fileId;
-
-                    // Mark file as fully uploaded in progress tracking
-                    fileProgressRef.current[fileId] = fileInfo.file.size;
-
-                    // Update to uploaded state
-                    setFileUploadState((state) => {
-                        if (state?.type === 'uploadInProgress') {
-                            return produce(state, (draft) => {
-                                if (fileIndex < draft.files[submissionId].length) {
-                                    draft.files[submissionId][fileIndex] = {
-                                        type: 'uploaded',
-                                        fileId,
-                                        name: fileInfo.name,
-                                        size: fileInfo.file.size,
-                                    };
-                                }
-                            });
-                        }
-                        return state;
+                    // Upload completed successfully
+                    updateFileStatus(submissionId, index, {
+                        status: 'uploaded',
+                        fileId: result.fileId,
+                        progress: undefined,
                     });
-
-                    setOverallProgress((prev) =>
-                        prev
-                            ? {
-                                  ...prev,
-                                  uploadedFiles: prev.uploadedFiles + 1,
-                                  uploadedBytes: Object.values(fileProgressRef.current).reduce(
-                                      (sum, bytes) => sum + bytes,
-                                      0,
-                                  ),
-                              }
-                            : null,
-                    );
+                    markFileCompleted(result.fileId, file.size);
                 } catch (error) {
-                    // Check if this is a cancellation
                     const isCancelled = error instanceof Error && error.message === 'Upload cancelled';
-                    let errorMessage = 'Upload failed';
+                    const errorMessage = isCancelled
+                        ? 'Upload cancelled'
+                        : error instanceof Error
+                          ? error.message
+                          : 'Upload failed';
 
-                    if (isCancelled) {
-                        errorMessage = 'Upload cancelled';
-                    } else if (error instanceof Error) {
-                        errorMessage = error.message;
-                    }
-
-                    setFileUploadState((state) => {
-                        if (state?.type === 'uploadInProgress') {
-                            return produce(state, (draft) => {
-                                if (fileIndex < draft.files[submissionId].length) {
-                                    draft.files[submissionId][fileIndex] = {
-                                        type: 'error',
-                                        name: fileInfo.name,
-                                        size: fileInfo.file.size,
-                                        msg: errorMessage,
-                                    };
-                                }
-                            });
-                        }
-                        return state;
+                    updateFileStatus(submissionId, index, {
+                        status: 'error',
+                        error: errorMessage,
+                        progress: undefined,
                     });
 
-                    // If cancelled, stop processing more files
                     if (isCancelled) {
                         isCancellingRef.current = true;
-                        return;
+                        break;
                     }
 
-                    // Surface non-cancellation errors to user
                     onError(errorMessage);
+                } finally {
+                    activeUploadsRef.current.delete(uploadKey);
                 }
             }
         }
-    }
+
+        // Update final state
+        if (!isCancellingRef.current) {
+            setFileUploadState((prev) => ({ ...prev, status: 'completed' }));
+        }
+    }, [
+        fileUploadState,
+        initializeProgress,
+        updateFileProgress,
+        markFileCompleted,
+        accessToken,
+        clientConfig,
+        group,
+        onError,
+    ]);
 
     const cancelAllUploads = () => {
-        if (fileUploadState?.type === 'uploadInProgress') {
-            // Abort all active uploads
-            Object.values(fileUploadState.files)
-                .flat()
-                .forEach((file) => {
-                    if (file.type === 'uploading') {
-                        file.abortController.abort();
-                    }
-                });
-        }
-        setFileUploadState(undefined);
-        setOverallProgress(null);
-        fileProgressRef.current = {};
+        isCancellingRef.current = true;
+
+        // Abort all active uploads
+        activeUploadsRef.current.forEach((controller) => controller.abort());
+        activeUploadsRef.current.clear();
+
+        // Reset state
+        setFileUploadState({
+            status: 'idle',
+            files: {},
+        });
+        resetProgress();
     };
 
     useEffect(() => {
-        if (fileUploadState === undefined) {
+        if (fileUploadState.status === 'idle') {
             setFileMapping((currentMapping) => {
                 if (inputMode === 'bulk') {
                     if (currentMapping !== undefined) {
@@ -349,43 +226,48 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             return;
         }
 
-        switch (fileUploadState.type) {
-            // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
-            // and set the state to 'uploadInProgress'.
-            case 'readyToUpload': {
-                void startUploading(fileUploadState.files);
-                break;
-            }
-            case 'uploadInProgress': {
-                if (
-                    Object.values(fileUploadState.files)
-                        .flatMap((x) => x)
-                        .every(({ type }) => type === 'uploaded')
-                ) {
-                    setFileUploadState({
-                        type: 'uploadCompleted',
-                        files: fileUploadState.files as Record<string, Uploaded[]>,
-                    });
-                }
-                break;
-            }
-            case 'uploadCompleted': {
-                setFileMapping((currentMapping) =>
-                    produce(currentMapping ?? {}, (draft) => {
-                        Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                            if (currentMapping?.[submissionId] !== undefined) {
-                                draft[submissionId] = { ...currentMapping[submissionId] };
-                            } else {
-                                draft[submissionId] = {};
-                            }
-                            draft[submissionId][fileField] = files;
-                        });
-                    }),
-                );
-                break;
-            }
+        // Start upload when ready
+        if (fileUploadState.status === 'ready') {
+            void uploadFiles();
         }
-    }, [fileUploadState]);
+
+        // Update file mapping when upload is completed
+        if (fileUploadState.status === 'completed') {
+            interface UploadedFile {
+                type: 'uploaded';
+                fileId: string;
+                name: string;
+                size: number;
+            }
+            const uploadedFiles: Record<string, UploadedFile[]> = {};
+
+            Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
+                uploadedFiles[submissionId] = files
+                    .filter(
+                        (f): f is UploadFile & { fileId: string } => f.status === 'uploaded' && f.fileId !== undefined,
+                    )
+                    .map((f) => ({
+                        type: 'uploaded' as const,
+                        fileId: f.fileId,
+                        name: f.name,
+                        size: f.size,
+                    }));
+            });
+
+            setFileMapping((currentMapping) =>
+                produce(currentMapping ?? {}, (draft) => {
+                    Object.entries(uploadedFiles).forEach(([submissionId, files]) => {
+                        if (currentMapping?.[submissionId] !== undefined) {
+                            draft[submissionId] = { ...currentMapping[submissionId] };
+                        } else {
+                            draft[submissionId] = {};
+                        }
+                        draft[submissionId][fileField] = files;
+                    });
+                }),
+            );
+        }
+    }, [fileUploadState.status, inputMode, fileField, setFileMapping]);
 
     const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -398,40 +280,42 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 return;
             }
 
-            if (inputMode === 'form') {
-                setFileUploadState({
-                    type: 'readyToUpload',
-                    files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
-                });
-            } else {
-                const files: Record<
-                    string,
-                    {
-                        file: File;
-                        name: string;
-                    }[]
-                > = Object.fromEntries(
-                    filesArray
-                        .map((file) => file.webkitRelativePath.split('/'))
-                        .map((pathSegments) => [pathSegments[1], []]),
-                );
+            const uploadFiles: Record<SubmissionId, UploadFile[]> = {};
 
+            if (inputMode === 'form') {
+                uploadFiles.dummySubmissionId = filesArray.map((f) => ({
+                    name: f.name,
+                    size: f.size,
+                    file: f,
+                    status: 'pending' as const,
+                }));
+            } else {
+                // Group files by submission ID
                 filesArray.forEach((file) => {
                     const submissionId = file.webkitRelativePath.split('/')[1];
-                    files[submissionId].push({ file, name: file.name });
-                });
-
-                setFileUploadState({
-                    type: 'readyToUpload',
-                    files,
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (!uploadFiles[submissionId]) {
+                        uploadFiles[submissionId] = [];
+                    }
+                    uploadFiles[submissionId].push({
+                        name: file.name,
+                        size: file.size,
+                        file,
+                        status: 'pending' as const,
+                    });
                 });
             }
+
+            setFileUploadState({
+                status: 'ready',
+                files: uploadFiles,
+            });
         }
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'readyToUpload' ? (
+    return fileUploadState.status === 'idle' || fileUploadState.status === 'ready' ? (
         <div
-            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
+            className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState.status !== 'idle' ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
             onDragEnter={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -458,7 +342,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         >
             <LucideFolderUp className={`mx-auto mt-4 mb-2 h-12 w-12 text-gray-300`} aria-hidden='true' />
             <div>
-                {fileUploadState === undefined ? (
+                {fileUploadState.status === 'idle' ? (
                     <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
                         <span
                             onClick={(e) => {
@@ -517,21 +401,15 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium mb-2'>Files</h3>
                     <div className='max-h-60 overflow-y-auto'>
                         {inputMode === 'form'
-                            ? Object.values(fileUploadState.files)[0].map((file, index) => (
-                                  <FileListItem
-                                      key={'fileId' in file ? file.fileId : `${file.name}-${index}`}
-                                      file={file}
-                                  />
+                            ? Object.values(fileUploadState.files)[0]?.map((file, index) => (
+                                  <FileListItem key={file.fileId ?? `${file.name}-${index}`} file={file} />
                               ))
                             : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
                                   <h4 key={submissionId} className='text-xs font-medium py-2'>
                                       {submissionId}
                                   </h4>,
                                   ...files.map((file, index) => (
-                                      <FileListItem
-                                          key={'fileId' in file ? file.fileId : `${file.name}-${index}`}
-                                          file={file}
-                                      />
+                                      <FileListItem key={file.fileId ?? `${file.name}-${index}`} file={file} />
                                   )),
                               ])}
                     </div>
@@ -543,23 +421,18 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 data-testid={`discard_${fileField}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
-                {fileUploadState.type === 'uploadInProgress' &&
-                Object.values(fileUploadState.files)
-                    .flat()
-                    .some((f) => f.type === 'uploading')
-                    ? 'Cancel all uploads'
-                    : 'Discard files'}
+                {fileUploadState.status === 'uploading' ? 'Cancel all uploads' : 'Discard files'}
             </button>
         </div>
     );
 };
 
 type FileListItemProps = {
-    file: Pending | Uploading | Uploaded | Error;
+    file: UploadFile;
 };
 
 const FileListItem: FC<FileListItemProps> = ({ file }) => {
-    const isUploading = file.type === 'uploading';
+    const isUploading = file.status === 'uploading';
     const progress = isUploading ? file.progress : null;
 
     return (
@@ -572,7 +445,7 @@ const FileListItem: FC<FileListItemProps> = ({ file }) => {
                     <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
                 </div>
                 {/* Status icon */}
-                <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
+                <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.status)}</div>
             </div>
 
             {isUploading && progress && (
