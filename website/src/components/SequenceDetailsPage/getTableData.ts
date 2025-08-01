@@ -1,5 +1,5 @@
 import { sentenceCase } from 'change-case';
-import { err, Result } from 'neverthrow';
+import { err, ok, Result } from 'neverthrow';
 import z from 'zod';
 
 import type { TableDataEntry } from './types.js';
@@ -53,20 +53,53 @@ export async function getTableData(
                         aminoAcidInsertions: aminoAcidInsertions.data,
                     }),
                 )
-                .map((data) => ({
-                    data: toTableData(schema)(data),
-                    suborganism: getSuborganism(data.details, schema, referenceGenomes),
-                    isRevocation: isRevocationEntry(data.details),
-                })),
+                .andThen((data) => {
+                    const suborganismResult = getSuborganism(data.details, schema, referenceGenomes, accessionVersion);
+                    if (suborganismResult.isErr()) {
+                        return err(suborganismResult.error);
+                    }
+
+                    return ok({
+                        data: toTableData(schema)(data),
+                        suborganism: suborganismResult.value,
+                        isRevocation: isRevocationEntry(data.details),
+                    });
+                }),
         );
 }
 
-function getSuborganism(details: Details, schema: Schema, referenceGenomes: ReferenceGenomes): Suborganism {
+function getSuborganism(
+    details: Details,
+    _schema: Schema,
+    referenceGenomes: ReferenceGenomes,
+    accessionVersion: string,
+): Result<Suborganism, ProblemDetail> {
     if (SINGLE_REFERENCE in referenceGenomes) {
-        return SINGLE_REFERENCE;
+        return ok(SINGLE_REFERENCE);
     }
     const suborganismField = 'genotype'; // TODO read from schema
-    return z.string().parse(details[suborganismField]);
+    const value = details[suborganismField];
+    const suborganismResult = z.string().safeParse(value);
+    if (!suborganismResult.success) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid suborganism field',
+            status: 0,
+            detail: `Value '${value}' of field '${suborganismField}' is not a valid string.`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
+    const suborganism = suborganismResult.data;
+    if (!(suborganism in referenceGenomes)) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid suborganism',
+            status: 0,
+            detail: `Suborganism '${suborganism}' (value of field '${suborganismField}') not found in reference genomes.`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
+    return ok(suborganism);
 }
 
 function isRevocationEntry(details: Details): boolean {
