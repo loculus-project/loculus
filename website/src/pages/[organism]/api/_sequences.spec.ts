@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from 'vi
 
 import { GET } from './sequences.ts';
 import { mockRequest, testConfig } from '../../../../vitest.setup.ts';
-import { getConfiguredOrganisms, getLapisUrl, getReferenceGenomes, getRuntimeConfig } from '../../../config.ts';
+import { getConfiguredOrganisms, getLapisUrl, getReferenceGenome, getRuntimeConfig } from '../../../config.ts';
 
 vi.mock('../../../config.ts', () => ({
     getConfiguredOrganisms: vi.fn(),
-    getReferenceGenomes: vi.fn(),
+    getReferenceGenome: vi.fn(),
     getLapisUrl: vi.fn(),
     getSchema: vi.fn(),
     getRuntimeConfig: vi.fn(),
@@ -16,19 +16,19 @@ vi.mock('../../../config.ts', () => ({
 const organism = 'testOrganism';
 
 const getConfiguredOrganismsMock = getConfiguredOrganisms as Mock<typeof getConfiguredOrganisms>;
-const getReferenceGenomesMock = getReferenceGenomes as Mock<typeof getReferenceGenomes>;
+const getReferenceGenomeMock = getReferenceGenome as Mock<typeof getReferenceGenome>;
 const getLapisUrlMock = getLapisUrl as Mock<typeof getLapisUrl>;
 const getRuntimeConfigMock = getRuntimeConfig as Mock<typeof getRuntimeConfig>;
 
 function mockSingleSegmented() {
-    getReferenceGenomesMock.mockImplementation(() => ({
+    getReferenceGenomeMock.mockImplementation(() => ({
         nucleotideSequences: [{ name: 'main', sequence: 'ACGT' }],
         genes: [],
     }));
 }
 
 function mockMultiSegmented() {
-    getReferenceGenomesMock.mockImplementation(() => ({
+    getReferenceGenomeMock.mockImplementation(() => ({
         nucleotideSequences: [
             { name: 'segment1', sequence: 'ACGT' },
             { name: 'segment2', sequence: 'ACGT' },
@@ -72,7 +72,7 @@ describe('The sequences endpoint', () => {
         });
 
         test('should reject request when segment is set', async () => {
-            getReferenceGenomesMock.mockImplementation(() => ({
+            getReferenceGenomeMock.mockImplementation(() => ({
                 nucleotideSequences: [{ name: 'main', sequence: 'ACGT' }],
                 genes: [],
             }));

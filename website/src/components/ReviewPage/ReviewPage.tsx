@@ -173,7 +173,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                 You do not currently have any unreleased sequences awaiting review. You can view your released sequences
                 on the{' '}
                 <a href={routes.mySequencesPage(organism, group.groupId)} className='text-primary-600 hover:underline'>
-                    Released Sequences
+                    Released sequences
                 </a>{' '}
                 page.
             </div>
@@ -243,7 +243,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                 shape='rounded'
             />
             <div>
-                <label htmlFor='pageSize'>Page Size: </label>
+                <label htmlFor='pageSize'>Page size: </label>
                 <select id='pageSize' value={pageQuery.size} onChange={handleSizeChange}>
                     {pageSizeOptions.map((size) => (
                         <option key={size} value={size}>

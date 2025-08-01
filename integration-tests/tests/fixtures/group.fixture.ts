@@ -36,6 +36,7 @@ export const createTestGroup = (name = `test_group_${uuidv4().slice(0, 8)}`): Te
 type GroupFixtures = {
     pageWithGroup: Page;
     groupName: string;
+    groupId: number;
 };
 
 export const test = authTest.extend<GroupFixtures>({
@@ -43,13 +44,17 @@ export const test = authTest.extend<GroupFixtures>({
         await use(createTestGroup().name);
     },
 
-    pageWithGroup: async ({ pageWithACreatedUser, groupName }, use) => {
+    groupId: async ({ pageWithACreatedUser, groupName }, use) => {
         const groupPage = new GroupPage(pageWithACreatedUser);
         const testGroup = createTestGroup(groupName);
 
-        await groupPage.navigateToCreateGroupPage();
-        await groupPage.createGroup(testGroup);
+        const groupId = await groupPage.getOrCreateGroup(testGroup);
+        await use(groupId);
+    },
 
+    pageWithGroup: async ({ pageWithACreatedUser, groupId }, use) => {
+        // Ensure group is created by depending on groupId
+        void groupId;
         await use(pageWithACreatedUser);
     },
 });

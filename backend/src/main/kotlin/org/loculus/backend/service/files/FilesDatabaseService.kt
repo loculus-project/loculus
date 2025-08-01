@@ -2,6 +2,7 @@ package org.loculus.backend.service.files
 
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
@@ -12,16 +13,15 @@ import java.util.*
 @Transactional
 class FilesDatabaseService(private val dateProvider: DateProvider) {
 
-    fun createFileEntry(uploader: String, groupId: Int): FileId {
-        val id = UUID.randomUUID()
+    fun createFileEntry(fileId: UUID, uploader: String, groupId: Int, multipartUploadId: String? = null) {
         val now = dateProvider.getCurrentDateTime()
         FilesTable.insert {
-            it[idColumn] = id
+            it[idColumn] = fileId
             it[uploadRequestedAtColumn] = now
             it[uploaderColumn] = uploader
             it[groupIdColumn] = groupId
+            it[FilesTable.multipartUploadId] = multipartUploadId
         }
-        return id
     }
 
     fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
@@ -49,6 +49,19 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         .let { it != null }
 
     /**
+     * Return a mapping of file IDs and multipart upload IDs for the files for which multipart upload has been
+     * initiated but not completed
+     */
+    fun getUncompletedMultipartUploadIds(fileIds: Set<FileId>): List<Pair<FileId, MultipartUploadId>> = FilesTable
+        .select(FilesTable.idColumn, FilesTable.multipartUploadId)
+        .where {
+            FilesTable.idColumn inList fileIds and
+                (FilesTable.multipartUploadId neq null) and
+                (not(FilesTable.multipartCompleted))
+        }
+        .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
+
+    /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
      * no file has been uploaded yet (and therefore there's no file size).
      */
@@ -63,6 +76,14 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             FilesTable.idColumn eq fileId
         }) {
             it[sizeColumn] = size
+        }
+    }
+
+    fun completeMultipartUpload(fileId: FileId) {
+        FilesTable.update({
+            FilesTable.idColumn eq fileId
+        }) {
+            it[multipartCompleted] = true
         }
     }
 }

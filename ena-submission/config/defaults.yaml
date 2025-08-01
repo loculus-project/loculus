@@ -16,9 +16,11 @@ ena_http_timeout_seconds: 60
 ena_http_get_retry_attempts: 3
 # Don't retry posts by default as they might not be idempotent
 ena_http_post_retry_attempts: 1
+# 12 hours in minutes
+min_between_publicness_checks: 720
 log_level: DEBUG
 #ena_checklist: ERC000033 - do not use until all fields are mapped to ENA accepted options
-manifest_fields_mapping: 
+manifest_fields_mapping:
   authors:
     loculus_fields: [authors]
     function: reformat_authors
@@ -39,7 +41,7 @@ metadata_mapping:
     loculus_fields: [exposureEvent]
   'type exposure':
     loculus_fields: [exposureEvent]
-  hospitalisation:
+  'hospitalisation':
     loculus_fields: [hostHealthState]
     function: match
     args: [Hospital]
@@ -55,20 +57,19 @@ metadata_mapping:
     loculus_fields: [purposeOfSampling]
   'host disease outcome':
     loculus_fields: [hostHealthOutcome]
-  'host common name':
-    loculus_fields: [hostNameCommon]
   'host age':
     loculus_fields: [hostAge]
   'host health state':
     loculus_fields: [hostHealthState]
-  'host sex':
-    loculus_fields: [hostGender]
+    default: "not provided"
   'host scientific name':
     loculus_fields: [hostNameScientific]
   'isolate':
     loculus_fields: [specimenCollectorSampleId]
+    default: "not provided"
   'collecting institution':
     loculus_fields: [sequencedByOrganization, authorAffiliations]
+    default: "not provided"
   'receipt date':
     loculus_fields: [sampleReceivedDate]
   'isolation source host-associated':
@@ -77,21 +78,26 @@ metadata_mapping:
     loculus_fields: [environmentalSite, environmentalMaterial]
   'authors':
     loculus_fields: [authors]
+  'collector name':
+    loculus_fields: []
+    default: "not provided"
   'geographic location (latitude)':
     loculus_fields: [geoLocLatitude]
     units: DD
   'geographic location (longitude)':
     loculus_fields: [geoLocLongitude]
     units: DD
-metadata_mapping_mandatory_field_defaults:
-  isolate: "not provided"
-  "collecting institution": "not provided"
-  "collector name": "not provided"
-  "host scientific name": "not provided"
-  "host sex": "not provided"
-  "host health state": "not provided"
-  "host subject id": "not provided"
-  "host common name": "not provided"
+  'host sex':
+    loculus_fields: [hostGender]
+    default: "not provided"
+  "host subject id":
+    loculus_fields: []
+    default: "not provided"
+  'host common name':
+    loculus_fields: [hostNameCommon]
+    default: "not provided"
+  'GISAID accession':
+    loculus_fields: [gisaidIsolateId]
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"

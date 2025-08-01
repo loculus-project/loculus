@@ -52,7 +52,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
     return (
         <CommonFieldSelectorModal
-            title='Select Fields to Download'
+            title='Select fields to download'
             isOpen={isOpen}
             onClose={onClose}
             fields={fieldItems}

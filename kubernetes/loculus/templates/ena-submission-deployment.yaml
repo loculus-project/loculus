@@ -102,10 +102,10 @@ spec:
                   key: password
           args:
             - ena_deposition 
-            - "--config-file=/package/config/config.yaml"
+            - "--config-file=/config/config.yaml"
           volumeMounts:
             - name: loculus-ena-submission-config-volume
-              mountPath: /package/config/config.yaml
+              mountPath: /config/config.yaml
               subPath: config.yaml
       volumes:
         - name: loculus-ena-submission-config-volume
@@ -177,10 +177,10 @@ spec:
               args:
                 - python
                 - "scripts/get_ena_submission_list.py"
-                - "--config-file=config/config.yaml"
+                - "--config-file=/config/config.yaml"
               volumeMounts:
                 - name: loculus-ena-submission-config-volume
-                  mountPath: /package/config/config.yaml
+                  mountPath: /config/config.yaml
                   subPath: config.yaml
           volumes:
             - name: loculus-ena-submission-config-volume

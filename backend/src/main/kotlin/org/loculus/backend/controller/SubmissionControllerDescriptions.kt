@@ -1,11 +1,13 @@
 package org.loculus.backend.controller
 
+import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
+
 const val SUBMIT_RESPONSE_DESCRIPTION = """
 Returns a list of accession, version and submissionId of the submitted sequence entries. 
-The submissionId is the (locally unique) id provided by the submitter as 'submissionId' in the metadata file. 
+The submissionId is the (locally unique) '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' provided by the submitter in the metadata file. 
 The version will be 1 for every sequence. 
 The accession is the (globally unique) id that the system assigned to the sequence entry. 
-You can use this response to associate the user provided submissionId with the system assigned accession.
+You can use this response to associate the user provided $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES with the system assigned accession.
 """
 
 const val SUBMIT_ERROR_RESPONSE = """
@@ -16,20 +18,20 @@ const val METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the submitted sequence entries. 
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
 It must contain the column names.
-The field 'submissionId' is required and must be unique within the provided dataset.
+The field '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' is required and must be unique within the provided dataset.
 It is used to associate metadata to the sequences in the sequences fasta file.
 """
 const val SEQUENCE_FILE_DESCRIPTION = """
 A fasta file containing the unaligned nucleotide sequences of the submitted sequences.
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
 If the underlying organism has a single segment,
-the headers of the fasta file must match the 'submissionId' field in the metadata file.
+the headers of the fasta file must match the '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' field in the metadata file.
 If the underlying organism has multiple segments,
-the headers of the fasta file must be of the form '>[submissionId]_[segmentName]'.
+the headers of the fasta file must be of the form '>[$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]_[segmentName]'.
 """
 
 const val GROUP_ID_DESCRIPTION = """
-The group id of of the submitting group which the user is a member of.
+The group id of the submitting group which the user is a member of.
 A submitting group is a set of users that share access to the same sequence entries.
 """
 
@@ -106,7 +108,7 @@ The version will increase by one in respect to the original accession version.
 
 const val REVISED_METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the revised data.
-The first row must contain the column names. The column 'submissionId' is required and must be unique within the 
+The first row must contain the column names. The column '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' is required and must be unique within the 
 provided dataset. It is used to associate metadata to the sequences in the sequences fasta file.
 Additionally, the column 'accession' is required and must match the accession of the original sequence entry.
 """

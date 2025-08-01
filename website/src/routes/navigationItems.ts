@@ -1,5 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
-import { extraTopNavigationItems } from './extraTopNavigationItems.js';
+import { extraSequenceRelatedTopNavigationItems, extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
 
@@ -8,7 +8,10 @@ export const navigationItems = {
     bottom: bottomNavigationItems,
 };
 
-export type TopNavigationItems = ReturnType<(typeof navigationItems)['top']>;
+export type TopNavigationItems = {
+    text: string;
+    path: string;
+}[];
 
 function getSequenceRelatedItems(organism: string | undefined) {
     const browseItem = {
@@ -65,5 +68,11 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
-    return [...sequenceRelatedItems, ...seqSetsItems, ...extraTopNavigationItems, ...accountItems];
+    return [
+        ...sequenceRelatedItems,
+        ...extraSequenceRelatedTopNavigationItems(organism),
+        ...seqSetsItems,
+        ...extraStaticTopNavigationItems,
+        ...accountItems,
+    ];
 }

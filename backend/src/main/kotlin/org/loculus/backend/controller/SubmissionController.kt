@@ -1,7 +1,7 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -546,7 +546,7 @@ open class SubmissionController(
                 throw BadRequestException("the ${organism.name} organism does not support file submission.")
             }
             try {
-                objectMapper.readValue(it, object : TypeReference<SubmissionIdFilesMap>() {})
+                objectMapper.readValue<SubmissionIdFilesMap>(it)
             } catch (e: Exception) {
                 throw BadRequestException("Failed to parse file mapping.", e)
             }

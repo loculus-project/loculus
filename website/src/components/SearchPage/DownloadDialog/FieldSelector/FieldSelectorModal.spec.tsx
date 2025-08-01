@@ -150,11 +150,11 @@ describe('FieldSelectorModal', () => {
             );
         });
 
-        it('selects all fields when "Select All" is clicked', () => {
+        it('selects all fields when "Select all" is clicked', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
-            fireEvent.click(screen.getByText('Select All'));
+            fireEvent.click(screen.getByText('Select all'));
 
             const normalInputs = normalFields.map(
                 (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,
@@ -169,11 +169,11 @@ describe('FieldSelectorModal', () => {
             expect(accessionVersionInput.checked).toBe(true);
         });
 
-        it('unselects all expect accession version when "Select All" is clicked', () => {
+        it('unselects all except accession version when "Select none" is clicked', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
-            fireEvent.click(screen.getByText('Select None'));
+            fireEvent.click(screen.getByText('Select none'));
 
             const normalInputs = normalFields.map(
                 (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,

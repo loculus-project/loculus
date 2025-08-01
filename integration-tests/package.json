@@ -8,18 +8,18 @@
         "test": "npx playwright test"
     },
     "devDependencies": {
-        "@eslint/js": "^9.30.0",
-        "@playwright/test": "^1.53.1",
-        "@types/node": "^22.15.30",
+        "@eslint/js": "^9.31.0",
+        "@playwright/test": "^1.54.1",
+        "@types/node": "^24.0.15",
         "@types/papaparse": "^5.3.16",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.35.1",
-        "@typescript-eslint/parser": "^8.35.1",
-        "eslint": "^9.30.0",
-        "eslint-plugin-unicorn": "^59.0.1",
+        "@typescript-eslint/eslint-plugin": "^8.38.0",
+        "@typescript-eslint/parser": "^8.38.0",
+        "eslint": "^9.31.0",
+        "eslint-plugin-unicorn": "^60.0.0",
         "papaparse": "^5.5.3",
         "prettier": "^3.6.2",
-        "typescript-eslint": "^8.35.1",
+        "typescript-eslint": "^8.38.0",
         "uuid": "^11.1.0"
     }
 }

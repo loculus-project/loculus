@@ -553,7 +553,7 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
-                        "name in the format <submissionId>_<segment name>",
+                        "name in the format <id>_<segment name>",
                     OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),

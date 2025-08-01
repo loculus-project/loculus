@@ -96,7 +96,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             </div>
             <table className='customTable'>
                 <tbody className='w-full'>
-                    <Subtitle title='Original Data' bold />
+                    <Subtitle title='Original data' bold />
                     <SubmissionIdRow submissionId={dataToEdit.submissionId} />
                     <MetadataForm
                         editableMetadata={editableMetadata}

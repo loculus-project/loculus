@@ -6,7 +6,7 @@ import json
 import logging
 import unittest
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 from unittest import mock
 
 import xmltodict
@@ -57,9 +57,6 @@ def mock_config():
     config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
     config.metadata_mapping = defaults["metadata_mapping"]
     config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
-    config.metadata_mapping_mandatory_field_defaults = defaults[
-        "metadata_mapping_mandatory_field_defaults"
-    ]
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -84,6 +81,9 @@ test_project_xml_failure_response = (
 )
 
 test_sample_xml_request = Path("test/test_sample_request.xml").read_text(encoding="utf-8")
+test_sample_xml_request_gisaid = Path("test/test_sample_request_gisaid.xml").read_text(
+    encoding="utf-8"
+)
 test_sample_xml_response = Path("test/test_sample_response.xml").read_text(encoding="utf-8")
 revision_submission_xml_request = Path("test/test_revision_submission_request.xml").read_text(
     encoding="utf-8"
@@ -96,19 +96,25 @@ process_response_text = Path("test/get_ena_analysis_process_response.json").read
 # Test sample
 with open("test/approved_ena_submission_list_test.json", encoding="utf-8") as f:
     loculus_sample: dict = json.load(f)
-sample_data_in_submission_table = {
-    "accession": "LOC_0001TLY",
-    "version": "1",
-    "group_id": 2,
-    "organism": "Test organism",
-    "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
-    "unaligned_nucleotide_sequences": {
-        "seg1": None,
-        "seg2": "GCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT",
-        "seg3": "CTTAACTTTGAGAGAGTGAATT",
-    },
-    "center_name": "Fake center name",
-}
+
+
+def sample_data_in_submission_table() -> dict[str, Any]:
+    """Returns a sample data structure that mimics the one used in the submission table."""
+    return {
+        "accession": "LOC_0001TLY",
+        "version": "1",
+        "group_id": 2,
+        "organism": "Test organism",
+        "metadata": loculus_sample["LOC_0001TLY.1"]["metadata"],
+        "unaligned_nucleotide_sequences": {
+            "seg1": None,
+            "seg2": "GCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT",
+            "seg3": "CTTAACTTTGAGAGAGTGAATT",
+        },
+        "center_name": "Fake center name",
+    }
+
+
 project_table_entry = {"group_id": "2", "organism": "Test organism"}
 sample_table_entry = {
     "accession": "LOC_0001TLY",
@@ -171,7 +177,7 @@ class ProjectCreationTests(unittest.TestCase):
         ) == xmltodict.parse(text_project_xml_request)
 
 
-class SampleCreationTests(unittest.TestCase):
+class TestCreateSample:
     @mock.patch("requests.post")
     def test_create_sample_success(self, mock_post):
         mock_post.return_value = mock_requests_post(200, test_sample_xml_response)
@@ -182,38 +188,47 @@ class SampleCreationTests(unittest.TestCase):
             "biosample_accession": "SAMEA104174130",
             "ena_submission_accession": "ERA979927",
         }
-        self.assertEqual(response.result, desired_response)
+        assert response.result == desired_response
 
     def test_sample_set_construction(self):
         config = mock_config()
         sample_set = construct_sample_set_object(
             config,
-            sample_data_in_submission_table,
+            sample_data_in_submission_table(),
             sample_table_entry,
         )
-        self.assertEqual(
-            xmltodict.parse(dataclass_to_xml(sample_set, root_name="SAMPLE_SET")),
-            xmltodict.parse(test_sample_xml_request),
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request)
+
+    def test_sample_set_with_gisaid(self):
+        config = mock_config()
+        sample_data = sample_data_in_submission_table()
+        sample_data["metadata"]["gisaidIsolateId"] = "EPI_ISL_12345"
+        sample_set = construct_sample_set_object(
+            config,
+            sample_data,
+            sample_table_entry,
         )
+        assert xmltodict.parse(
+            dataclass_to_xml(sample_set, root_name="SAMPLE_SET")
+        ) == xmltodict.parse(test_sample_xml_request_gisaid)
 
     def test_sample_revision(self):
         config = mock_config()
         sample_set = construct_sample_set_object(
             config,
-            sample_data_in_submission_table,
+            sample_data_in_submission_table(),
             sample_table_entry,
         )
         files = get_sample_xml(sample_set, revision=True)
         revision = files["SUBMISSION"]
-        self.assertEqual(
-            xmltodict.parse(revision),
-            xmltodict.parse(revision_submission_xml_request),
-        )
+        assert xmltodict.parse(revision) == xmltodict.parse(revision_submission_xml_request)
 
 
 class AssemblyCreationTests(unittest.TestCase):
     def setUp(self):
-        self.unaligned_sequences_multi = sample_data_in_submission_table[
+        self.unaligned_sequences_multi = sample_data_in_submission_table()[
             "unaligned_nucleotide_sequences"
         ]
         self.unaligned_sequences = {
@@ -287,7 +302,7 @@ class AssemblyCreationTests(unittest.TestCase):
             config,
             sample_accession,
             study_accession,
-            sample_data_in_submission_table,
+            sample_data_in_submission_table(),
         )
         manifest_file_name = create_manifest(manifest, is_broker=True)
         data = {}

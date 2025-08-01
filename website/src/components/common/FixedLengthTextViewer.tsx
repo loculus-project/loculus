@@ -28,11 +28,9 @@ export const FixedLengthTextViewer: FC<FixedLengthTextViewerProps> = ({ text, ma
     }, [text, maxLineLength, header]);
 
     useEffect(() => {
-        // if textArea is null return
         if (textArea.current === null || lineNumbersArea.current === null) {
             return;
         }
-        // set height to scrollHeight
         textArea.current.style.height = `${textArea.current.scrollHeight + 4}px`;
 
         lineNumbersArea.current.style.height = `${textArea.current.scrollHeight + 4}px`;

@@ -24,6 +24,7 @@ from .ena_submission_helper import (
     get_molecule_type,
 )
 from .ena_types import (
+    DEFAULT_EMBL_PROPERTY_FIELDS,
     AssemblyChromosomeListFile,
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
@@ -44,6 +45,7 @@ from .submission_db_helper import (
     is_revision,
     last_version,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,30 +94,30 @@ def get_segment_order(unaligned_sequences: dict[str, str]) -> list[str]:
     return sorted(segment_order)
 
 
-def get_address(config: Config, entry: dict[str, Any]) -> str:
-    address_string = entry["center_name"]
-    if config.is_broker:
-        try:
-            group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
-        except Exception as e:
-            logger.error(
-                f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
-                f"{traceback.format_exc()}"
-            )
-            msg = (
-                "Failed to fetch group info from Loculus for group: "
-                f"{entry['metadata']['groupId']}, {e}"
-            )
-            raise RuntimeError(msg) from e
-        address = group_details.address
-        address_list = [
-            entry["center_name"],  # corresponds to Loculus' "Institution" group field
-            address.city,
-            address.state,
-            address.country,
-        ]
-        address_string = ", ".join([x for x in address_list if x])
-        logger.debug("Created address from group_info")
+def get_address(config: Config, entry: dict[str, Any]) -> str | None:
+    if not config.is_broker:
+        return None
+    try:
+        group_details = call_loculus.get_group_info(config, entry["metadata"]["groupId"])
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch group info for groupId={entry['metadata']['groupId']}\n"
+            f"{traceback.format_exc()}"
+        )
+        msg = (
+            "Failed to fetch group info from Loculus for group: "
+            f"{entry['metadata']['groupId']}, {e}"
+        )
+        raise RuntimeError(msg) from e
+    address = group_details.address
+    address_list = [
+        entry["center_name"],  # corresponds to Loculus' "Institution" group field
+        address.city,
+        address.state,
+        address.country,
+    ]
+    address_string = ", ".join([x for x in address_list if x])
+    logger.debug("Created address from group_info")
     return address_string
 
 
@@ -146,6 +148,8 @@ def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) ->
             value = default or None if not values else ", ".join(values)  # type: ignore
         if function == "reformat_authors":
             value = get_authors(str(value))
+        if not config.is_broker and key == "authors":
+            continue
         assembly_values[key] = value
     return assembly_values
 
@@ -213,7 +217,7 @@ def create_manifest_object(
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
             moleculetype=get_molecule_type(organism_metadata),
-            **assembly_values,
+            **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
     except Exception as e:
@@ -227,7 +231,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: SimpleConnectionPool):
+def submission_table_start(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -250,38 +254,26 @@ def submission_table_start(db_config: SimpleConnectionPool):
         corresponding_assembly = find_conditions_in_db(
             db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
         )
+        status_all = None
         if len(corresponding_assembly) == 1:
             if corresponding_assembly[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_ALL}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTED_ALL
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTING_ASSEMBLY
         else:
             # If not: create assembly_entry, change status to SUBMITTING_ASSEMBLY
-            assembly_table_entry = AssemblyTableEntry(**seq_key)
-            succeeded = add_to_assembly_table(db_config, assembly_table_entry)
-            if succeeded:
-                update_values = {"status_all": StatusAll.SUBMITTING_ASSEMBLY}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+            if not add_to_assembly_table(db_config, AssemblyTableEntry(**seq_key)):
+                continue
+            status_all = StatusAll.SUBMITTING_ASSEMBLY
+        update_db_where_conditions(
+            db_config,
+            table_name=TableName.SUBMISSION_TABLE,
+            conditions=seq_key,
+            update_values={"status_all": status_all},
+        )
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(db_config: SimpleConnectionPool) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTING_ASSEMBLY
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -326,40 +318,21 @@ def update_assembly_error(
     error: str | list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
-    retry_number: int = 3,
-):
+) -> None:
     logger.error(
         f"Assembly {update_type} failed for accession {seq_key['accession']} "
         f"version {seq_key['version']}. Propagating to db. Error: {error}"
     )
-    update_values = {
-        "status": Status.HAS_ERRORS,
-        "errors": json.dumps(error),
-        "started_at": datetime.now(tz=pytz.utc),
-    }
-    number_rows_updated = 0
-    tries = 0
-    while number_rows_updated != 1 and tries < retry_number:
-        if tries > 0:
-            # If state not correctly added retry
-            logger.warning(
-                f"While writing assembly creation error to db: DB update failed - "
-                f"reentry DB update Retry attempt: #{tries}."
-            )
-        number_rows_updated = update_db_where_conditions(
-            db_config,
-            table_name=TableName.ASSEMBLY_TABLE,
-            conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
-            update_values=update_values,
-        )
-        tries += 1
-
-    if number_rows_updated != 1:
-        error_msg = (
-            f"Assembly {update_type} failed for accession {seq_key['accession']} "
-            f"version {seq_key['version']}. DB update failed after {retry_number} attempts."
-        )
-        logger.error(error_msg)
+    update_with_retry(
+        db_config=db_config,
+        conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
+        update_values={
+            "status": Status.HAS_ERRORS,
+            "errors": json.dumps(error),
+            "started_at": datetime.now(tz=pytz.utc),
+        },
+        table_name=TableName.ASSEMBLY_TABLE,
+    )
 
 
 def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
@@ -429,6 +402,85 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     return True
 
 
+def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
+    """
+    Check if change in sequence or flatfile metadata has occurred since last version.
+    """
+    version_to_revise = last_version(db_config, entry)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name=TableName.SUBMISSION_TABLE,
+        conditions={"accession": entry["accession"], "version": version_to_revise},
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+
+    if (
+        entry["unaligned_nucleotide_sequences"]
+        != last_version_data[0]["unaligned_nucleotide_sequences"]
+    ):
+        logger.debug(
+            f"Unaligned nucleotide sequences have changed for {entry['accession']}, "
+            f"from {version_to_revise} to {entry['version']} - should be revised"
+            "(Metadata maybe also changed.)"
+        )
+        return True
+
+    fields = [
+        DEFAULT_EMBL_PROPERTY_FIELDS.country_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property,
+        DEFAULT_EMBL_PROPERTY_FIELDS.authors_property,
+        *DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties,
+    ]
+    for field in fields:
+        last_entry = last_version_data[0]["metadata"].get(field)
+        new_entry = entry["metadata"].get(field)
+        if last_entry != new_entry:
+            logger.debug(
+                f"Field {field} has changed from {last_entry} to {new_entry} "
+                f"for {entry['accession']}. (Maybe other fields changed as well)"
+            )
+            return True
+    logger.debug(
+        f"No changes detected for {entry['accession']} from version {version_to_revise} "
+        f"to {entry['version']}"
+    )
+    return False
+
+
+def update_assembly_results_with_latest_version(
+    db_config: SimpleConnectionPool, seq_key: dict[str, Any]
+):
+    version_to_revise = last_version(db_config, seq_key)
+    last_version_data = find_conditions_in_db(
+        db_config,
+        table_name=TableName.ASSEMBLY_TABLE,
+        conditions={
+            "accession": seq_key["accession"],
+            "version": version_to_revise,
+        },
+    )
+    if len(last_version_data) == 0:
+        error_msg = f"Last version {version_to_revise} not found in assembly_table"
+        raise RuntimeError(error_msg)
+    logger.info(
+        f"Updating assembly results for accession {seq_key['accession']} version "
+        f"{seq_key['version']} using results from version {version_to_revise} as there was no"
+        "change in flatfile data."
+    )
+    update_with_retry(
+        db_config=db_config,
+        conditions=seq_key,
+        update_values={
+            "status": Status.SUBMITTED,
+            "result": json.dumps(last_version_data[0]["result"]),
+        },
+        table_name=TableName.ASSEMBLY_TABLE,
+        reraise=False,
+    )
+
+
 def get_project_and_sample_results(
     db_config: SimpleConnectionPool, entry: dict[str, str]
 ) -> tuple[str, str]:
@@ -454,9 +506,7 @@ def get_project_and_sample_results(
     return sample_accession, study_accession
 
 
-def assembly_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in assembly_table in state READY
     2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
@@ -492,6 +542,9 @@ def assembly_table_create(
         if is_revision(db_config, seq_key):
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
+                continue
+            if not is_flatfile_data_changed(db_config, sample_data_in_submission_table[0]):
+                update_assembly_results_with_latest_version(db_config, seq_key)
                 continue
 
         try:
@@ -541,25 +594,16 @@ def assembly_table_create(
                 "status": Status.WAITING,
                 "result": json.dumps(assembly_creation_results.result),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"Assembly created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.ASSEMBLY_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded with: "
-                    f"{assembly_creation_results.result}"
-                )
+            logger.info(
+                f"Assembly creation succeeded for {seq_key['accession']} "
+                f"version {seq_key['version']}"
+            )
+            update_with_retry(
+                db_config=db_config,
+                conditions=seq_key,
+                update_values=update_values,
+                table_name=TableName.ASSEMBLY_TABLE,
+            )
         else:
             update_assembly_error(
                 db_config,
@@ -572,9 +616,7 @@ def assembly_table_create(
 _last_ena_check: datetime | None = None
 
 
-def assembly_table_update(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, time_threshold: int = 5
-):
+def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_threshold: int = 5):
     """
     - time_threshold (minutes)
     1. Find all entries in assembly_table in state WAITING
@@ -613,56 +655,28 @@ def assembly_table_update(
             if not (result_contains_gca_accession and result_contains_insdc_accession):
                 if previous_result == new_result.result:
                     continue
-                update_values = {
-                    "status": Status.WAITING,
+                status = Status.WAITING
+                logger.info(
+                    f"Assembly partially accessioned by ENA for {seq_key['accession']} "
+                    f"version {seq_key['version']}"
+                )
+            else:
+                status = Status.SUBMITTED
+                logger.info(
+                    f"Assembly accessioned by ENA for {seq_key['accession']} version "
+                    f"{seq_key['version']}"
+                )
+            update_with_retry(
+                db_config=db_config,
+                conditions=seq_key,
+                update_values={
+                    "status": status,
                     "result": json.dumps(new_result.result),
                     "finished_at": datetime.now(tz=pytz.utc),
-                }
-                number_rows_updated = 0
-                tries = 0
-                while number_rows_updated != 1 and tries < retry_number:
-                    if tries > 0:
-                        logger.warning(
-                            f"Assembly partially in ENA but DB update failed - "
-                            f"reentry DB update #{tries}."
-                        )
-                    number_rows_updated = update_db_where_conditions(
-                        db_config,
-                        table_name=TableName.ASSEMBLY_TABLE,
-                        conditions=seq_key,
-                        update_values=update_values,
-                    )
-                    tries += 1
-                if number_rows_updated == 1:
-                    logger.info(
-                        f"Partial results of assembly submission for accession "
-                        f"{row['accession']} returned!"
-                    )
-                continue
-            update_values = {
-                "status": Status.SUBMITTED,
-                "result": json.dumps(new_result.result),
-                "finished_at": datetime.now(tz=pytz.utc),
-            }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    logger.warning(
-                        f"Assembly in ENA but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.ASSEMBLY_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Assembly submission for accession {row['accession']} succeeded "
-                    f"and accession returned: {update_values}!"
-                )
+                },
+                table_name=TableName.ASSEMBLY_TABLE,
+                reraise=False,
+            )
 
 
 def assembly_table_handle_errors(
@@ -725,13 +739,13 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_assembly stopped due to exception in another task")
+            logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
         submission_table_start(db_config)
         submission_table_update(db_config)
 
-        assembly_table_create(db_config, config, retry_number=3, test=config.test)
+        assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
         assembly_table_handle_errors(db_config, config, slack_config)
         time.sleep(config.time_between_iterations)

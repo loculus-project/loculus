@@ -5,12 +5,19 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
-from typing import Any
+from typing import Any, Final
 
 import psycopg2
 import pytz
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +142,7 @@ class SubmissionTableEntry:
     project_id: int | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ProjectTableEntry:
     group_id: int
     organism: str
@@ -147,9 +154,11 @@ class ProjectTableEntry:
     finished_at: datetime | None = None
     center_name: str | None = None
     result: dict[str, str] | str | None = None
+    ena_first_publicly_visible: datetime | None = None
+    ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SampleTableEntry:
     accession: str
     version: int
@@ -159,9 +168,11 @@ class SampleTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: dict[str, str] | str | None = None
+    ena_first_publicly_visible: datetime | None = None
+    ncbi_first_publicly_visible: datetime | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AssemblyTableEntry:
     accession: str
     version: int
@@ -171,6 +182,10 @@ class AssemblyTableEntry:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     result: str | None = None
+    ena_nucleotide_first_publicly_visible: datetime | None = None
+    ncbi_nucleotide_first_publicly_visible: datetime | None = None
+    ena_gca_first_publicly_visible: datetime | None = None
+    ncbi_gca_first_publicly_visible: datetime | None = None
 
 
 type Accession = str
@@ -272,17 +287,21 @@ def find_conditions_in_db(
 
             query = f"SELECT * FROM {table_name}"  # noqa: S608
 
-            where_clause = " AND ".join([f"{key}=%s" for key in conditions])
-            query += f" WHERE {where_clause}"
+            where_conditions, params = [], []
 
-            cur.execute(
-                query,
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                ),
-            )
+            for key, value in conditions.items():
+                if value is None:
+                    where_conditions.append(f"{key} IS NULL")
+                else:
+                    where_conditions.append(f"{key} = %s")
+                    if isinstance(value, (Status, StatusAll)):
+                        params.append(str(value))
+                    else:
+                        params.append(value)
+            if where_conditions:
+                query += " WHERE " + " AND ".join(where_conditions)
 
+            cur.execute(query, params)
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
@@ -362,7 +381,7 @@ def find_waiting_in_db(
 def update_db_where_conditions(
     db_conn_pool: SimpleConnectionPool,
     table_name: TableName,
-    conditions: dict[str, str],
+    conditions: dict[str, str | int],
     update_values: dict[str, Any],
 ) -> int:
     updated_row_count = 0
@@ -394,10 +413,62 @@ def update_db_where_conditions(
             con.commit()
     except (Exception, psycopg2.DatabaseError) as e:
         con.rollback()
-        print(f"update_db_where_conditions errored with: {e}")
+        logger.warning(f"update_db_where_conditions errored with: {e}")
     finally:
         db_conn_pool.putconn(con)
     return updated_row_count
+
+
+def update_with_retry(
+    db_config: SimpleConnectionPool,
+    conditions: dict[str, str],
+    table_name: TableName,
+    update_values: dict[str, Any],
+    reraise: bool = True,
+) -> int:
+    """Update the database with retry logic.
+    the conditions and update_values are dictionaries where
+    keys are column names and values are the new values to set.
+    they will be added to the log message."""
+
+    def _do_update():
+        number_rows_updated = update_db_where_conditions(
+            db_config,
+            table_name=table_name,
+            conditions=conditions,
+            update_values=update_values,
+        )
+        if number_rows_updated != 1:
+            msg = f"{table_name} update failed"
+            raise ValueError(msg)
+        return number_rows_updated
+
+    number_of_retries: Final = 3
+    retryer = Retrying(
+        stop=stop_after_attempt(number_of_retries),
+        wait=wait_fixed(2),
+        retry=retry_if_exception_type(ValueError),
+        reraise=True,
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+    )
+
+    try:
+        logger.debug(
+            f"Updating {table_name} with conditions {conditions} and values {update_values}"
+        )
+        result = retryer(_do_update)
+        logger.info(f"{table_name} update succeeded for {conditions} with values {update_values}")
+        return result
+    except Exception as e:
+        error_msg = (
+            f"{table_name} update failed for {conditions} with values {update_values} "
+            f"after {number_of_retries} attempts."
+        )
+        logger.error(error_msg)
+        if reraise:
+            logger.error("Raising exception after retries failed")
+            raise ValueError(error_msg) from e
+        return 0
 
 
 def add_to_project_table(
@@ -430,7 +501,7 @@ def add_to_project_table(
         return project_id[0] if project_id else None
     except Exception as e:
         con.rollback()
-        print(f"add_to_project_table errored with: {e}")
+        logger.warning(f"add_to_project_table errored with: {e}")
         return None
     finally:
         db_conn_pool.putconn(con)
@@ -461,7 +532,7 @@ def add_to_sample_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_sample_table errored with: {e}")
+        logger.warning(f"add_to_sample_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)
@@ -492,7 +563,7 @@ def add_to_assembly_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_assembly_table errored with: {e}")
+        logger.warning(f"add_to_assembly_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)
@@ -551,7 +622,7 @@ def add_to_submission_table(
         return True
     except Exception as e:
         con.rollback()
-        print(f"add_to_submission_table errored with: {e}")
+        logger.warning(f"add_to_submission_table errored with: {e}")
         return False
     finally:
         db_conn_pool.putconn(con)

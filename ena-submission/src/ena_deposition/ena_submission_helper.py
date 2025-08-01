@@ -34,6 +34,7 @@ from tenacity import (
 from ena_deposition.config import Config
 
 from .ena_types import (
+    DEFAULT_EMBL_PROPERTY_FIELDS,
     Action,
     Actions,
     AssemblyChromosomeListFile,
@@ -399,22 +400,22 @@ def get_authors(authors: str) -> str:
 
 
 def get_country(metadata: dict[str, str]) -> str:
-    country = metadata.get("geoLocCountry", "Unknown")
-    admin_levels = ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
-    admin_values = [val for level in admin_levels if (val := metadata.get(level))]
-    admin = ", ".join(admin_values)
+    country = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.country_property, "Unknown")
+    admin = ", ".join(
+        filter(None, map(metadata.get, DEFAULT_EMBL_PROPERTY_FIELDS.admin_level_properties))
+    )
     return f"{country}: {admin}" if admin else country
 
 
 def create_flatfile(
     config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
 ):
-    collection_date = metadata.get("sampleCollectionDate", "Unknown")
+    collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
+    authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
     country = get_country(metadata)
     organism = organism_metadata.get("scientific_name", "Unknown")
     accession = metadata["accession"]
     description = get_description(config, metadata)
-    authors = get_authors(metadata.get("authors", ""))
     moleculetype = get_molecule_type(organism_metadata)
 
     if dir:
@@ -446,7 +447,7 @@ def create_flatfile(
                 "molecule_type": seq_io_moleculetype[moleculetype],
                 "organism": organism,
                 "topology": organism_metadata.get("topology", "linear"),
-                "references": [reference],
+                "references": [reference],  # type: ignore
             },
             description=description,
         )
@@ -463,13 +464,15 @@ def create_flatfile(
         )
         sequence.features.append(source_feature)
 
+        # This is really convoluted, will be fixed by using improvements
+        # from annotations PR in the future
         with tempfile.NamedTemporaryFile(delete=False, suffix=".embl") as temp_seq_file:
             SeqIO.write(sequence, temp_seq_file.name, "embl")
 
-        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:
+        with open(temp_seq_file.name, encoding="utf-8") as temp_seq_file:  # type: ignore
             embl_content.append(temp_seq_file.read())
 
-    final_content = "\n".join(embl_content)
+    final_content = "\n".join(embl_content)  # type: ignore
 
     gzip_filename = filename + ".gz"
 
@@ -751,8 +754,7 @@ def get_ena_analysis_process(
 
 
 # TODO: Also pass the full segment list from config so we can handle someone submitting
-# a multi-segmented virus that has a main segment. This will require having one pipeline
-# per organism, not one pipeline for all. Wider changes, thus.
+# a multi-segmented virus that has a main segment.
 def get_chromsome_accessions(
     insdc_accession_range: str, segment_order: list[str]
 ) -> dict[str, str]:
@@ -843,7 +845,7 @@ def set_error_if_accession_not_exists(
     succeeded: bool | int | None
     if accession_type == "BIOSAMPLE":
         sample_table_entry = SampleTableEntry(
-            **conditions,
+            **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
             errors=json.dumps([error_text]),
             result={"ena_sample_accession": accession, "biosample_accession": accession},
@@ -851,7 +853,7 @@ def set_error_if_accession_not_exists(
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
     else:
         project_table_entry = ProjectTableEntry(
-            **conditions,
+            **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
             errors=json.dumps([error_text]),
             result={"bioproject_accession": accession},

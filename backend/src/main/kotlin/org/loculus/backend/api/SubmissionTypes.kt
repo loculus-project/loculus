@@ -418,19 +418,6 @@ val FileCategoryFilesMap.categories: Set<FileCategory>
 val FileCategoryFilesMap.fileIds: Set<FileId>
     get() = this.values.flatMap { it.map { it.fileId } }.toSet()
 
-fun FileCategoryFilesMap.addUrls(
-    buildUrl: (fileCategory: String, fileId: FileId, fileName: String) -> String,
-): Map<String, List<FileIdAndNameAndReadUrl>> = this.entries.associate { entry ->
-    entry.key to
-        entry.value.map { fileIdAndName ->
-            FileIdAndNameAndReadUrl(
-                fileIdAndName.fileId,
-                fileIdAndName.name,
-                buildUrl(entry.key, fileIdAndName.fileId, fileIdAndName.name),
-            )
-        }
-}
-
 fun FileCategoryFilesMap.getFileId(fileCategory: FileCategory, fileName: String): FileId? =
     this[fileCategory]?.find { fileIdAndName -> fileIdAndName.name == fileName }?.fileId
 

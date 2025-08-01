@@ -89,7 +89,7 @@ export const SequenceDataUI: FC<Props> = ({
                 <>
                     <hr className='my-4' />
                     <div className='my-8'>
-                        <h2 className='text-xl font-bold mb-3'>Sequence Management</h2>
+                        <h2 className='text-xl font-bold mb-3'>Sequence management</h2>
                         <div className='text-sm text-gray-400 mb-4 block'>
                             <MdiEye className='w-6 h-6 inline-block mr-2' />
                             Only visible to group members

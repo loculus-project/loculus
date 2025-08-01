@@ -4,6 +4,8 @@ import threading
 
 import click
 
+from ena_deposition.check_external_visibility import check_and_update_visibility
+
 from .api import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
@@ -26,8 +28,12 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--input-file",
     type=click.Path(exists=True),
+    help=(
+        "(for debugging) Path to a file containing submission data. "
+        "If provided, the script will trigger submission from this file."
+    ),
 )
-def run(config_file: str, input_file: str) -> None:
+def run(config_file: str, input_file: str | None) -> None:
     logging.basicConfig(
         encoding="utf-8",
         level=logging.INFO,
@@ -37,7 +43,7 @@ def run(config_file: str, input_file: str) -> None:
 
     config: Config = get_config(config_file)
     logging.getLogger().setLevel(config.log_level)
-    logging.getLogger("requests").setLevel(logging.INFO)
+    logging.getLogger("requests").setLevel(logging.INFO)  # For requests, debug level is too verbose
     logger.info(f"Config: {config}")
 
     if input_file:
@@ -51,14 +57,17 @@ def run(config_file: str, input_file: str) -> None:
             executor.submit(create_assembly, config, stop_event),
             executor.submit(upload_external_metadata, config, stop_event),
             executor.submit(start_api, config, stop_event),
+            executor.submit(check_and_update_visibility, config, stop_event),
         ]
         if not input_file:
             futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))
         for future in concurrent.futures.as_completed(futures):
             try:
                 future.result()
-            except Exception as e:
-                print(f"Task generated an exception: {e}")
+            except concurrent.futures.CancelledError:
+                logger.debug("A task was cancelled")
+            except Exception:
+                logger.exception("Task generated an exception")
                 stop_event.set()  # Set the stop_event to notify other threads
                 for f in futures:
                     if not f.done():

@@ -99,6 +99,10 @@ spec:
             # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
             - name: KC_RUN_IN_CONTAINER
               value: "true"
+            {{- if .Values.runDevelopmentKeycloakDatabase  }}
+            - name: LOCULUS_VERSION
+              value: {{ $dockerTag }}
+            {{- end }}
           args:
             - "start"
             - "--import-realm"
