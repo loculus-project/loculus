@@ -1,5 +1,6 @@
 import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
+import z from 'zod';
 
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
@@ -11,16 +12,19 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
+import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 type GetTableDataResult = {
     data: TableDataEntry[];
+    suborganism: Suborganism;
     isRevocation: boolean;
 };
 
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
+    referenceGenomes: ReferenceGenomes,
     lapisClient: LapisClient,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
@@ -51,9 +55,18 @@ export async function getTableData(
                 )
                 .map((data) => ({
                     data: toTableData(schema)(data),
+                    suborganism: getSuborganism(data.details, schema, referenceGenomes),
                     isRevocation: isRevocationEntry(data.details),
                 })),
         );
+}
+
+function getSuborganism(details: Details, schema: Schema, referenceGenomes: ReferenceGenomes): Suborganism {
+    if (SINGLE_REFERENCE in referenceGenomes) {
+        return SINGLE_REFERENCE;
+    }
+    const suborganismField = 'genotype'; // TODO read from schema
+    return z.string().parse(details[suborganismField]);
 }
 
 function isRevocationEntry(details: Details): boolean {

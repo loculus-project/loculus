@@ -35,6 +35,7 @@ export const GET: APIRoute = async (req) => {
         dataUseTermsHistory: result.dataUseTermsHistory,
         schema,
         clientConfig,
+        suborganism: result.suborganism,
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,
     };
