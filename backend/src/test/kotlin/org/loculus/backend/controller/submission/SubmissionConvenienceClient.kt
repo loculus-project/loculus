@@ -26,6 +26,7 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -98,7 +99,7 @@ class SubmissionConvenienceClient(
             fileMapping = mutableMapOf()
 
             val client = HttpClient.newBuilder().build()
-            val fileContent = "Hello, world!".toByteArray()
+            val fileContent = DEFAULT_SIMPLE_FILE_CONTENT.toByteArray()
 
             DefaultFiles.submissionIds.forEachIndexed { i, submissionId ->
 
@@ -527,7 +528,7 @@ class SubmissionConvenienceClient(
     /**
      * Upload a file to a presigned write URL (S3).
      */
-    fun uploadFile(presignedWriteUrl: String, content: String) {
+    fun uploadFile(presignedWriteUrl: String, content: String): HttpResponse<String?> {
         val client = HttpClient.newBuilder().build()
         val fileContent = content.toByteArray()
 
@@ -536,6 +537,6 @@ class SubmissionConvenienceClient(
             .PUT(HttpRequest.BodyPublishers.ofByteArray(fileContent))
             .build()
 
-        client.send(request, HttpResponse.BodyHandlers.ofString())
+        return client.send(request, HttpResponse.BodyHandlers.ofString())
     }
 }

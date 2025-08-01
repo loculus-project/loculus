@@ -119,6 +119,7 @@ class SubmitModel(
         submissionIdFilesMappingPreconditionValidator
             .validateFilenamesAreUnique(submissionParams.files)
             .validateCategoriesMatchSchema(submissionParams.files, submissionParams.organism)
+            .validateMultipartUploads(submissionParams.files)
             .validateFilesExist(submissionParams.files)
 
         insertDataIntoAux(

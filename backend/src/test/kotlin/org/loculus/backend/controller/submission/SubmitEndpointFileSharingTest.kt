@@ -7,6 +7,7 @@ import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.controller.files.FilesClient
@@ -45,7 +46,7 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN a valid request with a valid File ID THEN the request is valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -67,7 +68,7 @@ class SubmitEndpointFileSharingTest(
     @Test
     fun `GIVEN a non-existing submission ID is given in submit THEN the request is not valid`() {
         val fileIdAndUrl = filesClient.requestUploads(groupId).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
@@ -128,7 +129,7 @@ class SubmitEndpointFileSharingTest(
             groupId = otherGroupId,
             jwt = jwtForAlternativeUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
 
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,

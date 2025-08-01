@@ -11,22 +11,9 @@ Read also the [administrator documentation](https://loculus.org/for-administrato
 
 ## Submission
 
-Read also the [end user documentation](https://loculus.org/for-users/submit-extra-files/) on file submission.
-
 ![submission](./plantuml/sequenceFileSharingSubmission.svg)
 
-Files are uploaded independently of the normal submission first, and then only the File IDs are attached to the regular submission process. You first make a request to `/files/request-upload` with the number of files you want to upload and the group ID of the group that will own the files. The endpoint returns file IDs and presigned URLs for the number of files that were requested:
-
-```json
-[
-  {
-    "fileId": "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
-    "url": "https://dummyendpoint.com/dummybucket/files/2ea137d0-8773-4e0a-a9aa-5591de12ff23?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=dummyac..."
-  }
-]
-```
-
-You then use the presigned URLs to upload your files. Afterwards you can attach a `fileMapping` to your call to the `/submit` endpoint, with the following structure: `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`.
+Files are uploaded independently of the normal submission first, and then only the File IDs are attached to the regular submission process. Read the [end user documentation](https://loculus.org/for-users/submit-extra-files/) for details.
 
 ## Preprocessing
 

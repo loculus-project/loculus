@@ -30,15 +30,17 @@ You do not need to upload it multiple times.
 
 ### Uploading the files
 
-To upload files, call the `/files/request-upload` endpoint.
-You need to provide a group ID, which is the group that will then own the files.
-Also give a number of how many files you want to upload.
+#### Simple upload
+
+The simple (single-part) way to upload files is to call the `/files/request-upload` endpoint.
+You need to provide a group ID, which is the group that will then own the files and give a number of how many files
+you want to upload.
 
 curl example:
 
 ```bash
 curl -X POST \
-  'https://backend-fs-user-docs.loculus.org/files/request-upload?groupId=2&numberFiles=3' \
+  '<Backend URL>/files/request-upload?groupId=2&numberFiles=3' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer eyJhbGciOiJSUzI1...' \
 ```
@@ -60,8 +62,94 @@ Use the pre-signed URL to upload your file:
 ```bash
 curl -X PUT \
   -T hello-world.txt \
-  "https://s3-fs-user-docs.loculus.org/loculus-preview-private/files/0699d6..."
+  "<presigned URL>"
 ```
+
+#### Multipart upload
+
+For large files (typically over 100 MB), you can use multipart upload which allows uploading a file in smaller chunks.
+This provides better reliability and performance for large file transfers.
+
+The multipart upload process involves three steps:
+
+1. Request multipart upload URLs
+2. Upload the file parts
+3. Complete the multipart upload
+
+##### Step 1: Request multipart upload URLs
+
+Call the `/files/request-multipart-upload` endpoint, specifying the number of files and the number of parts per file. curl example:
+
+```bash
+curl -X POST \
+  '<Backend URL>/files/request-multipart-upload?groupId=2&numberFiles=1&numberParts=3' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJSUzI1...'
+```
+
+The endpoint returns an array with file IDs and presigned URLs for each part:
+
+```json
+[
+  {
+    "fileId": "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
+    "urls": [
+      "https://dummyendpoint.com/dummybucket/files/8D8AC610-566D-4EF0-9C22-186B2A5ED793?partNumber=1&X-Amz-Algorithm=...",
+      "https://dummyendpoint.com/dummybucket/files/8D8AC610-566D-4EF0-9C22-186B2A5ED793?partNumber=2&X-Amz-Algorithm=...",
+      "https://dummyendpoint.com/dummybucket/files/8D8AC610-566D-4EF0-9C22-186B2A5ED793?partNumber=3&X-Amz-Algorithm=..."
+    ]
+  }
+]
+```
+
+##### Step 2: Upload the file parts
+
+Split your file into parts and upload each part to its corresponding presigned URL. Each part should be uploaded in order using the URLs provided.
+
+```bash
+# Upload part 1
+curl -X PUT \
+  -T large-file-part1 \
+  "<presigned URL for part 1>"
+```
+
+**Important**: Save the `ETag` header value from each response. You'll need these for the next step.
+
+The response headers will include something like:
+
+```
+ETag: "d41d8cd98f00b204e9800998ecf8427e"
+```
+
+Repeat this process for each part. Note that:
+
+- All parts except the last one should be at least 5 MB
+- You don't need to use all the provided URLs if your file requires fewer parts
+
+##### Step 3: Complete the multipart upload
+
+After uploading all parts, call the `/files/complete-multipart-upload` endpoint with the file ID and the ETags from each part:
+
+```bash
+curl -X POST \
+  '<Backend URL>/files/complete-multipart-upload' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJSUzI1...' \
+  -H 'Content-Type: application/json' \
+  -d '[
+    {
+      "fileId": "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
+      "etags": [
+        "d41d8cd98f00b204e9800998ecf8427e",
+        "098f6bcd4621d373cade4e832627b4f6",
+        "5d41402abc4b2a76b9719d911017c592"
+      ]
+    }
+  ]'
+```
+
+The ETags must be provided in the order of the parts. Once the multipart upload is completed successfully,
+you can proceed to attach the file ID to your submission as described in the next section.
 
 ### Attach file IDs to submission
 

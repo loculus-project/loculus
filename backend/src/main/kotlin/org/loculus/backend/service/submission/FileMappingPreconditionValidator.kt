@@ -60,6 +60,16 @@ class FileMappingPreconditionValidator(
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
     }
 
+    fun validateMultipartUploads(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val uncompleted = filesDatabaseService.getUncompletedMultipartUploadIds(fileIds)
+        if (uncompleted.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The following multipart uploads have not been completed: " + uncompleted.joinToString(),
+            )
+        }
+        return this
+    }
+
     fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
         uncheckedFileIds.forEach { fileId ->
@@ -109,6 +119,19 @@ class SubmissionIdFilesMappingPreconditionValidator(
     ): SubmissionIdFilesMappingPreconditionValidator {
         submissionIdFilesMap?.values?.forEach {
             fileMappingValidator.validateCategoriesMatchSubmissionSchema(it, organism)
+        }
+        return this
+    }
+
+    /**
+     * For files that have been uploaded through the multipart upload protocol, this validates that the uploads
+     * have been completed.
+     */
+    fun validateMultipartUploads(
+        submissionIdFilesMap: SubmissionIdFilesMap?,
+    ): SubmissionIdFilesMappingPreconditionValidator {
+        submissionIdFilesMap?.values?.forEach {
+            fileMappingValidator.validateMultipartUploads(it.fileIds)
         }
         return this
     }
