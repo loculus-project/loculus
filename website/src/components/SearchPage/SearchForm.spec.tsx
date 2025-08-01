@@ -6,7 +6,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesSequenceNames,
+    type ReferenceAccession,
+    SINGLE_REFERENCE,
+} from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
@@ -40,9 +44,11 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [defaultAccession],
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
 };
 
 const searchVisibilities = new Map<string, boolean>([

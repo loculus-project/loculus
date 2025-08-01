@@ -1,7 +1,11 @@
 import { type Dispatch, type FC, type SetStateAction, useState, useEffect } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
-import type { NucleotideSegmentNames, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import {
+    getFirstSequenceNames,
+    type NucleotideSegmentNames,
+    type ReferenceGenomesSequenceNames,
+} from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import {
     alignedSequenceSegment,
@@ -30,6 +34,8 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     referenceGenomeSequenceNames,
     loadSequencesAutomatically,
 }) => {
+    const { nucleotideSequences: nucleotideSegmentNames, genes } = getFirstSequenceNames(referenceGenomeSequenceNames);
+
     const [loadSequences, setLoadSequences] = useState(false);
     useEffect(() => {
         if (loadSequencesAutomatically) {
