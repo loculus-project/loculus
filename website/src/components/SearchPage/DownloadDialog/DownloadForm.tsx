@@ -55,7 +55,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
 
-    const {nucleotideSequences,genes  } = getFirstSequenceNames(referenceGenomesSequenceNames);
+    const { nucleotideSequences, genes } = getFirstSequenceNames(referenceGenomesSequenceNames);
 
     const isMultiSegmented = nucleotideSequences.length > 1;
 
@@ -68,18 +68,14 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             case 1:
                 downloadDataType = {
                     type: 'unalignedNucleotideSequences',
-                    segment: isMultiSegmented
-                        ? nucleotideSequences[unalignedNucleotideSequence]
-                        : undefined,
+                    segment: isMultiSegmented ? nucleotideSequences[unalignedNucleotideSequence] : undefined,
                     includeRichFastaHeaders: includeRichFastaHeaders === 1,
                 };
                 break;
             case 2:
                 downloadDataType = {
                     type: 'alignedNucleotideSequences',
-                    segment: isMultiSegmented
-                        ? nucleotideSequences[alignedNucleotideSequence]
-                        : undefined,
+                    segment: isMultiSegmented ? nucleotideSequences[alignedNucleotideSequence] : undefined,
                 };
                 break;
             case 3:

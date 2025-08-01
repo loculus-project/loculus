@@ -9,8 +9,8 @@ import {
 } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../../../../services/backendClientFactory';
-import { getAccessToken } from '../../../../../utils/getAccessToken';
 import { getFirstSequenceNames } from '../../../../../types/referencesGenomes';
+import { getAccessToken } from '../../../../../utils/getAccessToken';
 
 const version = Astro.params.version!;
 const accession = Astro.params.accession!;
