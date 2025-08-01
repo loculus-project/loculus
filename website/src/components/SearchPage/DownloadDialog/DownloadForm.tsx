@@ -9,7 +9,7 @@ import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -55,7 +55,9 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
 
-    const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
+    const {nucleotideSequences,genes  } = getFirstSequenceNames(referenceGenomesSequenceNames);
+
+    const isMultiSegmented = nucleotideSequences.length > 1;
 
     useEffect(() => {
         let downloadDataType: DownloadDataType;
@@ -67,7 +69,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 downloadDataType = {
                     type: 'unalignedNucleotideSequences',
                     segment: isMultiSegmented
-                        ? referenceGenomesSequenceNames.nucleotideSequences[unalignedNucleotideSequence]
+                        ? nucleotideSequences[unalignedNucleotideSequence]
                         : undefined,
                     includeRichFastaHeaders: includeRichFastaHeaders === 1,
                 };
@@ -76,14 +78,14 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 downloadDataType = {
                     type: 'alignedNucleotideSequences',
                     segment: isMultiSegmented
-                        ? referenceGenomesSequenceNames.nucleotideSequences[alignedNucleotideSequence]
+                        ? nucleotideSequences[alignedNucleotideSequence]
                         : undefined,
                 };
                 break;
             case 3:
                 downloadDataType = {
                     type: 'alignedAminoAcidSequences',
-                    gene: referenceGenomesSequenceNames.genes[alignedAminoAcidSequence],
+                    gene: genes[alignedAminoAcidSequence],
                 };
                 break;
             default:
@@ -106,8 +108,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         alignedAminoAcidSequence,
         includeRichFastaHeaders,
         isMultiSegmented,
-        referenceGenomesSequenceNames.nucleotideSequences,
-        referenceGenomesSequenceNames.genes,
+        nucleotideSequences,
+        genes,
         onChange,
         selectedFields,
     ]);
@@ -134,7 +136,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           {isMultiSegmented ? (
                               <DropdownOptionBlock
                                   name='unalignedNucleotideSequences'
-                                  options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
+                                  options={nucleotideSequences.map((segment) => ({
                                       label: <>{segment}</>,
                                   }))}
                                   selected={unalignedNucleotideSequence}
@@ -162,7 +164,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                       <div className='px-8'>
                           <DropdownOptionBlock
                               name='alignedNucleotideSequences'
-                              options={referenceGenomesSequenceNames.nucleotideSequences.map((gene) => ({
+                              options={nucleotideSequences.map((gene) => ({
                                   label: <>{gene}</>,
                               }))}
                               selected={alignedNucleotideSequence}
@@ -178,7 +180,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                       <div className='px-8'>
                           <DropdownOptionBlock
                               name='alignedAminoAcidSequences'
-                              options={referenceGenomesSequenceNames.genes.map((gene) => ({
+                              options={genes.map((gene) => ({
                                   label: <>{gene}</>,
                               }))}
                               selected={alignedAminoAcidSequence}
