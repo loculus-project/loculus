@@ -11,6 +11,8 @@ import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
 
+const PART_SIZE = 5 * 1024 * 1024; // 5MB
+
 type SubmissionId = string;
 
 /**
@@ -47,8 +49,10 @@ type Pending = {
     file: File;
     name: string;
     size: number;
-    url: string;
+    urls: string[];
     fileId: string;
+    etags: string[];
+    progress: number;
 };
 
 type Uploaded = {
@@ -96,50 +100,86 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
      */
     function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
         Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
-            files.forEach(({ file, url, fileId }) => {
-                fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
-                        'Content-Type': file.type,
-                    },
-                    body: file,
-                })
-                    .then((response) => {
-                        setFileUploadState((state) => {
-                            if (state?.type === 'uploadInProgress') {
-                                return produce(state, (draft) => {
-                                    draft.files[submissionId] = state.files[submissionId].map((file) => {
-                                        if (file.type === 'pending' && file.fileId === fileId) {
-                                            if (response.ok) {
-                                                return {
-                                                    type: 'uploaded',
-                                                    fileId: file.fileId,
-                                                    name: file.name,
-                                                    size: file.size,
-                                                };
-                                            } else {
-                                                return {
-                                                    type: 'error',
-                                                    msg: 'error',
-                                                    name: file.name,
-                                                    size: file.size,
-                                                };
-                                            }
-                                        } else {
-                                            return file;
-                                        }
-                                    });
-                                });
+            files.forEach((pending) => {
+                void (async () => {
+                    for (let i = 0; i < pending.urls.length; i++) {
+                        const start = i * PART_SIZE;
+                        const end = Math.min(start + PART_SIZE, pending.file.size);
+                        const part = pending.file.slice(start, end);
+                        try {
+                            const response = await fetch(pending.urls[i], {
+                                method: 'PUT',
+                                headers: {
+                                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                                    'Content-Type': 'application/octet-stream',
+                                },
+                                body: part,
+                            });
+                            if (!response.ok) {
+                                throw new Error('upload failed');
                             }
-                            return state;
-                        });
-                    })
-                    .catch((error: unknown) => {
-                        if (error instanceof Error) {
-                            onError(error.message);
+                            const etag = response.headers.get('ETag');
+                            if (etag) {
+                                pending.etags.push(etag);
+                            }
+                            const uploadedBytes = Math.min(end, pending.file.size);
+                            setFileUploadState((state) => {
+                                if (state?.type === 'uploadInProgress') {
+                                    return produce(state, (draft) => {
+                                        draft.files[submissionId] = state.files[submissionId].map((f) => {
+                                            if (f.type === 'pending' && f.fileId === pending.fileId) {
+                                                f.progress = uploadedBytes / pending.file.size;
+                                                return f;
+                                            }
+                                            return f;
+                                        });
+                                    });
+                                }
+                                return state;
+                            });
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                onError(error.message);
+                            }
+                            setFileUploadState((state) => {
+                                if (state?.type === 'uploadInProgress') {
+                                    return produce(state, (draft) => {
+                                        draft.files[submissionId] = state.files[submissionId].map((f) => {
+                                            if (f.type === 'pending' && f.fileId === pending.fileId) {
+                                                return { type: 'error', msg: 'error', name: f.name, size: f.size };
+                                            }
+                                            return f;
+                                        });
+                                    });
+                                }
+                                return state;
+                            });
+                            return;
                         }
+                    }
+
+                    await backendClient.completeMultipartUpload(accessToken, [
+                        { fileId: pending.fileId, etags: pending.etags },
+                    ]);
+                    setFileUploadState((state) => {
+                        if (state?.type === 'uploadInProgress') {
+                            return produce(state, (draft) => {
+                                draft.files[submissionId] = state.files[submissionId].map((f) => {
+                                    if (f.type === 'pending' && f.fileId === pending.fileId) {
+                                        return {
+                                            type: 'uploaded',
+                                            fileId: f.fileId,
+                                            name: f.name,
+                                            size: f.size,
+                                        };
+                                    }
+                                    return f;
+                                });
+                            });
+                        }
+                        return state;
                     });
+                })();
             });
         });
     }
@@ -172,46 +212,45 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
             // and set the state to 'uploadInProgress'.
             case 'awaitingUrls': {
-                const awaitingUrlCount = Object.values(fileUploadState.files)
-                    .map((l) => l.length)
-                    .reduce((a, b) => a + b);
-
-                backendClient
-                    .requestUpload(accessToken, group.groupId, awaitingUrlCount)
-                    .then((res) => {
-                        res.match(
-                            (fileIdAndUrlList) => {
-                                // Add file IDs and URLs to files, and set state to 'pending'
-                                const pendingFiles: Record<SubmissionId, Pending[]> = {};
-                                Object.keys(fileUploadState.files).forEach(
-                                    (submissionId) => (pendingFiles[submissionId] = []),
-                                );
-                                let i = 0;
-                                Object.entries(fileUploadState.files).forEach(([submissionId, files]) => {
-                                    files.forEach((file) => {
-                                        pendingFiles[submissionId].push({
-                                            type: 'pending',
-                                            file: file.file,
-                                            name: file.name,
-                                            size: file.file.size,
-                                            url: fileIdAndUrlList[i].url,
-                                            fileId: fileIdAndUrlList[i].fileId,
-                                        });
-                                        i++;
-                                    });
-                                });
-                                setFileUploadState({
-                                    type: 'uploadInProgress',
-                                    files: pendingFiles,
-                                });
-
-                                // For all pending files, start the upload
-                                startUploading(pendingFiles);
-                            },
-                            (err) => onError(err.detail),
+                void (async () => {
+                    try {
+                        const pendingFiles: Record<SubmissionId, Pending[]> = {};
+                        await Promise.all(
+                            Object.entries(fileUploadState.files).map(async ([submissionId, files]) => {
+                                pendingFiles[submissionId] = [];
+                                for (const file of files) {
+                                    const numberParts = Math.max(1, Math.ceil(file.file.size / PART_SIZE));
+                                    const res = await backendClient.requestMultipartUpload(
+                                        accessToken,
+                                        group.groupId,
+                                        1,
+                                        numberParts,
+                                    );
+                                    res.match(
+                                        (list) => {
+                                            const item = list[0];
+                                            pendingFiles[submissionId].push({
+                                                type: 'pending',
+                                                file: file.file,
+                                                name: file.name,
+                                                size: file.file.size,
+                                                urls: item.urls,
+                                                fileId: item.fileId,
+                                                etags: [],
+                                                progress: 0,
+                                            });
+                                        },
+                                        (err) => onError(err.detail),
+                                    );
+                                }
+                            }),
                         );
-                    })
-                    .catch(() => onError('failed to prepare upload.'));
+                        setFileUploadState({ type: 'uploadInProgress', files: pendingFiles });
+                        startUploading(pendingFiles);
+                    } catch {
+                        onError('failed to prepare upload.');
+                    }
+                })();
                 break;
             }
             case 'uploadInProgress': {
@@ -354,14 +393,26 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium'>Files</h3>
                     {inputMode === 'form'
                         ? Object.values(fileUploadState.files)[0].map((file) => (
-                              <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
+                              <FileListItem
+                                  key={file.name}
+                                  name={file.name}
+                                  size={file.size}
+                                  status={file.type}
+                                  progress={file.type === 'pending' ? file.progress : undefined}
+                              />
                           ))
                         : Object.entries(fileUploadState.files).flatMap(([submissionId, files]) => [
                               <h4 key={submissionId} className='text-xs font-medium py-2'>
                                   {submissionId}
                               </h4>,
                               ...files.map((file) => (
-                                  <FileListItem key={file.name} name={file.name} size={file.size} status={file.type} />
+                                  <FileListItem
+                                      key={file.name}
+                                      name={file.name}
+                                      size={file.size}
+                                      status={file.type}
+                                      progress={file.type === 'pending' ? file.progress : undefined}
+                                  />
                               )),
                           ])}
                     <ul></ul>
@@ -383,19 +434,28 @@ type FileListeItemProps = {
     name: string;
     size: number;
     status: UploadStatus;
+    progress?: number;
 };
 
-const FileListItem: FC<FileListeItemProps> = ({ name, size, status }) => {
+const FileListItem: FC<FileListeItemProps> = ({ name, size, status, progress }) => {
     return (
-        <div className='flex flex-row'>
-            <div className='w-3.5' />
-            <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
-            <div className='flex-1 min-w-0 flex items-center'>
-                <span className='text-xs text-gray-700 truncate max-w-[140px]'>{name}</span>
-                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(size)})</span>
+        <div className='flex flex-col mb-1'>
+            <div className='flex flex-row'>
+                <div className='w-3.5' />
+                <LucideFile className='h-4 w-4 text-gray-500 ml-1 mr-1' />
+                <div className='flex-1 min-w-0 flex items-center'>
+                    <span className='text-xs text-gray-700 truncate max-w-[140px]'>{name}</span>
+                    <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(size)})</span>
+                </div>
+                <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(status)}</div>
             </div>
-            {/* Status icon */}
-            <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(status)}</div>
+            {status === 'pending' && progress !== undefined && (
+                <progress
+                    className='progress progress-primary h-1 w-full mt-1'
+                    value={Math.round(progress * 100)}
+                    max='100'
+                />
+            )}
         </div>
     );
 };

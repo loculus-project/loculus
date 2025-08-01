@@ -7,6 +7,8 @@ import {
     getSequencesResponse,
     info,
     requestUploadResponse,
+    requestMultipartUploadResponse,
+    fileIdAndEtags,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     type ProblemDetail,
@@ -74,6 +76,32 @@ export class BackendClient {
                 groupId,
                 numberFiles,
             },
+        );
+    }
+
+    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
+        return this.request(
+            '/files/request-multipart-upload',
+            'POST',
+            requestMultipartUploadResponse,
+            createAuthorizationHeader(token),
+            undefined,
+            {
+                groupId,
+                numberFiles,
+                numberParts,
+            },
+        );
+    }
+
+    public completeMultipartUpload(token: string, parts: z.infer<typeof fileIdAndEtags>[]) {
+        return this.request(
+            '/files/complete-multipart-upload',
+            'POST',
+            z.never(),
+            createAuthorizationHeader(token),
+            parts,
+            undefined,
         );
     }
 
