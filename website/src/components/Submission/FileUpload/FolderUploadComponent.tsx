@@ -3,12 +3,10 @@ import { useEffect, useState, type Dispatch, type FC, type SetStateAction, useRe
 import { toast } from 'react-toastify';
 
 import useClientFlag from '../../../hooks/isClient';
-import { BackendClient } from '../../../services/backendClient';
-import type { FilesBySubmissionId, Group, FileIdAndEtags } from '../../../types/backend';
+import type { FilesBySubmissionId, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { 
-    uploadFile, 
-    calculateNumberOfParts,
+    uploadFile,
     formatBytes,
     formatTime,
     type UploadProgress 
@@ -25,15 +23,14 @@ type SubmissionId = string;
  * The state that the component is in, right after the user dropped the files.
  * We're awaiting the presigned upload URLs from the backend, to start uploading.
  */
-type AwaitingUrlState = {
-    type: 'awaitingUrls';
+type ReadyToUploadState = {
+    type: 'readyToUpload';
     files: Record<SubmissionId, FileInfo[]>;
 };
 
 type UploadInProgressState = {
     type: 'uploadInProgress';
     files: Record<SubmissionId, (Pending | Uploading | Uploaded | Error)[]>;
-    multipartUploads: FileIdAndEtags[];
 };
 
 type UploadCompleted = {
@@ -41,15 +38,13 @@ type UploadCompleted = {
     files: Record<SubmissionId, Uploaded[]>;
 };
 
-type FileUploadState = AwaitingUrlState | UploadInProgressState | UploadCompleted;
+type FileUploadState = ReadyToUploadState | UploadInProgressState | UploadCompleted;
 
 type UploadStatus = 'pending' | 'uploading' | 'uploaded' | 'error';
 
 interface FileInfo {
     file: File;
     name: string;
-    fileId?: string;
-    urls?: string[];
 }
 
 type Pending = {
@@ -57,8 +52,6 @@ type Pending = {
     file: File;
     name: string;
     size: number;
-    fileId: string;
-    urls: string[];
 };
 
 type Uploading = {
@@ -120,7 +113,6 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     // Track if we're cancelling to avoid completing uploads
     const isCancellingRef = useRef(false);
 
-    const backendClient = new BackendClient(clientConfig.backendUrl);
 
     // Notify parent component about upload state changes
     useEffect(() => {
@@ -130,11 +122,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     }, [fileUploadState, onUploadStateChange]);
 
     /**
-     * Takes a map of submission IDs to files that are pending for upload, and triggers uploads for each file.
+     * Takes a map of submission IDs to files that are ready for upload, and triggers uploads for each file.
      */
-    async function startUploading(submissionIdFileMap: Record<string, Pending[]>) {
+    async function startUploading(submissionIdFileMap: Record<SubmissionId, FileInfo[]>) {
         const allFiles = Object.values(submissionIdFileMap).flat();
-        const totalBytes = allFiles.reduce((sum, file) => sum + file.size, 0);
+        const totalBytes = allFiles.reduce((sum, file) => sum + file.file.size, 0);
         
         // Reset progress tracking and cancelling flag
         fileProgressRef.current = {};
@@ -147,29 +139,42 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             uploadedBytes: 0,
         });
 
-        const multipartUploads: FileIdAndEtags[] = [];
+        // First, convert to uploading state with pending files
+        const pendingFiles: Record<SubmissionId, (Pending | Uploading | Uploaded | Error)[]> = {};
+        Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
+            pendingFiles[submissionId] = files.map(fileInfo => ({
+                type: 'pending' as const,
+                file: fileInfo.file,
+                name: fileInfo.name,
+                size: fileInfo.file.size,
+            }));
+        });
+        
+        setFileUploadState({
+            type: 'uploadInProgress',
+            files: pendingFiles,
+        });
 
         for (const [submissionId, files] of Object.entries(submissionIdFileMap)) {
-            for (const fileInfo of files) {
+            for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+                const fileInfo = files[fileIndex];
                 const abortController = new AbortController();
+                let fileId: string = '';
                 
                 // Update to uploading state
                 setFileUploadState((state) => {
                     if (state?.type === 'uploadInProgress') {
                         return produce(state, (draft) => {
-                            const fileIndex = draft.files[submissionId].findIndex(
-                                f => f.type === 'pending' && 'fileId' in f && f.fileId === fileInfo.fileId
-                            );
-                            if (fileIndex !== -1) {
+                            if (fileIndex < draft.files[submissionId].length) {
                                 draft.files[submissionId][fileIndex] = {
                                     type: 'uploading',
-                                    fileId: fileInfo.fileId,
+                                    fileId: '', // Will be set once upload starts
                                     name: fileInfo.name,
-                                    size: fileInfo.size,
+                                    size: fileInfo.file.size,
                                     progress: {
-                                        fileId: fileInfo.fileId,
+                                        fileId: '',
                                         fileName: fileInfo.name,
-                                        totalBytes: fileInfo.size,
+                                        totalBytes: fileInfo.file.size,
                                         uploadedBytes: 0,
                                         percentage: 0,
                                         speed: 0,
@@ -187,17 +192,23 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 try {
                     const result = await uploadFile(
                         fileInfo.file,
-                        fileInfo.fileId,
-                        fileInfo.urls,
+                        accessToken,
+                        clientConfig,
+                        group,
                         (progress) => {
+                            // Store the fileId once we get it
+                            if (!fileId && progress.fileId) {
+                                fileId = progress.fileId;
+                            }
+                            
                             setFileUploadState((state) => {
                                 if (state?.type === 'uploadInProgress') {
                                     return produce(state, (draft) => {
-                                        const fileIndex = draft.files[submissionId].findIndex(
-                                            f => 'fileId' in f && f.fileId === fileInfo.fileId
-                                        );
-                                        if (fileIndex !== -1 && draft.files[submissionId][fileIndex].type === 'uploading') {
-                                            (draft.files[submissionId][fileIndex] as Uploading).progress = progress;
+                                        if (fileIndex < draft.files[submissionId].length && 
+                                            draft.files[submissionId][fileIndex].type === 'uploading') {
+                                            const uploadingFile = draft.files[submissionId][fileIndex] as Uploading;
+                                            uploadingFile.progress = progress;
+                                            uploadingFile.fileId = progress.fileId;
                                         }
                                     });
                                 }
@@ -205,7 +216,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             });
 
                             // Update overall progress
-                            fileProgressRef.current[fileInfo.fileId] = progress.uploadedBytes;
+                            fileProgressRef.current[progress.fileId] = progress.uploadedBytes;
                             
                             setOverallProgress(prev => {
                                 if (!prev) return null;
@@ -223,28 +234,21 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         abortController.signal
                     );
 
-                    // Collect multipart upload info
-                    multipartUploads.push({
-                        fileId: fileInfo.fileId,
-                        etags: result.etags,
-                    });
-
+                    fileId = result.fileId;
+                    
                     // Mark file as fully uploaded in progress tracking
-                    fileProgressRef.current[fileInfo.fileId] = fileInfo.size;
+                    fileProgressRef.current[fileId] = fileInfo.file.size;
 
                     // Update to uploaded state
                     setFileUploadState((state) => {
                         if (state?.type === 'uploadInProgress') {
                             return produce(state, (draft) => {
-                                const fileIndex = draft.files[submissionId].findIndex(
-                                    f => 'fileId' in f && f.fileId === fileInfo.fileId
-                                );
-                                if (fileIndex !== -1) {
+                                if (fileIndex < draft.files[submissionId].length) {
                                     draft.files[submissionId][fileIndex] = {
                                         type: 'uploaded',
-                                        fileId: fileInfo.fileId,
+                                        fileId,
                                         name: fileInfo.name,
-                                        size: fileInfo.size,
+                                        size: fileInfo.file.size,
                                     };
                                 }
                             });
@@ -263,19 +267,23 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     
                     // Check if this is a cancellation
                     const isCancelled = error instanceof Error && error.message === 'Upload cancelled';
+                    let errorMessage = 'Upload failed';
+                    
+                    if (isCancelled) {
+                        errorMessage = 'Upload cancelled';
+                    } else if (error instanceof Error) {
+                        errorMessage = error.message;
+                    }
                     
                     setFileUploadState((state) => {
                         if (state?.type === 'uploadInProgress') {
                             return produce(state, (draft) => {
-                                const fileIndex = draft.files[submissionId].findIndex(
-                                    f => 'fileId' in f && f.fileId === fileInfo.fileId
-                                );
-                                if (fileIndex !== -1) {
+                                if (fileIndex < draft.files[submissionId].length) {
                                     draft.files[submissionId][fileIndex] = {
                                         type: 'error',
                                         name: fileInfo.name,
-                                        size: fileInfo.size,
-                                        msg: isCancelled ? 'Upload cancelled' : (error instanceof Error ? error.message : 'Upload failed'),
+                                        size: fileInfo.file.size,
+                                        msg: errorMessage,
                                     };
                                 }
                             });
@@ -288,61 +296,15 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         isCancellingRef.current = true;
                         return;
                     }
+                    
+                    // Surface non-cancellation errors to user
+                    if (!isCancelled) {
+                        onError(errorMessage);
+                    }
                 }
             }
         }
 
-        // Complete multipart uploads (only if not cancelled)
-        if (multipartUploads.length > 0 && !isCancellingRef.current) {
-            try {
-                const result = await backendClient.completeMultipartUpload(accessToken, multipartUploads);
-                result.match(
-                    () => {
-                        // Success - uploads completed
-                    },
-                    (error) => {
-                        console.error('Failed to complete multipart uploads:', error);
-                        onError(`Failed to complete file uploads: ${error.detail || error.title || 'Unknown error'}`);
-                        
-                        // Mark all files as errored
-                        setFileUploadState((state) => {
-                            if (state?.type === 'uploadInProgress') {
-                                return produce(state, (draft) => {
-                                    multipartUploads.forEach(({ fileId }) => {
-                                        Object.values(draft.files).forEach(files => {
-                                            const fileIndex = files.findIndex(f => 'fileId' in f && f.fileId === fileId);
-                                            if (fileIndex !== -1) {
-                                                const file = files[fileIndex];
-                                                draft.files[Object.keys(draft.files)[0]][fileIndex] = {
-                                                    type: 'error',
-                                                    name: file.name,
-                                                    size: file.size,
-                                                    msg: 'Failed to complete upload',
-                                                };
-                                            }
-                                        });
-                                    });
-                                });
-                            }
-                            return state;
-                        });
-                    }
-                );
-            } catch (error) {
-                console.error('Failed to complete multipart uploads:', error);
-                onError('Failed to complete multipart uploads: Network error');
-            }
-        }
-
-        // Update state with multipart uploads
-        setFileUploadState((state) => {
-            if (state?.type === 'uploadInProgress') {
-                return produce(state, (draft) => {
-                    draft.multipartUploads = multipartUploads;
-                });
-            }
-            return state;
-        });
     }
 
     const cancelAllUploads = () => {
@@ -386,58 +348,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         switch (fileUploadState.type) {
             // If awaiting URLS, request pre signed upload URLs from the backend, assign them to the files,
             // and set the state to 'uploadInProgress'.
-            case 'awaitingUrls': {
-                const prepareUploads = async () => {
-                    try {
-                        const pendingFiles: Record<SubmissionId, Pending[]> = {};
-                        Object.keys(fileUploadState.files).forEach(
-                            (submissionId) => (pendingFiles[submissionId] = [])
-                        );
-                        
-                        // Request multipart URLs for all files
-                        for (const [submissionId, files] of Object.entries(fileUploadState.files)) {
-                            for (const fileInfo of files) {
-                                const numberOfParts = calculateNumberOfParts(fileInfo.file.size);
-                                const multipartResult = await backendClient.requestMultipartUpload(
-                                    accessToken,
-                                    group.groupId,
-                                    1,
-                                    numberOfParts
-                                );
-                                
-                                multipartResult.match(
-                                    (responses) => {
-                                        const { fileId, urls } = responses[0];
-                                        pendingFiles[submissionId].push({
-                                            type: 'pending',
-                                            file: fileInfo.file,
-                                            name: fileInfo.name,
-                                            size: fileInfo.file.size,
-                                            fileId,
-                                            urls,
-                                        });
-                                    },
-                                    (err) => onError('Failed to prepare multipart upload: ' + err.detail)
-                                );
-                            }
-                        }
-                        
-                        setFileUploadState({
-                            type: 'uploadInProgress',
-                            files: pendingFiles,
-                            multipartUploads: [],
-                        });
-                        
-                        // Start uploads
-                        await startUploading(pendingFiles);
-                        
-                    } catch (error) {
-                        console.error('Failed to prepare uploads:', error);
-                        onError('Failed to prepare uploads');
-                    }
-                };
-                
-                void prepareUploads();
+            case 'readyToUpload': {
+                void startUploading(fileUploadState.files);
                 break;
             }
             case 'uploadInProgress': {
@@ -484,7 +396,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
             if (inputMode === 'form') {
                 setFileUploadState({
-                    type: 'awaitingUrls',
+                    type: 'readyToUpload',
                     files: { dummySubmissionId: filesArray.map((f) => ({ file: f, name: f.name })) },
                 });
             } else {
@@ -506,14 +418,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 });
 
                 setFileUploadState({
-                    type: 'awaitingUrls',
+                    type: 'readyToUpload',
                     files,
                 });
             }
         }
     };
 
-    return fileUploadState === undefined || fileUploadState.type === 'awaitingUrls' ? (
+    return fileUploadState === undefined || fileUploadState.type === 'readyToUpload' ? (
         <div
             className={`flex flex-col items-center justify-center flex-1 py-2 px-4 border rounded-lg ${fileUploadState !== undefined ? 'border-hidden' : isDragging ? 'border-dashed border-yellow-400 bg-yellow-50' : 'border-dashed border-gray-900/25'}`}
             onDragEnter={(e) => {
@@ -568,7 +480,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         )}
                     </label>
                 ) : (
-                    <p>Preparing upload ...</p>
+                    <p>Processing files...</p>
                 )}
             </div>
             <p className='text-sm pt-2 leading-5 text-gray-600'>Upload an entire folder of files</p>
@@ -601,9 +513,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <h3 className='text-sm font-medium mb-2'>Files</h3>
                     <div className='max-h-60 overflow-y-auto'>
                         {inputMode === 'form'
-                            ? Object.values(fileUploadState.files)[0].map((file) => (
+                            ? Object.values(fileUploadState.files)[0].map((file, index) => (
                                   <FileListItem 
-                                      key={'fileId' in file ? file.fileId : file.name} 
+                                      key={'fileId' in file ? file.fileId : `${file.name}-${index}`} 
                                       file={file}
                                   />
                               ))
@@ -611,9 +523,9 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                   <h4 key={submissionId} className='text-xs font-medium py-2'>
                                       {submissionId}
                                   </h4>,
-                                  ...files.map((file) => (
+                                  ...files.map((file, index) => (
                                       <FileListItem 
-                                          key={'fileId' in file ? file.fileId : file.name} 
+                                          key={'fileId' in file ? file.fileId : `${file.name}-${index}`} 
                                           file={file}
                                       />
                                   )),

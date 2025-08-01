@@ -1,4 +1,7 @@
 import axios, { isCancel } from 'axios';
+import { BackendClient } from '../services/backendClient';
+import type { ClientConfig } from '../types/runtimeConfig';
+import type { Group } from '../types/backend';
 
 export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 
@@ -166,24 +169,67 @@ export async function uploadFileMultipart(options: MultipartUploadOptions): Prom
 }
 
 /**
- * Uploads a file using multipart upload
+ * Uploads a file using multipart upload - handles everything from requesting URLs to completion
  */
 export async function uploadFile(
     file: File,
-    fileId: string,
-    urls: string[],
+    accessToken: string,
+    clientConfig: ClientConfig,
+    group: Group,
     onProgress?: (progress: UploadProgress) => void,
     abortSignal?: AbortSignal,
-): Promise<{ etags: string[] }> {
+): Promise<{ fileId: string }> {
+    const backendClient = new BackendClient(clientConfig.backendUrl);
+    
+    // Request multipart upload URLs
+    const numberOfParts = calculateNumberOfParts(file.size);
+    const multipartResult = await backendClient.requestMultipartUpload(
+        accessToken,
+        group.groupId,
+        1,
+        numberOfParts
+    );
+    
+    let fileId: string;
+    let urls: string[];
+    
+    multipartResult.match(
+        (responses) => {
+            const response = responses[0];
+            fileId = response.fileId;
+            urls = response.urls;
+        },
+        (error) => {
+            throw new Error(`Failed to prepare upload: ${error.detail || error.title || 'Unknown error'}`);
+        }
+    );
+    
+    // Upload the file parts
     const results = await uploadFileMultipart({
         file,
-        fileId,
-        urls,
+        fileId: fileId!,
+        urls: urls!,
         onProgress,
         abortSignal,
     });
     
-    return { etags: results.map(r => r.etag) };
+    const etags = results.map(r => r.etag);
+    
+    // Complete the multipart upload for this file
+    const completeResult = await backendClient.completeMultipartUpload(accessToken, [
+        { fileId: fileId!, etags }
+    ]);
+    
+    completeResult.match(
+        () => {
+            // Success - upload completed
+        },
+        (error) => {
+            throw new Error(`Failed to complete upload: ${error.detail || error.title || 'Unknown error'}`);
+        }
+    );
+    
+    return { fileId: fileId! };
 }
 
 /**

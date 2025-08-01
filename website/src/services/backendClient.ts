@@ -113,7 +113,7 @@ export class BackendClient {
         return this.request(
             '/files/complete-multipart-upload',
             'POST',
-            z.never(),
+            z.string().or(z.object({})).or(z.null()),
             createAuthorizationHeader(token),
             fileIdsAndEtags,
             undefined,
