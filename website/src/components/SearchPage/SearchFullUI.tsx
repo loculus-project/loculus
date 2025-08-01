@@ -327,7 +327,7 @@ export const InnerSearchFullUI = ({
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <FieldSelectorModal
-                title='Customize Columns'
+                title='Customize columns'
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
                 fields={columnFieldItems}
