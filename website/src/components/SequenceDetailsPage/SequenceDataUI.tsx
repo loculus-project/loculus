@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox';
@@ -19,6 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
+    suborganism: Suborganism;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -32,6 +33,7 @@ interface Props {
 export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
+    suborganism,
     accessionVersion,
     dataUseTermsHistory,
     schema,
@@ -70,6 +72,7 @@ export const SequenceDataUI: FC<Props> = ({
             )}
             <DataTable
                 dataTableData={dataTableData}
+                suborganism={suborganism}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomeSequenceNames={referenceGenomeSequenceNames}
             />
