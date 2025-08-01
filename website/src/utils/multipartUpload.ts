@@ -102,7 +102,6 @@ export async function uploadFileMultipart(options: MultipartUploadOptions): Prom
     };
 
     try {
-        // Upload parts sequentially to maintain order
         for (let partNumber = 1; partNumber <= partsToUpload; partNumber++) {
             const start = (partNumber - 1) * CHUNK_SIZE;
             const end = Math.min(partNumber * CHUNK_SIZE, file.size);
@@ -115,7 +114,6 @@ export async function uploadFileMultipart(options: MultipartUploadOptions): Prom
             onPartComplete?.(partNumber, etag);
         }
 
-        // Final progress update
         onProgress?.({
             fileId,
             fileName: file.name,
@@ -129,7 +127,6 @@ export async function uploadFileMultipart(options: MultipartUploadOptions): Prom
 
         return results;
     } catch (error) {
-        // Check if this is an abort error
         if (isCancel(error)) {
             onProgress?.({
                 fileId,
@@ -176,7 +173,6 @@ export async function uploadFile(
 ): Promise<{ fileId: string }> {
     const backendClient = new BackendClient(clientConfig.backendUrl);
 
-    // Request multipart upload URLs
     const numberOfParts = calculateNumberOfParts(file.size);
     const multipartResult = await backendClient.requestMultipartUpload(accessToken, group.groupId, 1, numberOfParts);
 
@@ -194,7 +190,6 @@ export async function uploadFile(
         },
     );
 
-    // Upload the file parts
     const results = await uploadFileMultipart({
         file,
         fileId: fileId!,
@@ -205,7 +200,6 @@ export async function uploadFile(
 
     const etags = results.map((r) => r.etag);
 
-    // Complete the multipart upload for this file
     const completeResult = await backendClient.completeMultipartUpload(accessToken, [{ fileId: fileId!, etags }]);
 
     completeResult.match(
