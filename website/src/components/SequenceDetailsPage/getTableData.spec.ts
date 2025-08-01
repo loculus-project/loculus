@@ -7,6 +7,7 @@ import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
+import { type ReferenceGenomes, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 const schema: Schema = {
     organismName: 'instance name',
@@ -22,6 +23,26 @@ const schema: Schema = {
     inputFields: [],
     submissionDataTypes: {
         consensusSequences: true,
+    },
+};
+
+const singleReferenceGenomes: ReferenceGenomes = {
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: [],
+        genes: [],
+    },
+};
+
+const genome1 = 'genome1';
+const genome2 = 'genome2';
+const multipleReferenceGenomes: ReferenceGenomes = {
+    [genome1]: {
+        nucleotideSequences: [],
+        genes: [],
+    },
+    [genome2]: {
+        nucleotideSequences: [],
+        genes: [],
     },
 };
 
@@ -58,7 +79,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceDetails fails', async () => {
         mockRequest.lapis.details(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -66,7 +87,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceMutations fails', async () => {
         mockRequest.lapis.nucleotideMutations(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -74,13 +95,13 @@ describe('getTableData', () => {
     test('should return an error when getSequenceInsertions fails', async () => {
         mockRequest.lapis.nucleotideInsertions(500, dummyError);
 
-        const result = await getTableData(accessionVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData(accessionVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toStrictEqual(defaultMutationsInsertionsDeletionsList);
@@ -100,7 +121,7 @@ describe('getTableData', () => {
             ].map((d) => toLapisEntry(d)),
         });
 
-        const result = await getTableData('accession', schema, lapisClient);
+        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -123,7 +144,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
         mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
 
-        const result = await getTableData('accession', schema, lapisClient);
+        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -216,7 +237,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
-        const result = await getTableData('accession', schema, lapisClient);
+        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -238,7 +259,7 @@ describe('getTableData', () => {
     test('should map timestamps to human readable dates', async () => {
         mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
 
-        const result = await getTableData('accession', schema, lapisClient);
+        const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
 
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
@@ -256,7 +277,7 @@ describe('getTableData', () => {
                 info,
                 data: [toLapisEntry({}, expectedIsRevocation)],
             });
-            const result = await getTableData('accession', schema, lapisClient);
+            const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
             const isRevocation = result._unsafeUnwrap().isRevocation;
             expect(isRevocation).toBe(expectedIsRevocation);
         }
@@ -275,6 +296,7 @@ describe('getTableData', () => {
                     consensusSequences: false,
                 },
             },
+            singleReferenceGenomes,
             lapisClient,
         );
 
@@ -286,6 +308,56 @@ describe('getTableData', () => {
 
         expect(data.length).greaterThanOrEqual(1, 'data.length');
         expect(mutationTableEntries).toStrictEqual([]);
+    });
+
+    test('should return the suborganism name for a single reference genome', async () => {
+        const result = await getTableData(accessionVersion, schema, singleReferenceGenomes, lapisClient);
+
+        const suborganism = result._unsafeUnwrap().suborganism;
+
+        expect(suborganism).equals(SINGLE_REFERENCE);
+    });
+
+    test('should return the suborganism name for multiple reference genomes', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome2 }] });
+
+        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+
+        const suborganism = result._unsafeUnwrap().suborganism;
+
+        expect(suborganism).equals(genome2);
+    });
+
+    test('should throw when the suborganism name is not in multiple reference genomes', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: 5 }] });
+
+        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+
+        expect(result).toStrictEqual(
+            err({
+                detail: "Value '5' of field 'genotype' is not a valid string.",
+                instance: '/seq/' + accessionVersion,
+                status: 0,
+                title: 'Invalid suborganism field',
+                type: 'about:blank',
+            }),
+        );
+    });
+
+    test('should throw when the suborganism name is not in multiple reference genomes', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: 'unknown suborganism' }] });
+
+        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+
+        expect(result).toStrictEqual(
+            err({
+                detail: "Suborganism 'unknown suborganism' (value of field 'genotype') not found in reference genomes.",
+                instance: '/seq/' + accessionVersion,
+                status: 0,
+                title: 'Invalid suborganism',
+                type: 'about:blank',
+            }),
+        );
     });
 });
 

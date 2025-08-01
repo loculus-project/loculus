@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
-import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 describe('ActiveFilters', () => {
     describe('with LAPIS filters', () => {

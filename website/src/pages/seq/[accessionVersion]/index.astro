@@ -74,6 +74,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     tableData={result.tableData}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
                                     referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
+                                    suborganism={result.suborganism}
                                 />
                             ) : (
                                 <SequenceDataUI
