@@ -7,9 +7,12 @@ import {
     getSequencesResponse,
     info,
     requestUploadResponse,
+    requestMultipartUploadResponse,
+    fileIdAndEtags,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     type ProblemDetail,
+    type FileIdAndEtags,
 } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
@@ -74,6 +77,46 @@ export class BackendClient {
                 groupId,
                 numberFiles,
             },
+        );
+    }
+
+    /**
+     * Request presigned URLs for multipart upload.
+     * @param token The bearer token.
+     * @param groupId The group ID of the group that will own the uploaded files.
+     * @param numberFiles How many file IDs to generate.
+     * @param numberParts How many parts each file will have.
+     * @returns A list of file IDs and presigned URLs for each part.
+     */
+    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
+        return this.request(
+            '/files/request-multipart-upload',
+            'POST',
+            requestMultipartUploadResponse,
+            createAuthorizationHeader(token),
+            undefined,
+            {
+                groupId,
+                numberFiles,
+                numberParts,
+            },
+        );
+    }
+
+    /**
+     * Complete multipart uploads.
+     * @param token The bearer token.
+     * @param fileIdsAndEtags List of file IDs and their corresponding ETags from each part upload.
+     * @returns Success or error result.
+     */
+    public completeMultipartUpload(token: string, fileIdsAndEtags: FileIdAndEtags[]) {
+        return this.request(
+            '/files/complete-multipart-upload',
+            'POST',
+            z.never(),
+            createAuthorizationHeader(token),
+            fileIdsAndEtags,
+            undefined,
         );
     }
 
