@@ -71,7 +71,7 @@ const InnerDataUploadForm = ({
     const [agreedToINSDCUploadTerms, setAgreedToINSDCUploadTerms] = useState(false);
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
-    
+
     const [isFilesUploading, setIsFilesUploading] = useState(false);
 
     const handleSubmit = async (event: FormEvent) => {

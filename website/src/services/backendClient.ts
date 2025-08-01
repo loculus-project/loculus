@@ -8,7 +8,6 @@ import {
     info,
     requestUploadResponse,
     requestMultipartUploadResponse,
-    fileIdAndEtags,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     type ProblemDetail,

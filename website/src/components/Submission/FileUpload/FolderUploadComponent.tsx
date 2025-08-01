@@ -5,12 +5,7 @@ import { toast } from 'react-toastify';
 import useClientFlag from '../../../hooks/isClient';
 import type { FilesBySubmissionId, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
-import { 
-    uploadFile,
-    formatBytes,
-    formatTime,
-    type UploadProgress 
-} from '../../../utils/multipartUpload.ts';
+import { uploadFile, formatBytes, formatTime, type UploadProgress } from '../../../utils/multipartUpload.ts';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
@@ -107,17 +102,19 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         totalBytes: number;
         uploadedBytes: number;
     } | null>(null);
-    
+
     // Track individual file progress separately for accurate overall progress
     const fileProgressRef = useRef<Record<string, number>>({});
     // Track if we're cancelling to avoid completing uploads
     const isCancellingRef = useRef(false);
 
-
     // Notify parent component about upload state changes
     useEffect(() => {
-        const isUploading = fileUploadState?.type === 'uploadInProgress' && 
-            Object.values(fileUploadState.files).flat().some(f => f.type === 'uploading');
+        const isUploading =
+            fileUploadState?.type === 'uploadInProgress' &&
+            Object.values(fileUploadState.files)
+                .flat()
+                .some((f) => f.type === 'uploading');
         onUploadStateChange?.(isUploading);
     }, [fileUploadState, onUploadStateChange]);
 
@@ -127,11 +124,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     async function startUploading(submissionIdFileMap: Record<SubmissionId, FileInfo[]>) {
         const allFiles = Object.values(submissionIdFileMap).flat();
         const totalBytes = allFiles.reduce((sum, file) => sum + file.file.size, 0);
-        
+
         // Reset progress tracking and cancelling flag
         fileProgressRef.current = {};
         isCancellingRef.current = false;
-        
+
         setOverallProgress({
             totalFiles: allFiles.length,
             uploadedFiles: 0,
@@ -142,14 +139,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         // First, convert to uploading state with pending files
         const pendingFiles: Record<SubmissionId, (Pending | Uploading | Uploaded | Error)[]> = {};
         Object.entries(submissionIdFileMap).forEach(([submissionId, files]) => {
-            pendingFiles[submissionId] = files.map(fileInfo => ({
+            pendingFiles[submissionId] = files.map((fileInfo) => ({
                 type: 'pending' as const,
                 file: fileInfo.file,
                 name: fileInfo.name,
                 size: fileInfo.file.size,
             }));
         });
-        
+
         setFileUploadState({
             type: 'uploadInProgress',
             files: pendingFiles,
@@ -160,7 +157,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 const fileInfo = files[fileIndex];
                 const abortController = new AbortController();
                 let fileId: string = '';
-                
+
                 // Update to uploading state
                 setFileUploadState((state) => {
                     if (state?.type === 'uploadInProgress') {
@@ -200,12 +197,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                             if (!fileId && progress.fileId) {
                                 fileId = progress.fileId;
                             }
-                            
+
                             setFileUploadState((state) => {
                                 if (state?.type === 'uploadInProgress') {
                                     return produce(state, (draft) => {
-                                        if (fileIndex < draft.files[submissionId].length && 
-                                            draft.files[submissionId][fileIndex].type === 'uploading') {
+                                        if (
+                                            fileIndex < draft.files[submissionId].length &&
+                                            draft.files[submissionId][fileIndex].type === 'uploading'
+                                        ) {
                                             const uploadingFile = draft.files[submissionId][fileIndex] as Uploading;
                                             uploadingFile.progress = progress;
                                             uploadingFile.fileId = progress.fileId;
@@ -217,25 +216,27 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 
                             // Update overall progress
                             fileProgressRef.current[progress.fileId] = progress.uploadedBytes;
-                            
-                            setOverallProgress(prev => {
+
+                            setOverallProgress((prev) => {
                                 if (!prev) return null;
-                                
+
                                 // Calculate total uploaded bytes from all tracked files
-                                const totalUploadedBytes = Object.values(fileProgressRef.current)
-                                    .reduce((sum, bytes) => sum + bytes, 0);
-                                
+                                const totalUploadedBytes = Object.values(fileProgressRef.current).reduce(
+                                    (sum, bytes) => sum + bytes,
+                                    0,
+                                );
+
                                 return {
                                     ...prev,
                                     uploadedBytes: totalUploadedBytes,
                                 };
                             });
                         },
-                        abortController.signal
+                        abortController.signal,
                     );
 
                     fileId = result.fileId;
-                    
+
                     // Mark file as fully uploaded in progress tracking
                     fileProgressRef.current[fileId] = fileInfo.file.size;
 
@@ -256,25 +257,29 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         return state;
                     });
 
-                    setOverallProgress(prev => prev ? {
-                        ...prev,
-                        uploadedFiles: prev.uploadedFiles + 1,
-                        uploadedBytes: Object.values(fileProgressRef.current).reduce((sum, bytes) => sum + bytes, 0),
-                    } : null);
-
+                    setOverallProgress((prev) =>
+                        prev
+                            ? {
+                                  ...prev,
+                                  uploadedFiles: prev.uploadedFiles + 1,
+                                  uploadedBytes: Object.values(fileProgressRef.current).reduce(
+                                      (sum, bytes) => sum + bytes,
+                                      0,
+                                  ),
+                              }
+                            : null,
+                    );
                 } catch (error) {
-                    console.error('Upload error:', error);
-                    
                     // Check if this is a cancellation
                     const isCancelled = error instanceof Error && error.message === 'Upload cancelled';
                     let errorMessage = 'Upload failed';
-                    
+
                     if (isCancelled) {
                         errorMessage = 'Upload cancelled';
                     } else if (error instanceof Error) {
                         errorMessage = error.message;
                     }
-                    
+
                     setFileUploadState((state) => {
                         if (state?.type === 'uploadInProgress') {
                             return produce(state, (draft) => {
@@ -290,31 +295,30 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         }
                         return state;
                     });
-                    
+
                     // If cancelled, stop processing more files
                     if (isCancelled) {
                         isCancellingRef.current = true;
                         return;
                     }
-                    
+
                     // Surface non-cancellation errors to user
-                    if (!isCancelled) {
-                        onError(errorMessage);
-                    }
+                    onError(errorMessage);
                 }
             }
         }
-
     }
 
     const cancelAllUploads = () => {
         if (fileUploadState?.type === 'uploadInProgress') {
             // Abort all active uploads
-            Object.values(fileUploadState.files).flat().forEach(file => {
-                if (file.type === 'uploading') {
-                    file.abortController.abort();
-                }
-            });
+            Object.values(fileUploadState.files)
+                .flat()
+                .forEach((file) => {
+                    if (file.type === 'uploading') {
+                        file.abortController.abort();
+                    }
+                });
         }
         setFileUploadState(undefined);
         setOverallProgress(null);
@@ -500,22 +504,22 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     <div className='w-full bg-gray-200 rounded-full h-2'>
                         <div
                             className='bg-primary-600 h-2 rounded-full transition-all duration-300'
-                            style={{ 
-                                width: `${Math.round((overallProgress.uploadedBytes / overallProgress.totalBytes) * 100)}%` 
+                            style={{
+                                width: `${Math.round((overallProgress.uploadedBytes / overallProgress.totalBytes) * 100)}%`,
                             }}
                         />
                     </div>
                 </div>
             )}
-            
+
             <div className='flex justify-between items-center mb-3'>
                 <div className='w-full'>
                     <h3 className='text-sm font-medium mb-2'>Files</h3>
                     <div className='max-h-60 overflow-y-auto'>
                         {inputMode === 'form'
                             ? Object.values(fileUploadState.files)[0].map((file, index) => (
-                                  <FileListItem 
-                                      key={'fileId' in file ? file.fileId : `${file.name}-${index}`} 
+                                  <FileListItem
+                                      key={'fileId' in file ? file.fileId : `${file.name}-${index}`}
                                       file={file}
                                   />
                               ))
@@ -524,8 +528,8 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                       {submissionId}
                                   </h4>,
                                   ...files.map((file, index) => (
-                                      <FileListItem 
-                                          key={'fileId' in file ? file.fileId : `${file.name}-${index}`} 
+                                      <FileListItem
+                                          key={'fileId' in file ? file.fileId : `${file.name}-${index}`}
                                           file={file}
                                       />
                                   )),
@@ -539,9 +543,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 data-testid={`discard_${fileField}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
-                {fileUploadState.type === 'uploadInProgress' && 
-                 Object.values(fileUploadState.files).flat().some(f => f.type === 'uploading') 
-                    ? 'Cancel all uploads' 
+                {fileUploadState.type === 'uploadInProgress' &&
+                Object.values(fileUploadState.files)
+                    .flat()
+                    .some((f) => f.type === 'uploading')
+                    ? 'Cancel all uploads'
                     : 'Discard files'}
             </button>
         </div>
@@ -555,7 +561,7 @@ type FileListItemProps = {
 const FileListItem: FC<FileListItemProps> = ({ file }) => {
     const isUploading = file.type === 'uploading';
     const progress = isUploading ? file.progress : null;
-    
+
     return (
         <div className='flex flex-col mb-2'>
             <div className='flex flex-row items-center'>
@@ -566,11 +572,9 @@ const FileListItem: FC<FileListItemProps> = ({ file }) => {
                     <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>({formatFileSize(file.size)})</span>
                 </div>
                 {/* Status icon */}
-                <div className='ml-2 w-5 flex justify-center'>
-                    {getStatusIcon(file.type)}
-                </div>
+                <div className='ml-2 w-5 flex justify-center'>{getStatusIcon(file.type)}</div>
             </div>
-            
+
             {isUploading && progress && (
                 <div className='ml-9 mr-7 mt-1'>
                     <div className='flex items-center gap-2'>
