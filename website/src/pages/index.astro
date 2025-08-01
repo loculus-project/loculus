@@ -25,11 +25,12 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
                 class=`flex flex-wrap justify-center gap-x-5  gap-y-4 ${getConfiguredOrganisms().length ===5 ? "max-w-4xl" : ""}`
             >
                 {
-                    getConfiguredOrganisms().map(({ key, displayName, image }) => (
+                    getConfiguredOrganisms().map(({ key, displayName, longDisplayName, image }) => (
                         <OrganismCard
                             key={key}
                             image={image}
                             displayName={displayName}
+                            longDisplayName={longDisplayName}
                             organismStatistics={organismStatisticsMap.get(key)!}
                             numberDaysAgoStatistics={numberDaysAgoStatistics}
                         />
