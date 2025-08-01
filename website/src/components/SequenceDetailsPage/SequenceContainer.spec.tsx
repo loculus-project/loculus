@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { type NucleotideSegmentNames, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -16,15 +17,23 @@ const accessionVersion = 'accession';
 function renderSequenceViewer({
     nucleotideSegmentNames,
     genes,
-}: Pick<React.ComponentProps<typeof SequencesContainer>, 'nucleotideSegmentNames' | 'genes'>) {
+}: {
+    nucleotideSegmentNames: NucleotideSegmentNames;
+    genes: string[];
+}) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                genes={genes}
-                nucleotideSegmentNames={nucleotideSegmentNames}
+                referenceGenomeSequenceNames={{
+                    [SINGLE_REFERENCE]: {
+                        genes,
+                        nucleotideSequences: nucleotideSegmentNames,
+                        insdcAccessionFull: [],
+                    },
+                }}
                 loadSequencesAutomatically={false}
             />
         </QueryClientProvider>,
