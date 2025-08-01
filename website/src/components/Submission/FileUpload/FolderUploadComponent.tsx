@@ -362,7 +362,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                                 document.getElementById(fileField)?.click();
                             }}
                         >
-                            Upload Folder
+                            Upload folder
                         </span>
                         {isClient && (
                             <input
