@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import { useCallback, useEffect, useState, type Dispatch, type FC, type SetStateAction, useRef } from 'react';
 import { toast } from 'react-toastify';
 
@@ -94,14 +93,15 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
          * Helper to update individual file status
          */
         const updateFileStatus = (submissionId: string, index: number, updates: Partial<UploadFile>) => {
-            setFileUploadState((prev) =>
-                produce(prev, (draft) => {
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                    if (draft.files[submissionId] && index < draft.files[submissionId].length) {
-                        Object.assign(draft.files[submissionId][index], updates);
-                    }
-                }),
-            );
+            setFileUploadState((prev) => ({
+                ...prev,
+                files: {
+                    ...prev.files,
+                    [submissionId]: prev.files[submissionId]?.map((file, i) =>
+                        i === index ? { ...file, ...updates } : file
+                    ) ?? []
+                }
+            }));
         };
 
         // Process all files
@@ -207,20 +207,24 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             setFileMapping((currentMapping) => {
                 if (inputMode === 'bulk') {
                     if (currentMapping !== undefined) {
-                        return produce(currentMapping, (draft) => {
-                            Object.keys(draft).forEach((submissionId) => {
-                                draft[submissionId][fileField] = [];
-                            });
+                        const newMapping = { ...currentMapping };
+                        Object.keys(newMapping).forEach((submissionId) => {
+                            newMapping[submissionId] = {
+                                ...newMapping[submissionId],
+                                [fileField]: []
+                            };
                         });
+                        return newMapping;
                     } else {
                         return undefined;
                     }
                 } else {
-                    return produce(currentMapping ?? {}, (draft) => {
-                        draft.dummySubmissionId = {
+                    return {
+                        ...(currentMapping ?? {}),
+                        dummySubmissionId: {
                             [fileField]: [],
-                        };
-                    });
+                        }
+                    };
                 }
             });
             return;
@@ -254,18 +258,16 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                     }));
             });
 
-            setFileMapping((currentMapping) =>
-                produce(currentMapping ?? {}, (draft) => {
-                    Object.entries(uploadedFiles).forEach(([submissionId, files]) => {
-                        if (currentMapping?.[submissionId] !== undefined) {
-                            draft[submissionId] = { ...currentMapping[submissionId] };
-                        } else {
-                            draft[submissionId] = {};
-                        }
-                        draft[submissionId][fileField] = files;
-                    });
-                }),
-            );
+            setFileMapping((currentMapping) => {
+                const newMapping = { ...(currentMapping ?? {}) };
+                Object.entries(uploadedFiles).forEach(([submissionId, files]) => {
+                    newMapping[submissionId] = {
+                        ...(currentMapping?.[submissionId] ?? {}),
+                        [fileField]: files
+                    };
+                });
+                return newMapping;
+            });
         }
     }, [fileUploadState.status, inputMode, fileField, setFileMapping]);
 
