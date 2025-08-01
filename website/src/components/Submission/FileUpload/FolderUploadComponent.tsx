@@ -94,6 +94,11 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
          */
         const updateFileStatus = (submissionId: string, index: number, updates: Partial<UploadFile>) => {
             setFileUploadState((prev) => {
+                // Check if the submission exists in the current state
+                if (!(submissionId in prev.files)) {
+                    return prev;
+                }
+
                 const files = prev.files[submissionId];
                 if (index >= files.length) {
                     return prev;
