@@ -7,9 +7,9 @@ import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import {
-    getFirstSequenceNames,
     type ReferenceAccession,
     type ReferenceGenomesSequenceNames,
+    type Suborganism,
 } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
@@ -17,6 +17,7 @@ interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    suborganism: Suborganism;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -35,8 +36,14 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
     ));
 };
 
-const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, referenceGenomeSequenceNames }) => {
-    const hasReferenceAccession = getFirstSequenceNames(referenceGenomeSequenceNames).insdcAccessionFull.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+const DataTableComponent: React.FC<Props> = ({
+    dataTableData,
+    dataUseTermsHistory,
+    referenceGenomeSequenceNames,
+    suborganism,
+}) => {
+    const reference = referenceGenomeSequenceNames[suborganism].insdcAccessionFull;
+    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>
