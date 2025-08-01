@@ -93,15 +93,20 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
          * Helper to update individual file status
          */
         const updateFileStatus = (submissionId: string, index: number, updates: Partial<UploadFile>) => {
-            setFileUploadState((prev) => ({
-                ...prev,
-                files: {
-                    ...prev.files,
-                    [submissionId]: prev.files[submissionId]?.map((file, i) =>
-                        i === index ? { ...file, ...updates } : file
-                    ) ?? []
+            setFileUploadState((prev) => {
+                const files = prev.files[submissionId];
+                if (index >= files.length) {
+                    return prev;
                 }
-            }));
+
+                return {
+                    ...prev,
+                    files: {
+                        ...prev.files,
+                        [submissionId]: files.map((file, i) => (i === index ? { ...file, ...updates } : file)),
+                    },
+                };
+            });
         };
 
         // Process all files
@@ -211,7 +216,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         Object.keys(newMapping).forEach((submissionId) => {
                             newMapping[submissionId] = {
                                 ...newMapping[submissionId],
-                                [fileField]: []
+                                [fileField]: [],
                             };
                         });
                         return newMapping;
@@ -223,7 +228,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                         ...(currentMapping ?? {}),
                         dummySubmissionId: {
                             [fileField]: [],
-                        }
+                        },
                     };
                 }
             });
@@ -263,7 +268,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 Object.entries(uploadedFiles).forEach(([submissionId, files]) => {
                     newMapping[submissionId] = {
                         ...(currentMapping?.[submissionId] ?? {}),
-                        [fileField]: files
+                        [fileField]: files,
                     };
                 });
                 return newMapping;
