@@ -2,12 +2,13 @@ import { Result } from 'neverthrow';
 
 import { getTableData } from '../../../components/SequenceDetailsPage/getTableData';
 import { type TableDataEntry } from '../../../components/SequenceDetailsPage/types.ts';
-import { getSchema } from '../../../config.ts';
+import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { createBackendClient } from '../../../services/backendClientFactory.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../types/lapis.ts';
+import type { Suborganism } from '../../../types/referencesGenomes.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
 export enum SequenceDetailsTableResultType {
@@ -21,6 +22,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    suborganism: Suborganism;
     isRevocation: boolean;
 };
 
@@ -49,9 +51,10 @@ export const getSequenceDetailsTableData = async (
     }
 
     const schema = getSchema(organism);
+    const referenceGenomes = getReferenceGenomes(organism);
 
     const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
-        getTableData(accessionVersion, schema, lapisClient),
+        getTableData(accessionVersion, schema, referenceGenomes, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
         backendClient.getDataUseTermsHistory(accession),
     ]);
@@ -62,6 +65,7 @@ export const getSequenceDetailsTableData = async (
             tableData: tableData.data,
             sequenceEntryHistory,
             dataUseTermsHistory,
+            suborganism: tableData.suborganism,
             isRevocation: tableData.isRevocation,
         }),
     );

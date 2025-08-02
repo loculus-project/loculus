@@ -4,25 +4,23 @@
     "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
-            "referenceGenomes": {
-                "singleReference": {
-                    "nucleotideSequences": [
-                        {
-                            "name": "main",
-                            "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
-                        }
-                    ],
-                    "genes": [
-                        {
-                            "name": "someLongGene",
-                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
-                        },
-                        {
-                            "name": "someShortGene",
-                            "sequence": "MADS"
-                        }
-                    ]
-                }
+            "referenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
             },
             "schema": {
                 "organismName": "Test",
@@ -105,29 +103,27 @@
             }
         },
         "otherOrganism": {
-            "referenceGenomes": {
-                "singleReference": {
-                    "nucleotideSequences": [
-                        {
-                            "name": "notOnlySegment",
-                            "sequence": "ATCG"
-                        },
-                        {
-                            "name": "secondSegment",
-                            "sequence": "AAAAAAAAAAAAAAAA"
-                        }
-                    ],
-                    "genes": [
-                        {
-                            "name": "someLongGene",
-                            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
-                        },
-                        {
-                            "name": "someShortGene",
-                            "sequence": "MADS"
-                        }
-                    ]
-                }
+            "referenceGenome": {
+                "nucleotideSequences": [
+                    {
+                        "name": "notOnlySegment",
+                        "sequence": "ATCG"
+                    },
+                    {
+                        "name": "secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
             },
             "schema": {
                 "organismName": "Test",
@@ -191,11 +187,9 @@
             }
         },
         "dummyOrganismWithoutConsensusSequences": {
-            "referenceGenomes": {
-                "singleReference": {
-                    "nucleotideSequences": [],
-                    "genes": []
-                }
+            "referenceGenome": {
+                "nucleotideSequences": [],
+                "genes": []
             },
             "schema": {
                 "organismName": "Test without consensus sequences",

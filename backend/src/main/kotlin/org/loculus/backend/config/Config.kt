@@ -43,11 +43,7 @@ enum class FileUrlType {
     override fun toString(): String = lowerCase(name)
 }
 
-const val SINGLE_REFERENCE_GENOME_KEY = "singleReference"
-
-typealias Suborganism = String
-
-data class InstanceConfig(val schema: Schema, val referenceGenomes: Map<Suborganism, ReferenceGenome>)
+data class InstanceConfig(val schema: Schema, val referenceGenome: ReferenceGenome)
 
 data class Schema(
     val organismName: String,
