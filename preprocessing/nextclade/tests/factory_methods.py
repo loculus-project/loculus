@@ -71,6 +71,7 @@ class UnprocessedEntryFactory:
                 submittedAt=str(
                     datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
                 ),
+                group_id=2,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
             ),
