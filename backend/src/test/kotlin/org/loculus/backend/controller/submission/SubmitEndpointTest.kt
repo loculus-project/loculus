@@ -269,7 +269,7 @@ class SubmitEndpointTest(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "the otherOrganism organism does not support file submission.",
+                    "Organism 'otherOrganism' does not support file submission.",
                 ),
             )
     }
