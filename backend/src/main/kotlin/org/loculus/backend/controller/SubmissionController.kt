@@ -110,7 +110,7 @@ open class SubmissionController(
                 "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
                 "/files/request-upload endpoint.",
         )
-        @RequestPart fileMapping: String?,
+        @RequestPart fileMapping: SubmissionIdFilesMap?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
@@ -120,14 +120,19 @@ open class SubmissionController(
                 innerDataUseTermsType = dataUseTermsType
             }
         }
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
+
+        if (fileMapping != null &&
+            !backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled
+        ) {
+            throw BadRequestException("Organism '${organism.name}' does not support file submission.")
+        }
 
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
+            fileMapping,
             groupId,
             DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
         )
@@ -146,15 +151,20 @@ open class SubmissionController(
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile?,
-        @RequestPart fileMapping: String?,
+        @RequestPart fileMapping: SubmissionIdFilesMap?,
     ): List<SubmissionIdMapping> {
-        val fileMappingParsed = parseFileMapping(fileMapping, organism)
+        if (fileMapping != null &&
+            !backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled
+        ) {
+            throw BadRequestException("Organism '${organism.name}' does not support file submission.")
+        }
+
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            fileMappingParsed,
+            fileMapping,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -538,19 +548,5 @@ open class SubmissionController(
             }
         }
         MDC.remove(REQUEST_ID_MDC_KEY)
-    }
-
-    fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
-        val fileMappingParsed = fileMapping?.let {
-            if (!backendConfig.getInstanceConfig(organism).schema.submissionDataTypes.files.enabled) {
-                throw BadRequestException("the ${organism.name} organism does not support file submission.")
-            }
-            try {
-                objectMapper.readValue<SubmissionIdFilesMap>(it)
-            } catch (e: Exception) {
-                throw BadRequestException("Failed to parse file mapping.", e)
-            }
-        }
-        return fileMappingParsed
     }
 }

@@ -29,10 +29,20 @@ const submitEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles.transform((submitData) => {
-                // stringify the fileMapping
-                const { fileMapping, ...rest } = submitData;
-                return fileMapping !== undefined ? { ...rest, fileMapping: JSON.stringify(fileMapping) } : rest;
+            schema: submitFiles.transform(({ sequenceFile, fileMapping, ...rest }) => {
+                const result: Record<string, unknown> = { ...rest };
+
+                if (sequenceFile !== undefined) {
+                    result.sequenceFile = sequenceFile;
+                }
+
+                if (fileMapping !== undefined) {
+                    result.fileMapping = new File([JSON.stringify(fileMapping)], 'fileMapping.json', {
+                        type: 'application/json',
+                    });
+                }
+
+                return result;
             }),
         },
     ],

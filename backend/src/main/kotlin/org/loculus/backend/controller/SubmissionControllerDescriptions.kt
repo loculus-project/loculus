@@ -135,7 +135,7 @@ const val SUBMIT_EXTERNAL_METADATA_DESCRIPTION = """
 Update metadata of an existing accession with data from an external source with data as a stream of NDJSON.
 The following rules apply:
  - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
- - The user is authorized to use this endpoint
+ - The user is authorized to use this endpoint (has role 'EXTERNAL_METADATA_UPDATER')
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. can be released externally
 
 This endpoint performs validation (type validation, missing/required fields) on the metadata.
