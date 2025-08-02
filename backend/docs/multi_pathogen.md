@@ -1,10 +1,18 @@
 # Solution Design - Multi-Pathogen Organisms
 
-The purpose of this feature to enable Organisms that are divided into several "suborganisms".
+The purpose of this feature to allow a single top level organism to contain multiple suborganisms.
+
+Motivation:
+
+- Current organism architecture doesn't scale well for virus species with few sequences each: each organism requires separate pods for LAPIS/SILO, ingest, preprocessing
+- It's inconvenient for submitters to have to split their uploads by suborganism, just because the sequences map to different references
+- Much of the flexibility at the organism level isn't actually used in practice, causing configuration overhead
+
 It should roughly work as follows:
-* The user uploads sequences as usual
-* The preprocessing pipeline will figure out which suborganism the sequence belongs to
-* There will be a LAPIS instance for that organism that has a nucleotide segment for each suborganism
+
+* User uploads sequences without having to explicitly specify the suborganism (or segment) in the sequence header
+* Preprocessing pipeline will figure out which suborganism (and segment) each sequence belongs to
+* For LAPIS and backend, each suborganism is treated the way segments already are. There will be a LAPIS instance for that organism that has a nucleotide segment for each suborganism
 
 ## Helm Chart Configuration
 
@@ -113,9 +121,10 @@ defaultOrganisms:
 ```
 
 The website will then receive the `referenceGenomes` as configured above.
-LAPIS and the backend will receive a "merged" reference genome 
+LAPIS and the backend will receive a "merged" (flat) reference genome 
 that merges all suborganisms by prepending the suborganism name to the sequence name 
 (ignoring `main` if there is only a single segment):
+
 ```json
 {
   "nucleotideSequences": [
@@ -132,6 +141,7 @@ that merges all suborganisms by prepending the suborganism name to the sequence 
 ```
 
 Consequence:
+
 * The backend only knows the merged reference genome and will not know about the individual suborganisms.
   It should be relatively agnostic to how the organisms are structured.
   It just needs to make sure that the preprocessing output contains all segments and genes that are required for SILO.
@@ -142,16 +152,16 @@ Consequence:
 
 Metadata: as usual, nothing special here.
 
-Sequences: We don't want the user to be forced to put the segment name here.
+Sequences: We don't want the user to be forced to put the segment (and/or suborganism) name here.
 
-```
+```fasta
 >key1
 ACTG
 ```
 
 For multiple segments:
 
-```
+```fasta
 >key1_myFirstSegment
 ACTG
 >key1_mySecondSegment
@@ -161,10 +171,11 @@ GTCA
 We will achieve this by removing the requirement to put the segment name in the sequence header.
 We will keep `_` as a separator.
 Independently of how many segments there are, 
-* if there is no `_` in the FASTA header, then the backend will use the full FASTA header for matching in on the metadata (form: `>{id}`).
+
+* if there is no `_` in the FASTA header, then the backend will use the full FASTA header for joining to metadata (form: `>{id}`).
 * if there is a `_` in the FASTA header, then the backend will use the part before the last `_` for matching in on the metadata (form: `>{id}_{arbitrary segment name}`).
 
-TODO: Is the `fileMapping` relevant here?
+TODO: Is the `fileMapping` relevant here? Answer: No, because files are mapped at the entry level, not at the sequence level.
 
 ### INSDC Ingest
 
@@ -206,23 +217,17 @@ Multiple segments:
 }
 ```
 
-### Problems that need to be solved:
- 
-The backend compresses the unaligned nucleotide sequences before storing them.
-It uses the reference sequence as dictionary to achieve a good compression ratio.
-This is possible because it knows which segment a sequence is supposed to be.
+### Problems that need to be solved
 
-This will not be possible anymore.
-For single-segment organisms, the backend can still take the only segment as the dictionary.
+Currently, the backend compresses sequences with zstd using each reference segment as the dictionary.
+This is possible because segments are known through the FASTA id.
+With the new design, the backend will no longer know which segment (suborganism) a sequence belongs to.
 
-When there are multiple segments:
-* What should we use as the dictionary? Concatenation of all segments?
-* How do we make sure that after rolling out these changes, 
-  the unaligned nucleotide sequences that are already in the DB can still be decompressed (e.g. CCHF)?
-  This probably requires a non-trivial database migration.
-  The reference sequences are not store in the DB, so the migration cannot be a simple SQL script.
+We should switch to using the merged sequences as the dictionary for compression.
 
-## preprocessing input
+For new organisms, this is fine, but migration of existing organisms will be non-trivial as it involves re-compressing and current dictionaries are not in the db itself, see https://github.com/loculus-project/loculus/issues/4769
+
+## Preprocessing input
 
 Similar to what is stored in the DB.
 
@@ -276,11 +281,58 @@ similar for multiple segments.
 
 The backend will validate the preprocessing output against the merged reference genome
 since the merged reference genome is used in SILO and the preprocessing result will be fed into SILO.
-In particular all segments and genes for all suborganisms must be present in the preprocessing output.
+
+Similar to how metadata columns can be added/removed without requiring a new preprocessing run, so should segments/suborganisms be allowed to be dynamically added/removed. Backend just filters out segments that are not in the config and adds those as "null" that weren't in the preprocessing output.
+
+## Website
+
+### Sequence entry details page
+
+Don't show sequences that are not there anyway.
+Only show the "segments" of the relevant suborganism.
+Only show the relevant genes.
+Strip the suborganism name for the sequence names.
+
+![img.png](sequenceDisplay.png)
+
+Only show the reference of the relevant suborganism in the mutations header:
+
+![img_1.png](mutationReferences.png)
+
+Mutations should not show the suborganism name:
+
+![img_2.png](mutations.png)
+
+TODO: Is there more?
+
+### Search Page
+
+Mutation and lineage search should only show up once the search has been narrowed down to a specific suborganism.
+
+Mutation filter: Also strip the suborganism name for the user?
+User inputs `A123T`, we send `suborganism1:A123T` to LAPIS.
+(Similar for amino acid mutations and insertions).
+
+Do we still show the segments in the download modal?
+![img.png](downloadModal.png)
+
+### Review Page
+
+Do we want to leave all those sequences here?
+![img.png](processedSequences.png)
+
+Do we need to change this on the edit page?
+Those are unprocessed sequences.
+When there backend doesn't know the segments anymore, what do we display here?
+![img.png](editSequences.png)
+
+## ENA Deposition
+
+TODO: What needs to be done here?
 
 ## LAPIS / SILO
 
-Will there be per-segment metadata?
+No changes necessary
 
 The reference genome will be a product "suborganism x segment":
 
@@ -450,49 +502,3 @@ The response of sequence endpoints needs to be mapped.
 The Loculus website needs to pick the correct virtual LAPIS based on the filters,
 once they have been narrowed down to a specific suborganism.
 In return, it would not need to map sequence names in mutations and insertions by itself.
-
-## Website
-
-### Sequence entry details page
-
-Don't show sequences that are not there anyway.
-Only show the "segments" of the relevant suborganism.
-Only show the relevant genes.
-Strip the suborganism name for the sequence names.
-
-![img.png](sequenceDisplay.png)
-
-Only show the reference of the relevant suborganism in the mutations header:
-
-![img_1.png](mutationReferences.png)
-
-Mutations should not show the suborganism name:
-
-![img_2.png](mutations.png)
-
-TODO: Is there more?
-
-### Search Page
-
-Mutation and lineage search should only show up once the search has been narrowed down to a specific suborganism.
-
-Mutation filter: Also strip the suborganism name for the user?
-User inputs `A123T`, we send `suborganism1:A123T` to LAPIS.
-(Similar for amino acid mutations and insertions).
-
-Do we still show the segments in the download modal?
-![img.png](downloadModal.png)
-
-### Review Page
-
-Do we want to leave all those sequences here?
-![img.png](processedSequences.png)
-
-Do we need to change this on the edit page?
-Those are unprocessed sequences.
-When there backend doesn't know the segments anymore, what do we display here?
-![img.png](editSequences.png)
-
-## ENA Deposition
-
-TODO: What needs to be done here?
