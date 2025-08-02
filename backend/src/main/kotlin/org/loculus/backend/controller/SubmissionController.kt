@@ -104,13 +104,7 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
-        @Parameter(
-            description =
-            "A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
-                "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
-                "/files/request-upload endpoint.",
-        )
-        @RequestPart fileMapping: String?,
+        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
@@ -140,13 +134,9 @@ open class SubmissionController(
     fun revise(
         @PathVariable @Valid organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(
-            description = REVISED_METADATA_FILE_DESCRIPTION,
-        ) @RequestParam metadataFile: MultipartFile,
-        @Parameter(
-            description = SEQUENCE_FILE_DESCRIPTION,
-        ) @RequestParam sequenceFile: MultipartFile?,
-        @RequestPart fileMapping: String?,
+        @Parameter(description = REVISED_METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
+        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
+        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart fileMapping: String?,
     ): List<SubmissionIdMapping> {
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
