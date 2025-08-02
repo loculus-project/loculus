@@ -1665,7 +1665,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
-    enabled: false
+    enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
@@ -1748,7 +1748,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 12059 # Enterovirus (all EVs)
+        taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
