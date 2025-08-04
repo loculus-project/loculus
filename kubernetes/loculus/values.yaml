@@ -1757,6 +1757,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           log_level: INFO
           classify_with_nextclade_sort: True
+          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nucleotideSequences:
             - name: CV-A16
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16
