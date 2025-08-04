@@ -17,7 +17,7 @@ import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
-    return new Response(undefined, { status: groupsResult.error.status });
+    return Astro.rewrite(groupsResult.error.type === 'group_not_found' ? '/404' : '/403');
 }
 const { currentGroup: group } = groupsResult.value;
 
