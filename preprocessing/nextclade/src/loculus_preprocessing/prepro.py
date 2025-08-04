@@ -136,7 +136,7 @@ def run_sort(
     config: Config,
     nextclade_dataset_server: str,
     dataset_dir: str,
-) -> None:
+) -> pd.DataFrame:
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
@@ -171,8 +171,19 @@ def run_sort(
     if exit_code != 0:
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
+    return pd.read_csv(
+        result_file,
+        sep="\t",
+        dtype={
+            "index": "Int64",
+            "score": "float64",
+            "seqName": "string",
+            "dataset": "string",
+        },
+    )
 
 
+# TODO: running this for each sequence is inefficient, should be run once per batch
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
@@ -197,23 +208,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
-    run_sort(
+    df = run_sort(
         result_file,
         input_file,
         config,
         nextclade_dataset_server,
         dataset_dir,
-    )
-
-    df = pd.read_csv(
-        result_file,
-        sep="\t",
-        dtype={
-            "index": "Int64",
-            "score": "float64",
-            "seqName": "string",
-            "dataset": "string",
-        },
     )
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
@@ -253,17 +253,22 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     return alerts
 
 
-def assign_segment(
+def classify_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     config: Config,
+    dataset_dir: str,
 ):
     if config.classify_with_nextclade_sort:
-        # TODO: add this functionality
-        raise NotImplementedError(
-            "Classify with nextclade sort is not implemented yet. "
-            "Please set classify_with_nextclade_sort to False in the config."
+        return classify_with_nextclade_sort(
+            input_unaligned_sequences,
+            unaligned_nucleotide_sequences,
+            aligned_nucleotide_sequences,
+            dataset_dir=dataset_dir,
+            errors=errors,
+            config=config,
         )
     valid_segments = set()
     duplicate_segments = set()
@@ -377,8 +382,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        for gene in config.genes:
-            aligned_aminoacid_sequences[id][gene] = None
         (
             unaligned_nucleotide_sequences[id],
             alerts.errors[id],
@@ -387,6 +390,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
             errors=alerts.errors[id],
             config=config,
+            dataset_dir=dataset_dir,
         )
 
     nextclade_metadata: defaultdict[
@@ -808,7 +812,8 @@ def process_single(  # noqa: C901
         return processed_entry_no_alignment(id, unprocessed, output_metadata, errors, warnings)
 
     aligned_segments = set()
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
@@ -825,7 +830,8 @@ def process_single(  # noqa: C901
 
     if config.create_embl_file and unprocessed.nextcladeMetadata is not None:
         annotations = {}
-        for segment in config.nucleotideSequences:
+        for sequence_and_dataset in config.nucleotideSequences:
+            segment = sequence_and_dataset.name
             if segment in unprocessed.nextcladeMetadata:
                 annotations[segment] = None
                 if unprocessed.nextcladeMetadata[segment]:

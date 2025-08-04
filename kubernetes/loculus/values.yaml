@@ -1356,11 +1356,11 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile      
+          <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nucleotideSequences:
-          - name: "main"
-            nextclade_dataset_name: nextstrain/ebola/sudan
+            - name: "main"
+              nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
       - <<: *preprocessing
         version: 2
@@ -1368,8 +1368,8 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nucleotideSequences:
-          - name: "main"
-            nextclade_dataset_name: nextstrain/ebola/sudan
+            - name: "main"
+              nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   west-nile:
     <<: *defaultOrganismConfig
@@ -1422,8 +1422,8 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           nucleotideSequences:
-          - name: "main"
-            nextclade_dataset_name: nextstrain/wnv/all-lineages
+            - name: "main"
+              nextclade_dataset_name: nextstrain/wnv/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
     ingest:
@@ -1861,9 +1861,11 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           log_level: INFO
           classify_with_nextclade_sort: True
+          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nucleotideSequences:
             - name: CV-A16
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
             - name: CV-A10
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10
             - name: EV-A71
@@ -2091,7 +2093,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition: 
+enaDeposition:
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
