@@ -129,34 +129,20 @@ def parse_nextclade_json(
 
 
 def run_sort(
-    result_file_dir: str,
+    result_file: str,
     input_file: str,
-    alerts: Alerts,
     config: Config,
-    sequence_and_dataset: NextcladeSequenceAndDataset,
+    nextclade_dataset_server: str,
     dataset_dir: str,
-) -> Alerts:
+) -> None:
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
-    - assert highest score is in sequence_and_dataset.accepted_sort_matches
-    (default is nextclade_dataset_name)
     """
-    nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
-    if not sequence_and_dataset.accepted_sort_matches and not nextclade_dataset_name:
-        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
-        return alerts
-    nextclade_dataset_server = (
-        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
-    )
-
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
-
-    result_file = result_file_dir + "/sort_output.tsv"
-    command = [
+    subprocess_args_with_emtpy_strings = [
         "nextclade3",
         "sort",
         input_file,
@@ -175,12 +161,47 @@ def run_sort(
         f"{nextclade_dataset_server}",
     ]
 
-    logger.debug(f"Running nextclade sort: {command}")
+    subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
 
-    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    logger.debug(f"Running nextclade sort: {subprocess_args}")
+
+    exit_code = subprocess.run(subprocess_args, check=False).returncode  # noqa: S603
     if exit_code != 0:
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
+
+
+def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
+    result_file_dir: str,
+    input_file: str,
+    alerts: Alerts,
+    config: Config,
+    sequence_and_dataset: NextcladeSequenceAndDataset,
+    dataset_dir: str,
+) -> Alerts:
+    """
+    Run nextclade sort
+    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
+    if not sequence_and_dataset.accepted_sort_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
+    nextclade_dataset_server = (
+        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+    )
+
+    accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
+
+    result_file = result_file_dir + "/sort_output.tsv"
+    run_sort(
+        result_file,
+        input_file,
+        config,
+        nextclade_dataset_server,
+        dataset_dir,
+    )
 
     df = pd.read_csv(
         result_file,
@@ -361,7 +382,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                alerts = run_sort(
+                alerts = check_nextclade_sort_matches(
                     result_dir_seg, input_file, alerts, config, sequence_and_dataset, dataset_dir
                 )
 
