@@ -754,8 +754,6 @@ def process_single(  # noqa: C901
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
-        if not sequence:
-            unprocessed.unalignedNucleotideSequences[segment] = None
         key = "length" if segment == "main" else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0

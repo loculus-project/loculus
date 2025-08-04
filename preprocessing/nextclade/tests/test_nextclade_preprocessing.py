@@ -364,7 +364,6 @@ multi_segment_case_definitions = [
         name="with one succeeded and one not uploaded",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": None,
             "ebola-zaire": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
@@ -382,11 +381,9 @@ multi_segment_case_definitions = [
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
-                "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             alignedNucleotideSequences={
-                "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             nucleotideInsertions={"ebola-zaire": []},
@@ -435,9 +432,8 @@ multi_segment_case_definitions_all_requirement = [
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-sudan": invalid_sequence(),
-                "ebola-zaire": None,
             },
-            alignedNucleotideSequences={"ebola-sudan": None, "ebola-zaire": None},
+            alignedNucleotideSequences={"ebola-sudan": None},
             nucleotideInsertions={"ebola-sudan": []},  # TODO: this is odd
             alignedAminoAcidSequences={
                 "NPEbolaSudan": None,
