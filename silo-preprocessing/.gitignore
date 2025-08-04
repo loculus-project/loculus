@@ -1,0 +1,4 @@
+/input/*
+/output
+/input-data-cache
+!/input/reference_genomes.json
