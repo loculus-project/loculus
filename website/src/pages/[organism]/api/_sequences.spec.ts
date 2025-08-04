@@ -45,6 +45,7 @@ describe('The sequences endpoint', () => {
                 displayName: organism,
                 image: undefined,
                 description: undefined,
+                longDisplayName: undefined,
             },
         ]);
         getRuntimeConfigMock.mockImplementation(() => testConfig);
