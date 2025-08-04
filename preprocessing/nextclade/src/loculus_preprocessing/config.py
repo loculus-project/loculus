@@ -83,6 +83,7 @@ class Config:
     )
     genes: list[str] = dataclasses.field(default_factory=list)
     multi_segment: bool = False
+    classify_with_nextclade_sort: bool = False
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     require_nextclade_sort_match: bool = False
 
