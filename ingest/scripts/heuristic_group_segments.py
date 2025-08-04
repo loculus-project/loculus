@@ -211,11 +211,6 @@ def main(
                 if segment in group
             ]
         )
-        if not joint_key:
-            logger.warning(
-                f"Group {group} has no known segments, skipping."
-            )
-            continue
         for segment, accession in group.items():
             fasta_id_map[accession] = f"{joint_key}_{segment}"
 
