@@ -252,7 +252,9 @@ private fun clearDatabaseStatement(): String = """
         insert into $CURRENT_PROCESSING_PIPELINE_TABLE_NAME values
             (1, now(), '$DEFAULT_ORGANISM'),
             (1, now(), '$OTHER_ORGANISM'),
-            (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
+            (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES'),
+            (1, now(), '$MULTI_PATHOGEN_ORGANISM'),
+            (1, now(), '${SegmentedMultiPathogenOrganism.NAME}');
     """
 
 private fun createBucket(endpoint: String, user: String, password: String, region: String, bucket: String) {
