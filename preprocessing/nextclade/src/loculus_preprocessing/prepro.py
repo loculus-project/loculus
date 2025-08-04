@@ -259,7 +259,6 @@ def assign_segment(
     num_duplicate_segments = 0
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
-        aligned_nucleotide_sequences[segment] = None
         unaligned_segment = [
             data
             for data in input_unaligned_sequences
@@ -289,8 +288,7 @@ def assign_segment(
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-        else:
-            unaligned_nucleotide_sequences[segment] = None
+            aligned_nucleotide_sequences[segment] = None
     if len(input_unaligned_sequences) - num_valid_segments - num_duplicate_segments > 0:
         errors.append(
             ProcessingAnnotation(

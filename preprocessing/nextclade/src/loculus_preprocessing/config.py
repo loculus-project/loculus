@@ -76,7 +76,6 @@ class Config:
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
-    nextclade_dataset_server_map: dict[str, str] | None = None
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
     nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
