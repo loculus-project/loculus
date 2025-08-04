@@ -39,11 +39,11 @@ so to make a file public, the backend sets this tag on the object in S3.
 There are currently two mechanisms to handle files of new pipeline versions:
 
 - When files are uploaded for entries that are already public, the files are [published right away](https://github.com/loculus-project/loculus/pull/4515).
-- When files are uploaded for entries that are not yet published, but are also uploaded with a pipeline version greater than the current one, the backend will [_also_ publish these already](https://github.com/loculus-project/loculus/pull/4581). This is to prevent the files from being private once the current pipeline version is bumped. Why not publish these files during the pipeline version bump? The database is not locked during the bump, and so a file that is uploaded with the n+1 pipeline version could be missed.
+- When files are uploaded for entries that are not yet published, but are also uploaded with a pipeline version greater than the current one, the backend will [publish these when the entry is approved](https://github.com/loculus-project/loculus/pull/4581). This is to prevent the files from being private once the current pipeline version is bumped. Why not publish these files during the pipeline version bump? The database is not locked during the bump, and so a file that is uploaded with the n+1 pipeline version could be missed.
 
 ## The files table
 
-The database has a table to keep track of the files.
+The database keeps track of files in the `files` table.
 
 Entries in this table are created by the backend when the `request-uploads` endpoint is called.
 The request records who made the request, for which group and when.

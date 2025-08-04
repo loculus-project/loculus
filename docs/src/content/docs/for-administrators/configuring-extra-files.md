@@ -55,6 +55,10 @@ You can also use the `raw` secret type, but be aware that keeping credentials in
 
 ## Set S3 policy
 
+:::note
+This step is only required if you wish to be able to have the files be set to public on your S3 instance, accessible without the need to request pre-signed URLs from the backend.
+:::
+
 The backend makes files in the bucket public, by tagging them with `public=true`.
 For this to work, you need to configure a bucket policy like this:
 
@@ -78,10 +82,6 @@ For this to work, you need to configure a bucket policy like this:
 ```
 
 Consult the documentation of your particular S3 provider on how to configure bucket policies.
-
-:::note
-This step is only required if you wish to be able to have the files be set to public on your S3 instance, accessible without the need to request pre-signed URLs from the backend.
-:::
 
 ## Configuring file submission
 
