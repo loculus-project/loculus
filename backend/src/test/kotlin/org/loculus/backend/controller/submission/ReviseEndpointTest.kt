@@ -11,13 +11,16 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -29,6 +32,7 @@ import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndMultipartUrls
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -282,7 +286,7 @@ class ReviseEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
 
         client.reviseSequenceEntries(
             DefaultFiles.getRevisedMetadataFile(accessions),
@@ -408,6 +412,41 @@ class ReviseEndpointTest(
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+    }
+
+    @Test
+    fun `GIVEN valid file with multipart upload THEN is successful`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val accessions = convenienceClient.prepareDataTo(
+            status = APPROVED_FOR_RELEASE,
+            groupId = groupId,
+        )
+            .map { it.accession }
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+            numberParts = 2,
+        ).andGetFileIdsAndMultipartUrls()[0]
+        val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
+            .headers().map()["etag"]!![0]
+        val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], DEFAULT_MULTIPART_FILE_PARTS[1])
+            .headers().map()["etag"]!![0]
+        filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            fileMapping = mapOf(
+                "custom0" to
+                    mapOf(
+                        "myFileCategory" to
+                            listOf(
+                                FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
+                            ),
+                    ),
+            ),
+        )
+            .andExpect(status().isOk)
     }
 
     companion object {

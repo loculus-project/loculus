@@ -35,7 +35,7 @@ test.describe('Sequence view in review card', () => {
         await reviewPage.waitForZeroProcessing();
         await reviewPage.viewSequences();
 
-        const dialogTitle = page.getByText('Processed Sequences', { exact: true });
+        const dialogTitle = page.getByText('Processed sequences', { exact: true });
         await expect(dialogTitle).toBeVisible();
 
         const sequenceContent = await reviewPage.getSequenceContent();

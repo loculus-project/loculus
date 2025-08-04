@@ -218,7 +218,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             )}
             <RadioOptionBlock
                 name='dataType'
-                title='Data Type'
+                title='Data type'
                 options={dataTypeOptions}
                 selected={dataType}
                 onSelect={setDataType}

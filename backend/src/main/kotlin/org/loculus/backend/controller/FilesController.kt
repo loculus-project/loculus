@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.FileIdAndEtags
+import org.loculus.backend.api.FileIdAndMultipartWriteUrl
 import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
@@ -17,12 +19,14 @@ import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.generateFileId
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -102,12 +106,12 @@ class FilesController(
         @HiddenParam
         authenticatedUser: AuthenticatedUser,
         @Parameter(
-            description = "The Group ID of the group which will be owning the files. " +
+            description = "The Group ID of the group which will own the files. " +
                 "The requesting user must be a member of the group.",
         )
         @RequestParam
         groupId: Int,
-        @Parameter(description = "Number of URLs, default is 1.")
+        @Parameter(description = "Number of files, default is 1.")
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
@@ -120,10 +124,81 @@ class FilesController(
             throw BadRequestException("Number of files must be at least 1")
         }
         repeat(numberFiles) {
-            val fileId = filesDatabaseService.createFileEntry(authenticatedUser.username, groupId)
+            val fileId = generateFileId()
             val presignedUploadUrl = s3Service.createUrlToUploadPrivateFile(fileId)
+            filesDatabaseService.createFileEntry(fileId, authenticatedUser.username, groupId)
             response.add(FileIdAndWriteUrl(fileId, presignedUploadUrl))
         }
         return response
+    }
+
+    @Operation(
+        description =
+        "Requests S3 pre-signed URLs to upload files using multipart upload. The endpoint returns a list of " +
+            "file IDs and, for each file ID, a list of URLs. The URLs should be used to upload the parts " +
+            "and the upload should then be completed using the /complete-multipart-upload endpoint. " +
+            "Afterwards, the file IDs can be used in the `fileMapping` in the /submit endpoint.",
+    )
+    @PostMapping("/request-multipart-upload")
+    fun requestMultipartUploads(
+        @HiddenParam
+        authenticatedUser: AuthenticatedUser,
+        @Parameter(
+            description = "The Group ID of the group which will own the files. " +
+                "The requesting user must be a member of the group.",
+        )
+        @RequestParam
+        groupId: Int,
+        @Parameter(description = "Number of files, default is 1.")
+        @RequestParam
+        numberFiles: Int = 1,
+        @Parameter(description = "Number of parts, default is 1.")
+        @RequestParam
+        numberParts: Int = 1,
+    ): List<FileIdAndMultipartWriteUrl> {
+        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        val response = mutableListOf<FileIdAndMultipartWriteUrl>()
+        repeat(numberFiles) {
+            val fileId = generateFileId()
+            val multipartUploadHandler = s3Service.initiateMultipartUploadAndCreateUrlsToUpload(fileId, numberParts)
+            filesDatabaseService.createFileEntry(
+                fileId,
+                authenticatedUser.username,
+                groupId,
+                multipartUploadHandler.uploadId,
+            )
+            response.add(FileIdAndMultipartWriteUrl(fileId, multipartUploadHandler.presignedUrls))
+        }
+        return response
+    }
+
+    @Operation(
+        description =
+        "Completes multipart uploads that have been initiated with the /request-multipart-upload endpoint",
+    )
+    @PostMapping("/complete-multipart-upload")
+    fun completeMultipartUploads(
+        @RequestBody
+        @Parameter(
+            description = "The File IDs and and the ETags of the uploaded parts",
+        )
+        body: List<FileIdAndEtags>,
+    ) {
+        val fileIdsAndEtags = body.associate { it.fileId to it.etags }
+        val multipartUploadIds = filesDatabaseService.getUncompletedMultipartUploadIds(fileIdsAndEtags.keys)
+        val alreadyCompleted = fileIdsAndEtags.keys - multipartUploadIds.map { it.first }.toSet()
+        if (alreadyCompleted.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The following files have already been completed: " + alreadyCompleted.joinToString(),
+            )
+        }
+        multipartUploadIds.forEach { (fileId, uploadId) ->
+            val etags = fileIdsAndEtags[fileId]
+            if (etags == null || etags.isEmpty()) {
+                throw UnprocessableEntityException("No etags provided for file ID $fileId.")
+            }
+            s3Service.completeMultipartUpload(fileId, uploadId, etags)
+            filesDatabaseService.completeMultipartUpload(fileId)
+        }
     }
 }

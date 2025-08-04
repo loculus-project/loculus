@@ -22,9 +22,9 @@ const BUTTON_CLASS =
     'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500  mr-2 hover:no-underline';
 ---
 
-<BaseLayout title='API Documentation'>
+<BaseLayout title='API documentation'>
     <div class='container mx-auto p-8'>
-        <h1 class='title'>API Documentation</h1>
+        <h1 class='title'>API documentation</h1>
 
         <div class='mb-10'>
             <p class='mt-4 mb-4'>
@@ -56,7 +56,7 @@ const BUTTON_CLASS =
                             href={routes.datauseTermsPage()}
                             class='underline text-primary-900 hover:text-primary-800 hover:no-underline'
                         >
-                            Data Use Terms
+                            Data use terms
                         </a>
                         .
                     </p>
@@ -65,32 +65,32 @@ const BUTTON_CLASS =
         </div>
 
         <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend Server</h2>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend server</h2>
             <div class='mb-4'>
                 Please note that Loculus is under continuous development and the endpoints are subject to change.
             </div>
             <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
-                View Backend API Documentation
+                View backend API documentation
             </a>
             <div class='mt-8'>
-                <span class='font-medium'>URL of Backend Server:</span>
+                <span class='font-medium'>URL of backend server:</span>
                 <code>{clientConfig.backendUrl}</code>
             </div>
         </div>
 
         <div class='mb-10'>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS Query Engines</h2>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS query engines</h2>
             <div class='space-y-4'>
                 {
                     Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
                         <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
-                            {organismToDisplayName[organism]} LAPIS API Documentation
+                            {organismToDisplayName[organism]} LAPIS API documentation
                         </a>
                     ))
                 }
             </div>
             <div class='mt-8'>
-                <span class='font-medium'>URLs of LAPIS Query Engines:</span>
+                <span class='font-medium'>URLs of LAPIS query engines:</span>
                 <ul class='list-disc ml-6'>
                     {
                         Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
@@ -104,12 +104,12 @@ const BUTTON_CLASS =
         </div>
 
         <div>
-            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak Server</h2>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Keycloak server</h2>
             <div>
                 We use the open source software <a href='https://www.keycloak.org/'>Keycloak</a> for authentication.
             </div>
             <div class='mt-2'>
-                <span class='font-medium'>URL of Keycloak Server:</span>
+                <span class='font-medium'>URL of Keycloak server:</span>
                 <code>{keycloakUrl}</code>
             </div>
         </div>

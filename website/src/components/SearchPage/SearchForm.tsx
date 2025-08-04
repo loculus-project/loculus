@@ -85,7 +85,7 @@ export const SearchForm = ({
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
                                 <DisabledUntilHydrated>
                                     <button className='hover:underline' onClick={toggleFieldSelector}>
-                                        <StreamlineWrench className='inline-block' /> Add Search Fields
+                                        <StreamlineWrench className='inline-block' /> Add search fields
                                     </button>
                                 </DisabledUntilHydrated>
                                 <button
@@ -103,7 +103,7 @@ export const SearchForm = ({
                         </div>{' '}
                     </div>
                     <FieldSelectorModal
-                        title='Add Search Fields'
+                        title='Add search fields'
                         isOpen={isFieldSelectorOpen}
                         onClose={toggleFieldSelector}
                         fields={fieldItems}
