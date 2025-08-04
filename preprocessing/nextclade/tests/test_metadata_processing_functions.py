@@ -491,8 +491,8 @@ test_case_definitions = [
             "submissionId": "strip_spaces_in_metadata",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": " Smith, John II; Doe, A.B.C. ",
-            "regex_field": " EPI_ISL_123456 ",
+            "authors": " Smith, John II; Doe, A.B.C. \t",
+            "regex_field": "\n EPI_ISL_123456 \n",
         },
         accession_id="16",
         expected_metadata={
