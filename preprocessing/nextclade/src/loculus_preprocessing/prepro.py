@@ -819,7 +819,7 @@ def process_single(  # noqa: C901
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
-    if not aligned_segments:
+    if not aligned_segments and config.multi_segment:
         errors.append(
             ProcessingAnnotation(
                 unprocessedFields=[
