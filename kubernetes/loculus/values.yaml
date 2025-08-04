@@ -1759,7 +1759,7 @@ defaultOrganisms:
           classify_with_nextclade_sort: True
           nucleotideSequences:
             - name: CV-A16
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16`
+              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16
             - name: CV-A10
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10
             - name: EV-A71
