@@ -299,7 +299,7 @@ def classify_with_nextclade_sort(
                 )
 
         best_hits = hits.groupby("seqName", as_index=False).first()
-        logger.info(f"Found hits: {best_hits['seqName'].unique()}")
+        logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
 
         for _, row in best_hits.iterrows():
             not_found = True
