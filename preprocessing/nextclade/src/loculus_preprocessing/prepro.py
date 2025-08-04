@@ -301,6 +301,7 @@ def classify_with_nextclade_sort(
         best_hits = hits.groupby("seqName", as_index=False).first()
 
         for _, row in best_hits.iterrows():
+            not_found = True
             for segment in config.nucleotideSequences:
                 accepted_dataset_names = segment.accepted_sort_matches or [
                     segment.nextclade_dataset_name
@@ -310,19 +311,21 @@ def classify_with_nextclade_sort(
                         row["seqName"]
                     ]
                     aligned_nucleotide_sequences[segment.name] = None
+                    not_found = False
                     break
-            msg = (
-                f"Sequence {row['seqName']} best matches {row['dataset']}, "
-                "which is currently not an accepted option for organism: "
-                f"{config.organism}. It is therefore not possible to release. "
-                "Contact the administrator if you think this message is an error."
-            )
-            errors.append(
-                sequence_annotation(
-                    name="alignment",
-                    message=msg,
+            if not_found:
+                msg = (
+                    f"Sequence {row['seqName']} best matches {row['dataset']}, "
+                    "which is currently not an accepted option for organism: "
+                    f"{config.organism}. It is therefore not possible to release. "
+                    "Contact the administrator if you think this message is an error."
                 )
-            )
+                errors.append(
+                    sequence_annotation(
+                        name="alignment",
+                        message=msg,
+                    )
+                )
 
     return (unaligned_nucleotide_sequences, aligned_nucleotide_sequences, errors)
 
