@@ -57,7 +57,7 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -867,24 +867,6 @@ class SubmitProcessedDataEndpointTest(
 
         @JvmStatic
         fun provideInvalidNucleotideSequenceDataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with missing segment in unaligned nucleotide sequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingSegmentInUnalignedNucleotideSequences(
-                        accession = "DoesNotMatter",
-                        segment = "main",
-                    ),
-                expectedErrorMessage = "Missing the required segment 'main' in 'unalignedNucleotideSequences'.",
-            ),
-            InvalidDataScenario(
-                name = "data with missing segment in aligned nucleotide sequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingSegmentInAlignedNucleotideSequences(
-                        accession = "DoesNotMatter",
-                        segment = "main",
-                    ),
-                expectedErrorMessage = "Missing the required segment 'main' in 'alignedNucleotideSequences'.",
-            ),
             InvalidDataScenario(
                 name = "data with unknown segment in alignedNucleotideSequences",
                 processedDataThatNeedsAValidAccession = PreparedProcessedData

@@ -202,9 +202,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     fun validate(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val processedDataWithAllMetadataFields = validateMetadata(processedData)
         validateNucleotideSequences(processedDataWithAllMetadataFields)
-        validateAminoAcidSequences(processedDataWithAllMetadataFields)
+        val updatedProcessedDataWithAllMetadataFields =
+            addMissingNucleotideSequences(processedDataWithAllMetadataFields)
+        validateAminoAcidSequences(updatedProcessedDataWithAllMetadataFields)
 
-        return addMissingKeysForInsertions(processedDataWithAllMetadataFields)
+        return addMissingKeysForInsertions(updatedProcessedDataWithAllMetadataFields)
     }
 
     private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
@@ -220,21 +222,10 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {
-            validateNoMissingSegment(
-                segment,
-                processedData.alignedNucleotideSequences,
-                "alignedNucleotideSequences",
-            )
             validateLengthOfSequence(
                 segment,
                 processedData.alignedNucleotideSequences,
                 "alignedNucleotideSequences",
-            )
-
-            validateNoMissingSegment(
-                segment,
-                processedData.unalignedNucleotideSequences,
-                "unalignedNucleotideSequences",
             )
         }
 
@@ -268,10 +259,21 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         )
     }
 
-    private fun validateNoMissingSegment(segment: ReferenceSequence, sequenceData: Map<String, *>, sequence: String) {
-        if (!sequenceData.containsKey(segment.name)) {
-            throw ProcessingValidationException("Missing the required segment '${segment.name}' in '$sequence'.")
+    private fun addMissingNucleotideSequences(
+        processedData: ProcessedData<GeneticSequence>,
+    ): ProcessedData<GeneticSequence> {
+        val updatedAligned = referenceGenome.nucleotideSequences.associate { segment ->
+            segment.name to (processedData.alignedNucleotideSequences[segment.name])
         }
+
+        val updatedUnaligned = referenceGenome.nucleotideSequences.associate { segment ->
+            segment.name to (processedData.unalignedNucleotideSequences[segment.name])
+        }
+
+        return processedData.copy(
+            alignedNucleotideSequences = updatedAligned,
+            unalignedNucleotideSequences = updatedUnaligned,
+        )
     }
 
     private fun validateLengthOfSequence(
@@ -331,11 +333,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
