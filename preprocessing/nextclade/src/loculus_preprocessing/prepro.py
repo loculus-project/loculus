@@ -317,7 +317,7 @@ def classify_with_nextclade_sort(
                 f"{config.organism}. It is therefore not possible to release. "
                 "Contact the administrator if you think this message is an error."
             )
-            errors[row["seqName"]].append(
+            errors.append(
                 sequence_annotation(
                     name="alignment",
                     message=msg,
