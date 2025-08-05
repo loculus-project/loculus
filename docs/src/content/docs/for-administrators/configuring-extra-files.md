@@ -57,6 +57,8 @@ You can also use the `raw` secret type, but be aware that keeping credentials in
 
 :::note
 This step is only required if you wish to be able to have the files be set to public on your S3 instance, accessible without the need to request pre-signed URLs from the backend.
+
+There is currently a bug that may lead to a file not being set to public in rare cases (due to race conditioning, see [GitHub issue](https://github.com/loculus-project/loculus/issues/4806)).
 :::
 
 The backend makes files in the bucket public, by tagging them with `public=true`.
