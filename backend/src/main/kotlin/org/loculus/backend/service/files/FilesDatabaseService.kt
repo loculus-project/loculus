@@ -30,25 +30,6 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
             .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
 
     /**
-     * Set the release date for all given file IDs to now, if they are not set already.
-     */
-    fun release(fileIds: Set<FileId>) {
-        val now = dateProvider.getCurrentDateTime()
-        FilesTable.update({
-            FilesTable.idColumn inList fileIds and (FilesTable.releasedAtColumn.isNull())
-        }) {
-            it[releasedAtColumn] = now
-        }
-    }
-
-    fun isFilePublic(fileId: FileId): Boolean? = FilesTable
-        .select(FilesTable.releasedAtColumn)
-        .where { FilesTable.idColumn eq fileId }
-        .map { it[FilesTable.releasedAtColumn] }
-        .first()
-        .let { it != null }
-
-    /**
      * Return a mapping of file IDs and multipart upload IDs for the files for which multipart upload has been
      * initiated but not completed
      */
