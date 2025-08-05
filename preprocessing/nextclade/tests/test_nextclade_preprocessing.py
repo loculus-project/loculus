@@ -390,7 +390,10 @@ multi_segment_case_definitions = [
             },
             aminoAcidInsertions={},  # TODO: this is odd, should be the same as empty nuc insertions
         ),
-    ),
+    )
+]
+
+multi_segment_case_definitions_all_requirement = [
     Case(
         name="with one failed alignment, one not uploaded",
         input_metadata={},
@@ -437,9 +440,6 @@ multi_segment_case_definitions = [
             aminoAcidInsertions={},
         ),
     ),
-]
-
-multi_segment_case_definitions_all_requirement = [
     Case(
         name="with one failed alignment, one succeeded",
         input_metadata={},
@@ -489,6 +489,52 @@ multi_segment_case_definitions_all_requirement = [
 ]
 
 multi_segment_case_definitions_any_requirement = [
+    Case(
+        name="with one failed alignment, one not uploaded",
+        input_metadata={},
+        input_sequence={"ebola-sudan": invalid_sequence()},
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": 53,
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                ["alignment"],
+                ["alignment"],
+                "No segment aligned.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+            ProcessingAnnotationHelper(
+                ["ebola-sudan"],
+                ["ebola-sudan"],
+                "Nucleotide sequence for ebola-sudan failed to align",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-sudan": invalid_sequence(),
+                "ebola-zaire": None,
+            },
+            alignedNucleotideSequences={"ebola-sudan": None, "ebola-zaire": None},
+            nucleotideInsertions={"ebola-sudan": []},  # TODO: this is odd
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": None,
+                "VP35EbolaSudan": None,
+                "VP24EbolaZaire": None,
+                "LEbolaZaire": None,
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
     Case(
         name="with one failed alignment, one succeeded",
         input_metadata={},
