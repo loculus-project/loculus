@@ -202,11 +202,9 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     fun validate(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val processedDataWithAllMetadataFields = validateMetadata(processedData)
         validateNucleotideSequences(processedDataWithAllMetadataFields)
-        val updatedProcessedDataWithAllMetadataFields =
-            addMissingNucleotideSequences(processedDataWithAllMetadataFields)
-        validateAminoAcidSequences(updatedProcessedDataWithAllMetadataFields)
+        validateAminoAcidSequences(processedDataWithAllMetadataFields)
 
-        return addMissingKeysForInsertions(updatedProcessedDataWithAllMetadataFields)
+        return processedDataWithAllMetadataFields
     }
 
     private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
@@ -256,24 +254,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
         validateNoUnknownNucleotideSymbolInInsertion(
             processedData.nucleotideInsertions,
-        )
-    }
-
-    // TODO: remove this method
-    private fun addMissingNucleotideSequences(
-        processedData: ProcessedData<GeneticSequence>,
-    ): ProcessedData<GeneticSequence> {
-        val updatedAligned = referenceGenome.nucleotideSequences.associate { segment ->
-            segment.name to (processedData.alignedNucleotideSequences[segment.name])
-        }
-
-        val updatedUnaligned = referenceGenome.nucleotideSequences.associate { segment ->
-            segment.name to (processedData.unalignedNucleotideSequences[segment.name])
-        }
-
-        return processedData.copy(
-            alignedNucleotideSequences = updatedAligned,
-            unalignedNucleotideSequences = updatedUnaligned,
         )
     }
 
@@ -343,7 +323,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
         for (gene in referenceGenome.genes) {
-            validateNoMissingGene(gene, processedData)
             validateLengthOfSequence(
                 gene,
                 processedData.alignedAminoAcidSequences,
@@ -363,13 +342,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
         validateNoUnknownAminoAcidSymbol(processedData.alignedAminoAcidSequences)
         validateNoUnknownAminoAcidSymbolInInsertion(processedData.aminoAcidInsertions)
-    }
-
-    // TODO: remove this method, add aligned amino acid sequences when streaming
-    private fun validateNoMissingGene(gene: ReferenceSequence, processedData: ProcessedData<GeneticSequence>) {
-        if (!processedData.alignedAminoAcidSequences.containsKey(gene.name)) {
-            throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
-        }
     }
 
     private fun validateNoUnknownGeneInData(data: Map<String, *>, geneGrouping: String) {
@@ -407,32 +379,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
                 }
             }
         }
-    }
-
-    // TODO: remove this method, add insertions when streaming
-    private fun addMissingKeysForInsertions(
-        processedData: ProcessedData<GeneticSequence>,
-    ): ProcessedData<GeneticSequence> {
-        val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
-            if (it.name in processedData.nucleotideInsertions.keys) {
-                it.name to processedData.nucleotideInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        val aminoAcidInsertions = referenceGenome.genes.associate {
-            if (it.name in processedData.aminoAcidInsertions.keys) {
-                it.name to processedData.aminoAcidInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        return processedData.copy(
-            nucleotideInsertions = nucleotideInsertions,
-            aminoAcidInsertions = aminoAcidInsertions,
-        )
     }
 }
 

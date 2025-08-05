@@ -13,6 +13,12 @@ class ProcessedSequencesPostprocessor(private val backendConfig: BackendConfig) 
             .filterValues { it != null },
         alignedNucleotideSequences = processedData.alignedNucleotideSequences
             .filterValues { it != null },
+        alignedAminoAcidSequences = processedData.alignedAminoAcidSequences
+            .filterValues { it != null },
+        aminoAcidInsertions = processedData.aminoAcidInsertions
+            .filterValues { !it.isNullOrEmpty() },
+        nucleotideInsertions = processedData.nucleotideInsertions
+            .filterValues { !it.isNullOrEmpty() },
     )
 
     /** Filter out any extra sequences that are not in the current schema and add nulls for any missing sequences. */
@@ -35,6 +41,30 @@ class ProcessedSequencesPostprocessor(private val backendConfig: BackendConfig) 
             .map { it.name }
             .associateWith { seqName ->
                 processedData.alignedNucleotideSequences[seqName]
+            },
+        alignedAminoAcidSequences = backendConfig
+            .getInstanceConfig(organism)
+            .referenceGenome
+            .genes
+            .map { it.name }
+            .associateWith { geneName ->
+                processedData.alignedAminoAcidSequences[geneName]
+            },
+        aminoAcidInsertions = backendConfig
+            .getInstanceConfig(organism)
+            .referenceGenome
+            .genes
+            .map { it.name }
+            .associateWith { geneName ->
+                processedData.aminoAcidInsertions[geneName] ?: emptyList()
+            },
+        nucleotideInsertions = backendConfig
+            .getInstanceConfig(organism)
+            .referenceGenome
+            .nucleotideSequences
+            .map { it.name }
+            .associateWith { seqName ->
+                processedData.nucleotideInsertions[seqName] ?: emptyList()
             },
     )
 }

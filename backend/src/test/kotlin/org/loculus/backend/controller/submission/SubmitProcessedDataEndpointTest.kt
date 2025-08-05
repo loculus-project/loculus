@@ -180,89 +180,6 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
-        val accessions = prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM).map { it.accession }
-
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData(
-            accessions.first(),
-        ).data.copy(
-            nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
-            aminoAcidInsertions = emptyMap(),
-        )
-
-        submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = accessions.first()).copy(
-                data = dataWithoutInsertions,
-            ),
-            organism = OTHER_ORGANISM,
-        ).andExpect(status().isNoContent)
-
-        convenienceClient.getSequenceEntry(
-            accession = accessions.first(),
-            version = 1,
-            organism = OTHER_ORGANISM,
-        ).assertStatusIs(
-            Status.PROCESSED,
-        )
-
-        submissionControllerClient.getSequenceEntryToEdit(
-            accession = accessions.first(),
-            version = 1,
-            organism = OTHER_ORGANISM,
-        )
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions")
-                    .value(
-                        mapOf(
-                            "notOnlySegment" to listOf(
-                                Insertion(1, "A").toString(),
-                            ),
-                            "secondSegment" to emptyList(),
-                        ),
-                    ),
-            )
-            .andExpect(
-                jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
-            )
-    }
-
-    @Test
-    fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
-        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
-
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed(accessions.first()).data.copy(
-            nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
-            aminoAcidInsertions = emptyMap(),
-        )
-
-        submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = accessions.first()).copy(
-                data = dataWithoutInsertions,
-            ),
-        ).andExpect(status().isNoContent)
-
-        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
-            Status.PROCESSED,
-        )
-
-        submissionControllerClient.getSequenceEntryToEdit(
-            accession = accessions.first(),
-            version = 1,
-        )
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions.$MAIN_SEGMENT[0]")
-                    .value(Insertion(1, "A").toString()),
-            )
-            .andExpect(
-                jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf(SOME_SHORT_GENE to emptyList<String>(), SOME_LONG_GENE to emptyList())),
-            )
-    }
-
-    @Test
     fun `WHEN I submit null for a non-required field THEN the sequence entry is in status processed`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
@@ -938,15 +855,6 @@ class SubmitProcessedDataEndpointTest(
 
         @JvmStatic
         fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with missing gene in alignedAminoAcidSequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingGeneInAlignedAminoAcidSequences(
-                        accession = "DoesNotMatter",
-                        gene = SOME_SHORT_GENE,
-                    ),
-                expectedErrorMessage = "Missing the required gene 'someShortGene'.",
-            ),
             InvalidDataScenario(
                 name = "data with unknown gene in alignedAminoAcidSequences",
                 processedDataThatNeedsAValidAccession = PreparedProcessedData
