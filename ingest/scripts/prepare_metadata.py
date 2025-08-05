@@ -115,7 +115,7 @@ def main(
             record[to_key] = val
 
         # segment is a required field for the ingest grouping scripts
-        # Keep segment field if config.segmented and it is in rename
+        # Keep segment field if config.segmented even if it is specified to be renamed
         if config.segmented and "segment" in config.rename:
             record["segment"] = record[config.rename["segment"]]
 
