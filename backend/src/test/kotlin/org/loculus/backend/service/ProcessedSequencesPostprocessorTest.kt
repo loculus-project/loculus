@@ -6,99 +6,159 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
+import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.DataUseTerms
-import org.loculus.backend.config.InstanceConfig
-import org.loculus.backend.config.ReferenceGenome
-import org.loculus.backend.config.ReferenceSequence
-import org.loculus.backend.config.Schema
-import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.service.submission.ProcessedSequencesPostprocessor
 import org.springframework.beans.factory.annotation.Autowired
 
-private const val FIRST_NUCLEOTIDE_SEQUENCE = "firstNucleotideSequence"
-private const val SECOND_NUCLEOTIDE_SEQUENCE = "secondNucleotideSequence"
-private const val FIRST_AMINO_ACID_SEQUENCE = "firstAminoAcidSequence"
-private const val SECOND_AMINO_ACID_SEQUENCE = "secondAminoAcidSequence"
+fun <K, V> assertMapStorage(actual: Map<K, V>, expected: Map<K, V>, presentSeg: K, absentSegs: List<K>) {
+    absentSegs.forEach { key ->
+        assertThat(actual, not(hasKey(key)))
+    }
+    assertThat(actual, hasKey(presentSeg))
+    assertEquals(expected[presentSeg], actual[presentSeg])
+}
+
+fun <K, V> assertMapRetrieval(actual: Map<K, V>, expected: Map<K, V>, presentKeys: List<K>, absentSegs: List<K>) {
+    presentKeys.forEach { key ->
+        assertEquals(expected[key], actual[key])
+    }
+    absentSegs.forEach { key ->
+        assertThat(actual, not(hasKey(key)))
+    }
+}
 
 @SpringBootTestWithoutDatabase
 class ProcessedSequencesPostprocessorTest(
     @Autowired private val processedSequencesPostprocessor: ProcessedSequencesPostprocessor,
+    @Autowired private val backendConfig: BackendConfig,
 ) {
 
     @Test
     fun `Processed Sequences Postprocessor correctly round trips sequences`() {
-        val backendConfig = BackendConfig(
-            accessionPrefix = "LOC_",
-            organisms = mapOf(
-                DEFAULT_ORGANISM to InstanceConfig(
-                    schema = Schema(
-                        FIRST_NUCLEOTIDE_SEQUENCE,
-                        listOf(),
-                    ),
-                    referenceGenome = ReferenceGenome(
-                        listOf(
-                            ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                            ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),
-                        ),
-                        listOf(
-                            ReferenceSequence(FIRST_AMINO_ACID_SEQUENCE, "the sequence"),
-                            ReferenceSequence(SECOND_AMINO_ACID_SEQUENCE, "the sequence"),
-                        ),
-                    ),
-                ),
-            ),
-            dataUseTerms = DataUseTerms(true, null),
-            websiteUrl = "example.com",
-            backendUrl = "http://dummy-backend.com",
-        )
-        val organism = Organism(backendConfig.organisms.keys.first())
+        val organism = Organism("otherOrganism")
         val configuredSequences = backendConfig.getInstanceConfig(organism).referenceGenome.nucleotideSequences
             .map { it.name }
             .sorted()
         require(configuredSequences.size >= 2) { "Test requires at least 2 configured sequences" }
 
-        val configuredPresent = configuredSequences[0]
-        val configuredNull = configuredSequences[1]
-        val unconfiguredPresent = "unconfigured_present"
-        val unconfiguredNull = "unconfigured_null"
+        val configuredGenes = backendConfig.getInstanceConfig(organism).referenceGenome.genes
+            .map { it.name }
+            .sorted()
+        require(configuredGenes.size >= 2) { "Test requires at least 2 configured genes" }
+
+        val configuredPresentSeg = configuredSequences[0]
+        val configuredNullSeg = configuredSequences[1]
+        val unconfiguredPresentSeg = "unconfigured_present"
+        val unconfiguredNullSeg = "unconfigured_null"
+
+        val configuredPresentGene = configuredGenes[0]
+        val configuredNullGene = configuredGenes[1]
+        val unconfiguredPresentGene = "unconfigured_present"
+        val unconfiguredNullGene = "unconfigured_null"
 
         val testData = ProcessedData<String>(
             metadata = emptyMap(),
             unalignedNucleotideSequences = mapOf(
-                configuredPresent to "ATCGTACGATCG",
-                configuredNull to null,
-                unconfiguredPresent to "NNGATCGTACGATC",
-                unconfiguredNull to null,
+                configuredPresentSeg to "ATCGTACGATCG",
+                configuredNullSeg to null,
+                unconfiguredPresentSeg to "NNGATCGTACGATC",
+                unconfiguredNullSeg to null,
             ),
             alignedNucleotideSequences = mapOf(
-                configuredPresent to "ATCGTACGATCG",
-                configuredNull to null,
-                unconfiguredPresent to "GATCGTACGATC",
-                unconfiguredNull to null,
+                configuredPresentSeg to "ATCGTACGATCG",
+                configuredNullSeg to null,
+                unconfiguredPresentSeg to "GATCGTACGATC",
+                unconfiguredNullSeg to null,
             ),
-            nucleotideInsertions = emptyMap(),
-            alignedAminoAcidSequences = emptyMap(),
-            aminoAcidInsertions = emptyMap(),
+            nucleotideInsertions = mapOf(
+                configuredPresentSeg to listOf(Insertion(13, "TT")),
+                configuredNullSeg to emptyList(),
+                unconfiguredPresentSeg to listOf(Insertion(13, "TT")),
+                unconfiguredNullSeg to emptyList(),
+            ),
+            alignedAminoAcidSequences = mapOf(
+                configuredPresentGene to "ATCGTACGATCG",
+                configuredNullGene to null,
+                unconfiguredPresentGene to "GATCGTACGATC",
+                unconfiguredNullGene to null,
+            ),
+            aminoAcidInsertions = mapOf(
+                configuredPresentGene to listOf(Insertion(13, "TT")),
+                configuredNullGene to emptyList(),
+                unconfiguredPresentGene to listOf(Insertion(13, "TT")),
+                unconfiguredNullGene to emptyList(),
+            ),
             files = null,
         )
 
         val condensed = processedSequencesPostprocessor.stripNullValuesFromSequences(testData)
         val expanded = processedSequencesPostprocessor.filterOutExtraSequencesAndAddNulls(condensed, organism)
 
-        // Check storage
-        assertThat(condensed.unalignedNucleotideSequences, not(hasKey(configuredNull)))
-        assertThat(condensed.unalignedNucleotideSequences, not(hasKey(unconfiguredNull)))
-        assertThat(condensed.unalignedNucleotideSequences, hasKey(configuredPresent))
-        assertThat(condensed.unalignedNucleotideSequences, hasKey(unconfiguredPresent))
-        assertEquals(condensed.unalignedNucleotideSequences[configuredPresent], testData.unalignedNucleotideSequences[configuredPresent])
+        val absentSegs = listOf(configuredNullSeg, unconfiguredNullSeg)
+        val presentSeg = configuredPresentSeg
+        val retrievalPresentSegs = listOf(configuredPresentSeg, configuredNullSeg)
+        val retrievalAbsentSegs = listOf(unconfiguredPresentSeg, unconfiguredNullSeg)
 
-        // Check storage retrieval
-        assertEquals(expanded.unalignedNucleotideSequences[configuredPresent], testData.unalignedNucleotideSequences[configuredPresent])
-        assertEquals(expanded.unalignedNucleotideSequences[configuredNull], testData.unalignedNucleotideSequences[configuredNull])
-        assertThat(expanded.unalignedNucleotideSequences, not(hasKey(unconfiguredPresent)))
-        assertThat(expanded.unalignedNucleotideSequences, not(hasKey(unconfiguredNull)))
+        val absentGenes = listOf(configuredNullGene, unconfiguredNullGene)
+        val presentGene = configuredPresentGene
+        val retrievalPresentGenes = listOf(configuredPresentGene, configuredNullGene)
+        val retrievalAbsentGenes = listOf(unconfiguredPresentGene, unconfiguredNullGene)
+
+        // Check storage
+        assertMapStorage(
+            condensed.unalignedNucleotideSequences,
+            testData.unalignedNucleotideSequences,
+            presentSeg,
+            absentSegs,
+        )
+        assertMapStorage(
+            condensed.alignedNucleotideSequences,
+            testData.alignedNucleotideSequences,
+            presentSeg,
+            absentSegs,
+        )
+        assertMapStorage(condensed.nucleotideInsertions, testData.nucleotideInsertions, presentSeg, absentSegs)
+        assertMapStorage(
+            condensed.alignedAminoAcidSequences,
+            testData.alignedAminoAcidSequences,
+            presentGene,
+            absentGenes,
+        )
+        assertMapStorage(condensed.aminoAcidInsertions, testData.aminoAcidInsertions, presentGene, absentGenes)
+
+        // Check retrieval
+        assertMapRetrieval(
+            expanded.unalignedNucleotideSequences,
+            testData.unalignedNucleotideSequences,
+            retrievalPresentSegs,
+            retrievalAbsentSegs,
+        )
+        assertMapRetrieval(
+            expanded.alignedNucleotideSequences,
+            testData.alignedNucleotideSequences,
+            retrievalPresentSegs,
+            retrievalAbsentSegs,
+        )
+        assertMapRetrieval(
+            expanded.nucleotideInsertions,
+            testData.nucleotideInsertions,
+            retrievalPresentSegs,
+            retrievalAbsentSegs,
+        )
+        assertMapRetrieval(
+            expanded.alignedAminoAcidSequences,
+            testData.alignedAminoAcidSequences,
+            retrievalPresentGenes,
+            retrievalAbsentGenes,
+        )
+        assertMapRetrieval(
+            expanded.aminoAcidInsertions,
+            testData.aminoAcidInsertions,
+            retrievalPresentGenes,
+            retrievalAbsentGenes,
+        )
     }
 }
