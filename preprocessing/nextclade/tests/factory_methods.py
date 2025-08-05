@@ -77,24 +77,25 @@ class UnprocessedEntryFactory:
         )
 
 
-def build_processing_annotations(items: list[ProcessingAnnotationHelper]):
+def build_processing_annotations(
+    items: list[ProcessingAnnotationHelper],
+) -> list[ProcessingAnnotation]:
     annotations = []
     for item in items:
-        if item.type in {AnnotationSourceType.METADATA, AnnotationSourceType.NUCLEOTIDE_SEQUENCE}:
-            annotation_type = item.type
-            annotations.append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=annotation_type)
-                        for field in item.unprocessed_field_names
-                    ],
-                    processedFields=[
-                        AnnotationSource(name=field, type=annotation_type)
-                        for field in item.processed_field_names
-                    ],
-                    message=item.message,
-                )
+        annotation_type: AnnotationSourceType = item.type
+        annotations.append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(name=field, type=annotation_type)
+                    for field in item.unprocessed_field_names
+                ],
+                processedFields=[
+                    AnnotationSource(name=field, type=annotation_type)
+                    for field in item.processed_field_names
+                ],
+                message=item.message,
             )
+        )
     return annotations
 
 
