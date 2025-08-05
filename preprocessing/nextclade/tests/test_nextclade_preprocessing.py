@@ -633,12 +633,8 @@ def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
 
 
-@pytest.fixture(scope="module")
-def config():
-    return get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-
-
-def test_preprocessing_without_metadata(config: Config) -> None:
+def test_preprocessing_without_metadata() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
