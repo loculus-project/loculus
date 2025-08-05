@@ -222,11 +222,8 @@ single_segment_case_definitions = [
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={"main": invalid_sequence()},
             alignedNucleotideSequences={"main": None},
-            nucleotideInsertions={"main": []},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
-            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
             aminoAcidInsertions={},
         ),
     ),
@@ -340,7 +337,7 @@ multi_segment_case_definitions = [
                 "ebola-sudan": sequence_with_deletion("ebola-sudan", aligned=True),
                 "ebola-zaire": sequence_with_deletion("ebola-zaire", aligned=True),
             },
-            nucleotideInsertions={"ebola-sudan": [], "ebola-zaire": []},
+            nucleotideInsertions={},
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(
                     sequence_with_deletion("ebola-sudan", aligned=True),
@@ -386,14 +383,12 @@ multi_segment_case_definitions = [
             alignedNucleotideSequences={
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
-            nucleotideInsertions={"ebola-zaire": []},
+            nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
                 "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
-            aminoAcidInsertions={},  # TODO: this is odd, should be the same as empty nuc insertions
+            aminoAcidInsertions={},
         ),
     ),
 ]
@@ -434,13 +429,8 @@ multi_segment_case_definitions_all_requirement = [
                 "ebola-sudan": invalid_sequence(),
             },
             alignedNucleotideSequences={"ebola-sudan": None},
-            nucleotideInsertions={"ebola-sudan": []},  # TODO: this is odd
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
-                "VP24EbolaZaire": None,
-                "LEbolaZaire": None,
-            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
             aminoAcidInsertions={},
         ),
     ),
@@ -480,10 +470,8 @@ multi_segment_case_definitions_all_requirement = [
                 "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
-            nucleotideInsertions={"ebola-sudan": [], "ebola-zaire": []},
+            nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
                 "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
@@ -527,16 +515,10 @@ multi_segment_case_definitions_any_requirement = [
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-sudan": invalid_sequence(),
-                "ebola-zaire": None,
             },
-            alignedNucleotideSequences={"ebola-sudan": None, "ebola-zaire": None},
-            nucleotideInsertions={"ebola-sudan": []},  # TODO: this is odd
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
-                "VP24EbolaZaire": None,
-                "LEbolaZaire": None,
-            },
+            alignedNucleotideSequences={"ebola-sudan": None},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
             aminoAcidInsertions={},
         ),
     ),
@@ -576,10 +558,8 @@ multi_segment_case_definitions_any_requirement = [
                 "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
-            nucleotideInsertions={"ebola-sudan": [], "ebola-zaire": []},
+            nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "NPEbolaSudan": None,
-                "VP35EbolaSudan": None,
                 "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },

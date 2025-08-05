@@ -83,10 +83,8 @@ def parse_nextclade_tsv(
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str: list[NucleotideInsertion] = (
-                list(row["insertions"].split(",")) if row["insertions"] else []
-            )
-            nucleotide_insertions[id][segment] = nuc_ins_str
+            if row["insertions"]:
+                nucleotide_insertions[id][segment] = list(row["insertions"].split(","))
 
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
@@ -285,8 +283,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        for gene in config.genes:
-            aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
@@ -680,10 +676,6 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
-
-    for gene in config.genes:
-        amino_acid_insertions[gene] = []
-        aligned_aminoacid_sequences[gene] = None
 
     return SubmissionData(
         processed_entry=ProcessedEntry(
