@@ -255,7 +255,7 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission with file mapping THEN returns an error`() {
+    fun `GIVEN submission with file mapping for organism that does not support files THEN returns an error`() {
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFileMultiSegmented,
@@ -269,7 +269,7 @@ class SubmitEndpointTest(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "the otherOrganism organism does not support file submission.",
+                    "Organism 'otherOrganism' does not support file submission.",
                 ),
             )
     }
