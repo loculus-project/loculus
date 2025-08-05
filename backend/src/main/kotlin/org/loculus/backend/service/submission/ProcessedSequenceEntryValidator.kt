@@ -259,6 +259,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         )
     }
 
+    // TODO: remove this method
     private fun addMissingNucleotideSequences(
         processedData: ProcessedData<GeneticSequence>,
     ): ProcessedData<GeneticSequence> {
@@ -363,7 +364,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         validateNoUnknownAminoAcidSymbol(processedData.alignedAminoAcidSequences)
         validateNoUnknownAminoAcidSymbolInInsertion(processedData.aminoAcidInsertions)
     }
-
+    // TODO: remove this method, add aligned amino acid sequences when streaming
     private fun validateNoMissingGene(gene: ReferenceSequence, processedData: ProcessedData<GeneticSequence>) {
         if (!processedData.alignedAminoAcidSequences.containsKey(gene.name)) {
             throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
@@ -406,7 +407,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             }
         }
     }
-
+    //TODO: remove this method, add insertions when streaming
     private fun addMissingKeysForInsertions(
         processedData: ProcessedData<GeneticSequence>,
     ): ProcessedData<GeneticSequence> {
