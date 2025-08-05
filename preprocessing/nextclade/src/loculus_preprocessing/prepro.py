@@ -18,7 +18,7 @@ import pandas as pd
 from Bio import SeqIO
 
 from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
-from .config import Config
+from .config import AlignmentRequirement, Config
 from .datatypes import (
     AccessionVersion,
     Alerts,
@@ -566,12 +566,14 @@ def add_input_metadata(
                     ],
                     message=message,
                 )
-                if config.multi_segment and config.alignment_requirement == "ANY":
+                if (
+                    config.multi_segment
+                    and config.alignment_requirement == AlignmentRequirement.ANY
+                ):
                     warnings.append(annotation)
                     return None
                 errors.append(annotation)
                 return None
-            spec.args["some_segment_aligned"] = True
             result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -743,7 +745,6 @@ def process_single(  # noqa: C901
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
-    some_segment_aligned = False
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
@@ -758,7 +759,6 @@ def process_single(  # noqa: C901
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
-        spec.args["some_segment_aligned"] = some_segment_aligned
         processing_result = get_metadata(
             id,
             spec,
@@ -769,13 +769,6 @@ def process_single(  # noqa: C901
             config,
         )
         output_metadata[output_field] = processing_result.datum
-        if not isinstance(spec.args["some_segment_aligned"], bool):
-            msg = (
-                "Internal Error: Expected some_segment_aligned to be a boolean, "
-                f"got {type(spec.args['some_segment_aligned'])}"
-            )
-            raise ValueError(msg)
-        some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
             and spec.required
@@ -806,7 +799,12 @@ def process_single(  # noqa: C901
             id, unprocessed, config, output_metadata, errors, warnings
         )
 
-    if not some_segment_aligned:
+    aligned_segments = set()
+    for segment in config.nucleotideSequences:
+        if unprocessed.alignedNucleotideSequences.get(segment, None):
+            aligned_segments.add(segment)
+
+    if not aligned_segments:
         errors.append(
             ProcessingAnnotation(
                 unprocessedFields=[
