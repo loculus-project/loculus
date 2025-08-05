@@ -111,7 +111,13 @@ def main(
 
     for record in metadata:
         for from_key, to_key in config.rename.items():
-            val = record.pop(from_key)
+            # segment is a required field for the ingest grouping scripts
+            # Keep segment field if config.segmented even if it is specified to be renamed
+            val = (
+                record.get(from_key)
+                if (from_key == "segment" and config.segmented)
+                else record.pop(from_key)
+            )
             record[to_key] = val
 
     keys_to_keep = set(config.rename.values()) | set(config.keep)
@@ -138,9 +144,7 @@ def main(
         filtered_record = {k: str(v) for k, v in record.items() if v is not None and str(v)}
 
         # rename "id" to "submissionId" for back-compatibility with old hashes
-        
         filtered_record["submissionId"] = filtered_record.pop("id")
-        
 
         metadata_dump = json.dumps(filtered_record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
