@@ -30,6 +30,12 @@ If the underlying organism has multiple segments,
 the headers of the fasta file must be of the form '>[$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]_[segmentName]'.
 """
 
+const val FILE_MAPPING_DESCRIPTION = """
+"A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
+        "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
+        "/files/request-upload endpoint.",
+"""
+
 const val GROUP_ID_DESCRIPTION = """
 The group id of the submitting group which the user is a member of.
 A submitting group is a set of users that share access to the same sequence entries.
