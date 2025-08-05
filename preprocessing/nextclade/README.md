@@ -1,6 +1,6 @@
-# Preprocessing Pipeline
+# Preprocessing pipeline
 
-This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`. If no nextclade dataset is given only perform metadata checks.
+This preprocessing pipeline has been developed by the Loculus team. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of performing some metadata checks, and often a Nextclade run, to `/submit-processed-data`. If no nextclade dataset is given only perform metadata checks.
 
 ## Overview
 
