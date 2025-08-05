@@ -48,6 +48,18 @@ class ProcessingAnnotation:
     def __hash__(self):
         return hash((self.unprocessedFields, self.processedFields, self.message))
 
+    @classmethod
+    def from_fields(cls, input_fields, output_fields, type, message):
+        return cls(
+            unprocessedFields=[AnnotationSource(name=f, type=type) for f in input_fields],
+            processedFields=[AnnotationSource(name=f, type=type) for f in output_fields],
+            message=message,
+        )
+
+    @classmethod
+    def from_single(cls, name: str, type, message: str):
+        return cls.from_fields([name], [name], type, message)
+
 
 @dataclass
 class UnprocessedData:
