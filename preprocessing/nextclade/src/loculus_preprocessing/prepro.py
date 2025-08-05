@@ -290,7 +290,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         num_valid_segments = 0
         num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
-            aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
                 data
                 for data in entry.data.unalignedNucleotideSequences
@@ -320,8 +319,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 unaligned_nucleotide_sequences[id][segment] = (
                     entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
-            else:
-                unaligned_nucleotide_sequences[id][segment] = None
+                aligned_nucleotide_sequences[id][segment] = None
         if (
             len(entry.data.unalignedNucleotideSequences)
             - num_valid_segments
