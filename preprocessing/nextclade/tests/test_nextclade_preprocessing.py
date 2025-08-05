@@ -12,6 +12,7 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    ts_from_ymd,
     verify_processed_entry,
 )
 
@@ -19,6 +20,8 @@ from loculus_preprocessing.config import AlignmentRequirement, Config, get_confi
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
     ProcessedEntry,
+    UnprocessedData,
+    UnprocessedEntry,
 )
 from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
@@ -390,7 +393,7 @@ multi_segment_case_definitions = [
             },
             aminoAcidInsertions={},  # TODO: this is odd, should be the same as empty nuc insertions
         ),
-    )
+    ),
 ]
 
 multi_segment_case_definitions_all_requirement = [
@@ -485,7 +488,7 @@ multi_segment_case_definitions_all_requirement = [
             },
             aminoAcidInsertions={},
         ),
-    )
+    ),
 ]
 
 multi_segment_case_definitions_any_requirement = [
@@ -512,12 +515,14 @@ multi_segment_case_definitions_any_requirement = [
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
-        expected_warnings=[ProcessingAnnotationHelper(
+        expected_warnings=[
+            ProcessingAnnotationHelper(
                 ["ebola-sudan"],
                 ["ebola-sudan"],
                 "Nucleotide sequence for ebola-sudan failed to align",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            )],
+            )
+        ],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
                 "ebola-sudan": invalid_sequence(),
@@ -579,7 +584,7 @@ multi_segment_case_definitions_any_requirement = [
             },
             aminoAcidInsertions={},
         ),
-    )
+    ),
 ]
 
 
@@ -626,6 +631,35 @@ def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
     verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
+
+
+@pytest.fixture(scope="module")
+def config():
+    return get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+
+
+def test_preprocessing_without_metadata(config: Config) -> None:
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    config.processing_spec = {}
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0]
+
+    assert processed_entry.errors == []
+    assert processed_entry.warnings == []
+    assert processed_entry.data.metadata == {}
 
 
 def test_format_frameshift():
