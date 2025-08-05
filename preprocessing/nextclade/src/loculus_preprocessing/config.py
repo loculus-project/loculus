@@ -69,9 +69,6 @@ class Config:
     multi_segment: bool = False
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
-    nextclade_dataset_name: str | None = None
-    nextclade_dataset_name_map: dict[str, str] | None = None
-    nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
 
     require_nextclade_sort_match: bool = False
