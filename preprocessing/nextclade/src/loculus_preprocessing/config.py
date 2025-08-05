@@ -4,6 +4,7 @@ import dataclasses
 import logging
 import os
 from dataclasses import dataclass
+from enum import Enum
 from types import UnionType
 from typing import Any, get_args
 
@@ -15,33 +16,44 @@ logger = logging.getLogger(__name__)
 CLI_TYPES = [str, int, float, bool]
 
 
+class AlignmentRequirement(Enum):
+    # Determines whether ALL or ANY segments that a user provides must align.
+    # ANY: warn if some segments fail and some segments align
+    # ALL: error if any segment fails even if some segments align
+    ANY = "ANY"
+    ALL = "ALL"
+
+
 @dataclass
 class Config:
-    organism: str = "mpox"
+    config_file: str | None = None
+    log_level: str = "DEBUG"
+    keep_tmp_dir: bool = False
+    batch_size: int = 5
+    pipeline_version: int = 1
+
     backend_host: str = ""  # populated in get_config if left empty, so we can use organism
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
+
+    organism: str = "mpox"
+    genes: list[str] = dataclasses.field(default_factory=list)
+    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
+    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+    multi_segment: bool = False
+
+    alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     nextclade_dataset_name: str | None = None
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     nextclade_dataset_server_map: dict[str, str] | None = None
+
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
     accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
-    config_file: str | None = None
-    log_level: str = "DEBUG"
-    genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
-    keep_tmp_dir: bool = False
-    reference_length: int = 197209
-    batch_size: int = 5
-    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
-    pipeline_version: int = 1
-    multi_segment: bool = False
-    alignment_requirement: str = "ALL"
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -81,9 +93,7 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
     return parser
 
 
-def get_config(
-    config_file: str | None = None, ignore_args: bool = False
-) -> Config:
+def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
     """
     Config precedence: Direct function args > CLI args > ENV variables > config file > default
 
