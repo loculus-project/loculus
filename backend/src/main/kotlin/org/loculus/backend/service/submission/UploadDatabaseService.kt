@@ -43,6 +43,12 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
 
+private const val POSTGRESQL_PARAMETER_LIMIT = 65_535
+private const val SEQUENCE_INSERT_COLUMNS = 4
+private const val METADATA_INSERT_COLUMNS = 8
+private const val SEQUENCE_BATCH_SIZE = POSTGRESQL_PARAMETER_LIMIT / SEQUENCE_INSERT_COLUMNS
+private const val METADATA_BATCH_SIZE = POSTGRESQL_PARAMETER_LIMIT / METADATA_INSERT_COLUMNS
+
 @Service
 @Transactional
 class UploadDatabaseService(
@@ -63,15 +69,17 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
-            this[submitterColumn] = authenticatedUser.username
-            this[groupIdColumn] = groupId
-            this[uploadedAtColumn] = uploadedAt
-            this[submissionIdColumn] = it.submissionId
-            this[metadataColumn] = it.metadata
-            this[filesColumn] = files?.get(it.submissionId)
-            this[organismColumn] = submittedOrganism.name
-            this[uploadIdColumn] = uploadId
+        uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+            MetadataUploadAuxTable.batchInsert(batch) {
+                this[submitterColumn] = authenticatedUser.username
+                this[groupIdColumn] = groupId
+                this[uploadedAtColumn] = uploadedAt
+                this[submissionIdColumn] = it.submissionId
+                this[metadataColumn] = it.metadata
+                this[filesColumn] = files?.get(it.submissionId)
+                this[organismColumn] = submittedOrganism.name
+                this[uploadIdColumn] = uploadId
+            }
         }
     }
 
@@ -83,15 +91,17 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
-            this[accessionColumn] = it.accession
-            this[submitterColumn] = authenticatedUser.username
-            this[uploadedAtColumn] = uploadedAt
-            this[submissionIdColumn] = it.submissionId
-            this[metadataColumn] = it.metadata
-            this[filesColumn] = files?.get(it.submissionId)
-            this[organismColumn] = submittedOrganism.name
-            this[uploadIdColumn] = uploadId
+        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+            MetadataUploadAuxTable.batchInsert(batch) {
+                this[accessionColumn] = it.accession
+                this[submitterColumn] = authenticatedUser.username
+                this[uploadedAtColumn] = uploadedAt
+                this[submissionIdColumn] = it.submissionId
+                this[metadataColumn] = it.metadata
+                this[filesColumn] = files?.get(it.submissionId)
+                this[organismColumn] = submittedOrganism.name
+                this[uploadIdColumn] = uploadId
+            }
         }
     }
 
@@ -100,16 +110,18 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
-            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-            this[sequenceSubmissionIdColumn] = submissionId
-            this[segmentNameColumn] = segmentName
-            this[sequenceUploadIdColumn] = uploadId
-            this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                it.sequence,
-                segmentName,
-                submittedOrganism,
-            )
+        uploadedSequencesBatch.chunked(SEQUENCE_BATCH_SIZE).forEach { batch ->
+            SequenceUploadAuxTable.batchInsert(batch) {
+                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
+                this[sequenceSubmissionIdColumn] = submissionId
+                this[segmentNameColumn] = segmentName
+                this[sequenceUploadIdColumn] = uploadId
+                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                    it.sequence,
+                    segmentName,
+                    submittedOrganism,
+                )
+            }
         }
     }
 
