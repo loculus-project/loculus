@@ -111,13 +111,14 @@ def main(
 
     for record in metadata:
         for from_key, to_key in config.rename.items():
-            val = record.pop(from_key)
+            # segment is a required field for the ingest grouping scripts
+            # Keep segment field if config.segmented even if it is specified to be renamed
+            val = (
+                record.get(from_key)
+                if (from_key == "segment" and config.segmented)
+                else record.pop(from_key)
+            )
             record[to_key] = val
-
-        # segment is a required field for the ingest grouping scripts
-        # Keep segment field if config.segmented even if it is specified to be renamed
-        if config.segmented and "segment" in config.rename:
-            record["segment"] = record[config.rename["segment"]]
 
     keys_to_keep = set(config.rename.values()) | set(config.keep)
     if config.segmented:
