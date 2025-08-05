@@ -77,7 +77,7 @@ class UnprocessedEntryFactory:
         )
 
 
-def build_processing_annotations(items):
+def build_processing_annotations(items: list[ProcessingAnnotationHelper]):
     annotations = []
     for item in items:
         if item.type in {AnnotationSourceType.METADATA, AnnotationSourceType.NUCLEOTIDE_SEQUENCE}:
