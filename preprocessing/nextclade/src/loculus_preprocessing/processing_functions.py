@@ -906,7 +906,7 @@ class ProcessingFunctions:
                 )
             )
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
-
+        regex_field = regex_field.strip()
         if re.match(pattern, regex_field):
             return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
         errors.append(
@@ -988,7 +988,10 @@ class ProcessingFunctions:
                             )
                         )
                 case _:
-                    output_datum = input_datum
+                    if isinstance(input_datum, str):
+                        output_datum = input_datum.strip()
+                    else:
+                        output_datum = input_datum
         else:
             output_datum = input_datum
         return ProcessingResult(datum=output_datum, warnings=[], errors=errors)
@@ -1069,7 +1072,6 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
-
 
 def format_frameshift(input: str | None) -> str | None:
     """
