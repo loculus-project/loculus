@@ -681,10 +681,6 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
-    for segment in config.nucleotideSequences:
-        aligned_nucleotide_sequences[segment] = None
-        nucleotide_insertions[segment] = []
-
     for gene in config.genes:
         amino_acid_insertions[gene] = []
         aligned_aminoacid_sequences[gene] = None
