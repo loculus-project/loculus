@@ -17,7 +17,7 @@ CLI_TYPES = [str, int, float, bool]
 
 
 class AlignmentRequirement(Enum):
-    # Determines whether ALL or ANY segments must align.
+    # Determines whether ALL or ANY segments that a user provides must align.
     # ANY: warn if some segments fail and some segments align
     # ALL: error if any segment fails even if some segments align
     ANY = "ANY"
