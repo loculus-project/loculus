@@ -114,7 +114,8 @@ def main(
             val = record.pop(from_key)
             record[to_key] = val
 
-        # Keep segment field if segmented and it is in rename
+        # segment is a required field for the ingest grouping scripts
+        # Keep segment field if config.segmented and it is in rename
         if config.segmented and "segment" in config.rename:
             record["segment"] = record[config.rename["segment"]]
 
