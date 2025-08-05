@@ -662,10 +662,9 @@ def get_metadata(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
+def processed_entry_no_alignment(
     id: AccessionVersion,
     unprocessed: UnprocessedData,
-    config: Config,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
@@ -795,7 +794,7 @@ def process_single(  # noqa: C901
 
     if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(
-            id, unprocessed, config, output_metadata, errors, warnings
+            id, unprocessed, output_metadata, errors, warnings
         )
 
     aligned_segments = set()
