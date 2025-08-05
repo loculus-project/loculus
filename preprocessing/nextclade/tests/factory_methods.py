@@ -143,6 +143,45 @@ class ProcessedEntryFactory:
             ]
         )
 
+        warnings = [
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name=field,
+                        type=AnnotationSourceType.METADATA,
+                    )
+                    for field in warning.unprocessed_field_names
+                ],
+                processedFields=[
+                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                    for field in warning.processed_field_names
+                ],
+                message=warning.message,
+            )
+            for warning in metadata_warnings
+            if warning.type == AnnotationSourceType.METADATA
+        ]
+        warnings.extend(
+            [
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(
+                            name=field,
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                        for field in warning.unprocessed_field_names
+                    ],
+                    processedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                        for field in warning.processed_field_names
+                    ],
+                    message=warning.message,
+                )
+                for warning in metadata_warnings
+                if warning.type == AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+            ]
+        )
+
         return ProcessedEntry(
             accession=accession,
             version=1,
@@ -155,23 +194,7 @@ class ProcessedEntryFactory:
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
             ),
             errors=errors,
-            warnings=[
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=field,
-                            type=AnnotationSourceType.METADATA,
-                        )
-                        for field in warning.unprocessed_field_names
-                    ],
-                    processedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in warning.processed_field_names
-                    ],
-                    message=warning.message,
-                )
-                for warning in metadata_warnings
-            ],
+            warnings=warnings,
         )
 
 
