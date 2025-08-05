@@ -36,11 +36,6 @@ class AlignmentRequirement(StrEnum):
     ALL = "ALL"
 
 
-class AlignmentRequirement(Enum):
-    ANY = "ANY"
-    ALL = "ALL"
-
-
 @dataclass
 class NextcladeSequenceAndDataset:
     name: str = "main"
@@ -66,8 +61,10 @@ class Config:
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
+    nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
+        default_factory=list
+    )
     genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     multi_segment: bool = False
 
@@ -76,13 +73,9 @@ class Config:
     nextclade_dataset_name_map: dict[str, str] | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
+
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
-    nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
-        default_factory=list
-    )
-    genes: list[str] = dataclasses.field(default_factory=list)
-    multi_segment: bool = False
     classify_with_nextclade_sort: bool = False
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     require_nextclade_sort_match: bool = False
