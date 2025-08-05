@@ -1,4 +1,5 @@
 batch_size: 100
+alignment_requirement: ALL
 genes:
 - NPEbolaSudan
 - VP35EbolaSudan
