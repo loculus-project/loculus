@@ -30,13 +30,12 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.submitterCo
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
+import org.loculus.backend.service.submission.SequenceUploadAuxTable.metadataSubmissionIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
 import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
-import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
 import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.getNextSequenceNumbers
@@ -54,7 +53,6 @@ private const val METADATA_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_L
 @Service
 @Transactional
 class UploadDatabaseService(
-    private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
@@ -112,20 +110,16 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        uploadedSequencesBatch.chunkedForDatabase({ batch ->
-            SequenceUploadAuxTable.batchInsert(batch) {
-                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-                this[sequenceSubmissionIdColumn] = submissionId
-                this[segmentNameColumn] = segmentName
+        SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
+                this[sequenceSubmissionIdColumn] = it.sampleName
+                this[metadataSubmissionIdColumn] = it.sampleName
                 this[sequenceUploadIdColumn] = uploadId
                 this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
                     it.sequence,
-                    segmentName,
+                    it.sampleName,
                     submittedOrganism,
                 )
             }
-            emptyList<Unit>()
-        }, SEQUENCE_INSERT_COLUMNS)
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
@@ -176,9 +170,9 @@ class UploadDatabaseService(
                     'unalignedNucleotideSequences', 
                     COALESCE(
                         jsonb_object_agg(
-                            sequence_upload_aux_table.segment_name,
+                            sequence_upload_aux_table.submission_id,
                             sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
+                        ) FILTER (WHERE sequence_upload_aux_table.submission_id IS NOT NULL),
                         '{}'::jsonb
                     )
                 )
@@ -187,7 +181,7 @@ class UploadDatabaseService(
             LEFT JOIN
                 sequence_upload_aux_table
                 ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
+                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.metadata_submission_id
             WHERE metadata_upload_aux_table.upload_id = ?
             GROUP BY
                 metadata_upload_aux_table.upload_id,

@@ -60,31 +60,6 @@ class SubmitEndpointSingleSegmentedTest(
             .data
             .unalignedNucleotideSequences
 
-        assertThat(unalignedNucleotideSequences, hasEntry(DEFAULT_SEQUENCE_NAME, "AC"))
-    }
-
-    @Test
-    fun `GIVEN input data with explicit default segment name THEN data is rejected`() {
-        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val expectedDetail = "Metadata file contains 1 ids that are not present in the sequence file: header1"
-
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        header1	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >header1_$DEFAULT_SEQUENCE_NAME
-                        AC
-                """.trimIndent(),
-            ),
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity)
-            .andExpect(jsonPath("\$.title").value("Unprocessable Entity"))
-            .andExpect(jsonPath("\$.detail", containsString(expectedDetail)))
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
     }
 }
