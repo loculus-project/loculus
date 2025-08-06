@@ -240,6 +240,7 @@ def assign_segment(
     valid_segments = set()
     duplicate_segments = set()
     if not config.multi_segment:
+        aligned_nucleotide_sequences["main"] = None
         if len(input_unaligned_sequences) > 1:
             errors.append(
                 ProcessingAnnotation.from_single(
@@ -257,17 +258,20 @@ def assign_segment(
         else:
             _, value = next(iter(input_unaligned_sequences.items()))
             unaligned_nucleotide_sequences["main"] = value
-            aligned_nucleotide_sequences["main"] = None
         return (
             unaligned_nucleotide_sequences,
             aligned_nucleotide_sequences,
             errors,
         )
     for segment in config.nucleotideSequences:
+        aligned_nucleotide_sequences[segment] = None
         unaligned_segment = [
             data
             for data in input_unaligned_sequences
             if re.match(r"[\w\d]+_" + segment + "$", data, re.IGNORECASE)
+            or re.match(
+                segment + "$", data, re.IGNORECASE
+            )  # backward compatibility allow only segment name in submission dict
         ]
         if len(unaligned_segment) > 1:
             duplicate_segments.update(unaligned_segment)
