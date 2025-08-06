@@ -90,9 +90,9 @@ def get_description(  # noqa: PLR0913, PLR0917
     if metadata.get("gisaidIsolateId"):
         gisaid_accession = metadata.get("gisaidIsolateId")
         return (
-            f"GISAID accession: {gisaid_accession}, "
             f"INSDC accession: {insdc_accession}, "
-            f"{db_name} accession: {accession}.{version}"
+            f"{db_name} accession: {accession}.{version}, "
+            f"GISAID accession: {gisaid_accession}"
         )
     return (
         f"{db_name} accession: {accession}.{version}"
