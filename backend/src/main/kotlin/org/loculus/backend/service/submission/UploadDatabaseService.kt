@@ -111,15 +111,15 @@ class UploadDatabaseService(
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
         SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
-                this[sequenceSubmissionIdColumn] = it.sampleName
-                this[metadataSubmissionIdColumn] = it.sampleName
-                this[sequenceUploadIdColumn] = uploadId
-                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                    it.sequence,
-                    it.sampleName,
-                    submittedOrganism,
-                )
-            }
+            this[sequenceSubmissionIdColumn] = it.sampleName
+            this[metadataSubmissionIdColumn] = it.sampleName
+            this[sequenceUploadIdColumn] = uploadId
+            this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                it.sequence,
+                it.sampleName,
+                submittedOrganism,
+            )
+        }
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
