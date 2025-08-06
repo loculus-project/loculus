@@ -74,8 +74,6 @@ class Config:
     require_nextclade_sort_match: bool = False
     minimizer_url: str | None = None
     classify_with_nextclade_sort: bool = False
-    alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
-    require_nextclade_sort_match: bool = False
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
@@ -86,8 +84,6 @@ class Config:
     embl: EmblInfoMetadataPropertyNames = dataclasses.field(
         default_factory=EmblInfoMetadataPropertyNames
     )
-
-    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
 
 
 def assign_nextclade_sequence_and_dataset(

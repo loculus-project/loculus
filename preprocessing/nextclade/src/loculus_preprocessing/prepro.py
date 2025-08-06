@@ -859,7 +859,8 @@ def process_single(  # noqa: C901
         )
 
     aligned_segments = set()
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
@@ -875,7 +876,8 @@ def process_single(  # noqa: C901
 
     if config.create_embl_file and unprocessed.nextcladeMetadata is not None:
         annotations = {}
-        for segment in config.nucleotideSequences:
+        for sequence_and_dataset in config.nucleotideSequences:
+            segment = sequence_and_dataset.name
             if segment in unprocessed.nextcladeMetadata:
                 annotations[segment] = None
                 if unprocessed.nextcladeMetadata[segment]:
