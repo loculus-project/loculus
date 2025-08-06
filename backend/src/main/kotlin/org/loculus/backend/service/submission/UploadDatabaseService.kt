@@ -40,6 +40,7 @@ import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
 import org.loculus.backend.utils.getNextSequenceNumbers
 import org.loculus.backend.utils.processInDatabaseSafeChunks
+import org.loculus.backend.utils.chunkedForDatabase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -111,7 +112,7 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        uploadedSequencesBatch.chunked(SEQUENCE_BATCH_SIZE).forEach { batch ->
+        uploadedSequencesBatch.chunkedForDatabase({ batch ->
             SequenceUploadAuxTable.batchInsert(batch) {
                 val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
                 this[sequenceSubmissionIdColumn] = submissionId
@@ -123,7 +124,8 @@ class UploadDatabaseService(
                     submittedOrganism,
                 )
             }
-        }
+            emptyList<Unit>()
+        }, SEQUENCE_INSERT_COLUMNS)
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
@@ -217,13 +219,11 @@ class UploadDatabaseService(
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
             val accessions = insertionResult.map { it.accession }
-            accessions.processInDatabaseSafeChunks { chunk ->
-                dataUseTermsDatabaseService.setNewDataUseTerms(
-                    submissionParams.authenticatedUser,
-                    chunk,
-                    submissionParams.dataUseTerms,
-                )
-            }
+            dataUseTermsDatabaseService.setNewDataUseTerms(
+                submissionParams.authenticatedUser,
+                accessions,
+                submissionParams.dataUseTerms,
+            )
         }
 
         auditLogger.log(

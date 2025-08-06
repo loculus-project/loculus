@@ -26,18 +26,18 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> = fileIds.chunkedForDatabase { chunk ->
+    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> = fileIds.chunkedForDatabase({ chunk ->
         FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
             .where { FilesTable.idColumn inList chunk }
             .map { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
-    }.toMap()
+    }, 1).toMap()
 
     /**
      * Return a mapping of file IDs and multipart upload IDs for the files for which multipart upload has been
      * initiated but not completed
      */
     fun getUncompletedMultipartUploadIds(fileIds: Set<FileId>): List<Pair<FileId, MultipartUploadId>> =
-        fileIds.chunkedForDatabase { chunk ->
+        fileIds.chunkedForDatabase({ chunk ->
             FilesTable
                 .select(FilesTable.idColumn, FilesTable.multipartUploadId)
                 .where {
@@ -46,18 +46,18 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                         (not(FilesTable.multipartCompleted))
                 }
                 .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
-        }
+        }, 1)
 
     /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
      * no file has been uploaded yet (and therefore there's no file size).
      */
-    fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase { chunk ->
+    fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
         FilesTable
             .select(FilesTable.idColumn)
             .where { FilesTable.idColumn inList chunk and (FilesTable.sizeColumn eq null) }
             .map { it[FilesTable.idColumn] }
-    }.toSet()
+    }, 1).toSet()
 
     fun setFileSize(fileId: FileId, size: Long) {
         FilesTable.update({
