@@ -79,7 +79,7 @@ class SubmitLargeBatchTest(
     @Test
     fun `WHEN submitting large batch of revisions THEN succeeds`() {
         // First submit original sequences
-        val count = 10_000 // Smaller count for revision test to keep it reasonable
+        val count = 100_000
         val metadataHeader = "submissionId\tcountry\tdate"
         val metadataLines = mutableListOf(metadataHeader)
 
