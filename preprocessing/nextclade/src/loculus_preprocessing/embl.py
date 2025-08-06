@@ -244,20 +244,19 @@ def create_flatfile(  # noqa: PLR0914
 
     embl_content = []
 
-    multi_segment = set(unaligned_nuc_seq.keys()) != {"main"}
 
     for seq_name, sequence_str in unaligned_nuc_seq.items():
         if not sequence_str:
             continue
         reference = Reference()
-        segment = seq_name if multi_segment else None
+        segment = seq_name if config.multi_segment else None
         description = get_description(
             accession, version, config.db_name, submission_data.submitter, metadata, segment
         )
         reference.authors = authors
         sequence = SeqRecord(
             Seq(sequence_str),
-            id=f"{accession}_{seq_name}" if multi_segment else accession,
+            id=f"{accession}_{seq_name}" if config.multi_segment else accession,
             annotations={
                 "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
