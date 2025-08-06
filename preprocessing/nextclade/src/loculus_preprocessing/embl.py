@@ -78,23 +78,24 @@ def get_description(  # noqa: PLR0913, PLR0917
     metadata: ProcessedMetadata,
     segment: str | None,
 ) -> str:
+    if segment:
+        insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
+    else:
+        insdc_accession = metadata.get("insdcAccessionFull")
     if submitter and submitter == "insdc_ingest_user":
-        if segment:
-            insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
-        else:
-            insdc_accession = metadata.get("insdcAccessionFull")
         return (
-            f"Original sequence submitted to the INSDC with accession: {insdc_accession}, "
-            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
+            f"INSDC accession: {insdc_accession}, "
+            f"{db_name} accession: {accession}.{version}"
         )
     if metadata.get("gisaidIsolateId"):
         gisaid_accession = metadata.get("gisaidIsolateId")
         return (
-            f"Original sequence submitted to GISAID with accession: {gisaid_accession}, "
-            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
+            f"GISAID accession: {gisaid_accession}, "
+            f"INSDC accession: {insdc_accession}, "
+            f"{db_name} accession: {accession}.{version}"
         )
     return (
-        f"Original sequence submitted to {db_name} with accession: {accession}, version: {version}"
+        f"{db_name} accession: {accession}.{version}"
     )
 
 
