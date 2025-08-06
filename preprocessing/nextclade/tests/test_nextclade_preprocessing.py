@@ -649,6 +649,7 @@ def test_preprocessing_without_metadata() -> None:
     sequence_entry_data = UnprocessedEntry(
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
+            group_id=2,
             submitter="test_submitter",
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={},
@@ -662,46 +663,7 @@ def test_preprocessing_without_metadata() -> None:
     config.processing_spec = {}
 
     result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0]
-
-    assert processed_entry.errors == []
-    assert processed_entry.warnings == []
-    assert processed_entry.data.metadata == {}
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions + multi_segment_case_definitions_any_requirement,
-    ids=lambda tc: f"multi segment {tc.name}",
-)
-def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.alignment_requirement = AlignmentRequirement.ANY
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(processed_entry, test_case.expected_output, test_case.name)
-
-
-def test_preprocessing_without_metadata() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
-    )
-
-    config.processing_spec = {}
-
-    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0]
+    processed_entry = result[0].processed_entry
 
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
