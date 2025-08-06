@@ -252,6 +252,7 @@ def assign_segment(
             errors,
         )
     if not config.multi_segment:
+        aligned_nucleotide_sequences["main"] = None
         if len(input_unaligned_sequences) > 1:
             errors.append(
                 ProcessingAnnotation.from_single(
@@ -274,6 +275,7 @@ def assign_segment(
             errors,
         )
     for segment in config.nucleotideSequences:
+        aligned_nucleotide_sequences[segment] = None
         unaligned_segment = [
             data
             for data in input_unaligned_sequences
