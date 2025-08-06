@@ -38,9 +38,9 @@ import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
+import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.getNextSequenceNumbers
 import org.loculus.backend.utils.processInDatabaseSafeChunks
-import org.loculus.backend.utils.chunkedForDatabase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

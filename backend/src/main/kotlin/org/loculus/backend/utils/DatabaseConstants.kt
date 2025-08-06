@@ -10,10 +10,17 @@ fun <T> Collection<T>.processInDatabaseSafeChunks(action: (List<T>) -> Unit) {
 }
 
 /**
-  * PostgreSQL only supports 65,535 query parameters per query. This function chunks a list to avoid sending more parameters than allowed.
-  * @param numberQueryParametersPerEntry The number of query parameters that each entry in the list would use. The default of 6 should be safe for many requests. 
-  */
-fun <T, R> Collection<T>.chunkedForDatabase(transform: (List<T>) -> List<R>, numberQueryParametersPerEntry: Int = 6): List<R> {
+ * PostgreSQL only supports 65,535 query parameters per query. This function chunks a list to avoid sending more parameters than allowed.
+ * @param numberQueryParametersPerEntry The number of query parameters that each entry in the list would use. The default of 6 should be safe for many requests.
+ */
+fun <T, R> Collection<T>.chunkedForDatabase(
+    transform: (List<T>) -> List<R>,
+    numberQueryParametersPerEntry: Int = 6,
+): List<R> {
     if (isEmpty()) return emptyList()
-    return chunked(kotlin.math.floor((DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT - 100).toDouble() / numberQueryParametersPerEntry).toInt()).flatMap(transform)
+    return chunked(
+        kotlin.math.floor(
+            (DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT - 100).toDouble() / numberQueryParametersPerEntry,
+        ).toInt(),
+    ).flatMap(transform)
 }
