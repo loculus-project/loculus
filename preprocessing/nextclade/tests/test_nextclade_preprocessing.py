@@ -203,14 +203,6 @@ single_segment_case_definitions = [
             "length": len(invalid_sequence()),
         },
         expected_errors=[
-            # TODO: This error shouldn't show for single segmented organism
-            # Only the bottom one should
-            ProcessingAnnotationHelper(
-                ["alignment"],
-                ["alignment"],
-                "No segment aligned.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
             ProcessingAnnotationHelper(
                 ["main"],
                 ["main"],
