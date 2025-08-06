@@ -44,7 +44,7 @@ class Config:
     batch_size: int = 5
     pipeline_version: int = 1
 
-    backend_host: str = ""  # base API URL and organism - populated in get_config if left empty
+    api_url: str = ""  # base API URL and organism - populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
@@ -165,8 +165,8 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
         if value is not None:
             setattr(config, key, value)
 
-    if not config.backend_host:  # Set here so we can use organism
-        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
+    if not config.api_url:  # Set here so we can use organism
+        config.api_url = f"http://127.0.0.1:8079/{config.organism}"
 
     if len(config.nucleotideSequences) > 1:
         config.multi_segment = True

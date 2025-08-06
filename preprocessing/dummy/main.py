@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--backend-host",
+    "--api-url",
     type=str,
     default="http://127.0.0.1:8079",
     help="Host address of the loculus backend",
@@ -57,7 +57,7 @@ parser.add_argument(
 parser.add_argument("--pipeline-version", type=int, default=1)
 
 args = parser.parse_args()
-backendHost = args.backend_host
+backendHost = args.api_url
 watch_mode = args.watch
 addErrors = args.withErrors
 addWarnings = args.withWarnings

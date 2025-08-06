@@ -113,7 +113,7 @@ def fetch_unprocessed_sequences(
     etag: str | None, config: Config
 ) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
     n = config.batch_size
-    url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
+    url = config.api_url.rstrip("/") + "/extract-unprocessed-data"
     logger.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {
@@ -159,7 +159,7 @@ def submit_processed_sequences(
             for seq in processed:
                 json.dump(dataclasses.asdict(seq), f)
     ndjson_string = "\n".join(json_strings)
-    url = config.backend_host.rstrip("/") + "/submit-processed-data"
+    url = config.api_url.rstrip("/") + "/submit-processed-data"
     headers = {
         "Content-Type": "application/x-ndjson",
         "Authorization": "Bearer " + get_jwt(config),
@@ -180,7 +180,7 @@ def submit_processed_sequences(
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
     # we need to parse the backend URL, to extract the API path without the organism component
-    parsed = urlparse(config.backend_host)
+    parsed = urlparse(config.api_url)
 
     base_url = f"{parsed.scheme}://{parsed.netloc}"
     url = base_url + "/files/request-upload"
