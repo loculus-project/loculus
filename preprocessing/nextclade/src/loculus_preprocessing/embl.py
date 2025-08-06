@@ -1,12 +1,11 @@
 import logging
-from enum import Enum
 from typing import Any
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 
-from loculus_preprocessing.datatypes import ProcessedMetadata, SegmentName, SubmissionData
+from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
 
 from .config import Config
 
@@ -117,25 +116,8 @@ def get_authors(authors: str) -> str:
         raise ValueError(msg) from err
 
 
-class MoleculeType(Enum):
-    GENOMIC_DNA = "genomic DNA"
-    GENOMIC_RNA = "genomic RNA"
-    VIRAL_CRNA = "viral cRNA"
-
-    def __str__(self):
-        return self.value
-
-
-def get_molecule_type(molecule_type: str) -> MoleculeType:
-    try:
-        return MoleculeType(molecule_type)
-    except Exception as err:
-        msg = f"Invalid molecule type: {molecule_type}"
-        raise ValueError(msg) from err
-
-
 def get_seq_features(  # noqa: PLR0914
-    annotation_object: dict[str, Any], sequence_str: str, config
+    annotation_object: dict[str, Any], sequence_str: str
 ) -> list[SeqFeature]:
     """
     Takes a dictionary object with the following structure:
@@ -233,7 +215,7 @@ def create_flatfile(  # noqa: PLR0914
     authors = get_authors(str(metadata.get(config.embl.authors_property) or ""))
     country = get_country(metadata, config)
     organism = config.scientific_name
-    molecule_type = get_molecule_type(config.molecule_type)
+    molecule_type = config.molecule_type
     topology = config.topology
 
     seqIO_moleculetype = {  # noqa: N806
@@ -243,7 +225,6 @@ def create_flatfile(  # noqa: PLR0914
     }
 
     embl_content = []
-
 
     for seq_name, sequence_str in unaligned_nuc_seq.items():
         if not sequence_str:
@@ -278,7 +259,7 @@ def create_flatfile(  # noqa: PLR0914
         )
         sequence.features.append(source_feature)
         if annotation_object and annotation_object.get(seq_name, None):
-            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str, config)
+            seq_feature_list = get_seq_features(annotation_object[seq_name], sequence_str)
             for feature in seq_feature_list:
                 sequence.features.append(feature)
 

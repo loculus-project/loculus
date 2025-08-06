@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from enum import StrEnum, unique
+from enum import Enum, StrEnum, unique
 from typing import Any
 
 AccessionVersion = str
@@ -133,6 +133,7 @@ class SubmissionData:
     """Wraps a processed entry together with group ID and annotation information.
     The processed entry is submitted as usual,
     but the annotations need to be uploaded separately."""
+
     processed_entry: ProcessedEntry
     submitter: str | None
     group_id: int | None = None
@@ -149,5 +150,17 @@ class ProcessingResult:
 @dataclass
 class FileUploadInfo:
     """Objects of this type are returned by the /files/request-upload endpoint."""
+
     fileId: str  # noqa: N815
     url: str
+
+
+class MoleculeType(StrEnum):
+    GENOMIC_DNA = "genomic DNA"
+    GENOMIC_RNA = "genomic RNA"
+    VIRAL_CRNA = "viral cRNA"
+
+
+class Topology(StrEnum):
+    LINEAR = "linear"
+    CIRCULAR = "circular"

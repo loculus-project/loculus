@@ -4,11 +4,13 @@ import dataclasses
 import logging
 import os
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from types import UnionType
 from typing import Any, get_args
 
 import yaml
+
+from loculus_preprocessing.datatypes import MoleculeType, Topology
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class EmblInfoMetadataPropertyNames:
     authors_property: str = "authors"
 
 
-class AlignmentRequirement(Enum):
+class AlignmentRequirement(StrEnum):
     # Determines whether ALL or ANY segments that a user provides must align.
     # ANY: warn if some segments fail and some segments align
     # ALL: error if any segment fails even if some segments align
@@ -66,8 +68,8 @@ class Config:
     accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
-    molecule_type: str = "genomic RNA"
-    topology: str = "linear"
+    molecule_type: MoleculeType = MoleculeType.GENOMIC_RNA
+    topology: Topology = Topology.LINEAR
     db_name: str = "Loculus"
     # The 'embl' section of the config contains metadata property names for the EMBL file
     embl: EmblInfoMetadataPropertyNames = dataclasses.field(
@@ -82,6 +84,15 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
+            attr = getattr(config, key)
+            if isinstance(attr, StrEnum):
+                try:
+                    enum_value = type(attr)(value)
+                except ValueError as e:
+                    msg = f"Invalid value '{value}' for enum {type(attr).__name__}"
+                    raise ValueError(msg) from e
+                setattr(config, key, enum_value)
+                continue
             setattr(config, key, value)
             if key == "embl_info" and isinstance(value, dict):
                 for embl_key, embl_value in value.items():
