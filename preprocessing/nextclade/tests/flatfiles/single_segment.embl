@@ -2,7 +2,7 @@ ID   LOC_01; ; linear; RNA; ; UNC; 18875 BP.
 XX
 AC   LOC_01;
 XX
-DE   Original sequence submitted to Loculus with accession: LOC_01, version: 1
+DE   Loculus accession: LOC_01.1
 XX
 OS   Test Ebola Sudan Virus
 OC   .
