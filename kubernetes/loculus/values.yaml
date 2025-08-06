@@ -65,6 +65,8 @@ defaultOrganismConfig: &defaultOrganismConfig
       externalFields:
         - ncbiReleaseDate
     richFastaHeaderFields: ["displayName"]
+    files:
+      - name: annotations
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1204,6 +1206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         genes: []
         batch_size: 100
+        create_embl_file: true
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile

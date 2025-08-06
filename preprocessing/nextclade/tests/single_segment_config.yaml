@@ -5,6 +5,10 @@ genes:
 log_level: DEBUG
 nextclade_dataset_name: ebola-sudan-test-dataset
 nextclade_dataset_server: fake_url
+scientific_name: "Test Ebola Sudan Virus"
+molecule_type: "genomic RNA"
+topology: "linear"
+db_name: "Loculus"
 nucleotideSequences:
 - main
 organism: ebola-sudan-test

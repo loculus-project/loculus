@@ -1,5 +1,4 @@
 # ruff: noqa: S101
-
 import pytest
 from factory_methods import (
     Case,
@@ -548,7 +547,7 @@ def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
 ) -> ProcessedEntry:
     result = process_all([test_case.input], dataset_dir, config)
-    return result[0]
+    return result[0].processed_entry
 
 
 @pytest.mark.parametrize("test_case_def", test_case_definitions, ids=lambda tc: tc.name)
@@ -564,6 +563,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
         accessionVersion="LOC_01.1",
         data=UnprocessedData(
             submitter="test_submitter",
+            group_id=2,
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={
                 "ncbi_required_collection_date": "2024-01-01",
@@ -576,7 +576,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
     config.nucleotideSequences = []
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)
-    processed_entry = result[0]
+    processed_entry = result[0].processed_entry
 
     assert processed_entry.errors == []
     assert processed_entry.warnings == []
