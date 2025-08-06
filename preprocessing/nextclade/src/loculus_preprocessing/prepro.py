@@ -268,7 +268,7 @@ def assign_segment(
         unaligned_segment = [
             data
             for data in input_unaligned_sequences
-            if re.match(r"[A-Za-z0-9]+_" + segment + "$", data, re.IGNORECASE)
+            if re.match(segment + "$", data.split("_", 1)[-1], re.IGNORECASE)
             or re.match(
                 segment + "$", data, re.IGNORECASE
             )  # backward compatibility allow only segment name in submission dict
