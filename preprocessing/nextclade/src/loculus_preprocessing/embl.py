@@ -78,25 +78,17 @@ def get_description(  # noqa: PLR0913, PLR0917
     metadata: ProcessedMetadata,
     segment: str | None,
 ) -> str:
+    description = f"{db_name} accession: {accession}.{version}, "
     if segment:
         insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
     else:
         insdc_accession = metadata.get("insdcAccessionFull")
     if submitter and submitter == "insdc_ingest_user":
-        return (
-            f"INSDC accession: {insdc_accession}, "
-            f"{db_name} accession: {accession}.{version}"
-        )
+        description += f"INSDC accession: {insdc_accession}, "
     if metadata.get("gisaidIsolateId"):
         gisaid_accession = metadata.get("gisaidIsolateId")
-        return (
-            f"INSDC accession: {insdc_accession}, "
-            f"{db_name} accession: {accession}.{version}, "
-            f"GISAID accession: {gisaid_accession}"
-        )
-    return (
-        f"{db_name} accession: {accession}.{version}"
-    )
+        description += f"GISAID accession: {gisaid_accession}, "
+    return description.strip(", ")
 
 
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
