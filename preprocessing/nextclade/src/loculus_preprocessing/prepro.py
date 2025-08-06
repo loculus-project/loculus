@@ -24,7 +24,7 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config
+from .config import AlignmentRequirement, Config, NextcladeSequenceAndDataset
 from .datatypes import (
     AccessionVersion,
     Alerts,
@@ -50,6 +50,7 @@ from .datatypes import (
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
+    sequence_annotation,
 )
 from .embl import create_flatfile
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
@@ -128,32 +129,20 @@ def parse_nextclade_json(
 
 
 def run_sort(
-    result_file_dir: str,
+    result_file: str,
     input_file: str,
-    alerts: Alerts,
     config: Config,
-    segment: SegmentName,
+    nextclade_dataset_server: str,
     dataset_dir: str,
-) -> Alerts:
+) -> pd.DataFrame:
     """
     Run nextclade
     - use config.minimizer_url or default minimizer from nextclade server
-    - assert highest score is in config.accepted_dataset_matches
-    (default is nextclade_dataset_name)
     """
-    nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
-    if not config.accepted_dataset_matches and not nextclade_dataset_name:
-        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
-        return alerts
-    nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
-
     if config.minimizer_url:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
-    accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
-
-    result_file = result_file_dir + "/sort_output.tsv"
-    command = [
+    subprocess_args_with_emtpy_strings = [
         "nextclade3",
         "sort",
         input_file,
@@ -172,14 +161,15 @@ def run_sort(
         f"{nextclade_dataset_server}",
     ]
 
-    logger.debug(f"Running nextclade sort: {command}")
+    subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
 
-    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    logger.debug(f"Running nextclade sort: {subprocess_args}")
+
+    exit_code = subprocess.run(subprocess_args, check=False).returncode  # noqa: S603
     if exit_code != 0:
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
-
-    df = pd.read_csv(
+    return pd.read_csv(
         result_file,
         sep="\t",
         dtype={
@@ -188,6 +178,39 @@ def run_sort(
             "seqName": "string",
             "dataset": "string",
         },
+    )
+
+
+def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
+    result_file_dir: str,
+    input_file: str,
+    alerts: Alerts,
+    config: Config,
+    sequence_and_dataset: NextcladeSequenceAndDataset,
+    dataset_dir: str,
+) -> Alerts:
+    """
+    Run nextclade sort
+    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
+    if not sequence_and_dataset.accepted_sort_matches and not nextclade_dataset_name:
+        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
+        return alerts
+    nextclade_dataset_server = (
+        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+    )
+
+    accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
+
+    result_file = result_file_dir + "/sort_output.tsv"
+    df = run_sort(
+        result_file,
+        input_file,
+        config,
+        nextclade_dataset_server,
+        dataset_dir,
     )
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
@@ -199,17 +222,8 @@ def run_sort(
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(
-                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
-                ],
-                processedFields=[
-                    AnnotationSource(
-                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
-                ],
+            sequence_annotation(
+                name="alignment",
                 message=(
                     "Sequence does not appear to match reference, per `nextclade sort`. "
                     "Double check you are submitting to the correct organism."
@@ -221,20 +235,10 @@ def run_sort(
         # If best match is not the same as the dataset we are submitting to, add an error
         if row["dataset"] not in accepted_dataset_names:
             alerts.errors[row["seqName"]].append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                        ),
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
+                sequence_annotation(
+                    name="alignment",
                     message=(
-                        f"This sequence best matches {row['dataset']}, "
+                        f"Sequence best matches {row['dataset']}, "
                         "a different organism than the one you are submitting to: "
                         f"{config.organism}. It is therefore not possible to release. "
                         "Contact the administrator if you think this message is an error."
@@ -245,7 +249,144 @@ def run_sort(
     return alerts
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def classify_with_nextclade_sort(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    errors: list[ProcessingAnnotation],
+    config: Config,
+    dataset_dir: str,
+):
+    """
+    Run nextclade sort
+    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_server = config.nextclade_dataset_server
+
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
+        input_file = result_dir + "/input.fasta"
+        os.makedirs(os.path.dirname(input_file), exist_ok=True)
+        with open(input_file, "w", encoding="utf-8") as f:
+            for id, seq in input_unaligned_sequences.items():
+                f.write(f">{id}\n")
+                f.write(f"{seq}\n")
+
+        result_file = result_dir + "/sort_output.tsv"
+        df = run_sort(
+            result_file,
+            input_file,
+            config,
+            nextclade_dataset_server,
+            dataset_dir,
+        )
+
+        no_hits = df[df["score"].isna()]
+        hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+        for seq_name in no_hits["seqName"].unique():
+            if seq_name not in hits["seqName"].unique():
+                msg = (
+                    f"Sequence {seq_name} does not appear to match any reference for organism: "
+                    f"{config.organism} per `nextclade sort`. "
+                    f"Double check you are submitting to the correct organism."
+                )
+                # TODO: only error when config.alignment_requirement == "ALL", otherwise warn
+                errors.append(
+                    sequence_annotation(
+                        name="alignment",
+                        message=msg,
+                    )
+                )
+
+        best_hits = hits.groupby("seqName", as_index=False).first()
+        logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
+
+        for _, row in best_hits.iterrows():
+            not_found = True
+            for segment in config.nucleotideSequences:
+                accepted_dataset_names = segment.accepted_sort_matches or [
+                    segment.nextclade_dataset_name
+                ]
+                if row["dataset"] in accepted_dataset_names:
+                    unaligned_nucleotide_sequences[segment.name] = input_unaligned_sequences[
+                        row["seqName"]
+                    ]
+                    aligned_nucleotide_sequences[segment.name] = None
+                    not_found = False
+                    break
+            if not_found:
+                msg = (
+                    f"Sequence {row['seqName']} best matches {row['dataset']}, "
+                    "which is currently not an accepted option for organism: "
+                    f"{config.organism}. It is therefore not possible to release. "
+                    "Contact the administrator if you think this message is an error."
+                )
+                errors.append(
+                    sequence_annotation(
+                        name="alignment",
+                        message=msg,
+                    )
+                )
+
+    return (unaligned_nucleotide_sequences, aligned_nucleotide_sequences, errors)
+
+
+def assign_segment(  # noqa: PLR0913, PLR0917
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    errors: list[ProcessingAnnotation],
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    config: Config,
+    dataset_dir: str,
+):
+    if config.classify_with_nextclade_sort:
+        return classify_with_nextclade_sort(
+            input_unaligned_sequences,
+            unaligned_nucleotide_sequences,
+            aligned_nucleotide_sequences,
+            dataset_dir=dataset_dir,
+            errors=errors,
+            config=config,
+        )
+    valid_segments = set()
+    duplicate_segments = set()
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
+        unaligned_segment = [
+            data
+            for data in input_unaligned_sequences
+            if re.match(segment + "$", data, re.IGNORECASE)
+        ]
+        if len(unaligned_segment) > 1:
+            duplicate_segments.update(unaligned_segment)
+            errors.append(
+                sequence_annotation(
+                    name=segment,
+                    message=f"Found multiple sequences with the same segment name: {segment}",
+                )
+            )
+        elif len(unaligned_segment) == 1:
+            valid_segments.add(unaligned_segment[0])
+            unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
+                unaligned_segment[0]
+            ]
+            aligned_nucleotide_sequences[segment] = None
+    remaining_segments = set(input_unaligned_sequences.keys()) - valid_segments - duplicate_segments
+    if len(remaining_segments) > 0:
+        errors.append(
+            sequence_annotation(
+                name="alignment",
+                message=(
+                    f"Found segments in the input data that are not in the config: "
+                    f"{', '.join(remaining_segments)}. "
+                    "Please check your segments are annotated correctly."
+                ),
+            )
+        )
+    return (unaligned_nucleotide_sequences, aligned_nucleotide_sequences, errors)
+
+
+def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -276,72 +417,25 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
-        input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
+        input_metadata[id]["group_id"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        num_valid_segments = 0
-        num_duplicate_segments = 0
-        for segment in config.nucleotideSequences:
-            unaligned_segment = [
-                data
-                for data in entry.data.unalignedNucleotideSequences
-                if re.match(segment + "$", data, re.IGNORECASE)
-            ]
-            if len(unaligned_segment) > 1:
-                num_duplicate_segments += len(unaligned_segment)
-                alerts.errors[id].append(
-                    ProcessingAnnotation(
-                        unprocessedFields=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        ],
-                        processedFields=[
-                            AnnotationSource(
-                                name=segment,
-                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            ),
-                        ],
-                        message="Found multiple sequences with the same segment name.",
-                    )
-                )
-            elif len(unaligned_segment) == 1:
-                num_valid_segments += 1
-                unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
-                )
-                aligned_nucleotide_sequences[id][segment] = None
-        if (
-            len(entry.data.unalignedNucleotideSequences)
-            - num_valid_segments
-            - num_duplicate_segments
-            > 0
-        ):
-            alerts.errors[id].append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    message=(
-                        "Found unknown segments in the input data - "
-                        "check your segments are annotated correctly."
-                    ),
-                )
-            )
+        (
+            unaligned_nucleotide_sequences[id],
+            aligned_nucleotide_sequences[id],
+            alerts.errors[id],
+        ) = assign_segment(
+            input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+            unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
+            errors=alerts.errors[id],
+            aligned_nucleotide_sequences=aligned_nucleotide_sequences[id],
+            config=config,
+            dataset_dir=dataset_dir,
+        )
 
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
@@ -353,9 +447,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
-        for segment in config.nucleotideSequences:
-            result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
-            dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
+        for sequence_and_dataset in config.nucleotideSequences:
+            segment = sequence_and_dataset.name
+            result_dir_seg = result_dir if not config.multi_segment else result_dir + "/" + segment
+            dataset_dir_seg = (
+                dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
+            )
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
             is_empty: bool = True
@@ -369,7 +466,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment, dataset_dir)
+                alerts = check_nextclade_sort_matches(
+                    result_dir_seg, input_file, alerts, config, sequence_and_dataset, dataset_dir
+                )
 
             command = [
                 "nextclade3",
@@ -529,47 +628,17 @@ def add_input_metadata(
                 "An unknown internal error occurred while aligning sequences, "
                 "please contact the administrator."
             )
-            errors.append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=segment,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name=segment,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    message=message,
-                )
-            )
+            errors.append(sequence_annotation(name=segment, message=message))
             return None
         sub_path = input_path[len(nextclade_prefix) :]
         if segment in unprocessed.nextcladeMetadata:
             if not unprocessed.nextcladeMetadata[segment]:
                 message = (
                     "Nucleotide sequence failed to align"
-                    if segment == "main"
+                    if not config.multi_segment
                     else f"Nucleotide sequence for {segment} failed to align"
                 )
-                annotation = ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=segment,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name=segment,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    message=message,
-                )
+                annotation = sequence_annotation(name=segment, message=message)
                 if (
                     config.multi_segment
                     and config.alignment_requirement == AlignmentRequirement.ANY
@@ -712,20 +781,9 @@ def process_single(  # noqa: C901
             errors += unprocessed.errors
         elif not any(unprocessed.unalignedNucleotideSequences.values()):
             errors.append(
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                    ],
-                    processedFields=[
-                        AnnotationSource(
-                            name="alignment",
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        ),
-                    ],
-                    message="No sequence data found - check segments are annotated correctly",
+                sequence_annotation(
+                    name="alignment",
+                    message=("No sequence data found - check segments are annotated correctly"),
                 )
             )
 
@@ -737,15 +795,16 @@ def process_single(  # noqa: C901
         group_id = unprocessed.group_id
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
 
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         sequence = unaligned_nucleotide_sequences.get(segment, None)
-        key = "length" if segment == "main" else "length_" + segment
+        key = "length" if not config.multi_segment else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
-            "length" if segment == "main" else "length_" + segment
+            "length" if not config.multi_segment else "length_" + segment.name
             for segment in config.nucleotideSequences
         ]
         if output_field in length_fields:
@@ -798,26 +857,16 @@ def process_single(  # noqa: C901
         )
 
     aligned_segments = set()
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
-    if not aligned_segments:
+    if not aligned_segments and config.multi_segment:
         errors.append(
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(
-                        name="alignment",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    )
-                ],
-                processedFields=[
-                    AnnotationSource(
-                        name="alignment",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    )
-                ],
-                message=("No segment aligned."),
+            sequence_annotation(
+                name="alignment",
+                message=("No segment aligned.")
             )
         )
 
@@ -825,7 +874,8 @@ def process_single(  # noqa: C901
 
     if config.create_embl_file and unprocessed.nextcladeMetadata is not None:
         annotations = {}
-        for segment in config.nucleotideSequences:
+        for sequence_and_dataset in config.nucleotideSequences:
+            segment = sequence_and_dataset.name
             if segment in unprocessed.nextcladeMetadata:
                 annotations[segment] = None
                 if unprocessed.nextcladeMetadata[segment]:
@@ -894,7 +944,7 @@ def process_all(
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
-    if config.nextclade_dataset_name:
+    if config.nucleotideSequences:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
@@ -915,30 +965,15 @@ def process_all(
     return processed_results
 
 
-def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | None:
-    if config.nextclade_dataset_name_map and segment in config.nextclade_dataset_name_map:
-        return config.nextclade_dataset_name_map[segment]
-    if not config.nextclade_dataset_name:
-        return None
-    return (
-        config.nextclade_dataset_name
-        if segment == "main"
-        else config.nextclade_dataset_name + "/" + segment
-    )
-
-
-def get_nextclade_dataset_server(config: Config, segment: SegmentName) -> str:
-    if config.nextclade_dataset_server_map and segment in config.nextclade_dataset_server_map:
-        return config.nextclade_dataset_server_map[segment]
-    return config.nextclade_dataset_server
-
-
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
-    for segment in config.nucleotideSequences:
-        nextclade_dataset_name = get_nextclade_dataset_name(config, segment)
-        nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
+    for sequence_and_dataset in config.nucleotideSequences:
+        name = sequence_and_dataset.name
+        nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
+        nextclade_dataset_server = (
+            sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+        )
 
-        dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
+        dataset_dir_seg = dataset_dir if not config.multi_segment else dataset_dir + "/" + name
         dataset_download_command = [
             "nextclade3",
             "dataset",
@@ -948,8 +983,8 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
             f"--output-dir={dataset_dir_seg}",
         ]
 
-        if config.nextclade_dataset_tag is not None:
-            dataset_download_command.append(f"--tag={config.nextclade_dataset_tag}")
+        if sequence_and_dataset.nextclade_dataset_tag is not None:
+            dataset_download_command.append(f"--tag={sequence_and_dataset.nextclade_dataset_tag}")
 
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
@@ -993,7 +1028,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:  # noqa: PLR1702
-        if config.nextclade_dataset_name:
+        if config.nucleotideSequences:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
             download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
