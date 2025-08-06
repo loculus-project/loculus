@@ -201,14 +201,22 @@ def run_sort(
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ],
+                processedFields=[
+                    AnnotationSource(
+                        name="alignment", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
+                    ),
+                ],
                 message=(
                     "Sequence does not appear to match reference, per `nextclade sort`. "
                     "Double check you are submitting to the correct organism."
                 ),
-            ),
+            )
         )
 
     for _, row in best_hits.iterrows():
