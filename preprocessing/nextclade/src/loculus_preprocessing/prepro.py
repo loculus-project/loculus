@@ -424,8 +424,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        for gene in config.genes:
-            aligned_aminoacid_sequences[id][gene] = None
         (
             unaligned_nucleotide_sequences[id],
             aligned_nucleotide_sequences[id],
