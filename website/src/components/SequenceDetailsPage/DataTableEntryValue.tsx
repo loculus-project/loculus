@@ -69,7 +69,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                         {value}
                     </a>
                 )}
-               
+
                 {customDisplay?.type === 'linkWithMenu' && customDisplay.linkMenuItems !== undefined && (
                     <LinkWithMenuComponent value={value} linkMenuItems={customDisplay.linkMenuItems} />
                 )}
