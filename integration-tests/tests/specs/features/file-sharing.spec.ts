@@ -12,14 +12,21 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
         country: 'Uganda',
         date: '2023-10-15',
     });
+
+    const largeContent1 = 'Hello world! This is test data. '.repeat(260000);
+    const largeContent2 = 'Multipart upload test content. '.repeat(370000);
+
     let cleanup: () => Promise<void>;
     try {
         cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
-            'hello.txt': 'Hello',
-            'world.txt': 'World',
+            'large_file1.txt': largeContent1,
+            'large_file2.txt': largeContent2,
         });
 
-        await expect(page.getByText('✓').first()).toBeVisible();
+        await expect(page.getByText(/Overall progress/)).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/MB/)).toBeVisible();
+
+        await expect(page.getByText('✓').first()).toBeVisible({ timeout: 60000 });
         await expect(page.getByText('✓').nth(1)).toBeVisible();
     } finally {
         if (cleanup) {
@@ -33,10 +40,10 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
 
     // check that files can be seen after processing
     const filesDialog = await reviewPage.viewFiles();
-    await expect(filesDialog.getByText('hello.txt')).toBeVisible();
-    await checkFileContent(page, 'hello.txt', 'Hello');
-    await expect(filesDialog.getByText('world.txt')).toBeVisible();
-    await checkFileContent(page, 'world.txt', 'World');
+    await expect(filesDialog.getByText('large_file1.txt')).toBeVisible();
+    await checkFileContent(page, 'large_file1.txt', largeContent1);
+    await expect(filesDialog.getByText('large_file2.txt')).toBeVisible();
+    await checkFileContent(page, 'large_file2.txt', largeContent2);
     await reviewPage.closeFilesDialog();
 
     await reviewPage.releaseValidSequences();
@@ -48,12 +55,12 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     }
 
     await page.getByLabel('SearchResult').click();
-    await checkFileContent(page, 'hello.txt', 'Hello');
-    await checkFileContent(page, 'world.txt', 'World');
+    await checkFileContent(page, 'large_file1.txt', largeContent1);
+    await checkFileContent(page, 'large_file2.txt', largeContent2);
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
-    test.setTimeout(90000);
+    test.setTimeout(180000); // Increased timeout for large file uploads
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
@@ -68,18 +75,26 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
+    // Generate large files for each submission
+    const largeContent1 = 'Sweden submission data. '.repeat(220000); // ~5.3MB
+    const largeContent2 = 'Uganda submission data. '.repeat(230000); // ~5.5MB
+
     let cleanup: () => Promise<void>;
     try {
         cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
             sub1: {
-                'foo.txt': 'Foo',
+                'sweden_data.txt': largeContent1,
             },
             sub2: {
-                'bar.txt': 'Bar',
+                'uganda_data.txt': largeContent2,
             },
         });
 
-        await expect(page.getByText('✓').first()).toBeVisible();
+        // Watch for progress indicators during upload
+        await expect(page.getByText(/Overall progress/)).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/MB/)).toBeVisible(); // Should show MB units for large files
+
+        await expect(page.getByText('✓').first()).toBeVisible({ timeout: 60000 });
         await expect(page.getByText('✓').nth(1)).toBeVisible();
     } finally {
         if (cleanup) {
@@ -100,12 +115,12 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
     }
 
     await page.getByRole('cell', { name: 'Sweden' }).click();
-    await checkFileContent(page, 'foo.txt', 'Foo');
+    await checkFileContent(page, 'sweden_data.txt', largeContent1);
 
     await page.getByTestId('close-preview-button').click();
 
     await page.getByRole('cell', { name: 'Uganda' }).click();
-    await checkFileContent(page, 'bar.txt', 'Bar');
+    await checkFileContent(page, 'uganda_data.txt', largeContent2);
 });
 
 async function checkFileContent(page: Page, fileName: string, fileContent: string) {
