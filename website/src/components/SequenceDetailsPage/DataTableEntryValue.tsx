@@ -48,7 +48,6 @@ const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => 
 
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
-    console.log('CustomDisplayComponent', { value, customDisplay });
 
     return (
         <div className='whitespace-normal text-gray-600 break-inside-avoid'>

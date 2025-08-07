@@ -11,7 +11,6 @@ interface LinkWithMenuComponentProps {
 
 export const LinkWithMenuComponent: React.FC<LinkWithMenuComponentProps> = ({ value, linkMenuItems }) => {
 
-    console.log('LinkWithMenuComponent', { value, linkMenuItems });
     if (linkMenuItems.length === 0) {
         return <span>{value}</span>;
     }
