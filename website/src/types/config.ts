@@ -19,12 +19,18 @@ export const segmentedMutations = z.object({
     mutations: z.array(mutationProportionCount),
 });
 
+export const linkMenuItem = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
     html: z.string().optional(),
     value: z.array(segmentedMutations).optional(),
     displayGroup: z.string().optional(),
+    linkMenuItems: z.array(linkMenuItem).optional(),
 });
 
 /**
@@ -78,6 +84,7 @@ export const inputField = z.object({
 
 export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
+export type LinkMenuItem = z.infer<typeof linkMenuItem>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
