@@ -83,10 +83,8 @@ def parse_nextclade_tsv(
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str: list[NucleotideInsertion] = (
-                list(row["insertions"].split(",")) if row["insertions"] else []
-            )
-            nucleotide_insertions[id][segment] = nuc_ins_str
+            if row["insertions"]:
+                nucleotide_insertions[id][segment] = list(row["insertions"].split(","))
 
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
@@ -285,12 +283,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        for gene in config.genes:
-            aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
-            aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
                 data
                 for data in entry.data.unalignedNucleotideSequences
@@ -320,8 +315,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 unaligned_nucleotide_sequences[id][segment] = (
                     entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
-            else:
-                unaligned_nucleotide_sequences[id][segment] = None
+                aligned_nucleotide_sequences[id][segment] = None
         if (
             len(entry.data.unalignedNucleotideSequences)
             - num_valid_segments
@@ -668,10 +662,9 @@ def get_metadata(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
+def processed_entry_no_alignment(
     id: AccessionVersion,
     unprocessed: UnprocessedData,
-    config: Config,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
@@ -682,14 +675,6 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
     nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
-
-    for segment in config.nucleotideSequences:
-        aligned_nucleotide_sequences[segment] = None
-        nucleotide_insertions[segment] = []
-
-    for gene in config.genes:
-        amino_acid_insertions[gene] = []
-        aligned_aminoacid_sequences[gene] = None
 
     return SubmissionData(
         processed_entry=ProcessedEntry(
@@ -754,8 +739,6 @@ def process_single(  # noqa: C901
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
-        if not sequence:
-            unprocessed.unalignedNucleotideSequences[segment] = None
         key = "length" if segment == "main" else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
@@ -811,7 +794,7 @@ def process_single(  # noqa: C901
 
     if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(
-            id, unprocessed, config, output_metadata, errors, warnings
+            id, unprocessed, output_metadata, errors, warnings
         )
 
     aligned_segments = set()

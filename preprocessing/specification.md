@@ -138,7 +138,7 @@ The `metadata` field should contain a flat object consisting of the fields speci
 The `unalignedNucleotideSequences`, `alignedNucleotideSequences`, and `alignedAminoAcidSequences` fields contain objects with the segment/gene name as key and the sequence as value.
 If there is only a single segment (e.g., as in SARS-CoV-2), the segment name of the nucleotide sequence should be `main`.
 
-If a segment or a gene is not present in the sequence, the value should be `null`.
+If a segment or a gene is not present in the sequence, the segment or gene is not required in the map. Alternatively, the value can be set to `null`.
 
 Examples:
 
@@ -162,7 +162,7 @@ SARS-CoV-2 amino acid sequences:
 
 #### Insertions
 
-The `nucleotideInsertions` and `aminoAcidInsertions` fields contain dictionaries from the segment name or gene name to a list of `NucleotideInsertion`s or `AminoAcidInsertion`s. If there are no insertions the list should be empty.
+The `nucleotideInsertions` and `aminoAcidInsertions` fields contain dictionaries from the segment name or gene name to a list of `NucleotideInsertion`s or `AminoAcidInsertion`s. If there are no insertions the segment name or gene name can be omitted from the list or an empty list may be returned.
 
 Examples:
 
