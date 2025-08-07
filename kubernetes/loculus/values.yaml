@@ -608,8 +608,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: bioprojectAccession
         customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
+          type: linkWithMenu
+          linkMenuItems:
+            - name: View in NCBI
+              url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
+            - name: View in ENA
+              url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+            - name: View in DDBJ
+              url: "https://getentry.ddbj.nig.ac.jp/getentry/bp/__value__"
         header: "INSDC"
         ingest: bioprojects
         guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
