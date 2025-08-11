@@ -113,7 +113,7 @@ class UploadDatabaseService(
         uploadedSequencesBatch.chunkedForDatabase({ batch ->
             SequenceUploadAuxTable.batchInsert(batch) {
                 this[sequenceSubmissionIdColumn] = it.sampleName
-                this[segmentNameColumn] = it.sampleName
+                this[metadataSubmissionIdColumn] = it.sampleName
                 this[sequenceUploadIdColumn] = uploadId
                 this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
                     it.sequence,
