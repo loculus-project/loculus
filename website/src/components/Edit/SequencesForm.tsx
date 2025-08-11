@@ -52,14 +52,14 @@ export class EditableSequences {
      */
     static fromInitialData(initialData: SequenceEntryToEdit, segmentNames: string[]): EditableSequences {
         const emptyRows = this.emptyRows(segmentNames);
-        const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
-            ([key, value]) => ({
+        const existingDataRows = Object.entries(initialData.processedData.unalignedNucleotideSequences)
+            .filter(([_, value]) => value !== null)
+            .map(([key, value]) => ({
                 key,
-                initialValue: value,
-                value: value,
+                initialValue: value!.toString(),
+                value: value!.toString(),
                 ...mapErrorsAndWarnings(initialData, key, 'NucleotideSequence'),
-            }),
-        );
+            }));
         const mergedRows: Row[] = [];
         // merge in this way to retain the order of segment names as they were given.
         emptyRows.forEach((row) => {
