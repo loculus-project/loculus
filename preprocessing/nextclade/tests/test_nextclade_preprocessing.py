@@ -558,7 +558,110 @@ multi_segment_case_definitions_any_requirement = [
     ),
 ]
 
+segment_validation_tests_single_segment = [
+    Case(
+        name="accept any key for single segment",
+        input_metadata={},
+        input_sequence={"randomKey": sequence_with_mutation("single")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": 1.0,
+            "totalInsertedNucs": 0,
+            "totalSnps": 1,
+            "totalDeletedNucs": 0,
+            "length": len(consensus_sequence("single")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="do not accept multiple segments for single segment",
+        input_metadata={},
+        input_sequence={
+            "main": sequence_with_mutation("single"),
+            "randomKey": sequence_with_mutation("single"),
+        },
+        accession_id="2",
+        expected_metadata={
+            "completeness": None,
+            "totalInsertedNucs": None,
+            "totalSnps": None,
+            "totalDeletedNucs": None,
+            "length": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "Multiple sequences: ['main', 'randomKey'] found in the"
+                " input data, but organism: ebola-sudan-test is single-segmented. "
+                "Please check that your metadata and sequences are annotated correctly."
+                "Each metadata entry should have a single corresponding fasta sequence "
+                "entry with the same submissionId.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+        ),
+    ),
+]
+
 segment_validation_tests_multi_segments = [
+    Case(
+        name="accept any prefix for multi-segment",
+        input_metadata={},
+        input_sequence={
+            "prefix_ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "other_prefix_ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": 0,
+            "totalSnps_ebola-sudan": 1,
+            "totalDeletedNucs_ebola-sudan": 0,
+            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": 0,
+            "totalSnps_ebola-zaire": 1,
+            "totalDeletedNucs_ebola-zaire": 0,
+            "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+            alignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
+                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
     Case(
         name="don't allow multiple segments with the same name",
         input_metadata={},
@@ -591,7 +694,7 @@ segment_validation_tests_multi_segments = [
                 [ProcessingAnnotationAlignment],
                 "No segment aligned.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            )
+            ),
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
@@ -609,7 +712,7 @@ segment_validation_tests_multi_segments = [
             "ebola-sudan": sequence_with_mutation("ebola-sudan"),
             "unknown_segment": invalid_sequence(),
         },
-        accession_id="1",
+        accession_id="2",
         expected_metadata={
             "totalInsertedNucs_ebola-sudan": 0,
             "totalSnps_ebola-sudan": 1,
@@ -654,7 +757,9 @@ def process_single_entry(
 
 
 @pytest.mark.parametrize(
-    "test_case_def", single_segment_case_definitions, ids=lambda tc: f"single segment {tc.name}"
+    "test_case_def",
+    single_segment_case_definitions + segment_validation_tests_single_segment,
+    ids=lambda tc: f"single segment {tc.name}",
 )
 def test_preprocessing_single_segment(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
@@ -711,8 +816,8 @@ def test_preprocessing_without_metadata() -> None:
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={},
             unalignedNucleotideSequences={
-                "test_NIHPAK-19_ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "test_NIHPAK-19_ebola-zaire": sequence_with_mutation("ebola-zaire"),
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
         ),
     )
