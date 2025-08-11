@@ -24,6 +24,7 @@ type GroupPageProps = {
     username: string;
     userGroups: Group[];
     organisms: Organism[];
+    databaseName: string;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -33,6 +34,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     username,
     userGroups,
     organisms,
+    databaseName,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -157,7 +159,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             </div>
 
             <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
-                <h2 className='text-lg font-bold mb-2'>Sequences in LAPIS</h2>
+                <h2 className='text-lg font-bold mb-2'>Sequences available in {databaseName}</h2>
                 <table className='w-full'>
                     <tbody>
                         {organisms.map((organism) => (
