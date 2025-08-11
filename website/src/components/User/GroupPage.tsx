@@ -158,28 +158,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
-                <h2 className='text-lg font-bold mb-2'>Sequences available in {databaseName}</h2>
-                <table className='w-full'>
-                    <tbody>
-                        {organisms.map((organism) => (
-                            <TableRow key={organism.key} label={organism.displayName}>
-                                {sequenceCountsLoading ? (
-                                    <span className='loading loading-spinner loading-xs'></span>
-                                ) : (
-                                    <a
-                                        href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}
-                                        className='underline'
-                                    >
-                                        {sequenceCounts?.[organism.key] ?? 0}
-                                    </a>
-                                )}
-                            </TableRow>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
             {userHasEditPrivileges && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
@@ -230,6 +208,28 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </div>
                 </>
             )}
+
+            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+                <h2 className='text-lg font-bold mb-2'>Sequences available in {databaseName}</h2>
+                <table className='w-full'>
+                    <tbody>
+                        {organisms.map((organism) => (
+                            <TableRow key={organism.key} label={organism.displayName}>
+                                {sequenceCountsLoading ? (
+                                    <span className='loading loading-spinner loading-xs'></span>
+                                ) : (
+                                    <a
+                                        href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}
+                                        className='underline'
+                                    >
+                                        {sequenceCounts?.[organism.key] ?? 0}
+                                    </a>
+                                )}
+                            </TableRow>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
