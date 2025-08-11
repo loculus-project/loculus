@@ -2,7 +2,7 @@
 import { GroupPage } from '../../../components/User/GroupPage';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig } from '../../../config';
+import { getConfiguredOrganisms, getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
@@ -12,6 +12,7 @@ const accessToken = getAccessToken(session)!;
 const username = session.user?.username ?? '';
 const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
+const organisms = getConfiguredOrganisms();
 
 if (isNaN(groupId)) {
     return new Response(undefined, {
@@ -46,6 +47,7 @@ const userGroups = userGroupsResponse.match(
                         clientConfig={clientConfig}
                         username={username}
                         userGroups={userGroups}
+                        organisms={organisms}
                         client:load
                     />
                 ),

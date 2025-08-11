@@ -6,7 +6,7 @@ import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { getConfiguredOrganisms } from '../../config.ts';
+import type { Organism } from '../../config.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
@@ -23,6 +23,7 @@ type GroupPageProps = {
     accessToken: string;
     username: string;
     userGroups: Group[];
+    organisms: Organism[];
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -31,6 +32,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     accessToken,
     username,
     userGroups,
+    organisms,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -54,10 +56,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
-    const organisms = getConfiguredOrganisms();
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
         queryKey: ['group-sequence-counts', groupId],
-        queryFn: () => fetchSequenceCounts(groupId, clientConfig),
+        queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
     });
 
     return (
@@ -231,9 +232,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     );
 };
 
-async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig) {
+async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
     const counts: Record<string, number> = {};
-    const organisms = getConfiguredOrganisms();
     await Promise.all(
         organisms.map(async ({ key }) => {
             const url = clientConfig.lapisUrls[key];
