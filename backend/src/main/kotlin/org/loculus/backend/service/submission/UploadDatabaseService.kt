@@ -173,9 +173,9 @@ class UploadDatabaseService(
                     'unalignedNucleotideSequences', 
                     COALESCE(
                         jsonb_object_agg(
-                            sequence_upload_aux_table.submission_id,
+                            sequence_upload_aux_table.sequence_submission_id,
                             sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.submission_id IS NOT NULL),
+                        ) FILTER (WHERE sequence_upload_aux_table.sequence_submission_id IS NOT NULL),
                         '{}'::jsonb
                     )
                 )
