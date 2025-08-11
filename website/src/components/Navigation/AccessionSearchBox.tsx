@@ -36,7 +36,7 @@ export const AccessionSearchBox: FC<Props> = ({ className }) => {
                 <button
                     type='submit'
                     onClick={() => setOpen(true)}
-                    className='flex items-center justify-center text-primary hover:text-primary-600 transition-colors'
+                    className='flex items-center justify-center text-primary-600 hover:text-primary-700 transition-colors'
                     aria-label={open ? 'Search' : 'Open accession search'}
                 >
                     <SearchIcon className='w-5 h-5' />
@@ -55,7 +55,7 @@ export const AccessionSearchBox: FC<Props> = ({ className }) => {
                     className={
                         `input input-bordered input-md text-sm placeholder:text-gray-500 text-gray-900 ` +
                         `bg-white focus:border-primary focus:outline-none transition-all duration-200 ease-out ml-2 ` +
-                        (open ? 'px-3 w-64 md:w-80 opacity-100' : 'px-0 w-0 opacity-0 pointer-events-none')
+                        (open ? 'px-3 w-36 lg:w-48 opacity-100' : 'px-0 w-0 opacity-0 pointer-events-none')
                     }
                     aria-label='Enter an accession or accession.version'
                 />
