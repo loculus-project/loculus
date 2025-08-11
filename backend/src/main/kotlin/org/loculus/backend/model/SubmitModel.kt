@@ -135,7 +135,7 @@ class SubmitModel(
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
-            mapMetadataKeysToSequenceKeys(metadataSubmissionIds, sequenceSubmissionIds)
+            mapMetadataKeysToSequenceKeys(metadataSubmissionIds, sequenceSubmissionIds, submissionParams.organism)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -361,13 +361,23 @@ class SubmitModel(
     }
 
     @Transactional
-    private fun mapMetadataKeysToSequenceKeys(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
+    private fun mapMetadataKeysToSequenceKeys(
+        metadataKeysSet: Set<SubmissionId>,
+        sequenceKeysSet: Set<SubmissionId>,
+        organism: Organism,
+    ) {
         val metadataKeyToSequences = mutableMapOf<SubmissionId, MutableList<SubmissionId>>()
         val unmatchedSequenceKeys = mutableSetOf<SubmissionId>()
         val ambiguousSequenceKeys = mutableMapOf<SubmissionId, List<SubmissionId>>()
 
+        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
+
         for (seqKey in sequenceKeysSet) {
-            val baseKey = seqKey.removeSuffixPattern()
+            val baseKey = if (referenceGenome.nucleotideSequences.size == 1) {
+                seqKey
+            } else {
+                seqKey.removeSuffixPattern()
+            }
             val matchedMetadataKey = when {
                 metadataKeysSet.contains(seqKey) -> seqKey
                 metadataKeysSet.contains(baseKey) -> baseKey
@@ -405,9 +415,11 @@ class SubmitModel(
             }
             val ambiguousSequenceText = if (ambiguousSequenceKeys.isNotEmpty()) {
                 "Sequence file contains ${ambiguousSequenceKeys.size} ids that could be matched to multiple metadata " +
-                    "keys, e.g. ${ambiguousSequenceKeys.entries.joinToString(limit = 3) { (key, value) ->
-                        "Sequence key: $key matches $value"
-                    }} " +
+                    "keys, e.g. ${
+                        ambiguousSequenceKeys.entries.joinToString(limit = 3) { (key, value) ->
+                            "Sequence key: $key matches $value"
+                        }
+                    } " +
                     "- to avoid future issues we recommend not using the separator `_` in your metadata submissionIds;"
             } else {
                 ""

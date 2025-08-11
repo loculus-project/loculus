@@ -64,24 +64,20 @@ class SubmitEndpointSingleSegmentedTest(
     }
 
     @Test
-    fun `GIVEN input data with ambiguous submissionIds THEN data is rejected`() {
+    fun `GIVEN input data with explicit default segment name THEN data is rejected`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        val expectedDetail = "Sequence file contains 1 ids that could be matched to multiple metadata keys" +
-            ", e.g. Sequence key: header1_2 matches [header1_2, header1]"
+        val expectedDetail = "Metadata file contains 1 ids that are not present in the sequence file: header1"
 
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
                         submissionId	firstColumn
                         header1	someValue
-                        header1_2	someValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
                 content = """
-                        >header1_2
-                        AC
-                        >header1
+                        >header1_$DEFAULT_SEQUENCE_NAME
                         AC
                 """.trimIndent(),
             ),
