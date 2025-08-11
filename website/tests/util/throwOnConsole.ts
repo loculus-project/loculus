@@ -11,6 +11,7 @@ const messagesToIgnore = [
     /downloadable font: kern: Too large subtable/, // firefox only, keycloak only, https://github.com/keycloak/keycloak/issues/29486
     /downloadable font: Table discarded/, // firefox only, keycloak only
     /Target page, context or browser has been closed/, // Playwright specific warning after browser is closed
+    /Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING/, // network request aborted during tests
 ];
 
 export function throwOnConsole(page: Page) {
