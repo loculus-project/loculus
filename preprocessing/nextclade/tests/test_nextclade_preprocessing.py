@@ -213,7 +213,7 @@ single_segment_case_definitions = [
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={"main": invalid_sequence()},
-            alignedNucleotideSequences={"main": None},
+            alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
@@ -420,7 +420,7 @@ multi_segment_case_definitions_all_requirement = [
             unalignedNucleotideSequences={
                 "ebola-sudan": invalid_sequence(),
             },
-            alignedNucleotideSequences={"ebola-sudan": None},
+            alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
@@ -459,7 +459,6 @@ multi_segment_case_definitions_all_requirement = [
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             alignedNucleotideSequences={
-                "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             nucleotideInsertions={},
@@ -508,7 +507,7 @@ multi_segment_case_definitions_any_requirement = [
             unalignedNucleotideSequences={
                 "ebola-sudan": invalid_sequence(),
             },
-            alignedNucleotideSequences={"ebola-sudan": None},
+            alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
@@ -547,7 +546,6 @@ multi_segment_case_definitions_any_requirement = [
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             alignedNucleotideSequences={
-                "ebola-sudan": None,
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             nucleotideInsertions={},

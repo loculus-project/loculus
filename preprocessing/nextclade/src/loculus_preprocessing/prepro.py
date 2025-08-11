@@ -234,13 +234,11 @@ def assign_segment(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
-    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     config: Config,
 ):
     valid_segments = set()
     duplicate_segments = set()
     if not config.multi_segment:
-        aligned_nucleotide_sequences["main"] = None
         if len(input_unaligned_sequences) > 1:
             errors.append(
                 ProcessingAnnotation.from_single(
@@ -260,7 +258,6 @@ def assign_segment(
             unaligned_nucleotide_sequences["main"] = value
         return (
             unaligned_nucleotide_sequences,
-            aligned_nucleotide_sequences,
             errors,
         )
     for segment in config.nucleotideSequences:
@@ -290,23 +287,12 @@ def assign_segment(
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-            aligned_nucleotide_sequences[segment] = None
     remaining_segments = set(input_unaligned_sequences.keys()) - valid_segments - duplicate_segments
     if len(remaining_segments) > 0:
         errors.append(
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(
-                        name="alignment",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    ),
-                ],
-                processedFields=[
-                    AnnotationSource(
-                        name="alignment",
-                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    ),
-                ],
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 message=(
                     f"Found sequences in the input data with segments that are not in the config: "
                     f"{', '.join(remaining_segments)}. "
@@ -316,10 +302,10 @@ def assign_segment(
                 ),
             )
         )
-    return (unaligned_nucleotide_sequences, aligned_nucleotide_sequences, errors)
+    return (unaligned_nucleotide_sequences, errors)
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -359,13 +345,11 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         alerts.errors[id] = []
         (
             unaligned_nucleotide_sequences[id],
-            aligned_nucleotide_sequences[id],
             alerts.errors[id],
         ) = assign_segment(
             input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
             unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
             errors=alerts.errors[id],
-            aligned_nucleotide_sequences=aligned_nucleotide_sequences[id],
             config=config,
         )
 
