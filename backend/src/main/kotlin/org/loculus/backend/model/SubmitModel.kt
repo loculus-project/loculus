@@ -373,19 +373,24 @@ class SubmitModel(
         val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
 
         for (seqKey in sequenceKeysSet) {
-            val baseKey = if (referenceGenome.nucleotideSequences.size == 1) {
-                seqKey
+            val matchedMetadataKey = if (referenceGenome.nucleotideSequences.size == 1) {
+                val seqKeyInMeta = metadataKeysSet.contains(seqKey)
+                when {
+                    seqKeyInMeta -> seqKey
+                    else -> null
+                }
             } else {
-                seqKey.removeSuffixPattern()
-            }
-            val matchedMetadataKey = when {
-                metadataKeysSet.contains(seqKey) -> seqKey
-                metadataKeysSet.contains(baseKey) -> baseKey
-                else -> null
-            }
-
-            if ((seqKey != baseKey) && metadataKeysSet.contains(seqKey) && metadataKeysSet.contains(baseKey)) {
-                ambiguousSequenceKeys[seqKey] = listOf(seqKey, baseKey)
+                val baseKey = seqKey.removeSuffixPattern()
+                val seqKeyInMeta = metadataKeysSet.contains(seqKey)
+                val baseKeyInMeta = metadataKeysSet.contains(baseKey)
+                if ((seqKey != baseKey) && seqKeyInMeta && baseKeyInMeta) {
+                    ambiguousSequenceKeys[seqKey] = listOf(seqKey, baseKey)
+                }
+                when {
+                    seqKeyInMeta -> seqKey
+                    baseKeyInMeta -> baseKey
+                    else -> null
+                }
             }
 
             if (matchedMetadataKey != null) {
