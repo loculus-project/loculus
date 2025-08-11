@@ -49,9 +49,9 @@ class ProcessedAlignment:
         default_factory=lambda: {"main": None}
     )
     alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
-        default_factory=lambda: {"main": None}
+        default_factory=dict
     )
-    nucleotideInsertions: dict[str, list[str]] = field(default_factory=lambda: {"main": []})  # noqa: N815
+    nucleotideInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
     alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
     aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
 
@@ -150,7 +150,7 @@ class ProcessedEntryFactory:
 class Case:
     name: str
     input_metadata: dict[str, str | None] = field(default_factory=dict)
-    input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": ""})
+    input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
     expected_errors: list[ProcessingAnnotationHelper] | None = None
