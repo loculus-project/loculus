@@ -355,8 +355,9 @@ class ProcessingFunctions:
                         input_fields,
                         [output_field],
                         AnnotationSourceType.METADATA,
-                        message=f"Metadata field {output_field}:"
-                        f"'{input_date_str}' is in the future.",
+                        message=(
+                            f"Metadata field {output_field}:'{input_date_str}' is in the future."
+                        ),
                     )
                 )
 

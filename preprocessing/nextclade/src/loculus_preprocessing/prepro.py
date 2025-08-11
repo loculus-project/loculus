@@ -204,8 +204,10 @@ def run_sort(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="Sequence does not appear to match reference, per `nextclade sort`. "
-                "Double check you are submitting to the correct organism.",
+                message=(
+                    "Sequence does not appear to match reference, per `nextclade sort`. "
+                    "Double check you are submitting to the correct organism."
+                ),
             ),
         )
 
@@ -299,8 +301,10 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 ProcessingAnnotation.from_single(
                     ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="Found unknown segments in the input data - "
-                    "check your segments are annotated correctly.",
+                    message=(
+                        "Found unknown segments in the input data - "
+                        "check your segments are annotated correctly."
+                    ),
                 ),
             )
 
@@ -778,8 +782,10 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 ProcessingAnnotation.from_single(
                     "unknown",
                     AnnotationSourceType.METADATA,
-                    message=f"Failed to process submission with id: {id} - please review your "
-                    "submission or reach out to an administrator if this error persists.",
+                    message=(
+                        f"Failed to process submission with id: {id} - please review your "
+                        "submission or reach out to an administrator if this error persists."
+                    ),
                 ),
             ],
             warnings=[],
