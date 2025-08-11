@@ -106,7 +106,7 @@ export class FieldFilterSet implements SequenceFilter {
 
         delete sequenceFilters.mutation;
         const mutationSearchParams = intoMutationSearchParams(
-            this.fieldValues.mutation as any,
+            this.fieldValues.mutation,
             this.referenceGenomeSequenceNames,
         );
 

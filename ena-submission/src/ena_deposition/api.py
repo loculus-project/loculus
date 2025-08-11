@@ -97,7 +97,7 @@ def start_api(config: Config, stop_event: threading.Event):
     server_thread.start()
 
     stop_event.wait()
-    print("Stop event received, shutting down API...")
+    logger.warning("API received stop event, shutting down API...")
 
     server.should_exit = True
     server_thread.join()

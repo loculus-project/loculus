@@ -41,7 +41,9 @@ def parse(field: str, index: int) -> str:
     return field.split("_")[index] if len(field.split("_")) > index else ""
 
 
-def parse_file(config: NextcladeSortParams, sort_results: str, output_file: str):
+def parse_file(
+    config: NextcladeSortParams, sort_results: str, output_file: str, allowed_segments: list[str]
+) -> None:
     df = pd.read_csv(sort_results, sep="\t", dtype={"index": "Int64"})
 
     no_rows = df.shape[0]
@@ -62,7 +64,10 @@ def parse_file(config: NextcladeSortParams, sort_results: str, output_file: str)
         )
     header = list(config.minimizer_parser)
     header.append("seqName")
-    df_highest_per_group.to_csv(output_file, columns=header, sep="\t", index=False)
+    # Filter out rows where 'segment' is NOT in nucleotide_sequences
+    # these cases are not explicitly supported by loculus
+    filtered_df = df_highest_per_group[df_highest_per_group["segment"].isin(allowed_segments)]
+    filtered_df.to_csv(output_file, columns=header, sep="\t", index=False)
 
 
 @click.command()
@@ -94,7 +99,12 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
     if "segment" not in config.segment_identification.minimizer_parser and config.segmented:
         error_msg = "minimizer_parser must include 'segment'"
         raise ValueError(error_msg)
-    parse_file(config.segment_identification, sort_results, output)
+    parse_file(
+        config.segment_identification,
+        sort_results,
+        output,
+        allowed_segments=config.nucleotide_sequences,
+    )
 
 
 if __name__ == "__main__":

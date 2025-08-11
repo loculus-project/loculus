@@ -4,7 +4,7 @@
     "backendUrl": "http://dummy-backend.com",
     "organisms": {
         "dummyOrganism": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [
                     {
                         "name": "main",
@@ -30,15 +30,25 @@
                     "files": {
                         "enabled": true,
                         "categories": [
-                            {"name": "myFileCategory"},
-                            {"name": "myOtherFileCategory"}
+                            {
+                                "name": "myFileCategory"
+                            },
+                            {
+                                "name": "myOtherFileCategory"
+                            }
                         ]
                     }
                 },
                 "files": [
-                    {"name": "myFileCategory"},
-                    {"name": "myOtherFileCategory"},
-                    {"name": "myProcessedOnlyFileCategory"}
+                    {
+                        "name": "myFileCategory"
+                    },
+                    {
+                        "name": "myOtherFileCategory"
+                    },
+                    {
+                        "name": "myProcessedOnlyFileCategory"
+                    }
                 ],
                 "metadata": [
                     {
@@ -118,7 +128,7 @@
             }
         },
         "otherOrganism": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [
                     {
                         "name": "notOnlySegment",
@@ -202,7 +212,7 @@
             }
         },
         "dummyOrganismWithoutConsensusSequences": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [],
                 "genes": []
             },

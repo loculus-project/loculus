@@ -7,7 +7,7 @@
     },
     "organisms": {
         "dummyOrganism": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [
                     {
                         "name": "main",

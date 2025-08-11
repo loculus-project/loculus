@@ -108,11 +108,13 @@ TLDR: The `Snakefile` contains workflows defined as rules with required input an
 
 You might be notified that the ingest pipeline would like to regroup segments of multi-segmented organisms, making the previous grouping obsolete. In this case the old segment-grouping needs to be revoked and the new one added. We do not automate this process yet in case of potential reingest bugs leading to erroneous revocation of sequences. However, if you approve with the proposed revocation you can run the `regroup_and_revoke` cronjob using:
 
-```
+```bash
 kubectl create job --from=cronjob/loculus-revoke-and-regroup-cronjob-{config.organism} -n $NAMESPACE loculus-revoke-and-regroup-cronjob-{config.organism}
 ```
 
 ## Local Development
+
+### Creating Conda Environment
 
 Install micromamba, if you are on a mac:
 
@@ -134,12 +136,34 @@ micromamba create -f environment.yml --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
 
-From the ingest directly, create local test configs for the organism you are interested in and copy those configs to your config folder.
+### Generating local test config
+
+From the ingest directly, create local test configs for the organism you are interested in and copy those configs to your config folder. For Ebola Sudan:
 
 ```bash
 ../generate_local_test_config.sh
-cp ../temp/ingest-config.{organism}.yaml config/config.yaml
+cp ../website/tests/config/ingest-config.ebola-sudan.yaml config/config.yaml
 ```
+
+You might need to edit the following lines in the `config/config.yaml` to match your local setup:
+
+```yaml
+username: insdc_ingest_user
+password: insdc_ingest_user
+keycloak_token_url: http://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token
+backend_url: http://backend-main.loculus.org/
+mirror_bucket: "https://hel1.your-objectstorage.com/loculus-public/mirror/"
+```
+
+The password might be different, you can get it through:
+
+```bash
+kubectl get secret service-accounts -o jsonpath="{.data.insdcIngestUserPassword}" -n prev-main | base64 --decode; echo
+```
+
+where you need to replace `prev-main` with the namespace you are running against.
+
+### Running the Pipeline
 
 Then run snakemake using `snakemake` or `snakemake {rule}`.
 
@@ -169,8 +193,6 @@ We should add automated integration tests:
 - Check that backend ends up in the expected state
 
 To be able to run tests independently, we should use UUIDs for mock data. Currently, clearing the database is not possible without redeploying everything (see <https://github.com/loculus-project/loculus/issues/1764>).
-
-One complication for testing is that we don't have ARM containers for the backend yet (see <https://github.com/loculus-project/loculus/issues/1765>).
 
 ### Recover from processing errors
 

@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -34,15 +33,23 @@ import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedS
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.RevisionEntry
+import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.getNextSequenceNumbers
+import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
+
+private const val SEQUENCE_INSERT_COLUMNS = 4
+private const val METADATA_INSERT_COLUMNS = 8
+private const val SEQUENCE_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT / SEQUENCE_INSERT_COLUMNS
+private const val METADATA_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT / METADATA_INSERT_COLUMNS
 
 @Service
 @Transactional
@@ -64,15 +71,17 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
-            this[submitterColumn] = authenticatedUser.username
-            this[groupIdColumn] = groupId
-            this[uploadedAtColumn] = uploadedAt
-            this[submissionIdColumn] = it.submissionId
-            this[metadataColumn] = it.metadata
-            this[filesColumn] = files?.get(it.submissionId)
-            this[organismColumn] = submittedOrganism.name
-            this[uploadIdColumn] = uploadId
+        uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+            MetadataUploadAuxTable.batchInsert(batch) {
+                this[submitterColumn] = authenticatedUser.username
+                this[groupIdColumn] = groupId
+                this[uploadedAtColumn] = uploadedAt
+                this[submissionIdColumn] = it.submissionId
+                this[metadataColumn] = it.metadata
+                this[filesColumn] = files?.get(it.submissionId)
+                this[organismColumn] = submittedOrganism.name
+                this[uploadIdColumn] = uploadId
+            }
         }
     }
 
@@ -84,15 +93,17 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
-            this[accessionColumn] = it.accession
-            this[submitterColumn] = authenticatedUser.username
-            this[uploadedAtColumn] = uploadedAt
-            this[submissionIdColumn] = it.submissionId
-            this[metadataColumn] = it.metadata
-            this[filesColumn] = files?.get(it.submissionId)
-            this[organismColumn] = submittedOrganism.name
-            this[uploadIdColumn] = uploadId
+        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+            MetadataUploadAuxTable.batchInsert(batch) {
+                this[accessionColumn] = it.accession
+                this[submitterColumn] = authenticatedUser.username
+                this[uploadedAtColumn] = uploadedAt
+                this[submissionIdColumn] = it.submissionId
+                this[metadataColumn] = it.metadata
+                this[filesColumn] = files?.get(it.submissionId)
+                this[organismColumn] = submittedOrganism.name
+                this[uploadIdColumn] = uploadId
+            }
         }
     }
 
@@ -101,26 +112,35 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
-            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-            this[sequenceSubmissionIdColumn] = submissionId
-            this[segmentNameColumn] = segmentName
-            this[sequenceUploadIdColumn] = uploadId
-            this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                it.sequence,
-                segmentName,
-                submittedOrganism,
-            )
-        }
+        uploadedSequencesBatch.chunkedForDatabase({ batch ->
+            SequenceUploadAuxTable.batchInsert(batch) {
+                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
+                this[sequenceSubmissionIdColumn] = submissionId
+                this[segmentNameColumn] = segmentName
+                this[sequenceUploadIdColumn] = uploadId
+                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                    it.sequence,
+                    segmentName,
+                    submittedOrganism,
+                )
+            }
+            emptyList<Unit>()
+        }, SEQUENCE_INSERT_COLUMNS)
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
-        .selectAll()
+        .select(
+            uploadIdColumn,
+            submissionIdColumn,
+        )
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
 
     fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
-        .selectAll()
+        .select(
+            sequenceUploadIdColumn,
+            sequenceSubmissionIdColumn,
+        )
         .where { sequenceUploadIdColumn eq uploadId }
         .map {
             it[sequenceSubmissionIdColumn]
@@ -198,9 +218,10 @@ class UploadDatabaseService(
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
+            val accessions = insertionResult.map { it.accession }
             dataUseTermsDatabaseService.setNewDataUseTerms(
                 submissionParams.authenticatedUser,
-                insertionResult.map { it.accession },
+                accessions,
                 submissionParams.dataUseTerms,
             )
         }
@@ -232,11 +253,13 @@ class UploadDatabaseService(
                 .where { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        accessionPreconditionValidator.validate {
-            thatAccessionsExist(accessions)
-                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
-                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
-                .andThatOrganismIs(organism)
+        accessions.processInDatabaseSafeChunks { chunk ->
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(chunk)
+                    .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                    .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                    .andThatOrganismIs(organism)
+            }
         }
 
         val updateSql = """

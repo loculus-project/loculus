@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import java.util.UUID
 
 typealias FileId = UUID
+typealias MultipartUploadId = String
 const val FILES_TABLE_NAME = "files"
 
 /**
@@ -34,13 +35,12 @@ object FilesTable : Table(FILES_TABLE_NAME) {
     val groupIdColumn = integer("group_id")
 
     /**
-     * When a file was made public.
-     */
-    val releasedAtColumn = datetime("released_at").nullable()
-
-    /**
      * File size in bytes. Can be null.
      * If null, the file hasn't been uploaded yet, or file size hasn't been checked yet.
      */
     val sizeColumn = long("size").nullable()
+
+    val multipartCompleted = bool("multipart_completed")
+
+    val multipartUploadId = text("multipart_upload_id").nullable()
 }

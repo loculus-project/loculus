@@ -5,6 +5,7 @@ package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.service.files.FileId
 
 data class FileIdAndWriteUrl(
@@ -21,6 +22,15 @@ data class FileIdAndWriteUrl(
     val presignedWriteUrl: String,
 )
 
+data class FileIdAndMultipartWriteUrl(
+    @Schema(description = "The id of the file.", example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793") val fileId: FileId,
+    @Schema(
+        description = "A list of presigned URL, allowing users to PUT parts of an object.",
+    )
+    @JsonProperty("urls")
+    val presignedWriteUrls: List<String>,
+)
+
 data class FileIdAndName(val fileId: FileId, val name: String)
 
 data class FileIdAndNameAndReadUrl(val fileId: FileId, val name: String, @JsonProperty("url") val readUrl: String)
@@ -29,3 +39,7 @@ data class FileIdAndNameAndReadUrl(val fileId: FileId, val name: String, @JsonPr
  * Strip the URL from the object.
  */
 fun FileIdAndNameAndReadUrl.toFileIdAndName(): FileIdAndName = FileIdAndName(fileId, name)
+
+data class FileIdAndEtags(val fileId: FileId, val etags: List<String>)
+
+data class FileIdAndMaybeReleasedAt(val fileId: FileId, val releasedAt: LocalDateTime?)

@@ -65,8 +65,8 @@ class BackendSpringConfigTest {
 fun backendConfig(metadataList: List<Metadata>, earliestReleaseDate: EarliestReleaseDate) = BackendConfig(
     organisms = mapOf(
         DEFAULT_ORGANISM to InstanceConfig(
-            Schema(DEFAULT_ORGANISM, metadataList, earliestReleaseDate = earliestReleaseDate),
-            ReferenceGenome(emptyList(), emptyList()),
+            schema = Schema(DEFAULT_ORGANISM, metadataList, earliestReleaseDate = earliestReleaseDate),
+            referenceGenome = ReferenceGenome(emptyList(), emptyList()),
         ),
     ),
     accessionPrefix = "FOO_",

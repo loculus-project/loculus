@@ -4,8 +4,10 @@ import re
 import threading
 import time
 from datetime import datetime
+from typing import Any
 
 import pytz
+from attr import dataclass
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
@@ -38,65 +40,80 @@ from .submission_db_helper import (
     find_errors_in_db,
     is_revision,
     update_db_where_conditions,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def get_sample_attributes(config: Config, sample_metadata: dict[str, str], row: dict[str, str]):
-    list_sample_attributes = []
-    mapped_fields = []
-    for field in config.metadata_mapping:
-        loculus_metadata_field_names = config.metadata_mapping[field]["loculus_fields"]
-        loculus_metadata_field_values = [
-            sample_metadata.get(metadata) for metadata in loculus_metadata_field_names
-        ]
-        if (
-            "function" in config.metadata_mapping[field]
-            and "args" in config.metadata_mapping[field]
-        ):
-            function = config.metadata_mapping[field]["function"]
-            args = [i for i in config.metadata_mapping[field]["args"] if i]
-            full_field_values = [i for i in loculus_metadata_field_values if i]
-            if function != "match":
-                logger.warning(
-                    f"Unknown function: {function} with args: {args} for {row['accession']}"
-                )
-                continue
-            if function == "match" and (len(full_field_values) == len(args)):
-                value = "true"
-                for i in range(len(full_field_values)):
-                    if not re.match(
-                        args[i],
-                        full_field_values[i],
-                        re.IGNORECASE,
+@dataclass(frozen=True)
+class MetadataMapping:
+    loculus_fields: list[str]
+    default: str | None = None
+    function: str | None = None
+    args: list[str] | None = None
+    units: str | None = None
+
+
+def get_sample_attributes(
+    metadata_mapping: dict[str, dict[str, Any]], sample_metadata: dict[str, str]
+) -> list[SampleAttribute]:
+    """Turn Loculus metadata into ENA sample attributes per metadata_mapping."""
+
+    result: list[SampleAttribute] = []
+
+    for field_name, field_config in metadata_mapping.items():
+        mapping = MetadataMapping(
+            loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
+            default=field_config.get("default"),  # type: ignore[arg-type]
+            function=field_config.get("function"),  # type: ignore[arg-type]
+            args=field_config.get("args"),  # type: ignore[arg-type]
+            units=field_config.get("units"),  # type: ignore[arg-type]
+        )
+
+        loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
+
+        # Fields with function and args are processed differently
+        if mapping.function and mapping.args:
+            function = mapping.function
+            args = mapping.args
+            match function:
+                case "match":  # Regex match each value against respective arg (as regex)
+                    if len(mapping.loculus_fields) != len(mapping.args):
+                        logger.error(
+                            f"Function {function} for field {field_name} expects {len(args)} "
+                            f"arguments, but got {len(mapping.loculus_fields)} values: "
+                            f"{loculus_metadata_field_values}. "
+                            "Will not be added to sample attributes."
+                        )
+                        continue
+                    if all(
+                        value is not None and re.match(pattern, value, re.IGNORECASE)
+                        for pattern, value in zip(args, loculus_metadata_field_values, strict=True)
                     ):
+                        value = "true"
+                    else:
                         value = "false"
-                        break
-            else:
-                continue
+                case _:
+                    logger.error(
+                        f"Unknown function for field {field_name}: {mapping}. "
+                        f"Function: {function} with args: {args}. "
+                        "Will not be added to sample attributes."
+                    )
+                    continue
         else:
-            value = "; ".join(
-                [str(metadata) for metadata in loculus_metadata_field_values if metadata]
-            )
-        if value:
-            list_sample_attributes.append(
+            value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
+
+        if value_or_default := value or mapping.default:
+            result.append(
                 SampleAttribute(
-                    tag=field,
-                    value=value,
-                    units=config.metadata_mapping[field].get("units"),  # type: ignore
+                    tag=field_name,
+                    value=value_or_default,
+                    units=mapping.units,
                 )
             )
-            mapped_fields.append(field)
-    for field, default in config.metadata_mapping_mandatory_field_defaults.items():
-        if field not in mapped_fields:
-            list_sample_attributes.append(
-                SampleAttribute(
-                    tag=field,
-                    value=default,
-                )
-            )
-    return list_sample_attributes
+
+    return result
 
 
 def construct_sample_set_object(
@@ -123,14 +140,14 @@ def construct_sample_set_object(
         test,
         config.set_alias_suffix,
     )
-    list_sample_attributes = get_sample_attributes(config, sample_metadata, entry)
+    sample_attributes = get_sample_attributes(config.metadata_mapping, sample_metadata)
     if config.ena_checklist:
         # default is https://www.ebi.ac.uk/ena/browser/view/ERC000011
         sample_checklist = SampleAttribute(
             tag="ENA-CHECKLIST",
             value=config.ena_checklist,
         )
-        list_sample_attributes.append(sample_checklist)
+        sample_attributes.append(sample_checklist)
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
@@ -146,7 +163,7 @@ def construct_sample_set_object(
         sample_links=SampleLinks(
             sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]
         ),
-        sample_attributes=SampleAttributes(sample_attribute=list_sample_attributes),
+        sample_attributes=SampleAttributes(sample_attribute=sample_attributes),
     )
     return SampleSetType(sample=[sample_type])
 
@@ -220,37 +237,23 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
         )
         if len(corresponding_sample) == 1:
             if corresponding_sample[0]["status"] == str(Status.SUBMITTED):
-                update_values = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
+                status_all = StatusAll.SUBMITTED_SAMPLE
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-                update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SUBMISSION_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-            continue
-
-        # If not: create sample_entry, change status to SUBMITTING_SAMPLE
-        if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
-            set_sample_table_entry(db_config, row, seq_key, config)
-            continue
-        sample_table_entry = SampleTableEntry(**seq_key)
-        succeeded = add_to_sample_table(db_config, sample_table_entry)
-        if succeeded:
-            update_values = {"status_all": StatusAll.SUBMITTING_SAMPLE}
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
+                status_all = StatusAll.SUBMITTING_SAMPLE
+        else:
+            # If not: create sample_entry, change status to SUBMITTING_SAMPLE
+            if "biosampleAccession" in row["metadata"] and row["metadata"]["biosampleAccession"]:
+                set_sample_table_entry(db_config, row, seq_key, config)
+                continue
+            if not add_to_sample_table(db_config, SampleTableEntry(**seq_key)):
+                continue
+            status_all = StatusAll.SUBMITTING_SAMPLE
+        update_db_where_conditions(
+            db_config,
+            table_name=TableName.SUBMISSION_TABLE,
+            conditions=seq_key,
+            update_values={"status_all": status_all},
+        )
 
 
 def submission_table_update(db_config: SimpleConnectionPool):
@@ -292,7 +295,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], retry_number: int = 3):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = int(seq_key["version"])
     accession = {"accession": seq_key["accession"]}
@@ -307,28 +310,22 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str], ret
             "errors": json.dumps(["Revision version is not the latest version"]),
             "started_at": datetime.now(tz=pytz.utc),
         }
-        number_rows_updated = 0
-        tries = 0
-        while number_rows_updated != 1 and tries < retry_number:
-            if tries > 0:
-                # If state not correctly added retry
-                logger.warning(
-                    f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                )
-            number_rows_updated = update_db_where_conditions(
-                db_config,
-                table_name=TableName.SAMPLE_TABLE,
-                conditions=seq_key,
-                update_values=update_values,
-            )
-            tries += 1
+        logger.error(
+            f"Sample creation failed for {seq_key['accession']} version {version} "
+            "as it is not the latest version."
+        )
+        update_with_retry(
+            db_config=db_config,
+            conditions=seq_key,
+            update_values=update_values,
+            table_name=TableName.SAMPLE_TABLE,
+            reraise=False,
+        )
         return True
     return False
 
 
-def sample_table_create(
-    db_config: SimpleConnectionPool, config: Config, retry_number: int = 3, test: bool = False
-):
+def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in sample_table in state READY
     2. Create sample_set_object: use metadata, center_name, organism, and ingest fields
@@ -347,12 +344,14 @@ def sample_table_create(
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
         seq_key = {"accession": row["accession"], "version": row["version"]}
+        if is_old_version(db_config, seq_key):
+            logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
+            continue
+
+        logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
         )
-
-        if is_old_version(db_config, seq_key, retry_number=3):
-            continue
 
         sample_set = construct_sample_set_object(
             config, sample_data_in_submission_table[0], row, test
@@ -384,47 +383,24 @@ def sample_table_create(
                 "result": json.dumps(sample_creation_results.result),
                 "finished_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"Sample created but DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
-            if number_rows_updated == 1:
-                logger.info(
-                    f"Sample creation for accession {row['accession']} "
-                    f"succeeded with: {sample_creation_results.result}"
-                )
+            logger.info(
+                f"Sample creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+            )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
                 "errors": json.dumps(sample_creation_results.errors),
                 "started_at": datetime.now(tz=pytz.utc),
             }
-            number_rows_updated = 0
-            tries = 0
-            while number_rows_updated != 1 and tries < retry_number:
-                if tries > 0:
-                    # If state not correctly added retry
-                    logger.warning(
-                        f"sample creation failed and DB update failed - reentry DB update #{tries}."
-                    )
-                number_rows_updated = update_db_where_conditions(
-                    db_config,
-                    table_name=TableName.SAMPLE_TABLE,
-                    conditions=seq_key,
-                    update_values=update_values,
-                )
-                tries += 1
+            logger.error(
+                f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
+            )
+        update_with_retry(
+            db_config=db_config,
+            conditions=seq_key,
+            update_values=update_values,
+            table_name=TableName.SAMPLE_TABLE,
+        )
 
 
 def sample_table_handle_errors(
@@ -470,7 +446,7 @@ def create_sample(config: Config, stop_event: threading.Event):
 
     while True:
         if stop_event.is_set():
-            print("create_sample stopped due to exception in another task")
+            logger.warning("create_sample stopped due to exception in another task")
             return
         logger.debug("Checking for samples to create")
         submission_table_start(db_config, config=config)

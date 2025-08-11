@@ -77,17 +77,30 @@ def format_authors(authors: str) -> str:
             author_single_white_space.split(",")[0].strip(),
             author.split(",")[1].strip(),
         )
-        # Add dot after initials in first name
+        suffix = ""
+        match_suffix = re.search(r"[ .](II|III|IV|V|VI)$", first_name, re.IGNORECASE)
+        if match_suffix:
+            suffix = match_suffix.group(1).upper()
+            first_name = re.sub(r"[ .](II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
         first_names = []
         for name in first_name.split():
             if len(name) == 1:
                 first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":  # noqa: PLR2004
+            elif len(name) == 2 and name[1] == ".":
                 first_names.append(f"{name.upper()}")
+            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
+                initials = " ".join(f"{char}." for char in name)
+                first_names.append(initials)
+            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
+                letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
+                initials = " ".join(f"{ch}." for ch in letters)
+                first_names.append(initials)
             else:
                 first_names.append(name)
-        first_name = " ".join(first_names)
-        loculus_authors.append(f"{last_name}, {first_name}")
+        formated_first_name = " ".join(first_names)
+        if suffix:
+            formated_first_name = f"{formated_first_name} {suffix}"
+        loculus_authors.append(f"{last_name}, {formated_first_name}")
     return "; ".join(loculus_authors).strip()
 
 
@@ -799,7 +812,7 @@ class ProcessingFunctions:
                     f"The authors list '{authors}' might not be using the Loculus format. "
                     + author_format_description
                 )
-                warnings = [
+                warnings.append(
                     ProcessingAnnotation(
                         processedFields=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
@@ -810,18 +823,30 @@ class ProcessingFunctions:
                         ],
                         message=warning_message,
                     )
-                ]
-                return ProcessingResult(
-                    datum=formatted_authors,
-                    warnings=warnings,
-                    errors=errors,
+                )
+            if " and " in authors:
+                warning_message = (
+                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted "
+                    "authors list. Authors should always be separated by semi-colons only e.g. "
+                    "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+                warnings.append(
+                    ProcessingAnnotation(
+                        processedFields=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        unprocessedFields=[
+                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                            for field in input_fields
+                        ],
+                        message=warning_message,
+                    )
                 )
             return ProcessingResult(
                 datum=formatted_authors,
                 warnings=warnings,
                 errors=errors,
             )
-
         error_message = (
             f"The authors list '{authors}' is not in a recognized format. "
             + author_format_description
@@ -842,6 +867,61 @@ class ProcessingFunctions:
             ],
             warnings=warnings,
         )
+
+    @staticmethod
+    def check_regex(
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+    ) -> ProcessingResult:
+        """
+        Validates that the field regex_field matches the regex expression.
+        If not return error
+        """
+        regex_field = input_data["regex_field"]
+
+        warnings: list[ProcessingAnnotation] = []
+        errors: list[ProcessingAnnotation] = []
+
+        pattern = args["pattern"]
+
+        if not regex_field:
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        if not isinstance(pattern, str):
+            errors.append(
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=(
+                        f"Internal Error: Function check_regex did not receive valid "
+                        f"regex pattern, with input {input_data} and args {args}, "
+                        "please contact the administrator."
+                    ),
+                )
+            )
+            return ProcessingResult(datum=None, warnings=warnings, errors=errors)
+        regex_field = regex_field.strip()
+        if re.match(pattern, regex_field):
+            return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
+        errors.append(
+            ProcessingAnnotation(
+                processedFields=[
+                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                ],
+                unprocessedFields=[
+                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                    for field in input_fields
+                ],
+                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
+            )
+        )
+        return ProcessingResult(datum=None, warnings=warnings, errors=errors)
 
     @staticmethod
     def identity(  # noqa: C901, PLR0912
@@ -908,7 +988,10 @@ class ProcessingFunctions:
                             )
                         )
                 case _:
-                    output_datum = input_datum
+                    if isinstance(input_datum, str):
+                        output_datum = input_datum.strip()
+                    else:
+                        output_datum = input_datum
         else:
             output_datum = input_datum
         return ProcessingResult(datum=output_datum, warnings=[], errors=errors)
@@ -989,7 +1072,6 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
-
 
 def format_frameshift(input: str | None) -> str | None:
     """

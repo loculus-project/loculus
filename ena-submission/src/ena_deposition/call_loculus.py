@@ -90,6 +90,9 @@ def submit_external_metadata(
     organism: str,
 ) -> requests.Response:
     """Submit metadata to Loculus."""
+    logger.debug(
+        f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
+    )
     endpoint: str = "submit-external-metadata"
 
     url = f"{organism_url(config, organism)}/{endpoint}"
@@ -110,6 +113,11 @@ def submit_external_metadata(
         msg = f"External metadata submission failed with: {response.status_code} - {response.text}"
         logger.error(msg)
         raise requests.exceptions.HTTPError(msg)
+
+    logger.debug(
+        "External metadata submitted successfully for "
+        f"organism: {organism}, metadata: {external_metadata}"
+    )
 
     return response
 
@@ -133,8 +141,8 @@ def get_group_info(config: Config, group_id: int) -> Group:
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
-
-    return GroupDetails.model_validate_json(response.json()).group
+    # response.json() returns python dict
+    return GroupDetails.model_validate(response.json()).group
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:

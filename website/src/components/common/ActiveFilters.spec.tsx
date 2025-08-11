@@ -92,7 +92,6 @@ describe('ActiveFilters', () => {
                 />,
             );
 
-            screen.debug();
             expect(screen.queryByText('authorAffiliations:')).toBeInTheDocument();
             expect(screen.queryByText('authorAffiliations.regex:')).not.toBeInTheDocument();
         });

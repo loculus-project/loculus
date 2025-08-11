@@ -175,7 +175,7 @@ function LinkOutMenuDataUseTermModal(props: {
                 </h2>
                 <h3 className='text-lg font-medium text-gray-700 mb-4 mt-6'>Data use terms</h3>
                 <p className='mb-6 text-gray-600'>
-                    Would you like to include restricted-use sequences in this analysis? (If you do, you must comply
+                    Would you like to include Restricted-Use sequences in this analysis? (If you do, you must comply
                     with the Restricted-Use terms.)
                 </p>
                 <div className='flex justify-end space-x-4'>

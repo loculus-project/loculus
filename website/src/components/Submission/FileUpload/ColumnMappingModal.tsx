@@ -105,7 +105,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 <br />
                 to map columns in your file to the fields expected by the database.
             </Tooltip>
-            <BaseDialog title='Remap Columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
+            <BaseDialog title='Remap columns' isOpen={isOpen} onClose={closeDialog} fullWidth={false}>
                 {currentMapping === null || inputColumns === null ? (
                     'Loading ...'
                 ) : (

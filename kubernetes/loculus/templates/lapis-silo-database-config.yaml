@@ -4,7 +4,6 @@
 
 {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
 
-{{- $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
 {{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: v1
@@ -26,7 +25,7 @@ data:
     {{- end }}
 
   reference_genomes.json: |
-    {{ $referenceGenomes | toJson }}
+    {{ include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml | toJson }}
 
   silo_import_job.sh: |
     {{ range $importScriptLines }}

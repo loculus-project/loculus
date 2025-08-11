@@ -126,7 +126,7 @@ def local_ena_submission_generator(
             "curl -X POST $ena_submission_url "
             "-u '$ena_submission_username:$ena_submission_password' "
             "-F 'SUBMISSION=@project/submission.xml' -F 'PROJECT=@project/project.xml'"
-            " --max-time 10 > {output}"
+            " --max-time 50 > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 
@@ -150,7 +150,7 @@ def local_ena_submission_generator(
             "curl -X POST $ena_submission_url "
             "-u '$ena_submission_username:$ena_submission_password' "
             "-F 'SUBMISSION=@sample/submission.xml' -F 'SAMPLE=@sample/sample.xml'"
-            " --max-time 10 > {output}"
+            " --max-time 50 > {output}"
             "\n Remember to submit to wwwdev. if you do not want to submit to production"
         )
 

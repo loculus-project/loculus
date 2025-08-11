@@ -5,6 +5,9 @@
 {{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
+{{- /* Use the enaDepositionConfig as the base config */}}
+{{- $enaDepositionConfig := dig "enaDeposition" "configFile" dict $organismConfig }}
+{{- $preproAndEnaConfigFile := merge $processingConfig.configFile $enaDepositionConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -13,7 +16,7 @@ metadata:
 data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
-    {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
     {{- (dict "nucleotideSequences" $nucleotideSequencesList) | toYaml | nindent 4 }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}

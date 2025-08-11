@@ -68,6 +68,16 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('integration-tests/**/package-lock.json') }}
       - name: Install dependencies
         run: cd integration-tests && npm ci
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install CLI
+        run: cd cli && uv sync && uv build && pip install dist/*.whl
+      - name: Install keyring backend for CLI
+        run: pip install keyrings.alt
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV

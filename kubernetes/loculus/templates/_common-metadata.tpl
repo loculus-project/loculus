@@ -370,9 +370,9 @@ organisms:
         externalFields: []
       {{- end }}
       {{- end }}
-    referenceGenomes:
-      {{ $referenceGenomes:= include "loculus.generateReferenceGenome" $instance.referenceGenomes | fromYaml }}
-      {{ $referenceGenomes | toYaml |nindent 8}}
+    referenceGenome:
+      {{- $referenceGenome := include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | fromYaml }}
+      {{ $referenceGenome | toYaml | nindent 10 }}
   {{- end }}
 {{- end }}
 

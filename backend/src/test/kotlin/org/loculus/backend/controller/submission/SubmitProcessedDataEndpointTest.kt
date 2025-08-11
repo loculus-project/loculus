@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.Organism
@@ -22,7 +23,9 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
+import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
@@ -32,6 +35,7 @@ import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIds
+import org.loculus.backend.controller.files.andGetFileIdsAndMultipartUrls
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
@@ -53,7 +57,7 @@ import java.net.http.HttpResponse
 import java.util.UUID
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
 class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
@@ -173,89 +177,6 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.PROCESSED,
         )
-    }
-
-    @Test
-    fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
-        val accessions = prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM).map { it.accession }
-
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData(
-            accessions.first(),
-        ).data.copy(
-            nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
-            aminoAcidInsertions = emptyMap(),
-        )
-
-        submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = accessions.first()).copy(
-                data = dataWithoutInsertions,
-            ),
-            organism = OTHER_ORGANISM,
-        ).andExpect(status().isNoContent)
-
-        convenienceClient.getSequenceEntry(
-            accession = accessions.first(),
-            version = 1,
-            organism = OTHER_ORGANISM,
-        ).assertStatusIs(
-            Status.PROCESSED,
-        )
-
-        submissionControllerClient.getSequenceEntryToEdit(
-            accession = accessions.first(),
-            version = 1,
-            organism = OTHER_ORGANISM,
-        )
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions")
-                    .value(
-                        mapOf(
-                            "notOnlySegment" to listOf(
-                                Insertion(1, "A").toString(),
-                            ),
-                            "secondSegment" to emptyList(),
-                        ),
-                    ),
-            )
-            .andExpect(
-                jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
-            )
-    }
-
-    @Test
-    fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
-        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
-
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed(accessions.first()).data.copy(
-            nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
-            aminoAcidInsertions = emptyMap(),
-        )
-
-        submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = accessions.first()).copy(
-                data = dataWithoutInsertions,
-            ),
-        ).andExpect(status().isNoContent)
-
-        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
-            Status.PROCESSED,
-        )
-
-        submissionControllerClient.getSequenceEntryToEdit(
-            accession = accessions.first(),
-            version = 1,
-        )
-            .andExpect(status().isOk)
-            .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions.$MAIN_SEGMENT[0]")
-                    .value(Insertion(1, "A").toString()),
-            )
-            .andExpect(
-                jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf(SOME_SHORT_GENE to emptyList<String>(), SOME_LONG_GENE to emptyList())),
-            )
     }
 
     @Test
@@ -483,7 +404,7 @@ class SubmitProcessedDataEndpointTest(
             groupId = groupId,
             jwt = jwtForDefaultUser,
         ).andGetFileIdsAndUrls()[0]
-        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, "Hello World!")
+        convenienceClient.uploadFile(fileIdAndUrl.presignedWriteUrl, DEFAULT_SIMPLE_FILE_CONTENT)
         val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
 
         submissionControllerClient.submitProcessedData(
@@ -758,6 +679,37 @@ class SubmitProcessedDataEndpointTest(
         assertThat(response.body(), `is`("FileV2"))
     }
 
+    @Test
+    fun `WHEN I submit valid file with multipart upload THEN is successful`() {
+        val groupId = groupManagementClient
+            .createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andGetGroupId()
+        val fileIdAndUrls = filesClient.requestMultipartUploads(
+            groupId = groupId,
+            jwt = jwtForDefaultUser,
+            numberParts = 2,
+        ).andGetFileIdsAndMultipartUrls()[0]
+        val etag1 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[0], DEFAULT_MULTIPART_FILE_PARTS[0])
+            .headers().map()["etag"]!![0]
+        val etag2 = convenienceClient.uploadFile(fileIdAndUrls.presignedWriteUrls[1], DEFAULT_MULTIPART_FILE_PARTS[1])
+            .headers().map()["etag"]!![0]
+        filesClient.completeMultipartUploads(listOf(FileIdAndEtags(fileIdAndUrls.fileId, listOf(etag1, etag2))))
+
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM, groupId = groupId)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withFiles(
+                accession,
+                mapOf(
+                    "myFileCategory" to listOf(
+                        FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
+                    ),
+                ),
+            ),
+        )
+            .andExpect(status().isNoContent)
+    }
+
     private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM, groupId: Int? = null): Accession =
         prepareExtractedSequencesInDatabase(1, organism = organism, groupId = groupId)[0].accession
 
@@ -833,24 +785,6 @@ class SubmitProcessedDataEndpointTest(
         @JvmStatic
         fun provideInvalidNucleotideSequenceDataScenarios() = listOf(
             InvalidDataScenario(
-                name = "data with missing segment in unaligned nucleotide sequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingSegmentInUnalignedNucleotideSequences(
-                        accession = "DoesNotMatter",
-                        segment = "main",
-                    ),
-                expectedErrorMessage = "Missing the required segment 'main' in 'unalignedNucleotideSequences'.",
-            ),
-            InvalidDataScenario(
-                name = "data with missing segment in aligned nucleotide sequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingSegmentInAlignedNucleotideSequences(
-                        accession = "DoesNotMatter",
-                        segment = "main",
-                    ),
-                expectedErrorMessage = "Missing the required segment 'main' in 'alignedNucleotideSequences'.",
-            ),
-            InvalidDataScenario(
                 name = "data with unknown segment in alignedNucleotideSequences",
                 processedDataThatNeedsAValidAccession = PreparedProcessedData
                     .withUnknownSegmentInAlignedNucleotideSequences(
@@ -921,15 +855,6 @@ class SubmitProcessedDataEndpointTest(
 
         @JvmStatic
         fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with missing gene in alignedAminoAcidSequences",
-                processedDataThatNeedsAValidAccession = PreparedProcessedData
-                    .withMissingGeneInAlignedAminoAcidSequences(
-                        accession = "DoesNotMatter",
-                        gene = SOME_SHORT_GENE,
-                    ),
-                expectedErrorMessage = "Missing the required gene 'someShortGene'.",
-            ),
             InvalidDataScenario(
                 name = "data with unknown gene in alignedAminoAcidSequences",
                 processedDataThatNeedsAValidAccession = PreparedProcessedData

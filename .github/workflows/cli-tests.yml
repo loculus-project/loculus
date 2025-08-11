@@ -1,0 +1,71 @@
+name: cli-tests
+on:
+  pull_request:
+    paths:
+      - "cli/**"
+      - ".github/workflows/cli-tests.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-cli-tests
+  cancel-in-progress: true
+jobs:
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies and package
+        run: uv sync --all-extras
+        working-directory: cli
+      # - name: Run tests
+      #   run: uv run pytest
+      #   working-directory: cli
+  check-format:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies and package
+        run: uv sync --all-extras
+        working-directory: cli
+      - name: Check black formatting
+        run: uv run black --check .
+        working-directory: cli
+      - name: Check ruff linting
+        run: uv run ruff check .
+        working-directory: cli
+  check-types:
+    name: Check types
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies and package
+        run: uv sync --all-extras
+        working-directory: cli
+      - name: Check types with mypy
+        run: uv run mypy .
+        working-directory: cli
