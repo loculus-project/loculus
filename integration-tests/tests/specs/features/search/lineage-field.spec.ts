@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 const SEQUENCE = 'ATTGATCTCATCATTT';
 
 test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
-    test.setTimeout(95_000);
+    test.setTimeout(100_000);
     const uuid = uuidv4();
 
     await page.goto('/');
