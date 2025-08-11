@@ -159,14 +159,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=(
                             f"Internal Error: Function {function_name} did not return "
                             f"ProcessingResult with input {input_data} and args {args}, "
@@ -204,14 +200,10 @@ class ProcessingFunctions:
             parsed_date = datetime.strptime(date, "%Y-%m-%d").astimezone(pytz.utc)
             if parsed_date > datetime.now(tz=pytz.utc):
                 warnings.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message="Date is in the future.",
                     )
                 )
@@ -224,14 +216,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=warnings,
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=error_message,
                     )
                 ],
@@ -270,14 +258,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=(
                             f"Internal Error: Function parse_into_ranges did not receive valid "
                             f"submittedAt date, with input {input_data} and args {args}, "
@@ -354,14 +338,10 @@ class ProcessingFunctions:
 
             if message:
                 warnings.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=f"Metadata field {output_field}:'{input_date_str}' - " + message,
                     )
                 )
@@ -371,30 +351,23 @@ class ProcessingFunctions:
                     f"Lower range of date: {datum.date_range_lower} > {datetime.now(tz=pytz.utc)}"
                 )
                 errors.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
-                        message=f"Metadata field {output_field}:"
-                        f"'{input_date_str}' is in the future.",
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
+                        message=(
+                            f"Metadata field {output_field}:'{input_date_str}' is in the future."
+                        ),
                     )
                 )
 
             if release_date and datum.date_range_lower and (datum.date_range_lower > release_date):
                 logger.debug(f"Lower range of date: {parsed_date} > release_date: {release_date}")
                 errors.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=(
                             f"Metadata field {output_field}:'{input_date_str}'"
                             "is after release date."
@@ -425,14 +398,10 @@ class ProcessingFunctions:
             datum=None,
             warnings=[],
             errors=[
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message=f"Metadata field {output_field}: "
                     f"Date {input_date_str} could not be parsed.",
                 )
@@ -492,16 +461,10 @@ class ProcessingFunctions:
 
                 if message:
                     warnings.append(
-                        ProcessingAnnotation(
-                            processedFields=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            unprocessedFields=[
-                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                                for field in input_fields
-                            ],
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
                             message=f"Metadata field {output_field}:'{date_str}' - " + message,
                         )
                     )
@@ -509,16 +472,10 @@ class ProcessingFunctions:
                 if parsed_date > datetime.now(tz=pytz.utc):
                     logger.debug(f"parsed_date: {parsed_date} > {datetime.now(tz=pytz.utc)}")
                     errors.append(
-                        ProcessingAnnotation(
-                            processedFields=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            unprocessedFields=[
-                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                                for field in input_fields
-                            ],
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
                             message=f"Metadata field {output_field}:'{date_str}' is in the future.",
                         )
                     )
@@ -526,16 +483,10 @@ class ProcessingFunctions:
                 if release_date and parsed_date > release_date:
                     logger.debug(f"parsed_date: {parsed_date} > release_date: {release_date}")
                     errors.append(
-                        ProcessingAnnotation(
-                            processedFields=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            unprocessedFields=[
-                                AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                                for field in input_fields
-                            ],
+                        ProcessingAnnotation.from_fields(
+                            input_fields,
+                            [output_field],
+                            AnnotationSourceType.METADATA,
                             message=(
                                 f"Metadata field {output_field}:'{date_str}'is after release date."
                             ),
@@ -551,14 +502,10 @@ class ProcessingFunctions:
             datum=None,
             warnings=[],
             errors=[
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message=f"Metadata field {output_field}: Date format is not recognized.",
                 )
             ],
@@ -598,14 +545,10 @@ class ProcessingFunctions:
             return ProcessingResult(
                 datum=None,
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=error_message,
                     )
                 ],
@@ -632,14 +575,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=(
                             f"Internal Error: Function concatenate did not receive accession_version "
                             f"ProcessingResult with input {input_data} and args {args}, "
@@ -655,14 +594,10 @@ class ProcessingFunctions:
 
         def add_errors():
             errors.append(
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message="Concatenation failed."
                     "This may be a configuration error, please contact the administrator.",
                 )
@@ -736,14 +671,10 @@ class ProcessingFunctions:
         except ValueError as e:
             logger.error(f"Concatenate failed with {e} (accession_version: {accession_version})")
             errors.append(
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message=(
                         f"Concatenation failed for {output_field}. This is a technical error, "
                         "please contact the administrator."
@@ -792,14 +723,10 @@ class ProcessingFunctions:
             return ProcessingResult(
                 datum=None,
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=error_message,
                     )
                 ],
@@ -813,14 +740,10 @@ class ProcessingFunctions:
                     + author_format_description
                 )
                 warnings.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=warning_message,
                     )
                 )
@@ -831,14 +754,10 @@ class ProcessingFunctions:
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
                 warnings.append(
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=warning_message,
                     )
                 )
@@ -854,14 +773,10 @@ class ProcessingFunctions:
         return ProcessingResult(
             datum=None,
             errors=[
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message=error_message,
                 )
             ],
@@ -890,14 +805,10 @@ class ProcessingFunctions:
             return ProcessingResult(datum=None, warnings=warnings, errors=errors)
         if not isinstance(pattern, str):
             errors.append(
-                ProcessingAnnotation(
-                    processedFields=[
-                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                    ],
-                    unprocessedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in input_fields
-                    ],
+                ProcessingAnnotation.from_fields(
+                    input_fields,
+                    [output_field],
+                    AnnotationSourceType.METADATA,
                     message=(
                         f"Internal Error: Function check_regex did not receive valid "
                         f"regex pattern, with input {input_data} and args {args}, "
@@ -910,14 +821,10 @@ class ProcessingFunctions:
         if re.match(pattern, regex_field):
             return ProcessingResult(datum=regex_field, warnings=warnings, errors=errors)
         errors.append(
-            ProcessingAnnotation(
-                processedFields=[
-                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                ],
-                unprocessedFields=[
-                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                    for field in input_fields
-                ],
+            ProcessingAnnotation.from_fields(
+                input_fields,
+                [output_field],
+                AnnotationSourceType.METADATA,
                 message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
             )
         )
@@ -933,14 +840,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=f"No data found for output field: {output_field}",
                     )
                 ],
@@ -1006,14 +909,10 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=(
                             "Website configuration error: no options list specified for field "
                             f"{output_field}, please contact an administrator."
@@ -1041,14 +940,10 @@ class ProcessingFunctions:
             return ProcessingResult(
                 datum=input_datum,
                 warnings=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=error_msg,
                     )
                 ],
@@ -1059,19 +954,16 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[],
                 errors=[
-                    ProcessingAnnotation(
-                        processedFields=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        unprocessedFields=[
-                            AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                            for field in input_fields
-                        ],
+                    ProcessingAnnotation.from_fields(
+                        input_fields,
+                        [output_field],
+                        AnnotationSourceType.METADATA,
                         message=error_msg,
                     )
                 ],
             )
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
+
 
 def format_frameshift(input: str | None) -> str | None:
     """

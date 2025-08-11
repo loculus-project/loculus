@@ -25,7 +25,7 @@ from loculus_preprocessing.datatypes import (
     UnprocessedEntry,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
-from loculus_preprocessing.prepro import process_all
+from loculus_preprocessing.prepro import ProcessingAnnotationAlignment, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -403,8 +403,8 @@ multi_segment_case_definitions_all_requirement = [
         },
         expected_errors=[
             ProcessingAnnotationHelper(
-                ["alignment"],
-                ["alignment"],
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
                 "No segment aligned.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
@@ -490,8 +490,8 @@ multi_segment_case_definitions_any_requirement = [
         },
         expected_errors=[
             ProcessingAnnotationHelper(
-                ["alignment"],
-                ["alignment"],
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
                 "No segment aligned.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
@@ -709,10 +709,7 @@ def test_create_flatfile():
 
     result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
 
-    embl_str = create_flatfile(
-        config,
-        result[0]
-    )
+    embl_str = create_flatfile(config, result[0])
     expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
     assert embl_str == expected_embl
 
