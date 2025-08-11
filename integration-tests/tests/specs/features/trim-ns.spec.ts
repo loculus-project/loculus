@@ -10,7 +10,7 @@ test.describe('Sequence N trimming functionality', () => {
         const page = pageWithGroup;
         const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
-        await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
+        await submissionPage.navigateToSubmissionPage('CCHF');
         await submissionPage.fillSubmissionForm({
             submissionId: 'TRIM_NS_TEST',
             collectionCountry: 'Switzerland',
