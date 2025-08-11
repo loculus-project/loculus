@@ -77,7 +77,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                 />
             </div>
             {error && (
-                <div className="text-red-600 text-xs mt-1" role="alert">
+                <div className='text-red-600 text-xs mt-1' role='alert'>
                     {error}
                 </div>
             )}

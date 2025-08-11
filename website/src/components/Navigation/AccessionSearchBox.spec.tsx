@@ -75,7 +75,7 @@ describe('AccessionSearchBox', () => {
     it('updates the input value when typing', async () => {
         render(<AccessionSearchBox defaultOpen={true} />);
 
-        const input = screen.getByPlaceholderText('Search by accession');
+        const input = screen.getByPlaceholderText('Search by accession') as HTMLInputElement;
 
         await userEvent.type(input, 'TEST123');
 
