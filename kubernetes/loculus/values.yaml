@@ -624,7 +624,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: gcaAccession
         displayName: GCA accession
         customDisplay:
-          type: linkWithMenu
+          type: link
           url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
         header: "INSDC"
         noInput: true
