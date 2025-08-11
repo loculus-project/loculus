@@ -1,9 +1,14 @@
 import { type FC, type FormEvent, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { getConfiguredOrganisms } from '../../config.ts';
+import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import { versionStatuses } from '../../types/lapis.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -48,6 +53,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
+
+    const organisms = getConfiguredOrganisms();
+    const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
+        queryKey: ['group-sequence-counts', groupId],
+        queryFn: () => fetchSequenceCounts(groupId, clientConfig),
+    });
 
     return (
         <div className='flex flex-col h-full p-4'>
@@ -144,6 +155,28 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
+            <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
+                <h2 className='text-lg font-bold mb-2'>Sequences in LAPIS</h2>
+                <table className='w-full'>
+                    <tbody>
+                        {organisms.map((organism) => (
+                            <TableRow key={organism.key} label={organism.displayName}>
+                                {sequenceCountsLoading ? (
+                                    <span className='loading loading-spinner loading-xs'></span>
+                                ) : (
+                                    <a
+                                        href={`${routes.searchPage(organism.key)}?${GROUP_ID_FIELD}=${groupId}`}
+                                        className='underline'
+                                    >
+                                        {sequenceCounts?.[organism.key] ?? 0}
+                                    </a>
+                                )}
+                            </TableRow>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
             {userHasEditPrivileges && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
@@ -197,6 +230,33 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         </div>
     );
 };
+
+async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig) {
+    const counts: Record<string, number> = {};
+    const organisms = getConfiguredOrganisms();
+    await Promise.all(
+        organisms.map(async ({ key }) => {
+            const url = clientConfig.lapisUrls[key];
+            if (url === undefined) {
+                counts[key] = 0;
+                return;
+            }
+            try {
+                const response = await axios.post(`${url}/sample/aggregated`, {
+                    [GROUP_ID_FIELD]: groupId,
+                    [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+                    [IS_REVOCATION_FIELD]: 'false',
+                    fields: [],
+                });
+                const count = response.data?.data?.[0]?.count ?? 0;
+                counts[key] = count;
+            } catch {
+                counts[key] = 0;
+            }
+        }),
+    );
+    return counts;
+}
 
 export const GroupPage = withQueryProvider(InnerGroupPage);
 
