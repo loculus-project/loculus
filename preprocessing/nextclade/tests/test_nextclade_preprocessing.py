@@ -622,8 +622,8 @@ def test_preprocessing_without_metadata() -> None:
             submittedAt=ts_from_ymd(2021, 12, 15),
             metadata={},
             unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+                "test_NIHPAK-19_ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "test_NIHPAK-19_ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
         ),
     )
