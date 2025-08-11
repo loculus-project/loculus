@@ -1,14 +1,14 @@
-import { type FC, type FormEvent, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { type FC, type FormEvent, useState, type ReactNode } from 'react';
 
+import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
-import type { Address, Group, GroupDetails } from '../../types/backend.ts';
-import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import type { Organism } from '../../config.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
+import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -59,7 +59,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
-        queryKey: ['group-sequence-counts', groupId],
+        queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
         queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
     });
 
@@ -239,7 +239,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
     await Promise.all(
         organisms.map(async ({ key }) => {
             const url = clientConfig.lapisUrls[key];
-            if (url === undefined) {
+            if (!url) {
                 counts[key] = 0;
                 return;
             }
@@ -250,7 +250,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [],
                 });
-                const count = response.data?.data?.[0]?.count ?? 0;
+                const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
             } catch {
                 counts[key] = 0;

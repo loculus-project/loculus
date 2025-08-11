@@ -4,7 +4,10 @@ import { test } from '../../fixtures/group.fixture';
 // Verify that group details page shows per-organism LAPIS sequence counts with search links
 
 test.describe('Group page sequence counts', () => {
-    test('shows sequence counts and search links for each organism', async ({ pageWithGroup, groupId }) => {
+    test('shows sequence counts and search links for each organism', async ({
+        pageWithGroup,
+        groupId,
+    }) => {
         const section = pageWithGroup.locator('div:has(h2:has-text("Sequences available in"))');
         const sequencesHeading = section.getByRole('heading', { name: /Sequences available in/ });
         await expect(sequencesHeading).toBeVisible();
