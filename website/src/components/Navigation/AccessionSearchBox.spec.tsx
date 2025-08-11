@@ -9,12 +9,17 @@ describe('AccessionSearchBox', () => {
     const originalLocation = window.location;
 
     beforeEach(() => {
-        delete (window as unknown as { location: Location }).location;
-        window.location = { href: '' } as Location;
+        Object.defineProperty(window, 'location', {
+            value: { href: '' },
+            writable: true,
+        });
     });
 
     afterEach(() => {
-        window.location = originalLocation;
+        Object.defineProperty(window, 'location', {
+            value: originalLocation,
+            writable: true,
+        });
     });
 
     it('renders the search icon button', () => {
