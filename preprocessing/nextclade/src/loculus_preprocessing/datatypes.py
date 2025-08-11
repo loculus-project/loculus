@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum, unique
+from enum import StrEnum, unique
 from typing import Any
 
 AccessionVersion = str

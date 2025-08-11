@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 import dpath
 import pandas as pd
@@ -62,6 +62,8 @@ csv.field_size_limit(sys.maxsize)
 
 
 # Functions related to reading and writing files
+
+ProcessingAnnotationAlignment: Final = "alignment"
 
 
 def parse_nextclade_tsv(
@@ -200,7 +202,7 @@ def run_sort(
     for seq in missing_ids:
         alerts.warnings[seq].append(
             ProcessingAnnotation.from_single(
-                "alignment",
+                ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 message="Sequence does not appear to match reference, per `nextclade sort`. "
                 "Double check you are submitting to the correct organism.",
@@ -212,7 +214,7 @@ def run_sort(
         if row["dataset"] not in accepted_dataset_names:
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation.from_single(
-                    "alignment",
+                    ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     message=(
                         f"This sequence best matches {row['dataset']}, "
@@ -295,7 +297,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         ):
             alerts.errors[id].append(
                 ProcessingAnnotation.from_single(
-                    "alignment",
+                    ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     message="Found unknown segments in the input data - "
                     "check your segments are annotated correctly.",
@@ -648,7 +650,7 @@ def process_single(  # noqa: C901
         elif not any(unprocessed.unalignedNucleotideSequences.values()):
             errors.append(
                 ProcessingAnnotation.from_single(
-                    "alignment",
+                    ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                     message="No sequence data found - check segments are annotated correctly",
                 )
@@ -708,9 +710,7 @@ def process_single(  # noqa: C901
     logger.debug(f"Processed {id}: {output_metadata}")
 
     if isinstance(unprocessed, UnprocessedData):
-        return processed_entry_no_alignment(
-            id, unprocessed, output_metadata, errors, warnings
-        )
+        return processed_entry_no_alignment(id, unprocessed, output_metadata, errors, warnings)
 
     aligned_segments = set()
     for segment in config.nucleotideSequences:
@@ -720,7 +720,7 @@ def process_single(  # noqa: C901
     if not aligned_segments and config.multi_segment:
         errors.append(
             ProcessingAnnotation.from_single(
-                "alignment",
+                ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 message="No segment aligned.",
             )
