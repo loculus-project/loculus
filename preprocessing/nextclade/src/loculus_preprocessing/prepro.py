@@ -546,7 +546,7 @@ def add_input_metadata(
             )
             return None
         sub_path = input_path[len(nextclade_prefix) :]
-        if segment in unprocessed.nextcladeMetadata:
+        if unprocessed.nextcladeMetadata and segment in unprocessed.nextcladeMetadata:
             if not unprocessed.nextcladeMetadata[segment]:
                 message = (
                     "Nucleotide sequence failed to align"
