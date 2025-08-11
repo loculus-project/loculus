@@ -62,4 +62,33 @@ class SubmitEndpointSingleSegmentedTest(
 
         assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
     }
+
+    @Test
+    fun `GIVEN input data with ambiguous submissionIds THEN data is rejected`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val expectedDetail = "Sequence file contains 1 ids that could be matched to multiple metadata keys" +
+            ", e.g. Sequence key: header1_2 matches [header1_2, header1]"
+
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        header1	someValue
+                        header1_2	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >header1_2
+                        AC
+                        >header1
+                        AC
+                """.trimIndent(),
+            ),
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("\$.detail", containsString(expectedDetail)))
+    }
 }

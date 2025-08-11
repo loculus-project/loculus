@@ -364,6 +364,7 @@ class SubmitModel(
     private fun mapMetadataKeysToSequenceKeys(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
         val metadataKeyToSequences = mutableMapOf<SubmissionId, MutableList<SubmissionId>>()
         val unmatchedSequenceKeys = mutableSetOf<SubmissionId>()
+        val ambiguousSequenceKeys = mutableMapOf<SubmissionId, List<SubmissionId>>()
 
         for (seqKey in sequenceKeysSet) {
             val baseKey = seqKey.removeSuffixPattern()
@@ -371,6 +372,10 @@ class SubmitModel(
                 metadataKeysSet.contains(seqKey) -> seqKey
                 metadataKeysSet.contains(baseKey) -> baseKey
                 else -> null
+            }
+
+            if ((seqKey != baseKey) && metadataKeysSet.contains(seqKey) && metadataKeysSet.contains(baseKey)) {
+                ambiguousSequenceKeys[seqKey] = listOf(seqKey, baseKey)
             }
 
             if (matchedMetadataKey != null) {
@@ -382,7 +387,9 @@ class SubmitModel(
 
         val metadataKeysWithoutSequences = metadataKeysSet.filterNot { metadataKeyToSequences.containsKey(it) }
 
-        if (unmatchedSequenceKeys.isNotEmpty() || metadataKeysWithoutSequences.isNotEmpty()) {
+        if (unmatchedSequenceKeys.isNotEmpty() || metadataKeysWithoutSequences.isNotEmpty() ||
+            ambiguousSequenceKeys.isNotEmpty()
+        ) {
             val unmatchedSeqText = if (unmatchedSequenceKeys.isNotEmpty()) {
                 "Sequence file contains ${unmatchedSequenceKeys.size} ids that are not present in the metadata file: ${
                     unmatchedSequenceKeys.joinToString(limit = 10)
@@ -396,7 +403,16 @@ class SubmitModel(
             } else {
                 ""
             }
-            throw UnprocessableEntityException(unmatchedSeqText + unmatchedMetadataText)
+            val ambiguousSequenceText = if (ambiguousSequenceKeys.isNotEmpty()) {
+                "Sequence file contains ${ambiguousSequenceKeys.size} ids that could be matched to multiple metadata " +
+                    "keys, e.g. ${ambiguousSequenceKeys.entries.joinToString(limit = 3) { (key, value) ->
+                        "Sequence key: $key matches $value"
+                    }} " +
+                    "- to avoid future issues we recommend not using the separator `_` in your metadata submissionIds;"
+            } else {
+                ""
+            }
+            throw UnprocessableEntityException(unmatchedSeqText + unmatchedMetadataText + ambiguousSequenceText)
         }
 
         transaction {
