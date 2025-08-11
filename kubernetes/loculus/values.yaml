@@ -593,8 +593,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: insdcAccessionFull
         displayName: INSDC accession
         customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+          type: linkWithMenu
+          linkMenuItems:
+            - name: View in NCBI
+              url: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
+            - name: View in ENA
+              url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+            - name: View in DDBJ
+              url: "https://getentry.ddbj.nig.ac.jp/getentry/na/__value__"
         header: "INSDC"
         ingest: genbankAccession
         noInput: true
@@ -602,8 +608,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         oneHeader: true
       - name: bioprojectAccession
         customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
+          type: linkWithMenu
+          linkMenuItems:
+            - name: View in NCBI
+              url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
+            - name: View in ENA
+              url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+            - name: View in DDBJ
+              url: "https://ddbj.nig.ac.jp/search/entry/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
         guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
@@ -613,14 +625,20 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: GCA accession
         customDisplay:
           type: link
-          url: "https://www.ncbi.nlm.nih.gov/datasets/genome/__value__"
+          url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
         header: "INSDC"
         noInput: true
         oneHeader: true
       - name: biosampleAccession
         customDisplay:
-          type: link
-          url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
+          type: linkWithMenu
+          linkMenuItems:
+            - name: View in NCBI
+              url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
+            - name: View in ENA
+              url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
+            - name: View in DDBJ
+              url: "https://ddbj.nig.ac.jp/search/entry/biosample/__value__"
         header: "INSDC"
         guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
         definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
