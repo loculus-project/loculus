@@ -49,9 +49,9 @@ class ProcessedAlignment:
         default_factory=lambda: {"main": None}
     )
     alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
-        default_factory=lambda: {"main": None}
+        default_factory=dict
     )
-    nucleotideInsertions: dict[str, list[str]] = field(default_factory=lambda: {"main": []})  # noqa: N815
+    nucleotideInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
     alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
     aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
 
@@ -71,10 +71,33 @@ class UnprocessedEntryFactory:
                 submittedAt=str(
                     datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
                 ),
+                group_id=2,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
             ),
         )
+
+
+def build_processing_annotations(
+    items: list[ProcessingAnnotationHelper],
+) -> list[ProcessingAnnotation]:
+    annotations = []
+    for item in items:
+        annotation_type: AnnotationSourceType = item.type
+        annotations.append(
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(name=field, type=annotation_type)
+                    for field in item.unprocessed_field_names
+                ],
+                processedFields=[
+                    AnnotationSource(name=field, type=annotation_type)
+                    for field in item.processed_field_names
+                ],
+                message=item.message,
+            )
+        )
+    return annotations
 
 
 @dataclass
@@ -104,44 +127,8 @@ class ProcessedEntryFactory:
         if not processed_alignment:
             processed_alignment = ProcessedAlignment()
 
-        errors = [
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(
-                        name=field,
-                        type=AnnotationSourceType.METADATA,
-                    )
-                    for field in error.unprocessed_field_names
-                ],
-                processedFields=[
-                    AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                    for field in error.processed_field_names
-                ],
-                message=error.message,
-            )
-            for error in metadata_errors
-            if error.type == AnnotationSourceType.METADATA
-        ]
-        errors.extend(
-            [
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=field,
-                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        )
-                        for field in error.unprocessed_field_names
-                    ],
-                    processedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
-                        for field in error.processed_field_names
-                    ],
-                    message=error.message,
-                )
-                for error in metadata_errors
-                if error.type == AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-            ]
-        )
+        errors = build_processing_annotations(metadata_errors)
+        warnings = build_processing_annotations(metadata_warnings)
 
         return ProcessedEntry(
             accession=accession,
@@ -155,23 +142,7 @@ class ProcessedEntryFactory:
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
             ),
             errors=errors,
-            warnings=[
-                ProcessingAnnotation(
-                    unprocessedFields=[
-                        AnnotationSource(
-                            name=field,
-                            type=AnnotationSourceType.METADATA,
-                        )
-                        for field in warning.unprocessed_field_names
-                    ],
-                    processedFields=[
-                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
-                        for field in warning.processed_field_names
-                    ],
-                    message=warning.message,
-                )
-                for warning in metadata_warnings
-            ],
+            warnings=warnings,
         )
 
 
@@ -179,7 +150,7 @@ class ProcessedEntryFactory:
 class Case:
     name: str
     input_metadata: dict[str, str | None] = field(default_factory=dict)
-    input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": ""})
+    input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
     expected_errors: list[ProcessingAnnotationHelper] | None = None

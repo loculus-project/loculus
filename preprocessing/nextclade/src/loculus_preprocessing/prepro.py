@@ -17,8 +17,14 @@ import dpath
 import pandas as pd
 from Bio import SeqIO
 
-from .backend import download_minimizer, fetch_unprocessed_sequences, submit_processed_sequences
-from .config import Config
+from .backend import (
+    download_minimizer,
+    fetch_unprocessed_sequences,
+    request_upload,
+    submit_processed_sequences,
+    upload_embl_file_to_presigned_url,
+)
+from .config import AlignmentRequirement, Config
 from .datatypes import (
     AccessionVersion,
     Alerts,
@@ -26,6 +32,7 @@ from .datatypes import (
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
+    FileIdAndName,
     GeneName,
     GenericSequence,
     InputMetadata,
@@ -39,10 +46,12 @@ from .datatypes import (
     ProcessingResult,
     ProcessingSpec,
     SegmentName,
+    SubmissionData,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
 )
+from .embl import create_flatfile
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
 from .sequence_checks import errors_if_non_iupac
 
@@ -74,10 +83,8 @@ def parse_nextclade_tsv(
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str: list[NucleotideInsertion] = (
-                list(row["insertions"].split(",")) if row["insertions"] else []
-            )
-            nucleotide_insertions[id][segment] = nuc_ins_str
+            if row["insertions"]:
+                nucleotide_insertions[id][segment] = list(row["insertions"].split(","))
 
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
@@ -269,18 +276,16 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
+        input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
         aligned_aminoacid_sequences[id] = {}
         unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
         alerts.warnings[id] = []
         alerts.errors[id] = []
-        for gene in config.genes:
-            aligned_aminoacid_sequences[id][gene] = None
         num_valid_segments = 0
         num_duplicate_segments = 0
         for segment in config.nucleotideSequences:
-            aligned_nucleotide_sequences[id][segment] = None
             unaligned_segment = [
                 data
                 for data in entry.data.unalignedNucleotideSequences
@@ -310,8 +315,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 unaligned_nucleotide_sequences[id][segment] = (
                     entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
                 )
-            else:
-                unaligned_nucleotide_sequences[id][segment] = None
+                aligned_nucleotide_sequences[id][segment] = None
         if (
             len(entry.data.unalignedNucleotideSequences)
             - num_valid_segments
@@ -414,7 +418,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
 
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
-            )
+            )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -566,12 +570,14 @@ def add_input_metadata(
                     ],
                     message=message,
                 )
-                if config.multi_segment and config.alignment_requirement == "ANY":
+                if (
+                    config.multi_segment
+                    and config.alignment_requirement == AlignmentRequirement.ANY
+                ):
                     warnings.append(annotation)
                     return None
                 errors.append(annotation)
                 return None
-            spec.args["some_segment_aligned"] = True
             result: str | None = str(
                 dpath.get(
                     unprocessed.nextcladeMetadata[segment],
@@ -656,14 +662,13 @@ def get_metadata(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
+def processed_entry_no_alignment(
     id: AccessionVersion,
     unprocessed: UnprocessedData,
-    config: Config,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-) -> ProcessedEntry:
+) -> SubmissionData:
     """Process a single sequence without alignment"""
 
     aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
@@ -671,33 +676,28 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
-    for segment in config.nucleotideSequences:
-        aligned_nucleotide_sequences[segment] = None
-        nucleotide_insertions[segment] = []
-
-    for gene in config.genes:
-        amino_acid_insertions[gene] = []
-        aligned_aminoacid_sequences[gene] = None
-
-    return ProcessedEntry(
-        accession=accession_from_str(id),
-        version=version_from_str(id),
-        data=ProcessedData(
-            metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
-            alignedNucleotideSequences=aligned_nucleotide_sequences,
-            nucleotideInsertions=nucleotide_insertions,
-            alignedAminoAcidSequences=aligned_aminoacid_sequences,
-            aminoAcidInsertions=amino_acid_insertions,
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+                alignedNucleotideSequences=aligned_nucleotide_sequences,
+                nucleotideInsertions=nucleotide_insertions,
+                alignedAminoAcidSequences=aligned_aminoacid_sequences,
+                aminoAcidInsertions=amino_acid_insertions,
+            ),
+            errors=errors,
+            warnings=warnings,
         ),
-        errors=errors,
-        warnings=warnings,
+        submitter=unprocessed.submitter,
     )
 
 
 def process_single(  # noqa: C901
     id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
-) -> ProcessedEntry:
+) -> SubmissionData:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
@@ -730,20 +730,19 @@ def process_single(  # noqa: C901
             )
 
         submitter = unprocessed.inputMetadata["submitter"]
+        group_id = int(str(unprocessed.inputMetadata["group_id"]))
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
+        group_id = unprocessed.group_id
         unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
 
     for segment in config.nucleotideSequences:
         sequence = unaligned_nucleotide_sequences.get(segment, None)
-        if not sequence:
-            unprocessed.unalignedNucleotideSequences[segment] = None
         key = "length" if segment == "main" else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
-    some_segment_aligned = False
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
@@ -758,7 +757,6 @@ def process_single(  # noqa: C901
             args=spec_dict.get("args", {}),
         )
         spec.args = {} if spec.args is None else spec.args
-        spec.args["some_segment_aligned"] = some_segment_aligned
         processing_result = get_metadata(
             id,
             spec,
@@ -769,13 +767,6 @@ def process_single(  # noqa: C901
             config,
         )
         output_metadata[output_field] = processing_result.datum
-        if not isinstance(spec.args["some_segment_aligned"], bool):
-            msg = (
-                "Internal Error: Expected some_segment_aligned to be a boolean, "
-                f"got {type(spec.args['some_segment_aligned'])}"
-            )
-            raise ValueError(msg)
-        some_segment_aligned = spec.args["some_segment_aligned"]
         if (
             null_per_backend(processing_result.datum)
             and spec.required
@@ -803,10 +794,15 @@ def process_single(  # noqa: C901
 
     if isinstance(unprocessed, UnprocessedData):
         return processed_entry_no_alignment(
-            id, unprocessed, config, output_metadata, errors, warnings
+            id, unprocessed, output_metadata, errors, warnings
         )
 
-    if not some_segment_aligned:
+    aligned_segments = set()
+    for segment in config.nucleotideSequences:
+        if unprocessed.alignedNucleotideSequences.get(segment, None):
+            aligned_segments.add(segment)
+
+    if not aligned_segments and config.multi_segment:
         errors.append(
             ProcessingAnnotation(
                 unprocessedFields=[
@@ -825,7 +821,19 @@ def process_single(  # noqa: C901
             )
         )
 
-    return ProcessedEntry(
+    annotations: dict[str, Any] | None = None
+
+    if config.create_embl_file and unprocessed.nextcladeMetadata is not None:
+        annotations = {}
+        for segment in config.nucleotideSequences:
+            if segment in unprocessed.nextcladeMetadata:
+                annotations[segment] = None
+                if unprocessed.nextcladeMetadata[segment]:
+                    annotations[segment] = unprocessed.nextcladeMetadata[segment].get(
+                        "annotation", None
+                    )
+
+    processed_entry = ProcessedEntry(
         accession=accession_from_str(id),
         version=version_from_str(id),
         data=ProcessedData(
@@ -840,41 +848,52 @@ def process_single(  # noqa: C901
         warnings=list(set(warnings)),
     )
 
+    return SubmissionData(
+        processed_entry=processed_entry,
+        annotations=annotations,
+        group_id=group_id,
+        submitter=str(submitter),
+    )
 
-def processed_entry_with_errors(id):
-    return ProcessedEntry(
-        accession=accession_from_str(id),
-        version=version_from_str(id),
-        data=ProcessedData(
-            metadata=dict[str, ProcessedMetadataValue](),
-            unalignedNucleotideSequences=defaultdict(dict[str, Any]),
-            alignedNucleotideSequences=defaultdict(dict[str, Any]),
-            nucleotideInsertions=defaultdict(dict[str, Any]),
-            alignedAminoAcidSequences=defaultdict(dict[str, Any]),
-            aminoAcidInsertions=defaultdict(dict[str, Any]),
+
+def processed_entry_with_errors(id) -> SubmissionData:
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(id),
+            version=version_from_str(id),
+            data=ProcessedData(
+                metadata=dict[str, ProcessedMetadataValue](),
+                unalignedNucleotideSequences=defaultdict(dict[str, Any]),
+                alignedNucleotideSequences=defaultdict(dict[str, Any]),
+                nucleotideInsertions=defaultdict(dict[str, Any]),
+                alignedAminoAcidSequences=defaultdict(dict[str, Any]),
+                aminoAcidInsertions=defaultdict(dict[str, Any]),
+            ),
+            errors=[
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
+                    ],
+                    processedFields=[
+                        AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
+                    ],
+                    message=(
+                        f"Failed to process submission with id: {id} - please review your "
+                        "submission or reach out to an administrator if this error persists."
+                    ),
+                )
+            ],
+            warnings=[],
         ),
-        errors=[
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
-                ],
-                processedFields=[
-                    AnnotationSource(name="unknown", type=AnnotationSourceType.METADATA)
-                ],
-                message=(
-                    f"Failed to process submission with id: {id} - please review your submission "
-                    "or reach out to an administrator if this error persists."
-                ),
-            )
-        ],
-        warnings=[],
+        submitter=None,
     )
 
 
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
-) -> Sequence[ProcessedEntry]:
+) -> Sequence[SubmissionData]:
     processed_results = []
+    logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.nextclade_dataset_name:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
@@ -939,8 +958,41 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
         logger.info("Nextclade dataset downloaded successfully")
 
 
+def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> None:
+    for submission_data in processed:
+        accession = submission_data.processed_entry.accession
+        version = submission_data.processed_entry.version
+        try:
+            if submission_data.group_id is None:
+                msg = "Group ID is required for EMBL file upload"
+                raise ValueError(msg)
+            file_content = create_flatfile(config, submission_data)
+            file_name = f"{accession}.{version}.embl"
+            upload_info = request_upload(submission_data.group_id, 1, config)[0]
+            file_id = upload_info.fileId
+            url = upload_info.url
+            upload_embl_file_to_presigned_url(file_content, url)
+            submission_data.processed_entry.data.files = {
+                "annotations": [FileIdAndName(fileId=file_id, name=file_name)]
+            }
+        except Exception as e:
+            logger.error("Error creating or uploading EMBL file: %s", e)
+            submission_data.processed_entry.errors.append(
+                ProcessingAnnotation(
+                    unprocessedFields=[
+                        AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
+                    ],
+                    processedFields=[
+                        AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
+                    ],
+                    message="Failed to create or upload EMBL file "
+                    "please contact your administrator.",
+                )
+            )
+
+
 def run(config: Config) -> None:
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:  # noqa: PLR1702
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
@@ -970,8 +1022,15 @@ def run(config: Config) -> None:
                     f"Processing failed. Traceback : {e}. Unprocessed data: {unprocessed}"
                 )
                 continue
+
+            if config.create_embl_file:
+                upload_flatfiles(processed, config)
+
             try:
-                submit_processed_sequences(processed, dataset_dir, config)
+                processed_entries = [
+                    submission_data.processed_entry for submission_data in processed
+                ]
+                submit_processed_sequences(processed_entries, dataset_dir, config)
             except RuntimeError as e:
                 logger.exception("Submitting processed data failed. Traceback : %s", e)
                 continue

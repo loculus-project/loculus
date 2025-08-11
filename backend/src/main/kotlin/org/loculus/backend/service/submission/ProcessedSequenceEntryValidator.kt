@@ -193,7 +193,7 @@ class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendC
         val instanceConfig = backendConfig.organisms[organism.name]!!
         return ProcessedSequenceEntryValidator(
             schema = instanceConfig.schema,
-            referenceGenome = instanceConfig.referenceGenomes.values.first(),
+            referenceGenome = instanceConfig.referenceGenome,
         )
     }
 }
@@ -204,7 +204,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         validateNucleotideSequences(processedDataWithAllMetadataFields)
         validateAminoAcidSequences(processedDataWithAllMetadataFields)
 
-        return addMissingKeysForInsertions(processedDataWithAllMetadataFields)
+        return processedDataWithAllMetadataFields
     }
 
     private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
@@ -220,21 +220,10 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {
-            validateNoMissingSegment(
-                segment,
-                processedData.alignedNucleotideSequences,
-                "alignedNucleotideSequences",
-            )
             validateLengthOfSequence(
                 segment,
                 processedData.alignedNucleotideSequences,
                 "alignedNucleotideSequences",
-            )
-
-            validateNoMissingSegment(
-                segment,
-                processedData.unalignedNucleotideSequences,
-                "unalignedNucleotideSequences",
             )
         }
 
@@ -266,12 +255,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         validateNoUnknownNucleotideSymbolInInsertion(
             processedData.nucleotideInsertions,
         )
-    }
-
-    private fun validateNoMissingSegment(segment: ReferenceSequence, sequenceData: Map<String, *>, sequence: String) {
-        if (!sequenceData.containsKey(segment.name)) {
-            throw ProcessingValidationException("Missing the required segment '${segment.name}' in '$sequence'.")
-        }
     }
 
     private fun validateLengthOfSequence(
@@ -331,16 +314,15 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
         for (gene in referenceGenome.genes) {
-            validateNoMissingGene(gene, processedData)
             validateLengthOfSequence(
                 gene,
                 processedData.alignedAminoAcidSequences,
@@ -360,12 +342,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
         validateNoUnknownAminoAcidSymbol(processedData.alignedAminoAcidSequences)
         validateNoUnknownAminoAcidSymbolInInsertion(processedData.aminoAcidInsertions)
-    }
-
-    private fun validateNoMissingGene(gene: ReferenceSequence, processedData: ProcessedData<GeneticSequence>) {
-        if (!processedData.alignedAminoAcidSequences.containsKey(gene.name)) {
-            throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
-        }
     }
 
     private fun validateNoUnknownGeneInData(data: Map<String, *>, geneGrouping: String) {
@@ -403,31 +379,6 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
                 }
             }
         }
-    }
-
-    private fun addMissingKeysForInsertions(
-        processedData: ProcessedData<GeneticSequence>,
-    ): ProcessedData<GeneticSequence> {
-        val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
-            if (it.name in processedData.nucleotideInsertions.keys) {
-                it.name to processedData.nucleotideInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        val aminoAcidInsertions = referenceGenome.genes.associate {
-            if (it.name in processedData.aminoAcidInsertions.keys) {
-                it.name to processedData.aminoAcidInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        return processedData.copy(
-            nucleotideInsertions = nucleotideInsertions,
-            aminoAcidInsertions = aminoAcidInsertions,
-        )
     }
 }
 

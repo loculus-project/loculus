@@ -4,7 +4,9 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.update
+import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.utils.chunkedForDatabase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -24,52 +26,38 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
         }
     }
 
-    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> =
+    fun getGroupIds(fileIds: Set<FileId>): Map<FileId, Int> = fileIds.chunkedForDatabase({ chunk ->
         FilesTable.select(FilesTable.idColumn, FilesTable.groupIdColumn)
-            .where { FilesTable.idColumn inList fileIds }
-            .associate { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
-
-    /**
-     * Set the release date for all given file IDs to now, if they are not set already.
-     */
-    fun release(fileIds: Set<FileId>) {
-        val now = dateProvider.getCurrentDateTime()
-        FilesTable.update({
-            FilesTable.idColumn inList fileIds and (FilesTable.releasedAtColumn.isNull())
-        }) {
-            it[releasedAtColumn] = now
-        }
-    }
-
-    fun isFilePublic(fileId: FileId): Boolean? = FilesTable
-        .select(FilesTable.releasedAtColumn)
-        .where { FilesTable.idColumn eq fileId }
-        .map { it[FilesTable.releasedAtColumn] }
-        .first()
-        .let { it != null }
+            .where { FilesTable.idColumn inList chunk }
+            .map { Pair(it[FilesTable.idColumn], it[FilesTable.groupIdColumn]) }
+    }, 1).toMap()
 
     /**
      * Return a mapping of file IDs and multipart upload IDs for the files for which multipart upload has been
      * initiated but not completed
      */
-    fun getUncompletedMultipartUploadIds(fileIds: Set<FileId>): List<Pair<FileId, MultipartUploadId>> = FilesTable
-        .select(FilesTable.idColumn, FilesTable.multipartUploadId)
-        .where {
-            FilesTable.idColumn inList fileIds and
-                (FilesTable.multipartUploadId neq null) and
-                (not(FilesTable.multipartCompleted))
-        }
-        .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
+    fun getUncompletedMultipartUploadIds(fileIds: Set<FileId>): List<Pair<FileId, MultipartUploadId>> =
+        fileIds.chunkedForDatabase({ chunk ->
+            FilesTable
+                .select(FilesTable.idColumn, FilesTable.multipartUploadId)
+                .where {
+                    FilesTable.idColumn inList chunk and
+                        (FilesTable.multipartUploadId neq null) and
+                        (not(FilesTable.multipartCompleted))
+                }
+                .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
+        }, 1)
 
     /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
      * no file has been uploaded yet (and therefore there's no file size).
      */
-    fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = FilesTable
-        .select(FilesTable.idColumn)
-        .where { FilesTable.idColumn inList fileIds and (FilesTable.sizeColumn eq null) }
-        .map { it[FilesTable.idColumn] }
-        .toSet()
+    fun getUncheckedFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
+        FilesTable
+            .select(FilesTable.idColumn)
+            .where { FilesTable.idColumn inList chunk and (FilesTable.sizeColumn eq null) }
+            .map { it[FilesTable.idColumn] }
+    }, 1).toSet()
 
     fun setFileSize(fileId: FileId, size: Long) {
         FilesTable.update({

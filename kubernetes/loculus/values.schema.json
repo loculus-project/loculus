@@ -484,7 +484,7 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "enum": ["ALL", "ANY"],
-                      "description": "If multi-segmented viruses should require ALL segments align or ANY segment aligns"
+                      "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
                     },
                     "nextclade_dataset_server": {
                       "groups": ["nextcladePipelineConfigFile"],

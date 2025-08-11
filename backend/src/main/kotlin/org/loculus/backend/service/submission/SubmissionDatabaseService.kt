@@ -47,6 +47,7 @@ import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.EditedSequenceEntryData
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.FileCategory
+import org.loculus.backend.api.FileIdAndMaybeReleasedAt
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
@@ -271,7 +272,6 @@ class SubmissionDatabaseService(
                     releasedFiles.add(fileId)
                 }
             }
-            filesDatabaseService.release(releasedFiles)
         }
 
         log.info {
@@ -640,7 +640,6 @@ class SubmissionDatabaseService(
         for (fileId in filesToPublish) {
             s3Service.setFileToPublic(fileId)
         }
-        filesDatabaseService.release(filesToPublish.toSet())
 
         auditLogger.log(
             authenticatedUser.username,
@@ -1307,16 +1306,28 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getFileId(accessionVersion: AccessionVersion, fileCategory: FileCategory, fileName: String): FileId? =
-        SequenceEntriesView.select(
-            SequenceEntriesView.processedDataColumn,
-        )
-            .where {
-                SequenceEntriesView.accessionVersionEquals(accessionVersion)
+    fun getFileIdAndReleasedAt(
+        accessionVersion: AccessionVersion,
+        fileCategory: FileCategory,
+        fileName: String,
+    ): FileIdAndMaybeReleasedAt? = SequenceEntriesView.select(
+        SequenceEntriesView.processedDataColumn,
+        SequenceEntriesView.releasedAtTimestampColumn,
+    )
+        .where {
+            SequenceEntriesView.accessionVersionEquals(accessionVersion)
+        }
+        .map {
+            val fileId = it[SequenceEntriesView.processedDataColumn]?.files?.getFileId(fileCategory, fileName)
+            if (fileId != null) {
+                FileIdAndMaybeReleasedAt(
+                    fileId,
+                    it[SequenceEntriesView.releasedAtTimestampColumn],
+                )
+            } else {
+                null
             }
-            .map {
-                it[SequenceEntriesView.processedDataColumn]
-            }.firstOrNull()?.files?.getFileId(fileCategory, fileName)
+        }.firstOrNull()
 
     fun getReleasedAt(accessionVersions: List<AccessionVersion>): Map<AccessionVersion, LocalDateTime?> =
         accessionVersions

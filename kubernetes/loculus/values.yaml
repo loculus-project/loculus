@@ -65,6 +65,8 @@ defaultOrganismConfig: &defaultOrganismConfig
       externalFields:
         - ncbiReleaseDate
     richFastaHeaderFields: ["displayName"]
+    files:
+      - name: annotations
     ### Field list
     ## General fields
     # name: Key used across app to refer to this field (required)
@@ -1204,6 +1206,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         genes: []
         batch_size: 100
+        create_embl_file: true
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
@@ -1750,7 +1753,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 12059 # Enterovirus (all EVs)
+        taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
