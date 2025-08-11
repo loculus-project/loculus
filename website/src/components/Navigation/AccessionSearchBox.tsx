@@ -14,6 +14,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [value, setValue] = useState('');
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (open) {
@@ -21,13 +22,24 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         }
     }, [open]);
 
+    // Only allow alphanumeric, dot, dash, underscore (adjust as needed)
+    function isValidAccession(input: string): boolean {
+        return /^[A-Za-z0-9._-]+$/.test(input);
+    }
+
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
         const v = value.trim();
         if (!v) {
             setOpen(true);
+            setError(null);
             return;
         }
+        if (!isValidAccession(v)) {
+            setError('Invalid accession format.');
+            return;
+        }
+        setError(null);
         onSubmitSuccess?.();
         window.location.href = routes.sequenceEntryDetailsPage(v);
     };
@@ -64,6 +76,11 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                     aria-label='Enter an accession or accession.version'
                 />
             </div>
+            {error && (
+                <div className="text-red-600 text-xs mt-1" role="alert">
+                    {error}
+                </div>
+            )}
         </form>
     );
 };
