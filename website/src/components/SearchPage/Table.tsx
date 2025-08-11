@@ -123,6 +123,17 @@ export const Table: FC<TableProps> = ({
     };
 
     const mouseDownSelection = useRef('');
+    const dragSelecting = useRef({ active: false, value: false });
+
+    useEffect(() => {
+        const handleMouseUp = () => {
+            dragSelecting.current.active = false;
+        };
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
 
     const handleRowMouseDown = () => {
         const sel = window.getSelection();
@@ -231,21 +242,31 @@ export const Table: FC<TableProps> = ({
                                     <td
                                         className='px-2 whitespace-nowrap text-primary-900 md:pl-6'
                                         onClick={(e) => {
-                                            e.stopPropagation(); // Prevent row-level click events from triggering
-                                            // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- we need to cast to the special HTML element type
-                                            const checkbox = e.currentTarget.querySelector(
-                                                'input[type="checkbox"]',
-                                            ) as HTMLInputElement;
-                                            checkbox.checked = !checkbox.checked;
-                                            setRowSelected(row[primaryKey] as string, checkbox.checked);
+                                            e.stopPropagation();
+                                            const seqId = row[primaryKey] as string;
+                                            const newValue = !selectedSeqs.has(seqId);
+                                            setRowSelected(seqId, newValue);
                                         }}
                                     >
                                         <input
                                             type='checkbox'
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
-                                            onChange={(e) =>
-                                                setRowSelected(row[primaryKey] as string, e.target.checked)
-                                            }
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                const seqId = row[primaryKey] as string;
+                                                const newValue = !selectedSeqs.has(seqId);
+                                                dragSelecting.current = { active: true, value: newValue };
+                                                setRowSelected(seqId, newValue);
+                                            }}
+                                            onMouseEnter={() => {
+                                                if (dragSelecting.current.active) {
+                                                    setRowSelected(
+                                                        row[primaryKey] as string,
+                                                        dragSelecting.current.value,
+                                                    );
+                                                }
+                                            }}
                                             onClick={(e) => e.stopPropagation()}
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
                                         />
