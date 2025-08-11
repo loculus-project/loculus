@@ -75,11 +75,11 @@ describe('AccessionSearchBox', () => {
     it('updates the input value when typing', async () => {
         render(<AccessionSearchBox defaultOpen={true} />);
 
-        const input = screen.getByPlaceholderText('Search by accession') as HTMLInputElement;
+        const input = screen.getByPlaceholderText('Search by accession');
 
         await userEvent.type(input, 'TEST123');
 
-        expect(input.value).toBe('TEST123');
+        expect((input as HTMLInputElement).value).toBe('TEST123');
     });
 
     it('navigates to the correct URL when submitting a valid accession', async () => {
