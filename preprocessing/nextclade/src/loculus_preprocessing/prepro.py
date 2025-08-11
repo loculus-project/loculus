@@ -533,7 +533,7 @@ def add_input_metadata(
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
-        if not unprocessed.nextcladeMetadata:
+        if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
             # This field should never be empty
             message = (
                 "An unknown internal error occurred while aligning sequences, "

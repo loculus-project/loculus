@@ -558,6 +558,93 @@ multi_segment_case_definitions_any_requirement = [
     ),
 ]
 
+segment_validation_tests_multi_segments = [
+    Case(
+        name="don't allow multiple segments with the same name",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": invalid_sequence(),
+            "duplicate_ebola-sudan": invalid_sequence(),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": None,
+            "totalSnps_ebola-sudan": None,
+            "totalDeletedNucs_ebola-sudan": None,
+            "length_ebola-sudan": 0,
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "Found multiple sequences with the same segment name: ebola-sudan. "
+                "Each metadata entry can have multiple corresponding fasta sequence "
+                "entries with format <submissionId>_<segmentName>.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            ),
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "No segment aligned.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            )
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="don't allow unknown segments",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "unknown_segment": invalid_sequence(),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": 0,
+            "totalSnps_ebola-sudan": 1,
+            "totalDeletedNucs_ebola-sudan": 0,
+            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "Found sequences in the input data with segments that are not in the config: "
+                "unknown_segment. Each metadata entry can have multiple corresponding fasta sequence "
+                "entries with format <submissionId>_<segmentName> valid segments are: "
+                "ebola-sudan, ebola-zaire.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            )
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
+            alignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
+]
+
 
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
@@ -581,7 +668,9 @@ def test_preprocessing_single_segment(test_case_def: Case):
 
 @pytest.mark.parametrize(
     "test_case_def",
-    multi_segment_case_definitions + multi_segment_case_definitions_all_requirement,
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_all_requirement,
     ids=lambda tc: f"multi segment {tc.name}",
 )
 def test_preprocessing_multi_segment_all_requirement(test_case_def: Case):
@@ -596,7 +685,9 @@ def test_preprocessing_multi_segment_all_requirement(test_case_def: Case):
 
 @pytest.mark.parametrize(
     "test_case_def",
-    multi_segment_case_definitions + multi_segment_case_definitions_any_requirement,
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_any_requirement,
     ids=lambda tc: f"multi segment {tc.name}",
 )
 def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
