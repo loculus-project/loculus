@@ -165,6 +165,36 @@ class SubmitEndpointTest(
     }
 
     @Test
+    fun `GIVEN fasta data with empty segment THEN data is not accepted`() {
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        commonHeader	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >commonHeader_notOnlySegment
+                        AC
+                        >commonHeader_secondSegment
+                """.trimIndent(),
+            ),
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "No sequence data given for sample commonHeader_secondSegment.",
+                ),
+            )
+    }
+
+    @Test
     fun `GIVEN fasta data with whitespace-only segment THEN data is not accepted`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
