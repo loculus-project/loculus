@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FC, type FormEvent } from 'react';
 
+import { routes } from '../../routes/routes';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
@@ -16,7 +17,6 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
 
     useEffect(() => {
         if (open) {
-            // Focus the input when opening
             inputRef.current?.focus();
         }
     }, [open]);
@@ -25,14 +25,11 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         e.preventDefault();
         const v = value.trim();
         if (!v) {
-            // If empty, just ensure it stays open to allow typing
             setOpen(true);
             return;
         }
-        // Allow parent to react (e.g., close drawer) before navigation
         onSubmitSuccess?.();
-        // Navigate to the sequence details page for the given accession/version
-        window.location.href = `/seq/${encodeURIComponent(v)}`;
+        window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
     return (
