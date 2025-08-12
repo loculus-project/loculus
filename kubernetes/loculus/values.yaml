@@ -1424,7 +1424,7 @@ defaultOrganisms:
           preprocessing:
             function: process_options
             inputs:
-              input: pangoLineage
+              input: lineage
         - name: hiddenField
           displayName: "Hidden Field"
           initiallyVisible: false
