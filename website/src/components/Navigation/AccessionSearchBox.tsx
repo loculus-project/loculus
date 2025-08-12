@@ -73,7 +73,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                         }
                     }}
                     onBlur={() => {
-                        if (!value.trim()) {
+                        if (!value.trim() && !defaultOpen) {
                             setOpen(false);
                         }
                     }}
