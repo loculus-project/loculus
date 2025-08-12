@@ -14,7 +14,6 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [value, setValue] = useState('');
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
-    const containerRef = useRef<HTMLFormElement | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
