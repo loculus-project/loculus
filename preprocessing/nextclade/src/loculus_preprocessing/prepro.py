@@ -239,7 +239,10 @@ def assign_segment(
     valid_segments = set()
     duplicate_segments = set()
     if not config.nucleotideSequences:
-        return (unaligned_nucleotide_sequences, errors)
+        return (
+            unaligned_nucleotide_sequences,
+            errors,
+        )
     if not config.multi_segment:
         if len(input_unaligned_sequences) > 1:
             errors.append(
@@ -709,11 +712,10 @@ def process_single(  # noqa: C901
 
         submitter = unprocessed.inputMetadata["submitter"]
         group_id = int(str(unprocessed.inputMetadata["group_id"]))
-        unaligned_nucleotide_sequences = unprocessed.unalignedNucleotideSequences
     else:
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
-        unaligned_nucleotide_sequences, errors = assign_segment(
+        unprocessed.unalignedNucleotideSequences, errors = assign_segment(
             input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
             unaligned_nucleotide_sequences={},
             errors=errors,
@@ -721,7 +723,7 @@ def process_single(  # noqa: C901
         )
 
     for segment in config.nucleotideSequences:
-        sequence = unaligned_nucleotide_sequences.get(segment, None)
+        sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
         key = "length" if segment == "main" else "length_" + segment
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
