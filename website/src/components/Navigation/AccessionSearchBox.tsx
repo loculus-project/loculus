@@ -14,6 +14,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [value, setValue] = useState('');
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const containerRef = useRef<HTMLFormElement | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -44,8 +45,22 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
+    useEffect(() => {
+        const handleClickAway = (e: MouseEvent) => {
+            const target = e.target as Node | null;
+            if (containerRef.current && target && !containerRef.current.contains(target)) {
+                // Clicking outside: remove focus from the input and collapse the box
+                inputRef.current?.blur();
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickAway);
+        return () => document.removeEventListener('mousedown', handleClickAway);
+    }, []);
+
     return (
         <form
+            ref={containerRef}
             onSubmit={onSubmit}
             className={className}
             role='search'
@@ -69,6 +84,11 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={(e) => {
                         if (e.key === 'Escape') {
+                            setOpen(false);
+                        }
+                    }}
+                    onBlur={() => {
+                        if (!value.trim()) {
                             setOpen(false);
                         }
                     }}
