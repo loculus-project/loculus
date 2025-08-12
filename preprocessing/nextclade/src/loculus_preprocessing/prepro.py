@@ -489,7 +489,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
-            result_dir_seg = result_dir if not config.multi_segment else result_dir + "/" + segment
+            result_dir_seg = strip_wrapping_quotes(result_dir) if not config.multi_segment else result_dir + "/" + segment
             dataset_dir_seg = (
                 dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
             )
@@ -1004,6 +1004,8 @@ def process_all(
 # TODO: figure out why this is needed all of a sudden
 def strip_wrapping_quotes(s: str) -> str:
     if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+        logger.error(
+            "Stripping quotes from string: %s", s)
         return s[1:-1]
     return s
 
