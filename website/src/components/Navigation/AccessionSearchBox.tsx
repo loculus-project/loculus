@@ -45,19 +45,6 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         window.location.href = routes.sequenceEntryDetailsPage(v);
     };
 
-    useEffect(() => {
-        const handleClickAway = (e: MouseEvent) => {
-            const target = e.target as Node | null;
-            if (containerRef.current && target && !containerRef.current.contains(target)) {
-                // Clicking outside: remove focus from the input and collapse the box
-                inputRef.current?.blur();
-                setOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickAway);
-        return () => document.removeEventListener('mousedown', handleClickAway);
-    }, []);
-
     return (
         <form
             ref={containerRef}
