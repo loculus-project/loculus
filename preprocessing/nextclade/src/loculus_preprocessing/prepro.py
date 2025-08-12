@@ -257,7 +257,86 @@ def classify_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
-    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    config: Config,
+    dataset_dir: str,
+):
+    """
+    Run nextclade sort
+    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    (default is nextclade_dataset_name)
+    """
+    nextclade_dataset_server = config.nextclade_dataset_server
+
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
+        input_file = result_dir + "/input.fasta"
+        os.makedirs(os.path.dirname(input_file), exist_ok=True)
+        with open(input_file, "w", encoding="utf-8") as f:
+            for id, seq in input_unaligned_sequences.items():
+                f.write(f">{id}\n")
+                f.write(f"{seq}\n")
+
+        result_file = result_dir + "/sort_output.tsv"
+        df = run_sort(
+            result_file,
+            input_file,
+            config,
+            nextclade_dataset_server,
+            dataset_dir,
+        )
+
+        no_hits = df[df["score"].isna()]
+        hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+        for seq_name in no_hits["seqName"].unique():
+            if seq_name not in hits["seqName"].unique():
+                msg = (
+                    f"Sequence {seq_name} does not appear to match any reference for organism: "
+                    f"{config.organism} per `nextclade sort`. "
+                    f"Double check you are submitting to the correct organism."
+                )
+                # TODO: only error when config.alignment_requirement == "ALL", otherwise warn
+                errors.append(
+                    sequence_annotation(
+                        name="alignment",
+                        message=msg,
+                    )
+                )
+
+        best_hits = hits.groupby("seqName", as_index=False).first()
+        logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
+
+        for _, row in best_hits.iterrows():
+            not_found = True
+            for segment in config.nucleotideSequences:
+                accepted_dataset_names = segment.accepted_sort_matches or [
+                    segment.nextclade_dataset_name
+                ]
+                if row["dataset"] in accepted_dataset_names:
+                    unaligned_nucleotide_sequences[segment.name] = input_unaligned_sequences[
+                        row["seqName"]
+                    ]
+                    not_found = False
+                    break
+            if not_found:
+                msg = (
+                    f"Sequence {row['seqName']} best matches {row['dataset']}, "
+                    "which is currently not an accepted option for organism: "
+                    f"{config.organism}. It is therefore not possible to release. "
+                    "Contact the administrator if you think this message is an error."
+                )
+                errors.append(
+                    sequence_annotation(
+                        name="alignment",
+                        message=msg,
+                    )
+                )
+
+    return (unaligned_nucleotide_sequences, errors)
+
+
+def assign_segment(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    errors: list[ProcessingAnnotation],
     config: Config,
     dataset_dir: str,
 ):
@@ -265,7 +344,6 @@ def classify_with_nextclade_sort(
         return classify_with_nextclade_sort(
             input_unaligned_sequences,
             unaligned_nucleotide_sequences,
-            aligned_nucleotide_sequences,
             dataset_dir=dataset_dir,
             errors=errors,
             config=config,
@@ -278,7 +356,6 @@ def classify_with_nextclade_sort(
             errors,
         )
     if not config.multi_segment:
-        aligned_nucleotide_sequences["main"] = None
         if len(input_unaligned_sequences) > 1:
             errors.append(
                 ProcessingAnnotation.from_single(
