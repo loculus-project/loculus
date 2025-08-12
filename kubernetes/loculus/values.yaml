@@ -1421,6 +1421,10 @@ defaultOrganisms:
             - name: A.1.1
             - name: A.2
             - name: B
+          preprocessing:
+            function: process_options
+            inputs:
+              input: pangoLineage
         - name: hiddenField
           displayName: "Hidden Field"
           initiallyVisible: false
@@ -1568,6 +1572,10 @@ defaultOrganisms:
             - name: B.1.1.1
             - name: C
             - name: C.1
+          preprocessing:
+            function: process_options
+            inputs:
+              input: lineage
         - name: region
           type: string
           initiallyVisible: true
