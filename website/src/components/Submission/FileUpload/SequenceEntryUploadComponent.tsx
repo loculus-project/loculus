@@ -202,9 +202,10 @@ function getExampleData(randomEntries = 20) {
     const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
     const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
     const hosts = ['Homo sapiens', 'Canis lupus familiaris'];
+    const lineages = ['A', 'A.1', 'A.1.1', 'A.2', 'B'];
 
-    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\n';
-    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\n';
+    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\tlineage\n';
+    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\tlineage\n';
     let sequenceContent = '';
 
     for (let i = 0; i < randomEntries; i++) {
@@ -216,9 +217,10 @@ function getExampleData(randomEntries = 20) {
         const country = countries[Math.floor(Math.random() * countries.length)];
         const division = divisions[Math.floor(Math.random() * divisions.length)];
         const host = hosts[Math.floor(Math.random() * hosts.length)];
+        const lineage = lineages[Math.floor(Math.random() * lineages.length)];
 
-        metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
-        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
+        metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\t${lineage}\n`;
+        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\t${lineage}\n`;
         sequenceContent += `>${submissionId}\nACTG\n`;
     }
 
