@@ -414,9 +414,11 @@ def assign_segment(
                 ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 message=(
-                    f"Found segments in the input data that are not in the config: "
+                    f"Found sequences in the input data with segments that are not in the config: "
                     f"{', '.join(remaining_segments)}. "
-                    "Please check your segments are annotated correctly."
+                    "Each metadata entry can have multiple corresponding fasta sequence "
+                    "entries with format <submissionId>_<segmentName> valid segments are: "
+                    f"{', '.join({sequence_and_dataset.name for sequence_and_dataset in config.nucleotideSequences})}."
                 ),
             )
         )
