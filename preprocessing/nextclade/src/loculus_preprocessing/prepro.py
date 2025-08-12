@@ -339,9 +339,13 @@ def assign_segment(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
     config: Config,
-    dataset_dir: str = "",
+    dataset_dir: str | None = None,
 ):
     if config.classify_with_nextclade_sort:
+        if not dataset_dir:
+            error_msg = "Dataset directory must be provided when classify_with_nextclade_sort is True"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         return classify_with_nextclade_sort(
             input_unaligned_sequences,
             unaligned_nucleotide_sequences,
