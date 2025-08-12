@@ -513,9 +513,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             command = [
                 "nextclade3",
                 "run",
-                f"--output-all={result_dir_seg}",
-                f"--input-dataset={dataset_dir_seg}",
-                f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
+                f"--output-all={strip_wrapping_quotes(result_dir_seg)}",
+                f"--input-dataset={strip_wrapping_quotes(dataset_dir_seg)}",
+                f"--output-translations={strip_wrapping_quotes(result_dir_seg)}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
                 "--",
                 input_file,
@@ -999,6 +999,13 @@ def process_all(
             processed_results.append(processed_single)
 
     return processed_results
+
+
+# TODO: figure out why this is needed all of a sudden
+def strip_wrapping_quotes(s: str) -> str:
+    if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+        return s[1:-1]
+    return s
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
