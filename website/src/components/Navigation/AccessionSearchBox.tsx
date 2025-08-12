@@ -45,13 +45,20 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     };
 
     return (
-        <form onSubmit={onSubmit} className={className} role='search' aria-label='Accession search'>
+        <form
+            onSubmit={onSubmit}
+            className={className}
+            role='search'
+            aria-label='Accession search'
+            data-testid='nav-accession-search-form'
+        >
             <div className='relative flex items-center'>
                 <button
                     type='submit'
                     onClick={() => setOpen(true)}
                     className='flex items-center justify-center text-primary-600 hover:text-primary-700 transition-colors'
                     aria-label={open ? 'Search' : 'Open accession search'}
+                    data-testid='nav-accession-search-button'
                 >
                     <SearchIcon className='w-5 h-5' />
                 </button>
@@ -74,10 +81,11 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                             : 'px-0 w-0 opacity-0 pointer-events-none')
                     }
                     aria-label='Enter an accession or accession.version'
+                    data-testid='nav-accession-search-input'
                 />
             </div>
             {error && (
-                <div className='text-red-600 text-xs mt-1' role='alert'>
+                <div className='text-red-600 text-xs mt-1' role='alert' data-testid='nav-accession-search-error'>
                     {error}
                 </div>
             )}
