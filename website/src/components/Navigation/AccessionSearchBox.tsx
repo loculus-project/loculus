@@ -46,7 +46,6 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
 
     return (
         <form
-            ref={containerRef}
             onSubmit={onSubmit}
             className={className}
             role='search'
