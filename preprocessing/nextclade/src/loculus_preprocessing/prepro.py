@@ -182,7 +182,6 @@ def run_sort(
     )
 
 
-# TODO: running this for each sequence is inefficient, should be run once per batch
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
@@ -253,6 +252,7 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     return alerts
 
 
+# TODO: running this for each sequence is inefficient, should be run once per batch
 def classify_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
@@ -340,7 +340,7 @@ def assign_segment(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
     config: Config,
-    dataset_dir: str,
+    dataset_dir: str = "",
 ):
     if config.classify_with_nextclade_sort:
         return classify_with_nextclade_sort(
@@ -418,7 +418,7 @@ def assign_segment(
                     f"{', '.join(remaining_segments)}. "
                     "Each metadata entry can have multiple corresponding fasta sequence "
                     "entries with format <submissionId>_<segmentName> valid segments are: "
-                    f"{', '.join({sequence_and_dataset.name for sequence_and_dataset in config.nucleotideSequences})}."
+                    f"{', '.join([sequence_and_dataset.name for sequence_and_dataset in config.nucleotideSequences])}."
                 ),
             )
         )
@@ -977,7 +977,7 @@ def process_all(
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
-    if config.nucleotideSequences:
+    if config.alignment_requirement != AlignmentRequirement.NONE:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
@@ -1061,7 +1061,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        if config.nextclade_dataset_name:
+        if config.alignment_requirement == AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
             download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")

@@ -32,14 +32,17 @@ class AlignmentRequirement(StrEnum):
     # Determines whether ALL or ANY segments that a user provides must align.
     # ANY: warn if some segments fail and some segments align
     # ALL: error if any segment fails even if some segments align
+    # NONE: do not align any segments, just process them as-is 
+    # - set if no nextclade dataset is provided
     ANY = "ANY"
     ALL = "ALL"
+    NONE = "NONE"
 
 
 @dataclass
 class NextcladeSequenceAndDataset:
     name: str = "main"
-    nextclade_dataset_name: str = "main"
+    nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
     accepted_sort_matches: list[str] | None = None
@@ -103,6 +106,17 @@ def assign_nextclade_sequence_and_dataset(
                 setattr(seq_and_dataset, seq_key, seq_value)
         nextclade_sequence_and_dataset_list.append(seq_and_dataset)
     return nextclade_sequence_and_dataset_list
+
+
+def set_alignment_requirement(
+    config: Config) -> AlignmentRequirement:
+    need_nextclade_dataset: bool = False
+    for sequence in config.nucleotideSequences:
+        if sequence.nextclade_dataset_name:
+            need_nextclade_dataset = True
+    if not need_nextclade_dataset:
+        return AlignmentRequirement.NONE
+    return config.alignment_requirement
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
@@ -201,5 +215,7 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
 
     if len(config.nucleotideSequences) > 1:
         config.multi_segment = True
+
+    config.alignment_requirement = set_alignment_requirement(config)
 
     return config
