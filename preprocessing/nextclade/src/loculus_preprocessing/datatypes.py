@@ -61,24 +61,6 @@ class ProcessingAnnotation:
         return cls.from_fields([name], [name], type, message)
 
 
-def sequence_annotation(name: str, message: str) -> ProcessingAnnotation:
-    return ProcessingAnnotation(
-        unprocessedFields=[
-            AnnotationSource(
-                name=name,
-                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
-        ],
-        processedFields=[
-            AnnotationSource(
-                name=name,
-                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
-        ],
-        message=message,
-    )
-
-
 @dataclass
 class UnprocessedData:
     submitter: str
