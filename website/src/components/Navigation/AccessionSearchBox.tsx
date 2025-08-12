@@ -22,7 +22,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         }
     }, [open]);
 
-    // Only allow alphanumeric, dot, dash, underscore (adjust as needed)
+    // Only allow alphanumeric, dot, dash, underscore - this is for security to prevent injection into URLs, rather than for UX
     function isValidAccession(input: string): boolean {
         return /^[A-Za-z0-9._-]+$/.test(input);
     }
