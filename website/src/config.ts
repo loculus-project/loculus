@@ -227,7 +227,7 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
 }
 
 export function getReferenceGenome(organism: string): ReferenceGenome {
-    return Object.values(getConfig(organism).referenceGenomes)[0];
+    return getConfig(organism).referenceGenome;
 }
 
 const getAccession = (n: NamedSequence): ReferenceAccession => {
