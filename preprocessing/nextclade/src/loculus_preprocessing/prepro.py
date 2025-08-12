@@ -50,7 +50,6 @@ from .datatypes import (
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
-    sequence_annotation,
 )
 from .embl import create_flatfile
 from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
@@ -225,8 +224,9 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
-            sequence_annotation(
-                name="alignment",
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 message=(
                     "Sequence does not appear to match reference, per `nextclade sort`. "
                     "Double check you are submitting to the correct organism."
@@ -295,8 +295,9 @@ def classify_with_nextclade_sort(
                 )
                 # TODO: only error when config.alignment_requirement == "ALL", otherwise warn
                 errors.append(
-                    sequence_annotation(
-                        name="alignment",
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         message=msg,
                     )
                 )
@@ -324,8 +325,9 @@ def classify_with_nextclade_sort(
                     "Contact the administrator if you think this message is an error."
                 )
                 errors.append(
-                    sequence_annotation(
-                        name="alignment",
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         message=msg,
                     )
                 )
