@@ -308,9 +308,8 @@ def classify_with_nextclade_sort(
         for _, row in best_hits.iterrows():
             not_found = True
             for segment in config.nucleotideSequences:
-                accepted_dataset_names = segment.accepted_sort_matches or [
-                    segment.nextclade_dataset_name
-                ]
+                default = [segment.nextclade_dataset_name] if segment.nextclade_dataset_name else []
+                accepted_dataset_names = segment.accepted_sort_matches or default
                 if row["dataset"] in accepted_dataset_names:
                     unaligned_nucleotide_sequences[segment.name] = input_unaligned_sequences[
                         row["seqName"]
