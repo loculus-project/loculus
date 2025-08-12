@@ -343,7 +343,9 @@ def assign_segment(
 ):
     if config.classify_with_nextclade_sort:
         if not dataset_dir:
-            error_msg = "Dataset directory must be provided when classify_with_nextclade_sort is True"
+            error_msg = (
+                "Dataset directory must be provided when classify_with_nextclade_sort is True"
+            )
             logger.error(error_msg)
             raise ValueError(error_msg)
         return classify_with_nextclade_sort(
@@ -489,7 +491,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
-            result_dir_seg = strip_wrapping_quotes(result_dir) if not config.multi_segment else result_dir + "/" + segment
+            result_dir_seg = result_dir if not config.multi_segment else result_dir + "/" + segment
             dataset_dir_seg = (
                 dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
             )
@@ -513,9 +515,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             command = [
                 "nextclade3",
                 "run",
-                f"--output-all={strip_wrapping_quotes(result_dir_seg)}",
-                f"--input-dataset={strip_wrapping_quotes(dataset_dir_seg)}",
-                f"--output-translations={strip_wrapping_quotes(result_dir_seg)}/nextclade.cds_translation.{{cds}}.fasta",
+                f"--output-all={result_dir_seg}",
+                f"--input-dataset={dataset_dir_seg}",
+                f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
                 "--",
                 input_file,
@@ -999,15 +1001,6 @@ def process_all(
             processed_results.append(processed_single)
 
     return processed_results
-
-
-# TODO: figure out why this is needed all of a sudden
-def strip_wrapping_quotes(s: str) -> str:
-    if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
-        logger.error(
-            "Stripping quotes from string: %s", s)
-        return s[1:-1]
-    return s
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
