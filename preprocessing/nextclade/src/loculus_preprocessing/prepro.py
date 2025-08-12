@@ -1073,7 +1073,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        if config.alignment_requirement == AlignmentRequirement.NONE:
+        if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
             download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
