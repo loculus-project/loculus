@@ -239,7 +239,7 @@ organisms:
       {{ end }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
-    referenceGenomes:
+    referenceGenome:
       {{ include "loculus.mergeReferenceGenomes" $instance.referenceGenomes | nindent 6 }}
   {{- end }}
 {{- end }}
