@@ -1375,7 +1375,7 @@ defaultOrganisms:
       metadataTemplate:
         - country
         - date
-      metadata: &DummyMetadata
+      metadata: &dummyMetadata
         - name: date
           type: date
           initiallyVisible: true
@@ -1491,8 +1491,7 @@ defaultOrganisms:
             - name: raw_reads
       files:
         - name: raw_reads
-      metadata:
-        <<: *DummyMetadata
+      metadata: *dummyMetadata
       website:
         tableColumns:
           - country
