@@ -1,13 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { Table, type TableSequenceData } from './Table';
 import type { Schema } from '../../types/config';
-
-vi.mock('./ScrollContainer.jsx', () => ({
-    default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
 
 const schema: Schema = {
     organismName: '',
