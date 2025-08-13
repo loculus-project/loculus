@@ -1541,8 +1541,6 @@ defaultOrganisms:
           - "--withWarnings"
           - "--withErrors"
           - "--randomWarnError"
-        configFile:
-          nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1600,8 +1598,6 @@ defaultOrganisms:
         args:
           - "--watch"
           - "--disableConsensusSequences"
-        configFile:
-          nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences: []
