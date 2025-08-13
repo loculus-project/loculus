@@ -1410,6 +1410,7 @@ defaultOrganisms:
           header: "Collection Details"
         - name: lineage
           initiallyVisible: false
+          notSearchable: true
         - name: pangoLineage
           initiallyVisible: true
           displayName: "Pango lineage"
