@@ -168,7 +168,11 @@ def group_records(
                 [record["id"] for record in record_list]
             )
             logger.error(msg)
-            notify(config, f"Ingest for {config.organism}: {msg}")
+            full_msg = (
+                f"Ingest for {config.organism} filed with: {msg} "
+                "- this indicates the grouping override file needs to be changed"
+            )
+            notify(config, full_msg)
             orjsonl.append(ERROR_FILE, record_list)
             return
     segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
