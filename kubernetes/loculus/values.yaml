@@ -1312,7 +1312,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        genes: []
         batch_size: 100
         create_embl_file: true
   ingest: &ingest
@@ -1357,7 +1356,6 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
-          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nucleotideSequences:
             - name: "main"
               nextclade_dataset_name: nextstrain/ebola/sudan
@@ -1366,7 +1364,6 @@ defaultOrganisms:
         version: 2
         configFile:
           <<: *preprocessingConfigFile
-          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nucleotideSequences:
             - name: "main"
               nextclade_dataset_name: nextstrain/ebola/sudan
@@ -1425,7 +1422,6 @@ defaultOrganisms:
             - name: "main"
               nextclade_dataset_name: nextstrain/wnv/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
-          genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
     ingest:
       <<: *ingest
       configFile:
@@ -1545,7 +1541,8 @@ defaultOrganisms:
           - "--withWarnings"
           - "--withErrors"
           - "--randomWarnError"
-        nucleotideSequences: ["main"]
+        configFile:
+          nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1603,7 +1600,8 @@ defaultOrganisms:
         args:
           - "--watch"
           - "--disableConsensusSequences"
-        nucleotideSequences: ["main"]
+        configFile:
+          nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences: []
@@ -1682,7 +1680,6 @@ defaultOrganisms:
           - "prepro"
         configFile:
           log_level: DEBUG
-          genes: []
           batch_size: 100
           nucleotideSequences:
             - name: "main"
@@ -1753,7 +1750,6 @@ defaultOrganisms:
             - name: S
               nextclade_dataset_name: nextstrain/cchfv/linked/S
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1878,7 +1874,6 @@ defaultOrganisms:
             - name: EV-D68
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
-          genes: ["CV-A16-VP4", "CV-A16-VP2", "CV-A16-VP3", "CV-A16-VP1", "CV-A16-2A", "CV-A16-2B", "CV-A16-2C", "CV-A16-3A", "CV-A16-3B", "CV-A16-3C", "CV-A16-3D", "CV-A10-VP4", "CV-A10-VP2", "CV-A10-VP3", "CV-A10-VP1", "CV-A10-2A", "CV-A10-2B", "CV-A10-2C", "CV-A10-3A", "CV-A10-3B", "CV-A10-3C", "CV-A10-3D", "EV-A71-VP4", "EV-A71-VP2", "EV-A71-VP3", "EV-A71-VP1", "EV-A71-2A", "EV-A71-2B", "EV-A71-2C", "EV-A71-3A", "EV-A71-3B", "EV-A71-3C", "EV-A71-3D", "EV-D68-VP4", "EV-D68-VP2", "EV-D68-VP3", "EV-D68-VP1", "EV-D68-2A", "EV-D68-2B", "EV-D68-2C", "EV-D68-3A", "EV-D68-3B", "EV-D68-3C", "EV-D68-3D"]
     ingest:
       <<: *ingest
       configFile:
