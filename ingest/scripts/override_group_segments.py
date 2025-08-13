@@ -29,12 +29,14 @@ Example output for a single isolate with 3 segments:
 import hashlib
 import json
 import logging
+import os
 import pathlib
 from dataclasses import dataclass
 from typing import Any, Final
 
 import click
 import orjsonl  # type: ignore
+import requests
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,8 @@ class Config:
     insdc_segment_specific_fields: list[str]  # Fields that can vary between segments in a group
     nucleotide_sequences: list[str]
     segmented: bool
+    organism: str
+    slack_hook: str = ""
 
 
 @dataclass
@@ -69,6 +73,14 @@ class Groups:
 
 # id is actually NCBI accession
 INTRINSICALLY_SEGMENT_SPECIFIC_FIELDS: Final = {"segment", "id"}
+ERROR_FILE: Final = "results/errors.ndjson"
+
+
+def notify(config: Config, text: str):
+    """Send slack notification with text"""
+    if config.slack_hook:
+        requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+    logger.warning(text)
 
 
 def sort_authors(authors: str) -> str:
@@ -152,13 +164,12 @@ def group_records(
     # Assert that all records are from a different segment
     for segment in config.nucleotide_sequences:
         if len([record for record in record_list if record["metadata"]["segment"] == segment]) > 1:
-            # TODO(#3589): Raise an error after duplicate segments can be removed
-            logger.error(
-                "Cannot group multiple records from the same segment"
-                + ", ".join([record["id"] for record in record_list])
+            msg = "Cannot group multiple records from the same segment" + ", ".join(
+                [record["id"] for record in record_list]
             )
-            # write record list to a file
-            orjsonl.append("results/errors.ndjson", record_list)
+            logger.error(msg)
+            notify(config, f"Ingest for {config.organism}: {msg}")
+            orjsonl.append(ERROR_FILE, record_list)
             return
     segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
 
@@ -315,19 +326,22 @@ def main(  # noqa: PLR0913, PLR0917
     if not config.segmented:
         raise ValueError({"ERROR: You are running a function that requires segmented data"})
 
-    groups: Groups = get_groups_object(groups)
+    groups_: Groups = get_groups_object(groups)
 
     fasta_id_map, ungrouped_accessions = write_grouped_metadata(
         input_metadata,
         output_ungrouped_metadata,
         output_metadata,
         config,
-        groups,
+        groups_,
     )
 
     write_grouped_sequences(
         input_seq, output_ungrouped_seq, output_seq, fasta_id_map, ungrouped_accessions
     )
+    if os.path.isfile(ERROR_FILE) and os.path.getsize(ERROR_FILE) > 0:
+        msg = f"Ingest: {config.organism}: There was an error when grouping sequences"
+        raise ValueError(msg)
 
 
 if __name__ == "__main__":
