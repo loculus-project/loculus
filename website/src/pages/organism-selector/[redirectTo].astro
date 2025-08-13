@@ -31,7 +31,6 @@ const myRoutes = {
 };
 const purpose = purposes[redirectTo];
 
-// Prevent caching to allow back button after user creates group
 Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
 Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
@@ -39,7 +38,6 @@ Astro.response.headers.append('Expires', '0');
 const requiresLogin = redirectTo === 'submission';
 const requiresGroup = redirectTo === 'submission';
 
-// Stats shown on organism cards (mirrors index page)
 const numberDaysAgoStatistics = 30;
 const configuredOrganisms = getConfiguredOrganisms();
 const organismStatisticsMap = await getOrganismStatisticsMap(
@@ -47,7 +45,6 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
     numberDaysAgoStatistics,
 );
 
-// No server-side filter on this page
 ---
 
 <BaseLayout title='Select Organism'>
