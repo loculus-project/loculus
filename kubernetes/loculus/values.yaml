@@ -1375,7 +1375,7 @@ defaultOrganisms:
       metadataTemplate:
         - country
         - date
-      metadata:
+      metadata: &DummyMetadata
         - name: date
           type: date
           initiallyVisible: true
@@ -1492,38 +1492,7 @@ defaultOrganisms:
       files:
         - name: raw_reads
       metadata:
-        - name: date
-          type: date
-          initiallyVisible: true
-          header: "Collection Details"
-          required: true
-          preprocessing:
-            function: parse_and_assert_past_date
-            inputs:
-              date: date
-        - name: region
-          type: string
-          initiallyVisible: true
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: country
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: division
-          initiallyVisible: true
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: "Collection Details"
-        - name: host
-          initiallyVisible: true
-          type: string
-          autocomplete: true
-          header: "Collection Details"
+        <<: *DummyMetadata
       website:
         tableColumns:
           - country
