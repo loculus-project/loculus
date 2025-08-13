@@ -55,9 +55,10 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
                 <NeedAGroup />
             ) : (
                 <section class='py-4'>
-                    <div class='rounded-xl bg-base-100 border border-base-200/70 border-l-4 border-l-primary/30 px-6 py-4 my-5'>
-                        <h1 class='text-2xl font-semibold text-slate-900 tracking-tight'>Choose an organism</h1>
-                        <p class='text-slate-600 mt-1'>Select the organism for which you want {purpose}.</p>
+                    <div class='mb-5 px-1'>
+                        <h2 class='text-base sm:text-lg font-medium text-slate-800'>
+                            Please select the organism for which you want {purpose}:
+                        </h2>
                     </div>
 
                     <div class='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6'>
@@ -81,7 +82,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
                                                 {displayName}
                                             </h3>
                                         </div>
-                                        <div class='text-primary/70 text-2xl transition-transform duration-150 group-hover:translate-x-0.5 flex-shrink-0'>
+                                        <div class='text-primary/70 text-xl transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary/80 flex-shrink-0'>
                                             →
                                         </div>
                                     </div>
