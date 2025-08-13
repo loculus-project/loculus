@@ -1545,8 +1545,7 @@ defaultOrganisms:
           - "--withWarnings"
           - "--withErrors"
           - "--randomWarnError"
-        nucleotideSequences:
-          main: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+        nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1604,8 +1603,7 @@ defaultOrganisms:
         args:
           - "--watch"
           - "--disableConsensusSequences"
-        nucleotideSequences:
-          main: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+        nucleotideSequences: ["main"]
     referenceGenomes:
       singleReference:
         nucleotideSequences: []
