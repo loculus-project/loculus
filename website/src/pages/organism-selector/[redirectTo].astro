@@ -31,6 +31,7 @@ const myRoutes = {
 };
 const purpose = purposes[redirectTo];
 
+// Prevent caching to allow back button after user creates group
 Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
 Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
@@ -46,7 +47,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
 );
 ---
 
-<BaseLayout title='Select Organism'>
+<BaseLayout title='Select organism'>
     <div class='max-w-7xl mx-auto'>
         {
             !accessToken && requiresLogin ? (
