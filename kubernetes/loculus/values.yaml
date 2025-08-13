@@ -1408,6 +1408,8 @@ defaultOrganisms:
           type: string
           autocomplete: true
           header: "Collection Details"
+        - name: lineage
+          initiallyVisible: false
         - name: pangoLineage
           initiallyVisible: true
           displayName: "Pango lineage"
