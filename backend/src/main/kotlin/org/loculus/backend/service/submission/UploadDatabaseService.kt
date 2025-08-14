@@ -163,39 +163,47 @@ class UploadDatabaseService(
                 original_data
             )
             SELECT
-                metadata_upload_aux_table.accession,
-                metadata_upload_aux_table.version,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at,
+                m.accession,
+                m.version,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_id,
+                m.uploaded_at,
                 jsonb_build_object(
-                    'metadata', metadata_upload_aux_table.metadata,
-                    'files', metadata_upload_aux_table.files,
-                    'unalignedNucleotideSequences', 
+                    'metadata', m.metadata,
+                    'files', m.files,
+                    'unalignedNucleotideSequences',
                     COALESCE(
                         jsonb_object_agg(
-                            sequence_upload_aux_table.segment_name,
-                            sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
+                            s.segment_name,
+                            s.compressed_sequence_data::jsonb
+                        ) FILTER (WHERE s.segment_name IS NOT NULL),
+                        sequence_entries.original_data -> 'unalignedNucleotideSequences',
                         '{}'::jsonb
                     )
                 )
             FROM
-                metadata_upload_aux_table
+                metadata_upload_aux_table m
             LEFT JOIN
-                sequence_upload_aux_table
-                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
-            WHERE metadata_upload_aux_table.upload_id = ?
+                sequence_upload_aux_table s
+                ON m.upload_id = s.upload_id
+                AND m.submission_id = s.submission_id
+            LEFT JOIN
+                sequence_entries
+                ON m.accession = sequence_entries.accession
+                AND ${SequenceEntriesTable.isMaxVersion}
+            WHERE m.upload_id = ?
             GROUP BY
-                metadata_upload_aux_table.upload_id,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at
+                m.upload_id,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_id,
+                m.uploaded_at,
+                m.metadata,
+                m.files,
+                sequence_entries.original_data
             RETURNING accession, version, submission_id;
         """.trimIndent()
         val insertionResult = exec(
@@ -266,7 +274,9 @@ class UploadDatabaseService(
             UPDATE metadata_upload_aux_table m
             SET
                 version = sequence_entries.version + 1,
-                group_id = sequence_entries.group_id
+                group_id = sequence_entries.group_id,
+                metadata = COALESCE((sequence_entries.original_data -> 'metadata')::jsonb, '{}'::jsonb) || COALESCE(m.metadata, '{}'::jsonb),
+                files = COALESCE(m.files, (sequence_entries.original_data -> 'files')::jsonb)
             FROM sequence_entries
             WHERE
                 m.upload_id = ?

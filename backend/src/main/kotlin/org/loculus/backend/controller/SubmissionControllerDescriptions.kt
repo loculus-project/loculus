@@ -114,9 +114,9 @@ The version will increase by one in respect to the original accession version.
 
 const val REVISED_METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the revised data.
-The first row must contain the column names. The column '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' is required and must be unique within the 
+The first row must contain the column names. The column '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' is required and must be unique within the
 provided dataset. It is used to associate metadata to the sequences in the sequences fasta file.
-Additionally, the column 'accession' is required and must match the accession of the original sequence entry.
+Additionally, the column 'accession' is required and must match the accession of the original sequence entry. Only the metadata columns present in this file will be updated; omitted columns keep their previous values.
 """
 
 const val SUBMIT_DESCRIPTION = """
@@ -129,11 +129,12 @@ may cause data duplication.
 
 const val REVISE_DESCRIPTION = """
 Submit revised data for new accession versions as multipart/form-data. The following rules apply:
- - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
+ - Given sequence entries must exist (identified by the column 'accession' in the metadata file)
  - The submitting user is member of the group that a sequence entry was initially submitted for.
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. revisable
  - The provided files contain only specified content
- 
+ - If no sequence file is provided, existing sequence and file data are reused
+
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """
 

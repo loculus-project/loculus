@@ -424,7 +424,7 @@ class SubmissionConvenienceClient(
     ): List<SubmissionIdMapping> {
         val result = client.reviseSequenceEntries(
             DefaultFiles.getRevisedMetadataFile(accessions),
-            DefaultFiles.sequencesFile,
+            sequencesFile = null,
             organism = organism,
         ).andExpect(status().isOk)
 

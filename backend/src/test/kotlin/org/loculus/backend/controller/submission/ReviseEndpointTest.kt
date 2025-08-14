@@ -217,18 +217,14 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `GIVEN no consensus sequences file for organism that requires one THEN throws bad request error`() {
+    fun `GIVEN no consensus sequences file for organism that requires one THEN metadata-only revision succeeds`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
 
         client.reviseSequenceEntries(
             metadataFile = DefaultFiles.getRevisedMetadataFile(accessions),
             sequencesFile = null,
         )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath("\$.detail").value("Submissions for organism $DEFAULT_ORGANISM require a sequence file."),
-            )
+            .andExpect(status().isOk)
     }
 
     @Test
@@ -449,6 +445,29 @@ class ReviseEndpointTest(
             .andExpect(status().isOk)
     }
 
+    @Test
+    fun `GIVEN only metadata is provided THEN existing fields are preserved`() {
+        val accession = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).first().accession
+        val submissionId = DefaultFiles.submissionIds.first()
+        val revisedFile = SubmitFiles.revisedMetadataFileWith(
+            content = "accession\tsubmissionId\thost\n$accession\t$submissionId\tnew host",
+        )
+
+        client.reviseSequenceEntries(
+            revisedFile,
+            sequencesFile = null,
+        ).andExpect(status().isOk)
+
+        val metadataEntries = convenienceClient.getOriginalMetadata()
+        val updatedEntry = metadataEntries.first { it.accession == accession && it.version == 2L }
+
+        assertThat(updatedEntry.originalMetadata?.get("host"), `is`("new host"))
+        assertThat(
+            updatedEntry.originalMetadata?.get("region"),
+            `is`(defaultOriginalData.metadata["region"]),
+        )
+    }
+
     companion object {
         @JvmStatic
         fun badRequestForRevision(): List<Arguments> = listOf(
@@ -459,14 +478,6 @@ class ReviseEndpointTest(
                 status().isBadRequest,
                 "Bad Request",
                 "Required part 'metadataFile' is not present.",
-            ),
-            Arguments.of(
-                "sequences file with wrong submitted filename",
-                SubmitFiles.revisedMetadataFileWith(),
-                SubmitFiles.sequenceFileWith(name = "notSequencesFile"),
-                status().isBadRequest,
-                "Bad Request",
-                "Submissions for organism $DEFAULT_ORGANISM require a sequence file.",
             ),
             Arguments.of(
                 "wrong extension for metadata file",

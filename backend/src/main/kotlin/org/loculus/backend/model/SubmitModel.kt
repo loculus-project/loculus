@@ -129,7 +129,10 @@ class SubmitModel(
         )
 
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
-        if (requiresConsensusSequenceFile(submissionParams.organism)) {
+        if (
+            requiresConsensusSequenceFile(submissionParams.organism) &&
+            submissionParams.sequenceFile != null
+        ) {
             log.debug { "Validating submission with uploadId $uploadId" }
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
@@ -188,7 +191,10 @@ class SubmitModel(
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
+            if (
+                submissionParams.uploadType == UploadType.ORIGINAL &&
+                requiresConsensusSequenceFile(submissionParams.organism)
+            ) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
