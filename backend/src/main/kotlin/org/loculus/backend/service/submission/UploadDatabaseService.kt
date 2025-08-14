@@ -98,7 +98,8 @@ class UploadDatabaseService(
                 this[accessionColumn] = it.accession
                 this[submitterColumn] = authenticatedUser.username
                 this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
+                // Use a placeholder when submissionId is null - it will be replaced in the UPDATE query
+                this[submissionIdColumn] = it.submissionId ?: ""
                 this[metadataColumn] = it.metadata
                 this[filesColumn] = files?.get(it.submissionId)
                 this[organismColumn] = submittedOrganism.name
@@ -171,7 +172,7 @@ class UploadDatabaseService(
                 m.group_id,
                 m.uploaded_at,
                 jsonb_build_object(
-                    'metadata', m.metadata,
+                    'metadata', jsonb_build_object('submissionId', m.submission_id) || COALESCE(m.metadata, '{}'::jsonb),
                     'files', m.files,
                     'unalignedNucleotideSequences',
                     COALESCE(
@@ -275,7 +276,10 @@ class UploadDatabaseService(
             SET
                 version = sequence_entries.version + 1,
                 group_id = sequence_entries.group_id,
-                metadata = COALESCE((sequence_entries.original_data -> 'metadata')::jsonb, '{}'::jsonb) || COALESCE(m.metadata, '{}'::jsonb),
+                submission_id = COALESCE(NULLIF(m.submission_id, ''), (sequence_entries.original_data -> 'metadata' ->> 'submissionId')),
+                metadata = jsonb_build_object('submissionId', COALESCE(NULLIF(m.submission_id, ''), (sequence_entries.original_data -> 'metadata' ->> 'submissionId'))) || 
+                           (COALESCE((sequence_entries.original_data -> 'metadata')::jsonb, '{}'::jsonb) - 'submissionId') || 
+                           COALESCE(m.metadata, '{}'::jsonb),
                 files = COALESCE(m.files, (sequence_entries.original_data -> 'files')::jsonb)
             FROM sequence_entries
             WHERE

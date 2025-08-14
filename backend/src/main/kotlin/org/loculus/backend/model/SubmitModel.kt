@@ -288,7 +288,8 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream)
+                    val requireSubmissionId = submissionParams.sequenceFile != null
+                    revisionEntryStreamAsSequence(metadataStream, requireSubmissionId)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(

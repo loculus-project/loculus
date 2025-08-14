@@ -446,11 +446,11 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `GIVEN only metadata is provided THEN existing fields are preserved`() {
+    fun `GIVEN only metadata is provided THEN existing fields are preserved and submissionId is updated`() {
         val accession = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).first().accession
-        val submissionId = DefaultFiles.submissionIds.first()
+        val newSubmissionId = "new-submission-id-123"
         val revisedFile = SubmitFiles.revisedMetadataFileWith(
-            content = "accession\tsubmissionId\thost\n$accession\t$submissionId\tnew host",
+            content = "accession\tsubmissionId\thost\n$accession\t$newSubmissionId\tnew host",
         )
 
         client.reviseSequenceEntries(
@@ -466,6 +466,38 @@ class ReviseEndpointTest(
             updatedEntry.originalMetadata?.get("region"),
             `is`(defaultOriginalData.metadata["region"]),
         )
+        assertThat(updatedEntry.originalMetadata?.get("submissionId"), `is`(newSubmissionId))
+    }
+
+    @Test
+    fun `GIVEN metadata without submissionId THEN submissionId is inherited from previous version`() {
+        val originalData = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).first()
+        val accession = originalData.accession
+        
+        // Get the original submissionId from the first version
+        val originalMetadataEntries = convenienceClient.getOriginalMetadata()
+        val originalEntry = originalMetadataEntries.first { it.accession == accession && it.version == 1L }
+        val originalSubmissionId = originalEntry.originalMetadata?.get("submissionId")
+        
+        // Create revised file without submissionId column
+        val revisedFile = SubmitFiles.revisedMetadataFileWith(
+            content = "accession\thost\n$accession\tnew host without submissionId",
+        )
+
+        client.reviseSequenceEntries(
+            revisedFile,
+            sequencesFile = null,
+        ).andExpect(status().isOk)
+
+        val updatedMetadataEntries = convenienceClient.getOriginalMetadata()
+        val updatedEntry = updatedMetadataEntries.first { it.accession == accession && it.version == 2L }
+
+        assertThat(updatedEntry.originalMetadata?.get("host"), `is`("new host without submissionId"))
+        assertThat(
+            updatedEntry.originalMetadata?.get("region"),
+            `is`(defaultOriginalData.metadata["region"]),
+        )
+        assertThat(updatedEntry.originalMetadata?.get("submissionId"), `is`(originalSubmissionId))
     }
 
     companion object {

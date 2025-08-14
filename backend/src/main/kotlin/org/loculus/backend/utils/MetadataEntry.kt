@@ -28,6 +28,21 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     return submissionIdHeaders.first()
 }
 
+fun findOptionalSubmissionIdHeader(headerNames: List<String>): String? {
+    val submissionIdHeaders = listOf(
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
+        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
+    ).filter { headerNames.contains(it) }
+
+    when {
+        submissionIdHeaders.isEmpty() -> return null
+        submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
+            "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
+        )
+    }
+    return submissionIdHeaders.first()
+}
+
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
         .parse(InputStreamReader(metadataInputStream))
@@ -60,14 +75,18 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     }
 }
 
-data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
+data class RevisionEntry(val submissionId: SubmissionId?, val accession: Accession, val metadata: Map<String, String>)
 
-fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
+fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, requireSubmissionId: Boolean = true): Sequence<RevisionEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
         .parse(InputStreamReader(metadataInputStream))
 
     val headerNames = csvParser.headerNames
-    val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
+    val submissionIdHeader = if (requireSubmissionId) {
+        findAndValidateSubmissionIdHeader(headerNames)
+    } else {
+        findOptionalSubmissionIdHeader(headerNames)
+    }
 
     if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(
@@ -76,11 +95,26 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
     }
 
     return csvParser.asSequence().map { record ->
-        val submissionId = record[submissionIdHeader]
-        if (submissionId.isNullOrEmpty()) {
-            throw UnprocessableEntityException(
-                "A row in metadata file contains no $submissionIdHeader: $record",
-            )
+        val submissionId = if (submissionIdHeader != null) {
+            val value = record[submissionIdHeader]
+            if (value.isNullOrEmpty()) {
+                if (requireSubmissionId) {
+                    throw UnprocessableEntityException(
+                        "A row in metadata file contains no $submissionIdHeader: $record",
+                    )
+                } else {
+                    null
+                }
+            } else {
+                if (value.any { it.isWhitespace() }) {
+                    throw UnprocessableEntityException(
+                        "A value for $submissionIdHeader contains whitespace: $record",
+                    )
+                }
+                value
+            }
+        } else {
+            null
         }
 
         val accession = record[ACCESSION_HEADER]
