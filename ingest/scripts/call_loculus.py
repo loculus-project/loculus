@@ -358,7 +358,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
     submission_id_to_new_accessions = {}  # Map from id to new loculus accession
     for item in response:
-        submission_id_to_new_accessions[item["id"]] = item["accession"]
+        submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
     to_revoke = json.load(open(map, encoding="utf-8"))
 
