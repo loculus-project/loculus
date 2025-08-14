@@ -54,10 +54,11 @@ def parse_file(
     df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
     df_highest_per_group = df_sorted.drop_duplicates(subset="index", keep="first")
 
-    df_highest_per_group = df_highest_per_group.copy()
+    df_highest_per_group = df_highest_per_group.copy()  # Avoid SettingWithCopyWarning
     parts = df_highest_per_group["dataset"].astype(str).str.split("_", expand=True)
     for i, field in enumerate(config.minimizer_parser):
-        df_highest_per_group.loc[:, field] = parts[i].fillna("")
+        # set entire column field to results of parts[i]
+        df_highest_per_group[field] = parts[i].fillna("")
 
     header = list(config.minimizer_parser)
     header.append("seqName")
