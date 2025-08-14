@@ -356,7 +356,7 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
     """
     response = submit_or_revise(metadata, sequences, config, group_id, mode="submit")
-    submission_id_to_new_accessions = {}  # Map from id to new loculus accession
+    submission_id_to_new_accessions = {}  # Map from submissionId to new loculus accession
     for item in response:
         submission_id_to_new_accessions[item["submissionId"]] = item["accession"]
 
