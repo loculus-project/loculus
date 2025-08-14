@@ -75,7 +75,14 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         <span>
                             <strong>
                                 For revisions, your metadata file must contain an "accession" column, containing for
-                                each row the accession already in the database. <br />
+                                each row the accession already in the database.{' '}
+                                {enableConsensusSequences && (
+                                    <>
+                                        Sequence files are optional - if not provided, existing sequences will be
+                                        retained.
+                                    </>
+                                )}
+                                <br />
                             </strong>
                         </span>
                     )}
@@ -133,7 +140,9 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                 <div className='flex flex-col lg:flex-row gap-6'>
                     {enableConsensusSequences && (
                         <div className='w-60 space-y-2'>
-                            <label className='text-gray-900 font-medium text-sm block'>Sequence file</label>
+                            <label className='text-gray-900 font-medium text-sm block'>
+                                Sequence file{action === 'revise' && ' (optional)'}
+                            </label>
                             <FileUploadComponent
                                 setFile={setSequenceFile}
                                 name='sequence_file'

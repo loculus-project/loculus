@@ -473,12 +473,12 @@ class ReviseEndpointTest(
     fun `GIVEN metadata without submissionId THEN submissionId is inherited from previous version`() {
         val originalData = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).first()
         val accession = originalData.accession
-        
+
         // Get the original submissionId from the first version
         val originalMetadataEntries = convenienceClient.getOriginalMetadata()
         val originalEntry = originalMetadataEntries.first { it.accession == accession && it.version == 1L }
         val originalSubmissionId = originalEntry.originalMetadata?.get("submissionId")
-        
+
         // Create revised file without submissionId column
         val revisedFile = SubmitFiles.revisedMetadataFileWith(
             content = "accession\thost\n$accession\tnew host without submissionId",
@@ -498,6 +498,36 @@ class ReviseEndpointTest(
             `is`(defaultOriginalData.metadata["region"]),
         )
         assertThat(updatedEntry.originalMetadata?.get("submissionId"), `is`(originalSubmissionId))
+    }
+
+    @Test
+    fun `GIVEN metadata with empty string value THEN it overrides existing value`() {
+        val originalData = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).first()
+        val accession = originalData.accession
+        val submissionId = DefaultFiles.submissionIds.first()
+
+        // Verify original has a region value
+        val originalMetadataEntries = convenienceClient.getOriginalMetadata()
+        val originalEntry = originalMetadataEntries.first { it.accession == accession && it.version == 1L }
+        assertThat(originalEntry.originalMetadata?.get("region"), `is`(defaultOriginalData.metadata["region"]))
+
+        // Create revised file with empty string for region
+        val revisedFile = SubmitFiles.revisedMetadataFileWith(
+            content = "accession\tsubmissionId\tregion\n$accession\t$submissionId\t",
+        )
+
+        client.reviseSequenceEntries(
+            revisedFile,
+            sequencesFile = null,
+        ).andExpect(status().isOk)
+
+        val updatedMetadataEntries = convenienceClient.getOriginalMetadata()
+        val updatedEntry = updatedMetadataEntries.first { it.accession == accession && it.version == 2L }
+
+        // Verify region is now empty string, not the original value
+        assertThat(updatedEntry.originalMetadata?.get("region"), `is`(""))
+        // Verify other fields are preserved
+        assertThat(updatedEntry.originalMetadata?.get("host"), `is`(defaultOriginalData.metadata["host"]))
     }
 
     companion object {

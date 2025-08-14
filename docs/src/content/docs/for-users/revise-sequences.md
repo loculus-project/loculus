@@ -8,15 +8,26 @@ The process of submitting revisions is very similar to original submission. The 
 
 ## Preparing the metadata file
 
-The metadata file should include all the metadata fields that were originally included, **both** those that you wish to update and that should remain the same. (Not including a metadata column will set its value to 'empty'.)
+The metadata file needs to include an `accession` column, which contains the Loculus accessions assigned at initial submission. 
 
-The metadata file should only have rows of data for the sequences in the FASTA file. It needs to include an `accession` column, which includes the Loculus accessions assigned at initial submission. You should also include the `id` column, which will match the sequence ids in your FASTA file. (In the case of segmented organisms, the FASTA ids will additionally contain segment suffix, e.g. `_L` for segment L)
+For **metadata-only revisions** (no sequence changes):
+- Include only the metadata fields you wish to update
+- Fields not included in your file will retain their previous values
+- To clear a field's value, include the column and leave the value empty
+- The `id` column is optional when not providing sequences
 
-## Preparing the FASTA file
+For **revisions with sequence changes**:
+- Include the `id` column to match sequence ids in your FASTA file
+- In the case of segmented organisms, the FASTA ids will additionally contain segment suffix, e.g. `_L` for segment L
 
-Create a FASTA file that contains only the sequences you'd like to revise, with whatever changes you'd like to make. There is no reason to edit the sequence names in the FASTA file, as long as they still match those in your metadata file.
+## Preparing the FASTA file (optional)
 
-Even if you are not revising the sequence, you must provide a FASTA file that matches the metadata file you are uploading. It should only contain the sequences that are in the metadata file (if this is fewer than your original submission), and does not otherwise need to be edited.
+A FASTA file is **only required if you are updating sequences**. For metadata-only revisions, you can skip this step entirely.
+
+If you are revising sequences:
+- Create a FASTA file that contains only the sequences you'd like to revise
+- Include whatever sequence changes you'd like to make
+- Ensure sequence names match the `id` values in your metadata file
 
 ## Submitting the revision
 
