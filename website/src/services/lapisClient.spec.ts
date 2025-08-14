@@ -22,10 +22,10 @@ describe('LapisClient', () => {
             .spyOn(client, 'call')
             .mockResolvedValue(ok({ data: [], info: { dataVersion: '' } } as InsertionsResponse));
 
-        await client.getSequenceInsertions('AV1', 'nucleotide');
+        await client.getSequenceInsertions('LOC_123', 'nucleotide');
 
         expect(spy).toHaveBeenCalledWith('nucleotideInsertions', {
-            [schema.primaryKey]: 'AV1',
+            [schema.primaryKey]: 'LOC_123',
             orderBy: [
                 { field: 'sequenceName', type: 'ascending' },
                 { field: 'position', type: 'ascending' },
