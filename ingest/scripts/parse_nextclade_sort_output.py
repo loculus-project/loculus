@@ -37,10 +37,6 @@ class Config:
     segmented: bool = False
 
 
-def parse(field: str, index: int) -> str:
-    return field.split("_")[index] if len(field.split("_")) > index else ""
-
-
 def parse_file(
     config: NextcladeSortParams, sort_results: str, output_file: str, allowed_segments: list[str]
 ) -> None:
@@ -58,10 +54,11 @@ def parse_file(
     df_sorted = df.sort_values(["index", "score"], ascending=[True, False])
     df_highest_per_group = df_sorted.drop_duplicates(subset="index", keep="first")
 
+    df_highest_per_group = df_highest_per_group.copy()
+    parts = df_highest_per_group["dataset"].astype(str).str.split("_", expand=True)
     for i, field in enumerate(config.minimizer_parser):
-        df_highest_per_group[field] = df_highest_per_group.apply(
-            lambda x: parse(x["dataset"], i), axis=1
-        )
+        df_highest_per_group.loc[:, field] = parts[i].fillna("")
+
     header = list(config.minimizer_parser)
     header.append("seqName")
     # Filter out rows where 'segment' is NOT in nucleotide_sequences
