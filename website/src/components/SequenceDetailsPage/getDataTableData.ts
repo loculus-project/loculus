@@ -108,10 +108,13 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
     for (const [header, rows] of tableHeaderMap.entries()) {
         rows.sort(
             (a, b) =>
-                (a.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER) - (b.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER),
+                (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
         );
+        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
         const meanOrder =
-            rows.reduce((sum, r) => sum + (r.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER), 0) / rows.length;
+            definedOrders.length > 0
+                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
+                : Number.POSITIVE_INFINITY;
         headerGroups.push({ header, rows, meanOrder });
     }
 
