@@ -56,6 +56,47 @@ describe('getDataTableData', () => {
         expect(data.table.map((t) => t.header)).toStrictEqual(['Header B', 'Header A']);
         expect(data.table[1].rows.map((r) => r.name)).toStrictEqual(['a2', 'a1']);
     });
+
+    test('should ignore rows without orderOnDetailsPage when computing header order', () => {
+        const entries: TableDataEntry[] = [
+            {
+                label: 'A1',
+                name: 'a1',
+                value: 'v1',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 20,
+            },
+            {
+                label: 'A2',
+                name: 'a2',
+                value: 'v2',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+            },
+            {
+                label: 'B1',
+                name: 'b1',
+                value: 'v3',
+                header: 'Header B',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 10,
+            },
+            {
+                label: 'B2',
+                name: 'b2',
+                value: 'v4',
+                header: 'Header B',
+                type: { kind: 'metadata', metadataType: 'string' },
+            },
+        ];
+
+        const data = getDataTableData(entries);
+
+        expect(data.table.map((t) => t.header)).toStrictEqual(['Header B', 'Header A']);
+        expect(data.table[0].rows.map((r) => r.name)).toStrictEqual(['b1', 'b2']);
+        expect(data.table[1].rows.map((r) => r.name)).toStrictEqual(['a1', 'a2']);
+    });
 });
 
 const testTableDataEntries: TableDataEntry[] = [
