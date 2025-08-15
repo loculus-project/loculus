@@ -97,7 +97,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
     metadata:
       - name: sampleCollectionDate
-        displayName: Collection date
+        displayName: Date
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
@@ -113,7 +113,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         notSearchable: true
         columnWidth: 100
       - name: sampleCollectionDateRangeLower
-        displayName: Collection date (lower bound)
+        displayName: Date (lower bound)
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
@@ -131,7 +131,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
-        displayName: Collection date (upper bound)
+        displayName: Date (upper bound)
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
@@ -145,7 +145,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeUpper
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
-          rangeDisplayName: Collection date
+          rangeDisplayName: Date
           bound: upper
         noInput: true
       - name: displayName
@@ -198,7 +198,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: float
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
-        displayName: Collection country
+        displayName: Country
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
@@ -1266,7 +1266,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile      
+          <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1418,7 +1418,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1532,7 +1532,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: alternativeLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1978,7 +1978,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition: 
+enaDeposition:
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
