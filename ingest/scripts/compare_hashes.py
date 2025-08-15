@@ -340,9 +340,9 @@ def try_to_revoke(
         revoke_all(can_revoke, already_ingested_accessions, config)
     if can_not_revoke:
         warning = (
-            f"Organism: {config.organism}; {len(potentially_suppressed)} previously ingested "
+            f"Organism: {config.organism}; {len(can_not_revoke)} previously ingested "
             "INSDC accessions not found in "
-            f"re-ingested metadata - {', '.join(potentially_suppressed)}."
+            f"re-ingested metadata - {', '.join(can_not_revoke)}."
             " The sequences were not suppressed, replaced or withdrawn in the INSDC database."
             " Please check why this is happening, as this might indicate an ingest error."
         )
