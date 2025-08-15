@@ -282,7 +282,7 @@ def is_sequence_suppressed(nucleotide_id):
         response = requests.get(base_url, params=params, timeout=30)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+        logger.error(f"Request failed: {e}")
         return None
 
     try:
@@ -297,7 +297,7 @@ def is_sequence_suppressed(nucleotide_id):
                     return status in {"suppressed", "replaced", "withdrawn"}
         raise ValueError(parse_error_msg)
     except Exception as e:
-        print(f"Failed to parse XML: {e}")
+        logger.error(f"Failed to parse XML: {e}")
         return None
 
 
