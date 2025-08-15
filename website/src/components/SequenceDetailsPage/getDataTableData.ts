@@ -37,6 +37,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
                     header: entry.header,
                     customDisplay: entry.customDisplay,
                     label: entry.label,
+                    orderOnDetailsPage: entry.orderOnDetailsPage,
                 });
             }
             groupedEntries.get(entry.customDisplay.displayGroup)!.push(entry);
@@ -102,9 +103,20 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         }
         tableHeaderMap.get(entry.header)!.push(entry);
     }
+
+    const headerGroups: { header: string; rows: TableDataEntry[]; meanOrder: number }[] = [];
     for (const [header, rows] of tableHeaderMap.entries()) {
-        result.table.push({ header, rows });
+        rows.sort(
+            (a, b) =>
+                (a.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER) - (b.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER),
+        );
+        const meanOrder =
+            rows.reduce((sum, r) => sum + (r.orderOnDetailsPage ?? Number.MAX_SAFE_INTEGER), 0) / rows.length;
+        headerGroups.push({ header, rows, meanOrder });
     }
+
+    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
+    result.table = headerGroups.map(({ header, rows }) => ({ header, rows }));
 
     return result;
 }
