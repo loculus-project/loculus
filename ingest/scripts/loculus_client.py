@@ -15,12 +15,6 @@ import orjsonl
 import requests
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding="utf-8",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)8s %(filename)15s%(mode)s - %(message)s ",
-    datefmt="%H:%M:%S",
-)
 
 
 @dataclass
