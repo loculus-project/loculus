@@ -60,7 +60,7 @@ class SubmitEndpointSingleSegmentedTest(
             .data
             .unalignedNucleotideSequences
 
-        assertThat(unalignedNucleotideSequences, hasEntry(DEFAULT_SEQUENCE_NAME, "AC"))
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
     }
 
     @Test
