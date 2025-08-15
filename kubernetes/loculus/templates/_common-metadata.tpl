@@ -279,6 +279,9 @@ organisms:
   {{- if .order }}
   order: {{ .order }}
   {{- end }}
+  {{- if .orderOnDetailsPage }}
+  orderOnDetailsPage: {{ .orderOnDetailsPage }}
+  {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
