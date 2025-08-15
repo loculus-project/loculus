@@ -9,7 +9,7 @@ import click
 import orjsonl
 import requests
 import yaml
-from defusedxml.ElementTree import parse
+from defusedxml.ElementTree import fromstring
 from loculus_client import revoke
 
 logger = logging.getLogger(__name__)
@@ -286,7 +286,7 @@ def is_sequence_suppressed(nucleotide_id):
         return None
 
     try:
-        root = parse(response.text)
+        root = fromstring(response.text)
         parse_error_msg = "Response is in unexpected format."
         for docsum in root.findall("DocSum"):
             for item in docsum.findall("Item"):
