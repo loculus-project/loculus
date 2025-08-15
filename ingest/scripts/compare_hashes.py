@@ -295,6 +295,7 @@ def is_sequence_suppressed(nucleotide_id):
                         raise ValueError(parse_error_msg)
                     status = item.text.strip().lower()
                     return status in {"suppressed", "replaced", "withdrawn"}
+        logger.error(f"{parse_error_msg} for response {response.text}")
         raise ValueError(parse_error_msg)
     except Exception as e:
         logger.error(f"Failed to parse XML: {e}")
