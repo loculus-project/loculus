@@ -9,8 +9,8 @@ import click
 import orjsonl
 import requests
 import yaml
-from call_loculus import revoke
 from defusedxml.ElementTree import parse
+from loculus_client import revoke
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
