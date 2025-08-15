@@ -351,6 +351,14 @@ def submit_or_revise(
     return response.json()
 
 
+def revoke(accession_to_revoke: str, message: str, config: Config) -> str:
+    url = f"{organism_url(config)}/revoke"
+    body = {"accessions": [accession_to_revoke], "versionComment": message}
+    response = make_request(HTTPMethod.POST, url, config, json_body=body)
+    logger.debug(f"revocation response: {response.json()}")
+    return response.json()
+
+
 def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
     """
     Submit segments in new sequence groups and revoke segments in old (incorrect) groups in Loculus.
@@ -371,7 +379,6 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
             new_accessions_for_this_old_accession.append(submission_id_to_new_accessions[key])
             old_to_new_loculus_keys[loc_accession] = new_accessions_for_this_old_accession
 
-    url = f"{organism_url(config)}/revoke"
     responses = []
     for old_loc_accession, new_loc_accession in old_to_new_loculus_keys.items():
         logger.debug(f"revoking: {old_loc_accession}")
@@ -380,10 +387,9 @@ def regroup_and_revoke(metadata, sequences, map, config: Config, group_id):
             "sequence to be grouped differently. The newly grouped sequences can be found "
             f"here: {', '.join(new_loc_accession)}."
         )
-        body = {"accessions": [old_loc_accession], "versionComment": comment}
-        response = make_request(HTTPMethod.POST, url, config, json_body=body)
-        logger.debug(f"revocation response: {response.json()}")
-        responses.append(response.json())
+        response = revoke(old_loc_accession, comment, config)
+        logger.debug(f"revocation response: {response}")
+        responses.append(response)
 
     return responses
 
