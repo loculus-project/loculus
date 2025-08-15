@@ -337,6 +337,7 @@ def try_to_revoke(
             continue
         can_not_revoke.append(accession)
     if can_revoke:
+        logger.info(f"Revoking {len(can_revoke)} sequences that have been suppressed in INSDC")
         revoke_all(can_revoke, already_ingested_accessions, config)
     if can_not_revoke:
         warning = (
