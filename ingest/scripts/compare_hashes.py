@@ -10,7 +10,8 @@ import orjsonl
 import requests
 import yaml
 from defusedxml.ElementTree import parse
-from ingest.scripts.call_loculus import revoke
+
+from scripts.call_loculus import revoke
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
