@@ -123,7 +123,6 @@ export const SearchForm = ({
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
                         </div>
-
                         {showMutationSearch && (
                             <MutationField
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
@@ -131,16 +130,25 @@ export const SearchForm = ({
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />
                         )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
-                        ))}
+
+                        {visibleFields
+                            .slice()
+                            .sort((a, b) => {
+                                // some fields have specified an 'order', default to 100 if not present
+                                const orderA = 'order' in a && typeof a.order === 'number' ? a.order : 100;
+                                const orderB = 'order' in b && typeof b.order === 'number' ? b.order : 100;
+                                return orderA - orderB;
+                            })
+                            .map((filter) => (
+                                <SearchField
+                                    field={filter}
+                                    lapisUrl={lapisUrl}
+                                    fieldValues={fieldValues}
+                                    setSomeFieldValues={setSomeFieldValues}
+                                    key={filter.name}
+                                    lapisSearchParameters={lapisSearchParameters}
+                                />
+                            ))}
                     </div>{' '}
                 </div>
             </div>
