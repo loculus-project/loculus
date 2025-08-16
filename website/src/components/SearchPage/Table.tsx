@@ -251,6 +251,7 @@ export const Table: FC<TableProps> = ({
                                         <input
                                             type='checkbox'
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                            tabIndex={-1}
                                             onMouseDown={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -268,6 +269,7 @@ export const Table: FC<TableProps> = ({
                                                 }
                                             }}
                                             onClick={(e) => e.stopPropagation()}
+                                            onChange={() => {}} // Controlled by mouse events
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
                                         />
                                     </td>
