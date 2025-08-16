@@ -117,6 +117,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        order: 11
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -127,13 +128,14 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeLower
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
-          rangeDisplayName: Collection date
+          rangeDisplayName: Date range
           bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
         displayName: Date (upper bound)
         type: date
         initiallyVisible: true
+        order: 12
         hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
@@ -145,7 +147,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeUpper
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
-          rangeDisplayName: Date
+          rangeDisplayName: Date range
           bound: upper
         noInput: true
       - name: displayName
@@ -522,31 +524,36 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         header: Sample details
-        order: 30
+        order: 21
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         desired: true
         generateIndex: true
         autocomplete: true
+        order: 22
         header: Sample details
       - name: geoLocCity
         displayName: Collection city
         desired: true
         generateIndex: true
         autocomplete: true
+        order: 23
         header: Sample details
       - name: geoLocSite
         ontology_id: GENEPIO:0100436
         definition: The name of a specific geographical location e.g. Credit River (rather than river).
         guidance: Provide the name of the specific geographical site using a specific noun (a word that names a certain place, thing).
         example: Credit River
+        order: 25
         displayName: Collection site
         header: Sample details
       - name: specimenCollectorSampleId
         displayName: Isolate name
         desired: true
         header: Sample details
+        initiallyVisible: true
+        order: 90
         ingest: ncbiIsolateName
         enableSubstringSearch: true
       - name: authors
