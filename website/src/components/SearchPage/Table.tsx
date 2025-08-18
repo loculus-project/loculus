@@ -252,8 +252,8 @@ export const Table: FC<TableProps> = ({
                                             type='checkbox'
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                             onMouseDown={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
+                                                //e.preventDefault();
+                                                //e.stopPropagation();
                                                 const seqId = row[primaryKey] as string;
                                                 const newValue = !selectedSeqs.has(seqId);
                                                 dragSelecting.current = { active: true, value: newValue };
