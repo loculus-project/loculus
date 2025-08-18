@@ -4,6 +4,7 @@ import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
+import AccessionSearchBox from './AccessionSearchBox';
 
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;
@@ -44,6 +45,9 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
                     <div>
                         <div className='h-10'>
                             <a href='/'>{siteName}</a>
+                        </div>
+                        <div className='py-3 pr-2'>
+                            <AccessionSearchBox defaultOpen fullWidth onSubmitSuccess={closeMenu} />
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             {topNavigationItems.map(({ text, path }) => (

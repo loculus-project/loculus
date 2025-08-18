@@ -149,9 +149,14 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public getSequenceInsertions(accessionVersion: string, type: BaseType) {
         const endpoint = type === 'nucleotide' ? 'nucleotideInsertions' : 'aminoAcidInsertions';
-        return this.call(endpoint, {
+        const request = {
             [this.schema.primaryKey]: accessionVersion,
-        });
+            orderBy: [
+                { field: 'sequenceName', type: 'ascending' },
+                { field: 'position', type: 'ascending' },
+            ],
+        };
+        return this.call(endpoint, request as LapisBaseRequest);
     }
 
     public getUnalignedSequences(accessionVersion: string) {

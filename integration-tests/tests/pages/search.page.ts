@@ -52,8 +52,13 @@ export class SearchPage {
     }
 
     async enterAccessions(accessions: string) {
-        await this.page.getByLabel('Accession').click();
-        await this.page.getByLabel('Accession').fill(accessions);
+        // Target the main accession textbox (avoid header/nav widgets)
+        const accessionField = this.page.getByRole('textbox', {
+            name: 'Accession',
+            exact: true,
+        });
+        await accessionField.click();
+        await accessionField.fill(accessions);
     }
 
     async resetSearchForm() {

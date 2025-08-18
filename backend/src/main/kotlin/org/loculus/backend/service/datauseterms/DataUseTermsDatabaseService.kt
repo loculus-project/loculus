@@ -11,6 +11,7 @@ import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.utils.processInDatabaseSafeChunks
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,23 +31,25 @@ class DataUseTermsDatabaseService(
     ) {
         val now = dateProvider.getCurrentDateTime()
 
-        accessionPreconditionValidator.validate {
-            thatAccessionsExist(accessions)
-                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
-        }
-
-        dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(accessions, newDataUseTerms)
-        dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)
-
-        DataUseTermsTable.batchInsert(accessions) {
-            this[DataUseTermsTable.accessionColumn] = it
-            this[DataUseTermsTable.changeDateColumn] = now
-            this[DataUseTermsTable.dataUseTermsTypeColumn] = newDataUseTerms.type.toString()
-            this[DataUseTermsTable.restrictedUntilColumn] = when (newDataUseTerms) {
-                is DataUseTerms.Restricted -> newDataUseTerms.restrictedUntil
-                else -> null
+        accessions.processInDatabaseSafeChunks { chunk ->
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(chunk)
+                    .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
             }
-            this[DataUseTermsTable.userNameColumn] = authenticatedUser.username
+
+            dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(chunk, newDataUseTerms)
+            dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)
+
+            DataUseTermsTable.batchInsert(chunk) {
+                this[DataUseTermsTable.accessionColumn] = it
+                this[DataUseTermsTable.changeDateColumn] = now
+                this[DataUseTermsTable.dataUseTermsTypeColumn] = newDataUseTerms.type.toString()
+                this[DataUseTermsTable.restrictedUntilColumn] = when (newDataUseTerms) {
+                    is DataUseTerms.Restricted -> newDataUseTerms.restrictedUntil
+                    else -> null
+                }
+                this[DataUseTermsTable.userNameColumn] = authenticatedUser.username
+            }
         }
 
         auditLogger.log(

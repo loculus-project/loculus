@@ -1,4 +1,5 @@
 ---
+import AccessionSearchBox from './AccessionSearchBox.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
@@ -24,7 +25,8 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
 ---
 
 <div class='flex justify-end relative'>
-    <div class='subtitle hidden md:flex md:z-6 gap-4'>
+    <div class='subtitle hidden md:flex md:z-6 gap-4 items-center'>
+        <AccessionSearchBox className='' client:load />
         {topNavigationItems.map(({ text, path }) => <a href={path}>{text}</a>)}
     </div>
 

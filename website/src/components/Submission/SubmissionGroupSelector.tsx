@@ -27,11 +27,11 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
     );
 
     if (groups.length === 1) {
-        return <div className='mb-2 ml-4'>{groupNameElement}</div>;
+        return <div className='mb-2'>{groupNameElement}</div>;
     }
 
     return (
-        <div className='mb-2 ml-4'>
+        <div className='mb-2'>
             <div className='dropdown'>
                 <div tabIndex={0} role='button' className=''>
                     {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />

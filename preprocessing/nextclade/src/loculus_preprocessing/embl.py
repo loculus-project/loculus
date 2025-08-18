@@ -70,32 +70,24 @@ def get_country(metadata: ProcessedMetadata, config: Config) -> str:
     return f"{country}: {admin}" if admin else country
 
 
-def get_description(  # noqa: PLR0913, PLR0917
+def get_description(
     accession: str,
     version: int,
     db_name: str,
-    submitter: str | None,
     metadata: ProcessedMetadata,
     segment: str | None,
 ) -> str:
-    if submitter and submitter == "insdc_ingest_user":
-        if segment:
-            insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
-        else:
-            insdc_accession = metadata.get("insdcAccessionFull")
-        return (
-            f"Original sequence submitted to the INSDC with accession: {insdc_accession}, "
-            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
-        )
+    description = f"{db_name} accession: {accession}.{version}, "
+    if segment:
+        insdc_accession = metadata.get(f"insdcAccessionFull_{segment}")
+    else:
+        insdc_accession = metadata.get("insdcAccessionFull")
+    if insdc_accession:
+        description += f"INSDC accession: {insdc_accession}, "
     if metadata.get("gisaidIsolateId"):
         gisaid_accession = metadata.get("gisaidIsolateId")
-        return (
-            f"Original sequence submitted to GISAID with accession: {gisaid_accession}, "
-            f"Sequence submitted to {db_name} with accession: {accession}, version: {version}"
-        )
-    return (
-        f"Original sequence submitted to {db_name} with accession: {accession}, version: {version}"
-    )
+        description += f"GISAID accession: {gisaid_accession}, "
+    return description.strip(", ")
 
 
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
@@ -231,9 +223,7 @@ def create_flatfile(  # noqa: PLR0914
             continue
         reference = Reference()
         segment = seq_name if config.multi_segment else None
-        description = get_description(
-            accession, version, config.db_name, submission_data.submitter, metadata, segment
-        )
+        description = get_description(accession, version, config.db_name, metadata, segment)
         reference.authors = authors
         sequence = SeqRecord(
             Seq(sequence_str),

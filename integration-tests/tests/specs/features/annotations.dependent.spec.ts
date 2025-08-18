@@ -43,8 +43,7 @@ ID   LOC_000002W; ; linear; RNA; ; UNC; 910 BP.
 XX
 AC   LOC_000002W;
 XX
-DE   Original sequence submitted to Loculus with accession: LOC_000002W,
-DE   version: 1
+DE   Loculus accession: LOC_000002W.1
 XX
 OS   Sudan ebolavirus
 OC   .
