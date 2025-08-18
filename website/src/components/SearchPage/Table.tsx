@@ -247,26 +247,23 @@ export const Table: FC<TableProps> = ({
                                             const newValue = !selectedSeqs.has(seqId);
                                             setRowSelected(seqId, newValue);
                                         }}
+                                        onMouseEnter={() => {
+                                            if (dragSelecting.current.active) {
+                                                setRowSelected(row[primaryKey] as string, dragSelecting.current.value);
+                                            }
+                                        }}
                                     >
                                         <input
                                             type='checkbox'
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                            onClick={(e) => e.stopPropagation()}
+                                            checked={selectedSeqs.has(row[primaryKey] as string)}
                                             onMouseDown={() => {
                                                 const seqId = row[primaryKey] as string;
                                                 const newValue = !selectedSeqs.has(seqId);
                                                 dragSelecting.current = { active: true, value: newValue };
                                                 setRowSelected(seqId, newValue);
                                             }}
-                                            onMouseEnter={() => {
-                                                if (dragSelecting.current.active) {
-                                                    setRowSelected(
-                                                        row[primaryKey] as string,
-                                                        dragSelecting.current.value,
-                                                    );
-                                                }
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            checked={selectedSeqs.has(row[primaryKey] as string)}
                                         />
                                     </td>
 
