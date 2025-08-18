@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 import unicodedata
+from unidecode import unidecode  
 
 import dateutil.parser as dateutil
 import pytz
