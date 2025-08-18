@@ -90,11 +90,13 @@ fields:
     customDisplay:
       type: dataUseTerms
     header: Data use terms
+    orderOnDetailsPage: 610
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
+    orderOnDetailsPage: 620
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -105,6 +107,7 @@ fields:
     customDisplay:
       type: link
       url: "__value__"
+    orderOnDetailsPage: 630
   {{- end}}
   {{- end}}
   - name: versionStatus
