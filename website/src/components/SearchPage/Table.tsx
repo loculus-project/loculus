@@ -250,6 +250,9 @@ export const Table: FC<TableProps> = ({
                                         onMouseEnter={() => {
                                             if (dragSelecting.current.active) {
                                                 setRowSelected(row[primaryKey] as string, dragSelecting.current.value);
+                                                if (document.activeElement instanceof HTMLElement) {
+                                                    document.activeElement.blur();
+                                                }
                                             }
                                         }}
                                     >
