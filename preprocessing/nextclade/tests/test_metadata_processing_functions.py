@@ -392,19 +392,19 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="accents_in_authors",
+        name="diacritics_in_authors",
         input_metadata={
-            "submissionId": "accents_in_authors",
+            "submissionId": "diacritics_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Pérez, José; Bailley, François",
+            "authors": "Pérez, José; Bailley, François; Møller, Anäis",
         },
         accession_id="13",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_13.1/2022-11-01",
-            "authors": "Pérez, José; Bailley, François",
+            "authors": "Pérez, José; Bailley, François; Møller, Anäis",
         },
         expected_errors=[],
         expected_warnings=[],
