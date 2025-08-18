@@ -215,7 +215,7 @@
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "Object of type [organism schema](#schema-type)",
+          "description": "Object of type [organism schema](#organism-schema-type)",
           "additionalProperties": false,
           "properties": {
             "organismName": {
