@@ -8,8 +8,8 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
     // Then commit the changes
-    id 'org.jetbrains.kotlin.jvm' version '2.2.0'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.10'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.10'
     id 'org.jlleitschuh.gradle.ktlint' version '13.0.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -42,7 +42,7 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9"
-    implementation "org.flywaydb:flyway-database-postgresql:11.11.0"
+    implementation "org.flywaydb:flyway-database-postgresql:11.11.1"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
@@ -51,7 +51,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.6"
     implementation("io.minio:minio:8.5.17")
-    implementation("software.amazon.awssdk:s3:2.32.19")
+    implementation("software.amazon.awssdk:s3:2.32.24")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -66,9 +66,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
-    testImplementation "io.jsonwebtoken:jjwt-api:0.12.6"
-    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
-    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
+    testImplementation "io.jsonwebtoken:jjwt-api:0.12.7"
+    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.7"
+    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.7"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.21.3"
     testImplementation "org.testcontainers:minio:1.21.3"
