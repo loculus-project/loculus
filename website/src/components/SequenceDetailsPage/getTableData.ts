@@ -70,14 +70,23 @@ export async function getTableData(
 
 function getSuborganism(
     details: Details,
-    _schema: Schema,
+    schema: Schema,
     referenceGenomes: ReferenceGenomes,
     accessionVersion: string,
 ): Result<Suborganism, ProblemDetail> {
     if (SINGLE_REFERENCE in referenceGenomes) {
         return ok(SINGLE_REFERENCE);
     }
-    const suborganismField = 'genotype'; // TODO read from schema
+    const suborganismField = schema.suborganismIdentifierField;
+    if (suborganismField === undefined) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid configuration',
+            status: 0,
+            detail: `No 'suborganismIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
     const value = details[suborganismField];
     const suborganismResult = z.string().safeParse(value);
     if (!suborganismResult.success) {

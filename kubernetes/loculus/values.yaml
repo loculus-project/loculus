@@ -1753,6 +1753,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+        suborganismIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
