@@ -26,9 +26,10 @@ interface Props {
     title: string;
     implicitOrganism?: string;
     noHorizontalPadding?: boolean;
+    fullWidth?: boolean;
 }
 
-const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
+const { title, implicitOrganism, noHorizontalPadding, fullWidth } = Astro.props;
 
 // Get the current organism from either implicit prop or URL params
 const { organism } = cleanOrganism(Astro.params.organism);
@@ -68,10 +69,10 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             serverTime={Date.now()}
             client:load
         />
-        <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
+        <div class='flex flex-col min-h-screen'>
             <ToastContainer client:load />
             <header class='bg-white h-fit z-30'>
-                <nav class='flex justify-between items-center p-4'>
+                <nav class='flex justify-between items-center p-4 mx-4'>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
                             <div class='flex flex-row'>
@@ -96,7 +97,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 {/* Organism-specific submenu */}
                 {currentOrganism && (
                     <div class='bg-primary-50'>
-                        <div class='flex items-center gap-2 px-4 py-2'>
+                        <div class='flex items-center gap-2 px-4 py-2 mx-4'>
                             <span class='text-primary-800 font-medium mr-3'>
                                 {organism?.displayName || currentOrganism}
                             </span>
@@ -130,12 +131,18 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <slot name='banner' />
             </header>
 
-            <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
+            <div class:list={[
+                'flex-grow', 
+                'mt-3', 
+                'mb-5',
+                fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full',
+                noHorizontalPadding ? '' : 'px-4'
+            ]}>
                 <slot />
             </div>
 
             <hr class='border-t border-gray-1000' />
-            <footer class='hidden sm:flex sm:z-6 sm:z-6 flex justify-between items-center h-20'>
+            <footer class={`hidden sm:flex sm:z-6 flex justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}>
                 <div class='flex gap-5'>
                     {
                         navigationItems.bottom.map(({ text, path }) => (
