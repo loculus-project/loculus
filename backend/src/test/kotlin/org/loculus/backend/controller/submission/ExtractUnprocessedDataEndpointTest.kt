@@ -47,6 +47,9 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @EndpointTest(
     properties = [
@@ -58,6 +61,99 @@ class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val client: SubmissionControllerClient,
 ) {
+
+    @Test
+    fun `GIVEN multiple concurrent clients extracting data THEN each row is only returned once and not error`() {
+        // Submit some test data
+        val submissionResult = convenienceClient.submitDefaultFiles()
+        val accessionVersions = submissionResult.submissionIdMappings
+
+        // Create a latch to synchronize the start of concurrent requests
+        val startLatch = CountDownLatch(1)
+        val completionLatch = CountDownLatch(2)
+
+        // Store results from each client
+        val client1Results = mutableListOf<UnprocessedData>()
+        val client2Results = mutableListOf<UnprocessedData>()
+        val client1Errors = mutableListOf<Exception>()
+        val client2Errors = mutableListOf<Exception>()
+
+        // Create two threads to simulate concurrent clients
+        val client1Thread = Thread {
+            try {
+                startLatch.await() // Wait for signal to start
+                val response = client.extractUnprocessedData(
+                    numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+                    organism = DEFAULT_ORGANISM,
+                )
+                val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
+                client1Results.addAll(responseBody)
+            } catch (e: Exception) {
+                client1Errors.add(e)
+            } finally {
+                completionLatch.countDown()
+            }
+        }
+
+        val client2Thread = Thread {
+            try {
+                startLatch.await() // Wait for signal to start
+                val response = client.extractUnprocessedData(
+                    numberOfSequenceEntries = DefaultFiles.NUMBER_OF_SEQUENCES,
+                    organism = DEFAULT_ORGANISM,
+                )
+                val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
+                client2Results.addAll(responseBody)
+            } catch (e: Exception) {
+                client2Errors.add(e)
+            } finally {
+                completionLatch.countDown()
+            }
+        }
+
+        // Start both threads
+        client1Thread.start()
+        client2Thread.start()
+
+        // Release both threads to make requests simultaneously
+        startLatch.countDown()
+
+        // Wait for both to complete
+        completionLatch.await(30, TimeUnit.SECONDS)
+
+        // Check for errors
+        assertThat("Client 1 should not have errors", client1Errors, `is`(empty()))
+        assertThat("Client 2 should not have errors", client2Errors, `is`(empty()))
+
+        // Get all returned accessions from both clients
+        val client1Accessions = client1Results.map { it.accession to it.version }.toSet()
+        val client2Accessions = client2Results.map { it.accession to it.version }.toSet()
+
+        // Check that no accession was returned to both clients
+        val duplicateAccessions = client1Accessions.intersect(client2Accessions)
+        assertThat(
+            "No accession should be returned to both clients, but found duplicates: $duplicateAccessions",
+            duplicateAccessions,
+            `is`(empty()),
+        )
+
+        // Check that all submitted entries were extracted exactly once
+        val allExtractedAccessions = client1Accessions.union(client2Accessions)
+        val expectedAccessions = accessionVersions.map { it.accession to 1L }.toSet()
+
+        assertThat(
+            "All submitted entries should be extracted exactly once",
+            allExtractedAccessions,
+            `is`(expectedAccessions),
+        )
+
+        // Verify total count
+        assertThat(
+            "Total extracted entries should equal submitted entries",
+            client1Results.size + client2Results.size,
+            `is`(DefaultFiles.NUMBER_OF_SEQUENCES),
+        )
+    }
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
