@@ -11,8 +11,10 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -21,6 +23,7 @@ import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
+import org.jetbrains.exposed.sql.delete
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.extract
@@ -1272,6 +1275,94 @@ class SubmissionDatabaseService(
         }
     }
 
+    /**
+     * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
+     * the given organism and have a pipelineVersion smaller than earliestVersionToKeep.
+     * Batches deletes to avoid locking the table for a long time.
+     */
+    fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
+        val batchSize = 1000
+        log.debug(
+            "Starting cleanup of outdated preprocessing data for organism '$organism' " +
+                "with earliest version to keep: $earliestVersionToKeep",
+        )
+
+        var totalDeletedRows = 0
+        var deletedRowsInLastBatch: Int
+        do {
+            deletedRowsInLastBatch = transaction {
+                val keysToDelete = SequenceEntriesPreprocessedDataTable
+                    .join(SequenceEntriesTable, JoinType.INNER, null, null) {
+                        (
+                            SequenceEntriesPreprocessedDataTable.accessionColumn eq
+                                SequenceEntriesTable.accessionColumn
+                            ) and
+                            (
+                                SequenceEntriesPreprocessedDataTable.versionColumn eq
+                                    SequenceEntriesTable.versionColumn
+                                )
+                    }
+                    .select(
+                        SequenceEntriesPreprocessedDataTable.accessionColumn,
+                        SequenceEntriesPreprocessedDataTable.versionColumn,
+                        SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
+                    )
+                    .where {
+                        (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn less earliestVersionToKeep) and
+                            (SequenceEntriesTable.organismColumn eq organism)
+                    }
+                    .limit(batchSize)
+                    .map {
+                        Triple(
+                            it[SequenceEntriesPreprocessedDataTable.accessionColumn],
+                            it[SequenceEntriesPreprocessedDataTable.versionColumn],
+                            it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn],
+                        )
+                    }
+                SequenceEntriesPreprocessedDataTable.deleteWhere {
+                    Triple(
+                        SequenceEntriesPreprocessedDataTable.accessionColumn,
+                        SequenceEntriesPreprocessedDataTable.versionColumn,
+                        SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
+                    ) inList keysToDelete
+                }
+            }
+            totalDeletedRows += deletedRowsInLastBatch
+            log.debug {
+                "Deleted $deletedRowsInLastBatch rows in this batch for organism '$organism' " +
+                    "with version < $earliestVersionToKeep"
+            }
+        } while (deletedRowsInLastBatch == batchSize)
+        if (totalDeletedRows > 0) {
+            log.info(
+                "Finished cleanup of outdated preprocessing data for organism '$organism', " +
+                    "with version < $earliestVersionToKeep. Total deleted rows: $totalDeletedRows.",
+            )
+        } else {
+            log.info(
+                "No outdated preprocessing data found for organism '$organism' with version < $earliestVersionToKeep.",
+            )
+        }
+    }
+
+    /**
+     * Garbage collects outdated preprocessed entries for all organisms.
+     * This is a convenience method that iterates over all distinct organisms in the database
+     * and calls [cleanUpOutdatedPreprocessingData] for each organism.
+     */
+    fun cleanUpOutdatedPreprocessingDataForAllOrganisms() {
+        CurrentProcessingPipelineTable.selectAll()
+            .forEach { row ->
+                cleanUpOutdatedPreprocessingData(
+                    organism = row[CurrentProcessingPipelineTable.organismColumn],
+                    earliestVersionToKeep = row[CurrentProcessingPipelineTable.versionColumn],
+                )
+            }
+    }
+
+    /**
+     * Returns a map from organism names to new versions or null if version wasn't upgraded.
+     */
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
         SequenceEntriesTable.distinctOrganisms().map { organismName ->
             Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
