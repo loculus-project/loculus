@@ -30,7 +30,7 @@ const filteredNavItems = topNavigationItems.filter(item => item.text !== 'Browse
 ---
 
 <div class='flex justify-end relative'>
-    <div class='subtitle hidden md:flex md:z-6 gap-4 items-center'>
+    <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
         <OrganismNavigation 
             currentOrganism={selectedOrganism}
             knownOrganisms={knownOrganisms}
@@ -41,7 +41,7 @@ const filteredNavItems = topNavigationItems.filter(item => item.text !== 'Browse
     </div>
 
     <div
-        class='md:hidden z-0'
+        class='lg:hidden z-0'
         style={{
             position: 'absolute',
             right: '1.5rem',
