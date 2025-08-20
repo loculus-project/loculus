@@ -71,7 +71,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         />
         <div class='flex flex-col min-h-screen'>
             <ToastContainer client:load />
-            <header class='bg-white h-fit z-30'>
+            <header class='bg-white border-b border-gray-200 h-fit z-30'>
                 <nav class='flex justify-between items-center p-4 mx-4'>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
@@ -92,22 +92,21 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     </div>
                     <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
                 </nav>
-                <hr class='border-t border-gray-1000' />
                 
                 {/* Organism-specific submenu */}
                 {currentOrganism && (
-                    <div class='bg-primary-50'>
+                    <div class='bg-gray-50 border-b border-gray-200'>
                         <div class='flex items-center gap-2 px-4 py-2 mx-4'>
-                            <span class='text-primary-800 font-medium mr-3'>
+                            <span class='text-gray-700 font-medium mr-3'>
                                 {organism?.displayName || currentOrganism}
                             </span>
-                            <span class='text-primary-200 mr-2'>|</span>
+                            <span class='text-gray-300 mr-2'>|</span>
                             <a 
                                 href={`/${currentOrganism}/search`} 
                                 class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
                                     isBrowsePage 
-                                        ? 'bg-primary-100 text-primary-700' 
-                                        : 'text-primary-600 hover:bg-primary-100'
+                                        ? 'bg-primary-100 text-gray-900' 
+                                        : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                             >
                                 Browse
@@ -117,8 +116,8 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                                     href={`/${currentOrganism}/submission`} 
                                     class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
                                         isSubmitPage 
-                                            ? 'bg-primary-100 text-primary-700' 
-                                            : 'text-primary-600 hover:bg-primary-100'
+                                            ? 'bg-primary-100 text-gray-900' 
+                                            : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                                 >
                                     Submit
