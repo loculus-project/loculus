@@ -43,6 +43,8 @@ In the unprocessed NDJSON, each line contains a sequence entry represented as a 
 {"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": john_smith, ...}
 ```
 
+The `unalignedNucleotideSequences` field is a dictionary from the fasta header (of the form <submissionId>_<suffix> or <submissionId> where `submissionId` is the metadata submission Id) of the submitted entry to the sequence.
+
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Fields present in the metadata file header but left empty by the submitter will be returned as "". Only columns present in the submission metadata file will be keys in the JSON object - independent of the metadata schema.
 
 The `files` field contains a JSON object in which the keys are the names of the file categories and the values are lists of objects containing file IDs, names and URLs. This is only available if the Loculus instance and organism are configured to support files. The URLs are S3 presigned, read-only URLs that are only valid for a limited amount of time.
