@@ -24,6 +24,7 @@ const schema: Schema = {
     submissionDataTypes: {
         consensusSequences: true,
     },
+    suborganismIdentifierField: 'genotype',
 };
 
 const singleReferenceGenomes: ReferenceGenomes = {
