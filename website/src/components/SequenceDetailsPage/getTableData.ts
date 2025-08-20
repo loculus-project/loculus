@@ -157,6 +157,9 @@ function toTableData(config: Schema) {
                 value: mapValueToDisplayedValue(details[metadata.name], metadata),
                 header: metadata.header ?? '',
                 type: { kind: 'metadata', metadataType: metadata.type },
+                ...(metadata.orderOnDetailsPage !== undefined
+                    ? { orderOnDetailsPage: metadata.orderOnDetailsPage }
+                    : {}),
             }));
 
         if (config.submissionDataTypes.consensusSequences) {

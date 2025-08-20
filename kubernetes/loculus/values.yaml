@@ -101,6 +101,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
+        orderOnDetailsPage: 200
         includeInDownloadsByDefault: true
         preprocessing:
           function: parse_date_into_range
@@ -118,6 +119,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         hideInSearchResultsTable: true
         header: Sample details
+        orderOnDetailsPage: 220
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -136,6 +138,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         hideInSearchResultsTable: true
         header: Sample details
+        orderOnDetailsPage: 240
         preprocessing:
           function: parse_date_into_range
           inputs:
@@ -162,6 +165,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: NCBI release date
         type: date
         header: "INSDC"
+        orderOnDetailsPage: 1000
         preprocessing:
           function: parse_timestamp
           inputs:
@@ -175,10 +179,12 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         noInput: true
         includeInDownloadsByDefault: true
+        orderOnDetailsPage: 300
       - name: ncbiUpdateDate
         type: date
         displayName: NCBI update date
         header: "INSDC"
+        orderOnDetailsPage: 1020
         preprocessing:
           function: parse_timestamp
           inputs:
@@ -191,11 +197,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Latitude
         header: Sample details
         type: float
+        orderOnDetailsPage: 420
         guidance: Geo-coordinate latitude in decimal degree (WGS84) format, i.e. values in range -90 to 90, where positive values are north of the Equator.
       - name: geoLocLongitude
         displayName: Longitude
         header: Sample details
         type: float
+        orderOnDetailsPage: 440
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
         displayName: Collection country
@@ -205,6 +213,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         includeInDownloadsByDefault: true
         header: Sample details
         order: 20
+        orderOnDetailsPage: 400
         ingest: country
         required: true
         options:
@@ -523,6 +532,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         header: Sample details
         order: 30
+        orderOnDetailsPage: 460
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
@@ -530,12 +540,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: Sample details
+        orderOnDetailsPage: 480
       - name: geoLocCity
         displayName: Collection city
         desired: true
         generateIndex: true
         autocomplete: true
         header: Sample details
+        orderOnDetailsPage: 500
       - name: geoLocSite
         ontology_id: GENEPIO:0100436
         definition: The name of a specific geographical location e.g. Credit River (rather than river).
@@ -543,12 +555,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Credit River
         displayName: Collection site
         header: Sample details
+        orderOnDetailsPage: 520
       - name: specimenCollectorSampleId
         displayName: Isolate name
         desired: true
         header: Sample details
         ingest: ncbiIsolateName
         enableSubstringSearch: true
+        orderOnDetailsPage: 600
       - name: authors
         displayName: Authors
         type: authors
@@ -556,6 +570,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         desired: true
         enableSubstringSearch: true
         order: 40
+        orderOnDetailsPage: 800
         includeInDownloadsByDefault: true
         ingest: ncbiSubmitterNames
         preprocessing:
@@ -570,6 +585,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Authors
         ingest: ncbiSubmitterAffiliation
         includeInDownloadsByDefault: true
+        orderOnDetailsPage: 820
       - name: ncbiSubmitterCountry
         displayName: NCBI submitter country
         generateIndex: true
@@ -602,6 +618,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             - name: View in DDBJ
               url: "https://getentry.ddbj.nig.ac.jp/getentry/na/__value__"
         header: "INSDC"
+        orderOnDetailsPage: 1040
         ingest: genbankAccession
         noInput: true
         perSegment: true
@@ -617,6 +634,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             - name: View in DDBJ
               url: "https://ddbj.nig.ac.jp/search/entry/bioproject/__value__"
         header: "INSDC"
+        orderOnDetailsPage: 1060
         ingest: bioprojects
         guidance: "Only add this field if you want your sequences to be linked to an existing public bioproject in the INSDC. If you do not have a bioproject, leave this field blank - we will create a bioproject for you on submission of your consensus sequence."
         definition: "Accession of public bioproject in the INSDC your consensus sequences should be uploaded tp"
@@ -627,6 +645,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ebi.ac.uk/ena/browser/view/__value__"
         header: "INSDC"
+        orderOnDetailsPage: 1100
         noInput: true
         oneHeader: true
       - name: biosampleAccession
@@ -640,6 +659,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             - name: View in DDBJ
               url: "https://ddbj.nig.ac.jp/search/entry/biosample/__value__"
         header: "INSDC"
+        orderOnDetailsPage: 1080
         guidance: "Only add this field if you have already submitted the raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences. If you add this field we will not create a new biosample for you and assume you have submitted all required metadata in the linked biosample."
         definition: "Accession of corresponding public biosample of the raw reads in the INSDC"
         example: "SAMN12345678"
@@ -648,6 +668,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Culture ID
         desired: true
         header: Sample details
+        orderOnDetailsPage: 620
       - name: sampleReceivedDate
         ontology_id: GENEPIO:0001177
         definition: The date on which the sample was received by the laboratory.
@@ -656,6 +677,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sample received date
         desired: true
         type: date
+        orderOnDetailsPage: 260
         preprocessing:
           function: parse_and_assert_past_date
           inputs:
@@ -664,12 +686,14 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sampleType
         displayName: Sample type
         header: Sampling
+        orderOnDetailsPage: 1200
       - name: purposeOfSampling
         ontology_id: GENEPIO:0001198
         definition: The reason that the sample was collected.
         guidance: Select a value from the pick list in the template
         example: Diagnostic testing
         header: Sampling
+        orderOnDetailsPage: 1220
         ingest: ncbiPurposeOfSampling
       - name: presamplingActivity
         ontology_id: GENEPIO:0100433
@@ -678,6 +702,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Antimicrobial pre-treatment [GENEPIO:0100537]
         displayName: Presampling activity
         header: Sampling
+        orderOnDetailsPage: 1240
       - name: anatomicalMaterial
         ontology_id: GENEPIO:0001211
         definition: A substance obtained from an anatomical part of an organism e.g. tissue, blood.
@@ -685,6 +710,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Blood [UBERON:0000178]
         displayName: Anatomical material
         header: Sampling
+        orderOnDetailsPage: 1260
       - name: anatomicalPart
         ontology_id: GENEPIO:0001214
         definition: An anatomical part of an organism e.g. oropharynx.
@@ -692,6 +718,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Nasopharynx (NP) [UBERON:0001728]
         displayName: Anatomical part
         header: Sampling
+        orderOnDetailsPage: 1280
       - name: bodyProduct
         ontology_id: GENEPIO:0001216
         definition: A substance excreted/secreted from an organism e.g. feces, urine, sweat.
@@ -699,6 +726,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Feces [UBERON:0001988]
         displayName: Body product
         header: Sampling
+        orderOnDetailsPage: 1300
       - name: environmentalMaterial
         ontology_id: GENEPIO:0001223
         definition: A substance obtained from the natural or man-made environment e.g. soil, water, sewage, door handle, bed handrail, face mask.
@@ -706,6 +734,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Face mask [OBI:0002787]
         displayName: Environmental material
         header: Sampling
+        orderOnDetailsPage: 1320
       - name: environmentalSite
         ontology_id: GENEPIO:0001232
         definition: An environmental location may describe a site in the natural or built environment e.g. hospital, wet market, bat cave.
@@ -713,6 +742,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Hospital [ENVO:00002173]
         displayName: Environmental site
         header: Sampling
+        orderOnDetailsPage: 1340
       - name: collectionDevice
         ontology_id: GENEPIO:0001234
         definition: The instrument or container used to collect the sample e.g. swab.
@@ -721,6 +751,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection device
         header: Sampling
         desired: true
+        orderOnDetailsPage: 1360
       - name: collectionMethod
         ontology_id: GENEPIO:0001241
         definition: The process used to collect the sample e.g. phlebotomy, necropsy.
@@ -729,6 +760,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Collection method
         header: Sampling
         desired: true
+        orderOnDetailsPage: 1380
       - name: foodProduct
         ontology_id: GENEPIO:0100444
         definition: A material consumed and digested for nutritional value or enjoyment.
@@ -736,6 +768,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Feather meal [FOODON:00003927]; Bone meal [ENVO:02000054]; Chicken breast [FOODON:00002703]
         displayName: Food product
         header: Sampling
+        orderOnDetailsPage: 1400
       - name: foodProductProperties
         ontology_id: GENEPIO:0100445
         definition: Any characteristic of the food product pertaining to its state, processing, a label claim, or implications for consumers.
@@ -743,6 +776,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Food (chopped) [FOODON:00002777]; Ready-to-eat (RTE) [FOODON:03316636]
         displayName: Food product properties
         header: Sampling
+        orderOnDetailsPage: 1420
       - name: specimenProcessing
         ontology_id: GENEPIO:0100435
         definition: The processing applied to samples post-collection, prior to further testing, characterization, or isolation procedures.
@@ -750,6 +784,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Samples pooled [OBI:0600016]
         displayName: Specimen processing
         header: Specimen processing
+        orderOnDetailsPage: 1500
       - name: specimenProcessingDetails
         ontology_id: GENEPIO:0100311
         definition: Detailed information regarding the processing applied to a sample during or after receiving the sample.
@@ -757,6 +792,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: 25 swabs were pooled and further prepared as a single sample during library prep.
         displayName: Specimen processing details
         header: Specimen processing
+        orderOnDetailsPage: 1520
       - name: experimentalSpecimenRoleType
         ontology_id: GENEPIO:0100921
         definition: The type of role that the sample represents in the experiment.
@@ -788,6 +824,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Host gender
         header: Host
         ingest: ncbiHostSex
+        orderOnDetailsPage: 1640
       - name: hostOriginCountry
         ontology_id: GENEPIO:0100438
         definition: The country of origin of the host.
@@ -823,6 +860,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Recovered [NCIT:C49498]
         displayName: Host health outcome
         header: Host
+        orderOnDetailsPage: 1740
       - name: travelHistory
         ontology_id: GENEPIO:0001416
         definition: Travel history in last six months.
@@ -830,6 +868,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Canada, Vancouver; USA, Seattle; Italy, Milan
         displayName: Travel history
         header: Host
+        orderOnDetailsPage: 1760
       - name: exposureEvent
         ontology_id: GENEPIO:0001417
         definition: Event leading to exposure.
@@ -837,6 +876,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Mass Gathering [GENEPIO:0100237]
         displayName: Exposure event
         header: Host
+        orderOnDetailsPage: 1780
       - name: hostRole
         ontology_id: GENEPIO:0001419
         definition: The role of the host in relation to the exposure setting.
@@ -844,6 +884,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Patient [OMRSE:00000030]
         displayName: Host role
         header: Host
+        orderOnDetailsPage: 1800
       - name: exposureSetting
         ontology_id: GENEPIO:0001428
         definition: The setting leading to exposure.
@@ -851,6 +892,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Healthcare Setting [GENEPIO:0100201]
         displayName: Exposure setting
         header: Host
+        orderOnDetailsPage: 1820
       - name: exposureDetails
         ontology_id: GENEPIO:0001431
         definition: Additional host exposure information.
@@ -858,18 +900,21 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: "Host role - Other: Bus Driver"
         displayName: Exposure details
         header: Host
+        orderOnDetailsPage: 1840
       - name: previousInfectionDisease
         definition: The name of the disease previously experienced by the host.
         guidance: Provide the name(s) of the previous of ongoing disease(s). Multiple diseases can be separated by a semi-colon.
         example: COVID-19
         displayName: Previous infection (disease)
         header: Host
+        orderOnDetailsPage: 1860
       - name: previousInfectionOrganism
         definition: The name of the pathogen causing the disease previously experienced by the host.
         guidance: Provide the name(s) of the pathogen(s) causing the previous or ongoing infections. Multiple pathogen names can be separated using a semi-colon.
         example: Sudden Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2)
         displayName: Previous infection (organism)
         header: Host
+        orderOnDetailsPage: 1880
       - name: hostVaccinationStatus
         ontology_id: GENEPIO:0001404
         definition: The vaccination status of the host (fully vaccinated, partially vaccinated, or not vaccinated).
@@ -877,6 +922,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Fully Vaccinated [GENEPIO:0100100]
         displayName: Host vaccination status
         header: Host
+        orderOnDetailsPage: 1900
       - name: purposeOfSequencing
         ontology_id: GENEPIO:0001445
         definition: The reason that the sample was sequenced.
@@ -884,6 +930,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Baseline surveillance (random sampling) [GENEPIO:0100005]
         displayName: Purpose of sequencing
         header: Sequencing
+        orderOnDetailsPage: 2000
       - name: sequencingDate
         ontology_id: GENEPIO:0001447
         definition: The date the sample was sequenced.
@@ -891,6 +938,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: "2021-04-26"
         displayName: Sequencing date
         type: date
+        orderOnDetailsPage: 2020
         preprocessing:
           function: parse_and_assert_past_date
           inputs:
@@ -904,6 +952,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: https://github.com/joshquick/artic-ncov2019/blob/master/primer_schemes/nCoV-2019/V3/nCoV-2019.tsv
         displayName: Amplicon PCR primer scheme
         header: Sequencing
+        orderOnDetailsPage: 2040
       - name: ampliconSize
         ontology_id: GENEPIO:0001449
         definition: The length of the amplicon generated by PCR amplification.
@@ -911,6 +960,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: 300bp
         displayName: Amplicon size
         header: Sequencing
+        orderOnDetailsPage: 2060
       - name: sequencingInstrument
         ontology_id: GENEPIO:0001452
         definition: The model of the sequencing instrument used.
@@ -919,6 +969,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing instrument
         header: Sequencing
         desired: true
+        orderOnDetailsPage: 2080
       - name: sequencingProtocol
         ontology_id: GENEPIO:0001454
         definition: The protocol used to generate the sequence.
@@ -927,6 +978,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Sequencing protocol
         header: Sequencing
         desired: true
+        orderOnDetailsPage: 2100
       - name: sequencingAssayType
         ontology_id: GENEPIO:0100997
         definition: The overarching sequencing methodology that was used to determine the sequence of a biomaterial.
@@ -934,6 +986,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: whole genome sequencing assay [OBI:0002117]
         displayName: Sequencing assay type
         header: Sequencing
+        orderOnDetailsPage: 2120
       - name: sequencedByOrganization
         ontology_id: GENEPIO:0100416
         definition: The name of the agency, organization or institution responsible for sequencing the isolate's genome.
@@ -941,6 +994,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Public Health Agency of Canada (PHAC) [GENEPIO:0100551]
         displayName: Sequenced by
         header: Sequencing
+        orderOnDetailsPage: 2140
       - name: sequencedByContactName
         ontology_id: GENEPIO:0100471
         definition: The name or title of the contact responsible for follow-up regarding the sequence.
@@ -948,6 +1002,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Enterics Lab Manager
         displayName: Sequenced by - contact name
         header: Sequencing
+        orderOnDetailsPage: 2160
       - name: sequencedByContactEmail
         ontology_id: GENEPIO:0100422
         definition: The email address of the contact responsible for follow-up regarding the sequence.
@@ -955,6 +1010,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: enterics@lab.ca
         displayName: Sequenced by - contact email
         header: Sequencing
+        orderOnDetailsPage: 2180
       - name: rawSequenceDataProcessingMethod
         ontology_id: GENEPIO:0001458
         definition: The method used for raw data processing such as removing barcodes, adapter trimming, filtering etc.
@@ -962,6 +1018,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Porechop 0.2.3
         displayName: Raw sequence data processing method
         header: Sequencing
+        orderOnDetailsPage: 2200
       - name: dehostingMethod
         ontology_id: GENEPIO:0001459
         definition: The method used to remove host reads from the pathogen sequence.
@@ -969,6 +1026,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Nanostripper 1.2.3
         displayName: Dehosting method
         header: Sequencing
+        orderOnDetailsPage: 2220
       - name: referenceGenomeAccession
         ontology_id: GENEPIO:0001485
         definition: A persistent, unique identifier of a genome database entry.
@@ -976,6 +1034,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: NC_045512.2
         displayName: Reference genome accession
         header: Sequencing
+        orderOnDetailsPage: 2240
       - name: consensusSequenceSoftwareName
         ontology_id: GENEPIO:0001463
         definition: The name of software used to generate the consensus sequence.
@@ -983,6 +1042,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: Ivar
         displayName: Consensus sequence software name
         header: Sequencing
+        orderOnDetailsPage: 2260
       - name: consensusSequenceSoftwareVersion
         ontology_id: GENEPIO:0001469
         definition: The version of the software used to generate the consensus sequence.
@@ -990,6 +1050,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: "1.3"
         displayName: Consensus sequence software version
         header: Sequencing
+        orderOnDetailsPage: 2280
       - name: depthOfCoverage
         ontology_id: GENEPIO:0001474
         definition: The average number of reads representing a given nucleotide in the reconstructed sequence.
@@ -999,6 +1060,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: Sequencing
         desired: true
+        orderOnDetailsPage: 2300
       - name: breadthOfCoverage
         ontology_id: GENEPIO:0001475
         definition: The threshold used as a cut-off for the depth of coverage.
@@ -1007,6 +1069,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Breadth of coverage
         type: int
         header: Sequencing
+        orderOnDetailsPage: 2320
       - name: qualityControlMethodName
         ontology_id: GENEPIO:0100557
         definition: The name of the method used to assess whether a sequence passed a predetermined quality control threshold.
@@ -1014,6 +1077,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: ncov-tools
         displayName: Quality control method name
         header: Sequencing
+        orderOnDetailsPage: 2340
       - name: qualityControlMethodVersion
         ontology_id: GENEPIO:0100558
         definition: The version number of the method used to assess whether a sequence passed a predetermined quality control threshold.
@@ -1021,6 +1085,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: "1.2.3"
         displayName: Quality control method version
         header: Sequencing
+        orderOnDetailsPage: 2360
       - name: qualityControlDetermination
         ontology_id: GENEPIO:0100559
         definition: The determination of a quality control assessment.
@@ -1028,6 +1093,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: sequence failed quality control
         displayName: Quality control determination
         header: Sequencing
+        orderOnDetailsPage: 2380
       - name: qualityControlIssues
         ontology_id: GENEPIO:0100560
         definition: The reason contributing to, or causing, a low quality determination in a quality control assessment.
@@ -1035,6 +1101,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: low average genome coverage
         displayName: Quality control issues
         header: Sequencing
+        orderOnDetailsPage: 2400
       - name: qualityControlDetails
         ontology_id: GENEPIO:0100561
         definition: The details surrounding a low quality determination in a quality control assessment.
@@ -1042,20 +1109,26 @@ defaultOrganismConfig: &defaultOrganismConfig
         example: CT value of 39. Low viral load. Low DNA concentration after amplification.
         displayName: Quality control details
         header: Diagnostics
+        orderOnDetailsPage: 2500
       - name: diagnosticMeasurementMethod
         displayName: Diagnostic measurement method
         header: Diagnostics
+        orderOnDetailsPage: 2520
       - name: diagnosticTargetPresence
         displayName: Diagnostic target presence
         header: Diagnostics
+        orderOnDetailsPage: 2540
       - name: diagnosticTargetGeneName
         displayName: Gene name
         header: Diagnostics
+        orderOnDetailsPage: 2560
       - name: diagnosticMeasurementValue
         displayName: Diagnostic measurement value
         header: Diagnostics
+        orderOnDetailsPage: 2580
       - name: diagnosticMeasurementUnit
         displayName: Diagnostic measurement unit
+        orderOnDetailsPage: 2600
         header: Diagnostics
       - name: length
         type: int
@@ -1065,17 +1138,20 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         perSegment: true
         displayName: Length
+        orderOnDetailsPage: 2700
       - name: hostNameScientific
         generateIndex: true
         autocomplete: true
         header: "Host"
         ingest: ncbiHostName
         desired: true
+        orderOnDetailsPage: 1560
       - name: hostNameCommon
         generateIndex: true
         autocomplete: true
         header: "Host"
         ingest: ncbiHostCommonName
+        orderOnDetailsPage: 1580
       - name: hostTaxonId
         type: int
         autocomplete: true
@@ -1085,22 +1161,27 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Host"
         ingest: ncbiHostTaxId
         desired: true
+        orderOnDetailsPage: 1540
       - name: isLabHost
         type: boolean
         autocomplete: true
         header: "Host"
         ingest: ncbiIsLabHost
+        orderOnDetailsPage: 1920
       - name: cellLine
         generateIndex: true
+        orderOnDetailsPage: 1940
         autocomplete: true
         header: "Host"
       - name: passageNumber
         type: int
         header: "Host"
+        orderOnDetailsPage: 1960
       - name: passageMethod
         generateIndex: true
         autocomplete: true
         header: "Host"
+        orderOnDetailsPage: 1980
       - name: ncbiSourceDb
         generateIndex: true
         autocomplete: true
@@ -1128,6 +1209,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           type: link
           url: "https://www.ncbi.nlm.nih.gov/sra/?term=__value__"
         header: "INSDC"
+        orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
       - name: totalSnps
         type: int
@@ -1136,6 +1218,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total SNPs
+        orderOnDetailsPage: 2720
         preprocessing:
           inputs: {input: nextclade.totalSubstitutions}
       - name: totalInsertedNucs
@@ -1145,6 +1228,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total inserted nucs
+        orderOnDetailsPage: 2740
         preprocessing:
           inputs: {input: nextclade.totalInsertions}
       - name: totalDeletedNucs
@@ -1153,6 +1237,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         perSegment: true
+        orderOnDetailsPage: 2760
         preprocessing:
           inputs: {input: nextclade.totalDeletions}
         displayName: Total deleted nucs
@@ -1163,9 +1248,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         perSegment: true
         displayName: Total ambiguous nucs
+        orderOnDetailsPage: 2780
         preprocessing:
           inputs: {input: "nextclade.totalNonACGTNs"}
       - name: totalUnknownNucs
+        orderOnDetailsPage: 2800
         type: int
         header: "Alignment and QC metrics"
         noInput: true
@@ -1181,6 +1268,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         displayName: Total frame shifts
+        orderOnDetailsPage: 2820
         preprocessing:
           inputs: {input: nextclade.totalFrameShifts}
       - name: frameShifts
@@ -1188,6 +1276,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         displayName: Frame shifts
+        orderOnDetailsPage: 2840
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: completeness
@@ -1197,6 +1286,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: Completeness
         rangeSearch: true
+        orderOnDetailsPage: 2860
         customDisplay:
           type: percentage
         preprocessing:
