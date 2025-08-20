@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
-import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
+import { cleanOrganism } from '../components/Navigation/cleanOrganism';
 import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import { navigationItems } from '../routes/navigationItems';
@@ -29,6 +29,15 @@ interface Props {
 }
 
 const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
+
+// Get the current organism from either implicit prop or URL params
+const { organism } = cleanOrganism(Astro.params.organism);
+const currentOrganism = implicitOrganism || organism?.key;
+
+// Check which page we're on for highlighting
+const currentPath = Astro.url.pathname;
+const isBrowsePage = currentPath.includes('/search');
+const isSubmitPage = currentPath.includes('/submission');
 
 const backendIsInDebugMode = await createBackendClient().isInDebugMode();
 
@@ -65,7 +74,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <nav class='flex justify-between items-center p-4'>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
-                            <div class='flex flex-row pb-3'>
+                            <div class='flex flex-row'>
                                 <a href='/'
                                     ><img
                                         class='h-8 mr-4'
@@ -78,12 +87,45 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                                 >
                                 <a href='/' class='fancytitle mr-4'>{websiteName}</a>
                             </div>
-                            <OrganismSelector implicitOrganism={implicitOrganism} />
                         </div>
                     </div>
                     <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
                 </nav>
                 <hr class='border-t border-gray-1000' />
+                
+                {/* Organism-specific submenu */}
+                {currentOrganism && (
+                    <div class='bg-primary-50'>
+                        <div class='flex items-center gap-2 px-4 py-2'>
+                            <span class='text-primary-800 font-medium mr-3'>
+                                {organism?.displayName || currentOrganism}
+                            </span>
+                            <span class='text-primary-200 mr-2'>|</span>
+                            <a 
+                                href={`/${currentOrganism}/search`} 
+                                class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
+                                    isBrowsePage 
+                                        ? 'bg-primary-100 text-primary-700' 
+                                        : 'text-primary-600 hover:bg-primary-100'
+                                }`}
+                            >
+                                Browse
+                            </a>
+                            {websiteConfig.enableSubmissionNavigationItem && (
+                                <a 
+                                    href={`/${currentOrganism}/submission`} 
+                                    class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
+                                        isSubmitPage 
+                                            ? 'bg-primary-100 text-primary-700' 
+                                            : 'text-primary-600 hover:bg-primary-100'
+                                    }`}
+                                >
+                                    Submit
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <slot name='banner' />
             </header>
