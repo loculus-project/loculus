@@ -36,8 +36,8 @@ const filteredNavItems = topNavigationItems.filter(item => item.text !== 'Browse
             knownOrganisms={knownOrganisms}
             client:load
         />
-        <AccessionSearchBox className='' client:load />
         {filteredNavItems.map(({ text, path }) => <a href={path}>{text}</a>)}
+        <AccessionSearchBox className='' client:load />
     </div>
 
     <div

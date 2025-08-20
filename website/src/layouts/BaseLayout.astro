@@ -142,7 +142,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             </div>
 
             <hr class='border-t border-gray-1000' />
-            <footer class={`hidden sm:flex sm:z-6 flex justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}>
+            <footer class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}>
                 <div class='flex gap-5'>
                     {
                         navigationItems.bottom.map(({ text, path }) => (
