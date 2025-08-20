@@ -422,6 +422,11 @@
                   "type": "string",
                   "enum": ["ascending", "descending"],
                   "description": "Default order direction."
+                },
+                "suborganismIdentifierField": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Must be set in the multi pathogen case. This metadata field is used to determine which suborganism a sequence entry belongs to."
                 }
               }
             }
