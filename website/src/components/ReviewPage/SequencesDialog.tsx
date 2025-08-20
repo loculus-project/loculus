@@ -73,9 +73,10 @@ const extractProcessedSequences = (data: SequenceEntryToEdit): ProcessedSequence
             let label = sequenceName;
             if (type !== 'gene') {
                 if (label === 'main') {
-                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                    label = type === 'unaligned' ? 'Sequence' : 'Reference-aligned';
                 } else {
-                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                    label =
+                        type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (reference-aligned)`;
                 }
             }
             return { label, sequence };
