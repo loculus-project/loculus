@@ -106,4 +106,21 @@ class UseNewerProcessingPipelineVersionTaskTest(
 
         assertThat(rowCount, `is`(rowCountAfterV2))
     }
+
+    @Suppress("ktlint:standard:max-line-length")
+    @Test
+    fun `GIVEN no new processed data WHEN checking for newer pipeline multiple times THEN subsequent calls return empty map`() {
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+        val processedData = accessionVersions.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+
+        val firstCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val secondCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+
+        assertThat(firstCall.keys, `is`(setOf(DEFAULT_ORGANISM)))
+        assertThat(secondCall.isEmpty(), `is`(true))
+    }
 }
