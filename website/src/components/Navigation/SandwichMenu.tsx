@@ -13,7 +13,6 @@ type SandwichMenuProps = {
     knownOrganisms: Organism[];
     gitHubMainUrl: string | undefined;
     siteName: string;
-    enableSubmission: boolean;
 };
 
 export const SandwichMenu: FC<SandwichMenuProps> = ({ 
@@ -21,8 +20,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
     currentOrganism,
     knownOrganisms,
     gitHubMainUrl, 
-    siteName,
-    enableSubmission 
+    siteName
 }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
@@ -30,7 +28,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
         <div className='relative'>
             {!isOpen ? (
                 <button
-                    className='absolute z-50 bg-transparent border-none cursor-pointer'
+                    className='z-50 bg-transparent border-none cursor-pointer'
                     onClick={toggleMenu}
                     aria-label='Open main menu'
                 >
@@ -93,23 +91,6 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                         </a>
                                     ))}
                                 </div>
-                                {currentOrganism && (
-                                    <div className='mt-3 ml-4 pt-3 border-t border-gray-200'>
-                                        <div className='text-sm text-gray-600 mb-2'>
-                                            {currentOrganism.displayName}:
-                                        </div>
-                                        <div className='flex gap-4'>
-                                            <a href={`/${currentOrganism.key}/search`} className='text-primary-600'>
-                                                Browse
-                                            </a>
-                                            {enableSubmission && (
-                                                <a href={`/${currentOrganism.key}/submission`} className='text-primary-600'>
-                                                    Submit
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                             {topNavigationItems.map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} />

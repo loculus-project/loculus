@@ -17,8 +17,8 @@ const { implicitOrganism, gitHubMainUrl } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
-const siteName = getWebsiteConfig().name;
 const websiteConfig = getWebsiteConfig();
+const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
@@ -40,21 +40,13 @@ const filteredNavItems = topNavigationItems.filter(item => item.text !== 'Browse
         <AccessionSearchBox className='' client:load />
     </div>
 
-    <div
-        class='lg:hidden z-0'
-        style={{
-            position: 'absolute',
-            right: '1.5rem',
-            top: '-2rem',
-        }}
-    >
+    <div class='lg:hidden z-0 flex items-center'>
         <SandwichMenu
             topNavigationItems={filteredNavItems}
             currentOrganism={selectedOrganism}
             knownOrganisms={knownOrganisms}
             gitHubMainUrl={gitHubMainUrl}
             siteName={siteName}
-            enableSubmission={websiteConfig.enableSubmissionNavigationItem}
             client:load
         />
     </div>

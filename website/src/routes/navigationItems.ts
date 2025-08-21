@@ -14,9 +14,15 @@ export type TopNavigationItems = {
 }[];
 
 function getSequenceRelatedItems(organism: string | undefined) {
+    // If no organism is selected, don't show Browse/Submit in the main nav
+    // (they'll be in the organism dropdown instead)
+    if (organism === undefined) {
+        return [];
+    }
+
     const browseItem = {
         text: 'Browse',
-        path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
+        path: routes.searchPage(organism),
     };
 
     if (!getWebsiteConfig().enableSubmissionNavigationItem) {
@@ -25,10 +31,7 @@ function getSequenceRelatedItems(organism: string | undefined) {
 
     const submitItem = {
         text: 'Submit',
-        path:
-            organism !== undefined
-                ? routes.submissionPageWithoutGroup(organism)
-                : routes.organismSelectorPage('submission'),
+        path: routes.submissionPageWithoutGroup(organism),
     };
     return [browseItem, submitItem];
 }

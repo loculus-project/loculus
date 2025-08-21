@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
+import OrganismSubmenu from '../components/Navigation/OrganismSubmenu.astro';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
 import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
@@ -32,8 +33,13 @@ interface Props {
 const { title, implicitOrganism, noHorizontalPadding, fullWidth } = Astro.props;
 
 // Get the current organism from either implicit prop or URL params
-const { organism } = cleanOrganism(Astro.params.organism);
-const currentOrganism = implicitOrganism || organism?.key;
+const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
+// If we have an implicit organism (string key), find the full organism object
+const implicitOrganismObject = implicitOrganism 
+    ? knownOrganisms.find(o => o.key === implicitOrganism)
+    : undefined;
+const currentOrganismObject = implicitOrganismObject || organism;
+const currentOrganism = currentOrganismObject?.key;
 
 // Check which page we're on for highlighting
 const currentPath = Astro.url.pathname;
@@ -71,7 +77,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         />
         <div class='flex flex-col min-h-screen'>
             <ToastContainer client:load />
-            <header class='bg-white border-b border-gray-200 h-fit z-30'>
+            <header class={`bg-white h-fit z-30 ${!currentOrganism ? 'border-b-[1.5px] border-gray-200' : ''}`}>
                 <nav class='flex justify-between items-center p-4 mx-4'>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
@@ -93,39 +99,13 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
                 </nav>
                 
-                {/* Organism-specific submenu */}
-                {currentOrganism && (
-                    <div class='bg-gray-50 border-b border-gray-200'>
-                        <div class='flex items-center gap-2 px-4 py-2 mx-4'>
-                            <span class='text-gray-700 font-medium mr-3'>
-                                {organism?.displayName || currentOrganism}
-                            </span>
-                            <span class='text-gray-300 mr-2'>|</span>
-                            <a 
-                                href={`/${currentOrganism}/search`} 
-                                class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                                    isBrowsePage 
-                                        ? 'bg-primary-100 text-gray-900' 
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                            >
-                                Browse
-                            </a>
-                            {websiteConfig.enableSubmissionNavigationItem && (
-                                <a 
-                                    href={`/${currentOrganism}/submission`} 
-                                    class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                                        isSubmitPage 
-                                            ? 'bg-primary-100 text-gray-900' 
-                                            : 'text-gray-600 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    Submit
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                )}
+                <OrganismSubmenu 
+                    currentOrganism={currentOrganism}
+                    currentOrganismObject={currentOrganismObject}
+                    isBrowsePage={isBrowsePage}
+                    isSubmitPage={isSubmitPage}
+                    enableSubmission={websiteConfig.enableSubmissionNavigationItem}
+                />
 
                 <slot name='banner' />
             </header>
