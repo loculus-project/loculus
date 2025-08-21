@@ -12,7 +12,7 @@ class SubmissionPage {
         this.page = page;
     }
 
-    async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
+    async navigateToOrganism(organism: string = 'Ebola Sudan') {
         // First, ensure we're on the homepage
         await this.page.goto('/');
 
@@ -34,7 +34,10 @@ class SubmissionPage {
         await this.page
             .getByRole('link', { name: 'Submit', exact: true })
             .waitFor({ state: 'visible' });
+    }
 
+    async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
+        await this.navigateToOrganism(organism);
         // Now click Submit in the submenu
         await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
 

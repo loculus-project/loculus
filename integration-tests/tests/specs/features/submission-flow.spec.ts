@@ -9,7 +9,8 @@ test.describe('Submission flow', () => {
     }) => {
         test.setTimeout(10000);
         const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
-        await submissionPage.navigateToSubmissionPage('Ebola Sudan');
+        await submissionPage.navigateToOrganism('Ebola Sudan');
+        await pageWithACreatedUser.getByRole('link', { name: 'Submit', exact: true }).click();
         await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
