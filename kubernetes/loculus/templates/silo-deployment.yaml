@@ -41,6 +41,8 @@ spec:
             - "16"
             - "--api-max-queued-http-connections"
             - "1000"
+            - "--query-materialization-cutoff"
+            - "3276"
           volumeMounts:
             - name: lapis-silo-shared-data
               mountPath: /data
