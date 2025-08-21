@@ -13,6 +13,10 @@ export class NavigationFixture {
         await this.page.getByRole('button', { name: 'Organisms' }).click();
     }
 
+    public async selectOrganism(name: string) {
+        await this.page.locator('a').filter({ hasText: name }).first().click();
+    }
+
     public async expectTitle(title: string) {
         await expect(this.page).toHaveTitle(new RegExp(`^${title}`));
     }
