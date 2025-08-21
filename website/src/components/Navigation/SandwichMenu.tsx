@@ -1,10 +1,10 @@
 import type { FC } from 'react';
 
+import type { Organism } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
-import type { Organism } from '../../config';
 import AccessionSearchBox from './AccessionSearchBox';
 
 type SandwichMenuProps = {
@@ -15,12 +15,12 @@ type SandwichMenuProps = {
     siteName: string;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ 
-    topNavigationItems, 
+export const SandwichMenu: FC<SandwichMenuProps> = ({
+    topNavigationItems,
     currentOrganism,
     knownOrganisms,
-    gitHubMainUrl, 
-    siteName
+    gitHubMainUrl,
+    siteName,
 }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
@@ -60,29 +60,27 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             <div className='py-3'>
-                                <div className='ml-4 font-semibold text-gray-700 mb-3'>
-                                    Organisms
-                                </div>
+                                <div className='ml-4 font-semibold text-gray-700 mb-3'>Organisms</div>
                                 <div className='ml-4 space-y-2'>
                                     {knownOrganisms.map((organism) => (
-                                        <a 
+                                        <a
                                             key={organism.key}
-                                            href={`/${organism.key}/search`} 
+                                            href={`/${organism.key}/search`}
                                             className='flex items-center gap-3 py-1 text-gray-700 hover:text-primary-600'
                                         >
                                             {organism.image ? (
-                                                <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                                                    <img 
-                                                        src={organism.image} 
+                                                <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
+                                                    <img
+                                                        src={organism.image}
                                                         alt={organism.displayName}
-                                                        className="w-full h-full object-cover"
+                                                        className='w-full h-full object-cover'
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="w-5 h-5" />
+                                                <div className='w-5 h-5' />
                                             )}
                                             <span>{organism.displayName}</span>
                                             {organism === currentOrganism && (

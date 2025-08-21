@@ -1,12 +1,11 @@
 ---
 import AccessionSearchBox from './AccessionSearchBox.tsx';
-import { SandwichMenu } from './SandwichMenu.tsx';
 import { OrganismNavigation } from './OrganismNavigation.tsx';
+import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
 import { navigationItems } from '../../routes/navigationItems';
 import { getAuthUrl } from '../../utils/getAuthUrl';
-import { routes } from '../../routes/routes';
 
 interface Props {
     implicitOrganism?: string;
@@ -26,16 +25,12 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl);
 // Filter out Browse and Submit items as they'll be in the organism navigation
-const filteredNavItems = topNavigationItems.filter(item => item.text !== 'Browse' && item.text !== 'Submit');
+const filteredNavItems = topNavigationItems.filter((item) => item.text !== 'Browse' && item.text !== 'Submit');
 ---
 
 <div class='flex justify-end relative'>
     <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
-        <OrganismNavigation 
-            currentOrganism={selectedOrganism}
-            knownOrganisms={knownOrganisms}
-            client:load
-        />
+        <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
         {filteredNavItems.map(({ text, path }) => <a href={path}>{text}</a>)}
         <AccessionSearchBox className='' client:load />
     </div>

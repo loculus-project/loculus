@@ -35,9 +35,7 @@ const { title, implicitOrganism, noHorizontalPadding, fullWidth } = Astro.props;
 // Get the current organism from either implicit prop or URL params
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 // If we have an implicit organism (string key), find the full organism object
-const implicitOrganismObject = implicitOrganism 
-    ? knownOrganisms.find(o => o.key === implicitOrganism)
-    : undefined;
+const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
 const currentOrganismObject = implicitOrganismObject || organism;
 const currentOrganism = currentOrganismObject?.key;
 
@@ -98,8 +96,8 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     </div>
                     <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
                 </nav>
-                
-                <OrganismSubmenu 
+
+                <OrganismSubmenu
                     currentOrganism={currentOrganism}
                     currentOrganismObject={currentOrganismObject}
                     isBrowsePage={isBrowsePage}
@@ -110,18 +108,22 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <slot name='banner' />
             </header>
 
-            <div class:list={[
-                'flex-grow', 
-                'mt-3', 
-                'mb-5',
-                fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full',
-                noHorizontalPadding ? '' : 'px-4'
-            ]}>
+            <div
+                class:list={[
+                    'flex-grow',
+                    'mt-3',
+                    'mb-5',
+                    fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full',
+                    noHorizontalPadding ? '' : 'px-4',
+                ]}
+            >
                 <slot />
             </div>
 
             <hr class='border-t border-gray-1000' />
-            <footer class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}>
+            <footer
+                class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}
+            >
                 <div class='flex gap-5'>
                     {
                         navigationItems.bottom.map(({ text, path }) => (

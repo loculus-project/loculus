@@ -12,35 +12,33 @@ interface Props {
 const { currentOrganism, currentOrganismObject, isBrowsePage, isSubmitPage, enableSubmission } = Astro.props;
 ---
 
-{currentOrganism && (
-    <nav class='bg-gray-50  border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
-        <div class='flex items-center gap-2 px-4 py-2 mx-4'>
-            <span class='text-gray-700 font-medium mr-3'>
-                {currentOrganismObject?.displayName || currentOrganism}
-            </span>
-            <span class='text-gray-300 mr-2'>|</span>
-            <a 
-                href={`/${currentOrganism}/search`} 
-                class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                    isBrowsePage 
-                        ? 'bg-primary-100 text-gray-900' 
-                        : 'text-gray-600 hover:bg-gray-100'
-                }`}
-            >
-                Browse
-            </a>
-            {enableSubmission && (
-                <a 
-                    href={`/${currentOrganism}/submission`} 
+{
+    currentOrganism && (
+        <nav class='bg-gray-50  border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
+            <div class='flex items-center gap-2 px-4 py-2 mx-4'>
+                <span class='text-gray-700 font-medium mr-3'>
+                    {currentOrganismObject?.displayName || currentOrganism}
+                </span>
+                <span class='text-gray-300 mr-2'>|</span>
+                <a
+                    href={`/${currentOrganism}/search`}
                     class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                        isSubmitPage 
-                            ? 'bg-primary-100 text-gray-900' 
-                            : 'text-gray-600 hover:bg-gray-100'
+                        isBrowsePage ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
-                    Submit
+                    Browse
                 </a>
-            )}
-        </div>
-    </nav>
-)}
+                {enableSubmission && (
+                    <a
+                        href={`/${currentOrganism}/submission`}
+                        class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
+                            isSubmitPage ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                    >
+                        Submit
+                    </a>
+                )}
+            </div>
+        </nav>
+    )
+}
