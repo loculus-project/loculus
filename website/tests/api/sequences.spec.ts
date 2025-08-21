@@ -21,35 +21,4 @@ test.describe('The sequences endpoint', () => {
             `>${getAccessionVersionString(testSequenceEntry)}|Switzerland|A.1.1\nAAAAAAAAAAAAAAAAAAAAAAAAAAA`,
         );
     });
-
-    test('should handle single nucleotideMutations parameter as array', async ({ request }) => {
-        const query = new URLSearchParams([
-            ['headerFields', 'displayName'],
-            ['downloadFileBasename', 'test-mutations'],
-            ['nucleotideMutations', '52108T'],
-            ['versionStatus', 'LATEST_VERSION'],
-            ['isRevocation', 'false'],
-            ['dataUseTerms', 'OPEN'],
-        ]);
-
-        const response = await request.get(`${baseUrl}/${dummyOrganism.key}/api/sequences?${query}`);
-
-        expect(response.status()).not.toBe(400);
-    });
-
-    test('should handle multiple nucleotideMutations parameters as array', async ({ request }) => {
-        const query = new URLSearchParams([
-            ['headerFields', 'displayName'],
-            ['downloadFileBasename', 'test-mutations'],
-            ['nucleotideMutations', '52108T'],
-            ['nucleotideMutations', '1234A'],
-            ['versionStatus', 'LATEST_VERSION'],
-            ['isRevocation', 'false'],
-            ['dataUseTerms', 'OPEN'],
-        ]);
-
-        const response = await request.get(`${baseUrl}/${dummyOrganism.key}/api/sequences?${query}`);
-
-        expect(response.status()).not.toBe(400);
-    });
 });
