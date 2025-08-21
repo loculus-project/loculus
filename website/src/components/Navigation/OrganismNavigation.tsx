@@ -1,5 +1,5 @@
-import React from 'react';
 import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react';
+import React from 'react';
 import { Fragment } from 'react';
 
 import type { Organism } from '../../config';
