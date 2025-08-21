@@ -96,7 +96,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 
                 {/* Organism-specific submenu */}
                 {currentOrganism && (
-                    <div class='bg-primary-50'>
+                    <div class='bg-primary-50 border-b border-primary-200'>
                         <div class='flex items-center gap-2 px-4 py-2 mx-4'>
                             <span class='text-primary-800 font-medium mr-3'>
                                 {organism?.displayName || currentOrganism}
