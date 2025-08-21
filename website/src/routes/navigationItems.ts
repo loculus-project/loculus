@@ -1,5 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
-import { extraSequenceRelatedTopNavigationItems, extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
+import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
 
@@ -14,8 +14,6 @@ export type TopNavigationItems = {
 }[];
 
 export function getSequenceRelatedItems(organism: string | undefined) {
-    // If no organism is selected, don't show Browse/Submit in the main nav
-    // (they'll be in the organism dropdown instead)
     if (organism === undefined) {
         return [];
     }
@@ -67,12 +65,10 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
 }
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
-    // Browse and Submit are now handled by the OrganismSubmenu, not in the top navigation
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
     return [
-        ...extraSequenceRelatedTopNavigationItems(organism),
         ...seqSetsItems,
         ...extraStaticTopNavigationItems,
         ...accountItems,

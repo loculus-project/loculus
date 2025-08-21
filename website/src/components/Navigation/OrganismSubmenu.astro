@@ -6,11 +6,10 @@ import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNav
 interface Props {
     currentOrganism?: string;
     currentOrganismObject?: Organism;
-    isBrowsePage: boolean;
-    isSubmitPage: boolean;
+    currentPath: string;
 }
 
-const { currentOrganism, currentOrganismObject, isBrowsePage, isSubmitPage } = Astro.props;
+const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
 
 // Get the navigation items for this organism
 const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
@@ -26,9 +25,8 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
                 {sequenceRelatedItems.map(({ text, path }) => {
-                    const isActive = 
-                        (text === 'Browse' && isBrowsePage) || 
-                        (text === 'Submit' && isSubmitPage);
+                    // Use startsWith to match path prefixes (e.g., /organism/search matches /organism/search/details)
+                    const isActive = currentPath.startsWith(path);
                     return (
                         <a
                             href={path}
@@ -40,14 +38,19 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                         </a>
                     );
                 })}
-                {extraItems.map(({ text, path }) => (
-                    <a
-                        href={path}
-                        class='px-2.5 py-0.5 rounded text-sm transition-colors text-gray-600 hover:bg-gray-100'
-                    >
-                        {text}
-                    </a>
-                ))}
+                {extraItems.map(({ text, path }) => {
+                    const isActive = currentPath.startsWith(path);
+                    return (
+                        <a
+                            href={path}
+                            class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
+                                isActive ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            {text}
+                        </a>
+                    );
+                })}
             </div>
         </nav>
     )

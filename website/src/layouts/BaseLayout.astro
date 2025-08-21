@@ -26,11 +26,10 @@ const bannerMessage = remoteBannerMessage ?? configBannerMessage;
 interface Props {
     title: string;
     implicitOrganism?: string;
-    noHorizontalPadding?: boolean;
     fullWidth?: boolean;
 }
 
-const { title, implicitOrganism, noHorizontalPadding, fullWidth } = Astro.props;
+const { title, implicitOrganism, fullWidth } = Astro.props;
 
 // Get the current organism from either implicit prop or URL params
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
@@ -39,10 +38,8 @@ const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.k
 const currentOrganismObject = implicitOrganismObject || organism;
 const currentOrganism = currentOrganismObject?.key;
 
-// Check which page we're on for highlighting
+// Get the current path for the submenu
 const currentPath = Astro.url.pathname;
-const isBrowsePage = currentPath.includes('/search');
-const isSubmitPage = currentPath.includes('/submission');
 
 const backendIsInDebugMode = await createBackendClient().isInDebugMode();
 
@@ -100,8 +97,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <OrganismSubmenu
                     currentOrganism={currentOrganism}
                     currentOrganismObject={currentOrganismObject}
-                    isBrowsePage={isBrowsePage}
-                    isSubmitPage={isSubmitPage}
+                    currentPath={currentPath}
                 />
 
                 <slot name='banner' />
@@ -112,8 +108,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     'flex-grow',
                     'mt-3',
                     'mb-5',
-                    fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full',
-                    noHorizontalPadding ? '' : 'px-4',
+                    fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full px-4',
                 ]}
             >
                 <slot />
