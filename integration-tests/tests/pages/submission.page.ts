@@ -15,20 +15,26 @@ class SubmissionPage {
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         // First, ensure we're on the homepage
         await this.page.goto('/');
-        
+
         // Click on the organism dropdown button
         const organismDropdown = this.page.getByRole('button', { name: /Organisms/ });
         await organismDropdown.click();
-        
+
         // Wait for dropdown menu to be visible
-        await this.page.locator('a').filter({ hasText: organism }).first().waitFor({ state: 'visible' });
-        
+        await this.page
+            .locator('a')
+            .filter({ hasText: organism })
+            .first()
+            .waitFor({ state: 'visible' });
+
         // Click on the specific organism in the dropdown menu
         await this.page.locator('a').filter({ hasText: organism }).first().click();
-        
+
         // Wait for the submenu to appear with Submit link
-        await this.page.getByRole('link', { name: 'Submit', exact: true }).waitFor({ state: 'visible' });
-        
+        await this.page
+            .getByRole('link', { name: 'Submit', exact: true })
+            .waitFor({ state: 'visible' });
+
         // Now click Submit in the submenu
         await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
 
