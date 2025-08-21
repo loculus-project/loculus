@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -22,7 +22,7 @@ test.describe('Submission flow', () => {
         const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
         const metadataFile = join(testFilesDir, 'cchfv_test_metadata.tsv');
 
-        const submissionPage = new SingleSequenceSubmissionPage(page);
+        const submissionPage = new BulkSubmissionPage(page);
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
 
         await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
