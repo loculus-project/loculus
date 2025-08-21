@@ -213,6 +213,7 @@ async function getAccessionVersionToFastaHeaderMap(lapisClient: LapisClient, sea
                 .filter((it) => it !== null)
                 .map((it) => it.toString())
                 .join('|');
+
             fastaHeaderMap.set(datum.accessionVersion as string, fastaHeader);
         }
 
