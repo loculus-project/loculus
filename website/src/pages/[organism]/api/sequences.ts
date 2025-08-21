@@ -105,8 +105,13 @@ function getSearchParams(url: URL, organism: string) {
     }
 
     const queryFilters: SearchParams['queryFilters'] = {};
+    const mutationKeys = ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'];
     for (const key of searchParams.keys()) {
-        queryFilters[key] = searchParams.getAll(key).length > 1 ? searchParams.getAll(key) : searchParams.get(key)!;
+        if (mutationKeys.includes(key)) {
+            queryFilters[key] = searchParams.getAll(key);
+        } else {
+            queryFilters[key] = searchParams.getAll(key).length > 1 ? searchParams.getAll(key) : searchParams.get(key)!;
+        }
     }
     return ok({
         segment,
