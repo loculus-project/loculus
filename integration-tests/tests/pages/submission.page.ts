@@ -13,17 +13,26 @@ class SubmissionPage {
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
+        // First, ensure we're on the homepage
+        await this.page.goto('/');
+        
+        // Click on the organism dropdown button
+        const organismDropdown = this.page.getByRole('button', { name: /Organisms/ });
+        await organismDropdown.click();
+        
+        // Wait for dropdown menu to be visible
+        await this.page.locator('a').filter({ hasText: organism }).first().waitFor({ state: 'visible' });
+        
+        // Click on the specific organism in the dropdown menu
+        await this.page.locator('a').filter({ hasText: organism }).first().click();
+        
+        // Wait for the submenu to appear with Submit link
+        await this.page.getByRole('link', { name: 'Submit', exact: true }).waitFor({ state: 'visible' });
+        
+        // Now click Submit in the submenu
         await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
 
-        // Depending on current state (organism selected or not), we need to switch
-        const organismSwitchLink = this.page.getByRole('link', { name: organism });
-        const organismLocator = this.page.locator('label').filter({ hasText: organism });
-
-        await Promise.race([
-            organismLocator.waitFor({ state: 'visible', timeout: 5000 }),
-            organismSwitchLink.click(),
-        ]);
-
+        // Click on the submit upload link
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
