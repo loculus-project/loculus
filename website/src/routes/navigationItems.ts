@@ -13,7 +13,7 @@ export type TopNavigationItems = {
     path: string;
 }[];
 
-function getSequenceRelatedItems(organism: string | undefined) {
+export function getSequenceRelatedItems(organism: string | undefined) {
     // If no organism is selected, don't show Browse/Submit in the main nav
     // (they'll be in the organism dropdown instead)
     if (organism === undefined) {
@@ -67,12 +67,11 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
 }
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
-    const sequenceRelatedItems = getSequenceRelatedItems(organism);
+    // Browse and Submit are now handled by the OrganismSubmenu, not in the top navigation
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
     return [
-        ...sequenceRelatedItems,
         ...extraSequenceRelatedTopNavigationItems(organism),
         ...seqSetsItems,
         ...extraStaticTopNavigationItems,

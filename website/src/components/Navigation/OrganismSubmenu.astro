@@ -1,15 +1,20 @@
 ---
 import type { Organism } from '../../config';
+import { getSequenceRelatedItems } from '../../routes/navigationItems';
+import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 
 interface Props {
     currentOrganism?: string;
     currentOrganismObject?: Organism;
     isBrowsePage: boolean;
     isSubmitPage: boolean;
-    enableSubmission: boolean;
 }
 
-const { currentOrganism, currentOrganismObject, isBrowsePage, isSubmitPage, enableSubmission } = Astro.props;
+const { currentOrganism, currentOrganismObject, isBrowsePage, isSubmitPage } = Astro.props;
+
+// Get the navigation items for this organism
+const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
+const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
 ---
 
 {
@@ -20,24 +25,29 @@ const { currentOrganism, currentOrganismObject, isBrowsePage, isSubmitPage, enab
                     {currentOrganismObject?.displayName || currentOrganism}
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
-                <a
-                    href={`/${currentOrganism}/search`}
-                    class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                        isBrowsePage ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                    Browse
-                </a>
-                {enableSubmission && (
+                {sequenceRelatedItems.map(({ text, path }) => {
+                    const isActive = 
+                        (text === 'Browse' && isBrowsePage) || 
+                        (text === 'Submit' && isSubmitPage);
+                    return (
+                        <a
+                            href={path}
+                            class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
+                                isActive ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            {text}
+                        </a>
+                    );
+                })}
+                {extraItems.map(({ text, path }) => (
                     <a
-                        href={`/${currentOrganism}/submission`}
-                        class={`px-2.5 py-0.5 rounded text-sm transition-colors ${
-                            isSubmitPage ? 'bg-primary-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100'
-                        }`}
+                        href={path}
+                        class='px-2.5 py-0.5 rounded text-sm transition-colors text-gray-600 hover:bg-gray-100'
                     >
-                        Submit
+                        {text}
                     </a>
-                )}
+                ))}
             </div>
         </nav>
     )
