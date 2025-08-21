@@ -100,14 +100,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <slot name='banner' />
             </header>
 
-            <div
-                class:list={[
-                    'flex-grow',
-                    'mt-3',
-                    'mb-5',
-                    fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full px-4',
-                ]}
-            >
+            <div class:list={['flex-grow', 'mt-3', 'mb-5', fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full px-4']}>
                 <slot />
             </div>
 

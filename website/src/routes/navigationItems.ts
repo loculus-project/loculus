@@ -68,9 +68,5 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
-    return [
-        ...seqSetsItems,
-        ...extraStaticTopNavigationItems,
-        ...accountItems,
-    ];
+    return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
 }
