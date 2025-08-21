@@ -8,10 +8,9 @@ test.describe('Submission flow', () => {
         pageWithACreatedUser,
     }) => {
         test.setTimeout(10000);
-        const page = pageWithACreatedUser;
-        await page.getByRole('link', { name: 'Loculus' }).click();
-        await page.getByRole('link', { name: 'Submit' }).click();
-        await page.getByRole('link', { name: 'create a submitting group' }).click();
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
+        await submissionPage.navigateToSubmissionPage('Ebola Sudan');
+        await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
     test('basic file upload submission flow works', async ({ pageWithGroup }) => {
@@ -22,10 +21,8 @@ test.describe('Submission flow', () => {
         const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
         const metadataFile = join(testFilesDir, 'cchfv_test_metadata.tsv');
 
-        await page.getByRole('link', { name: 'Loculus' }).click();
-        await page.getByRole('link', { name: 'Submit' }).click();
-        await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
-        await page.getByRole('link', { name: 'Submit Upload New Sequences' }).click();
+        const submissionPage = new SingleSequenceSubmissionPage(page);
+        await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
 
         await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
         await page.getByTestId('metadata_file').setInputFiles(metadataFile);
