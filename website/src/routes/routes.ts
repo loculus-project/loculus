@@ -60,7 +60,6 @@ export const routes = {
         return `/seqsets/${seqSetId}.${seqSetVersion}`;
     },
     logout: () => '/logout',
-    organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
     datauseTermsPage: () => '/about/terms-of-use/data-use-terms',
 };
 

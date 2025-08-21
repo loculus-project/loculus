@@ -1,5 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
-import { extraSequenceRelatedTopNavigationItems, extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
+import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
 
@@ -13,10 +13,14 @@ export type TopNavigationItems = {
     path: string;
 }[];
 
-function getSequenceRelatedItems(organism: string | undefined) {
+export function getSequenceRelatedItems(organism: string | undefined) {
+    if (organism === undefined) {
+        return [];
+    }
+
     const browseItem = {
         text: 'Browse',
-        path: organism !== undefined ? routes.searchPage(organism) : routes.organismSelectorPage('search'),
+        path: routes.searchPage(organism),
     };
 
     if (!getWebsiteConfig().enableSubmissionNavigationItem) {
@@ -25,10 +29,7 @@ function getSequenceRelatedItems(organism: string | undefined) {
 
     const submitItem = {
         text: 'Submit',
-        path:
-            organism !== undefined
-                ? routes.submissionPageWithoutGroup(organism)
-                : routes.organismSelectorPage('submission'),
+        path: routes.submissionPageWithoutGroup(organism),
     };
     return [browseItem, submitItem];
 }
@@ -64,15 +65,8 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
 }
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
-    const sequenceRelatedItems = getSequenceRelatedItems(organism);
     const seqSetsItems = getSeqSetsItems();
     const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
 
-    return [
-        ...sequenceRelatedItems,
-        ...extraSequenceRelatedTopNavigationItems(organism),
-        ...seqSetsItems,
-        ...extraStaticTopNavigationItems,
-        ...accountItems,
-    ];
+    return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
 }
