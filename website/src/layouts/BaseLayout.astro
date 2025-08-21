@@ -31,14 +31,11 @@ interface Props {
 
 const { title, implicitOrganism, fullWidth } = Astro.props;
 
-// Get the current organism from either implicit prop or URL params
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
-// If we have an implicit organism (string key), find the full organism object
 const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
 const currentOrganismObject = implicitOrganismObject || organism;
 const currentOrganism = currentOrganismObject?.key;
 
-// Get the current path for the submenu
 const currentPath = Astro.url.pathname;
 
 const backendIsInDebugMode = await createBackendClient().isInDebugMode();
