@@ -1372,6 +1372,7 @@ defaultOrganisms:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Dummy Organism"
+      longDisplayName: "Test Dummy Organism for development"
       metadataTemplate:
         - country
         - date
@@ -1596,7 +1597,8 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      organismName: "CCHF"
+      longDisplayName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:

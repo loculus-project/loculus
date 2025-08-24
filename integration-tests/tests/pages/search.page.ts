@@ -13,7 +13,7 @@ export class SearchPage {
     }
 
     async cchf() {
-        await this.navigateToVirus('Crimean-Congo Hemorrhagic Fever Virus');
+        await this.navigateToVirus('CCHF');
     }
 
     async testOrganismWithoutAlignment() {

@@ -224,6 +224,12 @@
               "type": "string",
               "description": "Display name for the organism"
             },
+            "longDisplayName": {
+              "groups": ["schema"],
+              "docsIncludePrefix": false,
+              "type": "string",
+              "description": "Longer display name for the organism"
+            },
             "image": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
