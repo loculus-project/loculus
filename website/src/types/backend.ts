@@ -339,5 +339,19 @@ export const requestUploadResponse = z.array(
 );
 export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;
 
+export const requestMultipartUploadResponse = z.array(
+    z.object({
+        fileId: z.string().uuid(),
+        urls: z.array(z.string()),
+    }),
+);
+export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUploadResponse>;
+
+export const fileIdAndEtags = z.object({
+    fileId: z.string().uuid(),
+    etags: z.array(z.string()),
+});
+export type FileIdAndEtags = z.infer<typeof fileIdAndEtags>;
+
 export const pipelineVersionStatistics = z.record(z.record(z.number()));
 export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;

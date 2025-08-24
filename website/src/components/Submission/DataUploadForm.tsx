@@ -72,8 +72,15 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
+    const [isFilesUploading, setIsFilesUploading] = useState(false);
+
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
+
+        if (isFilesUploading) {
+            onError('Please wait for file uploads to complete before submitting.');
+            return;
+        }
 
         const sequenceDataResult = await fileFactory!();
 
@@ -169,6 +176,7 @@ const InnerDataUploadForm = ({
                             group={group}
                             onError={onError}
                             setFileMapping={setFileMapping}
+                            onUploadStateChange={setIsFilesUploading}
                         />
                         <hr />
                     </>
@@ -196,17 +204,19 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated alsoDisabledIf={isLoading}>
+                    <DisabledUntilHydrated alsoDisabledIf={isLoading || isFilesUploading}>
                         <button
                             name='submit'
                             type='submit'
-                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500 disabled:bg-gray-400 disabled:cursor-not-allowed'
                             onClick={(e) => void handleSubmit(e)}
                         >
                             <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                                 <span className='loading loading-spinner loading-sm' />
                             </div>
-                            <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                            <span className='flex-1 text-center mx-8'>
+                                {isFilesUploading ? 'Uploading files...' : 'Submit sequences'}
+                            </span>
                         </button>
                     </DisabledUntilHydrated>
                 </div>
@@ -268,6 +278,7 @@ const ExtraFilesUpload = ({
     fileCategories,
     setFileMapping,
     onError,
+    onUploadStateChange,
 }: {
     accessToken: string;
     clientConfig: ClientConfig;
@@ -276,6 +287,7 @@ const ExtraFilesUpload = ({
     fileCategories: FileCategory[];
     setFileMapping: Dispatch<SetStateAction<FilesBySubmissionId | undefined>>;
     onError: (message: string) => void;
+    onUploadStateChange: (isUploading: boolean) => void;
 }) => {
     return (
         <div className='grid sm:grid-cols-3 gap-x-16 gap-y-4'>
@@ -298,6 +310,7 @@ const ExtraFilesUpload = ({
                         group={group}
                         onError={onError}
                         setFileMapping={setFileMapping}
+                        onUploadStateChange={onUploadStateChange}
                     />
                 ))}
             </div>
