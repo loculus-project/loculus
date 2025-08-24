@@ -10,7 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import useQueryAsState from './useQueryAsState.js';
+import useQueryAsState, { type QueryState } from './useQueryAsState.ts';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
@@ -18,7 +18,7 @@ import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
 import type { LinkOut } from '../../types/config.ts';
-import { type OrderBy } from '../../types/lapis.ts';
+import { type OrderBy, type OrderByType } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
@@ -51,10 +51,6 @@ export interface InnerSearchFullUIProps {
     linkOuts?: LinkOut[];
 }
 
-interface QueryState {
-    [key: string]: string;
-}
-
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
     const sequenceCount = totalSequences ?? oldCount ?? initialCount;
 
@@ -64,7 +60,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
@@ -133,14 +129,18 @@ export const InnerSearchFullUI = ({
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 
-    let orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    const stateOrderBy = (state as Record<string, string | undefined>).orderBy;
+    let orderByField = stateOrderBy ?? (schema.defaultOrderBy as string | undefined) ?? schema.primaryKey;
     if (!columnsToShow.includes(orderByField)) {
         orderByField = schema.primaryKey;
     }
 
-    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+    const stateOrderDirection = (state as Record<string, string | undefined>).order;
+    const orderDirection = (stateOrderDirection ??
+        (schema.defaultOrder as OrderByType | undefined) ??
+        'ascending') as OrderByType;
 
-    const page = parseInt(state.page ?? '1', 10);
+    const page = parseInt((state as Record<string, string | undefined>).page ?? '1', 10);
 
     const setPage = useCallback(
         (newPage: number) => {
