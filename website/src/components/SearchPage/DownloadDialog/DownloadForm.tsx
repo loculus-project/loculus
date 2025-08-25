@@ -94,7 +94,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             dataType: downloadDataType,
             includeRestricted: includeRestricted === 1,
             fields: dataType === 0 ? orderFieldsForDownload(selectedFields, metadata) : undefined,
-            compression: includeRichFastaHeaders ? undefined : compressionOptions[compression],
+            compression: compressionOptions[compression],
             dataFormat: undefined,
         });
     }, [
@@ -229,7 +229,6 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 options={[{ label: <>None</> }, { label: <>Zstandard</> }, { label: <>Gzip</> }]}
                 selected={compression}
                 onSelect={setCompression}
-                disabled={dataType === 1 && includeRichFastaHeaders === 1}
             />
 
             <FieldSelectorModal
