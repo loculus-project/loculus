@@ -53,7 +53,8 @@ test.describe('Group management', () => {
         await groupPage.finishEditingGroup();
 
         await expect(pageWithGroup.getByRole('heading', { name: newName })).toBeVisible();
-        const table = pageWithGroup.locator('table');
+        // Select the group details table, ignoring the sequence counts table
+        const table = pageWithGroup.locator('table').filter({ hasText: 'Group ID' });
         await expect(table).toContainText(newInstitution);
         await expect(table).toContainText(newEmail);
         await expect(table).toContainText(newLine1);
