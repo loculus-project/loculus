@@ -4,9 +4,9 @@ import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forward
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
@@ -64,7 +64,7 @@ export const AutoCompleteField = ({
             <Combobox
                 immediate
                 value={fieldValue}
-                onChange={(value) => setSomeFieldValues([field.name, value === null ? NULL_QUERY_VALUE : value])}
+                onChange={(value) => setSomeFieldValues([field.name, value ?? NULL_QUERY_VALUE])}
             >
                 <div className='relative'>
                     <ComboboxInput

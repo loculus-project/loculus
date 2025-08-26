@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AutoCompleteField } from './AutoCompleteField';
-import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
