@@ -220,7 +220,7 @@ export class MetadataFilterSchema {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
             if (field.name in queryState) {
-                values[field.name] = queryState[field.name];
+                values[field.name] = queryState[field.name] === 'null' ? null : queryState[field.name];
             }
         }
         if ('accession' in queryState) {

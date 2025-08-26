@@ -56,20 +56,20 @@ export const AutoCompleteField = ({
                 ? options
                 : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase()));
         return allMatchedOptions.slice(0, maxDisplayedOptions);
-    }, [options, query]);
+    }, [options, query, maxDisplayedOptions]);
 
     return (
         <DisabledUntilHydrated>
-            <Combobox immediate value={fieldValue} onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}>
+            <Combobox immediate value={fieldValue} onChange={(value) => setSomeFieldValues([field.name, value])}>
                 <div className='relative'>
                     <ComboboxInput
-                        displayValue={(value: string) => value}
+                        displayValue={(value: string | number | null) => (value === null ? '(blank)' : String(value))}
                         onChange={(event) => setQuery(event.target.value)}
                         onFocus={load}
                         placeholder={field.displayName ?? field.name}
                         as={CustomInput}
                     />
-                    {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (
+                    {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                         <button
                             className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                             onClick={() => {
@@ -115,7 +115,7 @@ export const AutoCompleteField = ({
                                             focus ? 'bg-blue-500 text-white' : 'text-gray-900'
                                         }`
                                     }
-                                    value={option.option}
+                                    value={option.value}
                                 >
                                     {({ selected, focus }) => (
                                         <>

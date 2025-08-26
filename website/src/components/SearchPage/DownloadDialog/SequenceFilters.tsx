@@ -177,11 +177,13 @@ export class FieldFilterSet implements SequenceFilter {
 
     private filterValueDisplayString(fieldName: string, value: any): string {
         let result = value;
-        if (this.filterSchema.getType(fieldName) === 'timestamp') {
+        if (value === null) {
+            result = '(blank)';
+        } else if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
-        if (result.length > 40) {
+        if (typeof result === 'string' && result.length > 40) {
             result = `${result.substring(0, 37)}...`;
         }
         return result;

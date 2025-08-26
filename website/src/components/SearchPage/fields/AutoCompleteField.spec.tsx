@@ -229,6 +229,37 @@ describe('AutoCompleteField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
     });
 
+    it('allows selecting blank option', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [{ testField: null, count: 5 }],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options[0]).toHaveTextContent('(blank)(5)');
+        await userEvent.click(options[0]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
+    });
+
     it('shows at most a configured number of options', async () => {
         const data = [];
         for (let i = 0; i < 100; i++) {

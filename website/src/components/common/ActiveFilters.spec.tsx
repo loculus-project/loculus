@@ -30,6 +30,22 @@ describe('ActiveFilters', () => {
             expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
         });
 
+        it('renders null values as (blank)', () => {
+            render(
+                <ActiveFilters
+                    sequenceFilter={
+                        new FieldFilterSet(
+                            new MetadataFilterSchema([]),
+                            { field1: null },
+                            {},
+                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                        )
+                    }
+                />,
+            );
+            expect(screen.getByText('(blank)')).toBeInTheDocument();
+        });
+
         const mockRemoveFilter = vi.fn();
         beforeEach(() => {
             mockRemoveFilter.mockReset();
