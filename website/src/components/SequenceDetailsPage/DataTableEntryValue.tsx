@@ -2,6 +2,7 @@ import React from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
+import { LinkWithMenuComponent } from './LinkWithMenuComponent';
 import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
@@ -67,6 +68,10 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     >
                         {value}
                     </a>
+                )}
+
+                {customDisplay?.type === 'linkWithMenu' && customDisplay.linkMenuItems !== undefined && (
+                    <LinkWithMenuComponent value={value} linkMenuItems={customDisplay.linkMenuItems} />
                 )}
                 {customDisplay?.type === 'htmlTemplate' && customDisplay.html !== undefined && (
                     /* eslint-disable @typescript-eslint/naming-convention */

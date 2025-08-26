@@ -1,17 +1,17 @@
 package org.loculus.backend.controller.submission
 
-import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
+@EnabledIfEnvironmentVariable(named = "RUN_EXTRA_TESTS", matches = "true")
 class SubmitLargeBatchTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val groupManagementClient: GroupManagementControllerClient,

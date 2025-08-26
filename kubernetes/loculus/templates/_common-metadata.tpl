@@ -285,7 +285,16 @@ organisms:
   {{- if .customDisplay }}
   customDisplay:
     type: {{ quote .customDisplay.type }}
+    {{- if .customDisplay.url }}
     url: {{ .customDisplay.url }}
+    {{- end }}
+    {{- if .customDisplay.linkMenuItems }}
+    linkMenuItems:
+      {{- range .customDisplay.linkMenuItems }}
+      - name: {{ quote .name }}
+        url: {{ quote .url }}
+      {{- end }}
+    {{- end }}
     {{- if .customDisplay.displayGroup }}
     displayGroup: {{ quote .customDisplay.displayGroup }}
     {{- end }}

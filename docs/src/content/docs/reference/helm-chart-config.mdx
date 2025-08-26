@@ -59,6 +59,8 @@ lineageSystemDefinitions:
 
 <SchemaDocs group='lineage-system-definitions' fieldColumnClass='w-48' />
 
+Note: Lineages should be determined by the preprocessing pipeline and not the user, set the lineage field to `noInput: true` to reflect this or alternatively only allow users to submit valid lineage values by adding an `options` list.
+
 ### Organism (type)
 
 Each organism object has the following fields:
@@ -79,11 +81,15 @@ Definition of metadata fields for sequence entries of an organism, for example t
 
 Use the optional `customDisplay` object on a metadata field to change how the
 value appears on the sequence details page. The object can contain
-`type`, `url`, `html`, `value` and `displayGroup` properties. The `type`
+`type`, `url`, `html`, `value`, `linkMenuItems` and `displayGroup` properties. The `type`
 property controls the behaviour:
 
 - `link` – open the value as a hyperlink using the `url` where `__value__` is
   replaced by the actual value.
+- `linkWithMenu` – display the value as a hyperlink with a dropdown menu for
+  multiple link options. Requires `linkMenuItems` array with objects containing
+  `name` and `url` properties. The first item is used as the default/primary link
+  that opens when clicking the value directly.
 - `badge` – show mutation lists as coloured badges (requires `value`).
 - `htmlTemplate` – replace `__value__` in the provided `html` string and render
   the resulting HTML snippet.
@@ -96,6 +102,23 @@ property controls the behaviour:
 
 When `displayGroup` is provided, all entries with the same group are collapsed
 into a single row.
+
+##### Example: linkWithMenu for INSDC accessions
+
+```yaml
+- name: insdcAccessionFull
+  displayName: INSDC accession
+  customDisplay:
+    type: linkWithMenu
+    linkMenuItems:
+      - name: View in NCBI
+        url: 'https://www.ncbi.nlm.nih.gov/nuccore/__value__'
+      - name: View in ENA
+        url: 'https://www.ebi.ac.uk/ena/browser/view/__value__'
+      - name: View in DDBJ
+        url: 'https://www.ddbj.nig.ac.jp/entry/__value__'
+  header: 'INSDC'
+```
 
 ### Preprocessing (type)
 
