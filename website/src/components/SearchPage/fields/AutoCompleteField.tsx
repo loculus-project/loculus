@@ -4,6 +4,7 @@ import { type InputHTMLAttributes, useEffect, useMemo, useState, useRef, forward
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
@@ -60,7 +61,11 @@ export const AutoCompleteField = ({
 
     return (
         <DisabledUntilHydrated>
-            <Combobox immediate value={fieldValue} onChange={(value) => setSomeFieldValues([field.name, value])}>
+            <Combobox
+                immediate
+                value={fieldValue}
+                onChange={(value) => setSomeFieldValues([field.name, value === null ? NULL_QUERY_VALUE : value])}
+            >
                 <div className='relative'>
                     <ComboboxInput
                         displayValue={(value: string | number | null) => (value === null ? '(blank)' : String(value))}

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AutoCompleteField } from './AutoCompleteField';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
 
@@ -257,7 +258,7 @@ describe('AutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         expect(options[0]).toHaveTextContent('(blank)(5)');
         await userEvent.click(options[0]);
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', NULL_QUERY_VALUE]);
     });
 
     it('shows at most a configured number of options', async () => {
