@@ -125,7 +125,9 @@ export const AutoCompleteField = ({
                                     {({ selected, focus }) => (
                                         <>
                                             <span
-                                                className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}
+                                                className={`inline-block ${selected ? 'font-medium' : 'font-normal'} ${
+                                                    option.option === '(blank)' ? 'italic' : ''
+                                                }`}
                                             >
                                                 {option.option}
                                             </span>

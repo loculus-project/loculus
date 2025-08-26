@@ -30,8 +30,9 @@ export interface SequenceFilter {
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
+     * null values are maintained as null.
      */
-    toDisplayStrings(): Map<string, [string, string]>;
+    toDisplayStrings(): Map<string, [string, string | null]>;
 }
 
 /**
@@ -164,22 +165,23 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | null]> {
         return new Map(
             Object.entries(this.fieldValues)
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
-                .map(([name, filterValue]): [string, [string, string]] => [
+                .map(([name, filterValue]): [string, [string, string | null]] => [
                     name,
-                    [this.filterSchema.getLabel(name), this.filterValueDisplayString(name, filterValue)],
+                    [
+                        this.filterSchema.getLabel(name),
+                        filterValue === null ? null : this.filterValueDisplayString(name, filterValue),
+                    ],
                 ]),
         );
     }
 
     private filterValueDisplayString(fieldName: string, value: any): string {
         let result = value;
-        if (value === null) {
-            result = '(blank)';
-        } else if (this.filterSchema.getType(fieldName) === 'timestamp') {
+        if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
@@ -243,7 +245,7 @@ export class SequenceEntrySelection implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | null]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
         const seqs = Array.from(this.selectedSequences).sort();

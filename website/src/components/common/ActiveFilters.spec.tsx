@@ -30,7 +30,7 @@ describe('ActiveFilters', () => {
             expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
         });
 
-        it('renders null values as (blank)', () => {
+        it('renders null values as (blank) in italics', () => {
             render(
                 <ActiveFilters
                     sequenceFilter={
@@ -43,7 +43,9 @@ describe('ActiveFilters', () => {
                     }
                 />,
             );
-            expect(screen.getByText('(blank)')).toBeInTheDocument();
+            const blankElement = screen.getByText('(blank)');
+            expect(blankElement).toBeInTheDocument();
+            expect(blankElement).toHaveClass('italic');
         });
 
         const mockRemoveFilter = vi.fn();
