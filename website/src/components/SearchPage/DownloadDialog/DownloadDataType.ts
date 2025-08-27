@@ -5,8 +5,8 @@ export type DownloadDataType =
           segment?: string;
           includeRichFastaHeaders?: boolean;
       }
-    | { type: 'alignedNucleotideSequences'; segment?: string }
-    | { type: 'alignedAminoAcidSequences'; gene: string };
+    | { type: 'alignedNucleotideSequences'; segment?: string; includeRichFastaHeaders?: boolean }
+    | { type: 'alignedAminoAcidSequences'; gene: string; includeRichFastaHeaders?: boolean };
 
 /**
  * Get a shortened kebab-case datatype including the gene and sequence as well.
