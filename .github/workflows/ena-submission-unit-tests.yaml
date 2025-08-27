@@ -18,7 +18,7 @@ jobs:
     name: Check formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/ruff-action@v3
         with:
           args: "format --check --diff"
@@ -27,7 +27,7 @@ jobs:
     name: Lint code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/ruff-action@v3
         with:
           args: "check"
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
