@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout Main Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
       - name: Get SHA - length 7
@@ -83,7 +83,7 @@ jobs:
           wait-interval: 2
       # End of wait block
       - name: Checkout External Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: "loculus-project/argocd_metadata"
           token: ${{ secrets.ARGOCD_METADATA_PAT }}

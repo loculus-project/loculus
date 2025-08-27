@@ -39,7 +39,7 @@ jobs:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
