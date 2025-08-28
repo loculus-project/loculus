@@ -13,8 +13,8 @@ export type DataTableData = {
 
 function formatAuthorName(author: string): string {
     const parts = author.split(',').map((x) => x.trim());
-    if (parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0) {
-        return `${parts[1]} ${parts[0]}`;
+    if (parts.length >= 2) {
+        return `${parts[1]} ${parts[0]}`.trim();
     }
     return author.trim();
 }
@@ -37,6 +37,7 @@ function grouping(listTableDataEntries: TableDataEntry[]): TableDataEntry[] {
                     header: entry.header,
                     customDisplay: entry.customDisplay,
                     label: entry.label,
+                    orderOnDetailsPage: entry.orderOnDetailsPage,
                 });
             }
             groupedEntries.get(entry.customDisplay.displayGroup)!.push(entry);
@@ -102,9 +103,23 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
         }
         tableHeaderMap.get(entry.header)!.push(entry);
     }
+
+    const headerGroups: { header: string; rows: TableDataEntry[]; meanOrder: number }[] = [];
     for (const [header, rows] of tableHeaderMap.entries()) {
-        result.table.push({ header, rows });
+        rows.sort(
+            (a, b) =>
+                (a.orderOnDetailsPage ?? Number.POSITIVE_INFINITY) - (b.orderOnDetailsPage ?? Number.POSITIVE_INFINITY),
+        );
+        const definedOrders = rows.map((r) => r.orderOnDetailsPage).filter((o): o is number => o !== undefined);
+        const meanOrder =
+            definedOrders.length > 0
+                ? definedOrders.reduce((sum, o) => sum + o, 0) / definedOrders.length
+                : Number.POSITIVE_INFINITY;
+        headerGroups.push({ header, rows, meanOrder });
     }
+
+    headerGroups.sort((a, b) => a.meanOrder - b.meanOrder);
+    result.table = headerGroups.map(({ header, rows }) => ({ header, rows }));
 
     return result;
 }
