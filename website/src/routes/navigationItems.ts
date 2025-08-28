@@ -2,6 +2,8 @@ import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
+import SearchIcon from '~icons/tabler/list-search';
+import UploadIcon from '~icons/material-symbols/upload';
 
 export const navigationItems = {
     top: topNavigationItems,
@@ -11,6 +13,7 @@ export const navigationItems = {
 export type TopNavigationItems = {
     text: string;
     path: string;
+    icon?: any;
 }[];
 
 export function getSequenceRelatedItems(organism: string | undefined) {
@@ -21,6 +24,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     const browseItem = {
         text: 'Browse data',
         path: routes.searchPage(organism),
+        icon: SearchIcon,
     };
 
     if (!getWebsiteConfig().enableSubmissionNavigationItem) {
@@ -30,6 +34,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     const submitItem = {
         text: 'Submit sequences',
         path: routes.submissionPageWithoutGroup(organism),
+        icon: UploadIcon,
     };
     return [browseItem, submitItem];
 }

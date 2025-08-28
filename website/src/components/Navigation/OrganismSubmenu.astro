@@ -24,16 +24,17 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                     {currentOrganismObject?.displayName || currentOrganism}
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
-                {sequenceRelatedItems.map(({ text, path }) => {
+                {sequenceRelatedItems.map(({ text, path, icon: Icon }) => {
                     // Use startsWith to match path prefixes (e.g., /organism/search matches /organism/search/details)
                     const isActive = currentPath.startsWith(path);
                     return (
                         <a
                             href={path}
-                            class={`px-2.5 py-0.5 rounded text-sm transition-colors font-semibold ${
+                            class={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-sm transition-colors font-semibold ${
                                 isActive ? 'bg-primary-100 text-gray-900' : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
+                            {Icon && <Icon className='w-4 h-4' />}
                             {text}
                         </a>
                     );
