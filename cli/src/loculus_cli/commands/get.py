@@ -41,7 +41,7 @@ def get_group() -> None:
 @click.option(
     "--limit",
     type=int,
-    default=10,
+    default=None,
     help="Maximum number of results",
 )
 @click.option(
