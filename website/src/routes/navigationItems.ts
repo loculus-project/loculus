@@ -19,7 +19,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     }
 
     const browseItem = {
-        text: 'Browse',
+        text: 'Browse data',
         path: routes.searchPage(organism),
     };
 
@@ -28,7 +28,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     }
 
     const submitItem = {
-        text: 'Submit',
+        text: 'Submit sequences',
         path: routes.submissionPageWithoutGroup(organism),
     };
     return [browseItem, submitItem];
