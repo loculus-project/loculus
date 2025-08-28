@@ -206,6 +206,8 @@ data class ReleasedData(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
 
+typealias ReleasedData2 = Map<String, JsonNode>
+
 data class ExternalSubmittedData(
     override val accession: Accession,
     override val version: Version,
