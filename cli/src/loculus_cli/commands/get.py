@@ -485,13 +485,7 @@ def _output_fasta(data: list[dict[str, str]], output: Path | None) -> None:
             or item.get("unalignedNucleotideSequence")
         )
         if sequence:
-            # Handle accessionVersion field from FASTA response or separate fields
-            if "accessionVersion" in item:
-                header = f">{item['accessionVersion']}"
-            else:
-                accession = item.get("accession", "unknown")
-                version = item.get("version", "1")
-                header = f">{accession}.{version}"
+            header = f">{item['accessionVersion']}"
             fasta_lines.append(header)
             fasta_lines.append(sequence)
 
