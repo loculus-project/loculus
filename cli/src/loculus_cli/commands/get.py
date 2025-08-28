@@ -206,9 +206,6 @@ def sequences(
                         f"Invalid segment '{segment}' for organism '{organism}'"
                     )
 
-            # For single-reference organisms with only one segment,
-            # don't pass segment parameter. Otherwise use the segment
-            # or default to 'main' for multi-segment organisms
             should_omit_segment = is_single_reference and len(nucleotide_sequences) == 1
             segment_name = None if should_omit_segment else segment
 
