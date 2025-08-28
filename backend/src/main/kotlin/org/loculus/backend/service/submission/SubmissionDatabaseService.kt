@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -124,6 +125,8 @@ class SubmissionDatabaseService(
     init {
         Database.connect(pool)
     }
+
+    private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
         numberOfSequenceEntries: Int,
@@ -1272,10 +1275,28 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
-        SequenceEntriesTable.distinctOrganisms().map { organismName ->
-            Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
-        }.toMap()
+    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+        val latestUpdate = transaction {
+            UpdateTrackerTable
+                .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
+                .where { UpdateTrackerTable.tableNameColumn eq SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME }
+                .map { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+                .firstOrNull()
+        }
+
+        if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
+            log.info {
+                "No updates in $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME; skipping pipeline version check"
+            }
+            return emptyMap()
+        }
+
+        lastPreprocessedDataUpdate = latestUpdate
+
+        return SequenceEntriesTable.distinctOrganisms().associateWith { organismName ->
+            useNewerProcessingPipelineIfPossible(organismName)
+        }
+    }
 
     /**
      * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];
