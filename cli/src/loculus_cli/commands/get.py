@@ -47,7 +47,7 @@ def get_group() -> None:
 @click.option(
     "--offset",
     type=int,
-    default=0,
+    default=None,
     help="Offset for pagination",
 )
 @click.option(
