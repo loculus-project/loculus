@@ -15,6 +15,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.ProcessingResult
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -492,7 +493,7 @@ class SubmissionConvenienceClient(
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
-        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        client.getReleasedData(organism).expectNdjsonAndGetContent<ReleasedData>()
 
     fun getOriginalMetadata(
         organism: String = DEFAULT_ORGANISM,

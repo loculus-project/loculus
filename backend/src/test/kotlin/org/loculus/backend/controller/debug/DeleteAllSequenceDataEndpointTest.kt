@@ -170,14 +170,14 @@ class DeleteAllSequenceDataEndpointTest(
     fun `GIVEN I deleted all sequences WHEN submitting again THEN new sequences are present`() {
         submissionConvenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
         val accessionsBeforeDeletion = submissionConvenienceClient.getReleasedData()
-            .map { it.metadata["accession"]?.textValue() }
+            .map { it["accession"]?.textValue() }
 
         deleteAllSequences(jwtForSuperUser)
             .andExpect(status().isNoContent)
 
         val firstNewAccession = submissionConvenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE).first().accession
         val accessionsAfterDeletion = submissionConvenienceClient.getReleasedData()
-            .map { it.metadata["accession"]?.textValue() }
+            .map { it["accession"]?.textValue() }
         assertThat(accessionsAfterDeletion, hasSize(NUMBER_OF_SEQUENCES))
         assertThat(accessionsAfterDeletion, hasItem(firstNewAccession))
         assertThat(accessionsAfterDeletion, not(hasItem(accessionsBeforeDeletion.first())))

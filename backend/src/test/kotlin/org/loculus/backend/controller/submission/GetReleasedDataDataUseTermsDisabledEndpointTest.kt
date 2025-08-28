@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_CONFIG
@@ -71,11 +72,11 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
 
         responseBody.forEach {
-            assertThat(it.metadata.keys, not(hasItem("dataUseTerms")))
-            assertThat(it.metadata.keys, not(hasItem("dataUseTermsRestrictedUntil")))
+            assertThat(it.keys, not(hasItem("dataUseTerms")))
+            assertThat(it.keys, not(hasItem("dataUseTermsRestrictedUntil")))
         }
     }
 
@@ -95,15 +96,15 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+        val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
 
         assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
 
         response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
-            val id = it.metadata["accession"]!!.asText()
-            val version = it.metadata["version"]!!.asLong()
+            val id = it["accession"]!!.asText()
+            val version = it["version"]!!.asLong()
             assertThat(version, `is`(1))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
@@ -118,24 +119,36 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
                 "submittedDate" to TextNode(currentDate),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
+            val expectedUnalignedSequences = defaultProcessedData.unalignedNucleotideSequences
+                .map { "unaligned_${it.key}" to TextNode(it.value) }
+                .toMap()
+            val expectedMetadataAndUnalignedSequences = expectedMetadata + expectedUnalignedSequences
 
-            for ((key, value) in it.metadata) {
+            for ((key, value) in it) {
                 when (key) {
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     "groupId" -> assertThat(value.intValue(), `is`(groupId))
                     else -> {
-                        assertThat(expectedMetadata.keys, hasItem(key))
-                        assertThat(value, `is`(expectedMetadata[key]))
+                        if (defaultProcessedData.alignedNucleotideSequences[key] != null) {
+                            expectCorrectAlignedSequence(
+                                value,
+                                defaultProcessedData.alignedNucleotideSequences[key]!!,
+                                defaultProcessedData.nucleotideInsertions[key]!!,
+                            )
+                        } else if (defaultProcessedData.alignedAminoAcidSequences[key] != null) {
+                            expectCorrectAlignedSequence(
+                                value,
+                                defaultProcessedData.alignedAminoAcidSequences[key]!!,
+                                defaultProcessedData.aminoAcidInsertions[key]!!,
+                            )
+                        } else {
+                            assertThat(value, `is`(expectedMetadataAndUnalignedSequences[key]))
+                        }
                     }
                 }
             }
-            assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
-            assertThat(it.unalignedNucleotideSequences, `is`(defaultProcessedData.unalignedNucleotideSequences))
-            assertThat(it.alignedAminoAcidSequences, `is`(defaultProcessedData.alignedAminoAcidSequences))
-            assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
-            assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
     }
 }

@@ -9,6 +9,7 @@ import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
@@ -62,7 +63,7 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
     }
 
     @Test
@@ -87,8 +88,8 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
-        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        assertThat(releasedSequenceEntry, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry, hasEntry("other_db_accession", TextNode("DB1.1")))
     }
 
     @Test
@@ -113,7 +114,7 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntryAfter = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntryBefore.metadata, equalTo(releasedSequenceEntryAfter.metadata))
+        assertThat(releasedSequenceEntryBefore, equalTo(releasedSequenceEntryAfter))
     }
 
     @Test
@@ -159,9 +160,9 @@ class SubmitExternalMetadataEndpointTest(
             )
     }
 
-    private fun getReleasedSequenceEntry(accession: Accession): ProcessedData<GeneticSequence> {
+    private fun getReleasedSequenceEntry(accession: Accession): ReleasedData {
         val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accession }
+            .find { it["accession"]?.textValue() == accession }
 
         assertThat(releasedSequenceEntry, notNullValue())
         return releasedSequenceEntry!!
