@@ -24,7 +24,7 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                     {currentOrganismObject?.displayName || currentOrganism}
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
-                {sequenceRelatedItems.map(({ text, path }) => {
+                {sequenceRelatedItems.map(({ text, path, icon: iconComponent }) => {
                     // Use startsWith to match path prefixes (e.g., /organism/search matches /organism/search/details)
                     const isActive = currentPath.startsWith(path);
                     return (
@@ -34,11 +34,12 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                                 isActive ? 'bg-primary-100 text-gray-900' : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
+                            {iconComponent && <iconComponent class='inline-block w-4 h-4 mr-1 align-text-bottom' />}
                             {text}
                         </a>
                     );
                 })}
-                {extraItems.map(({ text, path }) => {
+                {extraItems.map(({ text, path, icon: iconComponent }) => {
                     const isActive = currentPath.startsWith(path);
                     return (
                         <a
@@ -47,6 +48,7 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                                 isActive ? 'bg-primary-100 text-gray-900' : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
+                            {iconComponent && <iconComponent class='inline-block w-4 h-4 mr-1 align-text-bottom' />}
                             {text}
                         </a>
                     );

@@ -1,35 +1,46 @@
+import type { SVGProps, ForwardRefExoticComponent } from 'react';
+
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
+import Upload from '~icons/icon-park-outline/upload';
+import ListSearch from '~icons/tabler/list-search';
 
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,
 };
 
-export type TopNavigationItems = {
+export type NavigationItemIcon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
+
+export type NavigationItem = {
     text: string;
     path: string;
-}[];
+    icon?: NavigationItemIcon;
+};
+
+export type TopNavigationItems = NavigationItem[];
 
 export function getSequenceRelatedItems(organism: string | undefined) {
     if (organism === undefined) {
         return [];
     }
 
-    const browseItem = {
+    const browseItem: NavigationItem = {
         text: 'Browse data',
         path: routes.searchPage(organism),
+        icon: ListSearch,
     };
 
     if (!getWebsiteConfig().enableSubmissionNavigationItem) {
         return [browseItem];
     }
 
-    const submitItem = {
+    const submitItem: NavigationItem = {
         text: 'Submit sequences',
         path: routes.submissionPageWithoutGroup(organism),
+        icon: Upload,
     };
     return [browseItem, submitItem];
 }
