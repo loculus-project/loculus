@@ -97,7 +97,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     # preprocessing: Preprocessing function to run on the field (optional: defaults to identity function on input field with same name)
     metadata:
       - name: sampleCollectionDate
-        displayName: Collection date
+        displayName: Date
         header: Sample details
         ingest: ncbiCollectionDate
         order: 10
@@ -113,10 +113,11 @@ defaultOrganismConfig: &defaultOrganismConfig
         notSearchable: true
         columnWidth: 100
       - name: sampleCollectionDateRangeLower
-        displayName: Collection date (lower bound)
+        displayName: Date (lower bound)
         type: date
         initiallyVisible: true
         hideInSearchResultsTable: true
+        order: 11
         header: Sample details
         preprocessing:
           function: parse_date_into_range
@@ -127,13 +128,14 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeLower
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
-          rangeDisplayName: Collection date
+          rangeDisplayName: Date range
           bound: lower
         noInput: true
       - name: sampleCollectionDateRangeUpper
-        displayName: Collection date (upper bound)
+        displayName: Date (upper bound)
         type: date
         initiallyVisible: true
+        order: 12
         hideInSearchResultsTable: true
         header: Sample details
         preprocessing:
@@ -145,7 +147,7 @@ defaultOrganismConfig: &defaultOrganismConfig
             fieldType: dateRangeUpper
         rangeOverlapSearch:
           rangeName: sampleCollectionDateRange
-          rangeDisplayName: Collection date
+          rangeDisplayName: Date range
           bound: upper
         noInput: true
       - name: displayName
@@ -198,7 +200,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: float
         guidance: Geo-coordinate longitude in decimal degree (WGS84) format, i.e. values in range -180 to 180, where positive values are east of the Prime Meridian.
       - name: geoLocCountry
-        displayName: Collection country
+        displayName: Country
         generateIndex: true
         autocomplete: true
         initiallyVisible: true
@@ -522,31 +524,36 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         initiallyVisible: true
         header: Sample details
-        order: 30
+        order: 21
         ingest: division
       - name: geoLocAdmin2
         displayName: Collection subdivision level 2
         desired: true
         generateIndex: true
         autocomplete: true
+        order: 22
         header: Sample details
       - name: geoLocCity
         displayName: Collection city
         desired: true
         generateIndex: true
         autocomplete: true
+        order: 23
         header: Sample details
       - name: geoLocSite
         ontology_id: GENEPIO:0100436
         definition: The name of a specific geographical location e.g. Credit River (rather than river).
         guidance: Provide the name of the specific geographical site using a specific noun (a word that names a certain place, thing).
         example: Credit River
+        order: 25
         displayName: Collection site
         header: Sample details
       - name: specimenCollectorSampleId
         displayName: Isolate name
         desired: true
         header: Sample details
+        initiallyVisible: true
+        order: 90
         ingest: ncbiIsolateName
         enableSubstringSearch: true
       - name: authors
@@ -1266,7 +1273,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
-          <<: *preprocessingConfigFile      
+          <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1418,7 +1425,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: pangoLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1532,7 +1539,7 @@ defaultOrganisms:
           required: true
           type: string
           lineageSystem: alternativeLineage
-          options: 
+          options:
             - name: A
             - name: A.1
             - name: A.1.1
@@ -1978,7 +1985,7 @@ enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
-enaDeposition: 
+enaDeposition:
   submitToEnaProduction: false
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
