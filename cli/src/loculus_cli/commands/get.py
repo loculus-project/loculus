@@ -161,18 +161,19 @@ def sequences(
         organism_info = instance_info["organisms"].get(organism, {})
         ref_genomes = organism_info.get("referenceGenomes", {})
 
+        is_single_reference = "singleReference" in ref_genomes
+
         nucleotide_sequences: list[str]
-        if "nucleotideSequences" in ref_genomes:
-            nucleotide_sequences = [
-                seq["name"] for seq in ref_genomes["nucleotideSequences"]
-            ]
+        if is_single_reference:
+            if "nucleotideSequences" in ref_genomes.get("singleReference", {}):
+                nucleotide_sequences = [
+                    seq["name"]
+                    for seq in ref_genomes["singleReference"]["nucleotideSequences"]
+                ]
+            else:
+                raise ValueError("No nucleotide sequences defined in config")
         else:
-            # Fallback to schema if referenceGenomes not available
-            schema_dict = dict(schema)
-            sequences = schema_dict.get("nucleotideSequences", ["main"])
-            nucleotide_sequences = (
-                sequences if isinstance(sequences, list) else ["main"]
-            )
+            raise ValueError("Only singleReference organisms are supported currently")
 
         # Handle segment parameter for multisegmented viruses
         if output_format == "fasta":
@@ -205,8 +206,11 @@ def sequences(
                         f"Invalid segment '{segment}' for organism '{organism}'"
                     )
 
-            # Use the segment or default to 'main' for single-segment organisms
-            segment_name = segment or "main"
+            # For single-reference organisms with only one segment,
+            # don't pass segment parameter. Otherwise use the segment
+            # or default to 'main' for multi-segment organisms
+            should_omit_segment = is_single_reference and len(nucleotide_sequences) == 1
+            segment_name = None if should_omit_segment else segment
 
             stderr_console = get_stderr_console()
             with stderr_console.status("Fetching sequences..."):
@@ -484,9 +488,13 @@ def _output_fasta(data: list[dict[str, str]], output: Path | None) -> None:
             or item.get("unalignedNucleotideSequence")
         )
         if sequence:
-            accession = item.get("accession", "unknown")
-            version = item.get("version", "1")
-            header = f">{accession}.{version}"
+            # Handle accessionVersion field from FASTA response or separate fields
+            if "accessionVersion" in item:
+                header = f">{item['accessionVersion']}"
+            else:
+                accession = item.get("accession", "unknown")
+                version = item.get("version", "1")
+                header = f">{accession}.{version}"
             fasta_lines.append(header)
             fasta_lines.append(sequence)
 
