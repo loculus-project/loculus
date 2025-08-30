@@ -21,6 +21,8 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                     <span className='text-primary-900 font-light pr-1'>{label}:</span>
                     {value === '' ? (
                         <span className='text-primary-900 italic'>any</span>
+                    ) : value === null ? (
+                        <span className='text-primary-900 italic'>(blank)</span>
                     ) : (
                         <span className='text-primary-900 font-semibold'>{value}</span>
                     )}

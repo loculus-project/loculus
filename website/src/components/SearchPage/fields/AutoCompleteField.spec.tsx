@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AutoCompleteField } from './AutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -227,6 +228,37 @@ describe('AutoCompleteField', () => {
         await userEvent.click(clearButton);
 
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
+    });
+
+    it('allows selecting blank option', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [{ testField: null, count: 5 }],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+
+        const options = await screen.findAllByRole('option');
+        expect(options[0]).toHaveTextContent('(blank)(5)');
+        await userEvent.click(options[0]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', NULL_QUERY_VALUE]);
     });
 
     it('shows at most a configured number of options', async () => {
