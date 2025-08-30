@@ -151,6 +151,7 @@ export const schema = z.object({
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
+    suborganismIdentifierField: z.string().optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

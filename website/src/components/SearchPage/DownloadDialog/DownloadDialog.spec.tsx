@@ -9,7 +9,11 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesSequenceNames,
+    type ReferenceAccession,
+    SINGLE_REFERENCE,
+} from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
@@ -24,9 +28,11 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [defaultAccession],
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
 };
 
 const defaultLapisUrl = 'https://lapis';
@@ -136,7 +142,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -274,7 +280,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -323,7 +329,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                    { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                 ),
             });
 
