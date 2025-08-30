@@ -157,7 +157,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                   ),
               },
               {
-                  label: <>Aligned nucleotide sequences</>,
+                  label: <>Reference-aligned nucleotide sequences</>,
                   subOptions: isMultiSegmented ? (
                       <div className='px-8'>
                           <DropdownOptionBlock
@@ -173,7 +173,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                   ) : undefined,
               },
               {
-                  label: <>Aligned amino acid sequences</>,
+                  label: <>Reference-aligned amino acid sequences</>,
                   subOptions: (
                       <div className='px-8'>
                           <DropdownOptionBlock
