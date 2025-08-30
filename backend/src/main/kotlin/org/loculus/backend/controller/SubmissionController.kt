@@ -182,7 +182,7 @@ open class SubmissionController(
         ) numberOfSequenceEntries: Int,
         @RequestParam pipelineVersion: Long,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
-    ): ResponseEntity<StreamingResponseBody> {
+    ): ResponseEntity<String> {
         val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentProcessingPipelineVersion) {
             throw UnprocessableEntityException(
@@ -196,13 +196,24 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()
         }
 
+        val result = submissionDatabaseService.fetchUnprocessedSubmissions(
+            numberOfSequenceEntries,
+            organism,
+            pipelineVersion,
+        )
+
+        val ndjsonContent = result.data.joinToString("\n") { item ->
+            objectMapper.writeValueAsString(item)
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned {
-            submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
+
+        if (!result.hadConflict) {
+            headers.eTag = lastDatabaseWriteETag
         }
-        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+
+        return ResponseEntity(ndjsonContent, headers, HttpStatus.OK)
     }
 
     @Operation(

@@ -126,20 +126,6 @@ class SubmissionDatabaseService(
         Database.connect(pool)
     }
 
-    fun streamUnprocessedSubmissions(
-        numberOfSequenceEntries: Int,
-        organism: Organism,
-        pipelineVersion: Long,
-    ): Sequence<UnprocessedData> {
-        log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism." }
-
-        return fetchUnprocessedEntriesAndUpdateToInProcessing(
-            organism,
-            numberOfSequenceEntries,
-            pipelineVersion,
-        )
-    }
-
     fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
         val table = CurrentProcessingPipelineTable
         return table
@@ -151,15 +137,21 @@ class SubmissionDatabaseService(
             .first()
     }
 
-    private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
-        organism: Organism,
+    data class FetchUnprocessedResult(val data: List<UnprocessedData>, val hadConflict: Boolean = false)
+
+    fun fetchUnprocessedSubmissions(
         numberOfSequenceEntries: Int,
+        organism: Organism,
         pipelineVersion: Long,
-    ): Sequence<UnprocessedData> {
+    ): FetchUnprocessedResult {
+        log.info {
+            "Request received to fetch up to $numberOfSequenceEntries unprocessed submissions for $organism."
+        }
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
 
-        return table
+        // Select and lock the rows
+        val selectedRows = table
             .select(
                 table.accessionColumn,
                 table.versionColumn,
@@ -183,52 +175,57 @@ class SubmissionDatabaseService(
             .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
             .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
-            .fetchSize(streamBatchSize)
-            .asSequence()
-            .chunked(streamBatchSize)
-            .map { chunk ->
-                val chunkOfUnprocessedData = chunk.map {
-                    val originalData = compressionService.decompressSequencesInOriginalData(
-                        it[table.originalDataColumn]!!,
-                        organism,
-                    )
-                    val originalDataWithFileUrls = OriginalDataWithFileUrls(
-                        originalData.metadata,
-                        originalData.unalignedNucleotideSequences,
-                        originalData.files?.let {
-                            it.mapValues {
-                                it.value.map { f ->
-                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
-                                }
-                            }
-                        },
-                    )
-                    UnprocessedData(
-                        accession = it[table.accessionColumn],
-                        version = it[table.versionColumn],
-                        data = originalDataWithFileUrls,
-                        submissionId = it[table.submissionIdColumn],
-                        submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
-                    )
+            .toList()
+
+        try {
+            if (selectedRows.isNotEmpty()) {
+                preprocessing.batchInsert(selectedRows) { it ->
+                    this[preprocessing.accessionColumn] = it[table.accessionColumn]
+                    this[preprocessing.versionColumn] = it[table.versionColumn]
+                    this[preprocessing.pipelineVersionColumn] = pipelineVersion
+                    this[preprocessing.processingStatusColumn] = IN_PROCESSING.name
+                    this[preprocessing.startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
                 }
-                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
-                chunkOfUnprocessedData
             }
-            .flatten()
-    }
 
-    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
-        log.info { "updating status to processing. Number of sequence entries: ${sequenceEntries.size}" }
+            val data = selectedRows.map { it ->
+                val originalData = compressionService.decompressSequencesInOriginalData(
+                    it[table.originalDataColumn]!!,
+                    organism,
+                )
+                val originalDataWithFileUrls = OriginalDataWithFileUrls(
+                    originalData.metadata,
+                    originalData.unalignedNucleotideSequences,
+                    originalData.files?.let {
+                        it.mapValues {
+                            it.value.map { f ->
+                                val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
+                                FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
+                            }
+                        }
+                    },
+                )
+                UnprocessedData(
+                    accession = it[table.accessionColumn],
+                    version = it[table.versionColumn],
+                    data = originalDataWithFileUrls,
+                    submissionId = it[table.submissionIdColumn],
+                    submitter = it[table.submitterColumn],
+                    groupId = it[table.groupIdColumn],
+                    submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
+                )
+            }
 
-        SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
-            this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
-            this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
-            this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
-            this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = IN_PROCESSING.name
-            this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = dateProvider.getCurrentDateTime()
+            return FetchUnprocessedResult(data, hadConflict = false)
+        } catch (e: Exception) {
+            if (e.message?.contains("duplicate key") == true) {
+                // Another client got some of these entries
+                // Return empty list with conflict flag
+                log.info { "Duplicate key conflict - returning empty result without ETag" }
+                return FetchUnprocessedResult(emptyList(), hadConflict = true)
+            } else {
+                throw e
+            }
         }
     }
 
