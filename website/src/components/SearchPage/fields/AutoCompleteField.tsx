@@ -9,8 +9,8 @@ import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
-import MdiTick from '~icons/mdi/tick';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
+import MdiTick from '~icons/mdi/tick';
 
 const CustomInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
@@ -49,6 +49,7 @@ export const AutoCompleteField = ({
     const buttonRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
 
     const hook = createOptionsProviderHook(optionsProvider);
     const { options, isLoading: isOptionListLoading, error, load } = hook();
@@ -82,10 +83,11 @@ export const AutoCompleteField = ({
         return allMatchedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions]);
 
-    const handleChange = (value: any) => {
+    const handleChange = (value: string | string[] | null) => {
         if (!multiSelect) {
             // Single-select mode - just set the value
-            setSomeFieldValues([field.name, value ?? NULL_QUERY_VALUE]);
+            const singleValue = Array.isArray(value) ? value[0] ?? NULL_QUERY_VALUE : value ?? NULL_QUERY_VALUE;
+            setSomeFieldValues([field.name, singleValue]);
             return;
         }
 
@@ -94,9 +96,9 @@ export const AutoCompleteField = ({
             if (value.length === 0) {
                 setSomeFieldValues([field.name, '']);
             } else {
-                // Convert any null values to NULL_QUERY_VALUE
-                const processedValues = value.map((v) => (v === null ? NULL_QUERY_VALUE : v.toString()));
-                setSomeFieldValues([field.name, processedValues as any]);
+                // Convert null values to NULL_QUERY_VALUE (values can be null at runtime from Combobox)
+                const processedValues = value.map((v) => (v as string | null) ?? NULL_QUERY_VALUE);
+                setSomeFieldValues([field.name, processedValues as unknown as string]);
             }
         }
     };
@@ -129,79 +131,99 @@ export const AutoCompleteField = ({
                 >
                     <div className='relative'>
                         {multiSelect ? (
-                            // Multi-select mode with badges inside the field
-                            <div
-                                className='relative flex flex-wrap items-center border border-gray-300 rounded-md pr-16 cursor-text hover:border-gray-400 transition-colors'
-                                onClick={(e) => {
-                                    // Focus the input when clicking anywhere in the field
-                                    // unless clicking on a button or the input itself
-                                    const target = e.target as HTMLElement;
-                                    if (!target.closest('button') && !target.closest('input')) {
-                                        inputRef.current?.focus();
-                                    }
-                                }}
-                            >
-                                {selectedValues.size > 0 && (
-                                    <div className='flex flex-wrap gap-1 p-1'>
-                                        {Array.from(selectedValues).map((value) => {
-                                            const displayValue = value === NULL_QUERY_VALUE ? '(blank)' : value;
-                                            return (
-                                                <span
-                                                    key={value}
-                                                    className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs flex items-center'
-                                                >
-                                                    {displayValue}
-                                                    <button
-                                                        className='ml-1 text-blue-500 hover:text-blue-700'
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            // Remove this value from the array
-                                                            const newValues =
-                                                                multiSelectValue?.filter((v) => {
-                                                                    const compareValue =
-                                                                        v === null ? NULL_QUERY_VALUE : v;
-                                                                    return compareValue !== value;
-                                                                }) || [];
-                                                            handleChange(newValues);
-                                                        }}
-                                                        aria-label={`Remove ${displayValue}`}
-                                                        type='button'
-                                                    >
-                                                        <MaterialSymbolsClose className='w-3 h-3' />
-                                                    </button>
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                <ComboboxInput
-                                    ref={inputRef}
-                                    className={`flex-grow border-0 outline-none px-3 ${
-                                        selectedValues.size > 0 ? 'p-1' : 'py-2.5'
+                            // Multi-select mode with floating label styling to match TextField
+                            <div className='relative my-1'>
+                                <div
+                                    className={`relative flex flex-wrap items-center rounded-md pr-16 cursor-text transition-colors bg-white min-h-[52px] border ${
+                                        isFocused 
+                                            ? 'border-blue-600' 
+                                            : 'border-gray-300 hover:border-gray-400'
                                     }`}
-                                    displayValue={() => ''}
-                                    onChange={(event) => setQuery(event.target.value)}
-                                    onFocus={load}
-                                    placeholder={selectedValues.size > 0 ? '' : (field.displayName ?? field.name)}
-                                    aria-label={field.displayName ?? field.name}
-                                />
-                                {(selectedValues.size > 0 || query !== '') && (
-                                    <button
-                                        className='absolute inset-y-0 right-8 flex items-center pr-2'
-                                        onClick={handleClear}
-                                        aria-label={`Clear ${field.displayName ?? field.name}`}
-                                        type='button'
-                                    >
-                                        <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
-                                    </button>
-                                )}
-                                <ComboboxButton
-                                    className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
-                                    ref={buttonRef}
+                                    onClick={(e) => {
+                                        // Focus the input when clicking anywhere in the field
+                                        // unless clicking on a button or the input itself
+                                        const target = e.target as HTMLElement;
+                                        if (!target.closest('button') && !target.closest('input')) {
+                                            inputRef.current?.focus();
+                                        }
+                                    }}
                                 >
-                                    <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
-                                </ComboboxButton>
+                                    {selectedValues.size > 0 && (
+                                        <div className='flex flex-wrap gap-1 p-1 pt-3'>
+                                            {Array.from(selectedValues).map((value) => {
+                                                const displayValue = value === NULL_QUERY_VALUE ? '(blank)' : value;
+                                                return (
+                                                    <span
+                                                        key={value}
+                                                        className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs flex items-center'
+                                                    >
+                                                        {displayValue}
+                                                        <button
+                                                            className='ml-1 text-blue-500 hover:text-blue-700'
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                // Remove this value from the array
+                                                                const newValues =
+                                                                    multiSelectValue?.filter((v) => {
+                                                                        const compareValue =
+                                                                            v ?? NULL_QUERY_VALUE;
+                                                                        return compareValue !== value;
+                                                                    }) ?? [];
+                                                                handleChange(newValues.map(v => v ?? NULL_QUERY_VALUE));
+                                                            }}
+                                                            aria-label={`Remove ${displayValue}`}
+                                                            type='button'
+                                                        >
+                                                            <MaterialSymbolsClose className='w-3 h-3' />
+                                                        </button>
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    <ComboboxInput
+                                        ref={inputRef}
+                                        className={`flex-grow border-0 outline-none text-sm text-gray-900 bg-transparent appearance-none focus:ring-0 ${
+                                            selectedValues.size > 0 ? 'px-3 pb-1.5 pt-1' : 'px-2.5 pb-1.5 pt-3'
+                                        }`}
+                                        displayValue={() => ''}
+                                        onChange={(event) => setQuery(event.target.value)}
+                                        onFocus={() => {
+                                            setIsFocused(true);
+                                            load();
+                                        }}
+                                        onBlur={() => setIsFocused(false)}
+                                        placeholder=''
+                                        aria-label={field.displayName ?? field.name}
+                                    />
+                                    {(selectedValues.size > 0 || query !== '') && (
+                                        <button
+                                            className='absolute inset-y-0 right-8 flex items-center pr-2'
+                                            onClick={handleClear}
+                                            aria-label={`Clear ${field.displayName ?? field.name}`}
+                                            type='button'
+                                        >
+                                            <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
+                                        </button>
+                                    )}
+                                    <ComboboxButton
+                                        className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
+                                        ref={buttonRef}
+                                    >
+                                        <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
+                                    </ComboboxButton>
+                                </div>
+                                {/* Floating label for multi-select */}
+                                <label
+                                    className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 start-1 pointer-events-none ${
+                                        selectedValues.size > 0 || isFocused || query !== ''
+                                            ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`
+                                            : 'text-gray-500 scale-100 -translate-y-1/2 top-1/2'
+                                    }`}
+                                >
+                                    {field.displayName ?? field.name}
+                                </label>
                             </div>
                         ) : (
                             // Single-select mode (original layout)
