@@ -210,10 +210,19 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
+                // Check if the field value is an array or a string
+                const value = fieldValues[field.name];
+                const isArray = Array.isArray(value);
+
+                // Extract single value or array of values
+                const fieldValue = isArray ? '' : (value ?? '');
+                const fieldValuesArray = isArray ? (value as string[]) : [];
+
                 return (
                     <AutoCompleteField
                         field={field}
-                        fieldValue={field.name in fieldValues ? fieldValues[field.name] : ''}
+                        fieldValue={fieldValue}
+                        fieldValues={fieldValuesArray}
                         setSomeFieldValues={setSomeFieldValues}
                         optionsProvider={{
                             type: 'generic',
@@ -221,6 +230,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
+                        multiSelect={true} // Enable multi-select for all autocomplete fields
                     />
                 );
             }
