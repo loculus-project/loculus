@@ -88,9 +88,17 @@ export class FieldFilterSet implements SequenceFilter {
 
     public toApiParams(): LapisSearchParameters {
         const sequenceFilters = Object.fromEntries(
-            Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
-            ),
+            Object.entries(this.fieldValues as Record<string, any>)
+                .filter(([, value]) => value !== undefined && value !== '')
+                .map(([key, value]) => {
+                    // If it's an array, convert "_null_" strings back to null for the API
+                    if (Array.isArray(value)) {
+                        const converted = value.map((v) => v === '_null_' ? null : v);
+                        return [key, converted];
+                    }
+                    return [key, value];
+                })
+                .filter(([, value]) => value !== undefined),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
             if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {

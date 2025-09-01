@@ -21,7 +21,6 @@ import type { LinkOut } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { normalizeArrayWithNulls } from '../../utils/extractFieldValue.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
     getColumnVisibilitiesFromQuery,
@@ -29,7 +28,6 @@ import {
     VISIBILITY_PREFIX,
     COLUMN_VISIBILITY_PREFIX,
     MetadataFilterSchema,
-    NULL_QUERY_VALUE,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -228,9 +226,9 @@ export const InnerSearchFullUI = ({
     const removeFilter = (metadataFilterName: string) => {
         if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
             const hiddenValue = hiddenFieldValues[metadataFilterName];
-            // Normalize arrays with nulls if needed
+            // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
             const valueToSet = Array.isArray(hiddenValue)
-                ? normalizeArrayWithNulls(hiddenValue, NULL_QUERY_VALUE)
+                ? (hiddenValue.filter((v): v is string => v !== null) as string[])
                 : hiddenValue;
             setSomeFieldValues([metadataFilterName, valueToSet]);
         } else {
@@ -244,15 +242,16 @@ export const InnerSearchFullUI = ({
 
         // If it's an array, filter out the value to remove
         if (Array.isArray(currentValue)) {
-            // Normalize nulls to NULL_QUERY_VALUE for comparison
-            const normalizedArray = normalizeArrayWithNulls(currentValue, NULL_QUERY_VALUE);
-            const newValues = normalizedArray.filter((val) => val !== valueToRemove);
+            // Filter and ensure we have only strings (no nulls)
+            const newValues = currentValue
+                .filter((val) => val !== valueToRemove)
+                .filter((val): val is string => val !== null);
 
             // Reset the key to empty if all values removed, otherwise set the new filtered array
             if (newValues.length === 0) {
                 setSomeFieldValues([key, '']);
             } else {
-                setSomeFieldValues([key, newValues]);
+                setSomeFieldValues([key, newValues as string[]]);
             }
         } else if (typeof currentValue === 'string') {
             // For single string values, just clear it

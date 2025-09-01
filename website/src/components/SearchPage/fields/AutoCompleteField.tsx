@@ -97,9 +97,8 @@ export const AutoCompleteField = ({
             if (value.length === 0) {
                 setSomeFieldValues([field.name, '']);
             } else {
-                // Convert null values to NULL_QUERY_VALUE (values can be null at runtime from Combobox)
-                const processedValues = value.map((v) => (v as string | null) ?? NULL_QUERY_VALUE);
-                setSomeFieldValues([field.name, processedValues as unknown as string]);
+                // Keep values as strings, NULL_QUERY_VALUE is already a string
+                setSomeFieldValues([field.name, value]);
             }
         }
     };
@@ -118,7 +117,8 @@ export const AutoCompleteField = ({
     // Convert selectedValues Set to array for multi-select Combobox value
     const multiSelectValue = useMemo(() => {
         if (!multiSelect) return undefined;
-        return Array.from(selectedValues).map((v) => (v === NULL_QUERY_VALUE ? null : v));
+        // Keep values as-is, including NULL_QUERY_VALUE as string
+        return Array.from(selectedValues);
     }, [multiSelect, selectedValues]);
 
     return (
@@ -216,9 +216,12 @@ export const AutoCompleteField = ({
                             // Single-select mode (original layout)
                             <>
                                 <ComboboxInput
-                                    displayValue={(value: string | number | null) =>
-                                        value === null ? '(blank)' : String(value)
-                                    }
+                                    displayValue={(value: string | number | null) => {
+                                        if (value === null || value === NULL_QUERY_VALUE) {
+                                            return '(blank)';
+                                        }
+                                        return String(value);
+                                    }}
                                     onChange={(event) => setQuery(event.target.value)}
                                     onFocus={load}
                                     placeholder={field.displayName ?? field.name}
@@ -264,9 +267,7 @@ export const AutoCompleteField = ({
                                         value={option.value}
                                     >
                                         {({ focus }) => {
-                                            const isSelected = selectedValues.has(
-                                                option.value?.toString() ?? NULL_QUERY_VALUE,
-                                            );
+                                            const isSelected = selectedValues.has(option.value);
                                             return (
                                                 <>
                                                     <span
