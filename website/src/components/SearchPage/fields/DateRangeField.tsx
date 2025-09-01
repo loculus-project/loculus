@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { DateField } from './DateField';
 import type { FieldValues, GroupedMetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import { CustomTooltip } from '../../../utils/CustomTooltip';
+import { validateSingleValue } from '../../../utils/extractFieldValue';
 
 export type DateRangeFieldProps = {
     field: GroupedMetadataFilter;
@@ -49,8 +50,14 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
 
     const lowerField = strictMode ? lowerFromField : upperFromField;
     const upperField = strictMode ? upperToField : lowerToField;
-    const [lowerValue, setLowerValue] = useState(fieldValues[lowerField.name] ?? '');
-    const [upperValue, setUpperValue] = useState(fieldValues[upperField.name] ?? '');
+
+    // Extract single values from fieldValues (date ranges should never be arrays)
+    const getFieldValue = (fieldName: string): string | number => {
+        return validateSingleValue(fieldValues[fieldName], fieldName);
+    };
+
+    const [lowerValue, setLowerValue] = useState(getFieldValue(lowerField.name));
+    const [upperValue, setUpperValue] = useState(getFieldValue(upperField.name));
 
     useEffect(() => {
         setStrictMode(
@@ -61,8 +68,8 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                 upperToField.name in fieldValues,
             ),
         );
-        setLowerValue(fieldValues[lowerField.name] ?? '');
-        setUpperValue(fieldValues[upperField.name] ?? '');
+        setLowerValue(validateSingleValue(fieldValues[lowerField.name], lowerField.name));
+        setUpperValue(validateSingleValue(fieldValues[upperField.name], upperField.name));
     }, [field, fieldValues]);
 
     useEffect(() => {
@@ -128,7 +135,10 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={lowerValue}
-                setSomeFieldValues={(args) => setLowerValue(args[1]!)}
+                setSomeFieldValues={(args) => {
+                    const value = validateSingleValue(args[0][1], `${field.name}-from`);
+                    setLowerValue(value);
+                }}
             />
             <DateField
                 field={{
@@ -137,7 +147,10 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={upperValue}
-                setSomeFieldValues={(args) => setUpperValue(args[1]!)}
+                setSomeFieldValues={(args) => {
+                    const value = validateSingleValue(args[0][1], `${field.name}-to`);
+                    setUpperValue(value);
+                }}
             />
         </div>
     );

@@ -16,6 +16,7 @@ import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { validateSingleValue, extractArrayValue } from '../../utils/extractFieldValue.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
@@ -185,7 +186,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return (
                 <DateField
                     field={field}
-                    fieldValue={fieldValues[field.name] ?? ''}
+                    fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
@@ -193,7 +194,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return (
                 <TimestampField
                     field={field}
-                    fieldValue={fieldValues[field.name] ?? ''}
+                    fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
@@ -210,18 +211,13 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
-                // Check if the field value is an array or a string
-                const value = fieldValues[field.name];
-                const isArray = Array.isArray(value);
-
-                // Extract single value or array of values
-                const fieldValue = isArray ? '' : (value ?? '');
-                const fieldValuesArray = isArray ? (value as string[]) : [];
+                // AutoComplete fields support multi-select
+                const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
                     <AutoCompleteField
                         field={field}
-                        fieldValue={fieldValue}
+                        fieldValue='' // Not used in multi-select mode
                         fieldValues={fieldValuesArray}
                         setSomeFieldValues={setSomeFieldValues}
                         optionsProvider={{
@@ -238,7 +234,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 <NormalTextField
                     type={field.type}
                     field={field}
-                    fieldValue={fieldValues[field.name] ?? ''}
+                    fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                     setSomeFieldValues={setSomeFieldValues}
                 />
             );
