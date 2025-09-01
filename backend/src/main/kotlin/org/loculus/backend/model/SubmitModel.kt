@@ -24,7 +24,6 @@ import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedInputStream
 import java.io.Closeable
@@ -167,11 +166,12 @@ class SubmitModel(
     }
 
     private fun parseMetadataFile(submissionParams: SubmissionParams): Map<SubmissionId, MetadataEntry> =
-        MaybeFile().use { metadataTempFileToDelete ->
+
+        AutoDeletingTempFile().use { tempFile ->
             val metadataStream = getStreamFromFile(
                 submissionParams.metadataFile,
                 metadataFileTypes,
-                metadataTempFileToDelete,
+                tempFile,
             )
             val metadata: Map<SubmissionId, MetadataEntry> = metadataEntryStreamAsSequence(metadataStream)
                 .associateBy { it.submissionId }
@@ -195,11 +195,11 @@ class SubmitModel(
             )
         }
 
-        return MaybeFile().use { sequenceTempFileToDelete ->
+        return AutoDeletingTempFile().use { tempFile ->
             val sequenceStream = getStreamFromFile(
                 sequenceFile,
                 sequenceFileTypes,
-                sequenceTempFileToDelete,
+                tempFile,
             )
             FastaReader(sequenceStream).asSequence().associate { it.sampleName to it.sequence }
         }
@@ -218,45 +218,43 @@ class SubmitModel(
         return sequencesById
     }
 
-    class MaybeFile : Closeable {
-        var file: File? = null
-        fun delete() {
-            file?.delete()
+    class AutoDeletingTempFile :
+        File(
+            System.getProperty("java.io.tmpdir"),
+            UUID.randomUUID().toString(),
+        ),
+        Closeable {
+
+        init {
+            createNewFile()
         }
 
         override fun close() {
-            delete()
+            if (exists()) {
+                delete()
+            }
         }
     }
 
-    private fun getStreamFromFile(
-        file: MultipartFile,
-        dataType: ValidExtension,
-        maybeFileToDelete: MaybeFile,
-    ): InputStream = when (getFileType(file, dataType)) {
-        CompressionAlgorithm.ZIP -> {
-            val tempFile = File.createTempFile(
-                "upload_" + dataType.displayName.replace(" ", ""),
-                UUID.randomUUID().toString(),
-            )
-            maybeFileToDelete.file = tempFile
+    private fun getStreamFromFile(file: MultipartFile, dataType: ValidExtension, tempFile: File): InputStream =
+        when (getFileType(file, dataType)) {
+            CompressionAlgorithm.ZIP -> {
+                file.transferTo(tempFile)
+                val zipFile = ZipFile.builder()
+                    .setFile(tempFile)
+                    .setUseUnicodeExtraFields(true)
+                    .get()
+                BufferedInputStream(zipFile.getInputStream(zipFile.entries.nextElement()))
+            }
 
-            file.transferTo(tempFile)
-            val zipFile = ZipFile.builder()
-                .setFile(tempFile)
-                .setUseUnicodeExtraFields(true)
-                .get()
-            BufferedInputStream(zipFile.getInputStream(zipFile.entries.nextElement()))
+            CompressionAlgorithm.NONE ->
+                BufferedInputStream(file.inputStream)
+
+            else ->
+                CompressorStreamFactory().createCompressorInputStream(
+                    BufferedInputStream(file.inputStream),
+                )
         }
-
-        CompressionAlgorithm.NONE ->
-            BufferedInputStream(file.inputStream)
-
-        else ->
-            CompressorStreamFactory().createCompressorInputStream(
-                BufferedInputStream(file.inputStream),
-            )
-    }
 
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {
         val originalFilename = file.originalFilename

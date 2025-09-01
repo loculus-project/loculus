@@ -425,10 +425,11 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
-        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
+        // No longer works since we've removed the aux tables
+        // val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
+        // if (stillProcessing) {
+        //     return ResponseEntity.status(HttpStatus.LOCKED).build()
+        // }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
