@@ -51,6 +51,9 @@ export const AutoCompleteField = ({
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
+    
+    // Maximum number of badges to show before switching to summary
+    const MAX_VISIBLE_BADGES = 2;
 
     const hook = createOptionsProviderHook(optionsProvider);
     const { options, isLoading: isOptionListLoading, error, load } = hook();
@@ -149,34 +152,52 @@ export const AutoCompleteField = ({
                             >
                                 {selectedValues.size > 0 && (
                                     <div className='flex flex-wrap gap-1 p-1 pt-3'>
-                                        {Array.from(selectedValues).map((value) => {
-                                            const displayValue = value === NULL_QUERY_VALUE ? '(blank)' : value;
-                                            return (
-                                                <span
-                                                    key={value}
-                                                    className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs flex items-center'
-                                                >
-                                                    {displayValue}
-                                                    <button
-                                                        className='ml-1 text-blue-500 hover:text-blue-700'
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            // Remove this value from the array
-                                                            const newValues =
-                                                                multiSelectValue?.filter((v) => {
-                                                                    return v !== value;
-                                                                }) ?? [];
-                                                            handleChange(newValues);
-                                                        }}
-                                                        aria-label={`Remove ${displayValue}`}
-                                                        type='button'
+                                        {selectedValues.size > MAX_VISIBLE_BADGES ? (
+                                            // Show summary when too many selections
+                                            <button
+                                                type='button'
+                                                className='bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-200 transition-colors cursor-pointer'
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // Focus the input which will open the dropdown
+                                                    inputRef.current?.focus();
+                                                    inputRef.current?.click();
+                                                }}
+                                            >
+                                                {selectedValues.size} selected
+                                            </button>
+                                        ) : (
+                                            // Show individual badges when few selections
+                                            Array.from(selectedValues).map((value) => {
+                                                const displayValue = value === NULL_QUERY_VALUE ? '(blank)' : value;
+                                                return (
+                                                    <span
+                                                        key={value}
+                                                        className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs flex items-center'
                                                     >
-                                                        <MaterialSymbolsClose className='w-3 h-3' />
-                                                    </button>
-                                                </span>
-                                            );
-                                        })}
+                                                        {displayValue}
+                                                        <button
+                                                            className='ml-1 text-blue-500 hover:text-blue-700'
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                // Remove this value from the array
+                                                                const newValues =
+                                                                    multiSelectValue?.filter((v) => {
+                                                                        return v !== value;
+                                                                    }) ?? [];
+                                                                handleChange(newValues);
+                                                            }}
+                                                            aria-label={`Remove ${displayValue}`}
+                                                            type='button'
+                                                        >
+                                                            <MaterialSymbolsClose className='w-3 h-3' />
+                                                        </button>
+                                                    </span>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 )}
                                 <ComboboxInput
@@ -205,7 +226,7 @@ export const AutoCompleteField = ({
                                     </button>
                                 )}
                                 <ComboboxButton
-                                    className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
+                                    className='absolute inset-y-0 right-0 flex items-center pr-2'
                                     ref={buttonRef}
                                 >
                                     <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
@@ -236,7 +257,7 @@ export const AutoCompleteField = ({
                                     </button>
                                 )}
                                 <ComboboxButton
-                                    className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
+                                    className='absolute inset-y-0 right-0 flex items-center pr-2'
                                     ref={buttonRef}
                                 >
                                     <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
