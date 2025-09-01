@@ -3,7 +3,6 @@ package org.loculus.backend.model
 import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
@@ -12,11 +11,9 @@ import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
@@ -28,7 +25,6 @@ import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
-import org.loculus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -95,7 +91,6 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
-    private val s3Service: S3Service,
     private val parseFastaHeader: ParseFastaHeader,
 ) {
 
@@ -117,7 +112,7 @@ class SubmitModel(
         uploadId: String,
         submissionParams: SubmissionParams,
         batchSize: Int = 1000,
-    ): List<SubmissionIdMapping> = try {
+    ): List<SubmissionIdMapping> {
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
@@ -136,10 +131,6 @@ class SubmitModel(
             dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
         }
 
-        // 1. Parse metadata and sequences
-        // 2. Do validations
-        // 3. Insert into sequenceEntries
-
         val metadata = parseMetadataFile(submissionParams)
         val rawSequences = parseSequenceFile(submissionParams)
         val sequences = groupSequencesById(rawSequences, submissionParams.organism)
@@ -150,15 +141,13 @@ class SubmitModel(
             validateSubmissionIdSetsForConsensusSequences(metadata.keys, sequences.keys)
         }
 
-        files?.let { submittedFiles ->
-            validateSubmissionIdSetsForFiles(metadata.keys, submittedFiles.keys)
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+        files?.let {
+            validateSubmissionIdSetsForFiles(metadata.keys, it.keys)
+            validateFileExistenceAndGroupOwnership(it, submissionParams, metadata)
         }
 
-
-        when (submissionParams) {
+        return when (submissionParams) {
             is SubmissionParams.OriginalSubmissionParams -> {
-                // Actually put the sequences into the db
                 uploadDatabaseService.createNewSequenceEntries(
                     metadata,
                     sequences,
@@ -168,25 +157,16 @@ class SubmitModel(
             }
 
             is SubmissionParams.RevisionSubmissionParams -> {
-                log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
                 uploadDatabaseService.createRevisionEntries(
                     metadata,
                     sequences,
                     files,
                     submissionParams
                 )
-//                uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
-//                    uploadId,
-//                    submissionParams.organism,
-//                    submissionParams.authenticatedUser,
-//                )
             }
-        }
 
-        log.debug { "Persisting submission with uploadId $uploadId" }
-        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
-    } finally {
-        uploadDatabaseService.deleteUploadData(uploadId)
+            else -> throw IllegalStateException("Unknown submission type: ${submissionParams.uploadType}")
+        }
     }
 
     private fun parseMetadataFile(submissionParams: SubmissionParams): Map<SubmissionId, MetadataEntry> {
@@ -196,7 +176,6 @@ class SubmitModel(
                 metadataFileTypes,
                 metadataTempFileToDelete,
             )
-            // Collect the metadataStream into a map so we can do validations
             val metadata: Map<SubmissionId, MetadataEntry> = metadataEntryStreamAsSequence(metadataStream)
                 .associateBy { it.submissionId }
 
@@ -244,50 +223,6 @@ class SubmitModel(
     }
 
 
-    /**
-     * Inserts the uploaded metadata (and sequence data) into the 'aux' tables in the database.
-     */
-    private fun insertDataIntoAux(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
-        val metadataTempFileToDelete = MaybeFile()
-        val metadataStream = getStreamFromFile(
-            submissionParams.metadataFile,
-            metadataFileTypes,
-            metadataTempFileToDelete,
-        )
-        try {
-            uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
-        } finally {
-            metadataTempFileToDelete.delete()
-        }
-
-        val sequenceFile = submissionParams.sequenceFile
-        if (sequenceFile == null) {
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
-                throw BadRequestException(
-                    "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
-                )
-            }
-        } else {
-            if (!requiresConsensusSequenceFile(submissionParams.organism)) {
-                throw BadRequestException(
-                    "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
-                )
-            }
-
-            val sequenceTempFileToDelete = MaybeFile()
-            try {
-                val sequenceStream = getStreamFromFile(
-                    sequenceFile,
-                    sequenceFileTypes,
-                    sequenceTempFileToDelete,
-                )
-                uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
-            } finally {
-                sequenceTempFileToDelete.delete()
-            }
-        }
-    }
-
     class MaybeFile : Closeable {
         var file: File? = null
         fun delete() {
@@ -328,81 +263,6 @@ class SubmitModel(
             )
     }
 
-    private fun uploadMetadata(
-        uploadId: String,
-        submissionParams: SubmissionParams,
-        metadataStream: InputStream,
-        batchSize: Int,
-    ) {
-        log.debug {
-            "intermediate storing uploaded metadata of type ${submissionParams.uploadType.name} " +
-                    "from $submissionParams.submitter with UploadId $uploadId"
-        }
-        val now = dateProvider.getCurrentDateTime()
-        try {
-            when (submissionParams) {
-                is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream)
-                        .chunked(batchSize)
-                        .forEach { batch ->
-                            uploadDatabaseService.batchInsertMetadataInAuxTable(
-                                uploadId = uploadId,
-                                authenticatedUser = submissionParams.authenticatedUser,
-                                groupId = submissionParams.groupId,
-                                submittedOrganism = submissionParams.organism,
-                                uploadedMetadataBatch = batch,
-                                uploadedAt = now,
-                                files = submissionParams.files,
-                            )
-                        }
-                }
-
-                is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream)
-                        .chunked(batchSize)
-                        .forEach { batch ->
-                            uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
-                                uploadId = uploadId,
-                                authenticatedUser = submissionParams.authenticatedUser,
-                                submittedOrganism = submissionParams.organism,
-                                uploadedRevisedMetadataBatch = batch,
-                                uploadedAt = now,
-                                files = submissionParams.files,
-                            )
-                        }
-                }
-            }
-        } catch (e: ExposedSQLException) {
-            if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                throw DuplicateKeyException(
-                    "Metadata file contains at least one duplicate submissionId: ${e.cause?.cause}",
-                )
-            }
-            throw e
-        }
-    }
-
-    private fun uploadSequences(uploadId: String, sequenceStream: InputStream, batchSize: Int, organism: Organism) {
-        log.info {
-            "intermediate storing uploaded sequence data with UploadId $uploadId"
-        }
-        FastaReader(sequenceStream).asSequence().chunked(batchSize).forEach { batch ->
-            try {
-                uploadDatabaseService.batchInsertSequencesInAuxTable(
-                    uploadId,
-                    organism,
-                    batch,
-                )
-            } catch (e: ExposedSQLException) {
-                if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                    throw DuplicateKeyException(
-                        "Sequence file contains at least one duplicate submissionId: ${e.cause?.cause}",
-                    )
-                }
-                throw e
-            }
-        }
-    }
 
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {
         val originalFilename = file.originalFilename
@@ -461,13 +321,13 @@ class SubmitModel(
     private fun validateFileExistenceAndGroupOwnership(
         submittedFiles: SubmissionIdFilesMap,
         submissionParams: SubmissionParams,
-        uploadId: String,
+        metadata: Map<SubmissionId, MetadataEntry>,
     ) {
         val usedFileIds = submittedFiles.getAllFileIds()
-        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
+        val fileToGroupId = filesDatabaseService.getGroupIds(usedFileIds)
 
         log.debug { "Validating that all submitted file IDs exist." }
-        val notExistingIds = usedFileIds.subtract(fileGroups.keys)
+        val notExistingIds = usedFileIds.subtract(fileToGroupId.keys)
         if (notExistingIds.isNotEmpty()) {
             throw BadRequestException("The File IDs $notExistingIds do not exist.")
         }
@@ -475,25 +335,28 @@ class SubmitModel(
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
-        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            fileGroups.forEach {
-                if (it.value != submissionParams.groupId) {
-                    throw BadRequestException(
-                        "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
-                    )
+        when (submissionParams) {
+            is SubmissionParams.OriginalSubmissionParams -> {
+                fileToGroupId.forEach {
+                    if (it.value != submissionParams.groupId) {
+                        throw BadRequestException(
+                            "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
+                        )
+                    }
                 }
             }
-        } else if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-            val submissionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
-            submittedFiles.forEach {
-                val submissionGroup = submissionIdGroups[it.key]
-                val associatedFileIds = it.value.values.flatten().map { it.fileId }
-                associatedFileIds.forEach { fileId ->
-                    val fileGroup = fileGroups[fileId]
-                    if (fileGroup != submissionGroup) {
-                        throw BadRequestException(
-                            "File $fileId does not belong to group $submissionGroup.",
-                        )
+
+            is SubmissionParams.RevisionSubmissionParams -> {
+                val submissionIdToGroup = uploadDatabaseService.submissionIdToGroup(metadata)
+                submittedFiles.forEach { (submissionId, filesMap) ->
+                    val submissionGroup = submissionIdToGroup[submissionId]
+                    filesMap.values.flatten().map { it.fileId }.forEach { fileId ->
+                        val fileGroup = fileToGroupId[fileId]
+                        if (fileGroup != submissionGroup) {
+                            throw BadRequestException(
+                                "File $fileId does not belong to group $submissionGroup.",
+                            )
+                        }
                     }
                 }
             }
