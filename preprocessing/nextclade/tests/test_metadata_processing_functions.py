@@ -498,7 +498,7 @@ test_case_definitions = [
             "submissionId": "invalid_author_names_listed",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith, Anna; InvalidName; BadFormat123; Perez, Tom J.; 12345; NoComma",
+            "authors": "Smith, Anna; Invalid Name; BadFormat123; Perez, Tom J.; 12345; NoComma",
         },
         accession_id="17",
         expected_metadata={
@@ -511,7 +511,7 @@ test_case_definitions = [
                 ["authors"],
                 ["authors"],
                 (
-                    "Invalid name(s): InvalidName; BadFormat123; 12345 ... and 1 others. "
+                    "Invalid name(s): Invalid Name; BadFormat123; 12345 ... and 1 others. "
                     "Please ensure that authors are separated by semi-colons. Each author's name "
                     "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
                     "a comma is mandatory to separate first names/initials from last name. "

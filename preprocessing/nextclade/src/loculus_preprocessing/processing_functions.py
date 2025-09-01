@@ -55,18 +55,20 @@ def invalid_value_annotation(
     )
 
 
-def valid_authors(authors: str) -> bool:
+def valid_name() -> str:
     alpha = r"\s*[a-zA-Z]"
     name_chars = r"[a-zA-Z\s\.\-\']*"
-    name = alpha + name_chars + "," + name_chars
+    return alpha + name_chars + "," + name_chars
+
+
+def valid_authors(authors: str) -> bool:
+    name = valid_name()
     pattern = f"^{name}(;{name})*;?$"
     return re.match(pattern, authors) is not None
 
 
 def get_invalid_author_names(authors: str) -> list[str]:
-    alpha = r"\s*[a-zA-Z]"
-    name_chars = r"[a-zA-Z\s\.\-\']*"
-    pattern = re.compile(f"^{alpha}{name_chars},{name_chars}$")
+    pattern = re.compile(f"^{valid_name()}$")
     invalid = []
     for author in authors.split(";"):
         if author and pattern.fullmatch(author) is None:
