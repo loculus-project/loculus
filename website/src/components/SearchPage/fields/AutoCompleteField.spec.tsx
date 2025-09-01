@@ -338,7 +338,7 @@ describe('AutoCompleteField', () => {
             expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', ['Option 1']]);
         });
 
-        it('displays selected values as badges', async () => {
+        it('displays selected values as badges', () => {
             mockUseAggregated.mockReturnValue({
                 data: {
                     data: [
@@ -518,7 +518,7 @@ describe('AutoCompleteField', () => {
             expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', [NULL_QUERY_VALUE]]);
         });
 
-        it('shows badges for selected options', async () => {
+        it('shows badges for selected options', () => {
             mockUseAggregated.mockReturnValue({
                 data: {
                     data: [
