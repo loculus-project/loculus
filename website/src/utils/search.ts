@@ -17,7 +17,7 @@ export const COLUMN_VISIBILITY_PREFIX = 'column_';
 export const ORDER_KEY = 'orderBy';
 export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
-export const NULL_QUERY_VALUE = '<null>';
+export const NULL_QUERY_VALUE = '_null_';
 
 export type SearchResponse = {
     data: TableSequenceData[];
