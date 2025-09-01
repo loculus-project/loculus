@@ -29,6 +29,8 @@ def test_check_authors_lists_invalid_names():
     msg = result.errors[0].message
     assert "Smith Anna" in msg and "Jones Bob" in msg
     assert "others" not in msg
+    # Verify that the raw original authors list is NOT in the message
+    assert "Smith Anna; Jones Bob;" not in msg
 
 
 def test_check_authors_lists_invalid_names_with_others():
@@ -37,3 +39,5 @@ def test_check_authors_lists_invalid_names_with_others():
     assert result.errors
     msg = result.errors[0].message
     assert "Invalid name(s): A B; A B; A B ... and 2 others" in msg
+    # Verify that the raw original authors list is NOT in the message
+    assert authors not in msg

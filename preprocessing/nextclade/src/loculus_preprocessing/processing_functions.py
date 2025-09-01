@@ -728,7 +728,7 @@ class ProcessingFunctions:
             authors.encode("ascii")
         except UnicodeEncodeError:
             error_message = (
-                f"The authors list '{authors}' contains non-ASCII characters. "
+                "The authors list contains non-ASCII characters. "
                 + author_format_description
             )
             return ProcessingResult(
@@ -747,7 +747,7 @@ class ProcessingFunctions:
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warning_message = (
-                    f"The authors list '{authors}' might not be using the Loculus format. "
+                    "The authors list might not be using the Loculus format. "
                     + author_format_description
                 )
                 warnings.append(
@@ -760,7 +760,7 @@ class ProcessingFunctions:
                 )
             if " and " in authors:
                 warning_message = (
-                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted "
+                    "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
@@ -783,13 +783,12 @@ class ProcessingFunctions:
             if len(invalid_names) > 3:  # noqa: PLR2004
                 names_to_show += f" ... and {len(invalid_names) - 3} others"
             error_message = (
-                f"The authors list '{authors}' is not in a recognized format. "
                 f"Invalid name(s): {names_to_show}. "
                 + author_format_description
             )
         else:
             error_message = (
-                f"The authors list '{authors}' is not in a recognized format. "
+                "The authors list is not in a recognized format. "
                 + author_format_description
             )
         return ProcessingResult(
