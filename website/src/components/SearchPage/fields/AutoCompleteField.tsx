@@ -51,7 +51,7 @@ export const AutoCompleteField = ({
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
-    
+
     // Maximum number of badges to show before switching to summary
     const MAX_VISIBLE_BADGES = 2;
 

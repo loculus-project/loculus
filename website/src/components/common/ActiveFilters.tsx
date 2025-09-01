@@ -6,10 +6,9 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 type ActiveFiltersProps = {
     sequenceFilter: SequenceFilter;
     removeFilter?: (key: string) => void;
-    removeArrayFilter?: (key: string, value: string) => void;
 };
 
-export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFilter, removeArrayFilter }) => {
+export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFilter }) => {
     if (sequenceFilter.isEmpty()) return null;
     const showXButton = removeFilter !== undefined;
 
@@ -18,18 +17,32 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
             {[...sequenceFilter.toDisplayStrings()].map(([key, [label, value]]) => {
                 // Check if value is an array (multi-select)
                 if (Array.isArray(value)) {
-                    return value.map((val, index) => (
+                    // Show as a single badge with first few items and count
+                    let displayText: string;
+                    const MAX_SHOWN = 3;
+
+                    if (value.length === 1) {
+                        displayText = value[0];
+                    } else if (value.length <= MAX_SHOWN) {
+                        displayText = value.join(', ');
+                    } else {
+                        const shown = value.slice(0, MAX_SHOWN).join(', ');
+                        const remaining = value.length - MAX_SHOWN;
+                        displayText = `${shown}... & ${remaining} more`;
+                    }
+
+                    return (
                         <div
-                            key={`${key}-${index}`}
+                            key={key}
                             className='border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row'
                         >
                             <span className='text-primary-900 font-light pr-1'>{label}:</span>
-                            <span className='text-primary-900 font-semibold'>{val}</span>
-                            {showXButton && removeArrayFilter ? (
+                            <span className='text-primary-900 font-semibold'>{displayText}</span>
+                            {showXButton ? (
                                 <button
-                                    aria-label={`remove ${val} filter`}
+                                    aria-label={`remove ${label} filter`}
                                     className='inline ml-2 mt-0.5 pr-2'
-                                    onClick={() => removeArrayFilter(key, val)}
+                                    onClick={() => removeFilter(key)}
                                 >
                                     <MaterialSymbolsClose className='w-3 h-4 text-primary-600' />
                                 </button>
@@ -37,7 +50,7 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                                 <div className='pr-4'></div>
                             )}
                         </div>
-                    ));
+                    );
                 }
 
                 // Single value rendering (original behavior)

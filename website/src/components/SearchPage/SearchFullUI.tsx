@@ -236,32 +236,6 @@ export const InnerSearchFullUI = ({
         }
     };
 
-    // Function to remove a single value from a multi-select field
-    const removeArrayFilterValue = (key: string, valueToRemove: string) => {
-        const currentValue = fieldValues[key];
-
-        // If it's an array, filter out the value to remove
-        if (Array.isArray(currentValue)) {
-            // Filter and ensure we have only strings (no nulls)
-            const newValues = currentValue
-                .filter((val) => val !== valueToRemove)
-                .filter((val): val is string => val !== null);
-
-            // Reset the key to empty if all values removed, otherwise set the new filtered array
-            if (newValues.length === 0) {
-                setSomeFieldValues([key, '']);
-            } else {
-                setSomeFieldValues([key, newValues]);
-            }
-        } else if (typeof currentValue === 'string') {
-            // For single string values, just clear it
-            setSomeFieldValues([key, '']);
-        } else {
-            // For other value types
-            setSomeFieldValues([key, null]);
-        }
-    };
-
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => {
             const newState = { ...prev };
@@ -474,11 +448,7 @@ export const InnerSearchFullUI = ({
                 >
                     {!tableFilter.isEmpty() && (
                         <div className='pt-3 pb-2'>
-                            <ActiveFilters
-                                sequenceFilter={tableFilter}
-                                removeFilter={removeFilter}
-                                removeArrayFilter={removeArrayFilterValue}
-                            />
+                            <ActiveFilters sequenceFilter={tableFilter} removeFilter={removeFilter} />
                         </div>
                     )}
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
