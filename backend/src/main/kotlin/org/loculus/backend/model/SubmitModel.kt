@@ -143,13 +143,14 @@ class SubmitModel(
         val metadata = parseMetadataFile(submissionParams)
         val rawSequences = parseSequenceFile(submissionParams)
         val sequences = groupSequencesById(rawSequences, submissionParams.organism)
+        val files = submissionParams.files
 
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
             validateSubmissionIdSetsForConsensusSequences(metadata.keys, sequences.keys)
         }
 
-        submissionParams.files?.let { submittedFiles ->
+        files?.let { submittedFiles ->
             validateSubmissionIdSetsForFiles(metadata.keys, submittedFiles.keys)
             validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
@@ -157,25 +158,28 @@ class SubmitModel(
 
         when (submissionParams) {
             is SubmissionParams.OriginalSubmissionParams -> {
-                val submissionIdToAccession = uploadDatabaseService.generateNewAccessions(metadata.keys)
-
                 // Actually put the sequences into the db
                 uploadDatabaseService.createNewSequenceEntries(
                     metadata,
                     sequences,
                     files,
-                    submissionParams
-
+                    submissionParams,
                 )
             }
 
             is SubmissionParams.RevisionSubmissionParams -> {
                 log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
-                uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
-                    uploadId,
-                    submissionParams.organism,
-                    submissionParams.authenticatedUser,
+                uploadDatabaseService.createRevisionEntries(
+                    metadata,
+                    sequences,
+                    files,
+                    submissionParams
                 )
+//                uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
+//                    uploadId,
+//                    submissionParams.organism,
+//                    submissionParams.authenticatedUser,
+//                )
             }
         }
 
