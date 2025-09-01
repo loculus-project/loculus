@@ -591,9 +591,9 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"Internal Error: Function concatenate did not receive accession_version "
-                            f"ProcessingResult with input {input_data} and args {args}, "
-                            "please contact the administrator."
+                            "Internal Error: Function concatenate did not receive "
+                            f"accession_version ProcessingResult with input {input_data} "
+                            f"and args {args}, please contact the administrator."
                         ),
                     )
                 ],
@@ -728,8 +728,7 @@ class ProcessingFunctions:
             authors.encode("ascii")
         except UnicodeEncodeError:
             error_message = (
-                "The authors list contains non-ASCII characters. "
-                + author_format_description
+                "The authors list contains non-ASCII characters. " + author_format_description
             )
             return ProcessingResult(
                 datum=None,
@@ -782,14 +781,10 @@ class ProcessingFunctions:
             names_to_show = "; ".join(invalid_names[:3])
             if len(invalid_names) > 3:  # noqa: PLR2004
                 names_to_show += f" ... and {len(invalid_names) - 3} others"
-            error_message = (
-                f"Invalid name(s): {names_to_show}. "
-                + author_format_description
-            )
+            error_message = f"Invalid name(s): {names_to_show}. " + author_format_description
         else:
             error_message = (
-                "The authors list is not in a recognized format. "
-                + author_format_description
+                "The authors list is not in a recognized format. " + author_format_description
             )
         return ProcessingResult(
             datum=None,
@@ -846,7 +841,10 @@ class ProcessingFunctions:
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
+                message=(
+                    f"The value '{regex_field}' does not match the expected regex "
+                    f"pattern: '{pattern}'."
+                ),
             )
         )
         return ProcessingResult(datum=None, warnings=warnings, errors=errors)
