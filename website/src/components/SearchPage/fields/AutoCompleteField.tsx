@@ -47,6 +47,7 @@ export const AutoCompleteField = ({
     multiSelect = false,
 }: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
 
     const hook = createOptionsProviderHook(optionsProvider);
@@ -81,54 +82,65 @@ export const AutoCompleteField = ({
         return allMatchedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions]);
 
-    const handleChange = (value: string | number | null) => {
+    const handleChange = (value: any) => {
         if (!multiSelect) {
             // Single-select mode - just set the value
             setSomeFieldValues([field.name, value ?? NULL_QUERY_VALUE]);
             return;
         }
 
-        // Multi-select mode
-        if (!value && value !== null) return;
-
-        const newValues = new Set<string>(selectedValues);
-
-        // Convert null to NULL_QUERY_VALUE for consistent handling
-        const valueToToggle = value === null ? NULL_QUERY_VALUE : value.toString();
-
-        if (newValues.has(valueToToggle)) {
-            // If already selected, remove it
-            newValues.delete(valueToToggle);
-        } else {
-            // Otherwise add it
-            newValues.add(valueToToggle);
+        // Multi-select mode - value is an array when multiple=true
+        if (Array.isArray(value)) {
+            if (value.length === 0) {
+                setSomeFieldValues([field.name, '']);
+            } else {
+                // Convert any null values to NULL_QUERY_VALUE
+                const processedValues = value.map((v) => (v === null ? NULL_QUERY_VALUE : v.toString()));
+                setSomeFieldValues([field.name, processedValues as any]);
+            }
         }
-
-        if (newValues.size === 0) {
-            // If all values were removed, just clear the field
-            setSomeFieldValues([field.name, '']);
-        } else {
-            // Otherwise set the field to the array of values
-            setSomeFieldValues([field.name, Array.from(newValues) as any]);
-        }
-
-        setQuery(''); // Clear input field after selection
     };
 
     const handleClear = () => {
         setQuery('');
-        // Clear the field value, works for both single and multi-select
-        setSomeFieldValues([field.name, '']);
+        if (multiSelect) {
+            // For multi-select, pass an empty array to handleChange
+            handleChange([]);
+        } else {
+            // For single-select, clear normally
+            setSomeFieldValues([field.name, '']);
+        }
     };
+
+    // Convert selectedValues Set to array for multi-select Combobox value
+    const multiSelectValue = useMemo(() => {
+        if (!multiSelect) return undefined;
+        return Array.from(selectedValues).map((v) => (v === NULL_QUERY_VALUE ? null : v));
+    }, [multiSelect, selectedValues]);
 
     return (
         <DisabledUntilHydrated>
             <div className='w-full'>
-                <Combobox immediate value={multiSelect ? null : fieldValue} onChange={handleChange}>
+                <Combobox
+                    immediate
+                    multiple={multiSelect}
+                    value={multiSelect ? multiSelectValue : fieldValue}
+                    onChange={handleChange}
+                >
                     <div className='relative'>
                         {multiSelect ? (
                             // Multi-select mode with badges inside the field
-                            <div className='relative flex flex-wrap items-center min-h-[44px] border border-gray-300 rounded-md pr-16'>
+                            <div
+                                className='relative flex flex-wrap items-center border border-gray-300 rounded-md pr-16 cursor-text hover:border-gray-400 transition-colors'
+                                onClick={(e) => {
+                                    // Focus the input when clicking anywhere in the field
+                                    // unless clicking on a button or the input itself
+                                    const target = e.target as HTMLElement;
+                                    if (!target.closest('button') && !target.closest('input')) {
+                                        inputRef.current?.focus();
+                                    }
+                                }}
+                            >
                                 {selectedValues.size > 0 && (
                                     <div className='flex flex-wrap gap-1 p-1'>
                                         {Array.from(selectedValues).map((value) => {
@@ -144,7 +156,14 @@ export const AutoCompleteField = ({
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
-                                                            handleChange(value === NULL_QUERY_VALUE ? null : value);
+                                                            // Remove this value from the array
+                                                            const newValues =
+                                                                multiSelectValue?.filter((v) => {
+                                                                    const compareValue =
+                                                                        v === null ? NULL_QUERY_VALUE : v;
+                                                                    return compareValue !== value;
+                                                                }) || [];
+                                                            handleChange(newValues);
                                                         }}
                                                         aria-label={`Remove ${displayValue}`}
                                                         type='button'
@@ -157,6 +176,7 @@ export const AutoCompleteField = ({
                                     </div>
                                 )}
                                 <ComboboxInput
+                                    ref={inputRef}
                                     className={`flex-grow border-0 outline-none px-3 ${
                                         selectedValues.size > 0 ? 'p-1' : 'py-2.5'
                                     }`}
