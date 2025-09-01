@@ -63,6 +63,17 @@ def valid_authors(authors: str) -> bool:
     return re.match(pattern, authors) is not None
 
 
+def get_invalid_author_names(authors: str) -> list[str]:
+    alpha = r"\s*[a-zA-Z]"
+    name_chars = r"[a-zA-Z\s\.\-\']*"
+    pattern = re.compile(f"^{alpha}{name_chars},{name_chars}$")
+    invalid = []
+    for author in authors.split(";"):
+        if author and pattern.fullmatch(author) is None:
+            invalid.append(author.strip())
+    return invalid
+
+
 def warn_potentially_invalid_authors(authors: str) -> bool:
     authors_split = re.split(r"[,\s]+", authors)
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
@@ -766,10 +777,21 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        error_message = (
-            f"The authors list '{authors}' is not in a recognized format. "
-            + author_format_description
-        )
+        invalid_names = get_invalid_author_names(authors)
+        if invalid_names:
+            names_to_show = "; ".join(invalid_names[:3])
+            if len(invalid_names) > 3:  # noqa: PLR2004
+                names_to_show += f" ... and {len(invalid_names) - 3} others"
+            error_message = (
+                f"The authors list '{authors}' is not in a recognized format. "
+                f"Invalid name(s): {names_to_show}. "
+                + author_format_description
+            )
+        else:
+            error_message = (
+                f"The authors list '{authors}' is not in a recognized format. "
+                + author_format_description
+            )
         return ProcessingResult(
             datum=None,
             errors=[
