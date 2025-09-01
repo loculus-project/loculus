@@ -74,6 +74,11 @@ class UploadDatabaseService(
         val originalData: OriginalData<CompressedSequence>,
     )
 
+    data class SequenceInfo(
+        val latestVersion: Version,
+        val groupId: Int,
+    )
+
     fun createNewSequenceEntries(
         metadata: Map<String, MetadataEntry>,
         sequences: Map<String, Map<SegmentName, String>>,
@@ -149,28 +154,7 @@ class UploadDatabaseService(
             }
         }
 
-        data class SequenceInfo(
-            val latestVersion: Version,
-            val groupId: Int,
-        )
-
-        val sequenceInfo =
-            submissionIdToAccession.values.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
-                SequenceEntriesTable.select(
-                    accessionColumn,
-                    versionColumn.max(),
-                    groupIdColumn,
-                )
-                    .where { accessionColumn inList chunk }
-                    .groupBy(accessionColumn)
-                    .associate {
-                        it[accessionColumn] to
-                                SequenceInfo(
-                                    latestVersion = it[versionColumn],
-                                    groupId = it[groupIdColumn],
-                                )
-                    }
-            }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
+        val sequenceInfo = accessionToSequenceInfo(submissionIdToAccession.values)
 
         val now = dateProvider.getCurrentDateTime()
 
@@ -255,4 +239,48 @@ class UploadDatabaseService(
         log.info { "Generated ${submissionIds.size} new accessions" }
         return submissionIds.zip(nextAccessions)
     }
+
+    fun accessionToSequenceInfo(accessions: Collection<Accession>): Map<Accession, SequenceInfo> {
+        return accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2)
+        { chunk ->
+            SequenceEntriesTable.select(
+                accessionColumn,
+                versionColumn.max(),
+                groupIdColumn,
+            )
+                .where { accessionColumn inList chunk }
+                .groupBy(accessionColumn)
+                .associate {
+                    it[accessionColumn] to
+                            SequenceInfo(
+                                latestVersion = it[versionColumn],
+                                groupId = it[groupIdColumn],
+                            )
+                }
+        }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
+    }
+
+    fun submissionIdToGroup(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Int> {
+        val submissionIdToAccession = metadata.map { (submissionId, entry) ->
+            (submissionId to entry.metadata["accession"]!!)
+        }
+
+        val accessionToGroup = submissionIdToAccession.chunked(POSTGRESQL_PARAMETER_LIMIT / 2)
+        { chunk ->
+            SequenceEntriesTable.select(
+                accessionColumn,
+                groupIdColumn,
+            )
+                .where { accessionColumn inList chunk.map { it.second } }
+                .associate {
+                    it[accessionColumn] to it[groupIdColumn]
+                }
+        }.flatMap(Map<Accession, Int>::toList).toMap()
+
+        return submissionIdToAccession.associate { (submissionId, accession) ->
+            submissionId to (accessionToGroup[accession]
+                ?: throw IllegalStateException("Could not find groupId for accession $accession"))
+        }
+    }
 }
+
