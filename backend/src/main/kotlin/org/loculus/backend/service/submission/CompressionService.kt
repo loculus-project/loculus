@@ -5,6 +5,7 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.SegmentName
 import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -27,7 +28,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
 
     fun compressNucleotideSequence(
         uncompressedSequence: GeneticSequence,
-        segmentName: String,
+        segmentName: SegmentName,
         organism: Organism,
     ): CompressedSequence = compress(
         uncompressedSequence,

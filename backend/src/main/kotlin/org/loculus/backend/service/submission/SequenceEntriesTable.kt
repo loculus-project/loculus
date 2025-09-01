@@ -25,7 +25,7 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
-    val approverColumn = varchar("approver", 255)
+    val approverColumn = varchar("approver", 255).nullable()
     val groupIdColumn = integer("group_id")
     val submittedAtTimestampColumn = datetime("submitted_at")
     val releasedAtTimestampColumn = datetime("released_at").nullable()

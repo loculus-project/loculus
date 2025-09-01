@@ -106,14 +106,14 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        var innerDataUseTermsType = DataUseTermsType.OPEN
-        if (backendConfig.dataUseTerms.enabled) {
-            if (dataUseTermsType == null) {
-                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
+        val innerDataUseTermsType =
+            if (backendConfig.dataUseTerms.enabled) {
+                dataUseTermsType ?: throw BadRequestException(
+                    "the 'dataUseTermsType' needs to be provided."
+                )
             } else {
-                innerDataUseTermsType = dataUseTermsType
+                DataUseTermsType.OPEN
             }
-        }
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
