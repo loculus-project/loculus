@@ -17,6 +17,7 @@ export const COLUMN_VISIBILITY_PREFIX = 'column_';
 export const ORDER_KEY = 'orderBy';
 export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
+export const NULL_QUERY_VALUE = '_null_';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -220,7 +221,7 @@ export class MetadataFilterSchema {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
             if (field.name in queryState) {
-                values[field.name] = queryState[field.name];
+                values[field.name] = queryState[field.name] === NULL_QUERY_VALUE ? null : queryState[field.name];
             }
         }
         if ('accession' in queryState) {
