@@ -109,7 +109,7 @@ open class SubmissionController(
         val innerDataUseTermsType =
             if (backendConfig.dataUseTerms.enabled) {
                 dataUseTermsType ?: throw BadRequestException(
-                    "the 'dataUseTermsType' needs to be provided."
+                    "the 'dataUseTermsType' needs to be provided.",
                 )
             } else {
                 DataUseTermsType.OPEN

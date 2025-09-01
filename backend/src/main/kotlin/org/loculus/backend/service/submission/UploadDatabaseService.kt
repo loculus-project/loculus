@@ -15,17 +15,17 @@ import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
-import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.versionCommentColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.organismColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.submissionIdColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.submitterColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.approverColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.submittedAtTimestampColumn
-import org.loculus.backend.service.submission.SequenceEntriesTable.releasedAtTimestampColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.organismColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.originalDataColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.releasedAtTimestampColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submissionIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submittedAtTimestampColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submitterColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionCommentColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT
@@ -74,10 +74,7 @@ class UploadDatabaseService(
         val originalData: OriginalData<CompressedSequence>,
     )
 
-    data class SequenceInfo(
-        val latestVersion: Version,
-        val groupId: Int,
-    )
+    data class SequenceInfo(val latestVersion: Version, val groupId: Int)
 
     fun createNewSequenceEntries(
         metadata: Map<String, MetadataEntry>,
@@ -85,7 +82,6 @@ class UploadDatabaseService(
         files: SubmissionIdFilesMap?,
         submissionParams: SubmissionParams.OriginalSubmissionParams,
     ): List<SubmissionIdMapping> {
-
         log.debug { "Creating new sequence entries" }
 
         val now = dateProvider.getCurrentDateTime()
@@ -127,7 +123,6 @@ class UploadDatabaseService(
         )
 
         return submissionIdMapping
-
     }
 
     fun createRevisionEntries(
@@ -136,7 +131,6 @@ class UploadDatabaseService(
         files: SubmissionIdFilesMap?,
         submissionParams: SubmissionParams.RevisionSubmissionParams,
     ): List<SubmissionIdMapping> {
-
         log.debug { "Creating revision entries" }
 
         val submissionIdToAccession = metadata.map { (submissionId, entry) ->
@@ -240,9 +234,8 @@ class UploadDatabaseService(
         return submissionIds.zip(nextAccessions)
     }
 
-    fun accessionToSequenceInfo(accessions: Collection<Accession>): Map<Accession, SequenceInfo> {
-        return accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2)
-        { chunk ->
+    fun accessionToSequenceInfo(accessions: Collection<Accession>): Map<Accession, SequenceInfo> =
+        accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
             SequenceEntriesTable.select(
                 accessionColumn,
                 versionColumn.max(),
@@ -252,21 +245,19 @@ class UploadDatabaseService(
                 .groupBy(accessionColumn)
                 .associate {
                     it[accessionColumn] to
-                            SequenceInfo(
-                                latestVersion = it[versionColumn],
-                                groupId = it[groupIdColumn],
-                            )
+                        SequenceInfo(
+                            latestVersion = it[versionColumn],
+                            groupId = it[groupIdColumn],
+                        )
                 }
         }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
-    }
 
     fun submissionIdToGroup(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Int> {
         val submissionIdToAccession = metadata.map { (submissionId, entry) ->
             (submissionId to entry.metadata["accession"]!!)
         }
 
-        val accessionToGroup = submissionIdToAccession.chunked(POSTGRESQL_PARAMETER_LIMIT / 2)
-        { chunk ->
+        val accessionToGroup = submissionIdToAccession.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
             SequenceEntriesTable.select(
                 accessionColumn,
                 groupIdColumn,
@@ -278,9 +269,10 @@ class UploadDatabaseService(
         }.flatMap(Map<Accession, Int>::toList).toMap()
 
         return submissionIdToAccession.associate { (submissionId, accession) ->
-            submissionId to (accessionToGroup[accession]
-                ?: throw IllegalStateException("Could not find groupId for accession $accession"))
+            submissionId to (
+                accessionToGroup[accession]
+                    ?: throw IllegalStateException("Could not find groupId for accession $accession")
+                )
         }
     }
 }
-

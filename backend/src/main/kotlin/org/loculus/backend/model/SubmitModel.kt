@@ -32,7 +32,6 @@ import java.io.File
 import java.io.InputStream
 import java.util.UUID
 
-
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
 
@@ -159,7 +158,7 @@ class SubmitModel(
                     metadata,
                     sequences,
                     files,
-                    submissionParams
+                    submissionParams,
                 )
             }
 
@@ -167,8 +166,8 @@ class SubmitModel(
         }
     }
 
-    private fun parseMetadataFile(submissionParams: SubmissionParams): Map<SubmissionId, MetadataEntry> {
-        return MaybeFile().use { metadataTempFileToDelete ->
+    private fun parseMetadataFile(submissionParams: SubmissionParams): Map<SubmissionId, MetadataEntry> =
+        MaybeFile().use { metadataTempFileToDelete ->
             val metadataStream = getStreamFromFile(
                 submissionParams.metadataFile,
                 metadataFileTypes,
@@ -179,7 +178,6 @@ class SubmitModel(
 
             metadata
         }
-    }
 
     private fun parseSequenceFile(submissionParams: SubmissionParams): Map<String, String> {
         val sequenceFile = submissionParams.sequenceFile
@@ -219,7 +217,6 @@ class SubmitModel(
         }
         return sequencesById
     }
-
 
     class MaybeFile : Closeable {
         var file: File? = null
@@ -261,7 +258,6 @@ class SubmitModel(
             )
     }
 
-
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {
         val originalFilename = file.originalFilename
             ?: throw BadRequestException("${expectedFileType.displayName} file missing")
@@ -277,8 +273,8 @@ class SubmitModel(
             .flatMap { it.value }.joinToString(", .")
         throw BadRequestException(
             "${expectedFileType.displayName} has wrong extension. Must be " +
-                    ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                    ".$allowedCompressionFormats for compressed submissions",
+                ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                ".$allowedCompressionFormats for compressed submissions",
         )
     }
 
@@ -292,13 +288,13 @@ class SubmitModel(
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
                 "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
-                        "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
                 "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
-                        "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""
             }
@@ -311,7 +307,7 @@ class SubmitModel(
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
                 "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
-                        "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
             )
         }
     }
