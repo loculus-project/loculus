@@ -16,8 +16,6 @@ import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidato
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
-import org.loculus.backend.service.submission.MetadataUploadAuxTable
-import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -361,15 +359,6 @@ class SubmitModel(
                 }
             }
         }
-    }
-
-    @Transactional(readOnly = true)
-    fun checkIfStillProcessingSubmittedData(): Boolean {
-        val metadataInAuxTable: Boolean =
-            MetadataUploadAuxTable.select(MetadataUploadAuxTable.submissionIdColumn).count() > 0
-        val sequencesInAuxTable: Boolean =
-            SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
-        return metadataInAuxTable || sequencesInAuxTable
     }
 
     private fun requiresConsensusSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
