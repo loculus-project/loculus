@@ -261,6 +261,9 @@ export const Table: FC<TableProps> = ({
                                             className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                             onClick={(e) => e.stopPropagation()}
                                             checked={selectedSeqs.has(row[primaryKey] as string)}
+                                            onChange={() => {
+                                                // onChange is handled by onMouseDown for drag selection support
+                                            }}
                                             onMouseDown={() => {
                                                 const seqId = row[primaryKey] as string;
                                                 const newValue = !selectedSeqs.has(seqId);
