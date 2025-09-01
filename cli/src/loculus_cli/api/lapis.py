@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from ..utils.console import get_stderr_console
 from .models import LapisAggregatedResponse, LapisResponse, LapisSequenceResponse
 
 
@@ -17,6 +18,13 @@ class LapisClient:
             base_url=lapis_url,
             timeout=60.0,  # LAPIS queries can take longer
             follow_redirects=True,
+        )
+        self.stderr_console = get_stderr_console()
+
+    def _log_request(self, response: httpx.Response) -> None:
+        """Log the API request to stderr."""
+        self.stderr_console.print(
+            f"[dim]→ {response.request.method} {response.url}[/dim]"
         )
 
     def _build_url(self, organism: str, endpoint: str) -> str:
@@ -50,6 +58,7 @@ class LapisClient:
 
         try:
             response = self.client.get(url, params=params)
+            self._log_request(response)
             response.raise_for_status()
             return LapisResponse.model_validate(response.json())
         except httpx.HTTPStatusError as e:
@@ -81,6 +90,7 @@ class LapisClient:
 
         try:
             response = self.client.get(url, params=params)
+            self._log_request(response)
             response.raise_for_status()
             return LapisAggregatedResponse.model_validate(response.json())
         except httpx.HTTPStatusError as e:
@@ -95,14 +105,20 @@ class LapisClient:
     def get_aligned_sequences(
         self,
         organism: str,
-        segment: str = "main",
+        segment: str | None = None,
         filters: dict[str, Any] | None = None,
         limit: int | None = None,
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get aligned sequences from LAPIS."""
-        url = self._build_url(organism, f"/sample/alignedNucleotideSequences/{segment}")
+
+        if segment:
+            url = self._build_url(
+                organism, f"/sample/alignedNucleotideSequences/{segment}"
+            )
+        else:
+            url = self._build_url(organism, "/sample/alignedNucleotideSequences")
 
         params = {}
         if filters:
@@ -118,6 +134,7 @@ class LapisClient:
             # Request FASTA format
             headers = {"Accept": "text/x-fasta"}
             response = self.client.get(url, params=params, headers=headers)
+            self._log_request(response)
             response.raise_for_status()
 
             # Parse FASTA response
@@ -155,8 +172,10 @@ class LapisClient:
 
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
+            full_url = str(e.response.url)
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
+                f" - URL: {full_url}"
             ) from e
         except Exception as e:
             raise RuntimeError(f"LAPIS sequence query failed: {e}") from e
@@ -164,16 +183,19 @@ class LapisClient:
     def get_unaligned_sequences(
         self,
         organism: str,
-        segment: str = "main",
+        segment: str | None = None,
         filters: dict[str, Any] | None = None,
         limit: int | None = None,
         offset: int | None = None,
         order_by: str | None = None,
     ) -> LapisSequenceResponse:
         """Get unaligned sequences from LAPIS."""
-        url = self._build_url(
-            organism, f"/sample/unalignedNucleotideSequences/{segment}"
-        )
+        if segment:
+            url = self._build_url(
+                organism, f"/sample/unalignedNucleotideSequences/{segment}"
+            )
+        else:
+            url = self._build_url(organism, "/sample/unalignedNucleotideSequences")
 
         params = {}
         if filters:
@@ -189,6 +211,7 @@ class LapisClient:
             # Request FASTA format
             headers = {"Accept": "text/x-fasta"}
             response = self.client.get(url, params=params, headers=headers)
+            self._log_request(response)
             response.raise_for_status()
 
             # Parse FASTA response
@@ -226,8 +249,10 @@ class LapisClient:
 
             return LapisSequenceResponse(data=fasta_data, info={})
         except httpx.HTTPStatusError as e:
+            full_url = str(e.response.url)
             raise RuntimeError(
                 f"LAPIS sequence query failed: HTTP {e.response.status_code}"
+                f" - URL: {full_url}"
             ) from e
         except Exception as e:
             raise RuntimeError(f"LAPIS sequence query failed: {e}") from e

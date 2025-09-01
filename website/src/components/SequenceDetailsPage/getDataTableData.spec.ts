@@ -22,6 +22,81 @@ describe('getDataTableData', () => {
                 .find((x) => x.type.kind === 'metadata' && x.type.metadataType === 'authors'),
         ).toBeUndefined();
     });
+
+    test('should order headers and rows by orderOnDetailsPage', () => {
+        const entries: TableDataEntry[] = [
+            {
+                label: 'A1',
+                name: 'a1',
+                value: 'v1',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 20,
+            },
+            {
+                label: 'B1',
+                name: 'b1',
+                value: 'v2',
+                header: 'Header B',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 5,
+            },
+            {
+                label: 'A2',
+                name: 'a2',
+                value: 'v3',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 10,
+            },
+        ];
+
+        const data = getDataTableData(entries);
+
+        expect(data.table.map((t) => t.header)).toStrictEqual(['Header B', 'Header A']);
+        expect(data.table[1].rows.map((r) => r.name)).toStrictEqual(['a2', 'a1']);
+    });
+
+    test('should ignore rows without orderOnDetailsPage when computing header order', () => {
+        const entries: TableDataEntry[] = [
+            {
+                label: 'A1',
+                name: 'a1',
+                value: 'v1',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 20,
+            },
+            {
+                label: 'A2',
+                name: 'a2',
+                value: 'v2',
+                header: 'Header A',
+                type: { kind: 'metadata', metadataType: 'string' },
+            },
+            {
+                label: 'B1',
+                name: 'b1',
+                value: 'v3',
+                header: 'Header B',
+                type: { kind: 'metadata', metadataType: 'string' },
+                orderOnDetailsPage: 10,
+            },
+            {
+                label: 'B2',
+                name: 'b2',
+                value: 'v4',
+                header: 'Header B',
+                type: { kind: 'metadata', metadataType: 'string' },
+            },
+        ];
+
+        const data = getDataTableData(entries);
+
+        expect(data.table.map((t) => t.header)).toStrictEqual(['Header B', 'Header A']);
+        expect(data.table[0].rows.map((r) => r.name)).toStrictEqual(['b1', 'b2']);
+        expect(data.table[1].rows.map((r) => r.name)).toStrictEqual(['a1', 'a2']);
+    });
 });
 
 const testTableDataEntries: TableDataEntry[] = [
@@ -31,6 +106,7 @@ const testTableDataEntries: TableDataEntry[] = [
         value: 'value1',
         header: 'Header 1',
         type: { kind: 'metadata', metadataType: 'string' },
+        orderOnDetailsPage: 1,
     },
     {
         label: 'Metadata Field 2',
@@ -38,6 +114,7 @@ const testTableDataEntries: TableDataEntry[] = [
         value: 'value2',
         header: 'Header 1',
         type: { kind: 'metadata', metadataType: 'timestamp' },
+        orderOnDetailsPage: 3,
     },
     {
         label: 'Metadata Field 3',
@@ -45,6 +122,7 @@ const testTableDataEntries: TableDataEntry[] = [
         value: 'value3',
         header: 'Header 2',
         type: { kind: 'metadata', metadataType: 'int' },
+        orderOnDetailsPage: 2,
     },
     {
         label: 'Authors',
@@ -52,5 +130,6 @@ const testTableDataEntries: TableDataEntry[] = [
         value: 'Last1, First1; Last2, First2; Last3, First3',
         header: 'Header 2',
         type: { kind: 'metadata', metadataType: 'authors' },
+        orderOnDetailsPage: 4,
     },
 ];

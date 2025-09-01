@@ -15,5 +15,6 @@ export const tableDataEntrySchema = z.object({
     header: z.string(),
     customDisplay: customDisplay.optional(),
     type: tableDataEntryTypeSchema,
+    orderOnDetailsPage: z.number().optional(),
 });
 export type TableDataEntry = z.infer<typeof tableDataEntrySchema>;

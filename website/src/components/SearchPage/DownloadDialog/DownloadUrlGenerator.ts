@@ -27,7 +27,7 @@ export class DownloadUrlGenerator {
      * @param organism The organism, will be part of the filename.
      * @param lapisUrl The lapis API URL for downloading.
      * @param dataUseTermsEnabled If false, the downloaded URLs won't include any data use terms related settings.
-     * @param richFastaHeaderFields Forwarded to the /api/sequences endpoint to compute rich fasta headers.
+     * @param richFastaHeaderFields Set the fastaHeaderTemplate parameter to include rich fasta headers.
      */
     constructor(
         private readonly organism: string,
@@ -66,18 +66,15 @@ export class DownloadUrlGenerator {
             params.set('fields', option.fields.join(','));
         }
         if (
-            option.dataType.type === 'unalignedNucleotideSequences' &&
+            (option.dataType.type === 'unalignedNucleotideSequences' ||
+                option.dataType.type === 'alignedNucleotideSequences' ||
+                option.dataType.type === 'alignedAminoAcidSequences') &&
             option.dataType.includeRichFastaHeaders === true &&
-            this.richFastaHeaderFields
+            this.richFastaHeaderFields &&
+            this.richFastaHeaderFields.length > 0
         ) {
-            params.delete(downloadAsFile);
             params.delete(dataFormat);
-            for (const field of this.richFastaHeaderFields) {
-                params.append('headerFields', field);
-            }
-            if (option.dataType.segment !== undefined) {
-                params.set('segment', option.dataType.segment);
-            }
+            params.append('fastaHeaderTemplate', this.richFastaHeaderFields.map((field) => `{${field}}`).join('|'));
         }
 
         downloadParameters
@@ -110,9 +107,7 @@ export class DownloadUrlGenerator {
             case 'metadata':
                 return this.lapisUrl + '/sample/details';
             case 'unalignedNucleotideSequences':
-                return dataType.includeRichFastaHeaders === true
-                    ? location.origin + '/' + this.organism + '/api/sequences'
-                    : this.lapisUrl + '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
+                return this.lapisUrl + '/sample/unalignedNucleotideSequences' + segmentPath(dataType.segment);
             case 'alignedNucleotideSequences':
                 return this.lapisUrl + '/sample/alignedNucleotideSequences' + segmentPath(dataType.segment);
             case 'alignedAminoAcidSequences':
