@@ -386,6 +386,9 @@ def update_db_where_conditions(
 ) -> int:
     updated_row_count = 0
     con = db_conn_pool.getconn()
+    logger.debug(
+        f"Updating '{table_name}' with conditions '{conditions}' and values '{update_values}'"
+    )
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             # Prevent sql-injection with table_name and column_name validation
@@ -426,6 +429,10 @@ def update_db_where_conditions(
         logger.warning(f"update_db_where_conditions errored with: {e}")
     finally:
         db_conn_pool.putconn(con)
+    logger.debug(
+        f"Updated {updated_row_count} rows in '{table_name}' for conditions '{conditions}'"
+        f"and update values '{update_values}'"
+    )
     return updated_row_count
 
 
