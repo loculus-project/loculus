@@ -897,7 +897,7 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
 
 
 def run(config: Config) -> None:
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:  # noqa: PLR1702
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
         if config.minimizer_url and config.require_nextclade_sort_match:
