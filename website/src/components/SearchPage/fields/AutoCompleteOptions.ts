@@ -7,7 +7,7 @@ import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.ts
 
 export type Option = {
     option: string;
-    value: string;  // Always a string, using NULL_QUERY_VALUE for nulls
+    value: string; // Always a string, using NULL_QUERY_VALUE for nulls
     count: number | undefined;
 };
 

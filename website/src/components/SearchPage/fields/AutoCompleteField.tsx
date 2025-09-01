@@ -165,10 +165,9 @@ export const AutoCompleteField = ({
                                                             // Remove this value from the array
                                                             const newValues =
                                                                 multiSelectValue?.filter((v) => {
-                                                                    const compareValue = v ?? NULL_QUERY_VALUE;
-                                                                    return compareValue !== value;
+                                                                    return v !== value;
                                                                 }) ?? [];
-                                                            handleChange(newValues.map((v) => v ?? NULL_QUERY_VALUE));
+                                                            handleChange(newValues);
                                                         }}
                                                         aria-label={`Remove ${displayValue}`}
                                                         type='button'
@@ -256,46 +255,77 @@ export const AutoCompleteField = ({
                             ) : filteredOptions.length === 0 ? (
                                 <div className='px-4 py-2 text-gray-500'>No options available</div>
                             ) : (
-                                filteredOptions.map((option) => (
-                                    <ComboboxOption
-                                        key={option.option}
-                                        className={({ focus }) =>
-                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                                focus ? 'bg-blue-500 text-white' : 'text-gray-900'
-                                            }`
-                                        }
-                                        value={option.value}
-                                    >
-                                        {({ focus }) => {
-                                            const isSelected = selectedValues.has(option.value);
-                                            return (
-                                                <>
-                                                    <span
-                                                        className={`inline-block ${isSelected ? 'font-medium' : 'font-normal'} ${
-                                                            option.option === '(blank)' ? 'italic' : ''
-                                                        }`}
-                                                    >
-                                                        {option.option}
-                                                    </span>
-                                                    {option.count !== undefined && (
-                                                        <span className='inline-block ml-1'>
-                                                            ({formatNumberWithDefaultLocale(option.count)})
-                                                        </span>
-                                                    )}
-                                                    {isSelected && (
+                                <>
+                                    {multiSelect && (
+                                        <div className='flex justify-between px-4 py-2 text-xs text-gray-600 border-b border-gray-200'>
+                                            <button
+                                                type='button'
+                                                className='hover:text-blue-600 hover:underline'
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // Select all visible options
+                                                    const allValues = filteredOptions.map((opt) => opt.value);
+                                                    handleChange(allValues);
+                                                }}
+                                            >
+                                                Select all
+                                            </button>
+                                            <button
+                                                type='button'
+                                                className='hover:text-blue-600 hover:underline'
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // Clear all selections
+                                                    handleChange([]);
+                                                }}
+                                            >
+                                                Select none
+                                            </button>
+                                        </div>
+                                    )}
+                                    {filteredOptions.map((option) => (
+                                        <ComboboxOption
+                                            key={option.option}
+                                            className={({ focus }) =>
+                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                                    focus ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                }`
+                                            }
+                                            value={option.value}
+                                        >
+                                            {({ focus }) => {
+                                                const isSelected = selectedValues.has(option.value);
+                                                return (
+                                                    <>
                                                         <span
-                                                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                                                focus ? 'text-white' : 'text-blue-500'
+                                                            className={`inline-block ${isSelected ? 'font-medium' : 'font-normal'} ${
+                                                                option.option === '(blank)' ? 'italic' : ''
                                                             }`}
                                                         >
-                                                            <MdiTick className='w-5 h-5' />
+                                                            {option.option}
                                                         </span>
-                                                    )}
-                                                </>
-                                            );
-                                        }}
-                                    </ComboboxOption>
-                                ))
+                                                        {option.count !== undefined && (
+                                                            <span className='inline-block ml-1'>
+                                                                ({formatNumberWithDefaultLocale(option.count)})
+                                                            </span>
+                                                        )}
+                                                        {isSelected && (
+                                                            <span
+                                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                                                                    focus ? 'text-white' : 'text-blue-500'
+                                                                }`}
+                                                            >
+                                                                <MdiTick className='w-5 h-5' />
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                );
+                                            }}
+                                        </ComboboxOption>
+                                    ))}
+                                </>
                             )}
                         </ComboboxOptions>
                     </div>

@@ -93,7 +93,7 @@ export class FieldFilterSet implements SequenceFilter {
                 .map(([key, value]) => {
                     // If it's an array, convert "_null_" strings back to null for the API
                     if (Array.isArray(value)) {
-                        const converted = value.map((v) => v === '_null_' ? null : v);
+                        const converted = value.map((v) => (v === '_null_' ? null : v));
                         return [key, converted];
                     }
                     return [key, value];

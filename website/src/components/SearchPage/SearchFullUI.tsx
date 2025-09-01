@@ -251,7 +251,7 @@ export const InnerSearchFullUI = ({
             if (newValues.length === 0) {
                 setSomeFieldValues([key, '']);
             } else {
-                setSomeFieldValues([key, newValues as string[]]);
+                setSomeFieldValues([key, newValues]);
             }
         } else if (typeof currentValue === 'string') {
             // For single string values, just clear it
