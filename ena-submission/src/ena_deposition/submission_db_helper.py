@@ -404,7 +404,9 @@ def update_db_where_conditions(
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
             # Avoid updating rows that would not change so the return value is actually the
             # number of rows that were changed for real. See bug #4911
-            where_not_equal_clause = " OR ".join([f"{key}!=%s" for key in update_values])
+            where_not_equal_clause = " OR ".join(
+                [f"{key} IS DISTINCT FROM %s" for key in update_values]
+            )
             query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
             parameters = (
                 tuple(
