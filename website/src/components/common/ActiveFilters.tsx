@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, ReactElement } from 'react';
 
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -18,17 +18,57 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                 // Check if value is an array (multi-select)
                 if (Array.isArray(value)) {
                     // Show as a single badge with first few items and count
-                    let displayText: string;
+                    // Convert _null_ to (blank) for display
+                    const displayValues = value.map((v) => (v === '_null_' ? '(blank)' : v));
+
+                    let displayElement: ReactElement;
+                    // Show items individually if less than 6, otherwise truncate
+                    const SHOW_ALL_THRESHOLD = 6;
                     const MAX_SHOWN = 3;
 
-                    if (value.length === 1) {
-                        displayText = value[0];
-                    } else if (value.length <= MAX_SHOWN) {
-                        displayText = value.join(', ');
+                    if (displayValues.length === 1) {
+                        const val = displayValues[0];
+                        displayElement =
+                            val === '(blank)' ? (
+                                <span className='text-primary-900 italic font-semibold'>{val}</span>
+                            ) : (
+                                <span className='text-primary-900 font-semibold'>{val}</span>
+                            );
+                    } else if (displayValues.length < SHOW_ALL_THRESHOLD) {
+                        // Show all values if less than threshold
+                        displayElement = (
+                            <span className='text-primary-900'>
+                                {displayValues.map((val, idx) => (
+                                    <span key={idx}>
+                                        {idx > 0 && ', '}
+                                        {val === '(blank)' ? (
+                                            <span className='italic font-semibold'>{val}</span>
+                                        ) : (
+                                            <span className='font-semibold'>{val}</span>
+                                        )}
+                                    </span>
+                                ))}
+                            </span>
+                        );
                     } else {
-                        const shown = value.slice(0, MAX_SHOWN).join(', ');
-                        const remaining = value.length - MAX_SHOWN;
-                        displayText = `${shown}... & ${remaining} more`;
+                        // Only truncate if we have at least 3 more items
+                        const shown = displayValues.slice(0, MAX_SHOWN);
+                        const remaining = displayValues.length - MAX_SHOWN;
+                        displayElement = (
+                            <span className='text-primary-900'>
+                                {shown.map((val, idx) => (
+                                    <span key={idx}>
+                                        {idx > 0 && ', '}
+                                        {val === '(blank)' ? (
+                                            <span className='italic font-semibold'>{val}</span>
+                                        ) : (
+                                            <span className='font-semibold'>{val}</span>
+                                        )}
+                                    </span>
+                                ))}
+                                <span className='font-semibold'>… and {remaining} more</span>
+                            </span>
+                        );
                     }
 
                     return (
@@ -37,7 +77,7 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                             className='border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row'
                         >
                             <span className='text-primary-900 font-light pr-1'>{label}:</span>
-                            <span className='text-primary-900 font-semibold'>{displayText}</span>
+                            {displayElement}
                             {showXButton ? (
                                 <button
                                     aria-label={`remove ${label} filter`}
