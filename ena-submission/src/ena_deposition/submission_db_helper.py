@@ -399,13 +399,23 @@ def update_db_where_conditions(
             query += set_clause
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
-            query += f" WHERE {where_clause}"
-            parameters = tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value
-                for value in update_values.values()
-            ) + tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value
-                for value in conditions.values()
+            # Avoid updating rows that would not change so the return value is actually the
+            # number of rows that were changed for real. See bug #4911
+            where_not_equal_clause = " OR ".join([f"{key}!=%s" for key in update_values])
+            query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
+            parameters = (
+                tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in update_values.values()
+                )
+                + tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in conditions.values()
+                )
+                + tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in update_values.values()
+                )
             )
 
             cur.execute(query, parameters)
