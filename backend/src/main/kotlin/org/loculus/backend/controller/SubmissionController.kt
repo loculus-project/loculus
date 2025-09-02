@@ -48,6 +48,7 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.formatBytesHuman
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -559,7 +560,7 @@ open class SubmissionController(
 
 private fun MultipartFile.requireUnder(limitBytes: Long, name: String) {
     if (size > limitBytes) {
-        val maxHuman = DataSize.ofBytes(limitBytes).toString()
+        val maxHuman = formatBytesHuman(limitBytes)
         throw ResponseStatusException(
             HttpStatus.PAYLOAD_TOO_LARGE,
             "$name file is too large. Max $maxHuman.",
