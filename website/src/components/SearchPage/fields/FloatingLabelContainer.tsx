@@ -8,6 +8,7 @@ interface FloatingLabelContainerProps {
     onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
     className?: string;
     borderClassName?: string;
+    htmlFor?: string;
 }
 
 /**
@@ -22,6 +23,7 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
     onClick,
     className = '',
     borderClassName,
+    htmlFor,
 }) => {
     // Disable transitions on initial load to prevent animation on page load
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
@@ -47,6 +49,7 @@ export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
             </div>
             {/* Floating label */}
             <label
+                htmlFor={htmlFor}
                 className={`absolute text-sm ${isTransitionEnabled ? 'duration-300' : ''} transform z-10 origin-[0] bg-white px-2 start-1 pointer-events-none ${
                     hasContent || isFocused
                         ? `-translate-y-3 scale-75 top-1 ${isFocused ? 'text-blue-600' : 'text-gray-500'}`

@@ -63,6 +63,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                             hasContent={selectedOptions.length > 0 || inputValue !== ''}
                             borderClassName={hasFocus ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'}
                             className='shadow-sm'
+                            htmlFor='mutField'
                         >
                             {selectedOptions.length > 0 && (
                                 <div className='flex flex-wrap gap-1 p-1 pt-3'>
