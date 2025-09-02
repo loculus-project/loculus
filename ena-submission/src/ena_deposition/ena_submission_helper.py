@@ -164,7 +164,7 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
 def authors_to_ascii(authors: str) -> str:
     """
     Converts authors string to ASCII, handling diacritics and non-ASCII characters.
-    Raises ValueError if non-ASCII characters are encountered.
+    Raises ValueError if non-Latin characters are encountered.
     """
     authors_list = [author for author in authors.split(";") if author]
     formatted_author_list = []
@@ -172,13 +172,17 @@ def authors_to_ascii(authors: str) -> str:
         result = []
         for char in author:
             # If character is already ASCII, skip
-            if ord(char) < 128:
+            ascii_max_order = 128
+            if ord(char) < ascii_max_order:
                 result.append(char)
             else:
-                if not (0x0000 <= ord(char) <= 0x024F):
-                    raise ValueError(
-                        f"Unsupported non-ASCII character encountered: {char} (U+{ord(char):04X})"
+                latin_max_order = 591  # Latin Extended-A and Extended-B
+                if not ord(char) <= latin_max_order:
+                    error_msg = (
+                        f"Unsupported (non-Latin) character encountered: {char} (U+{ord(char):04X})"
                     )
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
                 result.append(unidecode(char))
         formatted_author_list.append("".join(result))
     return "; ".join(formatted_author_list)
@@ -202,7 +206,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return authors_to_ascii(", ".join(ena_authors) + ";")
+    return authors_to_ascii(", ".join(ena_authors)) + ";"
 
 
 def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
