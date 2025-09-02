@@ -31,6 +31,13 @@ export const routes = {
         `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
     sequenceEntryFastaPage: (accessionVersion: AccessionVersion | string, download = false) =>
         sequenceEntryDownloadUrl(accessionVersion, FileType.FASTA, download),
+    sequenceEntryAlignedFastaPage: (accessionVersion: AccessionVersion | string, download = false) => {
+        let url = `${routes.sequenceEntryDetailsPage(accessionVersion)}.aligned.${FileType.FASTA}`;
+        if (download) {
+            url += '?download';
+        }
+        return url;
+    },
     sequenceEntryTsvPage: (accessionVersion: AccessionVersion | string, download = false) =>
         sequenceEntryDownloadUrl(accessionVersion, FileType.TSV, download),
     createGroup: () => '/user/createGroup',
