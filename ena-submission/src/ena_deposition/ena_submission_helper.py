@@ -30,6 +30,7 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
+from unidecode import unidecode
 
 from ena_deposition.config import Config
 
@@ -160,6 +161,29 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
     return XmlAttribute(prefix)
 
 
+def authors_to_ascii(authors: str) -> str:
+    """
+    Converts authors string to ASCII, handling diacritics and non-ASCII characters.
+    Raises ValueError if non-ASCII characters are encountered.
+    """
+    authors_list = [author for author in authors.split(";") if author]
+    formatted_author_list = []
+    for author in authors_list:
+        result = []
+        for char in author:
+            # If character is already ASCII, skip
+            if ord(char) < 128:
+                result.append(char)
+            else:
+                if not (0x0000 <= ord(char) <= 0x024F):
+                    raise ValueError(
+                        f"Unsupported non-ASCII character encountered: {char} (U+{ord(char):04X})"
+                    )
+                result.append(unidecode(char))
+        formatted_author_list.append("".join(result))
+    return "; ".join(formatted_author_list)
+
+
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
     """This function reformats the Loculus authors string to the format expected by ENA
     Loculus format: `Doe, John A.; Roe, Jane Britt C.`
@@ -178,7 +202,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return ", ".join(ena_authors) + ";"
+    return authors_to_ascii(", ".join(ena_authors) + ";")
 
 
 def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResult:
