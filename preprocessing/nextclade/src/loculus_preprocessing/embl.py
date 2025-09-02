@@ -92,13 +92,22 @@ def get_description(
 
 
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
+    """This function reformats the Loculus authors string to the ascii-format expected by ENA
+    Loculus format: `Doe, John A.; Roe, Jane Britt C.`
+    EMBL expected: `Doe J.A., Roe J.B.C.;`
+
+    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt
+    Note if the initials are not known the surname alone will be listed.
+
+    This function does not add a semicolon as the Bio package adds a semicolon when creating
+    a SeqRecord."""
     authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return ", ".join(ena_authors)
+    return authors_to_ascii(", ".join(ena_authors))
 
 
 def authors_to_ascii(authors: str) -> str:
