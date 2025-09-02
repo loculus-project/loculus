@@ -236,18 +236,21 @@ class UploadDatabaseService(
 
     fun accessionToSequenceInfo(accessions: Collection<Accession>): Map<Accession, SequenceInfo> =
         accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
+            val maxVersion = versionColumn.max()
+            val maxGroupId = groupIdColumn.max() // All group IDs should be same, so max works
+            
             SequenceEntriesTable.select(
                 accessionColumn,
-                versionColumn.max(),
-                groupIdColumn,
+                maxVersion,
+                maxGroupId,
             )
                 .where { accessionColumn inList chunk }
                 .groupBy(accessionColumn)
                 .associate {
                     it[accessionColumn] to
                         SequenceInfo(
-                            latestVersion = it[versionColumn],
-                            groupId = it[groupIdColumn],
+                            latestVersion = it[maxVersion]!!,
+                            groupId = it[maxGroupId]!!,
                         )
                 }
         }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
