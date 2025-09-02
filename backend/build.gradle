@@ -10,7 +10,7 @@ plugins {
     // Then commit the changes
     id 'org.jetbrains.kotlin.jvm' version '2.2.10'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.2.10'
-    id 'org.jlleitschuh.gradle.ktlint' version '13.0.0'
+    id 'org.jlleitschuh.gradle.ktlint' version '13.1.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
@@ -51,7 +51,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.6"
     implementation("io.minio:minio:8.5.17")
-    implementation("software.amazon.awssdk:s3:2.32.29")
+    implementation("software.amazon.awssdk:s3:2.33.0")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -66,9 +66,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
-    testImplementation "io.jsonwebtoken:jjwt-api:0.12.6"
-    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.6"
-    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.6"
+    testImplementation "io.jsonwebtoken:jjwt-api:0.13.0"
+    testImplementation "io.jsonwebtoken:jjwt-impl:0.13.0"
+    testImplementation "io.jsonwebtoken:jjwt-jackson:0.13.0"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.21.3"
     testImplementation "org.testcontainers:minio:1.21.3"
