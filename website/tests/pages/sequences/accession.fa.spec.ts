@@ -9,6 +9,8 @@ test.describe('The sequence.fa page', () => {
 
         const url = `${baseUrl}${routes.sequenceEntryFastaPage(testSequences.testSequenceEntry)}`;
         const response = await fetch(url);
+        const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+        expect(corsHeader).toBe('*');
         const content = await response.text();
         expect(content).toBe(
             `>${getAccessionVersionString(testSequences.testSequenceEntry)}\n${testSequenceEntryData.unaligned}\n`,
@@ -20,6 +22,8 @@ test.describe('The sequence.fa page', () => {
 
         const downloadUrl = `${baseUrl}${routes.sequenceEntryFastaPage(testSequences.testSequenceEntry, true)}`;
         const response = await fetch(downloadUrl);
+        const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+        expect(corsHeader).toBe('*');
         const contentDisposition = response.headers.get('Content-Disposition');
 
         expect(contentDisposition).not.toBeNull();

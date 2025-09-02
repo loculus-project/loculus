@@ -56,6 +56,7 @@ export function createDownloadAPIRoute(
 
         const headers: Record<string, string> = {
             'Content-Type': contentType, // eslint-disable-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Origin': '*', // eslint-disable-line @typescript-eslint/naming-convention
         };
         if (isDownload) {
             const filename = `${accessionVersion}.${fileSuffix}`;
