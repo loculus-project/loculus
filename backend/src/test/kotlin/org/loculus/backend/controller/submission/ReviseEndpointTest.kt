@@ -141,8 +141,8 @@ class ReviseEndpointTest(
                 content =
                 """
                  accession	submissionId	firstColumn
-                    123	someHeader_main	someValue
-                    ${accessions.first()}	someHeader2_main	someOtherValue
+                    123	someHeader	someValue
+                    ${accessions.first()}	someHeader2	someOtherValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
@@ -520,25 +520,30 @@ class ReviseEndpointTest(
                             2	sameHeader	someValue2
                     """.trimIndent(),
                 ),
-                SubmitFiles.sequenceFileWith(),
+                SubmitFiles.sequenceFileWith(
+                    content = """
+                            >sameHeader
+                            AC
+                    """.trimIndent(),
+                ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains at least one duplicate submissionId",
+                "Metadata file contains duplicated submissionIds: `sameHeader`",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
                 SubmitFiles.revisedMetadataFileWith(),
                 SubmitFiles.sequenceFileWith(
                     content = """
-                            >sameHeader_main
+                            >sameHeader
                             AC
-                            >sameHeader_main
+                            >sameHeader
                             AC
                     """.trimIndent(),
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Sequence file contains at least one duplicate submissionId",
+                "Sequence file contains duplicated FASTA ids: `sameHeader`",
             ),
             Arguments.of(
                 "metadata file misses headers",
@@ -591,7 +596,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "The revised metadata file does not contain the header 'accession'",
+                "Metadata file is missing required column 'accession'",
             ),
             Arguments.of(
                 "metadata file with one row with missing accession",
@@ -605,7 +610,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no accession",
+                "The rows with the following submissionIds are missing accessions in metadata file: `someHeader`",
             ),
         )
     }

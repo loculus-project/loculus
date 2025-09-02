@@ -9,6 +9,7 @@ import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.SegmentName
 import org.loculus.backend.model.SubmissionId
@@ -133,11 +134,7 @@ class UploadDatabaseService(
     ): List<SubmissionIdMapping> {
         log.debug { "Creating revision entries" }
 
-        val submissionIdToAccession = metadata.map { (submissionId, entry) ->
-            val accession = entry.metadata["accession"]
-                ?: throw IllegalStateException("Metadata for submissionId $submissionId does not contain an accession")
-            Pair(submissionId, accession)
-        }.toMap()
+        val submissionIdToAccession = submissionIdToAccession(metadata)
 
         submissionIdToAccession.values.processInDatabaseSafeChunks { chunk ->
             accessionPreconditionValidator.validate {
@@ -238,7 +235,7 @@ class UploadDatabaseService(
         accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
             val maxVersion = versionColumn.max()
             val maxGroupId = groupIdColumn.max() // All group IDs should be same, so max works
-            
+
             SequenceEntriesTable.select(
                 accessionColumn,
                 maxVersion,
@@ -255,11 +252,39 @@ class UploadDatabaseService(
                 }
         }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
 
-    fun submissionIdToGroup(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Int> {
+    private fun submissionIdToAccession(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Accession> {
+        if (metadata.values.any { !it.metadata.containsKey("accession") }) {
+            throw UnprocessableEntityException("Metadata file is missing required column 'accession'")
+        }
+
         val submissionIdToAccession = metadata.map { (submissionId, entry) ->
             (submissionId to entry.metadata["accession"]!!)
         }
 
+        val submissionIdsWithoutAccessions = submissionIdToAccession.filter { it.second.isBlank() }
+        if (submissionIdsWithoutAccessions.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The rows with the following submissionIds are missing accessions in metadata file: " +
+                    formatListWithBackticks(submissionIdsWithoutAccessions.map { it.first }),
+            )
+        }
+
+        val duplicateAccessions = submissionIdToAccession.groupBy { it.second }
+            .filter { it.value.size > 1 }
+        if (duplicateAccessions.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "Some accessions appear multiple times in metadata file: " +
+                    formatListWithBackticks(duplicateAccessions.keys),
+            )
+        }
+
+        return submissionIdToAccession.toMap()
+    }
+
+    private fun formatListWithBackticks(list: Collection<String>): String = list.joinToString(", ") { "`$it`" }
+
+    fun submissionIdToGroup(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Int> {
+        val submissionIdToAccession = submissionIdToAccession(metadata).toList()
         val accessionToGroup = submissionIdToAccession.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
             SequenceEntriesTable.select(
                 accessionColumn,
