@@ -14,6 +14,10 @@ const val SUBMIT_ERROR_RESPONSE = """
 The data use terms type have not been provided, even though they are enabled for this Loculus instance.
 """
 
+const val PAYLOAD_TOO_LARGE_ERROR_RESPONSE = """
+Payload too large. File size exceeds configured limits.
+"""
+
 const val METADATA_FILE_DESCRIPTION = """    
 A TSV (tab separated values) file containing the metadata of the submitted sequence entries. 
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
