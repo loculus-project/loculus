@@ -36,6 +36,10 @@ object BackendSpringProperty {
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
 
+    const val MAX_METADATA_FILE_SIZE = "loculus.submission.max-metadata-file-size-bytes"
+    const val MAX_SEQUENCE_FILE_SIZE = "loculus.submission.max-sequence-file-size-bytes"
+    const val MAX_UNCOMPRESSED_SEQUENCE_SIZE = "loculus.submission.max-uncompressed-sequence-size-bytes"
+
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_BUCKET_ENDPOINT = "loculus.s3.bucket.endpoint"
     const val S3_BUCKET_INTERNAL_ENDPOINT = "loculus.s3.bucket.internal-endpoint"
@@ -108,6 +112,17 @@ class BackendSpringConfig {
 
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
+
+    @Bean
+    fun fileSizeConfig(
+        @Value("\${${BackendSpringProperty.MAX_METADATA_FILE_SIZE}}") maxMetadataFileSize: Long,
+        @Value("\${${BackendSpringProperty.MAX_SEQUENCE_FILE_SIZE}}") maxSequenceFileSize: Long,
+        @Value("\${${BackendSpringProperty.MAX_UNCOMPRESSED_SEQUENCE_SIZE}}") maxUncompressedSequenceSize: Long,
+    ): FileSizeConfig = FileSizeConfig(
+        maxMetadataFileSize = maxMetadataFileSize,
+        maxSequenceFileSize = maxSequenceFileSize,
+        maxUncompressedSequenceSize = maxUncompressedSequenceSize,
+    )
 
     @Bean
     fun s3Config(

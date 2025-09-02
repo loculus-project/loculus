@@ -10,6 +10,7 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.FileSizeConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
@@ -19,12 +20,16 @@ import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
+import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.util.unit.DataSize
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.server.ResponseStatusException
 import java.io.BufferedInputStream
 import java.io.Closeable
 import java.io.File
@@ -87,6 +92,7 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
+    private val fileSizeConfig: FileSizeConfig,
     private val parseFastaHeader: ParseFastaHeader,
 ) {
 
@@ -104,11 +110,7 @@ class SubmitModel(
             }
     }
 
-    fun processSubmissions(
-        uploadId: String,
-        submissionParams: SubmissionParams,
-        batchSize: Int = 1000,
-    ): List<SubmissionIdMapping> {
+    fun processSubmissions(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> {
         log.info {
             "Processing submission (type: ${submissionParams.uploadType.name}) with uploadId $uploadId"
         }
@@ -211,18 +213,44 @@ class SubmitModel(
                 sequenceFileTypes,
                 tempFile,
             )
-            val sequencesList = FastaReader(sequenceStream).asSequence().toList()
 
-            val duplicateHeaders = sequencesList.groupBy { it.sampleName }.filter { it.value.size > 1 }.keys
-            if (duplicateHeaders.isNotEmpty()) {
-                throw UnprocessableEntityException(
-                    "Sequence file contains duplicated FASTA ids: " +
-                        duplicateHeaders.joinToString(", ", transform = { "`$it`" }),
+            parseSequencesWithSizeLimit(sequenceStream)
+        }
+    }
+
+    private fun parseSequencesWithSizeLimit(sequenceStream: InputStream): Map<String, String> {
+        val sequences = mutableMapOf<String, String>()
+        val duplicateHeaders = mutableSetOf<String>()
+        var totalSize = 0L
+
+        FastaReader(sequenceStream).asSequence().forEach { fastaEntry ->
+            val entrySize = fastaEntry.sampleName.length + fastaEntry.sequence.length
+            totalSize += entrySize
+
+            if (totalSize > fileSizeConfig.maxUncompressedSequenceSize) {
+                val maxHuman = DataSize.ofBytes(fileSizeConfig.maxUncompressedSequenceSize).toString()
+                throw ResponseStatusException(
+                    HttpStatus.PAYLOAD_TOO_LARGE,
+                    "Uncompressed sequence data exceeds maximum allowed size. Max $maxHuman. " +
+                        "Consider splitting your submission into smaller batches.",
                 )
             }
 
-            sequencesList.associate { it.sampleName to it.sequence }
+            if (sequences.containsKey(fastaEntry.sampleName)) {
+                duplicateHeaders.add(fastaEntry.sampleName)
+            }
+
+            sequences[fastaEntry.sampleName] = fastaEntry.sequence
         }
+
+        if (duplicateHeaders.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "Sequence file contains duplicated FASTA ids: " +
+                    duplicateHeaders.joinToString(", ") { "`$it`" },
+            )
+        }
+
+        return sequences
     }
 
     private fun groupSequencesById(
@@ -236,24 +264,6 @@ class SubmitModel(
             segmentsForId[segmentName] = sequence
         }
         return sequencesById
-    }
-
-    class AutoDeletingTempFile :
-        File(
-            System.getProperty("java.io.tmpdir"),
-            UUID.randomUUID().toString(),
-        ),
-        Closeable {
-
-        init {
-            createNewFile()
-        }
-
-        override fun close() {
-            if (exists()) {
-                delete()
-            }
-        }
     }
 
     private fun getStreamFromFile(file: MultipartFile, dataType: ValidExtension, tempFile: File): InputStream =
@@ -379,4 +389,22 @@ class SubmitModel(
         .schema
         .submissionDataTypes
         .consensusSequences
+
+    private class AutoDeletingTempFile :
+        File(
+            System.getProperty("java.io.tmpdir"),
+            UUID.randomUUID().toString(),
+        ),
+        Closeable {
+
+        init {
+            createNewFile()
+        }
+
+        override fun close() {
+            if (exists()) {
+                delete()
+            }
+        }
+    }
 }

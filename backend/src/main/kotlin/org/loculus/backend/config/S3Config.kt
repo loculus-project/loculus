@@ -10,3 +10,9 @@ data class S3BucketConfig(
     val accessKey: String,
     val secretKey: String,
 )
+
+data class FileSizeConfig(
+    val maxMetadataFileSize: Long,
+    val maxSequenceFileSize: Long,
+    val maxUncompressedSequenceSize: Long,
+)
