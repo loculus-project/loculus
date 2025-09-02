@@ -42,6 +42,7 @@ export const GET: APIRoute = async (req) => {
     return new Response(JSON.stringify(detailsDataUIProps), {
         headers: {
             'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
+            'Access-Control-Allow-Origin': '*', // eslint-disable-line @typescript-eslint/naming-convention
         },
     });
 };
