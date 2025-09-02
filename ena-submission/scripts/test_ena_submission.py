@@ -239,7 +239,7 @@ class AssemblyCreationTests(unittest.TestCase):
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
         result = reformat_authors_from_loculus_to_embl_style(authors)
-        desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J.;"
+        desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
         self.assertEqual(result, desired_result)
 
         extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
