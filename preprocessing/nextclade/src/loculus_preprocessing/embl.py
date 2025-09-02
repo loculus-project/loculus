@@ -100,6 +100,7 @@ def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
         ena_authors.append(f"{last_names} {initials}".strip())
     return ", ".join(ena_authors)
 
+
 def authors_to_ascii(authors: str) -> str:
     """
     Converts authors string to ASCII, handling diacritics and non-ASCII characters.
@@ -114,14 +115,14 @@ def authors_to_ascii(authors: str) -> str:
             if ord(char) < 128:
                 result.append(char)
             else:
-                if not (0x0000 <= ord(char) <= 0x024F):   
+                if not (0x0000 <= ord(char) <= 0x024F):
                     raise ValueError(
                         f"Unsupported non-ASCII character encountered: {char} (U+{ord(char):04X})"
                     )
                 result.append(unidecode(char))
         formatted_author_list.append("".join(result))
-    formatted_authors = "; ".join(formatted_author_list) 
-    return formatted_authors
+    return "; ".join(formatted_author_list)
+
 
 def get_authors(authors: str) -> str:
     try:
