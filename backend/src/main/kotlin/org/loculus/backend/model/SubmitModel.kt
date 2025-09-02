@@ -173,10 +173,20 @@ class SubmitModel(
                 metadataFileTypes,
                 tempFile,
             )
-            val metadata: Map<SubmissionId, MetadataEntry> = metadataEntryStreamAsSequence(metadataStream)
-                .associateBy { it.submissionId }
 
-            metadata
+            val metadataEntries = metadataEntryStreamAsSequence(metadataStream).toList()
+
+            val duplicateIds = metadataEntries.groupBy { it.submissionId }
+                .filter { it.value.size > 1 }
+                .keys
+            if (duplicateIds.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "Metadata file contains duplicated submissionIds: " +
+                        duplicateIds.joinToString(", ", transform = { "`$it`" }),
+                )
+            }
+
+            metadataEntries.associateBy { it.submissionId }
         }
 
     private fun parseSequenceFile(submissionParams: SubmissionParams): Map<String, String> {
@@ -201,7 +211,17 @@ class SubmitModel(
                 sequenceFileTypes,
                 tempFile,
             )
-            FastaReader(sequenceStream).asSequence().associate { it.sampleName to it.sequence }
+            val sequencesList = FastaReader(sequenceStream).asSequence().toList()
+
+            val duplicateHeaders = sequencesList.groupBy { it.sampleName }.filter { it.value.size > 1 }.keys
+            if (duplicateHeaders.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "Sequence file contains duplicated FASTA ids: " +
+                        duplicateHeaders.joinToString(", ", transform = { "`$it`" }),
+                )
+            }
+
+            sequencesList.associate { it.sampleName to it.sequence }
         }
     }
 
