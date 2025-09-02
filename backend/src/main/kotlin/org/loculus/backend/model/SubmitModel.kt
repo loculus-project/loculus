@@ -24,10 +24,10 @@ import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
+import org.loculus.backend.utils.formatBytesHuman
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.util.unit.DataSize
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import java.io.BufferedInputStream
@@ -228,7 +228,7 @@ class SubmitModel(
             totalSize += entrySize
 
             if (totalSize > fileSizeConfig.maxUncompressedSequenceSize) {
-                val maxHuman = DataSize.ofBytes(fileSizeConfig.maxUncompressedSequenceSize).toString()
+                val maxHuman = formatBytesHuman(fileSizeConfig.maxUncompressedSequenceSize)
                 throw ResponseStatusException(
                     HttpStatus.PAYLOAD_TOO_LARGE,
                     "Uncompressed sequence data exceeds maximum allowed size. Max $maxHuman. " +
