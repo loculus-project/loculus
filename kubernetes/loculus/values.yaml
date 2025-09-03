@@ -64,8 +64,8 @@ defaultOrganismConfig: &defaultOrganismConfig
       singleSequence:
         - name: "Nextclade (this sequence)"
           url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
-        - name: "Example.com viewer"
-          url: "https://example.com/view?server=[server]&accessionVersion=[accessionVersion]&accession=[accession]"
+        - name: "Version comparison tool"
+          url: "https://ppx-version-comparator-git-codex-bfc3c3-theosandersons-projects.vercel.app/?accession=[accession]&server=[server]"
     earliestReleaseDate:
       enabled: true
       externalFields:
@@ -1388,8 +1388,8 @@ defaultOrganisms:
         singleSequence:
           - name: "Nextclade (this sequence)"
             url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/wnv/all-lineages&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output"
-          - name: "Example.com viewer"
-            url: "https://example.com/view?server=[server]&accessionVersion=[accessionVersion]&accession=[accession]"
+          - name: "Version comparison tool"
+            url: "https://ppx-version-comparator-git-codex-bfc3c3-theosandersons-projects.vercel.app/?accession=[accession]&server=[server]"
       metadataAdd:
         - name: lineage
           header: "Lineage"
@@ -1712,8 +1712,8 @@ defaultOrganisms:
         singleSequence:
           - name: "Nextclade (L) (this sequence)"
             url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
-          - name: "Example.com viewer"
-            url: "https://example.com/view?server=[server]&accessionVersion=[accessionVersion]&accession=[accession]"
+          - name: "Version comparison tool"
+            url: "https://ppx-version-comparator-git-codex-bfc3c3-theosandersons-projects.vercel.app/?accession=[accession]&server=[server]"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1809,8 +1809,8 @@ defaultOrganisms:
         singleSequence:
           - name: "Nextclade (CV-A16) (this sequence)"
             url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
-          - name: "Example.com viewer"
-            url: "https://example.com/view?server=[server]&accessionVersion=[accessionVersion]&accession=[accession]"
+          - name: "Version comparison tool"
+            url: "https://ppx-version-comparator-git-codex-bfc3c3-theosandersons-projects.vercel.app/?accession=[accession]&server=[server]"
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16

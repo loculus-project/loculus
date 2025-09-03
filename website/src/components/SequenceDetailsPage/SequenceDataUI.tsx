@@ -15,7 +15,6 @@ import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
-import SingleSequenceLinkOuts from './SingleSequenceLinkOuts';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -74,15 +73,6 @@ export const SequenceDataUI: FC<Props> = ({
                 </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
-            {schema.linkOuts?.singleSequence && schema.linkOuts.singleSequence.length > 0 && (
-                <SingleSequenceLinkOuts
-                    organism={organism}
-                    accessionVersion={accessionVersion}
-                    clientConfig={clientConfig}
-                    schema={schema}
-                    linkOuts={schema.linkOuts.singleSequence}
-                />
-            )}
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
                     <SequencesContainer
