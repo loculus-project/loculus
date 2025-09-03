@@ -201,13 +201,24 @@ organisms:
       organismName: {{ quote .organismName }}
       {{ if .linkOuts }}
       linkOuts:
-        {{- range $linkOut := .linkOuts }}
-        - name: {{ quote $linkOut.name }}
-          url: {{ quote $linkOut.url }}
-          {{- if $linkOut.maxNumberOfRecommendedEntries }}
-          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+        {{- if .linkOuts.search }}
+        search:
+          {{- range $linkOut := .linkOuts.search }}
+          - name: {{ quote $linkOut.name }}
+            url: {{ quote $linkOut.url }}
+            {{- if $linkOut.maxNumberOfRecommendedEntries }}
+            maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+            {{- end }}
           {{- end }}
         {{- end }}
+        {{- if .linkOuts.individualSequence }}
+        individualSequence:
+          {{- range $linkOut := .linkOuts.individualSequence }}
+          - name: {{ quote $linkOut.name }}
+            url: {{ quote $linkOut.url }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
       {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .richFastaHeaderFields}}

@@ -202,4 +202,22 @@ describe('LinkOutMenu with disabled data use terms', () => {
 
         expect(window.open).toHaveBeenCalled();
     });
+
+    test('replaces additional placeholders', () => {
+        render(
+            <LinkOutMenu
+                downloadUrlGenerator={realDownloadUrlGenerator}
+                sequenceFilter={mockSequenceFilter}
+                sequenceCount={1}
+                linkOuts={[{ name: 'Accession', url: 'http://example.com/[accession]/[server]' }]}
+                dataUseTermsEnabled={false}
+                extraPlaceholderValues={{ accession: 'A1', server: 'S1' }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Tools/ }));
+        fireEvent.click(screen.getByText('Accession'));
+
+        expect(window.open).toHaveBeenCalledWith('http://example.com/A1/S1', '_blank', 'noopener,noreferrer');
+    });
 });

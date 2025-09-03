@@ -5,14 +5,17 @@ import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
-import { getGitHubReportUrl } from '../../config.ts';
+import { getGitHubReportUrl, getLapisUrl } from '../../config.ts';
 import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
-import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
+import { type Schema, type SequenceFlaggingConfig, type LinkOut } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
+import { DownloadUrlGenerator } from '../SearchPage/DownloadDialog/DownloadUrlGenerator.ts';
+import { LinkOutMenu } from '../SearchPage/DownloadDialog/LinkOutMenu.tsx';
+import { type SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters.tsx';
 import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
 
@@ -27,6 +30,7 @@ interface Props {
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    linkOuts?: LinkOut[];
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -40,6 +44,7 @@ export const SequenceDataUI: FC<Props> = ({
     accessToken,
     sequenceFlaggingConfig,
     referenceGenomeSequenceNames,
+    linkOuts,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
 
@@ -60,6 +65,21 @@ export const SequenceDataUI: FC<Props> = ({
     const dataTableData = getDataTableData(tableData);
 
     const reportUrl = getGitHubReportUrl(sequenceFlaggingConfig, organism, accessionVersion);
+
+    const downloadUrlGenerator = new DownloadUrlGenerator(
+        organism,
+        getLapisUrl(clientConfig, organism),
+        false,
+        schema.richFastaHeaderFields,
+    );
+
+    const sequenceFilter: SequenceFilter = {
+        isEmpty: () => false,
+        sequenceCount: () => 1,
+        toApiParams: () => ({ [schema.primaryKey]: accessionVersion }),
+        toUrlSearchParams: () => [[schema.primaryKey, accessionVersion]],
+        toDisplayStrings: () => new Map(),
+    };
 
     return (
         <>
@@ -82,6 +102,20 @@ export const SequenceDataUI: FC<Props> = ({
                         genes={genes}
                         nucleotideSegmentNames={nucleotideSegmentNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
+                    />
+                </div>
+            )}
+            {linkOuts !== undefined && linkOuts.length > 0 && (
+                <div className='mt-10'>
+                    <LinkOutMenu
+                        downloadUrlGenerator={downloadUrlGenerator}
+                        sequenceFilter={sequenceFilter}
+                        linkOuts={linkOuts}
+                        dataUseTermsEnabled={false}
+                        extraPlaceholderValues={{
+                            accession: accessionVersion,
+                            server: window.location.origin,
+                        }}
                     />
                 </div>
             )}

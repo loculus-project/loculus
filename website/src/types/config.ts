@@ -110,13 +110,27 @@ export type GroupedMetadataFilter = {
     header?: string;
 };
 
-export const linkOut = z.object({
+export const searchLinkOut = z.object({
     name: z.string(),
     url: z.string(),
     maxNumberOfRecommendedEntries: z.number().int().positive().optional(),
 });
 
-export type LinkOut = z.infer<typeof linkOut>;
+export const individualSequenceLinkOut = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+export type SearchLinkOut = z.infer<typeof searchLinkOut>;
+export type IndividualSequenceLinkOut = z.infer<typeof individualSequenceLinkOut>;
+export type LinkOut = SearchLinkOut | IndividualSequenceLinkOut;
+
+export const linkOuts = z.object({
+    search: z.array(searchLinkOut).optional(),
+    individualSequence: z.array(individualSequenceLinkOut).optional(),
+});
+
+export type LinkOuts = z.infer<typeof linkOuts>;
 
 export const fileCategory = z.object({
     name: z.string(),
@@ -150,7 +164,7 @@ export const schema = z.object({
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
-    linkOuts: z.array(linkOut).optional(),
+    linkOuts: linkOuts.optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

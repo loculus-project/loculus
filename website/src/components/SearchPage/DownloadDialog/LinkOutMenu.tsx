@@ -24,6 +24,7 @@ type LinkOutMenuProps = {
     sequenceCount?: number;
     linkOuts: LinkOut[];
     dataUseTermsEnabled: boolean;
+    extraPlaceholderValues?: Record<string, string>;
 };
 
 export const LinkOutMenu: FC<LinkOutMenuProps> = ({
@@ -32,6 +33,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     sequenceCount,
     linkOuts,
     dataUseTermsEnabled,
+    extraPlaceholderValues,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDataUseTermsModalVisible, setDataUseTermsModalVisible] = useState(false);
@@ -62,7 +64,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
     const generateLinkOutUrl = (linkOut: LinkOut, includeRestricted = false) => {
         const placeholders = matchPlaceholders(linkOut.url);
 
-        const urlMap: Record<string, string> = {};
+        const urlMap: Record<string, string> = { ...(extraPlaceholderValues ?? {}) };
         for (const match of placeholders) {
             const { fullMatch, dataType, segment, richHeaders, dataFormat, columns } = match;
 

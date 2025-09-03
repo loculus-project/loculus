@@ -87,6 +87,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     myGroups={myGroups}
                                     accessToken={accessToken}
                                     sequenceFlaggingConfig={showDownloadAndReport ? sequenceFlaggingConfig : undefined}
+                                    linkOuts={getSchema(organism).linkOuts?.individualSequence}
                                     client:load
                                 />
                             ))}
