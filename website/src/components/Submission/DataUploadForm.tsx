@@ -135,7 +135,7 @@ const InnerDataUploadForm = ({
         if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
             displayConfirmationDialog({
                 dialogText:
-                    'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be released to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
+                    'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
                 confirmButtonText: 'Continue under Open terms',
                 closeButtonText: 'Cancel',
                 onConfirmation: submitSequenceData,
