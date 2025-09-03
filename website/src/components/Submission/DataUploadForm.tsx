@@ -24,6 +24,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -107,26 +108,40 @@ const InnerDataUploadForm = ({
             fileMappingWithSubmissionId = { [submissionId!]: Object.values(fileMapping)[0] };
         }
 
-        switch (action) {
-            case 'submit': {
-                const groupId = group.groupId;
-                submit({
-                    metadataFile: metadataFile,
-                    sequenceFile: sequenceFile,
-                    fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
-                    groupId,
-                    dataUseTermsType,
-                    restrictedUntil:
-                        dataUseTermsType === restrictedDataUseTermsOption
-                            ? restrictedUntil.toFormat('yyyy-MM-dd')
-                            : null,
-                });
-                break;
+        const submitSequenceData = () => {
+            switch (action) {
+                case 'submit': {
+                    const groupId = group.groupId;
+                    submit({
+                        metadataFile: metadataFile,
+                        sequenceFile: sequenceFile,
+                        fileMapping: extraFilesEnabled ? fileMappingWithSubmissionId : undefined,
+                        groupId,
+                        dataUseTermsType,
+                        restrictedUntil:
+                            dataUseTermsType === restrictedDataUseTermsOption
+                                ? restrictedUntil.toFormat('yyyy-MM-dd')
+                                : null,
+                    });
+                    break;
+                }
+                case 'revise':
+                    revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
+                    // TODO handle file stuff for revise
+                    break;
             }
-            case 'revise':
-                revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
-                // TODO handle file stuff for revise
-                break;
+        };
+
+        if (dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
+            displayConfirmationDialog({
+                dialogText:
+                    'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be released to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
+                confirmButtonText: 'Continue under Open terms',
+                closeButtonText: 'Cancel',
+                onConfirmation: submitSequenceData,
+            });
+        } else {
+            submitSequenceData();
         }
     };
 
