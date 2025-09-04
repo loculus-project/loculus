@@ -245,7 +245,7 @@ describe('SearchFullUI', () => {
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
-    it('does not store default invisible search field visibilities', async () => {
+    it('does not store default invisible search field visibilities in URL when set to false as this is unneeded', async () => {
         renderSearchFullUI({
             searchFormFilters: [
                 ...defaultSearchFormFilters,
