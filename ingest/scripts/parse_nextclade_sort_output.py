@@ -62,9 +62,9 @@ def parse_file(
 
     header = list(config.minimizer_parser)
     header.append("seqName")
-    # Filter out rows where 'segment' is NOT in nucleotide_sequences
-    # these cases are not explicitly supported by loculus
     if "segment" in config.minimizer_parser:
+        # Filter out rows where 'segment' is NOT in nucleotide_sequences
+        # these cases are not explicitly supported by loculus
         filtered_df = df_highest_per_group[df_highest_per_group["segment"].isin(allowed_segments)]
         filtered_df.to_csv(output_file, columns=header, sep="\t", index=False)
     else:
