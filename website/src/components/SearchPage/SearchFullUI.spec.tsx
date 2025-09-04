@@ -332,7 +332,7 @@ describe('SearchFullUI', () => {
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });
 
-    it('does not store default invisible column visibilities', async () => {
+    it('does not store default invisible column visibilities when selecting none', async () => {
         renderSearchFullUI({});
         const customizeButton = await screen.findByRole('button', { name: 'Customize columns' });
         await userEvent.click(customizeButton);
