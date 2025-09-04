@@ -27,7 +27,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN_READ_PUBLIC }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:

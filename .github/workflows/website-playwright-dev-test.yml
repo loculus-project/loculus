@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install yaml package
         run: pip3 install PyYAML requests
       - name: Generate local test config
