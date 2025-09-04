@@ -57,6 +57,7 @@ jobs:
           -U postgres 
           -d postgres 
           --schema-only 
+          --no-security-labels
           > /github/workspace/backend/docs/db/schema.sql"
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
