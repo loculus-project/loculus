@@ -4,6 +4,8 @@ import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdFilesMap
@@ -21,6 +23,7 @@ import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionVa
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
+import org.loculus.backend.service.submission.SequenceUploadAuxTable.metadataSubmissionIdColumn
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -132,7 +135,7 @@ class SubmitModel(
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
-            validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
+            mapMetadataKeysToSequenceKeys(metadataSubmissionIds, sequenceSubmissionIds, submissionParams.organism)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -348,27 +351,100 @@ class SubmitModel(
         )
     }
 
-    private fun validateSubmissionIdSetsForConsensusSequences(
+    private fun SubmissionId.removeSuffixPattern(): SubmissionId {
+        val lastDelimiter = this.lastIndexOf("_")
+        if (lastDelimiter == -1) {
+            return this
+        }
+        val cleaned = this.substring(0, lastDelimiter)
+        return cleaned
+    }
+
+    @Transactional
+    private fun mapMetadataKeysToSequenceKeys(
         metadataKeysSet: Set<SubmissionId>,
         sequenceKeysSet: Set<SubmissionId>,
+        organism: Organism,
     ) {
-        val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
-        val sequenceKeysNotInMetadata = sequenceKeysSet.subtract(metadataKeysSet)
+        val metadataKeyToSequences = mutableMapOf<SubmissionId, MutableList<SubmissionId>>()
+        val unmatchedSequenceKeys = mutableSetOf<SubmissionId>()
+        val ambiguousSequenceKeys = mutableMapOf<SubmissionId, List<SubmissionId>>()
 
-        if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
-            val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
-                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
+
+        for (seqKey in sequenceKeysSet) {
+            val matchedMetadataKey = if (referenceGenome.nucleotideSequences.size == 1) {
+                val seqKeyInMeta = metadataKeysSet.contains(seqKey)
+                when {
+                    seqKeyInMeta -> seqKey
+                    else -> null
+                }
+            } else {
+                val baseKey = seqKey.removeSuffixPattern()
+                val seqKeyInMeta = metadataKeysSet.contains(seqKey)
+                val baseKeyInMeta = metadataKeysSet.contains(baseKey)
+                if ((seqKey != baseKey) && seqKeyInMeta && baseKeyInMeta) {
+                    ambiguousSequenceKeys[seqKey] = listOf(seqKey, baseKey)
+                }
+                when {
+                    seqKeyInMeta -> seqKey
+                    baseKeyInMeta -> baseKey
+                    else -> null
+                }
+            }
+
+            if (matchedMetadataKey != null) {
+                metadataKeyToSequences.computeIfAbsent(matchedMetadataKey) { mutableListOf() }.add(seqKey)
+            } else {
+                unmatchedSequenceKeys.add(seqKey)
+            }
+        }
+
+        val metadataKeysWithoutSequences = metadataKeysSet.filterNot { metadataKeyToSequences.containsKey(it) }
+
+        if (unmatchedSequenceKeys.isNotEmpty() || metadataKeysWithoutSequences.isNotEmpty() ||
+            ambiguousSequenceKeys.isNotEmpty()
+        ) {
+            val unmatchedSeqText = if (unmatchedSequenceKeys.isNotEmpty()) {
+                "Sequence file contains ${unmatchedSequenceKeys.size} ids that are not present in the metadata file: ${
+                    unmatchedSequenceKeys.joinToString(limit = 10)
+                }; "
             } else {
                 ""
             }
-            val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
-                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+            val unmatchedMetadataText = if (metadataKeysWithoutSequences.isNotEmpty()) {
+                "Metadata file contains ${metadataKeysWithoutSequences.size} ids that are not present in " +
+                    "the sequence file: ${metadataKeysWithoutSequences.joinToString(limit = 10)};"
             } else {
                 ""
             }
-            throw UnprocessableEntityException(metadataNotPresentErrorText + sequenceNotPresentErrorText)
+            val ambiguousSequenceText = if (ambiguousSequenceKeys.isNotEmpty()) {
+                "Sequence file contains ${ambiguousSequenceKeys.size} ids that could be matched to multiple metadata " +
+                    "keys, e.g. ${
+                        ambiguousSequenceKeys.entries.joinToString(limit = 3) { (key, value) ->
+                            "Sequence key: $key matches $value"
+                        }
+                    } " +
+                    "- to avoid future issues we recommend not using the separator `_` in your metadata submissionIds;"
+            } else {
+                ""
+            }
+            throw UnprocessableEntityException(unmatchedSeqText + unmatchedMetadataText + ambiguousSequenceText)
+        }
+
+        transaction {
+            for ((metadataSubmissionId, sequenceSubmissionIds) in metadataKeyToSequences) {
+                for (sequenceSubmissionId in sequenceSubmissionIds) {
+                    SequenceUploadAuxTable.update(
+                        {
+                            SequenceUploadAuxTable.sequenceSubmissionIdColumn eq
+                                sequenceSubmissionId
+                        },
+                    ) {
+                        it[metadataSubmissionIdColumn] = metadataSubmissionId
+                    }
+                }
+            }
         }
     }
 
