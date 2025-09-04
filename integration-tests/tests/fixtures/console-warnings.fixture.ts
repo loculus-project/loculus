@@ -5,15 +5,17 @@ export const test = base.extend({
         const handleConsole = (msg: ConsoleMessage) => {
             if (msg.type() === 'warning' || msg.type() === 'error') {
                 const messageText = msg.text();
-                
+
                 // Filter out known harmless warnings/errors
                 const harmlessMessages = [
                     'Form submission canceled because the form is not connected',
                     'ERR_INCOMPLETE_CHUNKED_ENCODING',
                 ];
-                
-                const isHarmless = harmlessMessages.some(harmless => messageText.includes(harmless));
-                
+
+                const isHarmless = harmlessMessages.some((harmless) =>
+                    messageText.includes(harmless),
+                );
+
                 if (!isHarmless && browserName === 'chromium') {
                     expect(false, `Unexpected console ${msg.type()}: ${messageText}`).toBe(true);
                 }
