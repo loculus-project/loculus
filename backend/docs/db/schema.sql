@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.13 (Debian 15.13-1.pgdg120+1)
--- Dumped by pg_dump version 16.9 (Debian 16.9-1.pgdg120+1)
+\restrict 6yXELTLaqpYrUpq0raCQdSfDSeUHvWS9sbvN2VZyWxwp5aCa5813gyyXYRcyrko
+
+-- Dumped from database version 15.14 (Debian 15.14-1.pgdg13+1)
+-- Dumped by pg_dump version 16.10 (Debian 16.10-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -892,4 +894,6 @@ ALTER TABLE ONLY public.user_groups_table
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict 6yXELTLaqpYrUpq0raCQdSfDSeUHvWS9sbvN2VZyWxwp5aCa5813gyyXYRcyrko
 
