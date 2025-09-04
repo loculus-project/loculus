@@ -1298,6 +1298,7 @@ class SubmissionDatabaseService(
             useNewerProcessingPipelineIfPossible(organismName)
         }
     }
+
     /**
      * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
      * the given organism and are older than the earliest preprocessing pipeline version to keep.
@@ -1324,7 +1325,6 @@ class SubmissionDatabaseService(
             )
         }
     }
-
 
     /**
      * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];
