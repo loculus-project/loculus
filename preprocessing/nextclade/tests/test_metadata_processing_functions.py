@@ -511,7 +511,7 @@ test_case_definitions = [
                 ["authors"],
                 ["authors"],
                 (
-                    "Invalid name(s): Invalid Name; BadFormat123; 12345 ... and 1 others. "
+                    "Invalid name(s): 'Invalid Name'; 'BadFormat123'; '12345' ... and 1 others. "
                     "Please ensure that authors are separated by semi-colons. Each author's name "
                     "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
                     "a comma is mandatory to separate first names/initials from last name. "
