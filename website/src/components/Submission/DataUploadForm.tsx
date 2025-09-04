@@ -127,7 +127,7 @@ const InnerDataUploadForm = ({
                 }
                 case 'revise':
                     revise({ metadataFile: metadataFile, sequenceFile: sequenceFile });
-                    // TODO handle file stuff for revise
+                    // TODO #4573: handle file stuff for revise
                     break;
             }
         };
