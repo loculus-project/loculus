@@ -780,7 +780,7 @@ class ProcessingFunctions:
             )
         invalid_names = get_invalid_author_names(authors)
         if invalid_names:
-            names_to_show = "; ".join(invalid_names[:3])
+            names_to_show = "; ".join(f"'{name}'" for name in invalid_names[:3])
             if len(invalid_names) > 3:  # noqa: PLR2004
                 names_to_show += f" ... and {len(invalid_names) - 3} others"
             error_message = f"Invalid name(s): {names_to_show}. " + author_format_description
