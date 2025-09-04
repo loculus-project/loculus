@@ -99,7 +99,11 @@ S3 refers to a class of object storage services. It is hosted by several cloud p
 
 ### S3 credentials
 
-S3 credentials consist of an _Access Key ID_, also called _access key_ (public), and a _Secret Access Key_, also called _secret key_ (private). These work similar to a username and password, but in S3, many of these can be created and given different permissions. An access key might look like this: `AKIAIOSFODNN7EXAMPLE` and a secret key like this: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`.
+S3 credentials consist of two parts: an Access Key ID (public) and a Secret Access Key (private). Together, they function much like a username and password. Unlike a single account login, however, you can create multiple key pairs in S3, each with its own permissions and scope of access.
+
+An Access Key ID might look like: AKIAIOSFODNN7EXAMPLE
+
+A Secret Access Key might look like: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
 ### Schema
 
