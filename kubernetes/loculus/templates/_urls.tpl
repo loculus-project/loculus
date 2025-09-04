@@ -28,7 +28,7 @@
         {{- printf "http://%s:8084" $.Values.localHost -}}
     {{- end -}}
   {{- else -}}
-    {{- printf "http://%s:8084" $.Values.localHost -}}
+    {{- $.Values.s3.bucket.endpoint }}
   {{- end -}}
 {{- end -}}
 
