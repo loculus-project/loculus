@@ -8,7 +8,7 @@ import { METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
 async function loadTestFile(fileName: string): Promise<File> {
     const path = `${import.meta.dirname}/test_files/${fileName}`;
     const contents = await fs.readFile(path);
-    return new File([contents], fileName);
+    return new File([new Uint8Array(contents)], fileName);
 }
 
 describe('fileProcessing', () => {
