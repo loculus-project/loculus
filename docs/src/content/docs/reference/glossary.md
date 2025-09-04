@@ -103,7 +103,7 @@ S3 credentials consist of two parts: an Access Key ID (public) and a Secret Acce
 
 An Access Key ID might look like: `AKIAIOSFODNN7EXAMPLE`
 
-A Secret Access Key might look like: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+A Secret Key might look like: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
 
 ### Schema
 
