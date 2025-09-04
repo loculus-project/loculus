@@ -58,7 +58,7 @@ jobs:
           -d postgres 
           --schema-only 
           --no-security-labels
-          --restrict-key=''
+          | grep -v '^\\\\restrict\\|^\\\\unrestrict' 
           > /github/workspace/backend/docs/db/schema.sql"
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
