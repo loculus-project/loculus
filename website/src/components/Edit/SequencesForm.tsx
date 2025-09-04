@@ -55,8 +55,8 @@ export class EditableSequences {
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => ({
                 key,
-                initialValue: value.toString(),
-                value: value.toString(),
+                initialValue: value,
+                value: value,
                 ...mapErrorsAndWarnings(initialData, key, 'NucleotideSequence'),
             }),
         );
