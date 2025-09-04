@@ -222,10 +222,24 @@ export const InnerSearchFullUI = ({
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => ({
-            ...prev,
-            [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
-        }));
+        setState((prev: any) => {
+            const newState = { ...prev };
+            const key = `${VISIBILITY_PREFIX}${fieldName}`;
+            const metadataField = schema.metadata.find((field) => {
+                let name = field.name;
+                if (field.rangeOverlapSearch) {
+                    name = field.rangeOverlapSearch.rangeName;
+                }
+                return name === fieldName;
+            });
+            const defaultVisible = metadataField?.initiallyVisible === true;
+            if (visible === defaultVisible) {
+                delete newState[key];
+            } else {
+                newState[key] = visible ? 'true' : 'false';
+            }
+            return newState;
+        });
         // if visible is false, we should also remove the field from the fieldValues
         if (!visible) {
             setSomeFieldValues([fieldName, '']);

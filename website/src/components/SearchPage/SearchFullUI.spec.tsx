@@ -117,6 +117,7 @@ describe('SearchFullUI', () => {
                 href: '',
             },
         });
+        window.history.replaceState({ path: '' }, '', '');
 
         mockUseAggregated.mockReturnValue({
             data: {
@@ -236,6 +237,31 @@ describe('SearchFullUI', () => {
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 
+    it('does not store default invisible search field visibilities', async () => {
+        renderSearchFullUI({
+            searchFormFilters: [
+                ...defaultSearchFormFilters,
+                {
+                    name: 'field2',
+                    type: 'string',
+                    displayName: 'Field 2',
+                    autocomplete: false,
+                    initiallyVisible: false,
+                },
+            ],
+        });
+        const customizeButton = await screen.findByRole('button', { name: 'Add search fields' });
+        await userEvent.click(customizeButton);
+        const selectNoneButton = await screen.findByRole('button', { name: 'Select none' });
+        await userEvent.click(selectNoneButton);
+        const closeButton = await screen.findByTestId('field-selector-close-button');
+        await userEvent.click(closeButton);
+        await waitFor(() => {
+            expect(window.history.state.path).toContain('visibility_field1=false');
+            expect(window.history.state.path).not.toContain('visibility_field2=false');
+        });
+    });
+
     it('should update the URL with query parameters when a search is performed', async () => {
         renderSearchFullUI();
 
@@ -260,5 +286,19 @@ describe('SearchFullUI', () => {
         const closeButton = await screen.findByTestId('field-selector-close-button');
         await userEvent.click(closeButton);
         expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
+    });
+
+    it('does not store default invisible column visibilities', async () => {
+        renderSearchFullUI({});
+        const customizeButton = await screen.findByRole('button', { name: 'Customize columns' });
+        await userEvent.click(customizeButton);
+        const selectNoneButton = await screen.findByRole('button', { name: 'Select none' });
+        await userEvent.click(selectNoneButton);
+        const closeButton = await screen.findByTestId('field-selector-close-button');
+        await userEvent.click(closeButton);
+        await waitFor(() => {
+            expect(window.history.state.path).toContain('column_field1=false');
+            expect(window.history.state.path).not.toContain('column_field4=false');
+        });
     });
 });
