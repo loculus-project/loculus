@@ -238,11 +238,13 @@ export const InnerSearchFullUI = ({
             } else {
                 newState[key] = visible ? 'true' : 'false';
             }
+            if (!visible) {
+                delete newState[fieldName];
+            }
             return newState;
         });
-        // if visible is false, we should also remove the field from the fieldValues
         if (!visible) {
-            setSomeFieldValues([fieldName, '']);
+            setPage(1);
         }
     };
 
