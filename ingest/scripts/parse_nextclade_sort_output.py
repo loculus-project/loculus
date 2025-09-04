@@ -66,7 +66,9 @@ def parse_file(
     # these cases are not explicitly supported by loculus
     if "segment" in config.minimizer_parser:
         filtered_df = df_highest_per_group[df_highest_per_group["segment"].isin(allowed_segments)]
-    filtered_df.to_csv(output_file, columns=header, sep="\t", index=False)
+        filtered_df.to_csv(output_file, columns=header, sep="\t", index=False)
+    else:
+        df_highest_per_group.to_csv(output_file, columns=header, sep="\t", index=False)
 
 
 @click.command()
