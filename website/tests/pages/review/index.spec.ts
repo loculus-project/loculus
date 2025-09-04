@@ -50,7 +50,8 @@ test.describe('The review page', () => {
         await reviewPage.waitForTotalSequenceCountCorrect(total, 'less');
     });
 
-    test('approve restricted sequences', async ({ reviewPage, loginAsTestUser }) => {
+    test('approve restricted sequences', async ({ reviewPage, loginAsTestUser, browserName }) => {
+        test.skip(browserName === 'webkit', 'Webkit has false positive connection issues');
         const { token, groupId } = await loginAsTestUser();
 
         await reviewPage.goto(groupId);

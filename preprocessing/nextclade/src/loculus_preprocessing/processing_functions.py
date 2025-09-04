@@ -55,12 +55,25 @@ def invalid_value_annotation(
     )
 
 
-def valid_authors(authors: str) -> bool:
+def valid_name() -> str:
     alpha = r"\s*[a-zA-Z]"
     name_chars = r"[a-zA-Z\s\.\-\']*"
-    name = alpha + name_chars + "," + name_chars
+    return alpha + name_chars + "," + name_chars
+
+
+def valid_authors(authors: str) -> bool:
+    name = valid_name()
     pattern = f"^{name}(;{name})*;?$"
     return re.match(pattern, authors) is not None
+
+
+def get_invalid_author_names(authors: str) -> list[str]:
+    pattern = re.compile(f"^{valid_name()}$")
+    invalid = []
+    for author in authors.split(";"):
+        if author and pattern.fullmatch(author) is None:
+            invalid.append(author.strip())
+    return invalid
 
 
 def warn_potentially_invalid_authors(authors: str) -> bool:
@@ -580,9 +593,9 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"Internal Error: Function concatenate did not receive accession_version "
-                            f"ProcessingResult with input {input_data} and args {args}, "
-                            "please contact the administrator."
+                            "Internal Error: Function concatenate did not receive "
+                            f"accession_version ProcessingResult with input {input_data} "
+                            f"and args {args}, please contact the administrator."
                         ),
                     )
                 ],
@@ -717,8 +730,7 @@ class ProcessingFunctions:
             authors.encode("ascii")
         except UnicodeEncodeError:
             error_message = (
-                f"The authors list '{authors}' contains non-ASCII characters. "
-                + author_format_description
+                "The authors list contains non-ASCII characters. " + author_format_description
             )
             return ProcessingResult(
                 datum=None,
@@ -736,7 +748,7 @@ class ProcessingFunctions:
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warning_message = (
-                    f"The authors list '{authors}' might not be using the Loculus format. "
+                    "The authors list might not be using the Loculus format. "
                     + author_format_description
                 )
                 warnings.append(
@@ -749,7 +761,7 @@ class ProcessingFunctions:
                 )
             if " and " in authors:
                 warning_message = (
-                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted "
+                    "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
@@ -766,10 +778,16 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        error_message = (
-            f"The authors list '{authors}' is not in a recognized format. "
-            + author_format_description
-        )
+        invalid_names = get_invalid_author_names(authors)
+        if invalid_names:
+            names_to_show = "; ".join(f"'{name}'" for name in invalid_names[:3])
+            if len(invalid_names) > 3:  # noqa: PLR2004
+                names_to_show += f" ... and {len(invalid_names) - 3} others"
+            error_message = f"Invalid name(s): {names_to_show}. " + author_format_description
+        else:
+            error_message = (
+                "The authors list is not in a recognized format. " + author_format_description
+            )
         return ProcessingResult(
             datum=None,
             errors=[
@@ -825,7 +843,10 @@ class ProcessingFunctions:
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
+                message=(
+                    f"The value '{regex_field}' does not match the expected regex "
+                    f"pattern: '{pattern}'."
+                ),
             )
         )
         return ProcessingResult(datum=None, warnings=warnings, errors=errors)

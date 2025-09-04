@@ -25,6 +25,7 @@ fields:
     displayName: Submission ID
     type: string
     header: Submission details
+    orderOnDetailsPage: 5000
     enableSubstringSearch: true
     includeInDownloadsByDefault: true
   - name: isRevocation
@@ -38,6 +39,7 @@ fields:
     autocomplete: true
     hideOnSequenceDetailsPage: true
     header: Submission details
+    orderOnDetailsPage: 5010
   - name: groupName
     type: string
     generateIndex: true
@@ -45,6 +47,7 @@ fields:
     header: Submission details
     displayName: Submitting group
     includeInDownloadsByDefault: true
+    orderOnDetailsPage: 5020
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -54,6 +57,7 @@ fields:
     autocomplete: true
     header: Submission details
     displayName: Submitting group (numeric ID)
+    orderOnDetailsPage: 5030
     customDisplay:
       type: submittingGroup
       displayGroup: group
@@ -61,17 +65,20 @@ fields:
     type: timestamp
     displayName: Date submitted
     header: Submission details
+    orderOnDetailsPage: 5040
   - name: submittedDate
     type: string
     hideOnSequenceDetailsPage: true
     generateIndex: true
     autocomplete: true
     displayName: Date submitted (exact)
+    orderOnDetailsPage: 5050
   - name: releasedAtTimestamp
     type: timestamp
     displayName: Date released
     header: Submission details
     columnWidth: 100
+    orderOnDetailsPage: 5060
   - name: releasedDate
     type: string
     hideOnSequenceDetailsPage: true
@@ -79,6 +86,7 @@ fields:
     autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
+    orderOnDetailsPage: 5070
   {{- if $.Values.dataUseTerms.enabled }}
   - name: dataUseTerms
     type: string
@@ -90,11 +98,13 @@ fields:
     customDisplay:
       type: dataUseTerms
     header: Data use terms
+    orderOnDetailsPage: 610
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
     header: Data use terms
+    orderOnDetailsPage: 620
   {{- if $.Values.dataUseTerms.urls }}
   - name: dataUseTermsUrl
     displayName: Data use terms URL
@@ -105,6 +115,7 @@ fields:
     customDisplay:
       type: link
       url: "__value__"
+    orderOnDetailsPage: 630
   {{- end}}
   {{- end}}
   - name: versionStatus
@@ -116,6 +127,7 @@ fields:
     type: string
     displayName: Version comment
     header: Submission details
+    orderOnDetailsPage: 5000
   - name: pipelineVersion
     type: int
     notSearchable: true
@@ -278,6 +290,9 @@ organisms:
   {{- end }}
   {{- if .order }}
   order: {{ .order }}
+  {{- end }}
+  {{- if .orderOnDetailsPage }}
+  orderOnDetailsPage: {{ .orderOnDetailsPage }}
   {{- end }}
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}

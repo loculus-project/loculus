@@ -139,6 +139,11 @@
           "type": "boolean",
           "description": "If true, hides the field on the sequence details page."
         },
+        "orderOnDetailsPage": {
+          "groups": ["metadata"],
+          "type": "number",
+          "description": "Determines the order on the sequence details page."
+        },
         "hideInSearchResultsTable": {
           "groups": ["metadata"],
           "type": "boolean",
@@ -215,7 +220,7 @@
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "Object of type [organism schema](#schema-type)",
+          "description": "Object of type [organism schema](#organism-schema-type)",
           "additionalProperties": false,
           "properties": {
             "organismName": {

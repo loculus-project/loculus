@@ -63,6 +63,7 @@ export const metadata = z.object({
     lineageSearch: z.boolean().optional(),
     columnWidth: z.number().optional(),
     order: z.number().optional(),
+    orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
 });
 

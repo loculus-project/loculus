@@ -34,6 +34,7 @@ test.describe('Submission flow', () => {
         await page.getByLabel('I confirm I have not and will').check();
 
         await page.getByRole('button', { name: 'Submit sequences' }).click();
+        await page.getByRole('button', { name: 'Continue under Open terms' }).click();
 
         await expect(
             page.getByRole('heading', { name: 'Review current submissions' }),

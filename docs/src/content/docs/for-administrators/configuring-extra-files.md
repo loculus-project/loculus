@@ -20,7 +20,7 @@ When configuring this feature for an organism, you can configure file categories
 
 ## Configuring an S3 bucket
 
-You need admin access to an S3 bucket, and have the credentials at hand.
+You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
 
 Enable S3 and configure the location of the bucket:
 
@@ -29,7 +29,7 @@ s3:
   enabled: true
   bucket:
     region: us-east-1
-    endpoint: my-s3.net
+    endpoint: https://my-s3.net
     bucket: loculus-data
 ```
 
@@ -84,6 +84,10 @@ For this to work, you need to configure a bucket policy like this:
 ```
 
 Consult the documentation of your particular S3 provider on how to configure bucket policies.
+
+## Set CORS bucket policy
+
+Depending on your S3 provider, you might have to configure a CORS policy for your bucket. Without it, your browser will raise an error when trying to upload files to S3. Follow the documentation for you S3 provider to find out how to set a CORS bucket policy. For example: [AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enabling-cors-examples.html) and [Hetzner](https://docs.hetzner.com/storage/object-storage/howto-protect-objects/cors/).
 
 ## Configuring file submission
 

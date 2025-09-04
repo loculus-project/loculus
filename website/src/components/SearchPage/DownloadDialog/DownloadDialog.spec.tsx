@@ -313,23 +313,7 @@ describe('DownloadDialog', () => {
     });
 
     describe('with richFastaHeaderFields', () => {
-        test('should target Astro endpoint when downloading raw sequences with rich fasta headers', async () => {
-            await renderDialog({
-                richFastaHeaderFields: ['field1', 'field2'],
-            });
-
-            await checkAgreement();
-            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
-            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
-
-            const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
-            expect(query).toMatch(
-                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&headerFields=field1&headerFields=field2$/,
-            );
-        });
-
-        test('should include filters in download url', async () => {
+        test('should set fasta header template in download url', async () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
                 downloadParams: new FieldFilterSet(
@@ -348,24 +332,10 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe(`http://localhost:3000/${defaultOrganism}/api/sequences`);
+            expect(path).toBe('https://lapis/sample/unalignedNucleotideSequences');
             expect(query).toMatch(
-                /^downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&headerFields=field1&headerFields=field2&accession=accession1&accession=accession2&field1=value1/,
+                /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&accession=accession1&accession=accession2&field1=value1/,
             );
-        });
-
-        test('should ignore previously selected compression', async () => {
-            await renderDialog({
-                richFastaHeaderFields: ['field1', 'field2'],
-            });
-
-            await checkAgreement();
-            await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
-            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
-            await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
-
-            const [_, query] = getDownloadHref()?.split('?') ?? [];
-            expect(query).not.contains('compression');
         });
     });
 });

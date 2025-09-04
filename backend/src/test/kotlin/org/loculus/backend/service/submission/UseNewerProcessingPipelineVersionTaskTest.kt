@@ -2,6 +2,8 @@ package org.loculus.backend.service.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
@@ -123,4 +125,59 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(firstCall.keys, `is`(setOf(DEFAULT_ORGANISM)))
         assertThat(secondCall.isEmpty(), `is`(true))
     }
+
+    @Test
+    fun `GIVEN multiple pipeline versions exist WHEN the version is bumped THEN old data is deleted`() {
+        // ... but only for that organism!
+
+        // create data for OTHER_ORGANISM - so we can check later that it doesn't get deleted
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(
+            organism = OTHER_ORGANISM,
+        )
+
+        val processedData = convenienceClient.submitDefaultFiles().submissionIdMappings.map {
+            PreparedProcessedData.successfullyProcessed(it.accession, it.version)
+        }
+
+        convenienceClient.extractUnprocessedData(pipelineVersion = 1)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
+        useNewerProcessingPipelineVersionTask.task()
+
+        convenienceClient.extractUnprocessedData(pipelineVersion = 2)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
+        useNewerProcessingPipelineVersionTask.task()
+
+        transaction {
+            // check that nothing got deleted yet
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(1L, 2L)))
+            assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+        }
+
+        convenienceClient.extractUnprocessedData(pipelineVersion = 3)
+        convenienceClient.submitProcessedData(processedData, pipelineVersion = 3)
+        useNewerProcessingPipelineVersionTask.task()
+
+        assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
+
+        transaction {
+            // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
+            assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
+            assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+        }
+    }
+
+    /**
+     * Returns an ordered list of pipeline versions for which data exists in the
+     * SequenceEntriesPreprocessedDataTable table.
+     */
+    private fun getExistingPipelineVersions(organism: String) = SequenceEntriesPreprocessedDataTable
+        .join(SequenceEntriesTable, joinType = JoinType.INNER) {
+            (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
+                (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
+        }
+        .select(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .where { SequenceEntriesTable.organismColumn eq organism }
+        .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
+        .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
 }
