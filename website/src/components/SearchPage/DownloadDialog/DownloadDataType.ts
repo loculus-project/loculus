@@ -19,9 +19,11 @@ export const dataTypeForFilename = (dataType: DownloadDataType): string => {
             // segment is undefined in case of single segmented (not e.g. main)
             return dataType.segment !== undefined ? `nuc-${dataType.segment}` : 'nuc';
         case 'alignedNucleotideSequences':
-            return dataType.segment !== undefined ? `aligned-nuc-${dataType.segment}` : 'aligned-nuc';
+            return dataType.segment !== undefined
+                ? `reference-aligned-nuc-${dataType.segment}`
+                : 'reference-aligned-nuc';
         case 'alignedAminoAcidSequences':
-            return `aligned-aa-${dataType.gene}`;
+            return `reference-aligned-aa-${dataType.gene}`;
     }
 };
 
