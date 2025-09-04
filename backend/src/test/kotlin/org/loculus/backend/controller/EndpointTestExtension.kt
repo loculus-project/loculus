@@ -255,11 +255,11 @@ private fun clearDatabaseStatement(): String = """
             (1, now(), '$ORGANISM_WITHOUT_CONSENSUS_SEQUENCES');
     """
 
-private fun createBucket(endpoint: String, user: String, password: String, region: String, bucket: String) {
+private fun createBucket(endpoint: String, accessKey: String, secretKey: String, region: String, bucket: String) {
     val minioClient = MinioClient
         .builder()
         .endpoint(endpoint)
-        .credentials(user, password)
+        .credentials(accessKey, secretKey)
         .build()
     val exists = minioClient.bucketExists(
         BucketExistsArgs.builder()
