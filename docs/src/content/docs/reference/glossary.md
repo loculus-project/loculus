@@ -7,6 +7,10 @@ description: Glossary of terms used in Loculus
 
 An accession is the unique identifier of a [sequence entry](#sequence-entry). The `accession` itself does not contain the [version](#version) number. The field that concatenates the accession and the version (`<accession>.<version>`) is called `accessionVersion`.
 
+### Access key (S3)
+
+See [S3 credentials](#s3-credentials).
+
 ### Aligned sequence
 
 An aligned sequence is a sequence that has been aligned to a [reference sequence](#reference-sequences). I.e., it is a sequence that has the same length as the reference sequence. It is the task of the [preprocessing pipeline](#preprocessing-pipeline) to perform the alignment.
@@ -93,9 +97,17 @@ A revocation adds a new version that declares a [sequence entry](#sequence-entry
 
 S3 refers to a class of object storage services. It is hosted by several cloud provider (e.g., [AWS S3](https://aws.amazon.com/s3/), [Cloudflare R2](https://www.cloudflare.com/developer-platform/solutions/s3-compatible-object-storage/), [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage/)) and can be self-hosted (e.g., with [MinIO](https://github.com/minio/minio)). Loculus uses it for the [file sharing feature](#file-sharing-feature).
 
+### S3 credentials
+
+S3 credentials consist of an _Access Key ID_, also called _access key_ (public), and a _Secret Access Key_, also called _secret key_ (private). These work similar to a username and password, but in S3, many of these can be created and given different permissions. An access key might look like this: `AKIAIOSFODNN7EXAMPLE` and a secret key like this: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`.
+
 ### Schema
 
 A schema is a part of the configuration and describes the data structure of an instance. It includes the list of organisms and, for each [organism](#organism), the available [metadata](#metadata) fields and [segments](#segment).
+
+### Secret key (S3)
+
+See [S3 credentials](#s3-credentials).
 
 ### Segment
 
