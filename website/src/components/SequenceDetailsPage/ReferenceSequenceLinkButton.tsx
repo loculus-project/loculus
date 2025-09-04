@@ -8,7 +8,7 @@ import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 export const ReferenceLink = ({ accession }: { accession: string }) => {
     return (
         <a
-            href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession.toString())}
+            href={'https://www.ncbi.nlm.nih.gov/nuccore/__value__'.replace('__value__', accession)}
             target='_blank'
             className='underline text-primary-600 hover:text-primary-500'
         >

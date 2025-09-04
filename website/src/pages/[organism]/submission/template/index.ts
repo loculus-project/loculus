@@ -47,10 +47,10 @@ export const GET: APIRoute = ({ params, request }) => {
     });
 };
 
-function createTemplateFile(fileType: TemplateFileType, columnNames: string[]): Uint8Array {
+function createTemplateFile(fileType: TemplateFileType, columnNames: string[]): ArrayBuffer {
     if (fileType === 'tsv') {
         const content = columnNames.join('\t') + '\n';
-        return new TextEncoder().encode(content);
+        return new TextEncoder().encode(content).buffer;
     }
 
     const worksheetData = [columnNames]; // Add headers as the first row
@@ -59,5 +59,6 @@ function createTemplateFile(fileType: TemplateFileType, columnNames: string[]): 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
 
-    return XLSX.write(workbook, { type: 'buffer', bookType: fileType }) as Uint8Array;
+    const buffer = XLSX.write(workbook, { type: 'array', bookType: fileType });
+    return new Uint8Array(buffer as number[]).buffer;
 }

@@ -44,7 +44,7 @@ export const createModifiedFileContent = (accessions: Accession[]): FileContent 
 
     metadataRows[0].push(ACCESSION_FIELD);
     for (let i = 1; i < metadataRows.length && i - 1 < accessions.length; i++) {
-        metadataRows[i].push(accessions[i - 1].toString());
+        metadataRows[i].push(accessions[i - 1]);
     }
 
     const metadataContent = metadataRows

@@ -1,4 +1,5 @@
 import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import react from 'eslint-plugin-react';
 import parser from '@typescript-eslint/parser';
@@ -118,7 +119,7 @@ const disableFromReact = {
     'react/jsx-no-target-blank': 'off',
 };
 
-export default tseslint.config(
+export default defineConfig(
     {
         ignores: ['**/.astro/content.d.ts'],
         files: ['**/*.ts', '**/*.tsx'],
