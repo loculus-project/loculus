@@ -2,6 +2,12 @@
 import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
+import { DownloadUrlGenerator } from '../SearchPage/DownloadDialog/DownloadUrlGenerator.ts';
+import { SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters.tsx';
+import { getLapisUrl } from '../../config.ts';
+import { matchPlaceholders, processTemplate } from '../../utils/templateProcessor.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { LinkOut, Schema } from '../../types/config.ts';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
@@ -9,9 +15,52 @@ interface Props {
     sequenceEntryHistory?: SequenceEntryHistory;
     accessionVersion: string;
     showDownload: boolean;
+    // New optional props for Tools menu
+    organism?: string;
+    clientConfig?: ClientConfig;
+    schema?: Schema;
+    linkOuts?: LinkOut[];
 }
 
-const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
+const { sequenceEntryHistory, accessionVersion, showDownload, organism, clientConfig, schema, linkOuts } = Astro.props;
+
+function buildToolUrl(linkOut: LinkOut): string | null {
+    if (!organism || !clientConfig || !schema) return null;
+    const lapisUrl = getLapisUrl(clientConfig, organism);
+    const generator = new DownloadUrlGenerator(organism, lapisUrl, true, schema.richFastaHeaderFields);
+    const selection = new SequenceEntrySelection(new Set([accessionVersion]));
+
+    const placeholders = matchPlaceholders(linkOut.url);
+    const urlMap: Record<string, string> = {};
+    for (const match of placeholders) {
+        const { fullMatch, dataType, segment, richHeaders, dataFormat, columns } = match;
+        if (dataType === 'unalignedNucleotideSequences' || dataType === 'alignedNucleotideSequences' || dataType === 'metadata') {
+            const option: any = {
+                includeRestricted: true,
+                dataType: {
+                    type: dataType,
+                    segment,
+                    includeRichFastaHeaders: richHeaders ? true : undefined,
+                },
+                compression: undefined,
+                dataFormat,
+                fields: columns,
+            };
+            const { url } = generator.generateDownloadUrl(selection, option);
+            urlMap[fullMatch.slice(1, -1)] = url;
+        }
+    }
+    try {
+        const url = new URL(clientConfig.websiteUrl);
+        urlMap['server'] = url.hostname;
+    } catch (_) {
+        urlMap['server'] = '';
+    }
+    urlMap['accessionVersion'] = accessionVersion;
+    urlMap['accession'] = accessionVersion.split('.')[0] ?? accessionVersion;
+
+    return processTemplate(linkOut.url, urlMap);
+}
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -19,7 +68,7 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
         <h1 class='title'>{accessionVersion}</h1>
     </div>
 
-    <div class='pt-2'>
+    <div class='pt-2 flex gap-4 items-start'>
         {
             sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
                 <SequenceEntryHistoryMenu
@@ -58,6 +107,34 @@ const { sequenceEntryHistory, accessionVersion, showDownload } = Astro.props;
                                 Download metadata TSV
                             </a>
                         </li>
+                    </ul>
+                </div>
+            )
+        }
+
+        {
+            linkOuts !== undefined && linkOuts.length > 0 && organism && clientConfig && schema && (
+                <div class='inline-block dropdown dropdown-hover dropdown-end'>
+                    <label tabindex='0' class='hidden sm:block py-1 text-primary-700 cursor-pointer'>
+                        Tools
+                        <span class='text-primary'>
+                            {' '}
+                            <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4' />
+                        </span>
+                    </label>
+                    <ul class='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn top-full -left-44 sm:-left-24 w-64'>
+                        {
+                            linkOuts.map((lo) => {
+                                const href = buildToolUrl(lo);
+                                return (
+                                    <li>
+                                        <a href={href ?? '#'} class='block px-4 py-2 outlineButtonDropdownItem' target='_blank' rel='noreferrer noopener'>
+                                            {lo.name}
+                                        </a>
+                                    </li>
+                                );
+                            })
+                        }
                     </ul>
                 </div>
             )

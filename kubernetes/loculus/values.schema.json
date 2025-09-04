@@ -355,25 +355,50 @@
             "linkOuts": {
               "groups": ["schema"],
               "docsIncludePrefix": false,
-              "type": "array",
-              "description": "An array of external tools that can be linked to from the search page. Each linkOut has a name and URL. The URL can contain placeholders in the format [dataType] or [dataType:segment] or [dataType+rich] or [dataType:segment+rich|format] which will be replaced with the corresponding data URLs. `rich` means display name faster headers. You can use [metadata+col1,col2] to specify columns. Valid dataTypes are: unalignedNucleotideSequences, metadata, and alignedNucleotideSequences. You can also use {{this}} notation to URL-encode the contents of the double brackets, and you can {{nest {{these}} }}.",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Display name for the external tool link"
-                  },
-                  "url": {
-                    "type": "string",
-                    "description": "URL template with placeholders. Example: 'https://tool.example.com/?data={{[unalignedNucleotideSequences+rich|fasta]}}'"
-                  },
-                  "maxNumberOfRecommendedEntries": {
-                    "type": "integer",
-                    "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown.'"
+              "type": "object",
+              "description": "External tools that can be linked to. 'search' tools appear on the search page and accept placeholders for dataset URLs; 'singleSequence' tools appear on the sequence details page, accept the same placeholders, and also support [server], [accessionVersion], and [accession].",
+              "additionalProperties": false,
+              "properties": {
+                "search": {
+                  "type": "array",
+                  "description": "External tools for the search page.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Display name for the external tool link"
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "URL template with placeholders. Example: 'https://tool.example.com/?data={{[unalignedNucleotideSequences+rich|fasta]}}'"
+                      },
+                      "maxNumberOfRecommendedEntries": {
+                        "type": "integer",
+                        "description": "Optional maximum number of recommended entries for the tool beyond which a warning will be shown."
+                      }
+                    },
+                    "required": ["name", "url"]
                   }
                 },
-                "required": ["name", "url"]
+                "singleSequence": {
+                  "type": "array",
+                  "description": "External tools for the sequence details page.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Display name for the external tool link"
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "URL template with placeholders. Same as 'search', plus [server], [accessionVersion], [accession]."
+                      }
+                    },
+                    "required": ["name", "url"]
+                  }
+                }
               }
             },
             "earliestReleaseDate": {

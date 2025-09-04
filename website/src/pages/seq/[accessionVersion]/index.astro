@@ -67,6 +67,10 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                     : undefined
                             }
                             showDownload={showDownloadAndReport}
+                            organism={organism}
+                            clientConfig={clientConfig}
+                            schema={getSchema(organism)}
+                            linkOuts={getSchema(organism).linkOuts?.singleSequence}
                         />
                         {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
                             (result.isRevocation ? (

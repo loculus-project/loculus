@@ -368,6 +368,10 @@ export const InnerSearchFullUI = ({
                 setIsHalfScreen={setPreviewHalfScreen}
                 setPreviewedSeqId={(seqId: string | null) => setPreviewedSeqId(seqId)}
                 sequenceFlaggingConfig={sequenceFlaggingConfig}
+                organism={organism}
+                clientConfig={clientConfig}
+                schema={schema}
+                linkOuts={schema.linkOuts?.singleSequence}
             />
             <div className='md:w-[18rem]'>
                 <SearchForm

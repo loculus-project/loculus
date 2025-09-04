@@ -20,7 +20,8 @@ data:
             "backendUrl": "http://loculus-backend-service:8079",
             {{- end }}
             "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
-            "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://{{ $.Values.localHost }}:8083{{ end }}"
+            "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://{{ $.Values.localHost }}:8083{{ end }}",
+            "websiteUrl": "{{ include "loculus.websiteUrl" . }}"
             {{- end }}
         },
         "public": {

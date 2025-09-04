@@ -5,6 +5,7 @@ export const name = z.string().min(1);
 export const serviceUrls = z.object({
     backendUrl: z.string(),
     lapisUrls: z.record(z.string(), z.string()),
+    websiteUrl: z.string(),
 });
 export type ServiceUrls = z.infer<typeof serviceUrls>;
 

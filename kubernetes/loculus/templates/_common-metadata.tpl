@@ -201,11 +201,21 @@ organisms:
       organismName: {{ quote .organismName }}
       {{ if .linkOuts }}
       linkOuts:
-        {{- range $linkOut := .linkOuts }}
-        - name: {{ quote $linkOut.name }}
-          url: {{ quote $linkOut.url }}
-          {{- if $linkOut.maxNumberOfRecommendedEntries }}
-          maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+        {{- if .linkOuts.search }}
+        search:
+          {{- range $linkOut := .linkOuts.search }}
+          - name: {{ quote $linkOut.name }}
+            url: {{ quote $linkOut.url }}
+            {{- if $linkOut.maxNumberOfRecommendedEntries }}
+            maxNumberOfRecommendedEntries: {{ $linkOut.maxNumberOfRecommendedEntries }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if .linkOuts.singleSequence }}
+        singleSequence:
+          {{- range $linkOut := .linkOuts.singleSequence }}
+          - name: {{ quote $linkOut.name }}
+            url: {{ quote $linkOut.url }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -495,7 +505,8 @@ fields:
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}",
+            "websiteUrl": "{{ include "loculus.websiteUrl" . }}"
 {{- end }}
 
 
