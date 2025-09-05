@@ -14,15 +14,15 @@ test.describe('Search', () => {
         await searchPage.resetSearchForm();
         await searchPage.select('Collection country', 'France');
         await expect(page.getByText(/Collection country:\s*France/)).toBeVisible();
-        
+
         const filterChip = page.locator('text=/Collection country:\\s*France/').locator('..');
         await filterChip.getByRole('button').click();
-        
+
         await expect(page.getByText(/Collection country:\s*France/)).toBeHidden();
-        
+
         const countryCombo = page.getByRole('combobox', { name: 'Collection country' }).first();
         await expect(countryCombo).toHaveValue('');
-        
+
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 

@@ -12,7 +12,6 @@ test.describe('Search', () => {
     test('search form resets when the reset button is clicked', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-
         await searchPage.select('Collection country', 'France');
         await searchPage.enterMutation('A23T');
         await expect.soft(page.getByText('Collection country:France')).toBeVisible();

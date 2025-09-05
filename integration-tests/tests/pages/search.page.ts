@@ -22,17 +22,17 @@ export class SearchPage {
 
     async select(fieldLabel: string, option: string) {
         const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
-        
+
         await combo.click();
-        
+
         await combo.focus();
-        await combo.press('Control+a'); 
+        await combo.press('Control+a');
         await combo.pressSequentially(option);
-        
+
         await this.page.waitForTimeout(500);
-        
+
         await this.page.getByRole('option').first().click({ timeout: 3000 });
-        
+
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
     }
@@ -60,17 +60,17 @@ export class SearchPage {
         const combo = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await combo.click();
         await combo.fill(mutation);
-        
+
         // Wait for dropdown options to appear
         await this.page.waitForTimeout(300);
-        
+
         // Select matching mutation (with count suffix)
         const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
         const matchingOption = this.page.getByRole('option', { name: optionRegex }).first();
-        
+
         // Click the matching option
         await matchingOption.click({ timeout: 2000 });
-        
+
         // Press Escape to ensure dropdown is closed
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
