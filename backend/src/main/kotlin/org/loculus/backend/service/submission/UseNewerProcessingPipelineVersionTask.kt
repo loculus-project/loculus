@@ -15,7 +15,7 @@ class UseNewerProcessingPipelineVersionTask(
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     fun task() {
-        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val newVersions = submissionDatabaseService.runPipelineUpgradeIfPreproTableChanged()
 
         newVersions.forEach { (organism, latestVersion) ->
             if (latestVersion != null) {
