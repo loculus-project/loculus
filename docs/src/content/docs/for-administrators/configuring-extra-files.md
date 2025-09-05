@@ -20,8 +20,6 @@ When configuring this feature for an organism, you can configure file categories
 
 ## Loculus configuration
 
-Loculus needs to know where to find the bucket and how to access it, this is required.
-Then you can configure the submission of files also the displaying of files for a sample, you might only need one of those, depending on your use case.
 
 ### Configuring an S3 bucket to use
 
