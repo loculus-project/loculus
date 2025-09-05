@@ -22,10 +22,10 @@ export class SearchPage {
 
     async select(fieldLabel: string, option: string) {
         // Single, consistent approach: focus input -> open chevron -> type prefix -> pick option
-        const input = this.page.getByLabel(fieldLabel).first();
-        await input.click();
+        const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
+        await combo.click();
         // Open the dropdown and select the option directly (no typing to avoid focus issues)
-        const chevron = input.locator('xpath=following-sibling::button[1]');
+        const chevron = combo.locator('xpath=following-sibling::button[1]');
         await chevron.click();
         await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
         const optionRegex = new RegExp(`^${option}( \\([0-9,]+\\))?$`);
@@ -53,9 +53,14 @@ export class SearchPage {
     }
 
     async enterMutation(mutation: string) {
-        await this.page.getByPlaceholder('Mutations').click();
-        await this.page.getByLabel('Mutations').fill(mutation);
-        await this.page.getByRole('option', { name: mutation }).click();
+        const combo = this.page.getByRole('combobox', { name: 'Mutations' }).first();
+        await combo.click();
+        const chevron = combo.locator('xpath=following-sibling::button[1]');
+        await chevron.click();
+        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+        const optionRegex = new RegExp(`^${mutation}( \\([0-9,]+\\))?$`);
+        await this.page.getByRole('option', { name: optionRegex }).first().click();
+        await this.page.waitForTimeout(200);
     }
 
     async enterAccessions(accessions: string) {
