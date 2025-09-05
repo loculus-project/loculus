@@ -24,7 +24,7 @@ export class SearchPage {
         const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
         
         await combo.click();
-        =
+        
         await combo.focus();
         await combo.press('Control+a'); 
         await combo.pressSequentially(option);
