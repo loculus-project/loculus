@@ -20,7 +20,6 @@ When configuring this feature for an organism, you can configure file categories
 
 ## Loculus configuration
 
-
 ### Configuring an S3 bucket to use
 
 You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
@@ -64,6 +63,7 @@ secrets:
       accessKey: K93AK....
       secretKey: DK37sAKJ....
 ```
+
 :::
 
 ### Configuring file submission
@@ -105,7 +105,7 @@ The name (`rawReads` in the example above) must not be a name that is also used 
 
 ## S3 Configuration
 
-To ensure Loculus can access the bucket and allow reading files directly from S3, certain configuration settings are required. The default settings may depend on your S3 provider, meaning that  some steps may be unnecessary or different.
+To ensure Loculus can access the bucket and allow reading files directly from S3, certain configuration settings are required. The default settings may depend on your S3 provider, meaning that some steps may be unnecessary or different.
 
 [`s3cmd`](https://github.com/s3tools/s3cmd) is a good tool to configure S3.
 Once installed, you can configure it to access your bucket with `s3cmd --configure`.
