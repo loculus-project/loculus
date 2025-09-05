@@ -10,6 +10,7 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import datetime
+import unicodedata
 
 import dateutil.parser as dateutil
 import pytz
@@ -56,15 +57,26 @@ def invalid_value_annotation(
 
 
 def valid_name() -> str:
-    alpha = r"\s*[a-zA-Z]"
-    name_chars = r"[a-zA-Z\s\.\-\']*"
-    return alpha + name_chars + "," + name_chars
+    chars = (
+        r"\u0041-\u005A"  # A-Z
+        r"\u0061-\u007A"  # a-z
+        r"\u00C0-\u00D6"  # À-Ö
+        r"\u00D8-\u00F6"  # Ø-ö
+        r"\u00F8-\u00FF"  # ø-ÿ
+        r"\u0100-\u017F"  # Latin Extended-A
+        r"\u0180-\u024F"  # Latin Extended-B
+    )
+
+    alpha = rf"\s*[{chars}]"  # leading letter
+    name_chars = rf"[{chars}\s.\-']*"  # letters + space/.-'
+    return alpha + name_chars + r"," + name_chars
 
 
 def valid_authors(authors: str) -> bool:
     name = valid_name()
-    pattern = f"^{name}(;{name})*;?$"
-    return re.match(pattern, authors) is not None
+    pattern = rf"{name}(;{name})*;?"
+
+    return re.fullmatch(pattern, authors) is not None
 
 
 def get_invalid_author_names(authors: str) -> list[str]:
@@ -79,6 +91,38 @@ def get_invalid_author_names(authors: str) -> list[str]:
 def warn_potentially_invalid_authors(authors: str) -> bool:
     authors_split = re.split(r"[,\s]+", authors)
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
+
+
+def reformat_authors_from_latin_to_ascii(authors: str) -> str:
+    return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
+
+
+def check_latin_characters(
+    authors: str, input_fields: list[str], output_field: str
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    warnings: list[ProcessingAnnotation] = []
+    errors: list[ProcessingAnnotation] = []
+    # Check if all characters in the authors string are Latin letters or spaces (transformable to ASCII)
+    for char in authors:
+        # If character is already ASCII, skip
+        if ord(char) < 128:
+            continue
+        if char.isalpha() and not (0x0000 <= ord(char) <= 0x024F):
+            errors = [
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=(
+                        f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."
+                    ),
+                )
+            ]
+    return (errors, warnings)
 
 
 def format_authors(authors: str) -> str:
@@ -726,24 +770,14 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        try:
-            authors.encode("ascii")
-        except UnicodeEncodeError:
-            error_message = (
-                "The authors list contains non-ASCII characters. " + author_format_description
-            )
+        errors, warnings = check_latin_characters(authors, input_fields, output_field)
+        if errors or warnings:
             return ProcessingResult(
                 datum=None,
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=error_message,
-                    )
-                ],
                 warnings=warnings,
+                errors=errors,
             )
+
         if valid_authors(authors):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):

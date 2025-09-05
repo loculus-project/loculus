@@ -31,3 +31,4 @@ dependencies:
   - pydantic
   - python-dotenv
   - pytest
+  - unidecode

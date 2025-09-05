@@ -242,6 +242,11 @@ class AssemblyCreationTests(unittest.TestCase):
         desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J.;"
         self.assertEqual(result, desired_result)
 
+        extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
+        result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
+        desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L.;"
+        self.assertEqual(result_extended, desired_result_extended)
+
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
             self.unaligned_sequences_multi, self.seq_key, {"topology": "circular"}
