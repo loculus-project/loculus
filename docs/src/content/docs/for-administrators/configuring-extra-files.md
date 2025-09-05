@@ -53,7 +53,17 @@ secrets:
 ```
 
 :::note
-You can also use the `raw` secret type, but be aware that keeping credentials in plain text in your configuration file can be a security hazard.
+Alternatively, you can also use the `raw` secret type. If you do, ensure the configuration file is properly access-protected, since it will contain credentials in plain text.
+
+```
+secrets:
+  s3-bucket:
+    type: raw
+    clusterWide: 'true'
+    data:
+      accessKey: K93AK....
+      secretKey: DK37sAKJ....
+```
 :::
 
 ### Configuring file submission
