@@ -17,7 +17,7 @@ test.describe('Search', () => {
         await searchPage.select('Collection country', 'France');
         await searchPage.enterMutation('A23T');
         await expect.soft(page.getByText(/Collection country:\s*France/)).toBeVisible();
-        await expect.soft(page.getByText(/^(Mutations|mutation):\s*A23T$/)).toBeVisible();
+        await expect.soft(page.getByText(/^(|mutation):\s*A23T$/)).toBeVisible();
 
         await searchPage.resetSearchForm();
         expect(new URL(page.url()).searchParams.size).toBe(0);
