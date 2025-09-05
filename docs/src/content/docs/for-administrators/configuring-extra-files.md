@@ -162,4 +162,4 @@ For this to work, you need to configure a bucket policy like this:
 }
 ```
 
-You can do this with `s3cmd`. Save the policy above in a file, `policy.json` and then call `s3cmd setpolicy policy.json s3://<bucket-name>` (`replace <bucket-name> with your bucket name`). Also consult the documentation of your particular S3 provider on how to configure bucket policies.
+You can do this with `s3cmd`. Save the policy above in a file, `policy.json`, and then call `s3cmd setpolicy policy.json s3://<bucket-name>` (replace `<bucket-name>` with your bucket name).
