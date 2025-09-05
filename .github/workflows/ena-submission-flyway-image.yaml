@@ -1,5 +1,6 @@
 name: ena-submission-flyway-image
 on:
+  merge_group:
   pull_request:
   push:
     branches:

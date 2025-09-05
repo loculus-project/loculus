@@ -1,6 +1,7 @@
 name: Generate and Validate Flyway Schema
 
 on:
+  merge_group:
   pull_request:
     types: [opened, synchronize, labeled]
     paths:

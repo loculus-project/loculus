@@ -1,6 +1,7 @@
 name: Flyway Migration Check
 
 on:
+  merge_group:
   pull_request:
     branches: [ main ]
     paths:

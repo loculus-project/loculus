@@ -1,5 +1,6 @@
 name: E2E test (on kubernetes)
 on:
+  merge_group:
   workflow_dispatch:
     inputs:
       all_browsers:

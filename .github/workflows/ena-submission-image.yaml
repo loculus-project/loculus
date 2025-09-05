@@ -1,5 +1,6 @@
 name: ena-submission-image
 on:
+  merge_group:
   pull_request:
   push:
     branches:

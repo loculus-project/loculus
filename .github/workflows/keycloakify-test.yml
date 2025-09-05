@@ -1,6 +1,7 @@
 # Testing keycloakify local development builds, e.g. for approving dependabot upgrades
 name: keycloakify-test
 on:
+  merge_group:
   workflow_dispatch:
   pull_request:
     paths:

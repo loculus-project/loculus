@@ -1,5 +1,6 @@
 name: Docs Build Check
 on:
+  merge_group:
   pull_request:
     paths:
       - "docs/**"

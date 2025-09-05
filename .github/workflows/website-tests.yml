@@ -1,5 +1,6 @@
 name: website-tests
 on:
+  merge_group:
   # test
   pull_request:
     paths:
