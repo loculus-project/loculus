@@ -135,9 +135,10 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={lowerValue}
-                setSomeFieldValues={(args) => {
-                    const value = validateSingleValue(args[0][1], `${field.name}-from`);
-                    setLowerValue(value);
+                setSomeFieldValues={([_, value]) => {
+                    // DateField passes a single tuple [fieldName, value]
+                    const validatedValue = validateSingleValue(value, `${field.name}-from`);
+                    setLowerValue(validatedValue);
                 }}
             />
             <DateField
@@ -147,9 +148,10 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
                     type: 'date',
                 }}
                 fieldValue={upperValue}
-                setSomeFieldValues={(args) => {
-                    const value = validateSingleValue(args[0][1], `${field.name}-to`);
-                    setUpperValue(value);
+                setSomeFieldValues={([_, value]) => {
+                    // DateField passes a single tuple [fieldName, value]
+                    const validatedValue = validateSingleValue(value, `${field.name}-to`);
+                    setUpperValue(validatedValue);
                 }}
             />
         </div>
