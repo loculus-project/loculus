@@ -104,7 +104,7 @@ open class SubmissionController(
                 " It is the date when the sequence entries will become 'OPEN'." +
                 " Format: YYYY-MM-DD",
         ) @RequestParam restrictedUntil: String?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart fileMapping: String?,
+        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
         var innerDataUseTermsType = DataUseTermsType.OPEN
         if (backendConfig.dataUseTerms.enabled) {
