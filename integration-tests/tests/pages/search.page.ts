@@ -21,25 +21,23 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        // For multiselect2 branch: Type to search and select
+        // For multiselect2 branch: The combobox is an input element
+        // First click to open dropdown, then focus the input and type
         const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
+        
+        // Click to open dropdown
         await combo.click();
-        await combo.fill(option);
         
-        // Wait for dropdown with options to appear
-        await this.page.waitForTimeout(300);
+        // Now focus the input and type - the combo IS the input
+        await combo.focus();
+        await combo.press('Control+a'); // Select all existing text
+        await combo.pressSequentially(option);
         
-        // Select the matching option from dropdown (no space before parenthesis)
-        const optionRegex = new RegExp(`^${option}(\\([0-9,]+\\))?$`);
-        const optionElement = this.page.getByRole('option', { name: optionRegex }).first();
+        // Wait for dropdown to update with filtered results
+        await this.page.waitForTimeout(500);
         
-        // Try to find and click the option
-        try {
-            await optionElement.click({ timeout: 2000 });
-        } catch {
-            // If exact match fails, try clicking first visible option
-            await this.page.getByRole('option').first().click();
-        }
+        // Click first available option (should be filtered result)
+        await this.page.getByRole('option').first().click({ timeout: 3000 });
         
         // Press Escape to ensure dropdown is closed
         await this.page.keyboard.press('Escape');
@@ -70,20 +68,15 @@ export class SearchPage {
         await combo.click();
         await combo.fill(mutation);
         
-        // Wait for dropdown with options to appear
+        // Wait for dropdown options to appear
         await this.page.waitForTimeout(300);
         
-        // Select the matching mutation option (no space before parenthesis)
+        // Select matching mutation (with count suffix)
         const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
-        const optionElement = this.page.getByRole('option', { name: optionRegex }).first();
+        const matchingOption = this.page.getByRole('option', { name: optionRegex }).first();
         
-        // Try to find and click the option
-        try {
-            await optionElement.click({ timeout: 2000 });
-        } catch {
-            // If exact match fails, try clicking first visible option
-            await this.page.getByRole('option').first().click();
-        }
+        // Click the matching option
+        await matchingOption.click({ timeout: 2000 });
         
         // Press Escape to ensure dropdown is closed
         await this.page.keyboard.press('Escape');
