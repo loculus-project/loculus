@@ -15,6 +15,7 @@ jobs:
           - 11069   # Dengue type 3
           - 11070   # Dengue type 4
           - 11137   # Coronavirus 229E
+          - 11234   # Measles morbillivirus
           - 11250   # RSV
           - 11520   # Influenza B
           - 12059   # Enterovirus
@@ -36,12 +37,12 @@ jobs:
           - 208895  # RSV B
           - 277944  # Coronavirus NL63
           - 290028  # Coronavirus HKU1
+          - 1868215 # Orthopneumovirus
           - 3048448 # West nile virus
           - 3050294 # Chickenpox virus
           - 3052460 # Orthoebolavirus sudanense
           - 3052462 # Orthoebolavirus zairense
           - 3052518 # CCHFV
-          - 11234 # Measles morbillivirus
       fail-fast: false
     steps:
       - name: Checkout repository
