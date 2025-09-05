@@ -136,6 +136,20 @@ Using these functions in your `values.yaml` will look like:
             -...
 ```
 
+### Nextclade results
+
+Metadata fields that are created from the results of the nextclade analysis require the input field to be prefaced with `nextclade.` For example:
+
+```yaml
+- name: totalSnps
+  type: int
+  perSegment: true
+  displayName: Total SNPs
+  preprocessing:
+    inputs: {input: nextclade.totalSubstitutions}
+```
+Note that adding the `perSegment` field will mean that for a multi-segmented organism preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
+
 ## Deployment
 
 It is possible to run multiple preprocessing pipelines at once, ideally these will be labeled as different versions and point to different `dockerTags` (dockerTags can specify a commit).
