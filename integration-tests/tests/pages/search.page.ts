@@ -24,14 +24,12 @@ export class SearchPage {
         // Single, consistent approach: focus input -> open chevron -> type prefix -> pick option
         const input = this.page.getByLabel(fieldLabel).first();
         await input.click();
+        // Open the dropdown and select the option directly (no typing to avoid focus issues)
         const chevron = input.locator('xpath=following-sibling::button[1]');
         await chevron.click();
-        const prefix = option.slice(0, Math.min(6, option.length));
-        // Briefly wait for dropdown to render options after opening
-        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 750 }).catch(() => {});
-        await input.fill('');
-        await input.type(prefix);
-        await this.page.getByRole('option', { name: new RegExp(option) }).first().click();
+        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+        const optionRegex = new RegExp(`^${option}( \\([0-9,]+\\))?$`);
+        await this.page.getByRole('option', { name: optionRegex }).first().click();
         await this.page.waitForTimeout(200);
     }
 
@@ -40,7 +38,7 @@ export class SearchPage {
     }
 
     async enableSearchFields(...fieldLabels: string[]) {
-        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        await this.page.getByRole('button', { name: 'Add search fields' }).click();
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
@@ -71,7 +69,7 @@ export class SearchPage {
     }
 
     async resetSearchForm() {
-        await this.page.getByRole('button', { name: 'reset' }).click();
+        await this.page.getByRole('button', { name: 'Reset' }).click();
     }
 
     async waitForLoculusId(timeout = 60000): Promise<string | null> {
