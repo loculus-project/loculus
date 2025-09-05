@@ -162,7 +162,7 @@ class DeleteAllSequenceDataEndpointTest(
             .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
         submissionConvenienceClient.submitProcessedData(processedDataVersion2, pipelineVersion = 2)
 
-        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val newVersions = submissionDatabaseService.runPipelineUpgradeIfPreproTableChanged()
         assertThat("An update to v2 should be possible", newVersions["dummyOrganism"], `is`(2L))
     }
 
