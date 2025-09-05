@@ -21,25 +21,18 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        // For multiselect2 branch: The combobox is an input element
-        // First click to open dropdown, then focus the input and type
         const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
         
-        // Click to open dropdown
         await combo.click();
-        
-        // Now focus the input and type - the combo IS the input
+        =
         await combo.focus();
-        await combo.press('Control+a'); // Select all existing text
+        await combo.press('Control+a'); 
         await combo.pressSequentially(option);
         
-        // Wait for dropdown to update with filtered results
         await this.page.waitForTimeout(500);
         
-        // Click first available option (should be filtered result)
         await this.page.getByRole('option').first().click({ timeout: 3000 });
         
-        // Press Escape to ensure dropdown is closed
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
     }
