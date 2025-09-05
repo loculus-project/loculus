@@ -148,7 +148,7 @@ Metadata fields that are created from the results of the nextclade analysis requ
   preprocessing:
     inputs: {input: nextclade.totalSubstitutions}
 ```
-Note that adding the `perSegment` field will mean that for a multi-segmented organism preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
+Note that adding the `perSegment` field will mean that for a multi-segmented organism, preprocessing will create a `totalSnps_<segment>` field for each segment containing the nextclade results of that specific segment. In general, all nextclade metadata fields should be `perSegment`. 
 
 ## Deployment
 
