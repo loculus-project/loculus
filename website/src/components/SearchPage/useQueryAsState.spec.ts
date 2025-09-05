@@ -171,5 +171,23 @@ describe('useQueryAsState', () => {
                 'http://localhost:3000/test?',
             );
         });
+
+    test('re-enables URL storage when length drops below max', () => {
+        const longValue = 'a'.repeat(2000);
+        const { result } = renderHook(() => useQueryAsState({}));
+
+        act(() => {
+            result.current[1]({ longKey: longValue });
+        });
+
+        act(() => {
+            result.current[1]({ shortKey: 'b' });
+        });
+
+        expect(replaceStateMock).toHaveBeenLastCalledWith(
+            { path: 'http://localhost:3000/test?shortKey=b' },
+            '',
+            'http://localhost:3000/test?shortKey=b',
+        );
     });
 });

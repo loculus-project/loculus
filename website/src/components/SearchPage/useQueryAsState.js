@@ -33,8 +33,8 @@ export default function useQueryAsState(defaultDict) {
         }
        
         setValueDict( // only change if actually different
-        (prev) =>
-            JSON.stringify(prev) === JSON.stringify(newDict) ? prev : newDict
+            (prev) =>
+                JSON.stringify(prev) === JSON.stringify(newDict) ? prev : newDict
         );
     }, []);
 
@@ -55,17 +55,41 @@ export default function useQueryAsState(defaultDict) {
             }
             
             let newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
-
+            
             // Avoid '*' at the end because some systems do not recognize it as part of the link
-            if (newUrl.endsWith("*")) {
-                newUrl = newUrl.concat("&");
+            if (newUrl.endsWith('*')) {
+                newUrl = newUrl.concat('&');
             }
             
             if (newUrl.length > MAX_URL_LENGTH) {
                 setUseUrlStorage(false);
-                window.history.replaceState({ path: window.location.pathname }, '', window.location.pathname);
+                window.history.replaceState(
+                    { path: window.location.pathname },
+                    '',
+                    window.location.pathname,
+                );
             } else {
                 window.history.replaceState({ path: newUrl }, '', newUrl);
+            }
+        } else {
+            // Check if URL would be under the limit to re-enable URL storage
+            const urlParams = new URLSearchParams();
+            
+            for (const [key, value] of Object.entries(valueDict)) {
+                if (Array.isArray(value)) {
+                    value.forEach(val => {
+                        urlParams.append(key, val);
+                    });
+                } else {
+                    urlParams.set(key, value);
+                }
+            }
+            
+            let testUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + urlParams.toString();
+            
+            if (testUrl.length <= MAX_URL_LENGTH) {
+                setUseUrlStorage(true);
+                window.history.replaceState({ path: testUrl }, '', testUrl);
             }
         }
     }, [valueDict, useUrlStorage]);

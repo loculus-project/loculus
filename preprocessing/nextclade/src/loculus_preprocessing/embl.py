@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from unidecode import unidecode
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
@@ -91,13 +92,49 @@ def get_description(
 
 
 def reformat_authors_from_loculus_to_embl_style(authors: str) -> str:
+    """This function reformats the Loculus authors string to the ascii-format expected by ENA
+    Loculus format: `Doe, John A.; Roe, Jane Britt C.`
+    EMBL expected: `Doe J.A., Roe J.B.C.;`
+
+    See section "3.4.10.6: The RA Line" here: https://raw.githubusercontent.com/enasequence/read_docs/c4bd306c82710844128cdf43003a0167837dc442/submit/fileprep/flatfile_user_manual.txt
+    Note if the initials are not known the surname alone will be listed.
+
+    This function does not add a semicolon as the Bio package adds a semicolon when creating
+    a SeqRecord."""
     authors_list = [author for author in authors.split(";") if author]
     ena_authors = []
     for author in authors_list:
         last_names, first_names = author.split(",")[0].strip(), author.split(",")[1].strip()
         initials = "".join([name[0] + "." for name in first_names.split() if name])
         ena_authors.append(f"{last_names} {initials}".strip())
-    return ", ".join(ena_authors)
+    return authors_to_ascii(", ".join(ena_authors))
+
+
+def authors_to_ascii(authors: str) -> str:
+    """
+    Converts authors string to ASCII, handling diacritics and non-ASCII characters.
+    Raises ValueError if non-Latin characters are encountered.
+    """
+    authors_list = [author for author in authors.split(";") if author]
+    formatted_author_list = []
+    for author in authors_list:
+        result = []
+        for char in author:
+            # If character is already ASCII, skip
+            ascii_max_order = 128
+            if ord(char) < ascii_max_order:
+                result.append(char)
+            else:
+                latin_max_order = 591  # Latin Extended-A and Extended-B
+                if not ord(char) <= latin_max_order:
+                    error_msg = (
+                        f"Unsupported (non-Latin) character encountered: {char} (U+{ord(char):04X})"
+                    )
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
+                result.append(unidecode(char))
+        formatted_author_list.append("".join(result))
+    return "; ".join(formatted_author_list)
 
 
 def get_authors(authors: str) -> str:
