@@ -105,8 +105,7 @@ The name (`rawReads` in the example above) must not be a name that is also used 
 
 ## S3 Configuration
 
-To make sure that Loculus can access the given bucket, and to allow you to read files directly from S3, you need to ensure some configuration settings in your S3 bucket.
-The default of your particular S3 provider might mean that you do not have to do some of these steps or that something is configured in a different way.
+To ensure Loculus can access the bucket and allow reading files directly from S3, certain configuration settings are required. The default settings may depend on your S3 provider, meaning that  some steps may be unnecessary or different.
 
 [`s3cmd`](https://github.com/s3tools/s3cmd) is a good tool to configure S3.
 Once installed, you can configure it to access your bucket with `s3cmd --configure`.
