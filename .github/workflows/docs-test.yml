@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "docs/**"
-      - .github/workflows/docs-build-check.yml
+      - .github/workflows/docs-test.yml
   push:
     branches:
       - main
