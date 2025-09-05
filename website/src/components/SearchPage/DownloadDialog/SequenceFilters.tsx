@@ -26,13 +26,13 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to build a URL from.
      */
-    toUrlSearchParams(): [string, string][];
+    toUrlSearchParams(): [string, string | string[]][];
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
      * null values are maintained as null.
      */
-    toDisplayStrings(): Map<string, [string, string | null]>;
+    toDisplayStrings(): Map<string, [string, string | string[] | null]>;
 }
 
 /**
@@ -88,9 +88,17 @@ export class FieldFilterSet implements SequenceFilter {
 
     public toApiParams(): LapisSearchParameters {
         const sequenceFilters = Object.fromEntries(
-            Object.entries(this.fieldValues as Record<string, any>).filter(
-                ([, value]) => value !== undefined && value !== '',
-            ),
+            Object.entries(this.fieldValues as Record<string, any>)
+                .filter(([, value]) => value !== undefined && value !== '')
+                .map(([key, value]) => {
+                    // If it's an array, convert "_null_" strings back to null for the API
+                    if (Array.isArray(value)) {
+                        const converted = value.map((v) => (v === '_null_' ? null : v));
+                        return [key, converted];
+                    }
+                    return [key, value];
+                })
+                .filter(([, value]) => value !== undefined),
         );
         for (const filterName of Object.keys(sequenceFilters)) {
             if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
@@ -117,8 +125,8 @@ export class FieldFilterSet implements SequenceFilter {
         };
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
 
         // keys that need special handling
         const accessionKey = 'accession';
@@ -149,10 +157,18 @@ export class FieldFilterSet implements SequenceFilter {
             if (skipKeys.includes(key)) {
                 continue;
             }
-            const stringValue = String(value);
-            const trimmedValue = stringValue.trim();
-            if (trimmedValue.length > 0) {
-                result.push([key, trimmedValue]);
+
+            // Handle array values
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                    result.push([key, value]);
+                }
+            } else {
+                const stringValue = String(value);
+                const trimmedValue = stringValue.trim();
+                if (trimmedValue.length > 0) {
+                    result.push([key, trimmedValue]);
+                }
             }
         }
 
@@ -165,11 +181,11 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    public toDisplayStrings(): Map<string, [string, string | null]> {
+    public toDisplayStrings(): Map<string, [string, string | string[] | null]> {
         return new Map(
             Object.entries(this.fieldValues)
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
-                .map(([name, filterValue]): [string, [string, string | null]] => [
+                .map(([name, filterValue]): [string, [string, string | string[] | null]] => [
                     name,
                     [
                         this.filterSchema.getLabel(name),
@@ -179,7 +195,21 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    private filterValueDisplayString(fieldName: string, value: any): string {
+    private filterValueDisplayString(fieldName: string, value: any): string | string[] {
+        // For multi-select values, return the array to let ActiveFilters handle it
+        if (Array.isArray(value)) {
+            if (value.every((v) => typeof v === 'string')) {
+                return value;
+            }
+
+            // For other arrays, join with comma
+            let stringified = value.join(', ');
+            if (stringified.length > 40) {
+                stringified = `${stringified.substring(0, 37)}...`;
+            }
+            return stringified;
+        }
+
         let result = value;
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
@@ -235,8 +265,8 @@ export class SequenceEntrySelection implements SequenceFilter {
         return { accessionVersion: Array.from(this.selectedSequences).sort() };
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
         Array.from(this.selectedSequences)
             .sort()
             .forEach((sequence) => {
@@ -245,7 +275,7 @@ export class SequenceEntrySelection implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string | null]> {
+    public toDisplayStrings(): Map<string, [string, string | string[] | null]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
         const seqs = Array.from(this.selectedSequences).sort();

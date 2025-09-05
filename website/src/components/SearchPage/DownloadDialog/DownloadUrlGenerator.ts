@@ -81,7 +81,14 @@ export class DownloadUrlGenerator {
             .toUrlSearchParams()
             .filter(([name]) => !excludedParams.has(name))
             .forEach(([name, value]) => {
-                if (value.length > 0) {
+                if (Array.isArray(value)) {
+                    // If value is an array, add each item as a separate parameter
+                    value.forEach((val) => {
+                        if (val && val.length > 0) {
+                            params.append(name, val);
+                        }
+                    });
+                } else if (value && value.length > 0) {
                     params.append(name, value);
                 }
             });
