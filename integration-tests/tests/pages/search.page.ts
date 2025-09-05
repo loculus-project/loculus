@@ -27,6 +27,8 @@ export class SearchPage {
         const chevron = input.locator('xpath=following-sibling::button[1]');
         await chevron.click();
         const prefix = option.slice(0, Math.min(6, option.length));
+        // Briefly wait for dropdown to render options after opening
+        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 750 }).catch(() => {});
         await input.fill('');
         await input.type(prefix);
         await this.page.getByRole('option', { name: new RegExp(option) }).first().click();
