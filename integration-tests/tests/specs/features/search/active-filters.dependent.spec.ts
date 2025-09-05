@@ -15,13 +15,11 @@ test.describe('Search', () => {
         await searchPage.select('Collection country', 'France');
         await expect(page.getByText(/Collection country:\s*France/)).toBeVisible();
         
-        // Click the X button in the active filter chip
         const filterChip = page.locator('text=/Collection country:\\s*France/').locator('..');
         await filterChip.getByRole('button').click();
         
         await expect(page.getByText(/Collection country:\s*France/)).toBeHidden();
         
-        // Check that the combobox input is empty
         const countryCombo = page.getByRole('combobox', { name: 'Collection country' }).first();
         await expect(countryCombo).toHaveValue('');
         
@@ -39,7 +37,6 @@ test.describe('Search', () => {
 
     test('substring-search filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
-        await searchPage.resetSearchForm();
         await searchPage.enableSearchFields('Author affiliations');
         await searchPage.fill('Author affiliations', 'foo');
         await expect(page.getByText('Author affiliations:foo')).toBeVisible();

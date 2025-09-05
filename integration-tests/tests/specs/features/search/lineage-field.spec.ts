@@ -49,10 +49,6 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
 
     await search.select('Host', uuid);
     
-    // Click somewhere else to close the dropdown if it's still open
-    await page.locator('body').click({ position: { x: 10, y: 10 } });
-    await page.waitForTimeout(500);
-    
     await page.getByRole('checkbox', { name: 'include sublineages' }).check();
     await page.getByRole('textbox', { name: 'Lineage' }).click();
     // check diamond structure of A is correct
