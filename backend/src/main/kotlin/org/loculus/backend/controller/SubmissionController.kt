@@ -136,7 +136,7 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = REVISED_METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
-        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart fileMapping: String?,
+        @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
