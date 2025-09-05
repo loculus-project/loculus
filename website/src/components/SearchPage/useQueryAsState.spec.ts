@@ -171,6 +171,7 @@ describe('useQueryAsState', () => {
                 'http://localhost:3000/test?',
             );
         });
+    });
 
     test('re-enables URL storage when length drops below max', () => {
         const longValue = 'a'.repeat(2000);
