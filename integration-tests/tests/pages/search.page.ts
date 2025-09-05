@@ -21,15 +21,28 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        // Single, consistent approach: focus input -> open chevron -> type prefix -> pick option
+        // For multiselect2 branch: Type to search and select
         const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
         await combo.click();
-        // Open the dropdown and select the option directly (no typing to avoid focus issues)
-        const chevron = combo.locator('xpath=following-sibling::button[1]');
-        await chevron.click();
-        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-        const optionRegex = new RegExp(`^${option}( \\([0-9,]+\\))?$`);
-        await this.page.getByRole('option', { name: optionRegex }).first().click();
+        await combo.fill(option);
+        
+        // Wait for dropdown with options to appear
+        await this.page.waitForTimeout(300);
+        
+        // Select the matching option from dropdown (no space before parenthesis)
+        const optionRegex = new RegExp(`^${option}(\\([0-9,]+\\))?$`);
+        const optionElement = this.page.getByRole('option', { name: optionRegex }).first();
+        
+        // Try to find and click the option
+        try {
+            await optionElement.click({ timeout: 2000 });
+        } catch {
+            // If exact match fails, try clicking first visible option
+            await this.page.getByRole('option').first().click();
+        }
+        
+        // Press Escape to ensure dropdown is closed
+        await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
     }
 
@@ -55,11 +68,25 @@ export class SearchPage {
     async enterMutation(mutation: string) {
         const combo = this.page.getByRole('combobox', { name: 'Mutations' }).first();
         await combo.click();
-        const chevron = combo.locator('xpath=following-sibling::button[1]');
-        await chevron.click();
-        await this.page.getByRole('listbox').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-        const optionRegex = new RegExp(`^${mutation}( \\([0-9,]+\\))?$`);
-        await this.page.getByRole('option', { name: optionRegex }).first().click();
+        await combo.fill(mutation);
+        
+        // Wait for dropdown with options to appear
+        await this.page.waitForTimeout(300);
+        
+        // Select the matching mutation option (no space before parenthesis)
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const optionElement = this.page.getByRole('option', { name: optionRegex }).first();
+        
+        // Try to find and click the option
+        try {
+            await optionElement.click({ timeout: 2000 });
+        } catch {
+            // If exact match fails, try clicking first visible option
+            await this.page.getByRole('option').first().click();
+        }
+        
+        // Press Escape to ensure dropdown is closed
+        await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
     }
 

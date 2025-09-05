@@ -14,9 +14,17 @@ test.describe('Search', () => {
         await searchPage.resetSearchForm();
         await searchPage.select('Collection country', 'France');
         await expect(page.getByText(/Collection country:\s*France/)).toBeVisible();
-        await page.getByLabel('remove Collection country filter').click();
+        
+        // Click the X button in the active filter chip
+        const filterChip = page.locator('text=/Collection country:\\s*France/').locator('..');
+        await filterChip.getByRole('button').click();
+        
         await expect(page.getByText(/Collection country:\s*France/)).toBeHidden();
-        await expect(page.getByLabel('Collection country')).toBeEmpty();
+        
+        // Check that the combobox input is empty
+        const countryCombo = page.getByRole('combobox', { name: 'Collection country' }).first();
+        await expect(countryCombo).toHaveValue('');
+        
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 
@@ -47,12 +55,14 @@ test.describe('Search', () => {
         await page.getByPlaceholder('yyyy-mm-dd').first().click();
         await page.getByTestId('calendar').getByText('20', { exact: true }).click();
         await expect(page.getByText('Collection date - From:')).toBeVisible();
+        
+        // Wait for filter to be applied
+        await page.waitForTimeout(1000);
 
-        await page
-            .locator('div')
-            .filter({ hasText: /Collection date - From:/ })
-            .getByLabel('remove filter')
-            .click();
+        // Find and click the remove button for the date filter
+        const dateFilterChip = page.locator('text=/Collection date - From:/').locator('..');
+        await dateFilterChip.getByRole('button').click();
+        
         await expect(page.getByPlaceholder('yyyy-mm-dd').first()).toBeEmpty();
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
