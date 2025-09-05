@@ -1,5 +1,6 @@
 name: Integration tests
 on:
+  merge_group:
   workflow_dispatch:
   pull_request:
     paths:

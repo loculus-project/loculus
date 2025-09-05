@@ -1,5 +1,6 @@
 name: Dev server test
 on:
+  merge_group:
   pull_request:
     paths:
       - "website/**"

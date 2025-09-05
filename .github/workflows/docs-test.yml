@@ -1,9 +1,10 @@
 name: Docs Build Check
 on:
+  merge_group:
   pull_request:
     paths:
       - "docs/**"
-      - .github/workflows/docs-build-check.yml
+      - .github/workflows/docs-test.yml
   push:
     branches:
       - main
