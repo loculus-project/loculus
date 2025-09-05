@@ -59,16 +59,20 @@ export const AutoCompleteField = ({
         return allMatchedOptions.slice(0, maxDisplayedOptions);
     }, [options, query, maxDisplayedOptions]);
 
+    const comboboxValue = fieldValue === null ? NULL_QUERY_VALUE : fieldValue;
+
     return (
         <DisabledUntilHydrated>
             <Combobox
                 immediate
-                value={fieldValue}
-                onChange={(value) => setSomeFieldValues([field.name, value ?? NULL_QUERY_VALUE])}
+                value={comboboxValue}
+                onChange={(value) => setSomeFieldValues([field.name, value ?? ''])}
             >
                 <div className='relative'>
                     <ComboboxInput
-                        displayValue={(value: string | number | null) => (value === null ? '(blank)' : String(value))}
+                        displayValue={(value: string | number | null) =>
+                            value === NULL_QUERY_VALUE ? '(blank)' : value === null ? '' : String(value)
+                        }
                         onChange={(event) => setQuery(event.target.value)}
                         onFocus={load}
                         placeholder={field.displayName ?? field.name}
