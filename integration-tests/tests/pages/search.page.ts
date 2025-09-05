@@ -21,9 +21,16 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        await this.page.locator('label').filter({ hasText: fieldLabel }).click();
-        await this.page.getByRole('option', { name: new RegExp(option) }).click();
-        await this.page.waitForTimeout(500); // how can we better ensure that the filter is applied?
+        // Single, consistent approach: focus input -> open chevron -> type prefix -> pick option
+        const input = this.page.getByLabel(fieldLabel).first();
+        await input.click();
+        const chevron = input.locator('xpath=following-sibling::button[1]');
+        await chevron.click();
+        const prefix = option.slice(0, Math.min(6, option.length));
+        await input.fill('');
+        await input.type(prefix);
+        await this.page.getByRole('option', { name: new RegExp(option) }).first().click();
+        await this.page.waitForTimeout(200);
     }
 
     async clearSelect(fieldLabel: string) {
