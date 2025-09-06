@@ -308,7 +308,6 @@ export const InnerSearchFullUI = ({
                 type: orderDirection,
             },
         ];
-        // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
