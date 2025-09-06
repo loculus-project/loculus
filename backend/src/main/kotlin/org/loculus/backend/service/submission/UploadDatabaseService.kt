@@ -2,42 +2,38 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.VarCharColumnType
-import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.statements.StatementType
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.max
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.model.SegmentName
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.filesColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.organismColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.submissionIdColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.submitterColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
-import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.approverColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.organismColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.originalDataColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.releasedAtTimestampColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submissionIdColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submittedAtTimestampColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.submitterColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.SequenceEntriesTable.versionCommentColumn
+import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DatabaseConstants
-import org.loculus.backend.utils.FastaEntry
+import org.loculus.backend.utils.DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT
+import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.MetadataEntry
 import org.loculus.backend.utils.ParseFastaHeader
-import org.loculus.backend.utils.RevisionEntry
+import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.chunkedForDatabase
 import org.loculus.backend.utils.getNextSequenceNumbers
 import org.loculus.backend.utils.processInDatabaseSafeChunks
@@ -48,8 +44,11 @@ private val log = KotlinLogging.logger { }
 
 private const val SEQUENCE_INSERT_COLUMNS = 4
 private const val METADATA_INSERT_COLUMNS = 8
+private const val SEQUENCE_ENTRIES_INSERT_COLUMNS = 10
 private const val SEQUENCE_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT / SEQUENCE_INSERT_COLUMNS
 private const val METADATA_BATCH_SIZE = DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT / METADATA_INSERT_COLUMNS
+private const val SEQUENCE_ENTRIES_BATCH_SIZE =
+    DatabaseConstants.POSTGRESQL_PARAMETER_LIMIT / SEQUENCE_ENTRIES_INSERT_COLUMNS
 
 @Service
 @Transactional
@@ -60,241 +59,164 @@ class UploadDatabaseService(
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
     private val auditLogger: AuditLogger,
+    private val dateProvider: DateProvider,
 ) {
+    data class SequenceEntry(
+        val accession: Accession,
+        val version: Long,
+        val versionComment: String?,
+        val organism: Organism,
+        val submissionId: SubmissionId,
+        val submitter: String,
+        val approver: String?,
+        val groupId: Int,
+        val submittedAtTimestamp: LocalDateTime,
+        val releasedAtTimestamp: LocalDateTime?,
+        val originalData: OriginalData<CompressedSequence>,
+    )
 
-    fun batchInsertMetadataInAuxTable(
-        uploadId: String,
-        authenticatedUser: AuthenticatedUser,
-        groupId: Int,
-        submittedOrganism: Organism,
-        uploadedMetadataBatch: List<MetadataEntry>,
-        uploadedAt: LocalDateTime,
+    data class SequenceInfo(val latestVersion: Version, val groupId: Int)
+
+    fun createNewSequenceEntries(
+        metadata: Map<String, MetadataEntry>,
+        sequences: Map<String, Map<SegmentName, String>>,
         files: SubmissionIdFilesMap?,
-    ) {
-        uploadedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch) {
-                this[submitterColumn] = authenticatedUser.username
-                this[groupIdColumn] = groupId
-                this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
-                this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
-                this[organismColumn] = submittedOrganism.name
-                this[uploadIdColumn] = uploadId
-            }
-        }
-    }
+        submissionParams: SubmissionParams.OriginalSubmissionParams,
+    ): List<SubmissionIdMapping> {
+        log.debug { "Creating new sequence entries" }
 
-    fun batchInsertRevisedMetadataInAuxTable(
-        uploadId: String,
-        authenticatedUser: AuthenticatedUser,
-        submittedOrganism: Organism,
-        uploadedRevisedMetadataBatch: List<RevisionEntry>,
-        uploadedAt: LocalDateTime,
-        files: SubmissionIdFilesMap?,
-    ) {
-        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch) {
-                this[accessionColumn] = it.accession
-                this[submitterColumn] = authenticatedUser.username
-                this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
-                this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
-                this[organismColumn] = submittedOrganism.name
-                this[uploadIdColumn] = uploadId
-            }
-        }
-    }
+        val now = dateProvider.getCurrentDateTime()
 
-    fun batchInsertSequencesInAuxTable(
-        uploadId: String,
-        submittedOrganism: Organism,
-        uploadedSequencesBatch: List<FastaEntry>,
-    ) {
-        uploadedSequencesBatch.chunkedForDatabase({ batch ->
-            SequenceUploadAuxTable.batchInsert(batch) {
-                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-                this[sequenceSubmissionIdColumn] = submissionId
-                this[segmentNameColumn] = segmentName
-                this[sequenceUploadIdColumn] = uploadId
-                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                    it.sequence,
-                    segmentName,
-                    submittedOrganism,
-                )
-            }
-            emptyList<Unit>()
-        }, SEQUENCE_INSERT_COLUMNS)
-    }
+        val newAccessions = generateNewAccessions(metadata.keys)
 
-    fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
-        .select(
-            uploadIdColumn,
-            submissionIdColumn,
-        )
-        .where { uploadIdColumn eq uploadId }
-        .map { it[submissionIdColumn] }
-
-    fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
-        .select(
-            sequenceUploadIdColumn,
-            sequenceSubmissionIdColumn,
-        )
-        .where { sequenceUploadIdColumn eq uploadId }
-        .map {
-            it[sequenceSubmissionIdColumn]
-        }
-
-    fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
-        log.debug {
-            "mapping and copying sequences with UploadId $uploadId and uploadType: $submissionParams.uploadType"
-        }
-
-        val mapAndCopySql = """
-            INSERT INTO sequence_entries (
-                accession,
-                version,
-                organism,
-                submission_id,
-                submitter,
-                group_id,
-                submitted_at,
-                original_data
-            )
-            SELECT
-                metadata_upload_aux_table.accession,
-                metadata_upload_aux_table.version,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at,
-                jsonb_build_object(
-                    'metadata', metadata_upload_aux_table.metadata,
-                    'files', metadata_upload_aux_table.files,
-                    'unalignedNucleotideSequences', 
-                    COALESCE(
-                        jsonb_object_agg(
-                            sequence_upload_aux_table.segment_name,
-                            sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
-                        '{}'::jsonb
-                    )
-                )
-            FROM
-                metadata_upload_aux_table
-            LEFT JOIN
-                sequence_upload_aux_table
-                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
-            WHERE metadata_upload_aux_table.upload_id = ?
-            GROUP BY
-                metadata_upload_aux_table.upload_id,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at
-            RETURNING accession, version, submission_id;
-        """.trimIndent()
-        val insertionResult = exec(
-            mapAndCopySql,
-            listOf(
-                Pair(VarCharColumnType(), uploadId),
-            ),
-            explicitStatementType = StatementType.SELECT,
-        ) { rs ->
-            val result = mutableListOf<SubmissionIdMapping>()
-            while (rs.next()) {
-                result += SubmissionIdMapping(
-                    rs.getString("accession"),
-                    rs.getLong("version"),
-                    rs.getString("submission_id"),
-                )
-            }
-            result.toList()
-        } ?: emptyList()
-
-        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
-            val accessions = insertionResult.map { it.accession }
-            dataUseTermsDatabaseService.setNewDataUseTerms(
-                submissionParams.authenticatedUser,
-                accessions,
-                submissionParams.dataUseTerms,
-            )
-        }
-
-        auditLogger.log(
-            username = submissionParams.authenticatedUser.username,
-            description = "Submitted or revised ${insertionResult.size} sequences: " +
-                insertionResult.joinToString { it.displayAccessionVersion() },
-        )
-
-        return@transaction insertionResult
-    }
-
-    fun deleteUploadData(uploadId: String) {
-        log.debug { "deleting upload data with UploadId $uploadId" }
-
-        MetadataUploadAuxTable.deleteWhere { uploadIdColumn eq uploadId }
-        SequenceUploadAuxTable.deleteWhere { sequenceUploadIdColumn eq uploadId }
-    }
-
-    fun associateRevisedDataWithExistingSequenceEntries(
-        uploadId: String,
-        organism: Organism,
-        authenticatedUser: AuthenticatedUser,
-    ) {
-        val accessions =
-            MetadataUploadAuxTable
-                .select(accessionColumn)
-                .where { uploadIdColumn eq uploadId }
-                .map { it[accessionColumn]!! }
-
-        accessions.processInDatabaseSafeChunks { chunk ->
-            accessionPreconditionValidator.validate {
-                thatAccessionsExist(chunk)
-                    .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
-                    .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
-                    .andThatOrganismIs(organism)
-            }
-        }
-
-        val updateSql = """
-            UPDATE metadata_upload_aux_table m
-            SET
-                version = sequence_entries.version + 1,
-                group_id = sequence_entries.group_id
-            FROM sequence_entries
-            WHERE
-                m.upload_id = ?
-                AND m.accession = sequence_entries.accession
-                AND ${SequenceEntriesTable.isMaxVersion}
-        """.trimIndent()
-        transaction {
-            exec(
-                updateSql,
-                listOf(
-                    Pair(VarCharColumnType(), uploadId),
+        val newEntries = newAccessions.map { (submissionId, accession) ->
+            SequenceEntry(
+                accession = accession,
+                version = 1,
+                versionComment = null,
+                organism = submissionParams.organism,
+                submissionId = submissionId,
+                submitter = submissionParams.authenticatedUser.username,
+                approver = null,
+                groupId = submissionParams.groupId,
+                submittedAtTimestamp = now,
+                releasedAtTimestamp = null,
+                originalData = OriginalData(
+                    metadata = metadata[submissionId]?.metadata ?: emptyMap(),
+                    files = files?.get(submissionId),
+                    unalignedNucleotideSequences = sequences[submissionId]?.mapValues { (segmentName, sequence) ->
+                        compressor.compressNucleotideSequence(
+                            sequence,
+                            segmentName,
+                            submissionParams.organism,
+                        )
+                    } ?: emptyMap(),
                 ),
             )
         }
+
+        val submissionIdMapping = insertEntries(newEntries)
+
+        dataUseTermsDatabaseService.setNewDataUseTerms(
+            submissionParams.authenticatedUser,
+            newAccessions.map { it.second },
+            submissionParams.dataUseTerms,
+        )
+
+        return submissionIdMapping
     }
 
-    fun getSubmissionIdToGroupMapping(uploadId: String): Map<String, Int> = MetadataUploadAuxTable
-        .select(submissionIdColumn, groupIdColumn)
-        .where { uploadIdColumn eq uploadId }
-        .associate { Pair(it[submissionIdColumn], it[groupIdColumn]!!) }
+    fun createRevisionEntries(
+        metadata: Map<String, MetadataEntry>,
+        sequences: Map<String, Map<SegmentName, String>>,
+        files: SubmissionIdFilesMap?,
+        submissionParams: SubmissionParams.RevisionSubmissionParams,
+    ): List<SubmissionIdMapping> {
+        log.debug { "Creating revision entries" }
 
-    fun generateNewAccessionsForOriginalUpload(uploadId: String) {
-        val submissionIds =
-            MetadataUploadAuxTable
-                .select(submissionIdColumn)
-                .where { uploadIdColumn eq uploadId }
-                .map { it[submissionIdColumn] }
+        val submissionIdToAccession = submissionIdToAccession(metadata)
 
+        submissionIdToAccession.values.processInDatabaseSafeChunks { chunk ->
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(chunk)
+                    .andThatUserIsAllowedToEditSequenceEntries(submissionParams.authenticatedUser)
+                    .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                    .andThatOrganismIs(submissionParams.organism)
+            }
+        }
+
+        val sequenceInfo = accessionToSequenceInfo(submissionIdToAccession.values)
+
+        val now = dateProvider.getCurrentDateTime()
+
+        val newEntries = metadata.values.map { entry ->
+            val accession = submissionIdToAccession[entry.submissionId] ?: throw IllegalStateException(
+                "Metadata for submissionId ${entry.submissionId} does not contain an accession",
+            )
+            val info = sequenceInfo[accession]
+                ?: throw IllegalStateException("Could not find latest version for accession $accession")
+            val newVersion = info.latestVersion + 1
+            SequenceEntry(
+                accession = accession,
+                version = newVersion,
+                versionComment = entry.metadata["versionComment"],
+                organism = submissionParams.organism,
+                submissionId = entry.submissionId,
+                submitter = submissionParams.authenticatedUser.username,
+                approver = null,
+                groupId = info.groupId,
+                submittedAtTimestamp = now,
+                releasedAtTimestamp = null,
+                originalData = OriginalData(
+                    metadata = entry.metadata,
+                    files = files?.get(entry.submissionId),
+                    unalignedNucleotideSequences = sequences[entry.submissionId]?.mapValues { (segmentName, sequence) ->
+                        compressor.compressNucleotideSequence(
+                            sequence,
+                            segmentName,
+                            submissionParams.organism,
+                        )
+                    } ?: emptyMap(),
+                ),
+            )
+        }
+
+        return insertEntries(newEntries)
+    }
+
+    private fun insertEntries(newEntries: List<SequenceEntry>): List<SubmissionIdMapping> {
+        newEntries.chunkedForDatabase(
+            { batch ->
+                SequenceEntriesTable.batchInsert(batch) {
+                    this[accessionColumn] = it.accession
+                    this[versionColumn] = it.version
+                    this[versionCommentColumn] = it.versionComment
+                    this[organismColumn] = it.organism.name
+                    this[submissionIdColumn] = it.submissionId
+                    this[submitterColumn] = it.submitter
+                    this[approverColumn] = it.approver
+                    this[groupIdColumn] = it.groupId
+                    this[submittedAtTimestampColumn] = it.submittedAtTimestamp
+                    this[releasedAtTimestampColumn] = it.releasedAtTimestamp
+                    this[originalDataColumn] = it.originalData
+                }
+                emptyList<Unit>()
+            },
+            SEQUENCE_ENTRIES_INSERT_COLUMNS,
+        )
+
+        return newEntries.map { entry ->
+            SubmissionIdMapping(
+                accession = entry.accession,
+                version = entry.version,
+                submissionId = entry.submissionId,
+            )
+        }
+    }
+
+    // Returns a list of pairs (submissionId, accession)
+    fun generateNewAccessions(submissionIds: Collection<String>): List<Pair<String, Accession>> {
+        log.info { "Generating ${submissionIds.size} new accessions" }
         val nextAccessions = getNextSequenceNumbers("accession_sequence", submissionIds.size).map {
             generateAccessionFromNumberService.generateCustomId(it)
         }
@@ -305,21 +227,80 @@ class UploadDatabaseService(
             )
         }
 
-        val submissionIdToAccessionMap = submissionIds.zip(nextAccessions)
+        log.info { "Generated ${submissionIds.size} new accessions" }
+        return submissionIds.zip(nextAccessions)
+    }
 
-        log.info {
-            "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId $uploadId:"
+    fun accessionToSequenceInfo(accessions: Collection<Accession>): Map<Accession, SequenceInfo> =
+        accessions.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
+            val maxVersion = versionColumn.max()
+            val maxGroupId = groupIdColumn.max() // All group IDs should be same, so max works
+
+            SequenceEntriesTable.select(
+                accessionColumn,
+                maxVersion,
+                maxGroupId,
+            )
+                .where { accessionColumn inList chunk }
+                .groupBy(accessionColumn)
+                .associate {
+                    it[accessionColumn] to
+                        SequenceInfo(
+                            latestVersion = it[maxVersion]!!,
+                            groupId = it[maxGroupId]!!,
+                        )
+                }
+        }.flatMap(Map<Accession, SequenceInfo>::toList).toMap()
+
+    private fun submissionIdToAccession(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Accession> {
+        if (metadata.values.any { !it.metadata.containsKey("accession") }) {
+            throw UnprocessableEntityException("Metadata file is missing required column 'accession'")
         }
 
-        submissionIdToAccessionMap.forEach { (submissionId, accession) ->
-            MetadataUploadAuxTable.update(
-                where = {
-                    (submissionIdColumn eq submissionId) and (uploadIdColumn eq uploadId)
-                },
-            ) {
-                it[accessionColumn] = accession
-                it[versionColumn] = 1
-            }
+        val submissionIdToAccession = metadata.map { (submissionId, entry) ->
+            (submissionId to entry.metadata["accession"]!!)
+        }
+
+        val submissionIdsWithoutAccessions = submissionIdToAccession.filter { it.second.isBlank() }
+        if (submissionIdsWithoutAccessions.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The rows with the following submissionIds are missing accessions in metadata file: " +
+                    formatListWithBackticks(submissionIdsWithoutAccessions.map { it.first }),
+            )
+        }
+
+        val duplicateAccessions = submissionIdToAccession.groupBy { it.second }
+            .filter { it.value.size > 1 }
+        if (duplicateAccessions.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "Some accessions appear multiple times in metadata file: " +
+                    formatListWithBackticks(duplicateAccessions.keys),
+            )
+        }
+
+        return submissionIdToAccession.toMap()
+    }
+
+    private fun formatListWithBackticks(list: Collection<String>): String = list.joinToString(", ") { "`$it`" }
+
+    fun submissionIdToGroup(metadata: Map<SubmissionId, MetadataEntry>): Map<SubmissionId, Int> {
+        val submissionIdToAccession = submissionIdToAccession(metadata).toList()
+        val accessionToGroup = submissionIdToAccession.chunked(POSTGRESQL_PARAMETER_LIMIT / 2) { chunk ->
+            SequenceEntriesTable.select(
+                accessionColumn,
+                groupIdColumn,
+            )
+                .where { accessionColumn inList chunk.map { it.second } }
+                .associate {
+                    it[accessionColumn] to it[groupIdColumn]
+                }
+        }.flatMap(Map<Accession, Int>::toList).toMap()
+
+        return submissionIdToAccession.associate { (submissionId, accession) ->
+            submissionId to (
+                accessionToGroup[accession]
+                    ?: throw IllegalStateException("Could not find groupId for accession $accession")
+                )
         }
     }
 }
