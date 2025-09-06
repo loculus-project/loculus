@@ -27,9 +27,6 @@ cliTest.describe('CLI Authentication', () => {
         expect(invalidLoginResult.exitCode).not.toBe(0);
         expect(invalidLoginResult.stderr).toContain('Invalid username or password');
 
-        // Log the failed login attempt for debugging
-        cliPage.logCliResult('Failed login attempt (expected)', invalidLoginResult);
-
         // Step 4: Login with valid credentials
         const validLoginResult = await cliPage.login('testuser', 'testuser');
         cliPage.assertSuccess(validLoginResult, 'Valid login');
