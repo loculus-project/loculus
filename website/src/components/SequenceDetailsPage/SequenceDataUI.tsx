@@ -64,12 +64,8 @@ export const SequenceDataUI: FC<Props> = ({
     return (
         <>
             {isRestricted && (
-                <ErrorBox title='Restricted sequence' level='warning'>
-                    This sequence is only available under the Restricted Use Terms. If you make use of this data, you
-                    must follow the{' '}
-                    <a href={routes.datauseTermsPage()} className='underline'>
-                        terms of use.
-                    </a>
+                <ErrorBox title='Restricted-Use sequence' level='warning'>
+                    This sequence is only available under the <a href='https://pathoplexus.org/about/terms-of-use/restricted-data' className='underline'>Restricted Use Terms</a>. This prohibits publications that use this sequence as focal data during the restricted-use period, except with the consent of the sequence submitters.
                 </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
