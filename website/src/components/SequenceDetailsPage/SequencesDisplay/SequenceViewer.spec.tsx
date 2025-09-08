@@ -3,9 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
+import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
+import { type ClientConfig } from '../../../types/runtimeConfig.ts';
+import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),

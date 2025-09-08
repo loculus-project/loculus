@@ -1,28 +1,21 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
-import { SequencesViewer } from './SequenceViewer';
-import {
-    type ReferenceGenomesSequenceNames,
-    SINGLE_REFERENCE,
-    type Suborganism,
-} from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig';
+import { SequencesViewer } from './SequenceViewer.tsx';
+import { getSequenceNames, isMultiSegmented } from './getSequenceNames.tsx';
+import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../../types/referencesGenomes.ts';
+import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
     isUnalignedSequence,
+    type SequenceName,
     type SequenceType,
     unalignedSequenceSegment,
-} from '../../utils/sequenceTypeHelpers';
-import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
-
-type SequenceName = {
-    lapisName: string;
-    label: string;
-};
+} from '../../../utils/sequenceTypeHelpers.ts';
+import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
+import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
@@ -77,42 +70,6 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 };
 
 export const SequencesContainer = withQueryProvider(InnerSequencesContainer);
-
-function getSequenceNames(
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
-    suborganism: string,
-): {
-    nucleotideSegmentNames: SequenceName[];
-    genes: SequenceName[];
-    isMultiSegmented: boolean;
-} {
-    const { nucleotideSequences, genes } = referenceGenomeSequenceNames[suborganism];
-
-    if (suborganism === SINGLE_REFERENCE) {
-        return {
-            nucleotideSegmentNames: nucleotideSequences.map((name) => ({ lapisName: name, label: name })),
-            genes: genes.map((name) => ({ lapisName: name, label: name })),
-            isMultiSegmented: isMultiSegmented(nucleotideSequences),
-        };
-    }
-
-    const nucleotideSegmentNames =
-        nucleotideSequences.length === 1
-            ? [{ lapisName: suborganism, label: 'main' }]
-            : nucleotideSequences.map((name) => ({
-                  lapisName: `${suborganism}-${name}`,
-                  label: name,
-              }));
-
-    return {
-        nucleotideSegmentNames,
-        genes: genes.map((name) => ({
-            lapisName: `${suborganism}-${name}`,
-            label: name,
-        })),
-        isMultiSegmented: true,
-    };
-}
 
 type SequenceTabsProps = {
     organism: string;
@@ -308,7 +265,3 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
         </div>
     );
 };
-
-function isMultiSegmented(nucleotideSegmentNames: unknown[]) {
-    return nucleotideSegmentNames.length > 1;
-}
