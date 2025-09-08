@@ -31,7 +31,8 @@ export const SequencesViewer: FC<Props> = ({
     if (error !== null) {
         return (
             <div className='text-error'>
-                Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}: {JSON.stringify(error)}
+                Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}:{' '}
+                {JSON.stringify(error)}
             </div>
         );
     }
