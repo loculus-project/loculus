@@ -18,6 +18,7 @@ jobs:
           - 11234   # Measles morbillivirus
           - 11250   # RSV
           - 11520   # Influenza B
+          - 11676   # HIV1
           - 12059   # Enterovirus
           - 12637   # Dengue (all)
           - 31631   # Coronavirus OC43
