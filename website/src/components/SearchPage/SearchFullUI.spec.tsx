@@ -7,9 +7,9 @@ import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
-import type {
-    ReferenceAccession,
-    ReferenceGenomesSequenceNames,
+import {
+    type ReferenceAccession,
+    type ReferenceGenomesSequenceNames,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
