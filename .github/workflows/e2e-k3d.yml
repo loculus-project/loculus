@@ -68,7 +68,7 @@ jobs:
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm
