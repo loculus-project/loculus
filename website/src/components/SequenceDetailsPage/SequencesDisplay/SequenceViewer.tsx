@@ -1,11 +1,11 @@
 import { noCase } from 'change-case';
 import { type FC } from 'react';
 
-import { getLapisUrl } from '../../config.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
-import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
+import { getLapisUrl } from '../../../config.ts';
+import { lapisClientHooks } from '../../../services/serviceHooks.ts';
+import type { ClientConfig } from '../../../types/runtimeConfig.ts';
+import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
+import { FixedLengthTextViewer } from '../../common/FixedLengthTextViewer.tsx';
 
 const LINE_LENGTH = 100;
 

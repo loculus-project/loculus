@@ -4,8 +4,8 @@ import { act } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
-import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { type NucleotideSegmentNames, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
+import { type NucleotideSegmentNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
