@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
-import { SequencesContainer } from './SequencesContainer';
+import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
