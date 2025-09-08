@@ -35,6 +35,7 @@ function renderSequenceViewer({
                     },
                 }}
                 loadSequencesAutomatically={false}
+                suborganism={SINGLE_REFERENCE}
             />
         </QueryClientProvider>,
     );
