@@ -72,6 +72,7 @@ export const SequenceDataUI: FC<Props> = ({
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
+                        suborganism={suborganism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}

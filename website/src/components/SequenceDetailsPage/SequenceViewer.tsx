@@ -31,7 +31,7 @@ export const SequencesViewer: FC<Props> = ({
     if (error !== null) {
         return (
             <div className='text-error'>
-                Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name}: {JSON.stringify(error)}
+                Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}: {JSON.stringify(error)}
             </div>
         );
     }
@@ -44,7 +44,7 @@ export const SequencesViewer: FC<Props> = ({
         return <span className='text-gray-600 italic'>None</span>;
     }
 
-    const header = '>' + data.name + (sequenceType.name === 'main' ? '' : `_${sequenceType.name}`);
+    const header = '>' + data.name + (sequenceType.name.label === 'main' ? '' : `_${sequenceType.name.label}`);
 
     return (
         <div className='h-80 overflow-auto'>
