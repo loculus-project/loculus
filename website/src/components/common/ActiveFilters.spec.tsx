@@ -45,7 +45,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,
