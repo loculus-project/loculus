@@ -1367,6 +1367,21 @@
       },
       "additionalProperties": false
     },
+    "silo": {
+      "groups": ["silo"],
+      "type": "object", 
+      "description": "Configuration for the SILO component",
+      "properties": {
+        "apiThreadsForHttpConnections": {
+          "groups": ["silo"],
+          "type": "integer",
+          "description": "Number of threads for HTTP connections in SILO API",
+          "default": 16,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "registrationTermsMessage": {
       "type": "string",
       "description": "TODO",

@@ -38,7 +38,7 @@ spec:
           args:
             - "api"
             - "--api-threads-for-http-connections"
-            - "16"
+            - {{ dig "silo" "apiThreadsForHttpConnections" .Values | default 16 | quote }}
             - "--api-max-queued-http-connections"
             - "1000"
             - "--query-materialization-cutoff"
