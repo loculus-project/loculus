@@ -1997,6 +1997,8 @@ images:
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+silo:
+  apiThreadsForHttpConnections: 16
 secrets:
   smtp-password:
     type: raw
