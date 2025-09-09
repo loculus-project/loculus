@@ -1989,7 +1989,7 @@ images:
     pullPolicy: IfNotPresent
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.11"
+    tag: "0.5.14"
     pullPolicy: IfNotPresent
   website:
     repository: "ghcr.io/loculus-project/website"
