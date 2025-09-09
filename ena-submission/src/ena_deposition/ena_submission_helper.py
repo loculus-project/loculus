@@ -4,8 +4,8 @@ import gzip
 import json
 import logging
 import os
+import random
 import re
-import secrets
 import string
 import subprocess  # noqa: S404
 import tempfile
@@ -158,7 +158,7 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
-        entropy = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))
+        entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
         timestamp = datetime.datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
         return XmlAttribute(f"{prefix}:{timestamp}_{entropy}")
 
