@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import threading
 import time
 import traceback
@@ -163,7 +164,9 @@ def make_assembly_name(accession: str, version: str, test: bool = False) -> str:
     Unlike biosample revisions, assembly revisions require a new assemblyName.
     """
     if test:
-        return f"{accession}.{version}_{datetime.now(tz=pytz.utc).strftime('%Y%m%d_%H%M%S')}"
+        timestamp = datetime.now(tz=pytz.utc).strftime('%Y%m%d_%H%M%S%f')[:18]
+        random_suffix = random.randint(10000, 99999)  # 5-digit random number for better uniqueness
+        return f"{accession}.{version}_{timestamp}{random_suffix}"
     return f"{accession}.{version}"
 
 

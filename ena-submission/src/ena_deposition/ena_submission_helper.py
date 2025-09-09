@@ -4,6 +4,7 @@ import gzip
 import json
 import logging
 import os
+import random
 import re
 import subprocess  # noqa: S404
 import tempfile
@@ -156,7 +157,9 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
-        return XmlAttribute(f"{prefix}:{datetime.datetime.now(tz=pytz.utc)}")
+        timestamp = datetime.datetime.now(tz=pytz.utc).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        random_suffix = random.randint(10000, 99999)  # 5-digit random number for better uniqueness
+        return XmlAttribute(f"{prefix}:{timestamp}.{random_suffix}")
 
     return XmlAttribute(prefix)
 
