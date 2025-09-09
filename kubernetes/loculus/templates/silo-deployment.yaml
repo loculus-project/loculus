@@ -54,6 +54,14 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /info
+              port: 8081
+            initialDelaySeconds: 1200
+            periodSeconds: 600
+            failureThreshold: 3
+            timeoutSeconds: 10
         - name: silo-preprocessing
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"
