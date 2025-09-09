@@ -86,6 +86,6 @@ test.describe('The review page', () => {
         const rowLocator = page.locator('a[href*="/seq/LOC"]').first();
         await expect(rowLocator).toBeVisible();
         await rowLocator.click();
-        await expect(page.getByText('Restricted sequence')).toBeVisible();
+        await expect(page.getByText('Restricted-Use sequence')).toBeVisible();
     });
 });
