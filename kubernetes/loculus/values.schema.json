@@ -715,7 +715,7 @@
           "groups": ["image"],
           "type": "string",
           "enum": ["Always", "IfNotPresent", "Never"],
-          "description": "The pull policy to use. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only. If not specified, defaults to Always if tag is 'latest' or empty, otherwise IfNotPresent."
+          "description": "The pull policy to use. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
         }
       },
       "required": ["repository", "pullPolicy"],
