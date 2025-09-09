@@ -49,73 +49,75 @@ const unalignedSingleSegmentSequence = 'UnalignedSingleSegmentSequence';
 const unalignedMultiSegmentSequence = 'UnalignedMultiSegmentSequence';
 
 describe('SequencesContainer', () => {
-    beforeEach(() => {
-        mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
-        mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
-            200,
-            `>some\n${multiSegmentSequence}`,
-            multiSegmentName,
-        );
-        mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
-        mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, '', 'main');
-        mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
-            200,
-            `>some\n${unalignedMultiSegmentSequence}`,
-            multiSegmentName,
-        );
-    });
-
-    test('should render single segmented sequence', async () => {
-        renderSequenceViewer({
-            nucleotideSegmentNames: ['main'],
-            genes: [],
+    describe('with single reference', () => {
+        beforeEach(() => {
+            mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${singleSegmentSequence}`);
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${multiSegmentSequence}`,
+                multiSegmentName,
+            );
+            mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${unalignedSingleSegmentSequence}`);
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, '', 'main');
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${unalignedMultiSegmentSequence}`,
+                multiSegmentName,
+            );
         });
 
-        click('Load sequences');
+        test('should render single segmented sequence', async () => {
+            renderSequenceViewer({
+                nucleotideSegmentNames: ['main'],
+                genes: [],
+            });
 
-        click('Aligned nucleotide sequence');
-        await waitFor(() => {
-            expect(
-                screen.getByText(singleSegmentSequence, {
-                    exact: false,
-                }),
-            ).toBeVisible();
+            click('Load sequences');
+
+            click('Aligned nucleotide sequence');
+            await waitFor(() => {
+                expect(
+                    screen.getByText(singleSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
+
+            click('Nucleotide sequence');
+            await waitFor(() => {
+                expect(
+                    screen.getByText(unalignedSingleSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
         });
 
-        click('Nucleotide sequence');
-        await waitFor(() => {
-            expect(
-                screen.getByText(unalignedSingleSegmentSequence, {
-                    exact: false,
-                }),
-            ).toBeVisible();
-        });
-    });
+        test('should render multi segmented sequence', async () => {
+            renderSequenceViewer({
+                nucleotideSegmentNames: ['main', multiSegmentName],
+                genes: [],
+            });
 
-    test('should render multi segmented sequence', async () => {
-        renderSequenceViewer({
-            nucleotideSegmentNames: ['main', multiSegmentName],
-            genes: [],
-        });
+            click('Load sequences');
 
-        click('Load sequences');
+            click(`${multiSegmentName} (aligned)`);
+            await waitFor(() => {
+                expect(
+                    screen.getByText(multiSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
 
-        click(`${multiSegmentName} (aligned)`);
-        await waitFor(() => {
-            expect(
-                screen.getByText(multiSegmentSequence, {
-                    exact: false,
-                }),
-            ).toBeVisible();
-        });
-
-        click(`${multiSegmentName} (unaligned)`);
-        await waitFor(() => {
-            expect(
-                screen.getByText(unalignedMultiSegmentSequence, {
-                    exact: false,
-                }),
-            ).toBeVisible();
+            click(`${multiSegmentName} (unaligned)`);
+            await waitFor(() => {
+                expect(
+                    screen.getByText(unalignedMultiSegmentSequence, {
+                        exact: false,
+                    }),
+                ).toBeVisible();
+            });
         });
     });
 
