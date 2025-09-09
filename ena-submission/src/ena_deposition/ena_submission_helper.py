@@ -5,6 +5,8 @@ import json
 import logging
 import os
 import re
+import secrets
+import string
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
@@ -156,7 +158,9 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
     if set_alias_suffix:
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
-        return XmlAttribute(f"{prefix}:{datetime.datetime.now(tz=pytz.utc)}")
+        entropy = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))
+        timestamp = datetime.datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
+        return XmlAttribute(f"{prefix}:{timestamp}_{entropy}")
 
     return XmlAttribute(prefix)
 

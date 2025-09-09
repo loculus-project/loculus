@@ -1,5 +1,7 @@
 import json
 import logging
+import secrets
+import string
 import threading
 import time
 import traceback
@@ -163,7 +165,9 @@ def make_assembly_name(accession: str, version: str, test: bool = False) -> str:
     Unlike biosample revisions, assembly revisions require a new assemblyName.
     """
     if test:
-        return f"{accession}.{version}_{datetime.now(tz=pytz.utc).strftime('%Y%m%d_%H%M%S')}"
+        entropy = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))
+        timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
+        return f"{accession}.{version}_{timestamp}_{entropy}"
     return f"{accession}.{version}"
 
 
