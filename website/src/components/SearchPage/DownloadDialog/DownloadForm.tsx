@@ -203,7 +203,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                             label: (
                                 <>
                                     Yes, include restricted data
-                                    <br />({/* TODO(862) */}
+                                    <br />(
                                     <a href={routes.datauseTermsPage()} className='underline'>
                                         What does it mean?
                                     </a>
