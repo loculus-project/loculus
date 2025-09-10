@@ -13,7 +13,7 @@ import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
-import ErrorBox from '../common/ErrorBox';
+import RestrictedUseWarning from '../common/RestrictedUseWarning';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -63,15 +63,7 @@ export const SequenceDataUI: FC<Props> = ({
 
     return (
         <>
-            {isRestricted && (
-                <ErrorBox title='Restricted sequence' level='warning'>
-                    This sequence is only available under the Restricted Use Terms. If you make use of this data, you
-                    must follow the{' '}
-                    <a href={routes.datauseTermsPage()} className='underline'>
-                        terms of use.
-                    </a>
-                </ErrorBox>
-            )}
+            {isRestricted && <RestrictedUseWarning />}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
