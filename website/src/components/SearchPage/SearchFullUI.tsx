@@ -126,14 +126,37 @@ export const InnerSearchFullUI = ({
         if (typeof window === 'undefined') {
             return;
         }
+
+        const handlePopState = () => {
+            setPreviewedSeqId(null);
+        };
+
         if (previewedSeqId) {
-            previousUrlRef.current ??= window.location.pathname + window.location.search;
-            window.history.replaceState(window.history.state, '', `/seq/${previewedSeqId}`);
-        } else if (previousUrlRef.current) {
+            if (previousUrlRef.current === null) {
+                previousUrlRef.current = window.location.pathname + window.location.search;
+                window.history.pushState(window.history.state, '', `/seq/${previewedSeqId}`);
+            } else {
+                window.history.replaceState(window.history.state, '', `/seq/${previewedSeqId}`);
+            }
+            window.addEventListener('popstate', handlePopState);
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+            };
+        }
+
+        if (previousUrlRef.current) {
             window.history.replaceState(window.history.state, '', previousUrlRef.current);
             previousUrlRef.current = null;
         }
-    }, [previewedSeqId]);
+    }, [previewedSeqId, setPreviewedSeqId]);
+
+    const closePreview = useCallback(() => {
+        if (previousUrlRef.current) {
+            window.history.back();
+        } else {
+            setPreviewedSeqId(null);
+        }
+    }, [setPreviewedSeqId]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -375,7 +398,7 @@ export const InnerSearchFullUI = ({
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
-                onClose={() => setPreviewedSeqId(null)}
+                onClose={closePreview}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
