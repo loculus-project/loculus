@@ -1704,6 +1704,7 @@ defaultOrganisms:
           ingest: ncbiHostName
           initiallyVisible: true
         - name: lineage
+          displayName: "Segment S Lineage"
           header: "Lineage"
           noInput: true
           generateIndex: true
@@ -1711,6 +1712,8 @@ defaultOrganisms:
           initiallyVisible: true
           includeInDownloadsByDefault: true
           preprocessing:
+            args: 
+              segment: S
             inputs: {input: nextclade.clade}
       website:
         <<: *website
