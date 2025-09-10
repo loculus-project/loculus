@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import { type NucleotideSegmentNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import {
+    type NucleotideSegmentNames,
+    type ReferenceGenomesSequenceNames,
+    SINGLE_REFERENCE,
+} from '../../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -14,30 +18,37 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
-function renderSequenceViewer({
-    nucleotideSegmentNames,
-    genes,
-}: {
-    nucleotideSegmentNames: NucleotideSegmentNames;
-    genes: string[];
-}) {
+function renderSequenceViewer(referenceGenomeSequenceNames: ReferenceGenomesSequenceNames, suborganism: string) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomeSequenceNames={{
-                    [SINGLE_REFERENCE]: {
-                        genes,
-                        nucleotideSequences: nucleotideSegmentNames,
-                        insdcAccessionFull: [],
-                    },
-                }}
+                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 loadSequencesAutomatically={false}
-                suborganism={SINGLE_REFERENCE}
+                suborganism={suborganism}
             />
         </QueryClientProvider>,
+    );
+}
+
+function renderSingleReferenceSequenceViewer({
+    nucleotideSegmentNames,
+    genes,
+}: {
+    nucleotideSegmentNames: NucleotideSegmentNames;
+    genes: string[];
+}) {
+    renderSequenceViewer(
+        {
+            [SINGLE_REFERENCE]: {
+                genes,
+                nucleotideSequences: nucleotideSegmentNames,
+                insdcAccessionFull: [],
+            },
+        },
+        SINGLE_REFERENCE,
     );
 }
 
@@ -67,7 +78,7 @@ describe('SequencesContainer', () => {
         });
 
         test('should render single segmented sequence', async () => {
-            renderSequenceViewer({
+            renderSingleReferenceSequenceViewer({
                 nucleotideSegmentNames: ['main'],
                 genes: [],
             });
@@ -94,7 +105,7 @@ describe('SequencesContainer', () => {
         });
 
         test('should render multi segmented sequence', async () => {
-            renderSequenceViewer({
+            renderSingleReferenceSequenceViewer({
                 nucleotideSegmentNames: ['main', multiSegmentName],
                 genes: [],
             });
@@ -117,6 +128,90 @@ describe('SequencesContainer', () => {
                         exact: false,
                     }),
                 ).toBeVisible();
+            });
+        });
+    });
+
+    describe('with multiple references', () => {
+        const suborganism1 = 'sub1';
+        const suborganism2 = 'sub2';
+
+        test('should render single segmented sequences', async () => {
+            const alignedSequence = `${suborganism1}AlignedSequence`;
+            const sequence = `${suborganism1}Sequence`;
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${alignedSequence}`, suborganism1);
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, `>some\n${sequence}`, suborganism1);
+
+            renderSequenceViewer(
+                {
+                    [suborganism1]: {
+                        nucleotideSequences: ['main'],
+                        genes: [],
+                        insdcAccessionFull: [],
+                    },
+                    [suborganism2]: {
+                        nucleotideSequences: ['main'],
+                        genes: [],
+                        insdcAccessionFull: [],
+                    },
+                },
+                suborganism1,
+            );
+
+            click('Load sequences');
+
+            click('Aligned nucleotide sequence');
+            await waitFor(() => {
+                expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
+            });
+
+            click('Nucleotide sequence');
+            await waitFor(() => {
+                expect(screen.getByText(sequence, { exact: false })).toBeVisible();
+            });
+        });
+
+        test('should render multi segmented sequences', async () => {
+            const alignedSequence = `${suborganism2}AlignedSequence`;
+            const sequence = `${suborganism2}Sequence`;
+            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${alignedSequence}`,
+                `${suborganism2}-segment1`,
+            );
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, ``, `${suborganism2}-segment1`);
+            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(
+                200,
+                `>some\n${sequence}`,
+                `${suborganism2}-segment2`,
+            );
+
+            renderSequenceViewer(
+                {
+                    [suborganism1]: {
+                        nucleotideSequences: ['main'],
+                        genes: [],
+                        insdcAccessionFull: [],
+                    },
+                    [suborganism2]: {
+                        nucleotideSequences: ['segment1', 'segment2'],
+                        genes: [],
+                        insdcAccessionFull: [],
+                    },
+                },
+                suborganism2,
+            );
+
+            click('Load sequences');
+
+            click('segment1 (aligned)');
+            await waitFor(() => {
+                expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
+            });
+
+            click('segment2 (unaligned)');
+            await waitFor(() => {
+                expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
         });
     });
