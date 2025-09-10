@@ -60,7 +60,7 @@ export async function getTableData(
                     }
 
                     return ok({
-                        data: toTableData(schema)(data),
+                        data: toTableData(schema, data),
                         suborganism: suborganismResult.value,
                         isRevocation: isRevocationEntry(data.details),
                     });
@@ -188,8 +188,9 @@ function mutationDetails(
     return data;
 }
 
-function toTableData(config: Schema) {
-    return ({
+function toTableData(
+    config: Schema,
+    {
         details,
         nucleotideMutations,
         aminoAcidMutations,
@@ -201,32 +202,32 @@ function toTableData(config: Schema) {
         aminoAcidMutations: MutationProportionCount[];
         nucleotideInsertions: InsertionCount[];
         aminoAcidInsertions: InsertionCount[];
-    }): TableDataEntry[] => {
-        const data: TableDataEntry[] = config.metadata
-            .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
-            .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
-            .map((metadata) => ({
-                label: metadata.displayName ?? sentenceCase(metadata.name),
-                name: metadata.name,
-                customDisplay: metadata.customDisplay,
-                value: mapValueToDisplayedValue(details[metadata.name], metadata),
-                header: metadata.header ?? '',
-                type: { kind: 'metadata', metadataType: metadata.type },
-                orderOnDetailsPage: metadata.orderOnDetailsPage,
-            }));
+    },
+): TableDataEntry[] {
+    const data: TableDataEntry[] = config.metadata
+        .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+        .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
+        .map((metadata) => ({
+            label: metadata.displayName ?? sentenceCase(metadata.name),
+            name: metadata.name,
+            customDisplay: metadata.customDisplay,
+            value: mapValueToDisplayedValue(details[metadata.name], metadata),
+            header: metadata.header ?? '',
+            type: { kind: 'metadata', metadataType: metadata.type },
+            orderOnDetailsPage: metadata.orderOnDetailsPage,
+        }));
 
-        if (config.submissionDataTypes.consensusSequences) {
-            const mutations = mutationDetails(
-                nucleotideMutations,
-                aminoAcidMutations,
-                nucleotideInsertions,
-                aminoAcidInsertions,
-            );
-            data.push(...mutations);
-        }
+    if (config.submissionDataTypes.consensusSequences) {
+        const mutations = mutationDetails(
+            nucleotideMutations,
+            aminoAcidMutations,
+            nucleotideInsertions,
+            aminoAcidInsertions,
+        );
+        data.push(...mutations);
+    }
 
-        return data;
-    };
+    return data;
 }
 
 function mapValueToDisplayedValue(value: undefined | null | string | number | boolean, metadata: Metadata) {
