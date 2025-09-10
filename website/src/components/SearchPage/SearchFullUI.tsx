@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
@@ -120,6 +120,20 @@ export const InnerSearchFullUI = ({
         'boolean',
         (value) => !value,
     );
+
+    const previousUrlRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        if (previewedSeqId) {
+            previousUrlRef.current ??= window.location.pathname + window.location.search;
+            window.history.replaceState(window.history.state, '', `/seq/${previewedSeqId}`);
+        } else if (previousUrlRef.current) {
+            window.history.replaceState(window.history.state, '', previousUrlRef.current);
+            previousUrlRef.current = null;
+        }
+    }, [previewedSeqId]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
