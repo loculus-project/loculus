@@ -82,7 +82,6 @@ export class DownloadUrlGenerator {
             .filter(([name]) => !excludedParams.has(name))
             .forEach(([name, value]) => {
                 if (Array.isArray(value)) {
-                    // If value is an array, add each item as a separate parameter
                     value.forEach((val) => {
                         if (val && val.length > 0) {
                             params.append(name, val);

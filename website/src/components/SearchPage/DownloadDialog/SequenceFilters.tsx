@@ -158,7 +158,6 @@ export class FieldFilterSet implements SequenceFilter {
                 continue;
             }
 
-            // Handle array values
             if (Array.isArray(value)) {
                 if (value.length > 0) {
                     result.push([key, value]);

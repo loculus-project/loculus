@@ -311,7 +311,6 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
 
-            // Test that multi-select calls setSomeFieldValues with an array
             render(
                 <AutoCompleteField
                     field={field}
@@ -330,7 +329,6 @@ describe('AutoCompleteField', () => {
             const input = screen.getByLabelText('Test Field');
             await userEvent.click(input);
 
-            // Select first option
             const options = await screen.findAllByRole('option');
             await userEvent.click(options[0]);
 
@@ -365,11 +363,9 @@ describe('AutoCompleteField', () => {
                 />,
             );
 
-            // Check that badges are displayed
             expect(screen.getByText('Option 1')).toBeInTheDocument();
             expect(screen.getByText('Option 2')).toBeInTheDocument();
 
-            // Check that remove buttons exist
             const removeButtons = screen.getAllByLabelText(/Remove/);
             expect(removeButtons).toHaveLength(2);
         });
@@ -401,7 +397,6 @@ describe('AutoCompleteField', () => {
                 />,
             );
 
-            // Click remove button for Option 1
             const removeButton = screen.getByLabelText('Remove Option 1');
             await userEvent.click(removeButton);
 
@@ -454,7 +449,6 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
 
-            // Test that clicking on a badge remove button works
             render(
                 <AutoCompleteField
                     field={field}
@@ -470,11 +464,9 @@ describe('AutoCompleteField', () => {
                 />,
             );
 
-            // Verify the badges are displayed
             expect(screen.getByText('Option 1')).toBeInTheDocument();
             expect(screen.getByText('Option 2')).toBeInTheDocument();
 
-            // Click remove button for Option 1
             const removeButton = screen.getByLabelText('Remove Option 1');
             await userEvent.click(removeButton);
 

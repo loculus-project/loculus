@@ -211,7 +211,6 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 );
             }
             if (field.autocomplete === true) {
-                // AutoComplete fields support multi-select
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
@@ -226,7 +225,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
-                        multiSelect={true} // Enable multi-select for all autocomplete fields
+                        multiSelect={true} // Enable multi-select for all autocomplete fields for the moment - but we are currently keeping the functionality for single-select available in code
                     />
                 );
             }

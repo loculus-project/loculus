@@ -135,7 +135,6 @@ export const AutoCompleteField = ({
                 >
                     <div className='relative'>
                         {multiSelect ? (
-                            // Multi-select mode with floating label styling to match TextField
                             <FloatingLabelContainer
                                 label={field.displayName ?? field.name}
                                 isFocused={isFocused}

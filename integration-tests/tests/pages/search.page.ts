@@ -61,19 +61,12 @@ export class SearchPage {
         await combo.click();
         await combo.fill(mutation);
 
-        // Wait for dropdown options to appear
-        await this.page.waitForTimeout(300);
-
-        // Select matching mutation (with count suffix)
         const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
         const matchingOption = this.page.getByRole('option', { name: optionRegex }).first();
 
-        // Click the matching option
         await matchingOption.click({ timeout: 2000 });
 
-        // Press Escape to ensure dropdown is closed
         await this.page.keyboard.press('Escape');
-        await this.page.waitForTimeout(200);
     }
 
     async enterAccessions(accessions: string) {
