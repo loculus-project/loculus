@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
@@ -13,6 +13,7 @@ import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
+import { routes } from '../../routes/routes.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -120,6 +121,32 @@ export const InnerSearchFullUI = ({
         'boolean',
         (value) => !value,
     );
+
+    const previousSeqIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (previewedSeqId) {
+            const seqUrl = routes.sequenceEntryDetailsPage(previewedSeqId);
+            if (previousSeqIdRef.current === null) {
+                window.history.pushState({ seqPreview: true }, '', seqUrl);
+            } else {
+                window.history.replaceState({ seqPreview: true }, '', seqUrl);
+            }
+            previousSeqIdRef.current = previewedSeqId;
+
+            const handlePopState = () => {
+                setPreviewedSeqId(null);
+                setPreviewHalfScreen(false);
+            };
+
+            window.addEventListener('popstate', handlePopState);
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+            };
+        } else {
+            previousSeqIdRef.current = null;
+        }
+    }, [previewedSeqId, setPreviewedSeqId, setPreviewHalfScreen]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -361,7 +388,7 @@ export const InnerSearchFullUI = ({
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
-                onClose={() => setPreviewedSeqId(null)}
+                onClose={() => window.history.back()}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
