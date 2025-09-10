@@ -118,6 +118,13 @@ export const linkOut = z.object({
 
 export type LinkOut = z.infer<typeof linkOut>;
 
+export const linkOutsConfig = z
+    .object({
+        search: z.array(linkOut).optional(),
+        singleSequence: z.array(linkOut).optional(),
+    })
+    .optional();
+
 export const fileCategory = z.object({
     name: z.string(),
 });
@@ -150,7 +157,7 @@ export const schema = z.object({
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
-    linkOuts: z.array(linkOut).optional(),
+    linkOuts: linkOutsConfig,
 });
 export type Schema = z.infer<typeof schema>;
 

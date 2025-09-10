@@ -3,6 +3,12 @@ import React, { useEffect, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
+import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator';
+import { SequenceEntrySelection } from './DownloadDialog/SequenceFilters';
+import { getLapisUrl } from '../../config.ts';
+import { matchPlaceholders, processTemplate } from '../../utils/templateProcessor';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { LinkOut, Schema } from '../../types/config.ts';
 import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
 import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
@@ -16,6 +22,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
 import MdiDockBottom from '~icons/mdi/dock-bottom';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
+import MaterialSymbolsShare from '~icons/material-symbols/share';
 
 const BUTTONCLASS =
     'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
@@ -31,6 +38,10 @@ interface SeqPreviewModalProps {
     isHalfScreen?: boolean;
     setIsHalfScreen: (isHalfScreen: boolean) => void;
     setPreviewedSeqId?: (seqId: string | null) => void;
+    organism?: string;
+    clientConfig?: ClientConfig;
+    schema?: Schema;
+    linkOuts?: LinkOut[];
 }
 
 const logger = getClientLogger('SeqPreviewModal');
@@ -46,6 +57,10 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     isHalfScreen = false,
     setIsHalfScreen,
     setPreviewedSeqId,
+    organism,
+    clientConfig,
+    schema,
+    linkOuts,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<DetailsJson | null>(null);
@@ -124,6 +139,15 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     )}
                 </button>
                 <DownloadButton seqId={seqId} />
+                {organism && clientConfig && schema && linkOuts && linkOuts.length > 0 && (
+                    <ToolsButton
+                        seqId={seqId}
+                        organism={organism}
+                        clientConfig={clientConfig}
+                        schema={schema}
+                        linkOuts={linkOuts}
+                    />
+                )}
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
@@ -193,6 +217,75 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: strin
                         Download metadata TSV
                     </a>
                 </li>
+            </ul>
+        </div>
+    );
+};
+
+interface ToolsButtonProps {
+    seqId: string;
+    organism: string;
+    clientConfig: ClientConfig;
+    schema: Schema;
+    linkOuts: LinkOut[];
+}
+
+const ToolsButton: React.FC<ToolsButtonProps> = ({ seqId, organism, clientConfig, schema, linkOuts }) => {
+    const lapisUrl = getLapisUrl(clientConfig, organism);
+    const generator = new DownloadUrlGenerator(organism, lapisUrl, true, schema.richFastaHeaderFields);
+    const selection = new SequenceEntrySelection(new Set([seqId]));
+
+    const buildUrl = (lo: LinkOut) => {
+        const placeholders = matchPlaceholders(lo.url);
+        const urlMap: Record<string, string> = {};
+        for (const match of placeholders) {
+            const { fullMatch, dataType, segment, richHeaders, dataFormat, columns } = match;
+            if (dataType === 'unalignedNucleotideSequences' || dataType === 'alignedNucleotideSequences' || dataType === 'metadata') {
+                const option: any = {
+                    includeRestricted: true,
+                    dataType: {
+                        type: dataType,
+                        segment,
+                        includeRichFastaHeaders: richHeaders ? true : undefined,
+                    },
+                    compression: undefined,
+                    dataFormat,
+                    fields: columns,
+                };
+                const { url } = generator.generateDownloadUrl(selection, option);
+                urlMap[fullMatch.slice(1, -1)] = url;
+            }
+        }
+        try {
+            const wurl = new URL(clientConfig.websiteUrl);
+            urlMap['server'] = wurl.hostname;
+        } catch (_) {
+            urlMap['server'] = '';
+        }
+        urlMap['accessionVersion'] = seqId;
+        urlMap['accession'] = seqId.split('.')[0] ?? seqId;
+        return processTemplate(lo.url, urlMap);
+    };
+
+    return (
+        <div className='dropdown dropdown-hover relative inline-block'>
+            <button className={BUTTONCLASS} title='Tools'>
+                <MaterialSymbolsShare className='w-6 h-6' />
+                <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
+            </button>
+            <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-64 -left-32'>
+                {linkOuts.map((lo) => (
+                    <li>
+                        <a
+                            href={buildUrl(lo)}
+                            className='block px-4 py-2 hover:bg-gray-100'
+                            target='_blank'
+                            rel='noreferrer noopener'
+                        >
+                            {lo.name}
+                        </a>
+                    </li>
+                ))}
             </ul>
         </div>
     );

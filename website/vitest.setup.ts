@@ -29,6 +29,7 @@ export const testConfig = {
             dummy: 'http://lapis.dummy',
         },
         keycloakUrl: 'http://authentication.dummy',
+        websiteUrl: 'http://website.dummy',
     },
     serverSide: {
         discriminator: 'server',
@@ -37,6 +38,7 @@ export const testConfig = {
             dummy: 'http://lapis.dummy',
         },
         keycloakUrl: 'http://authentication.dummy',
+        websiteUrl: 'http://website.dummy',
     },
     insecureCookies: true,
     backendKeycloakClientSecret: 'dummy',
