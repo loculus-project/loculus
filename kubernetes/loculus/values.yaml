@@ -1691,11 +1691,11 @@ defaultOrganisms:
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade (L)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
         - name: "Nextclade (M)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
         - name: "Nextclade (S)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1734,8 +1734,8 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
@@ -1744,8 +1744,8 @@ defaultOrganisms:
         taxon_id: 3052518
         segment_identification:
           method: "align"
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output
     enaDeposition:
       configFile:
         taxon_id: 3052518
