@@ -1279,6 +1279,17 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2840
         preprocessing:
           inputs: {input: nextclade.frameShifts}
+      - name: totalStopCodons
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        preprocessing:
+          inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+      - name: stopCodons
+        header: "Alignment and QC metrics"
+        noInput: true
+        preprocessing:
+          inputs: {input: nextclade.qc.stopCodons.stopCodons}
       - name: completeness
         type: float
         header: "Alignment and QC metrics"
@@ -1388,17 +1399,6 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
-        - name: totalStopCodons
-          type: int
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
       website:
         <<: *website
         tableColumns:
@@ -1703,17 +1703,15 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
-        - name: totalStopCodons
-          type: int
-          header: "Alignment and QC metrics"
+        - name: lineage
+          header: "Lineage"
           noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
           preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+            inputs: {input: nextclade.clade}
       website:
         <<: *website
         tableColumns:
