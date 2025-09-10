@@ -59,9 +59,11 @@ export async function getTableData(
                         return err(suborganismResult.error);
                     }
 
+                    const suborganism = suborganismResult.value;
+
                     return ok({
-                        data: toTableData(schema, data),
-                        suborganism: suborganismResult.value,
+                        data: toTableData(schema, suborganism, data),
+                        suborganism,
                         isRevocation: isRevocationEntry(data.details),
                     });
                 }),
@@ -138,6 +140,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
+    suborganism: Suborganism,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -145,7 +148,10 @@ function mutationDetails(
             name: 'nucleotideSubstitutions',
             value: '',
             header: 'Nucleotide mutations',
-            customDisplay: { type: 'badge', value: substitutionsMap(nucleotideMutations) },
+            customDisplay: {
+                type: 'badge',
+                value: substitutionsMap(nucleotideMutations, suborganism),
+            },
             type: { kind: 'mutation' },
         },
         {
@@ -167,7 +173,10 @@ function mutationDetails(
             name: 'aminoAcidSubstitutions',
             value: '',
             header: 'Amino acid mutations',
-            customDisplay: { type: 'badge', value: substitutionsMap(aminoAcidMutations) },
+            customDisplay: {
+                type: 'badge',
+                value: substitutionsMap(aminoAcidMutations, suborganism),
+            },
             type: { kind: 'mutation' },
         },
         {
@@ -190,6 +199,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
+    suborganism: Suborganism,
     {
         details,
         nucleotideMutations,
@@ -223,6 +233,7 @@ function toTableData(
             aminoAcidMutations,
             nucleotideInsertions,
             aminoAcidInsertions,
+            suborganism,
         );
         data.push(...mutations);
     }
@@ -242,26 +253,42 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
     return value;
 }
 
-export function substitutionsMap(mutationData: MutationProportionCount[]): SegmentedMutations[] {
+export function substitutionsMap(
+    mutationData: MutationProportionCount[],
+    suborganism: Suborganism,
+): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
 
     const segmentMutationsMap = new Map<string, MutationProportionCount[]>();
     for (const entry of substitutionData) {
-        let sequenceName = '';
-        if (entry.sequenceName !== null) {
-            sequenceName = entry.sequenceName;
+        const sequenceDisplayName = computeSequenceDisplayName(entry.sequenceName, suborganism);
+
+        let sequenceKey = sequenceDisplayName ?? '';
+        if (!segmentMutationsMap.has(sequenceKey)) {
+            segmentMutationsMap.set(sequenceKey, []);
         }
-        if (!segmentMutationsMap.has(sequenceName)) {
-            segmentMutationsMap.set(sequenceName, []);
-        }
-        segmentMutationsMap.get(sequenceName)!.push(entry);
+        segmentMutationsMap.get(sequenceKey)!.push({ ...entry, sequenceName: sequenceDisplayName });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
     }
 
     return result;
+}
+
+function computeSequenceDisplayName(originalSequenceName: string | null, suborganism: Suborganism): string | null {
+    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE) {
+        return originalSequenceName;
+    }
+
+    if (originalSequenceName === suborganism) {
+        // there is only one segment in which case the name should be null
+        return null;
+    }
+
+    const prefixToTrim = `${suborganism}-`;
+    return originalSequenceName.substring(prefixToTrim.length);
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
