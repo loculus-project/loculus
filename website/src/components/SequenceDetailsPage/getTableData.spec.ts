@@ -242,23 +242,35 @@ describe('getTableData', () => {
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
         const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        expectInsertionsMatch(result);
+    });
 
+    test('should return data of insertions for multi pathogen', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: multiPathogenNucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiPathogenAminoAcidInsertions });
+
+        const result = await getTableData('accession', schema, multipleReferenceGenomes, lapisClient);
+        expectInsertionsMatch(result);
+    });
+
+    function expectInsertionsMatch(result: Result<GetTableDataResult, ProblemDetail>) {
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: 'nucleotideInsertion1, nucleotideInsertion2',
+            value: 'ins_123:AAA, ins_456:GCT',
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: 'aminoAcidInsertion1, aminoAcidInsertion2',
+            value: 'ins_gene1:123:AAA, ins_gene1:456:TTT',
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
-    });
+    }
 
     test('should map timestamps to human readable dates', async () => {
         mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
@@ -727,12 +739,32 @@ const multiPathogenAminoAcidMutations: MutationProportionCount[] = [
 ];
 
 const nucleotideInsertions = [
-    { count: 0, insertion: 'nucleotideInsertion1' },
-    { count: 0, insertion: 'nucleotideInsertion2' },
+    { count: 0, insertion: 'ins_123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: null },
+    { count: 0, insertion: 'ins_456:GCT', insertedSymbols: 'GCT', position: 456, sequenceName: null },
+];
+const multiPathogenNucleotideInsertions = [
+    { count: 0, insertion: `ins_${genome1}:123:AAA`, insertedSymbols: 'AAA', position: 123, sequenceName: genome1 },
+    { count: 0, insertion: `ins_${genome1}:456:GCT`, insertedSymbols: 'GCT', position: 456, sequenceName: genome1 },
 ];
 const aminoAcidInsertions = [
-    { count: 0, insertion: 'aminoAcidInsertion1' },
-    { count: 0, insertion: 'aminoAcidInsertion2' },
+    { count: 0, insertion: 'ins_gene1:123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: 'gene1' },
+    { count: 0, insertion: 'ins_gene1:456:TTT', insertedSymbols: 'TTT', position: 456, sequenceName: 'gene1' },
+];
+const multiPathogenAminoAcidInsertions = [
+    {
+        count: 0,
+        insertion: `ins_${genome1}-gene1:123:AAA`,
+        insertedSymbols: 'AAA',
+        position: 123,
+        sequenceName: `${genome1}-gene1`,
+    },
+    {
+        count: 0,
+        insertion: `ins_${genome1}-gene1:456:TTT`,
+        insertedSymbols: 'TTT',
+        position: 456,
+        sequenceName: `${genome1}-gene1`,
+    },
 ];
 
 const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
