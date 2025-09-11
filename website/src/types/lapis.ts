@@ -44,6 +44,9 @@ export type MutationsResponse = z.infer<typeof mutationsResponse>;
 const insertionCount = z.object({
     insertion: z.string(),
     count: z.number(),
+    insertedSymbols: z.string(),
+    position: z.number(),
+    sequenceName: z.string().nullable(),
 });
 export type InsertionCount = z.infer<typeof insertionCount>;
 

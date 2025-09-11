@@ -5,7 +5,7 @@ import z from 'zod';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema, SegmentedMutations } from '../../types/config.ts';
+import type { Metadata, MutationBadgeData, Schema, SegmentedMutations } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -15,7 +15,7 @@ import {
 import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
-type GetTableDataResult = {
+export type GetTableDataResult = {
     data: TableDataEntry[];
     suborganism: Suborganism;
     isRevocation: boolean;
@@ -59,9 +59,11 @@ export async function getTableData(
                         return err(suborganismResult.error);
                     }
 
+                    const suborganism = suborganismResult.value;
+
                     return ok({
-                        data: toTableData(schema)(data),
-                        suborganism: suborganismResult.value,
+                        data: toTableData(schema, suborganism, data),
+                        suborganism,
                         isRevocation: isRevocationEntry(data.details),
                     });
                 }),
@@ -138,6 +140,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
+    suborganism: Suborganism,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -145,20 +148,23 @@ function mutationDetails(
             name: 'nucleotideSubstitutions',
             value: '',
             header: 'Nucleotide mutations',
-            customDisplay: { type: 'badge', value: substitutionsMap(nucleotideMutations) },
+            customDisplay: {
+                type: 'badge',
+                value: substitutionsMap(nucleotideMutations, suborganism),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, suborganism),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, suborganism),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -167,20 +173,23 @@ function mutationDetails(
             name: 'aminoAcidSubstitutions',
             value: '',
             header: 'Amino acid mutations',
-            customDisplay: { type: 'badge', value: substitutionsMap(aminoAcidMutations) },
+            customDisplay: {
+                type: 'badge',
+                value: substitutionsMap(aminoAcidMutations, suborganism),
+            },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations),
+            value: deletionsToCommaSeparatedString(aminoAcidMutations, suborganism),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+            value: insertionsToCommaSeparatedString(aminoAcidInsertions, suborganism),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
@@ -188,8 +197,10 @@ function mutationDetails(
     return data;
 }
 
-function toTableData(config: Schema) {
-    return ({
+function toTableData(
+    config: Schema,
+    suborganism: Suborganism,
+    {
         details,
         nucleotideMutations,
         aminoAcidMutations,
@@ -201,32 +212,33 @@ function toTableData(config: Schema) {
         aminoAcidMutations: MutationProportionCount[];
         nucleotideInsertions: InsertionCount[];
         aminoAcidInsertions: InsertionCount[];
-    }): TableDataEntry[] => {
-        const data: TableDataEntry[] = config.metadata
-            .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
-            .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
-            .map((metadata) => ({
-                label: metadata.displayName ?? sentenceCase(metadata.name),
-                name: metadata.name,
-                customDisplay: metadata.customDisplay,
-                value: mapValueToDisplayedValue(details[metadata.name], metadata),
-                header: metadata.header ?? '',
-                type: { kind: 'metadata', metadataType: metadata.type },
-                orderOnDetailsPage: metadata.orderOnDetailsPage,
-            }));
+    },
+): TableDataEntry[] {
+    const data: TableDataEntry[] = config.metadata
+        .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+        .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
+        .map((metadata) => ({
+            label: metadata.displayName ?? sentenceCase(metadata.name),
+            name: metadata.name,
+            customDisplay: metadata.customDisplay,
+            value: mapValueToDisplayedValue(details[metadata.name], metadata),
+            header: metadata.header ?? '',
+            type: { kind: 'metadata', metadataType: metadata.type },
+            orderOnDetailsPage: metadata.orderOnDetailsPage,
+        }));
 
-        if (config.submissionDataTypes.consensusSequences) {
-            const mutations = mutationDetails(
-                nucleotideMutations,
-                aminoAcidMutations,
-                nucleotideInsertions,
-                aminoAcidInsertions,
-            );
-            data.push(...mutations);
-        }
+    if (config.submissionDataTypes.consensusSequences) {
+        const mutations = mutationDetails(
+            nucleotideMutations,
+            aminoAcidMutations,
+            nucleotideInsertions,
+            aminoAcidInsertions,
+            suborganism,
+        );
+        data.push(...mutations);
+    }
 
-        return data;
-    };
+    return data;
 }
 
 function mapValueToDisplayedValue(value: undefined | null | string | number | boolean, metadata: Metadata) {
@@ -241,20 +253,25 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
     return value;
 }
 
-export function substitutionsMap(mutationData: MutationProportionCount[]): SegmentedMutations[] {
+export function substitutionsMap(
+    mutationData: MutationProportionCount[],
+    suborganism: Suborganism,
+): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
 
-    const segmentMutationsMap = new Map<string, MutationProportionCount[]>();
+    const segmentMutationsMap = new Map<string, MutationBadgeData[]>();
     for (const entry of substitutionData) {
-        let sequenceName = '';
-        if (entry.sequenceName !== null) {
-            sequenceName = entry.sequenceName;
+        const { sequenceName, mutationFrom, position, mutationTo } = entry;
+        const sequenceDisplayName = computeSequenceDisplayName(sequenceName, suborganism);
+
+        const sequenceKey = sequenceDisplayName ?? '';
+        if (!segmentMutationsMap.has(sequenceKey)) {
+            segmentMutationsMap.set(sequenceKey, []);
         }
-        if (!segmentMutationsMap.has(sequenceName)) {
-            segmentMutationsMap.set(sequenceName, []);
-        }
-        segmentMutationsMap.get(sequenceName)!.push(entry);
+        segmentMutationsMap
+            .get(sequenceKey)!
+            .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
@@ -263,12 +280,28 @@ export function substitutionsMap(mutationData: MutationProportionCount[]): Segme
     return result;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
+function computeSequenceDisplayName(originalSequenceName: string | null, suborganism: Suborganism): string | null {
+    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE) {
+        return originalSequenceName;
+    }
+
+    if (originalSequenceName === suborganism) {
+        // there is only one segment in which case the name should be null
+        return null;
+    }
+
+    const prefixToTrim = `${suborganism}-`;
+    return originalSequenceName.startsWith(prefixToTrim)
+        ? originalSequenceName.substring(prefixToTrim.length)
+        : originalSequenceName;
+}
+
+function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment: string | null = m.sequenceName;
+            const segment = computeSequenceDisplayName(m.sequenceName, suborganism);
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
@@ -312,6 +345,13 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[]) {
-    return insertionData.map((m) => m.insertion).join(', ');
+function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism) {
+    return insertionData
+        .map((insertion) => {
+            const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, suborganism);
+
+            const sequenceNamePart = sequenceDisplayName !== null ? sequenceDisplayName + ':' : '';
+            return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
+        })
+        .join(', ');
 }
