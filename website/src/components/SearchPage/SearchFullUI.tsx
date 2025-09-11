@@ -12,7 +12,6 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
-import useUrlParamState from '../../hooks/useUrlParamState';
 import { routes } from '../../routes/routes.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
@@ -105,48 +104,64 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => !value,
-    );
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
-        state,
-        false,
-        setState,
-        'boolean',
-        (value) => !value,
-    );
+    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
+    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
 
     const previousSeqIdRef = useRef<string | null>(null);
+
+    // Check if we're on a /seq/ URL on initial load or navigation
+    useEffect(() => {
+        const checkUrlForSequence = () => {
+            const path = window.location.pathname;
+            const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
+            if (seqMatch?.[1]) {
+                setPreviewedSeqId(seqMatch[1]);
+            }
+        };
+
+        // Check on mount
+        checkUrlForSequence();
+
+        // Check on popstate (back/forward navigation)
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
+
+            if (seqMatch?.[1]) {
+                // We're on a sequence URL, open the modal
+                setPreviewedSeqId(seqMatch[1]);
+            } else if (path.includes('/search')) {
+                // We're back on search, close the modal
+                setPreviewedSeqId(null);
+                setPreviewHalfScreen(false);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [setPreviewedSeqId, setPreviewHalfScreen]);
 
     useEffect(() => {
         if (previewedSeqId) {
             const seqUrl = routes.sequenceEntryDetailsPage(previewedSeqId);
-            if (previousSeqIdRef.current === null) {
-                window.history.pushState({ seqPreview: true }, '', seqUrl);
-            } else {
-                window.history.replaceState({ seqPreview: true }, '', seqUrl);
+            // Only push/replace state if we're not already on the sequence URL
+            if (!window.location.pathname.startsWith('/seq/')) {
+                if (previousSeqIdRef.current === null) {
+                    window.history.pushState({ seqPreview: true }, '', seqUrl);
+                } else {
+                    window.history.replaceState({ seqPreview: true }, '', seqUrl);
+                }
             }
             previousSeqIdRef.current = previewedSeqId;
-
-            const handlePopState = () => {
-                setPreviewedSeqId(null);
-                setPreviewHalfScreen(false);
-            };
-
-            window.addEventListener('popstate', handlePopState);
-            return () => {
-                window.removeEventListener('popstate', handlePopState);
-            };
-        } else {
+        } else if (previousSeqIdRef.current !== null) {
+            // When modal closes, restore the search page URL
+            const searchUrl = routes.searchPage(organism) + window.location.search;
+            window.history.replaceState(null, '', searchUrl);
             previousSeqIdRef.current = null;
         }
-    }, [previewedSeqId, setPreviewedSeqId, setPreviewHalfScreen]);
+    }, [previewedSeqId, organism]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
