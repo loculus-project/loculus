@@ -46,7 +46,7 @@ class ProcessingAnnotationHelper:
 @dataclass
 class ProcessedAlignment:
     unalignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
-        default_factory=lambda: {"main": None}
+        default_factory=dict
     )
     alignedNucleotideSequences: dict[str, str | None] = field(  # noqa: N815
         default_factory=dict
