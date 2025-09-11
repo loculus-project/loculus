@@ -109,27 +109,21 @@ export const InnerSearchFullUI = ({
 
     const previousSeqIdRef = useRef<string | null>(null);
 
+    // Extract sequence ID from URL path if it matches /seq/[id]
+    const getSequenceIdFromPath = (path: string): string | null => {
+        const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
+        return seqMatch?.[1] ?? null;
+    };
+
     // Check if we're on a /seq/ URL on initial load or navigation
     useEffect(() => {
-        const checkUrlForSequence = () => {
+        const syncModalWithUrl = () => {
             const path = window.location.pathname;
-            const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
-            if (seqMatch?.[1]) {
-                setPreviewedSeqId(seqMatch[1]);
-            }
-        };
+            const sequenceId = getSequenceIdFromPath(path);
 
-        // Check on mount
-        checkUrlForSequence();
-
-        // Check on popstate (back/forward navigation)
-        const handlePopState = () => {
-            const path = window.location.pathname;
-            const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
-
-            if (seqMatch?.[1]) {
+            if (sequenceId) {
                 // We're on a sequence URL, open the modal
-                setPreviewedSeqId(seqMatch[1]);
+                setPreviewedSeqId(sequenceId);
             } else if (path.includes('/search')) {
                 // We're back on search, close the modal
                 setPreviewedSeqId(null);
@@ -137,9 +131,13 @@ export const InnerSearchFullUI = ({
             }
         };
 
-        window.addEventListener('popstate', handlePopState);
+        // Check on mount
+        syncModalWithUrl();
+
+        // Check on popstate (back/forward navigation)
+        window.addEventListener('popstate', syncModalWithUrl);
         return () => {
-            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('popstate', syncModalWithUrl);
         };
     }, [setPreviewedSeqId, setPreviewHalfScreen]);
 
@@ -403,7 +401,7 @@ export const InnerSearchFullUI = ({
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
-                onClose={() => window.history.back()}
+                onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
