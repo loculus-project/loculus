@@ -157,7 +157,7 @@ function mutationDetails(
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, suborganism),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -182,7 +182,7 @@ function mutationDetails(
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations),
+            value: deletionsToCommaSeparatedString(aminoAcidMutations, suborganism),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
@@ -296,12 +296,12 @@ function computeSequenceDisplayName(originalSequenceName: string | null, suborga
         : originalSequenceName;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
+function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment: string | null = m.sequenceName;
+            const segment = computeSequenceDisplayName(m.sequenceName, suborganism);
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
