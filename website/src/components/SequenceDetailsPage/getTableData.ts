@@ -164,7 +164,7 @@ function mutationDetails(
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, suborganism),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -189,7 +189,7 @@ function mutationDetails(
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+            value: insertionsToCommaSeparatedString(aminoAcidInsertions, suborganism),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
@@ -345,6 +345,13 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[]) {
-    return insertionData.map((m) => m.insertion).join(', ');
+function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism) {
+    return insertionData
+        .map((insertion) => {
+            const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, suborganism);
+
+            const sequenceNamePart = sequenceDisplayName !== null ? sequenceDisplayName + ':' : '';
+            return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;
+        })
+        .join(', ');
 }
