@@ -75,11 +75,12 @@ def parse_nextclade_tsv(
     ],
     result_dir: str,
     config: Config,
-    segment: SegmentName,
+    sequence_and_dataset: NextcladeSequenceAndDataset,
 ) -> tuple[
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
     defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
 ]:
+    segment = sequence_and_dataset.name
     with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
@@ -94,7 +95,12 @@ def parse_nextclade_tsv(
                     continue
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in config.genes:
-                    amino_acid_insertions[id][gene].append(val)
+                    gene_name = (
+                        sequence_and_dataset.gene_prefix + gene
+                        if sequence_and_dataset.gene_prefix
+                        else gene
+                    )
+                    amino_acid_insertions[id][gene_name].append(val)
                 else:
                     logger.debug(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
@@ -548,7 +554,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
                             masked_sequence = mask_terminal_gaps(
                                 str(aligned_sequence.seq), mask_char="X"
                             )
-                            aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
+                            gene_name = (
+                                sequence_and_dataset.gene_prefix + gene
+                                if sequence_and_dataset.gene_prefix
+                                else gene
+                            )
+                            aligned_aminoacid_sequences[sequence_id][gene_name] = masked_sequence
                 except FileNotFoundError:
                     # TODO: Add warning to each sequence
                     logger.info(
@@ -561,7 +572,11 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
             )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
-                amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
+                amino_acid_insertions,
+                nucleotide_insertions,
+                result_dir_seg,
+                config,
+                sequence_and_dataset,
             )
 
     return {

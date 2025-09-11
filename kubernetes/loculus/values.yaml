@@ -1862,11 +1862,15 @@ defaultOrganisms:
             - name: CV-A16
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16
               accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+              gene_prefix: "CV-A16-"
             - name: CV-A10
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10
+              gene_prefix: "CV-A10-"
             - name: EV-A71
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71
+              gene_prefix: "EV-A71-"
             - name: EV-D68
+              gene_prefix: "EV-D68-"
               nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
     ingest:
