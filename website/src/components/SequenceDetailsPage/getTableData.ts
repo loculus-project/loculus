@@ -5,7 +5,7 @@ import z from 'zod';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema, SegmentedMutations } from '../../types/config.ts';
+import type { Metadata, MutationBadgeData, Schema, SegmentedMutations } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -15,7 +15,7 @@ import {
 import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
-type GetTableDataResult = {
+export type GetTableDataResult = {
     data: TableDataEntry[];
     suborganism: Suborganism;
     isRevocation: boolean;
@@ -260,15 +260,18 @@ export function substitutionsMap(
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
 
-    const segmentMutationsMap = new Map<string, MutationProportionCount[]>();
+    const segmentMutationsMap = new Map<string, MutationBadgeData[]>();
     for (const entry of substitutionData) {
-        const sequenceDisplayName = computeSequenceDisplayName(entry.sequenceName, suborganism);
+        const { sequenceName, mutationFrom, position, mutationTo } = entry;
+        const sequenceDisplayName = computeSequenceDisplayName(sequenceName, suborganism);
 
-        let sequenceKey = sequenceDisplayName ?? '';
+        const sequenceKey = sequenceDisplayName ?? '';
         if (!segmentMutationsMap.has(sequenceKey)) {
             segmentMutationsMap.set(sequenceKey, []);
         }
-        segmentMutationsMap.get(sequenceKey)!.push({ ...entry, sequenceName: sequenceDisplayName });
+        segmentMutationsMap
+            .get(sequenceKey)!
+            .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
     }
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
@@ -288,7 +291,9 @@ function computeSequenceDisplayName(originalSequenceName: string | null, suborga
     }
 
     const prefixToTrim = `${suborganism}-`;
-    return originalSequenceName.substring(prefixToTrim.length);
+    return originalSequenceName.startsWith(prefixToTrim)
+        ? originalSequenceName.substring(prefixToTrim.length)
+        : originalSequenceName;
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
