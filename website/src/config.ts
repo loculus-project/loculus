@@ -231,7 +231,7 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
  * TODO(#3984) this should be removed. Use `getReferenceGenomes` instead.
  */
 export function getReferenceGenome(organism: string): ReferenceGenome {
-    return getConfig(organism).referenceGenome;
+    return Object.values(getConfig(organism).referenceGenomes)[0];
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomes {

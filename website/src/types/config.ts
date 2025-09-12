@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { mutationProportionCount, orderByType } from './lapis.ts';
-import { referenceGenome } from './referencesGenomes.ts';
+import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = z.enum([
@@ -165,7 +165,7 @@ export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenome,
+    referenceGenomes,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 
