@@ -66,8 +66,10 @@ class LatestLoculusVersion:
 def notify(config: Config, text: str):
     """Send slack notification with text"""
     if config.slack_hook:
-        requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
-    logger.warning(text)
+        try:
+            requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+        except Exception as e:
+            logger.error(f"Failed to send Slack notification: {e}")
 
 
 def md5_float(string: str) -> float:
@@ -113,14 +115,13 @@ def process_hashes(
 
     if previously_submitted_entry.curated:
         # Sequence has been curated before - special case
-        notify(
-            update_manager.config,
-            (
-                f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
-                f"accession {ingested_insdc_accession} has been curated before "
-                "- do not know how to proceed"
-            ),
+        notification = (
+            f"Ingest: Sequence {corresponding_loculus_accession} with INSDC "
+            f"accession {ingested_insdc_accession} has been curated before "
+            "- do not know how to proceed"
         )
+        logger.warning(notification)
+        notify(update_manager.config, notification)
         update_manager.blocked["CURATION_ISSUE"][metadata_id] = corresponding_loculus_accession
         return update_manager
 
@@ -423,10 +424,7 @@ def main(
             " If this is not the case, this indicates a potential ingest error."
         )
         logger.warning(warning)
-        notify(
-            config,
-            warning,
-        )
+        notify(config, warning)
 
 
 if __name__ == "__main__":
