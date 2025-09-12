@@ -51,6 +51,8 @@ lineageSystemDefinitions:
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
   alternativeLineage:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
+  cchfS:
+    1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1691,11 +1693,11 @@ defaultOrganisms:
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade (L)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
         - name: "Nextclade (M)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M"
         - name: "Nextclade (S)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1711,6 +1713,7 @@ defaultOrganisms:
           autocomplete: true
           initiallyVisible: true
           includeInDownloadsByDefault: true
+          lineageSystem: cchfS
           preprocessing:
             args: 
               segment: S
@@ -1736,7 +1739,6 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           log_level: DEBUG
           nextclade_dataset_name: community/pathoplexus/cchfv
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
@@ -1746,7 +1748,6 @@ defaultOrganisms:
         segment_identification:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/anya-copy/data_output
     enaDeposition:
       configFile:
         taxon_id: 3052518
