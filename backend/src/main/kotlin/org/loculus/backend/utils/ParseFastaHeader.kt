@@ -26,7 +26,7 @@ class ParseFastaHeader(private val backendConfig: BackendConfig) {
                     " segment name in the format <$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES>_<segment name>",
             )
         }
-        val isolateId = submissionId.substring(0, lastDelimiter)
+        val isolateId = submissionId.take(lastDelimiter)
         val segmentId = submissionId.substring(lastDelimiter + 1)
         if (!validSegmentIds.contains(segmentId)) {
             throw BadRequestException(
