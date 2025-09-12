@@ -21,9 +21,20 @@ export class SearchPage {
     }
 
     async select(fieldLabel: string, option: string) {
-        await this.page.locator('label').filter({ hasText: fieldLabel }).click();
-        await this.page.getByRole('option', { name: new RegExp(option) }).click();
-        await this.page.waitForTimeout(500); // how can we better ensure that the filter is applied?
+        const combo = this.page.getByRole('combobox', { name: fieldLabel }).first();
+
+        await combo.click();
+
+        await combo.focus();
+        await combo.press('Control+a');
+        await combo.pressSequentially(option);
+
+        await this.page.waitForTimeout(500);
+
+        await this.page.getByRole('option').first().click({ timeout: 3000 });
+
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(200);
     }
 
     async clearSelect(fieldLabel: string) {
@@ -31,7 +42,7 @@ export class SearchPage {
     }
 
     async enableSearchFields(...fieldLabels: string[]) {
-        await this.page.getByRole('button', { name: 'Add Search Fields' }).click();
+        await this.page.getByRole('button', { name: 'Add search fields' }).click();
         for (const label of fieldLabels) {
             await this.page.getByRole('checkbox', { name: label, exact: true }).check();
         }
@@ -46,9 +57,16 @@ export class SearchPage {
     }
 
     async enterMutation(mutation: string) {
-        await this.page.getByPlaceholder('Mutations').click();
-        await this.page.getByLabel('Mutations').fill(mutation);
-        await this.page.getByRole('option', { name: mutation }).click();
+        const combo = this.page.getByRole('combobox', { name: 'Mutations' }).first();
+        await combo.click();
+        await combo.fill(mutation);
+
+        const optionRegex = new RegExp(`^${mutation}(\\([0-9,]+\\))?$`);
+        const matchingOption = this.page.getByRole('option', { name: optionRegex }).first();
+
+        await matchingOption.click({ timeout: 2000 });
+
+        await this.page.keyboard.press('Escape');
     }
 
     async enterAccessions(accessions: string) {
@@ -62,7 +80,7 @@ export class SearchPage {
     }
 
     async resetSearchForm() {
-        await this.page.getByRole('button', { name: 'reset' }).click();
+        await this.page.getByRole('button', { name: 'Reset' }).click();
     }
 
     async waitForLoculusId(timeout = 60000): Promise<string | null> {

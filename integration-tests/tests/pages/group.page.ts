@@ -86,7 +86,8 @@ export class GroupPage {
         const groupLink = this.page
             .locator('li')
             .filter({ hasText: groupData.name })
-            .getByRole('link');
+            .getByRole('link')
+            .first();
 
         let groupId: number | null | undefined;
 

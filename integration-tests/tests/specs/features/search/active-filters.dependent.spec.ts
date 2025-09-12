@@ -11,11 +11,18 @@ test.describe('Search', () => {
 
     test('country filter can be removed by clicking the X', async ({ page }) => {
         await searchPage.ebolaSudan();
+        await searchPage.resetSearchForm();
         await searchPage.select('Collection country', 'France');
-        await expect(page.getByText('Collection country:France')).toBeVisible();
-        await page.getByLabel('remove filter').click();
-        await expect(page.getByText('Collection country:France')).toBeHidden();
-        await expect(page.getByLabel('Collection country')).toBeEmpty();
+        await expect(page.getByText(/Collection country:\s*France/)).toBeVisible();
+
+        const filterChip = page.locator('text=/Collection country:\\s*France/').locator('..');
+        await filterChip.getByRole('button').click();
+
+        await expect(page.getByText(/Collection country:\s*France/)).toBeHidden();
+
+        const countryCombo = page.getByRole('combobox', { name: 'Collection country' }).first();
+        await expect(countryCombo).toHaveValue('');
+
         expect(new URL(page.url()).searchParams.size).toBe(0);
     });
 

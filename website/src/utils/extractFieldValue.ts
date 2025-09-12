@@ -1,0 +1,56 @@
+/**
+ * Validates that a parameter value is a single value (not an array) and returns it.
+ * Throws an error if the value is unexpectedly an array.
+ *
+ * @param value - The parameter value that might be a string, number, null, or array
+ * @param paramName - The name of the parameter (for error messages)
+ * @returns The single value, or empty string if null/undefined
+ * @throws Error if the value is an array when it shouldn't be
+ */
+export function validateSingleValue(
+    value: string | number | null | string[] | (string | null)[] | undefined,
+    paramName: string,
+): string | number {
+    if (Array.isArray(value)) {
+        throw new Error(
+            `Parameter "${paramName}" unexpectedly contains multiple values. ` +
+                `This parameter does not support multiple values. ` +
+                `Values: ${JSON.stringify(value)}`,
+        );
+    }
+    // Convert null/undefined to empty string for compatibility
+    if (value === null || value === undefined) {
+        return '';
+    }
+    return value;
+}
+
+/**
+ * Extracts an array of values from a field value.
+ * If the value is not an array, it wraps it in an array.
+ *
+ * @param value - The field value
+ * @returns An array of values
+ */
+export function extractArrayValue(value: string | number | null | string[] | (string | null)[] | undefined): string[] {
+    if (value === null || value === undefined || value === '') {
+        return [];
+    }
+    if (Array.isArray(value)) {
+        // Filter out nulls and convert to strings
+        return value.filter((v): v is string => v !== null).map(String);
+    }
+    return [String(value)];
+}
+
+/**
+ * Normalizes an array that may contain nulls to an array of strings,
+ * converting null values to NULL_QUERY_VALUE.
+ *
+ * @param array - Array that may contain nulls
+ * @param NULL_QUERY_VALUE - The string to use for null values
+ * @returns Array of strings with nulls converted to NULL_QUERY_VALUE
+ */
+export function normalizeArrayWithNulls(array: (string | null)[], nullQueryValue: string): string[] {
+    return array.map((val) => val ?? nullQueryValue);
+}

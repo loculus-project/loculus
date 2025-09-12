@@ -164,7 +164,7 @@ describe('DateRangeField', () => {
                 collectionDateRangeUpperTo: '2024-12-31',
             });
 
-            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null][]) => {
+            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null | string[]][]) => {
                 _setValues((state) => {
                     const newState = { ...state };
                     fieldValuesToSet.forEach(([k, v]) => (newState[k] = v));
