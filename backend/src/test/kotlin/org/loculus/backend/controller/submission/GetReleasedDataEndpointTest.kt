@@ -298,7 +298,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessionVersions)
         convenienceClient.extractUnprocessedData(pipelineVersion = 2)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 2)
-        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        submissionDatabaseService.runPipelineUpgradeIfPreproTableChanged()
         val response = submissionControllerClient.getReleasedData()
         val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBody.size, `is`(accessionVersions.size))
