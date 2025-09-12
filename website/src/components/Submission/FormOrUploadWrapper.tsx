@@ -5,7 +5,7 @@ import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 
@@ -63,10 +63,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     submissionDataTypes,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
-    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
+    const isMultiSegmented = getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(referenceGenomeSequenceNames.nucleotideSequences),
+        EditableSequences.fromSequenceNames(getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);

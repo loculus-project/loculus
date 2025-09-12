@@ -1,5 +1,6 @@
 import { sentenceCase } from 'change-case';
-import { err, Result } from 'neverthrow';
+import { err, ok, Result } from 'neverthrow';
+import z from 'zod';
 
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
@@ -11,16 +12,19 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
+import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 type GetTableDataResult = {
     data: TableDataEntry[];
+    suborganism: Suborganism;
     isRevocation: boolean;
 };
 
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
+    referenceGenomes: ReferenceGenomes,
     lapisClient: LapisClient,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
@@ -49,11 +53,62 @@ export async function getTableData(
                         aminoAcidInsertions: aminoAcidInsertions.data,
                     }),
                 )
-                .map((data) => ({
-                    data: toTableData(schema)(data),
-                    isRevocation: isRevocationEntry(data.details),
-                })),
+                .andThen((data) => {
+                    const suborganismResult = getSuborganism(data.details, schema, referenceGenomes, accessionVersion);
+                    if (suborganismResult.isErr()) {
+                        return err(suborganismResult.error);
+                    }
+
+                    return ok({
+                        data: toTableData(schema)(data),
+                        suborganism: suborganismResult.value,
+                        isRevocation: isRevocationEntry(data.details),
+                    });
+                }),
         );
+}
+
+function getSuborganism(
+    details: Details,
+    schema: Schema,
+    referenceGenomes: ReferenceGenomes,
+    accessionVersion: string,
+): Result<Suborganism, ProblemDetail> {
+    if (SINGLE_REFERENCE in referenceGenomes) {
+        return ok(SINGLE_REFERENCE);
+    }
+    const suborganismField = schema.suborganismIdentifierField;
+    if (suborganismField === undefined) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid configuration',
+            status: 0,
+            detail: `No 'suborganismIdentifierField' has been configured in the schema for organism ${schema.organismName}`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
+    const value = details[suborganismField];
+    const suborganismResult = z.string().safeParse(value);
+    if (!suborganismResult.success) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid suborganism field',
+            status: 0,
+            detail: `Value '${value}' of field '${suborganismField}' is not a valid string.`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
+    const suborganism = suborganismResult.data;
+    if (!(suborganism in referenceGenomes)) {
+        return err({
+            type: 'about:blank',
+            title: 'Invalid suborganism',
+            status: 0,
+            detail: `Suborganism '${suborganism}' (value of field '${suborganismField}') not found in reference genomes.`,
+            instance: '/seq/' + accessionVersion,
+        });
+    }
+    return ok(suborganism);
 }
 
 function isRevocationEntry(details: Details): boolean {
