@@ -63,7 +63,7 @@ describe('SequencesContainer', () => {
 
         click('Load sequences');
 
-        click('Aligned nucleotide sequence');
+        click('Reference-aligned nucleotide sequence');
         await waitFor(() => {
             expect(
                 screen.getByText(singleSegmentSequence, {
@@ -90,7 +90,7 @@ describe('SequencesContainer', () => {
 
         click('Load sequences');
 
-        click(`${multiSegmentName} (aligned)`);
+        click(`${multiSegmentName} (reference-aligned)`);
         await waitFor(() => {
             expect(
                 screen.getByText(multiSegmentSequence, {
