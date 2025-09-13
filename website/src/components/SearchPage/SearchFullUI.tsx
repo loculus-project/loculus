@@ -143,13 +143,22 @@ export const InnerSearchFullUI = ({
 
     useEffect(() => {
         if (previewedSeqId) {
-            const seqUrl = routes.sequenceEntryDetailsPage(previewedSeqId);
-            // Only push/replace state if we're not already on the sequence URL
-            if (!window.location.pathname.startsWith('/seq/')) {
-                if (previousSeqIdRef.current === null) {
-                    window.history.pushState({ seqPreview: true }, '', seqUrl);
-                } else {
-                    window.history.replaceState({ seqPreview: true }, '', seqUrl);
+            if (!previewHalfScreen) {
+                // Full-screen mode: Update URL to /seq/[id]
+                const seqUrl = routes.sequenceEntryDetailsPage(previewedSeqId);
+                // Only push/replace state if we're not already on the sequence URL
+                if (!window.location.pathname.startsWith('/seq/')) {
+                    if (previousSeqIdRef.current === null) {
+                        window.history.pushState({ seqPreview: true }, '', seqUrl);
+                    } else {
+                        window.history.replaceState({ seqPreview: true }, '', seqUrl);
+                    }
+                }
+            } else {
+                // Docked mode: Restore search URL if we're currently on /seq/
+                if (window.location.pathname.startsWith('/seq/')) {
+                    const searchUrl = routes.searchPage(organism) + window.location.search;
+                    window.history.replaceState(null, '', searchUrl);
                 }
             }
             previousSeqIdRef.current = previewedSeqId;
@@ -159,7 +168,7 @@ export const InnerSearchFullUI = ({
             window.history.replaceState(null, '', searchUrl);
             previousSeqIdRef.current = null;
         }
-    }, [previewedSeqId, organism]);
+    }, [previewedSeqId, organism, previewHalfScreen]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
