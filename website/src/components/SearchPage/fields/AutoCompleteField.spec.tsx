@@ -230,6 +230,37 @@ describe('AutoCompleteField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
     });
 
+    it('clears selection when text is deleted with the keyboard', async () => {
+        mockUseAggregated.mockReturnValue({
+            data: {
+                data: [{ testField: 'Option 1', count: 10 }],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
+        render(
+            <AutoCompleteField
+                field={field}
+                optionsProvider={{
+                    type: 'generic',
+                    lapisUrl,
+                    lapisSearchParameters,
+                    fieldName: field.name,
+                }}
+                setSomeFieldValues={setSomeFieldValues}
+                fieldValue='Option 1'
+            />,
+        );
+
+        const input = screen.getByLabelText('Test Field');
+        await userEvent.click(input);
+        await userEvent.clear(input);
+        await userEvent.type(input, '{backspace}');
+
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
+    });
+
     it('allows selecting blank option', async () => {
         mockUseAggregated.mockReturnValue({
             data: {

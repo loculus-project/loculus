@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
@@ -66,7 +67,7 @@ const createGenericOptionsHook = (
             )
             .map((it) => ({
                 option: it[fieldName] === null ? '(blank)' : it[fieldName].toString(),
-                value: it[fieldName] === null ? null : it[fieldName].toString(),
+                value: it[fieldName] === null ? NULL_QUERY_VALUE : it[fieldName].toString(),
                 count: it.count,
             }))
             .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
