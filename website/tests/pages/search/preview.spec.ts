@@ -21,6 +21,8 @@ test.describe('sequence preview url handling', () => {
         await expect(searchPage.page).toHaveURL(`${baseUrl}${routes.sequenceEntryDetailsPage(accessionVersion)}`);
 
         await page.goBack();
-        await expect(searchPage.page).toHaveURL(`${baseUrl}${routes.searchPage(dummyOrganism.key)}`);
+        await expect(searchPage.page).toHaveURL(
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${accessionVersion}`,
+        );
     });
 });
