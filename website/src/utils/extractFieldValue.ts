@@ -18,7 +18,6 @@ export function validateSingleValue(
                 `Values: ${JSON.stringify(value)}`,
         );
     }
-    // Convert null/undefined to empty string for compatibility
     if (value === null || value === undefined) {
         return '';
     }
@@ -39,7 +38,6 @@ export function extractArrayValue(
         return [];
     }
     if (Array.isArray(value)) {
-        // Keep nulls in the array, they will be handled by the component
         return value;
     }
     return [String(value)];
