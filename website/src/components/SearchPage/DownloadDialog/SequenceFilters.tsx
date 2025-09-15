@@ -91,7 +91,6 @@ export class FieldFilterSet implements SequenceFilter {
             Object.entries(this.fieldValues as Record<string, any>)
                 .filter(([, value]) => value !== undefined && value !== '')
                 .map(([key, value]) => {
-                    // Arrays and single values already have null values properly set
                     return [key, value];
                 })
                 .filter(([, value]) => value !== undefined),
@@ -191,13 +190,12 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     private filterValueDisplayString(fieldName: string, value: any): string | string[] {
-        // For multi-select values, return the array to let ActiveFilters handle it
+
         if (Array.isArray(value)) {
             if (value.every((v) => typeof v === 'string')) {
                 return value;
             }
 
-            // For other arrays, join with comma
             let stringified = value.join(', ');
             if (stringified.length > 40) {
                 stringified = `${stringified.substring(0, 37)}...`;
