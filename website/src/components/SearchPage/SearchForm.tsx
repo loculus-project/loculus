@@ -11,6 +11,7 @@ import { DateRangeField } from './fields/DateRangeField.tsx';
 import { LineageField } from './fields/LineageField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { SuborganismSelector } from './fields/SuborganismSelector.tsx';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
@@ -53,6 +54,7 @@ export const SearchForm = ({
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
+    const [selectedSuborganism, setSelectedSuborganism] = useState<string>('');
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
 
@@ -117,6 +119,10 @@ export const SearchForm = ({
                         setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
+                        <SuborganismSelector 
+                            value={selectedSuborganism}
+                            onChange={setSelectedSuborganism}
+                        />
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
