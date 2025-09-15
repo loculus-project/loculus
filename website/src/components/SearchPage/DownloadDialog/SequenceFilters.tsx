@@ -179,7 +179,7 @@ export class FieldFilterSet implements SequenceFilter {
         return new Map(
             Object.entries(this.fieldValues)
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
-                .map(([name, filterValue]): [string, [string, string | string[] | null]] => [
+                .map(([name, filterValue]): [string, [string, string | (string | null)[] | null]] => [
                     name,
                     [
                         this.filterSchema.getLabel(name),
@@ -189,17 +189,10 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    private filterValueDisplayString(fieldName: string, value: any): string | string[] {
+    private filterValueDisplayString(fieldName: string, value: any): string | (string | null)[] {
         if (Array.isArray(value)) {
-            if (value.every((v) => typeof v === 'string')) {
-                return value;
-            }
-
-            let stringified = value.join(', ');
-            if (stringified.length > 40) {
-                stringified = `${stringified.substring(0, 37)}...`;
-            }
-            return stringified;
+            // Preserve arrays (including nulls) so ActiveFilters can render them correctly
+            return value as (string | null)[];
         }
 
         let result = value;

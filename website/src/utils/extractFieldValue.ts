@@ -35,8 +35,12 @@ export function validateSingleValue(
 export function extractArrayValue(
     value: string | number | null | string[] | (string | null)[] | undefined,
 ): (string | null)[] {
-    if (value === null || value === undefined || value === '') {
+    if (value === undefined || value === '') {
         return [];
+    }
+    if (value === null) {
+        // Preserve explicit null selection as [null] for multi-select fields
+        return [null];
     }
     if (Array.isArray(value)) {
         // Keep nulls in the array, they will be handled by the component
