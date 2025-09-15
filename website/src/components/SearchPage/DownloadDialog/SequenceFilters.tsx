@@ -190,7 +190,6 @@ export class FieldFilterSet implements SequenceFilter {
     }
 
     private filterValueDisplayString(fieldName: string, value: any): string | string[] {
-
         if (Array.isArray(value)) {
             if (value.every((v) => typeof v === 'string')) {
                 return value;
