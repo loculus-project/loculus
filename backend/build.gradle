@@ -41,8 +41,8 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql:42.7.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12"
-    implementation "org.flywaydb:flyway-database-postgresql:11.11.2"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
+    implementation "org.flywaydb:flyway-database-postgresql:11.12.0"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:0.61.0"
     implementation "org.jetbrains.exposed:exposed-jdbc:0.61.0"
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
@@ -51,7 +51,7 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.6"
     implementation("io.minio:minio:8.5.17")
-    implementation("software.amazon.awssdk:s3:2.33.2")
+    implementation("software.amazon.awssdk:s3:2.33.4")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
