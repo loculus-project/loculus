@@ -33,7 +33,7 @@ type AutoCompleteFieldProps = {
     optionsProvider: OptionsProvider;
     setSomeFieldValues: SetSomeFieldValues;
     fieldValue?: string | number | null;
-    fieldValues?: string[];
+    fieldValues?: (string | null)[];
     maxDisplayedOptions?: number;
     multiSelect?: boolean;
 };
@@ -61,7 +61,8 @@ export const AutoCompleteField = ({
     // For multi-select mode, track selected values as a Set
     const selectedValues = useMemo(() => {
         if (multiSelect) {
-            return new Set<string>(fieldValues);
+            // Convert null values to NULL_QUERY_VALUE for internal representation
+            return new Set<string>(fieldValues.map((v) => v ?? NULL_QUERY_VALUE));
         } else {
             // Handle null values properly for single select
             if (fieldValue === null) {
@@ -89,9 +90,10 @@ export const AutoCompleteField = ({
 
     const handleChange = (value: string | string[] | null) => {
         if (!multiSelect) {
-            // Single-select mode - just set the value
-            const singleValue = Array.isArray(value) ? (value[0] ?? NULL_QUERY_VALUE) : (value ?? NULL_QUERY_VALUE);
-            setSomeFieldValues([field.name, singleValue]);
+            // Single-select mode - convert NULL_QUERY_VALUE to null
+            const singleValue = Array.isArray(value) ? value[0] : value;
+            const finalValue = singleValue === NULL_QUERY_VALUE ? null : (singleValue ?? '');
+            setSomeFieldValues([field.name, finalValue]);
             return;
         }
 
@@ -100,8 +102,9 @@ export const AutoCompleteField = ({
             if (value.length === 0) {
                 setSomeFieldValues([field.name, '']);
             } else {
-                // Keep values as strings, NULL_QUERY_VALUE is already a string
-                setSomeFieldValues([field.name, value]);
+                // Convert NULL_QUERY_VALUE to null for consistency
+                const convertedValues = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
+                setSomeFieldValues([field.name, convertedValues]);
             }
         }
     };
@@ -120,7 +123,7 @@ export const AutoCompleteField = ({
     // Convert selectedValues Set to array for multi-select Combobox value
     const multiSelectValue = useMemo(() => {
         if (!multiSelect) return undefined;
-        // Keep values as-is, including NULL_QUERY_VALUE as string
+        // selectedValues already has NULL_QUERY_VALUE for null items
         return Array.from(selectedValues);
     }, [multiSelect, selectedValues]);
 

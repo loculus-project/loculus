@@ -207,5 +207,7 @@ export type FieldValues = {
     mutation?: string;
     accession?: string;
 } & Record<string, string | number | null | string[] | (string | null)[]>;
-export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null | string[]][]) => void;
+export type SetSomeFieldValues = (
+    ...fieldValuesToSet: [string, string | number | null | string[] | (string | null)[]][]
+) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

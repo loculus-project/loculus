@@ -32,7 +32,7 @@ export interface SequenceFilter {
      * Return a map of keys to human-readable descriptions of the filters to apply.
      * null values are maintained as null.
      */
-    toDisplayStrings(): Map<string, [string, string | string[] | null]>;
+    toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]>;
 }
 
 /**
@@ -91,11 +91,7 @@ export class FieldFilterSet implements SequenceFilter {
             Object.entries(this.fieldValues as Record<string, any>)
                 .filter(([, value]) => value !== undefined && value !== '')
                 .map(([key, value]) => {
-                    // If it's an array, convert "_null_" strings back to null for the API
-                    if (Array.isArray(value)) {
-                        const converted = value.map((v) => (v === '_null_' ? null : v));
-                        return [key, converted];
-                    }
+                    // Arrays and single values already have null values properly set
                     return [key, value];
                 })
                 .filter(([, value]) => value !== undefined),
@@ -180,7 +176,7 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    public toDisplayStrings(): Map<string, [string, string | string[] | null]> {
+    public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
         return new Map(
             Object.entries(this.fieldValues)
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
@@ -274,7 +270,7 @@ export class SequenceEntrySelection implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string | string[] | null]> {
+    public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
         const seqs = Array.from(this.selectedSequences).sort();

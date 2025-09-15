@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { NULL_QUERY_VALUE } from '../../utils/search.ts';
 
 const MAX_URL_LENGTH = 2000; // Set a maximum URL length threshold
 
@@ -46,11 +47,13 @@ export default function useQueryAsState(defaultDict) {
                 if (Array.isArray(value)) {
                     // Handle arrays of values by adding multiple params with the same key
                     value.forEach(val => {
-                        urlParams.append(key, val);
+                        const urlValue = val === null ? NULL_QUERY_VALUE : val;
+                        urlParams.append(key, urlValue);
                     });
                 } else {
-                    // Handle single values
-                    urlParams.set(key, value);
+
+                    const urlValue = value === null ? NULL_QUERY_VALUE : value;
+                    urlParams.set(key, urlValue);
                 }
             }
             
@@ -78,10 +81,13 @@ export default function useQueryAsState(defaultDict) {
             for (const [key, value] of Object.entries(valueDict)) {
                 if (Array.isArray(value)) {
                     value.forEach(val => {
-                        urlParams.append(key, val);
+                        const urlValue = val === null ? NULL_QUERY_VALUE : val;
+                        urlParams.append(key, urlValue);
                     });
                 } else {
-                    urlParams.set(key, value);
+        
+                    const urlValue = value === null ? NULL_QUERY_VALUE : value;
+                    urlParams.set(key, urlValue);
                 }
             }
             

@@ -32,13 +32,15 @@ export function validateSingleValue(
  * @param value - The field value
  * @returns An array of values
  */
-export function extractArrayValue(value: string | number | null | string[] | (string | null)[] | undefined): string[] {
+export function extractArrayValue(
+    value: string | number | null | string[] | (string | null)[] | undefined,
+): (string | null)[] {
     if (value === null || value === undefined || value === '') {
         return [];
     }
     if (Array.isArray(value)) {
-        // Filter out nulls and convert to strings
-        return value.filter((v): v is string => v !== null).map(String);
+        // Keep nulls in the array, they will be handled by the component
+        return value;
     }
     return [String(value)];
 }

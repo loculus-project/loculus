@@ -18,8 +18,7 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                 // Check if value is an array (multi-select)
                 if (Array.isArray(value)) {
                     // Show as a single badge with first few items and count
-                    // Convert _null_ to (blank) for display
-                    const displayValues = value.map((v) => (v === '_null_' ? '(blank)' : v));
+                    const displayValues = value.map((v) => v ?? '(blank)');
 
                     let displayElement: ReactElement;
                     // Show items individually if less than 6, otherwise truncate

@@ -193,7 +193,7 @@ export const InnerSearchFullUI = ({
      * - If value is '' or null, it clears the field
      */
     const setSomeFieldValues = useCallback(
-        (...fieldValuesToSet: [string, string | number | null | string[]][]) => {
+        (...fieldValuesToSet: [string, string | number | null | string[] | (string | null)[]][]) => {
             setState((prev: any) => {
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {

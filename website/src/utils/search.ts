@@ -236,8 +236,7 @@ export class MetadataFilterSchema {
                 const value = queryState[field.name];
                 // Handle arrays (multi-select) and single values
                 if (Array.isArray(value)) {
-                    // For arrays, keep the values as-is (including NULL_QUERY_VALUE as string)
-                    values[field.name] = value;
+                    values[field.name] = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
                 } else {
                     values[field.name] = value === NULL_QUERY_VALUE ? null : value;
                 }

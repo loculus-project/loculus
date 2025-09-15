@@ -5,7 +5,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AutoCompleteField } from './AutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
-import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -258,7 +257,7 @@ describe('AutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         expect(options[0]).toHaveTextContent('(blank)(5)');
         await userEvent.click(options[0]);
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', NULL_QUERY_VALUE]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
     });
 
     it('shows at most a configured number of options', async () => {
@@ -507,7 +506,7 @@ describe('AutoCompleteField', () => {
             expect(options[0]).toHaveTextContent('(blank)(5)');
             await userEvent.click(options[0]);
 
-            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', [NULL_QUERY_VALUE]]);
+            expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', [null]]);
         });
 
         it('shows badges for selected options', () => {
