@@ -61,6 +61,19 @@ export class SearchPage {
         await accessionField.fill(accessions);
     }
 
+    async setCollectionDateRange(from: string, to: string = from) {
+        const fromInput = this.page.locator('input[name="collectionDateRangeLowerFrom"]');
+        const toInput = this.page.locator('input[name="collectionDateRangeUpperTo"]');
+
+        await fromInput.waitFor({ state: 'visible' });
+        await fromInput.fill(from);
+        await fromInput.press('Enter');
+
+        await toInput.waitFor({ state: 'visible' });
+        await toInput.fill(to);
+        await toInput.press('Enter');
+    }
+
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'reset' }).click();
     }

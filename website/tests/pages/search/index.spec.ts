@@ -1,5 +1,4 @@
 import { type Page, type Download } from '@playwright/test';
-import { DateTime } from 'luxon';
 
 import { routes } from '../../../src/routes/routes.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
@@ -11,15 +10,6 @@ interface PerformDownloadOptions {
 }
 
 test.describe('The search page', () => {
-    test('should find no data in the future', async ({ searchPage }) => {
-        const tomorrow = DateTime.now().plus({ days: 1 }).toISODate();
-
-        await searchPage.goto();
-        await searchPage.searchFor([{ name: 'dateFrom', filterValue: tomorrow }]);
-
-        await expect(searchPage.page.getByText('No data')).toBeVisible();
-    });
-
     test('should search one existing sequence entry by accession, then click it', async ({ searchPage }) => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
