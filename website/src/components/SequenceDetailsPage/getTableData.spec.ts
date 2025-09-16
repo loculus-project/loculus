@@ -1,10 +1,11 @@
-import { err } from 'neverthrow';
+import { err, Result } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { getTableData } from './getTableData.ts';
+import { getTableData, type GetTableDataResult } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
+import type { ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 import { type ReferenceGenomes, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
@@ -147,6 +148,20 @@ describe('getTableData', () => {
 
         const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
 
+        expectMutationDataMatches(result);
+    });
+
+    test('should return data of mutations for multi pathogen organism', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: multiPathogenNucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: multiPathogenAminoAcidMutations });
+
+        const result = await getTableData('accession', schema, multipleReferenceGenomes, lapisClient);
+
+        expectMutationDataMatches(result);
+    });
+
+    function expectMutationDataMatches(result: Result<GetTableDataResult, ProblemDetail>) {
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Substitutions',
@@ -160,21 +175,15 @@ describe('getTableData', () => {
                         segment: '',
                         mutations: [
                             {
-                                count: 0,
-                                mutation: 'T10A',
                                 mutationFrom: 'T',
                                 mutationTo: 'A',
                                 position: 10,
-                                proportion: 0,
                                 sequenceName: null,
                             },
                             {
-                                count: 0,
-                                mutation: 'C30G',
                                 mutationFrom: 'C',
                                 mutationTo: 'G',
                                 position: 30,
-                                proportion: 0,
                                 sequenceName: null,
                             },
                         ],
@@ -202,21 +211,15 @@ describe('getTableData', () => {
                         segment: 'gene1',
                         mutations: [
                             {
-                                count: 0,
-                                mutation: 'gene1:N10Y',
                                 mutationFrom: 'N',
                                 mutationTo: 'Y',
                                 position: 10,
-                                proportion: 0,
                                 sequenceName: 'gene1',
                             },
                             {
-                                count: 0,
-                                mutation: 'gene1:T30N',
                                 mutationFrom: 'T',
                                 mutationTo: 'N',
                                 position: 30,
-                                proportion: 0,
                                 sequenceName: 'gene1',
                             },
                         ],
@@ -232,30 +235,42 @@ describe('getTableData', () => {
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
-    });
+    }
 
     test('should return data of insertions', async () => {
         mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
         mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
         const result = await getTableData('accession', schema, singleReferenceGenomes, lapisClient);
+        expectInsertionsMatch(result);
+    });
 
+    test('should return data of insertions for multi pathogen', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: genome1 }] });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: multiPathogenNucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: multiPathogenAminoAcidInsertions });
+
+        const result = await getTableData('accession', schema, multipleReferenceGenomes, lapisClient);
+        expectInsertionsMatch(result);
+    });
+
+    function expectInsertionsMatch(result: Result<GetTableDataResult, ProblemDetail>) {
         const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: 'nucleotideInsertion1, nucleotideInsertion2',
+            value: 'ins_123:AAA, ins_456:GCT',
             header: nucleotideMutationsHeader,
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: 'aminoAcidInsertion1, aminoAcidInsertion2',
+            value: 'ins_gene1:123:AAA, ins_gene1:456:TTT',
             header: aminoAcidMutationsHeader,
             type: { kind: 'mutation' },
         });
-    });
+    }
 
     test('should map timestamps to human readable dates', async () => {
         mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
@@ -369,189 +384,163 @@ function toLapisEntry(entry: Record<string, unknown>, isRevocation = false) {
     };
 }
 
-const nucleotideMutations: MutationProportionCount[] = [
-    {
+const nucleotideMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    [
+        {
+            mutationFrom: 'T',
+            mutationTo: 'A',
+            position: 10,
+        },
+        {
+            mutationFrom: 'A',
+            mutationTo: '-',
+            position: 20,
+        },
+        {
+            mutationFrom: 'A',
+            mutationTo: '-',
+            position: 21,
+        },
+        {
+            mutationFrom: 'C',
+            mutationTo: 'G',
+            position: 30,
+        },
+        {
+            mutationFrom: 'G',
+            mutationTo: '-',
+            position: 40,
+        },
+        {
+            mutationFrom: 'C',
+            mutationTo: '-',
+            position: 41,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 42,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 39,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 43,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 44,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 45,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: '-',
+            position: 400,
+        },
+    ],
+    null,
+);
+
+const multiPathogenNucleotideMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    nucleotideMutations,
+    genome1,
+);
+
+const aminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    [
+        {
+            mutationFrom: 'N',
+            mutationTo: 'Y',
+            position: 10,
+        },
+        {
+            mutationFrom: 'R',
+            mutationTo: '-',
+            position: 20,
+        },
+        {
+            mutationFrom: 'R',
+            mutationTo: '-',
+            position: 21,
+        },
+        {
+            mutationFrom: 'N',
+            mutationTo: '-',
+            position: 22,
+        },
+        {
+            mutationFrom: 'P',
+            mutationTo: '-',
+            position: 23,
+        },
+        {
+            mutationFrom: 'T',
+            mutationTo: 'N',
+            position: 30,
+        },
+        {
+            mutationFrom: 'F',
+            mutationTo: '-',
+            position: 40,
+        },
+    ],
+    'gene1',
+);
+
+const multiPathogenAminoAcidMutations: MutationProportionCount[] = mutationProportionCountWithSequenceName(
+    aminoAcidMutations,
+    `${genome1}-gene1`,
+);
+
+function mutationProportionCountWithSequenceName(
+    mutations: Pick<MutationProportionCount, 'mutationTo' | 'mutationFrom' | 'position'>[],
+    sequenceName: string | null,
+): MutationProportionCount[] {
+    return mutations.map((mutation) => ({
+        ...mutation,
         count: 0,
         proportion: 0,
-        mutation: 'T10A',
-        mutationFrom: 'T',
-        mutationTo: 'A',
-        position: 10,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'A20-',
-        mutationFrom: 'A',
-        mutationTo: '-',
-        position: 20,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'A21-',
-        mutationFrom: 'A',
-        mutationTo: '-',
-        position: 21,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'C30G',
-        mutationFrom: 'C',
-        mutationTo: 'G',
-        position: 30,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'G40-',
-        mutationFrom: 'G',
-        mutationTo: '-',
-        position: 40,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'C41-',
-        mutationFrom: 'C',
-        mutationTo: '-',
-        position: 41,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T42-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 42,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T39-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 39,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T43-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 43,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T44-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 44,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T45-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 45,
-        sequenceName: null,
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'T400-',
-        mutationFrom: 'T',
-        mutationTo: '-',
-        position: 400,
-        sequenceName: null,
-    },
-];
-const aminoAcidMutations: MutationProportionCount[] = [
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:N10Y',
-        mutationFrom: 'N',
-        mutationTo: 'Y',
-        position: 10,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:R20-',
-        mutationFrom: 'R',
-        mutationTo: '-',
-        position: 20,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:R21-',
-        mutationFrom: 'R',
-        mutationTo: '-',
-        position: 21,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:N22-',
-        mutationFrom: 'N',
-        mutationTo: '-',
-        position: 22,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:P23-',
-        mutationFrom: 'P',
-        mutationTo: '-',
-        position: 23,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:T30N',
-        mutationFrom: 'T',
-        mutationTo: 'N',
-        position: 30,
-        sequenceName: 'gene1',
-    },
-    {
-        count: 0,
-        proportion: 0,
-        mutation: 'gene1:F40-',
-        mutationFrom: 'F',
-        mutationTo: '-',
-        position: 40,
-        sequenceName: 'gene1',
-    },
-];
+        mutation: `${sequenceName === null ? '' : `${sequenceName}:`}${mutation.mutationFrom}${mutation.position}${mutation.mutationTo}`,
+        sequenceName,
+    }));
+}
 
 const nucleotideInsertions = [
-    { count: 0, insertion: 'nucleotideInsertion1' },
-    { count: 0, insertion: 'nucleotideInsertion2' },
+    { count: 0, insertion: 'ins_123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: null },
+    { count: 0, insertion: 'ins_456:GCT', insertedSymbols: 'GCT', position: 456, sequenceName: null },
+];
+const multiPathogenNucleotideInsertions = [
+    { count: 0, insertion: `ins_${genome1}:123:AAA`, insertedSymbols: 'AAA', position: 123, sequenceName: genome1 },
+    { count: 0, insertion: `ins_${genome1}:456:GCT`, insertedSymbols: 'GCT', position: 456, sequenceName: genome1 },
 ];
 const aminoAcidInsertions = [
-    { count: 0, insertion: 'aminoAcidInsertion1' },
-    { count: 0, insertion: 'aminoAcidInsertion2' },
+    { count: 0, insertion: 'ins_gene1:123:AAA', insertedSymbols: 'AAA', position: 123, sequenceName: 'gene1' },
+    { count: 0, insertion: 'ins_gene1:456:TTT', insertedSymbols: 'TTT', position: 456, sequenceName: 'gene1' },
+];
+const multiPathogenAminoAcidInsertions = [
+    {
+        count: 0,
+        insertion: `ins_${genome1}-gene1:123:AAA`,
+        insertedSymbols: 'AAA',
+        position: 123,
+        sequenceName: `${genome1}-gene1`,
+    },
+    {
+        count: 0,
+        insertion: `ins_${genome1}-gene1:456:TTT`,
+        insertedSymbols: 'TTT',
+        position: 456,
+        sequenceName: `${genome1}-gene1`,
+    },
 ];
 
 const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
