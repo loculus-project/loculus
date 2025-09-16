@@ -52,13 +52,16 @@ export class SearchPage {
     }
 
     async enterAccessions(accessions: string) {
-        // Target the main accession textbox (avoid header/nav widgets)
-        const accessionField = this.page.getByRole('textbox', {
+        const accessionField = this.getAccessionField();
+        await accessionField.click();
+        await accessionField.fill(accessions);
+    }
+
+    getAccessionField() {
+        return this.page.getByRole('textbox', {
             name: 'Accession',
             exact: true,
         });
-        await accessionField.click();
-        await accessionField.fill(accessions);
     }
 
     async resetSearchForm() {
@@ -82,6 +85,30 @@ export class SearchPage {
 
     getSequenceRows() {
         return this.page.locator('[data-testid="sequence-row"]');
+    }
+
+    async getAccessionValues(count: number): Promise<string[]> {
+        const rows = this.getSequenceRows();
+        const availableRows = await rows.count();
+        const limit = Math.min(count, availableRows);
+        const accessions: string[] = [];
+
+        for (let index = 0; index < limit; index++) {
+            const text = await rows.nth(index).innerText();
+            const loculusAccessionMatch = text.match(/LOC_[A-Z0-9]+(?:\.[0-9]+)?/);
+
+            if (loculusAccessionMatch !== null) {
+                accessions.push(loculusAccessionMatch[0]);
+                continue;
+            }
+
+            const firstToken = text.trim().split(/\s+/)[0];
+            if (firstToken !== undefined && firstToken.length > 0) {
+                accessions.push(firstToken);
+            }
+        }
+
+        return accessions;
     }
 
     async clickOnSequence(rowIndex = 0) {
