@@ -32,7 +32,7 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented organism', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
-                    nucleotideSequences: ['segment1'],
+                    nucleotideSequences: ['main'],
                     genes: ['gene1'],
                     insdcAccessionFull: [],
                 },
@@ -41,7 +41,7 @@ describe('getSequenceNames', () => {
             const result = getSequenceNames(referenceGenomeSequenceNames, SINGLE_REFERENCE);
 
             expect(result).to.deep.equal({
-                nucleotideSegmentNames: [{ lapisName: 'segment1', label: 'segment1' }],
+                nucleotideSegmentNames: [{ lapisName: 'main', label: 'main' }],
                 genes: [{ lapisName: 'gene1', label: 'gene1' }],
                 isMultiSegmented: false,
             });
@@ -59,7 +59,7 @@ describe('getSequenceNames', () => {
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
-                    nucleotideSequences: ['segmentA'],
+                    nucleotideSequences: ['segmentA', 'segmentB'],
                     genes: ['geneA'],
                     insdcAccessionFull: [],
                 },
@@ -83,7 +83,7 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented suborganism', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
-                    nucleotideSequences: ['segment1'],
+                    nucleotideSequences: ['main'],
                     genes: ['gene1'],
                     insdcAccessionFull: [],
                 },
