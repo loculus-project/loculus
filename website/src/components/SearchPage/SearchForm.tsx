@@ -5,6 +5,7 @@ import { useState } from 'react';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
+import { SuborganismSelector } from './SuborganismSelector.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -118,6 +119,7 @@ export const SearchForm = ({
                         setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
+                        <SuborganismSelector referenceGenomesSequenceNames={referenceGenomesSequenceNames} />
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
