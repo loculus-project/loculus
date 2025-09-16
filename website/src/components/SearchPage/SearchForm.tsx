@@ -2,13 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
 
+import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
-import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
 import { LineageField } from './fields/LineageField.tsx';
+import { MultiChoiceAutoCompleteField } from './fields/MultiChoiceAutoCompleteField';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
@@ -18,7 +19,6 @@ import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { validateSingleValue, extractArrayValue } from '../../utils/extractFieldValue.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
@@ -214,9 +214,8 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 const fieldValuesArray = extractArrayValue(fieldValues[field.name]);
 
                 return (
-                    <AutoCompleteField
+                    <MultiChoiceAutoCompleteField
                         field={field}
-                        fieldValue='' // Not used in multi-select mode
                         fieldValues={fieldValuesArray}
                         setSomeFieldValues={setSomeFieldValues}
                         optionsProvider={{
@@ -225,7 +224,6 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                             lapisSearchParameters,
                             fieldName: field.name,
                         }}
-                        multiSelect={true} // Enable multi-select for all autocomplete fields for the moment - but we are currently keeping the functionality for single-select available in code
                     />
                 );
             }

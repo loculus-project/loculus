@@ -2,7 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { AutoCompleteField } from './AutoCompleteField';
+import { MultiChoiceAutoCompleteField } from './MultiChoiceAutoCompleteField';
+import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
 
@@ -50,7 +51,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -86,7 +87,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -116,7 +117,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -142,7 +143,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -173,7 +174,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -207,7 +208,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -239,7 +240,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -274,7 +275,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -311,7 +312,7 @@ describe('AutoCompleteField', () => {
             });
 
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -320,7 +321,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={[]}
                 />,
             );
@@ -348,7 +348,7 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -357,7 +357,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={['Option 1', 'Option 2']}
                 />,
             );
@@ -382,7 +381,7 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -391,7 +390,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={['Option 1', 'Option 2']}
                 />,
             );
@@ -415,7 +413,7 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -424,7 +422,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={['Option 1', 'Option 2']}
                 />,
             );
@@ -449,7 +446,7 @@ describe('AutoCompleteField', () => {
             });
 
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -458,7 +455,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={['Option 1', 'Option 2']}
                 />,
             );
@@ -485,7 +481,7 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -494,7 +490,7 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
+                    fieldValues={[]}
                 />,
             );
 
@@ -523,7 +519,7 @@ describe('AutoCompleteField', () => {
                 mutate: vi.fn(),
             });
             render(
-                <AutoCompleteField
+                <MultiChoiceAutoCompleteField
                     field={field}
                     optionsProvider={{
                         type: 'generic',
@@ -532,7 +528,6 @@ describe('AutoCompleteField', () => {
                         fieldName: field.name,
                     }}
                     setSomeFieldValues={setSomeFieldValues}
-                    multiSelect={true}
                     fieldValues={['Option 1', 'Option 3']}
                 />,
             );
