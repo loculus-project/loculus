@@ -29,7 +29,6 @@ export const MultiChoiceAutoCompleteField = ({
     fieldValues,
     maxDisplayedOptions = 1000,
 }: MultiChoiceAutoCompleteFieldProps) => {
-    const buttonRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
@@ -161,10 +160,7 @@ export const MultiChoiceAutoCompleteField = ({
                                     <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
                                 </button>
                             )}
-                            <ComboboxButton
-                                className='absolute inset-y-0 right-0 flex items-center pr-2'
-                                ref={buttonRef}
-                            >
+                            <ComboboxButton className='absolute inset-y-0 right-0 flex items-center pr-2'>
                                 <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
                             </ComboboxButton>
                         </FloatingLabelContainer>
