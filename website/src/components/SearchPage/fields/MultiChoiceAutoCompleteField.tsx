@@ -146,7 +146,10 @@ export const MultiChoiceAutoCompleteField = ({
                                     setIsFocused(true);
                                     load();
                                 }}
-                                onBlur={() => setIsFocused(false)}
+                                onBlur={() => {
+                                    setIsFocused(false);
+                                    setQuery('');
+                                }}
                                 placeholder=''
                                 aria-label={field.displayName ?? field.name}
                             />
