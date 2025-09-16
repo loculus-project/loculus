@@ -6,6 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
@@ -60,9 +61,11 @@ const MockSaveWrapper = ({
                 organism='foo'
                 setFileFactory={setFileFactory}
                 referenceGenomeSequenceNames={{
-                    nucleotideSequences: ['foo', 'bar'],
-                    genes: [],
-                    insdcAccessionFull: [],
+                    [SINGLE_REFERENCE]: {
+                        nucleotideSequences: ['foo', 'bar'],
+                        genes: [],
+                        insdcAccessionFull: [],
+                    },
                 }}
                 metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
                 submissionDataTypes={{

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { dataUseTermsHistoryEntry } from './backend.ts';
 import { schema } from './config.ts';
 import { parsedSequenceEntryHistoryEntrySchema } from './lapis.ts';
+import { suborganism } from './referencesGenomes.ts';
 import { serviceUrls } from './runtimeConfig.ts';
 import { tableDataEntrySchema } from '../components/SequenceDetailsPage/types.ts';
 
@@ -13,6 +14,7 @@ export const detailsJsonSchema = z.object({
     dataUseTermsHistory: z.array(dataUseTermsHistoryEntry),
     schema: schema,
     clientConfig: serviceUrls,
+    suborganism: suborganism,
     isRevocation: z.boolean(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
 });

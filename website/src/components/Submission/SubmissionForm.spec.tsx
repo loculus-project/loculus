@@ -8,7 +8,11 @@ import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import {
+    type ReferenceAccession,
+    type ReferenceGenomesSequenceNames,
+    SINGLE_REFERENCE,
+} from '../../types/referencesGenomes.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -45,9 +49,11 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [defaultAccession],
+    [SINGLE_REFERENCE]: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
 };
 
 function renderSubmissionForm({
