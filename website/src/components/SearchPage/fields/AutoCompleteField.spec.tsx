@@ -432,7 +432,7 @@ describe('AutoCompleteField', () => {
             expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', '']);
         });
 
-        it('deselects an option when clicking on already selected option', async () => {
+        it('deselects an option when X clicked', async () => {
             mockUseAggregated.mockReturnValue({
                 data: {
                     data: [
