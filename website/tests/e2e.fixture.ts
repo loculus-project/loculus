@@ -14,8 +14,6 @@ import { SearchPage } from './pages/search/search.page';
 import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
-import { GroupPage } from './pages/user/group/group.page.ts';
-import { UserPage } from './pages/user/userPage/userPage.ts';
 import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { backendApi } from '../src/services/backendApi.ts';
@@ -31,8 +29,6 @@ type E2EFixture = {
     submitPage: SubmitPage;
     reviewPage: ReviewPage;
     seqSetPage: SeqSetPage;
-    userPage: UserPage;
-    groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
@@ -225,12 +221,6 @@ export const test = base.extend<E2EFixture>({
     },
     reviewPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, ReviewPage, action);
-    },
-    userPage: async ({ page }, action) => {
-        await setupPageWithConsoleListener(page, UserPage, action);
-    },
-    groupPage: async ({ page }, action) => {
-        await setupPageWithConsoleListener(page, GroupPage, action);
     },
     seqSetPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, SeqSetPage, action);
