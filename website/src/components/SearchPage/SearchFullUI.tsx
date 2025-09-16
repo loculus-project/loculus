@@ -16,7 +16,13 @@ import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
+import {
+    type Schema,
+    type FieldValues,
+    type SequenceFlaggingConfig,
+    type SetSomeFieldValues,
+    type FieldValueUpdate,
+} from '../../types/config.ts';
 import type { LinkOut } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -192,8 +198,8 @@ export const InnerSearchFullUI = ({
      * - If value is an array, it sets multiple values for that field
      * - If value is '' or null, it clears the field
      */
-    const setSomeFieldValues = useCallback(
-        (...fieldValuesToSet: [string, string | number | null | string[] | (string | null)[]][]) => {
+    const setSomeFieldValues: SetSomeFieldValues = useCallback(
+        (...fieldValuesToSet: FieldValueUpdate[]) => {
             setState((prev: any) => {
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {

@@ -7,10 +7,9 @@
  * @returns The single value, or empty string if null/undefined
  * @throws Error if the value is an array when it shouldn't be
  */
-export function validateSingleValue(
-    value: string | number | null | string[] | (string | null)[] | undefined,
-    paramName: string,
-): string | number {
+import type { FieldValue } from '../types/config';
+
+export function validateSingleValue(value: FieldValue | undefined, paramName: string): string | number {
     if (Array.isArray(value)) {
         throw new Error(
             `Parameter "${paramName}" unexpectedly contains multiple values. ` +
@@ -31,9 +30,7 @@ export function validateSingleValue(
  * @param value - The field value
  * @returns An array of values
  */
-export function extractArrayValue(
-    value: string | number | null | string[] | (string | null)[] | undefined,
-): (string | null)[] {
+export function extractArrayValue(value: FieldValue | undefined): (string | null)[] {
     if (value === undefined || value === '') {
         return [];
     }
