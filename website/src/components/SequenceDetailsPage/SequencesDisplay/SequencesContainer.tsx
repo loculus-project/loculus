@@ -1,26 +1,25 @@
-import { type Dispatch, type FC, type SetStateAction, useState, useEffect } from 'react';
+import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
-import { SequencesViewer } from './SequenceViewer';
-import {
-    getFirstSequenceNames,
-    type NucleotideSegmentNames,
-    type ReferenceGenomesSequenceNames,
-} from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig';
+import { SequencesViewer } from './SequenceViewer.tsx';
+import { getSequenceNames, isMultiSegmented } from './getSequenceNames.tsx';
+import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../../types/referencesGenomes.ts';
+import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
     isUnalignedSequence,
+    type SequenceName,
     type SequenceType,
     unalignedSequenceSegment,
-} from '../../utils/sequenceTypeHelpers';
-import { BoxWithTabsTabBar, BoxWithTabsTab, BoxWithTabsBox } from '../common/BoxWithTabs.tsx';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
+} from '../../../utils/sequenceTypeHelpers.ts';
+import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
+import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
+    suborganism: Suborganism;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
@@ -29,12 +28,16 @@ type SequenceContainerProps = {
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     organism,
+    suborganism,
     accessionVersion,
     clientConfig,
     referenceGenomeSequenceNames,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSequences: nucleotideSegmentNames, genes } = getFirstSequenceNames(referenceGenomeSequenceNames);
+    const { nucleotideSegmentNames, genes, isMultiSegmented } = getSequenceNames(
+        referenceGenomeSequenceNames,
+        suborganism,
+    );
 
     const [loadSequences, setLoadSequences] = useState(false);
     useEffect(() => {
@@ -61,6 +64,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             sequenceType={sequenceType}
             setType={setSequenceType}
             genes={genes}
+            isMultiSegmented={isMultiSegmented}
         />
     );
 };
@@ -71,10 +75,11 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    nucleotideSegmentNames: NucleotideSegmentNames;
+    nucleotideSegmentNames: SequenceName[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
-    genes: string[];
+    genes: SequenceName[];
+    isMultiSegmented: boolean;
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
@@ -85,6 +90,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     genes,
     sequenceType,
     setType,
+    isMultiSegmented,
 }) => {
     const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
 
@@ -129,7 +135,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
                         sequenceType={sequenceType}
-                        isMultiSegmented={isMultiSegmented(nucleotideSegmentNames)}
+                        isMultiSegmented={isMultiSegmented}
                     />
                 ) : (
                     <div className='h-80'></div>
@@ -140,7 +146,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 };
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: NucleotideSegmentNames;
+    nucleotideSegmentNames: SequenceName[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
@@ -158,7 +164,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         const onlySegment = nucleotideSegmentNames[0];
         return (
             <BoxWithTabsTab
-                key={onlySegment}
+                key={onlySegment.lapisName}
                 isActive={isActive}
                 onClick={() => {
                     setType(unalignedSequenceSegment(onlySegment));
@@ -173,13 +179,13 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         <>
             {nucleotideSegmentNames.map((segmentName) => (
                 <BoxWithTabsTab
-                    key={segmentName}
+                    key={segmentName.lapisName}
                     isActive={isActive && isUnalignedSequence(sequenceType) && segmentName === sequenceType.name}
                     onClick={() => {
                         setType(unalignedSequenceSegment(segmentName));
                         setActiveTab('unaligned');
                     }}
-                    label={`${segmentName} (unaligned)`}
+                    label={`${segmentName.label} (unaligned)`}
                 />
             ))}
         </>
@@ -197,7 +203,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         const onlySegment = nucleotideSegmentNames[0];
         return (
             <BoxWithTabsTab
-                key={onlySegment}
+                key={onlySegment.lapisName}
                 isActive={isActive}
                 onClick={() => {
                     setType(alignedSequenceSegment(onlySegment));
@@ -212,13 +218,13 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
         <>
             {nucleotideSegmentNames.map((segmentName) => (
                 <BoxWithTabsTab
-                    key={segmentName}
+                    key={segmentName.lapisName}
                     isActive={isActive && isAlignedSequence(sequenceType) && segmentName === sequenceType.name}
                     onClick={() => {
                         setType(alignedSequenceSegment(segmentName));
                         setActiveTab('aligned');
                     }}
-                    label={`${segmentName} (aligned)`}
+                    label={`${segmentName.label} (aligned)`}
                 />
             ))}
         </>
@@ -226,34 +232,36 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 };
 
 type GeneDropdownProps = {
-    genes: string[];
+    genes: SequenceName[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
 };
 
 const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) => {
-    const selectedGene = isGeneSequence(sequenceType.name, sequenceType) ? sequenceType.name : '';
+    const selectedGene = isGeneSequence(sequenceType.name, sequenceType) ? sequenceType.name.label : '';
 
     return (
         <div className='mb-4'>
             <select
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
-                onChange={(e) => setType(geneSequence(e.target.value))}
+                onChange={(e) => {
+                    const label = e.target.value;
+                    const gene = genes.find((gene) => gene.label === label);
+                    if (gene !== undefined) {
+                        setType(geneSequence(gene));
+                    }
+                }}
             >
                 <option value='' disabled>
                     Select a gene
                 </option>
                 {genes.map((gene) => (
-                    <option key={gene} value={gene}>
-                        {gene}
+                    <option key={gene.label} value={gene.label}>
+                        {gene.label}
                     </option>
                 ))}
             </select>
         </div>
     );
 };
-
-function isMultiSegmented(nucleotideSegmentNames: string[]) {
-    return nucleotideSegmentNames.length > 1;
-}

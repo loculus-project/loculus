@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
-import { SequencesContainer } from './SequencesContainer';
+import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
@@ -72,6 +72,7 @@ export const SequenceDataUI: FC<Props> = ({
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
+                        suborganism={suborganism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}
