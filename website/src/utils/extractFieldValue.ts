@@ -46,11 +46,11 @@ export function extractArrayValue(value: FieldValue | undefined): (string | null
 
 /**
  * Normalizes an array that may contain nulls to an array of strings,
- * converting null values to NULL_QUERY_VALUE.
+ * converting null values to nullQueryValue.
  *
  * @param array - Array that may contain nulls
- * @param NULL_QUERY_VALUE - The string to use for null values
- * @returns Array of strings with nulls converted to NULL_QUERY_VALUE
+ * @param nullQueryValue - The string to use for null values
+ * @returns Array of strings with nulls converted to nullQueryValue
  */
 export function normalizeArrayWithNulls(array: (string | null)[], nullQueryValue: string): string[] {
     return array.map((val) => val ?? nullQueryValue);
