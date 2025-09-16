@@ -6,20 +6,19 @@ import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
-import { EditPage } from './pages/edit/edit.page';
-import { NavigationFixture } from './pages/navigation.fixture';
 import type { InstanceLogger } from '../src/logger.ts';
+import { EditPage } from './pages/edit/edit.page';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
-import { backendApi } from '../src/services/backendApi.ts';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
 import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
+import { backendApi } from '../src/services/backendApi.ts';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { ZodiosWrapperClient } from '../src/services/zodiosWrapperClient.ts';
 import { type DataUseTerms, type NewGroup, openDataUseTermsOption } from '../src/types/backend.ts';
@@ -36,7 +35,6 @@ type E2EFixture = {
     groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
-    navigationFixture: NavigationFixture;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
 };
 
@@ -242,9 +240,6 @@ export const test = base.extend<E2EFixture>({
     },
     editPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, EditPage, action);
-    },
-    navigationFixture: async ({ page }, action) => {
-        await action(new NavigationFixture(page));
     },
     loginAsTestUser: async ({ page }, action) => {
         await action(async () => authorize(page));
