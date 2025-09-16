@@ -11,7 +11,6 @@ import { EditPage } from './pages/edit/edit.page';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
-import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
 import { throwOnConsole } from './util/throwOnConsole.ts';
@@ -28,7 +27,6 @@ type E2EFixture = {
     sequencePage: SequencePage;
     submitPage: SubmitPage;
     reviewPage: ReviewPage;
-    seqSetPage: SeqSetPage;
     revisePage: RevisePage;
     editPage: EditPage;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
@@ -221,9 +219,6 @@ export const test = base.extend<E2EFixture>({
     },
     reviewPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, ReviewPage, action);
-    },
-    seqSetPage: async ({ page }, action) => {
-        await setupPageWithConsoleListener(page, SeqSetPage, action);
     },
     revisePage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, RevisePage, action);
