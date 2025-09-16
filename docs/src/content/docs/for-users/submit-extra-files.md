@@ -153,7 +153,7 @@ you can proceed to attach the file ID to your submission as described in the nex
 
 ### Attach file IDs to submission
 
-Now, you can follow the regular steps for [sequence submission](./submit-sequences), calling the `/<organism>/submit` endpoint.
+Now, you can follow the regular steps for [sequence submission](../submit-sequences/), calling the `/<organism>/submit` endpoint.
 But you add another parameter to the curl call:
 
 ```bash
