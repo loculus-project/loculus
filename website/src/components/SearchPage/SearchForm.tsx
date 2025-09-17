@@ -15,6 +15,7 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
+import { ACCESSION_FIELD } from '../../settings.ts';
 import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -59,7 +60,7 @@ export const SearchForm = ({
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
 
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter((filter) => filter.name !== 'accession') // Exclude accession field
+        .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
