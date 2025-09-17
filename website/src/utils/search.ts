@@ -58,8 +58,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
 export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
-        field.notSearchable !== undefined ? !field.notSearchable : true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable !== true;
     return getFieldOrColumnVisibilitiesFromQuery(
         schema,
         state,
