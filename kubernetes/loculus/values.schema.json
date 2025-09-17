@@ -798,6 +798,14 @@
       "type": ["string", "null"],
       "description": "A custom welcome message to be shown on the landing page"
     },
+    "groupCreationGuidelines": {
+      "groups": ["general"],
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Guidelines displayed on the group creation page"
+    },
     "additionalHeadHTML": {
       "groups": ["general"],
       "type": "string",
