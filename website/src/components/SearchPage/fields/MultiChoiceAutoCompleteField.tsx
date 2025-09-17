@@ -213,12 +213,11 @@ export const MultiChoiceAutoCompleteField = ({
                                             }
                                             value={option.value}
                                         >
-                                            {({ focus }) => {
-                                                const isSelected = selectedValues.has(option.value);
+                                            {({ focus, selected }) => {
                                                 return (
                                                     <>
                                                         <span
-                                                            className={`inline-block ${isSelected ? 'font-medium' : 'font-normal'} ${
+                                                            className={`inline-block ${selected ? 'font-medium' : 'font-normal'} ${
                                                                 option.option === '(blank)' ? 'italic' : ''
                                                             }`}
                                                         >
@@ -229,7 +228,7 @@ export const MultiChoiceAutoCompleteField = ({
                                                                 ({formatNumberWithDefaultLocale(option.count)})
                                                             </span>
                                                         )}
-                                                        {isSelected && (
+                                                        {selected && (
                                                             <span
                                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
                                                                     focus ? 'text-white' : 'text-blue-500'

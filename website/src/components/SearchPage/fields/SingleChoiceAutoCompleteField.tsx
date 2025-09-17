@@ -47,14 +47,6 @@ export const SingleChoiceAutoCompleteField = ({
     const hook = createOptionsProviderHook(optionsProvider);
     const { options, isLoading: isOptionListLoading, error, load } = hook();
 
-    // Selected value set for tick rendering
-    const selectedValues = useMemo(() => {
-        if (fieldValue === null) return new Set<string>([NULL_QUERY_VALUE]);
-        return fieldValue !== undefined && fieldValue !== ''
-            ? new Set<string>([fieldValue.toString()])
-            : new Set<string>();
-    }, [fieldValue]);
-
     useEffect(() => {
         if (error) {
             void logger.error(`Error while loading autocomplete options: ${error.message} - ${error.stack}`);
@@ -132,12 +124,11 @@ export const SingleChoiceAutoCompleteField = ({
                                             }
                                             value={option.value}
                                         >
-                                            {({ focus }) => {
-                                                const isSelected = selectedValues.has(option.value);
+                                            {({ focus, selected }) => {
                                                 return (
                                                     <>
                                                         <span
-                                                            className={`inline-block ${isSelected ? 'font-medium' : 'font-normal'} ${
+                                                            className={`inline-block ${selected ? 'font-medium' : 'font-normal'} ${
                                                                 option.option === '(blank)' ? 'italic' : ''
                                                             }`}
                                                         >
@@ -148,7 +139,7 @@ export const SingleChoiceAutoCompleteField = ({
                                                                 ({formatNumberWithDefaultLocale(option.count)})
                                                             </span>
                                                         )}
-                                                        {isSelected && (
+                                                        {selected && (
                                                             <span
                                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
                                                                     focus ? 'text-white' : 'text-blue-500'
