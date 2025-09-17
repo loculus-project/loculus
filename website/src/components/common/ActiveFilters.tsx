@@ -1,4 +1,4 @@
-import type { FC, ReactElement } from 'react';
+import type { FC, ReactNode } from 'react';
 import { Fragment } from 'react';
 
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
@@ -23,10 +23,14 @@ const Token = ({ text }: { text: string }) => (
 
 const normalize = (v: string | null | undefined) => v ?? '(blank)';
 
-function renderArrayValues(values: (string | null | undefined)[]): ReactElement {
+type ArrayFilterValuesProps = {
+    values: (string | null | undefined)[];
+};
+
+const ArrayFilterValues: FC<ArrayFilterValuesProps> = ({ values }) => {
     const normalized = values.map(normalize);
 
-    // Single value
+    // Render the single available value without punctuation.
     if (normalized.length === 1) {
         const only = normalized[0];
         return (
@@ -36,7 +40,7 @@ function renderArrayValues(values: (string | null | undefined)[]): ReactElement 
         );
     }
 
-    // Show all values if total is below threshold
+    // Show all values inline when the list is short.
     if (normalized.length < SHOW_ALL_THRESHOLD) {
         return (
             <span className='text-primary-900'>
@@ -50,7 +54,7 @@ function renderArrayValues(values: (string | null | undefined)[]): ReactElement 
         );
     }
 
-    // Truncate when at/above threshold: show first few + count
+    // Otherwise, truncate and display a summary of the remaining count.
     const shown = normalized.slice(0, MAX_SHOWN);
     const remaining = normalized.length - MAX_SHOWN;
 
@@ -65,9 +69,13 @@ function renderArrayValues(values: (string | null | undefined)[]): ReactElement 
             <span className='font-semibold'>… and {remaining} more</span>
         </span>
     );
-}
+};
 
-function renderSingleValue(value: string | null | undefined): ReactElement {
+type SingleFilterValueProps = {
+    value: string | null | undefined;
+};
+
+const SingleFilterValue: FC<SingleFilterValueProps> = ({ value }) => {
     if (value === '') {
         return <span className='text-primary-900 italic'>any</span>;
     }
@@ -75,20 +83,20 @@ function renderSingleValue(value: string | null | undefined): ReactElement {
         return <span className='text-primary-900 italic'>(blank)</span>;
     }
     return <span className='text-primary-900 font-semibold'>{value}</span>;
-}
+};
 
 type BadgeProps = {
     label: string;
-    content: ReactElement;
     showX: boolean;
     onRemove?: () => void;
     ariaLabel: string;
+    children: ReactNode;
 };
 
-const Badge: FC<BadgeProps> = ({ label, content, showX, onRemove, ariaLabel }) => (
+const Badge: FC<BadgeProps> = ({ label, showX, onRemove, ariaLabel, children }) => (
     <div className={BADGE_CLASSES}>
         <span className='text-primary-900 font-light pr-1'>{label}:</span>
-        {content}
+        {children}
         {showX ? (
             <button aria-label={ariaLabel} className='inline ml-2 mt-0.5 pr-2' onClick={onRemove}>
                 <MaterialSymbolsClose className='w-3 h-4 text-primary-600' />
@@ -113,11 +121,12 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                         <Badge
                             key={key}
                             label={label}
-                            content={renderArrayValues(value)}
                             showX={showXButton}
                             onRemove={showXButton ? () => removeFilter(key) : undefined}
                             ariaLabel={`remove ${label} filter`}
-                        />
+                        >
+                            <ArrayFilterValues values={value} />
+                        </Badge>
                     );
                 }
 
@@ -125,11 +134,12 @@ export const ActiveFilters: FC<ActiveFiltersProps> = ({ sequenceFilter, removeFi
                     <Badge
                         key={key}
                         label={label}
-                        content={renderSingleValue(value)}
                         showX={showXButton}
                         onRemove={showXButton ? () => removeFilter(key) : undefined}
                         ariaLabel='remove filter'
-                    />
+                    >
+                        <SingleFilterValue value={value} />
+                    </Badge>
                 );
             })}
         </div>
