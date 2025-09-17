@@ -1,11 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AutoCompleteField } from './AutoCompleteField';
+import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import { type MetadataFilter } from '../../../types/config.ts';
-import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import type { MetadataFilter } from '../../../types/config.ts';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -15,7 +14,7 @@ vi.mock('../../../clientLogger.ts', () => ({
 }));
 
 const mockUseAggregated = vi.fn();
-// @ts-expect-error because mockReturnValue is not defined in the type definition
+// @ts-expect-error mock implementation for test double
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
     zodiosHooks: {
@@ -23,7 +22,7 @@ lapisClientHooks.mockReturnValue({
     },
 });
 
-describe('AutoCompleteField', () => {
+describe('SingleChoiceAutoCompleteField', () => {
     const field: MetadataFilter = {
         name: 'testField',
         displayName: 'Test Field',
@@ -36,6 +35,7 @@ describe('AutoCompleteField', () => {
 
     beforeEach(() => {
         setSomeFieldValues.mockClear();
+        mockUseAggregated.mockReset();
     });
 
     it('renders input and shows all options on empty input', async () => {
@@ -51,7 +51,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -87,7 +87,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -109,7 +109,7 @@ describe('AutoCompleteField', () => {
         expect(options[0]).toHaveTextContent('Option 2(20)');
     });
 
-    it('displays loading state when aggregated endpoint is in isLoading state', async () => {
+    it('displays loading state when aggregated endpoint is loading', async () => {
         mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: true,
@@ -117,7 +117,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -135,7 +135,7 @@ describe('AutoCompleteField', () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
-    it('displays error message when aggregated returns an error', async () => {
+    it('displays fallback when aggregated endpoint returns an error', async () => {
         mockUseAggregated.mockReturnValue({
             data: null,
             isLoading: false,
@@ -143,7 +143,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -161,7 +161,7 @@ describe('AutoCompleteField', () => {
         expect(screen.getByText('No options available')).toBeInTheDocument();
     });
 
-    it('calls setAFieldValue, when an option is selected', async () => {
+    it('calls setSomeFieldValues when an option is selected', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
@@ -174,7 +174,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -195,7 +195,7 @@ describe('AutoCompleteField', () => {
         expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', 'Option 1']);
     });
 
-    it('clears input value on clear button click', async () => {
+    it('clears input value when clear button is clicked', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
@@ -208,7 +208,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -240,7 +240,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
@@ -258,10 +258,10 @@ describe('AutoCompleteField', () => {
         const options = await screen.findAllByRole('option');
         expect(options[0]).toHaveTextContent('(blank)(5)');
         await userEvent.click(options[0]);
-        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', NULL_QUERY_VALUE]);
+        expect(setSomeFieldValues).toHaveBeenCalledWith(['testField', null]);
     });
 
-    it('shows at most a configured number of options', async () => {
+    it('limits the number of displayed options', async () => {
         const data = [];
         for (let i = 0; i < 100; i++) {
             data.push({ testField: `Option ${i}`, count: 10 });
@@ -275,7 +275,7 @@ describe('AutoCompleteField', () => {
             mutate: vi.fn(),
         });
         render(
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'generic',
