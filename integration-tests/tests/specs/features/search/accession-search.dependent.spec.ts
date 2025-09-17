@@ -42,7 +42,7 @@ test.describe('Search by accession', () => {
         await expect(page.getByText('Amino acid mutations')).toBeVisible();
     });
 
-    test('filters multiple accession inputs at once', async ({ page }) => {
+    test('filters multiple accession inputs at once', async () => {
         await searchPage.ebolaSudan();
         await expect(searchPage.getSequenceRows().first()).toBeVisible();
 
