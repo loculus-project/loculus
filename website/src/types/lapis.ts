@@ -19,7 +19,7 @@ export const lapisBaseRequest = z
         fields: z.array(z.string()).optional(),
         orderBy: z.array(orderBy).optional(),
     })
-    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string())]));
+    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string().nullable())]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });

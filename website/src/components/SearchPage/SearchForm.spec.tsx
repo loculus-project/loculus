@@ -90,7 +90,8 @@ describe('SearchForm', () => {
     it('renders without crashing', () => {
         renderSearchForm();
         expect(screen.getByText('Field 1')).toBeInTheDocument();
-        expect(screen.getByText('Field 3')).toBeInTheDocument();
+        // For multi-select autocomplete fields, the label is in aria-label
+        expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
     });
 
     it('handles field value changes', async () => {

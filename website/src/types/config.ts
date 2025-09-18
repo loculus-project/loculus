@@ -212,9 +212,12 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
+export type FieldValue = string | number | null | string[] | (string | null)[];
+export type FieldValueUpdate = [string, FieldValue];
+
 export type FieldValues = {
     mutation?: string;
     accession?: string;
-} & Record<string, string | number | null>;
-export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
+} & Record<string, FieldValue>;
+export type SetSomeFieldValues = (...fieldValuesToSet: FieldValueUpdate[]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

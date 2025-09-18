@@ -16,7 +16,13 @@ import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
+import {
+    type Schema,
+    type FieldValues,
+    type SequenceFlaggingConfig,
+    type SetSomeFieldValues,
+    type FieldValueUpdate,
+} from '../../types/config.ts';
 import type { LinkOut } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -52,7 +58,7 @@ export interface InnerSearchFullUIProps {
 }
 
 interface QueryState {
-    [key: string]: string;
+    [key: string]: string | string[];
 }
 
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
@@ -188,9 +194,12 @@ export const InnerSearchFullUI = ({
     /**
      * Update field values (query parameters).
      * If value is '' or null, the query parameter is unset.
+     * For multi-select fields, we handle fieldValuesToSet as an array where:
+     * - If value is an array, it sets multiple values for that field
+     * - If value is '' or null, it clears the field
      */
-    const setSomeFieldValues = useCallback(
-        (...fieldValuesToSet: [string, string | number | null][]) => {
+    const setSomeFieldValues: SetSomeFieldValues = useCallback(
+        (...fieldValuesToSet: FieldValueUpdate[]) => {
             setState((prev: any) => {
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {
@@ -202,6 +211,13 @@ export const InnerSearchFullUI = ({
                             // we can delete keys that are not in the hiddenFieldValues
                             delete newState[key];
                         }
+                    } else if (Array.isArray(value)) {
+                        // Handle array values for multi-select
+                        if (value.length === 0) {
+                            delete newState[key];
+                        } else {
+                            newState[key] = value;
+                        }
                     } else {
                         newState[key] = value;
                     }
@@ -210,12 +226,17 @@ export const InnerSearchFullUI = ({
             });
             setPage(1);
         },
-        [setState, setPage],
+        [setState, setPage, hiddenFieldValues],
     );
 
     const removeFilter = (metadataFilterName: string) => {
         if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
-            setSomeFieldValues([metadataFilterName, hiddenFieldValues[metadataFilterName]]);
+            const hiddenValue = hiddenFieldValues[metadataFilterName];
+            // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
+            const valueToSet = Array.isArray(hiddenValue)
+                ? (hiddenValue.filter((v): v is string => v !== null) as string[])
+                : hiddenValue;
+            setSomeFieldValues([metadataFilterName, valueToSet]);
         } else {
             setSomeFieldValues([metadataFilterName, null]);
         }
