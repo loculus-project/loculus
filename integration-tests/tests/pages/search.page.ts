@@ -29,9 +29,12 @@ export class SearchPage {
         await combo.press('Control+a');
         await combo.pressSequentially(option);
 
-        await this.page.waitForTimeout(500);
+        const optionLocator = this.page
+            .getByRole('option', { name: new RegExp(`^${option}`) })
+            .first();
 
-        await this.page.getByRole('option').first().click({ timeout: 3000 });
+        await expect(optionLocator).toBeVisible({ timeout: 5000 });
+        await optionLocator.click();
 
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
@@ -75,12 +78,14 @@ export class SearchPage {
             name: 'Accession',
             exact: true,
         });
+        await expect(accessionField).toBeEnabled({ timeout: 30000 });
         await accessionField.click();
         await accessionField.fill(accessions);
     }
 
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'Reset' }).click();
+        await this.waitForResults();
     }
 
     async waitForLoculusId(timeout = 60000): Promise<string | null> {
@@ -100,6 +105,53 @@ export class SearchPage {
 
     getSequenceRows() {
         return this.page.locator('[data-testid="sequence-row"]');
+    }
+
+    async waitForResults() {
+        await expect(this.getSequenceRows().first()).toBeVisible({ timeout: 30000 });
+    }
+
+    async getAccessionFromRow(rowIndex: number): Promise<string> {
+        const row = this.getSequenceRows().nth(rowIndex);
+        await expect(row, 'Expected at least one sequence row to be visible').toBeVisible({
+            timeout: 30000,
+        });
+
+        const rowText = await row.innerText();
+        const accessionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+
+        expect(accessionMatch, 'Failed to extract accession from sequence row').not.toBeNull();
+
+        return accessionMatch[0];
+    }
+
+    async getAccessions(count: number): Promise<string[]> {
+        const accessions: string[] = [];
+        for (let index = 0; index < count; index++) {
+            const accession = await this.getAccessionFromRow(index);
+            accessions.push(accession);
+        }
+
+        return accessions;
+    }
+
+    async getCellText(rowIndex: number, cellIndex: number): Promise<string> {
+        const row = this.getSequenceRows().nth(rowIndex);
+        await expect(row, 'Expected the requested row to be visible').toBeVisible({
+            timeout: 30000,
+        });
+
+        const cell = row.locator('td').nth(cellIndex);
+        await expect(cell, 'Expected the requested cell to be visible').toBeVisible({
+            timeout: 30000,
+        });
+
+        return (await cell.innerText()).trim();
+    }
+
+    async getCountryFromRow(rowIndex: number): Promise<string> {
+        // The "Collection country" column is currently the fourth cell (index 3)
+        return this.getCellText(rowIndex, 3);
     }
 
     async clickOnSequence(rowIndex = 0) {
