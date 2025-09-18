@@ -6,11 +6,12 @@ import { Tooltip } from 'react-tooltip';
 import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
-import type { Metadatum, OrderBy } from '../../types/lapis.ts';
+import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
+
 const MAX_TOOLTIP_LENGTH = 150;
 
 export type TableSequenceData = {
@@ -40,7 +41,7 @@ type TableProps = {
     setPreviewedSeqId: (seqId: string | null) => void;
     orderBy: OrderBy;
     setOrderByField: (field: string) => void;
-    setOrderDirection: (direction: 'ascending' | 'descending') => void;
+    setOrderDirection: (direction: OrderDirection) => void;
     columnsToShow: string[];
 };
 

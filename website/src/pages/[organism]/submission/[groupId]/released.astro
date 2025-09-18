@@ -39,7 +39,7 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
 
 const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-    [GROUP_ID_FIELD]: group.groupId,
+    [GROUP_ID_FIELD]: String(group.groupId),
 };
 
 const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());

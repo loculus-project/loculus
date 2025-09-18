@@ -10,35 +10,36 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import useQueryAsState from './useQueryAsState.js';
+import useQueryAsState, { type QueryState } from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
+import type { LinkOut } from '../../types/config.ts';
 import {
-    type Schema,
     type FieldValues,
+    type FieldValueUpdate,
+    type Schema,
     type SequenceFlaggingConfig,
     type SetSomeFieldValues,
-    type FieldValueUpdate,
 } from '../../types/config.ts';
-import type { LinkOut } from '../../types/config.ts';
-import { type OrderBy } from '../../types/lapis.ts';
+import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
+    COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
-    VISIBILITY_PREFIX,
-    COLUMN_VISIBILITY_PREFIX,
     MetadataFilterSchema,
+    NULL_QUERY_VALUE,
+    VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -57,10 +58,6 @@ export interface InnerSearchFullUIProps {
     linkOuts?: LinkOut[];
 }
 
-interface QueryState {
-    [key: string]: string | string[];
-}
-
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
     const sequenceCount = totalSequences ?? oldCount ?? initialCount;
 
@@ -70,7 +67,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
@@ -139,12 +136,12 @@ export const InnerSearchFullUI = ({
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 
-    let orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    let orderByField = state.orderBy ?? schema.defaultOrderBy;
     if (!columnsToShow.includes(orderByField)) {
         orderByField = schema.primaryKey;
     }
 
-    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+    const orderDirection = state.order ?? schema.defaultOrder;
 
     const page = parseInt(state.page ?? '1', 10);
 
@@ -174,7 +171,7 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const setOrderDirection = (direction: string) => {
+    const setOrderDirection = (direction: OrderDirection) => {
         setState((prev: QueryState) => ({
             ...prev,
             order: direction,
@@ -200,7 +197,7 @@ export const InnerSearchFullUI = ({
      */
     const setSomeFieldValues: SetSomeFieldValues = useCallback(
         (...fieldValuesToSet: FieldValueUpdate[]) => {
-            setState((prev: any) => {
+            setState((prev: QueryState) => {
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
@@ -216,7 +213,7 @@ export const InnerSearchFullUI = ({
                         if (value.length === 0) {
                             delete newState[key];
                         } else {
-                            newState[key] = value;
+                            newState[key] = value.map((v) => v ?? NULL_QUERY_VALUE);
                         }
                     } else {
                         newState[key] = value;
@@ -234,7 +231,7 @@ export const InnerSearchFullUI = ({
             const hiddenValue = hiddenFieldValues[metadataFilterName];
             // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
             const valueToSet = Array.isArray(hiddenValue)
-                ? (hiddenValue.filter((v): v is string => v !== null) as string[])
+                ? hiddenValue.filter((v): v is string => v !== null)
                 : hiddenValue;
             setSomeFieldValues([metadataFilterName, valueToSet]);
         } else {
@@ -243,7 +240,7 @@ export const InnerSearchFullUI = ({
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => {
+        setState((prev: QueryState) => {
             const newState = { ...prev };
             const key = `${VISIBILITY_PREFIX}${fieldName}`;
             const metadataField = schema.metadata.find((field) => {
@@ -270,7 +267,7 @@ export const InnerSearchFullUI = ({
     };
 
     const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => {
+        setState((prev: QueryState) => {
             const newState = { ...prev };
             const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
             const defaultVisible = schema.tableColumns.includes(fieldName);

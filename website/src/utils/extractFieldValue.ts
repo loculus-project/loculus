@@ -9,7 +9,7 @@
  */
 import type { FieldValue } from '../types/config';
 
-export function validateSingleValue(value: FieldValue | undefined, paramName: string): string | number {
+export function validateSingleValue(value: FieldValue | undefined, paramName: string): string {
     if (Array.isArray(value)) {
         throw new Error(
             `Parameter "${paramName}" unexpectedly contains multiple values. ` +
@@ -41,7 +41,7 @@ export function extractArrayValue(value: FieldValue | undefined): (string | null
     if (Array.isArray(value)) {
         return value;
     }
-    return [String(value)];
+    return [value];
 }
 
 /**

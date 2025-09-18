@@ -2,6 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
 import type { TableSequenceData } from '../components/SearchPage/Table';
+import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import type {
     FieldValues,
     GroupedMetadataFilter,
@@ -30,7 +31,7 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
-    state: Record<string, string | string[]>,
+    state: QueryState,
     visibilityPrefix: string,
     initiallyVisibleAccessor: InitialVisibilityAccessor,
     visibilitySelectableAccessor: VisiblitySelectableAccessor,
@@ -59,10 +60,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
     return visibilities;
 };
 
-export const getFieldVisibilitiesFromQuery = (
-    schema: Schema,
-    state: Record<string, string | string[]>,
-): Map<string, boolean> => {
+export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
     const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable !== true;
     return getFieldOrColumnVisibilitiesFromQuery(
@@ -74,10 +72,7 @@ export const getFieldVisibilitiesFromQuery = (
     );
 };
 
-export const getColumnVisibilitiesFromQuery = (
-    schema: Schema,
-    state: Record<string, string | string[]>,
-): Map<string, boolean> => {
+export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     const isFieldSelectable: VisiblitySelectableAccessor = (field) => !(field.hideInSearchResultsTable ?? false);
     return getFieldOrColumnVisibilitiesFromQuery(
@@ -225,20 +220,18 @@ export class MetadataFilterSchema {
      * @param queryState the key-values set in the URL.
      * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
      */
-    public getFieldValuesFromQuery(
-        queryState: Record<string, string | string[]>,
-        hiddenFieldValues: FieldValues,
-    ): FieldValues {
+    public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
-            if (field.name in queryState) {
-                const value = queryState[field.name];
-                // Handle arrays (multi-select) and single values
-                if (Array.isArray(value)) {
-                    values[field.name] = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
-                } else {
-                    values[field.name] = value === NULL_QUERY_VALUE ? null : value;
-                }
+            const value = queryState[field.name];
+            if (value === undefined) {
+                continue;
+            }
+            // Handle arrays (multi-select) and single values
+            if (Array.isArray(value)) {
+                values[field.name] = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
+            } else {
+                values[field.name] = value === NULL_QUERY_VALUE ? null : value;
             }
         }
         // Handle special fields - these must be single values
