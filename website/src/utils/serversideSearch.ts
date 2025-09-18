@@ -28,12 +28,12 @@ export const performLapisSearchQueries = async (
 
     // Extract single-value parameters using validation
     const orderByField =
-        ORDER_KEY in state ? String(validateSingleValue(state[ORDER_KEY], ORDER_KEY)) : schema.defaultOrderBy;
+        ORDER_KEY in state ? validateSingleValue(state[ORDER_KEY], ORDER_KEY) : schema.defaultOrderBy;
     const orderDirection =
         ORDER_DIRECTION_KEY in state
-            ? String(validateSingleValue(state[ORDER_DIRECTION_KEY], ORDER_DIRECTION_KEY))
+            ? validateSingleValue(state[ORDER_DIRECTION_KEY], ORDER_DIRECTION_KEY)
             : schema.defaultOrder;
-    const pageParam = PAGE_KEY in state ? String(validateSingleValue(state[PAGE_KEY], PAGE_KEY)) : '';
+    const pageParam = PAGE_KEY in state ? validateSingleValue(state[PAGE_KEY], PAGE_KEY) : '';
     const page = pageParam ? parseInt(pageParam, 10) : 1;
 
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);

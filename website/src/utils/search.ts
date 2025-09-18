@@ -54,7 +54,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
     for (const key of visibilityKeys) {
         // Visibility values must always be single strings
-        const stringValue = String(validateSingleValue(state[key], key));
+        const stringValue = validateSingleValue(state[key], key);
         visibilities.set(key.slice(visibilityPrefix.length), stringValue === 'true');
     }
     return visibilities;
@@ -237,11 +237,11 @@ export class MetadataFilterSchema {
         // Handle special fields - these must be single values
         if ('accession' in queryState) {
             const val = validateSingleValue(queryState.accession, 'accession');
-            values.accession = val === '' ? undefined : String(val);
+            values.accession = val === '' ? undefined : val;
         }
         if ('mutation' in queryState) {
             const val = validateSingleValue(queryState.mutation, 'mutation');
-            values.mutation = val === '' ? undefined : String(val);
+            values.mutation = val === '' ? undefined : val;
         }
         return values;
     }
