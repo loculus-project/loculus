@@ -1,4 +1,4 @@
-import { type FC, useMemo } from 'react';
+import { type FC, useId, useMemo } from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
@@ -25,6 +25,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     selectedSuborganism,
     setSelectedSuborganism,
 }) => {
+    const selectId = useId();
     const suborganismNames = Object.keys(referenceGenomesSequenceNames);
     const isSinglePathogen = suborganismNames.length < 2;
 
@@ -48,9 +49,12 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
 
     return (
         <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
-            <label className='block text-xs font-semibold text-gray-700 mb-1'>{label}</label>
+            <label className='block text-xs font-semibold text-gray-700 mb-1' htmlFor={selectId}>
+                {label}
+            </label>
             <div className='relative'>
                 <select
+                    id={selectId}
                     value={selectedSuborganism ?? ''}
                     onChange={(e) => setSelectedSuborganism(e.target.value)}
                     className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
