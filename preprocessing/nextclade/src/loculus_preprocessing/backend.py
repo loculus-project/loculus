@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 import jwt
 import pytz
 import requests
+import random
 
 from .config import Config
 from .datatypes import (
@@ -24,6 +25,60 @@ from .datatypes import (
 from .processing_functions import trim_ns
 
 logger = logging.getLogger(__name__)
+
+
+def retry_with_exponential_backoff(func, config, max_attempts=None):
+    """
+    Retry a function with exponential backoff on timeout or connection errors.
+    
+    Args:
+        func: Function to retry
+        config: Config object with retry settings
+        max_attempts: Override for config.backend_retry_attempts
+    
+    Returns:
+        Result of successful function call
+    
+    Raises:
+        Last exception if all attempts fail
+    """
+    max_attempts = max_attempts or config.backend_retry_attempts
+    initial_wait = config.backend_retry_initial_wait
+    max_wait = config.backend_retry_max_wait
+    multiplier = config.backend_retry_multiplier
+    
+    last_exception = None
+    
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return func()
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_exception = e
+            
+            if attempt == max_attempts:
+                # This is the last attempt, don't sleep and re-raise
+                logger.error(
+                    f"Backend request failed after {max_attempts} attempts over "
+                    f"approximately {initial_wait * (multiplier ** max_attempts - 1) / (multiplier - 1):.1f} seconds. "
+                    f"Final error: {type(e).__name__}: {e}"
+                )
+                raise
+            
+            # Calculate wait time with exponential backoff and jitter
+            wait_time = min(initial_wait * (multiplier ** (attempt - 1)), max_wait)
+            # Add jitter to avoid thundering herd
+            wait_time = wait_time * (0.5 + random.random() * 0.5)
+            
+            logger.warning(
+                f"Backend request failed (attempt {attempt}/{max_attempts}): {type(e).__name__}: {e}. "
+                f"Retrying in {wait_time:.1f} seconds..."
+            )
+            
+            time.sleep(wait_time)
+    
+    # This should never be reached, but just in case
+    if last_exception:
+        raise last_exception
 
 
 class JwtCache:
@@ -60,7 +115,7 @@ def get_jwt(config: Config) -> str:
 
     logger.debug(f"Requesting JWT from {url}")
 
-    with requests.post(url, data=data, timeout=10) as response:
+    with requests.post(url, data=data, timeout=config.backend_timeout_seconds) as response:
         if response.ok:
             logger.debug("JWT fetched successfully.")
             token = response.json()["access_token"]
@@ -112,20 +167,28 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 def fetch_unprocessed_sequences(
     etag: str | None, config: Config
 ) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
-    n = config.batch_size
-    url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
-    logger.debug(f"Fetching {n} unprocessed sequences from {url}")
-    params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
-    headers = {
-        "Authorization": "Bearer " + get_jwt(config),
-        **({"If-None-Match": etag} if etag else {}),
-    }
-    logger.debug(f"Requesting data with ETag: {etag}")
-    response = requests.post(url, data=params, headers=headers, timeout=10)
-    logger.info(
-        f"Unprocessed data from backend: status code {response.status_code}, "
-        f"request id: {response.headers.get('x-request-id')}"
-    )
+    """
+    Fetch unprocessed sequences from backend with retry logic and exponential backoff.
+    """
+    def _do_fetch():
+        n = config.batch_size
+        url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
+        logger.debug(f"Fetching {n} unprocessed sequences from {url}")
+        params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
+        headers = {
+            "Authorization": "Bearer " + get_jwt(config),
+            **({"If-None-Match": etag} if etag else {}),
+        }
+        logger.debug(f"Requesting data with ETag: {etag}")
+        response = requests.post(url, data=params, headers=headers, timeout=config.backend_timeout_seconds)
+        logger.info(
+            f"Unprocessed data from backend: status code {response.status_code}, "
+            f"request id: {response.headers.get('x-request-id')}"
+        )
+        return response
+
+    response = retry_with_exponential_backoff(_do_fetch, config)
+
     match response.status_code:
         case HTTPStatus.NOT_MODIFIED:
             return etag, None
@@ -152,6 +215,9 @@ def fetch_unprocessed_sequences(
 def submit_processed_sequences(
     processed: Sequence[ProcessedEntry], dataset_dir: str, config: Config
 ) -> None:
+    """
+    Submit processed sequences to backend with retry logic and exponential backoff.
+    """
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     if config.keep_tmp_dir:
         # For debugging: write all submit requests to submission_requests.json
@@ -159,13 +225,19 @@ def submit_processed_sequences(
             for seq in processed:
                 json.dump(dataclasses.asdict(seq), f)
     ndjson_string = "\n".join(json_strings)
-    url = config.backend_host.rstrip("/") + "/submit-processed-data"
-    headers = {
-        "Content-Type": "application/x-ndjson",
-        "Authorization": "Bearer " + get_jwt(config),
-    }
-    params = {"pipelineVersion": config.pipeline_version}
-    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
+
+    def _do_submit():
+        url = config.backend_host.rstrip("/") + "/submit-processed-data"
+        headers = {
+            "Content-Type": "application/x-ndjson",
+            "Authorization": "Bearer " + get_jwt(config),
+        }
+        params = {"pipelineVersion": config.pipeline_version}
+        response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=config.backend_timeout_seconds)
+        return response
+
+    response = retry_with_exponential_backoff(_do_submit, config)
+
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
@@ -179,14 +251,21 @@ def submit_processed_sequences(
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
-    # we need to parse the backend URL, to extract the API path without the organism component
-    parsed = urlparse(config.backend_host)
+    """
+    Request upload URLs from backend with retry logic and exponential backoff.
+    """
+    def _do_request():
+        # we need to parse the backend URL, to extract the API path without the organism component
+        parsed = urlparse(config.backend_host)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+        url = base_url + "/files/request-upload"
+        params = {"groupId": group_id, "numberFiles": number_of_files}
+        headers = {"Authorization": "Bearer " + get_jwt(config)}
+        response = requests.post(url, headers=headers, params=params, timeout=config.backend_timeout_seconds)
+        return response
 
-    base_url = f"{parsed.scheme}://{parsed.netloc}"
-    url = base_url + "/files/request-upload"
-    params = {"groupId": group_id, "numberFiles": number_of_files}
-    headers = {"Authorization": "Bearer " + get_jwt(config)}
-    response = requests.post(url, headers=headers, params=params, timeout=10)
+    response = retry_with_exponential_backoff(_do_request, config)
+
     if not response.ok:
         msg = f"Upload request failed: {response.status_code}, {response.text}"
         raise RuntimeError(msg)
@@ -203,7 +282,7 @@ def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
 
 def download_minimizer(url, save_path):
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)  # Use a reasonable timeout for downloads
         response.raise_for_status()
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)

@@ -75,6 +75,13 @@ class Config:
     embl: EmblInfoMetadataPropertyNames = dataclasses.field(
         default_factory=EmblInfoMetadataPropertyNames
     )
+    
+    # Retry configuration for backend requests
+    backend_timeout_seconds: int = 30  # Increased from 10 seconds
+    backend_retry_attempts: int = 10  # Maximum number of retry attempts
+    backend_retry_initial_wait: float = 1.0  # Initial wait time between retries (seconds)
+    backend_retry_max_wait: float = 60.0  # Maximum wait time between retries (seconds)
+    backend_retry_multiplier: float = 2.0  # Exponential backoff multiplier
 
 
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
