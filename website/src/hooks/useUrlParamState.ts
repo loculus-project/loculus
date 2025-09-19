@@ -34,7 +34,10 @@ function useUrlParamState<T>(
             case 'nullable-string':
                 return (typeof urlValue === 'string' ? urlValue : null) as T;
             case 'string':
-                return ((Array.isArray(urlValue) ? urlValue[0] : urlValue) ?? '') as T;
+                if (Array.isArray(urlValue)) {
+                    throw Error('Expected string, found array value in state.');
+                }
+                return (urlValue ?? '') as T;
         }
     }
 
