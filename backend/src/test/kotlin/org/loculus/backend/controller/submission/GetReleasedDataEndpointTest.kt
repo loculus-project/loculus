@@ -38,6 +38,7 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.VersionStatus
@@ -117,14 +118,28 @@ class GetReleasedDataEndpointTest(
 
     @Test
     fun `Given released data THEN does not have unknown top-level fields`() {
-        val allowedKeys = setOf(
-            "metadata",
-            "unalignedNucleotideSequences",
-            "alignedNucleotideSequences",
-            "nucleotideInsertions",
-            "alignedAminoAcidSequences",
-            "aminoAcidInsertions",
-        )
+        val allowedKeys = listOf(
+            "accession",
+            "version",
+            "accessionVersion",
+            "isRevocation",
+            "submitter",
+            "groupId",
+            "groupName",
+            "versionStatus",
+            "dataUseTerms",
+            "releasedDate",
+            "releasedAtTimestamp",
+            "submittedDate",
+            "submittedAtTimestamp",
+            "dataUseTermsRestrictedUntil",
+            "pipelineVersion",
+            "submissionId",
+        ) +
+            defaultProcessedData.metadata.keys +
+            defaultProcessedData.alignedNucleotideSequences.keys +
+            defaultProcessedData.alignedAminoAcidSequences.keys +
+            defaultProcessedData.unalignedNucleotideSequences.keys.map { "unaligned_$it" }
 
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
         val response = submissionControllerClient.getReleasedData()
@@ -159,8 +174,8 @@ class GetReleasedDataEndpointTest(
         response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
-            val id = it.metadata["accession"]!!.asText()
-            val version = it.metadata["version"]!!.asLong()
+            val id = it["accession"]!!.asText()
+            val version = it["version"]!!.asLong()
             assertThat(version, `is`(1))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
@@ -177,21 +192,36 @@ class GetReleasedDataEndpointTest(
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
+            val expectedUnalignedSequences = defaultProcessedData.unalignedNucleotideSequences
+                .map { "unaligned_${it.key}" to TextNode(it.value) }
+                .toMap()
+            val expectedMetadataAndUnalignedSequences = expectedMetadata + expectedUnalignedSequences
 
-            for ((key, value) in it.metadata) {
+            for ((key, value) in it) {
                 when (key) {
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     "groupId" -> assertThat(value.intValue(), `is`(groupId))
-                    else -> assertThat(value, `is`(expectedMetadata[key]))
+                    else -> {
+                        if (defaultProcessedData.alignedNucleotideSequences[key] != null) {
+                            expectCorrectAlignedSequence(
+                                value,
+                                defaultProcessedData.alignedNucleotideSequences[key]!!,
+                                defaultProcessedData.nucleotideInsertions[key]!!,
+                            )
+                        } else if (defaultProcessedData.alignedAminoAcidSequences[key] != null) {
+                            expectCorrectAlignedSequence(
+                                value,
+                                defaultProcessedData.alignedAminoAcidSequences[key]!!,
+                                defaultProcessedData.aminoAcidInsertions[key]!!,
+                            )
+                        } else {
+                            assertThat(value, `is`(expectedMetadataAndUnalignedSequences[key]))
+                        }
+                    }
                 }
             }
-            assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
-            assertThat(it.unalignedNucleotideSequences, `is`(defaultProcessedData.unalignedNucleotideSequences))
-            assertThat(it.alignedAminoAcidSequences, `is`(defaultProcessedData.alignedAminoAcidSequences))
-            assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
-            assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
     }
 
@@ -284,7 +314,7 @@ class GetReleasedDataEndpointTest(
             submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ReleasedData>()[0]
 
         for (absentField in absentFields) {
-            assertThat(firstSequenceEntry.metadata[absentField], `is`(NullNode.instance))
+            assertThat(firstSequenceEntry[absentField], `is`(NullNode.instance))
         }
     }
 
@@ -303,7 +333,7 @@ class GetReleasedDataEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBody.size, `is`(accessionVersions.size))
         responseBody.forEach {
-            assertThat(it.metadata["pipelineVersion"]!!.intValue(), `is`(2))
+            assertThat(it["pipelineVersion"]!!.intValue(), `is`(2))
         }
     }
 
@@ -313,9 +343,9 @@ class GetReleasedDataEndpointTest(
 
         val revocationEntry = submissionControllerClient.getReleasedData()
             .expectNdjsonAndGetContent<ReleasedData>()
-            .find { it.metadata["isRevocation"]!!.asBoolean() }!!
+            .find { it["isRevocation"]!!.asBoolean() }!!
 
-        for ((key, value) in revocationEntry.metadata) {
+        for ((key, value) in revocationEntry) {
             when (key) {
                 "isRevocation" -> assertThat(value, `is`(BooleanNode.TRUE))
                 "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
@@ -337,29 +367,10 @@ class GetReleasedDataEndpointTest(
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }
-
-        val expectedNucleotideSequences = mapOf(
-            MAIN_SEGMENT to null,
-        )
-        assertThat(revocationEntry.alignedNucleotideSequences, `is`(expectedNucleotideSequences))
-        assertThat(revocationEntry.unalignedNucleotideSequences, `is`(expectedNucleotideSequences))
-
-        val expectedAminoAcidSequences = mapOf(
-            SOME_LONG_GENE to null,
-            SOME_SHORT_GENE to null,
-        )
-        assertThat(revocationEntry.alignedAminoAcidSequences, `is`(expectedAminoAcidSequences))
-
-        val expectedNucleotideInsertions = mapOf(
-            MAIN_SEGMENT to emptyList<String>(),
-        )
-        assertThat(revocationEntry.nucleotideInsertions, `is`(expectedNucleotideInsertions))
-
-        val expectedAminoAcidInsertions = mapOf(
-            SOME_LONG_GENE to emptyList<String>(),
-            SOME_SHORT_GENE to emptyList(),
-        )
-        assertThat(revocationEntry.aminoAcidInsertions, `is`(expectedAminoAcidInsertions))
+        assertThat(revocationEntry[MAIN_SEGMENT], `is`(NullNode.instance))
+        assertThat(revocationEntry["unaligned_$MAIN_SEGMENT"], `is`(NullNode.instance))
+        assertThat(revocationEntry[SOME_LONG_GENE], `is`(NullNode.instance))
+        assertThat(revocationEntry[SOME_SHORT_GENE], `is`(NullNode.instance))
     }
 
     @Test
@@ -387,7 +398,7 @@ class GetReleasedDataEndpointTest(
             .map { jacksonObjectMapper.readValue<ReleasedData>(it) }
 
         assertThat(data, hasSize(NUMBER_OF_SEQUENCES))
-        assertThat(data[0].metadata, `is`(not(emptyMap())))
+        assertThat(data[0], `is`(not(emptyMap())))
     }
 
     /**
@@ -425,14 +436,14 @@ class GetReleasedDataEndpointTest(
 
         // assert that the accessions are sorted
         assertThat(data.size, Matchers.`is`(12))
-        val actualAccessionOrder = data.map { it.metadata["accession"]!!.asText() }
+        val actualAccessionOrder = data.map { it["accession"]!!.asText() }
         assertThat(actualAccessionOrder, equalTo(actualAccessionOrder.sorted()))
 
         // assert that _within_ each accession block, it's sorted by version
-        val accessionChunks = data.groupBy { it.metadata["accession"]!!.asText() }
+        val accessionChunks = data.groupBy { it["accession"]!!.asText() }
         assertThat(accessionChunks.size, Matchers.`is`(accessions.size))
         accessionChunks.values
-            .map { chunk -> chunk.map { it.metadata["version"]!!.asLong() } }
+            .map { chunk -> chunk.map { it["version"]!!.asLong() } }
             .forEach { assertThat(it, equalTo(it.sorted())) }
     }
 
@@ -462,6 +473,11 @@ fun expectIsTimestampWithCurrentYear(value: JsonNode) {
     val currentYear = Clock.System.now().toLocalDateTime(DateProvider.timeZone).year
     val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(DateProvider.timeZone)
     assertThat(dateTime.year, `is`(currentYear))
+}
+
+fun expectCorrectAlignedSequence(value: JsonNode, sequence: String, insertions: List<Insertion>) {
+    assertThat(value["sequence"].textValue(), `is`(sequence))
+    assertThat(value["insertions"].toList().map { it.textValue() }, `is`(insertions.map { it.toString() }))
 }
 
 private const val OPEN_DATA_USE_TERMS_URL = "openUrl"
@@ -562,17 +578,17 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     ) {
         val releasedData = submissionControllerClient.getReleasedData()
             .expectNdjsonAndGetContent<ReleasedData>()
-            .find { it.metadata["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
+            .find { it["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
 
-        assertThat(releasedData.metadata["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
+        assertThat(releasedData["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
         when (restrictedUntilDate) {
-            null -> assertThat(releasedData.metadata["dataUseTermsRestrictedUntil"], `is`(NullNode.instance))
+            null -> assertThat(releasedData["dataUseTermsRestrictedUntil"], `is`(NullNode.instance))
             else -> assertThat(
-                releasedData.metadata["dataUseTermsRestrictedUntil"]?.textValue(),
+                releasedData["dataUseTermsRestrictedUntil"]?.textValue(),
                 `is`(restrictedUntilDate.toString()),
             )
         }
-        assertThat(releasedData.metadata["dataUseTermsUrl"]?.textValue(), `is`(dataUseTermsUrl))
+        assertThat(releasedData["dataUseTermsUrl"]?.textValue(), `is`(dataUseTermsUrl))
     }
 
     @TestConfiguration
@@ -607,10 +623,10 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
 private fun List<ReleasedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
     val processedData =
-        find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
+        find { it["accession"]?.asText() == accession && it["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")
 
-    return processedData.metadata["versionStatus"]!!.asText()
+    return processedData["versionStatus"]!!.asText()
 }
 
 data class PreparedVersions(
