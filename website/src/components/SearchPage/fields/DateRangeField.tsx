@@ -52,7 +52,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     const upperField = strictMode ? upperToField : lowerToField;
 
     // Extract single values from fieldValues (date ranges should never be arrays)
-    const getFieldValue = (fieldName: string): string | number => {
+    const getFieldValue = (fieldName: string): string => {
         return validateSingleValue(fieldValues[fieldName], fieldName);
     };
 
