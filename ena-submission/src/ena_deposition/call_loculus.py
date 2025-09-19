@@ -155,7 +155,16 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
         for line in response.iter_lines():
-            full_json = json.loads(line)
+            try:
+                full_json = json.loads(line)
+            except json.JSONDecodeError as e:
+                # Log the first 100 characters of the content that failed to parse
+                content_preview = line[:100] if line else b""
+                logger.error(
+                    f"Failed to parse JSON content. Error: {e}. "
+                    f"Content preview (first 100 chars): {content_preview!r}"
+                )
+                raise
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
