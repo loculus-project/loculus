@@ -16,12 +16,12 @@ import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD } from '../../settings.ts';
-import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
+import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { validateSingleValue, extractArrayValue } from '../../utils/extractFieldValue.ts';
-import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
+import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
+import { type MetadataFilterSchema } from '../../utils/search.ts';
+import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
@@ -41,6 +41,8 @@ interface SearchFormProps {
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     suborganismIdentifierField: string | undefined;
+    selectedSuborganism: string | null;
+    setSelectedSuborganism: (newValue: string | null) => void;
 }
 
 export const SearchForm = ({
@@ -54,6 +56,8 @@ export const SearchForm = ({
     lapisSearchParameters,
     showMutationSearch,
     suborganismIdentifierField,
+    selectedSuborganism,
+    setSelectedSuborganism,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
@@ -128,12 +132,8 @@ export const SearchForm = ({
                                 filterSchema={filterSchema}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 suborganismIdentifierField={suborganismIdentifierField}
-                                value={
-                                    typeof fieldValues[suborganismIdentifierField] === 'string'
-                                        ? fieldValues[suborganismIdentifierField]
-                                        : undefined
-                                }
-                                onChange={(value) => setSomeFieldValues([suborganismIdentifierField, value])}
+                                selectedSuborganism={selectedSuborganism}
+                                setSelectedSuborganism={setSelectedSuborganism}
                             />
                         )}
                         <div className='mb-1'>

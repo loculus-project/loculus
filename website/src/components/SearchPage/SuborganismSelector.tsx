@@ -7,8 +7,8 @@ type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     suborganismIdentifierField: string | undefined;
-    value: string | undefined;
-    onChange: (value: string) => void;
+    selectedSuborganism: string | null;
+    setSelectedSuborganism: (newValue: string | null) => void;
 };
 
 /**
@@ -21,11 +21,10 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     filterSchema,
     referenceGenomesSequenceNames,
     suborganismIdentifierField,
-    value,
-    onChange,
+    selectedSuborganism,
+    setSelectedSuborganism,
 }) => {
     const suborganismNames = Object.keys(referenceGenomesSequenceNames);
-
     const isSinglePathogen = suborganismNames.length < 2;
 
     const label = useMemo(() => {
@@ -50,8 +49,8 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
         <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
             <label className='block text-xs font-semibold text-gray-700 mb-1'>{label}</label>
             <select
-                value={value ?? ''}
-                onChange={(e) => onChange(e.target.value)}
+                value={selectedSuborganism ?? ''}
+                onChange={(e) => setSelectedSuborganism(e.target.value)}
                 className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
             >
                 <option key={''} value={''} disabled>

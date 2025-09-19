@@ -123,6 +123,14 @@ export const InnerSearchFullUI = ({
         'boolean',
         (value) => !value,
     );
+    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
+        schema.suborganismIdentifierField ?? '',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => value === null,
+    );
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -358,6 +366,10 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
+    const showMutationSearch =
+        schema.submissionDataTypes.consensusSequences &&
+        (Object.keys(referenceGenomesSequenceNames).length < 2 || selectedSuborganism !== null);
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <FieldSelectorModal
@@ -399,8 +411,10 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
-                    showMutationSearch={schema.submissionDataTypes.consensusSequences}
+                    showMutationSearch={showMutationSearch}
                     suborganismIdentifierField={schema.suborganismIdentifierField}
+                    selectedSuborganism={selectedSuborganism}
+                    setSelectedSuborganism={setSelectedSuborganism}
                 />
             </div>
             <div
