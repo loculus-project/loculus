@@ -50,7 +50,7 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
-from .json_utils import safe_json_loads, safe_response_json
+from .json_utils import safe_json_loads
 from .submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
@@ -866,7 +866,7 @@ def set_error_if_accession_not_exists(
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
-        exists = int(safe_response_json(response, "check_accession_exists")["total"]) > 0
+        exists = int(safe_json_loads(response.text, "check_accession_exists")["total"]) > 0
         if exists:
             return True
     except Exception as e:

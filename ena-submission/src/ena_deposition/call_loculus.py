@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from .config import Config
-from .json_utils import safe_json_loads, safe_response_json
+from .json_utils import safe_json_loads
 from .loculus_models import Group, GroupDetails
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ def get_jwt(config: Config) -> str:
     response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=60)
     response.raise_for_status()
 
-    jwt_keycloak = safe_response_json(response, "get_jwt")
+    jwt_keycloak = safe_json_loads(response.text, "get_jwt")
     return jwt_keycloak["access_token"]
 
 
@@ -142,8 +142,8 @@ def get_group_info(config: Config, group_id: int) -> Group:
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
-    # safe_response_json returns python dict
-    return GroupDetails.model_validate(safe_response_json(response, "get_group_info")).group
+    # safe_json_loads returns python dict
+    return GroupDetails.model_validate(safe_json_loads(response.text, "get_group_info")).group
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
