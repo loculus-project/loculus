@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useMemo } from 'react';
 
 import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 
@@ -23,8 +23,9 @@ function useUrlParamState<T>(
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
 ): [T, (newValue: T) => void] {
-    const [valueState, setValueState] = useState<T>(
-        paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue,
+    const valueState = useMemo(
+        () => (paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue),
+        [paramName, queryState, paramType, defaultValue],
     );
 
     function parseUrlValue(urlValue: string | string[] | undefined, type: ParamType): T {
@@ -59,23 +60,7 @@ function useUrlParamState<T>(
         [paramName, setState, shouldRemove],
     );
 
-    const setValue = useCallback(
-        (newValue: T) => {
-            setValueState(newValue);
-            updateUrlParam(newValue);
-        },
-        [updateUrlParam],
-    );
-
-    useEffect(() => {
-        const urlValue = paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
-
-        if (JSON.stringify(urlValue) !== JSON.stringify(valueState)) {
-            setValueState(urlValue);
-        }
-    }, [queryState, paramName, paramType, defaultValue, valueState]);
-
-    return [valueState, setValue];
+    return [valueState, updateUrlParam];
 }
 
 export default useUrlParamState;
