@@ -8,6 +8,7 @@ from typing import Any
 import requests
 
 from .config import Config
+from .json_utils import safe_json_loads, safe_response_json
 from .loculus_models import Group, GroupDetails
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def get_jwt(config: Config) -> str:
     response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=60)
     response.raise_for_status()
 
-    jwt_keycloak = response.json()
+    jwt_keycloak = safe_response_json(response, "get_jwt")
     return jwt_keycloak["access_token"]
 
 
@@ -141,8 +142,8 @@ def get_group_info(config: Config, group_id: int) -> Group:
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
-    # response.json() returns python dict
-    return GroupDetails.model_validate(response.json()).group
+    # safe_response_json returns python dict
+    return GroupDetails.model_validate(safe_response_json(response, "get_group_info")).group
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
@@ -155,16 +156,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
         for line in response.iter_lines():
-            try:
-                full_json = json.loads(line)
-            except json.JSONDecodeError as e:
-                # Log the first 100 characters of the content that failed to parse
-                content_preview = line[:100] if line else b""
-                logger.error(
-                    f"Failed to parse JSON content. Error: {e}. "
-                    f"Content preview (first 100 chars): {content_preview!r}"
-                )
-                raise
+            full_json = safe_json_loads(line, "fetch_released_entries")
             filtered_json = {
                 k: v
                 for k, v in full_json.items()
