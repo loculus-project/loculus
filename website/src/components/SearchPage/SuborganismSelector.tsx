@@ -2,6 +2,7 @@ import { type FC, useMemo } from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
@@ -48,20 +49,32 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     return (
         <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
             <label className='block text-xs font-semibold text-gray-700 mb-1'>{label}</label>
-            <select
-                value={selectedSuborganism ?? ''}
-                onChange={(e) => setSelectedSuborganism(e.target.value)}
-                className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
-            >
-                <option key={''} value={''} disabled>
-                    Select {label}...
-                </option>
-                {suborganismNames.map((suborganism) => (
-                    <option key={suborganism} value={suborganism}>
-                        {suborganism}
+            <div className='relative'>
+                <select
+                    value={selectedSuborganism ?? ''}
+                    onChange={(e) => setSelectedSuborganism(e.target.value)}
+                    className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
+                >
+                    <option key={''} value={''} disabled>
+                        Select {label}...
                     </option>
-                ))}
-            </select>
+                    {suborganismNames.map((suborganism) => (
+                        <option key={suborganism} value={suborganism}>
+                            {suborganism}
+                        </option>
+                    ))}
+                </select>
+                {selectedSuborganism !== '' && selectedSuborganism !== null && (
+                    <button
+                        className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
+                        onClick={() => setSelectedSuborganism(null)}
+                        aria-label={`Clear ${label}`}
+                        type='button'
+                    >
+                        <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
+                    </button>
+                )}
+            </div>
             <p className='text-xs text-gray-600 mt-2'>
                 Select a {label} to enable mutation search and download of aligned sequences
             </p>
