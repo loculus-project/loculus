@@ -55,4 +55,15 @@ describe('GroupForm', () => {
         expect(screen.getByLabelText(/postal/i)).toHaveValue(postalCode);
         expect(screen.getByLabelText(/country/i)).toHaveValue(country);
     });
+
+    test('renders guidelines when provided', () => {
+        const guidelines = ['Follow the terms of use.', 'Ensure contact information is accurate.'];
+
+        render(<GroupForm title='' buttonText='' onSubmit={noOpSubmit} guidelines={guidelines} />);
+
+        expect(screen.getByRole('heading', { name: /group creation guidelines/i })).toBeVisible();
+        guidelines.forEach((guideline) => {
+            expect(screen.getByText(guideline)).toBeVisible();
+        });
+    });
 });

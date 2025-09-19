@@ -10,9 +10,10 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 interface GroupManagerProps {
     clientConfig: ClientConfig;
     accessToken: string;
+    groupCreationGuidelines?: string[];
 }
 
-const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken }) => {
+const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, groupCreationGuidelines }) => {
     const { createGroup } = useGroupCreation({
         clientConfig,
         accessToken,
@@ -34,7 +35,14 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
         }
     };
 
-    return <GroupForm title='Create a new submitting group' buttonText='Create group' onSubmit={handleCreateGroup} />;
+    return (
+        <GroupForm
+            title='Create a new submitting group'
+            buttonText='Create group'
+            onSubmit={handleCreateGroup}
+            guidelines={groupCreationGuidelines}
+        />
+    );
 };
 
 export const GroupCreationForm = withQueryProvider(InnerGroupCreationForm);

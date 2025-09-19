@@ -2166,3 +2166,6 @@ defaultResources:
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null
+groupCreationGuidelines:
+  - Use a name that will uniquely identify your group
+  - You may want to include a geographic location rather than just a generic name like "Pathogen Research Group"

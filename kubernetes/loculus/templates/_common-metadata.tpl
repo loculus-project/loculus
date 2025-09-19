@@ -179,6 +179,9 @@ gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
 {{ if $.Values.welcomeMessageHTML }}
 welcomeMessageHTML: {{ quote $.Values.welcomeMessageHTML }}
 {{end}}
+{{ if $.Values.groupCreationGuidelines }}
+groupCreationGuidelines: {{ $.Values.groupCreationGuidelines | toJson }}
+{{end}}
 {{ if $.Values.additionalHeadHTML }}
 additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
 {{end}}

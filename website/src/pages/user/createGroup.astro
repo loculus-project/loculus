@@ -1,14 +1,21 @@
 ---
 import { GroupCreationForm } from '../../components/User/GroupCreationForm.tsx';
-import { getRuntimeConfig } from '../../config';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 
-const clientConfig = getRuntimeConfig().public;
+const runtimeConfig = getRuntimeConfig();
+const clientConfig = runtimeConfig.public;
+const { groupCreationGuidelines } = getWebsiteConfig();
 ---
 
 <BaseLayout title='Create group'>
-    <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} client:load />
+    <GroupCreationForm
+        clientConfig={clientConfig}
+        accessToken={accessToken}
+        groupCreationGuidelines={groupCreationGuidelines}
+        client:load
+    />
 </BaseLayout>

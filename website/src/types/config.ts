@@ -190,6 +190,7 @@ export const websiteConfig = z.object({
     bannerMessage: z.string().optional(),
     bannerMessageURL: z.string().optional(),
     welcomeMessageHTML: z.string().optional().nullable(),
+    groupCreationGuidelines: z.array(z.string()).optional(),
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),
     gitHubMainUrl: z.string().optional(),
