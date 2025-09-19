@@ -40,6 +40,7 @@ interface SearchFormProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
+    suborganismIdentifierField: string | undefined;
 }
 
 export const SearchForm = ({
@@ -52,6 +53,7 @@ export const SearchForm = ({
     referenceGenomesSequenceNames,
     lapisSearchParameters,
     showMutationSearch,
+    suborganismIdentifierField,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
@@ -120,7 +122,19 @@ export const SearchForm = ({
                         setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
-                        <SuborganismSelector referenceGenomesSequenceNames={referenceGenomesSequenceNames} />
+                        {suborganismIdentifierField !== undefined && (
+                            <SuborganismSelector
+                                filterSchema={filterSchema}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                suborganismIdentifierField={suborganismIdentifierField}
+                                value={
+                                    typeof fieldValues[suborganismIdentifierField] === 'string'
+                                        ? fieldValues[suborganismIdentifierField]
+                                        : undefined
+                                }
+                                onChange={(value) => setSomeFieldValues([suborganismIdentifierField, value])}
+                            />
+                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}

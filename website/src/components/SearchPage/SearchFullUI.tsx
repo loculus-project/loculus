@@ -400,6 +400,7 @@ export const InnerSearchFullUI = ({
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={schema.submissionDataTypes.consensusSequences}
+                    suborganismIdentifierField={schema.suborganismIdentifierField}
                 />
             </div>
             <div

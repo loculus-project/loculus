@@ -1,30 +1,61 @@
-import { type FC, useState } from 'react';
+import { type FC, useMemo } from 'react';
 
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { MetadataFilterSchema } from '../../utils/search.ts';
 
 type SuborganismSelectorProps = {
+    filterSchema: MetadataFilterSchema;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    suborganismIdentifierField: string | undefined;
+    value: string | undefined;
+    onChange: (value: string) => void;
 };
 
-export const SuborganismSelector: FC<SuborganismSelectorProps> = ({ referenceGenomesSequenceNames }) => {
+/**
+ * In the multi pathogen case, this is a prominent selector at the top to choose the suborganism.
+ * Choosing a value here is required e.g. to enable mutation search and download of aligned sequences.
+ *
+ * Does nothing in the single pathogen case.
+ */
+export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
+    filterSchema,
+    referenceGenomesSequenceNames,
+    suborganismIdentifierField,
+    value,
+    onChange,
+}) => {
     const suborganismNames = Object.keys(referenceGenomesSequenceNames);
 
-    const [value, setValue] = useState<string | null>(null);
+    const isSinglePathogen = suborganismNames.length < 2;
 
-    if (suborganismNames.length < 2) {
+    const label = useMemo(() => {
+        if (isSinglePathogen || suborganismIdentifierField === undefined) {
+            return undefined;
+        }
+
+        return filterSchema.filterNameToLabelMap()[suborganismIdentifierField];
+    }, [isSinglePathogen, filterSchema, suborganismIdentifierField]);
+
+    if (isSinglePathogen) {
         return null;
+    }
+
+    if (label === undefined) {
+        throw Error(
+            'Cannot render suborganism selector without a label for multi pathogen case. Did you configure a "suborganismIdentifierField"?',
+        );
     }
 
     return (
         <div className='bg-gray-50 border border-gray-300 rounded-md p-3 mb-3'>
-            <label className='block text-xs font-semibold text-gray-700 mb-1'>Suborganism</label>
+            <label className='block text-xs font-semibold text-gray-700 mb-1'>{label}</label>
             <select
                 value={value ?? ''}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => onChange(e.target.value)}
                 className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
             >
                 <option key={''} value={''} disabled>
-                    Select...
+                    Select {label}...
                 </option>
                 {suborganismNames.map((suborganism) => (
                     <option key={suborganism} value={suborganism}>
@@ -33,7 +64,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({ referenceGen
                 ))}
             </select>
             <p className='text-xs text-gray-600 mt-2'>
-                Select a sub-organism to enable mutation search and download of aligned sequences
+                Select a {label} to enable mutation search and download of aligned sequences
             </p>
         </div>
     );
