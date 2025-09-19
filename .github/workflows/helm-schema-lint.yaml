@@ -1,6 +1,7 @@
 name: helm-schema-lint
 
 on:
+  merge_group:
   pull_request:
     paths:
       - "kubernetes/**"
