@@ -1,3 +1,5 @@
+import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+
 /**
  * Parse URLSearchParams into a dictionary that properly handles multiple values.
  * Single parameters become strings, multiple parameters with the same key become arrays.
@@ -5,8 +7,8 @@
  * @param searchParams - URLSearchParams to parse
  * @returns Record with string values for single params and string[] for multiple params
  */
-export function parseUrlSearchParams(searchParams: URLSearchParams): Record<string, string | string[]> {
-    const result: Record<string, string | string[]> = {};
+export function parseUrlSearchParams(searchParams: URLSearchParams): QueryState {
+    const result: QueryState = {};
     const allParams = [...searchParams.entries()];
 
     // Group parameters by key
