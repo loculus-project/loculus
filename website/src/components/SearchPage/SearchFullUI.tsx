@@ -10,7 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import useQueryAsState, { type QueryState } from './useQueryAsState.js';
+import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
