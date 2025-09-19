@@ -1772,7 +1772,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
-    enabled: false
+    enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
@@ -1843,6 +1843,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+        suborganismIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
