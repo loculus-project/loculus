@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -60,6 +60,43 @@ test.describe('Submission flow', () => {
         await page.getByRole('cell', { name: 'Pakistan' }).click();
         await page.waitForSelector('text="test_NIHPAK-19"');
         await page.waitForSelector('text="NC_005302.1"'); // reference
+    });
+
+    test('compressed file upload submission flow works', async ({ pageWithGroup, groupId }) => {
+        test.setTimeout(90000);
+        const submissionPage = new BulkSubmissionPage(pageWithGroup);
+        const websiteTestDataDir = join(__dirname, '../../../../website/tests/testData');
+        const sequencesFile = join(websiteTestDataDir, 'sequences.fasta.zst');
+        const metadataFile = join(websiteTestDataDir, 'metadata.tsv.zst');
+
+        await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
+
+        await submissionPage.uploadSequencesFileFromPath(sequencesFile);
+        await submissionPage.uploadMetadataFileFromPath(metadataFile);
+
+        await submissionPage.acceptTerms();
+        await submissionPage.submitSequence();
+
+        await pageWithGroup.waitForURL(new RegExp(`/submission/${groupId}/review$`));
+    });
+
+    test('restricted data use terms submission flow works', async ({ pageWithGroup, groupId }) => {
+        test.setTimeout(90000);
+        const submissionPage = new BulkSubmissionPage(pageWithGroup);
+        const testFilesDir = join(__dirname, '../../test-data');
+        const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
+        const metadataFile = join(testFilesDir, 'cchfv_test_metadata.tsv');
+
+        await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
+
+        await submissionPage.uploadSequencesFileFromPath(sequencesFile);
+        await submissionPage.uploadMetadataFileFromPath(metadataFile);
+
+        await submissionPage.selectRestrictedDataUseTerms();
+        await submissionPage.acceptTerms();
+        await submissionPage.submitSequence();
+
+        await pageWithGroup.waitForURL(new RegExp(`/submission/${groupId}/review$`));
     });
 
     test('basic form submission flow works', async ({ pageWithGroup }) => {

@@ -34,11 +34,16 @@ class SubmissionPage {
 
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        const confirmButton = this.page.getByRole('button', {
-            name: 'Continue under Open terms',
-        });
-        if (await confirmButton.isVisible()) {
-            await confirmButton.click();
+        const confirmButtons = [
+            this.page.getByRole('button', { name: 'Continue under Open terms' }),
+            this.page.getByRole('button', { name: /Continue .*restricted terms/i }),
+        ];
+
+        for (const confirmButton of confirmButtons) {
+            if (await confirmButton.isVisible()) {
+                await confirmButton.click();
+                break;
+            }
         }
         await this.page.waitForURL('**/review');
         return new ReviewPage(this.page);
@@ -181,6 +186,20 @@ export class BulkSubmissionPage extends SubmissionPage {
             mimeType: 'text/plain',
             buffer: Buffer.from(fastaContent),
         });
+    }
+
+    async uploadMetadataFileFromPath(filePath: string) {
+        await this.page.getByTestId('metadata_file').setInputFiles(filePath);
+    }
+
+    async uploadSequencesFileFromPath(filePath: string) {
+        await this.page.getByTestId('sequence_file').setInputFiles(filePath);
+    }
+
+    async selectRestrictedDataUseTerms() {
+        const restrictedSelector = this.page.locator('#data-use-restricted');
+        await restrictedSelector.waitFor({ state: 'visible' });
+        await restrictedSelector.click();
     }
 
     /**
