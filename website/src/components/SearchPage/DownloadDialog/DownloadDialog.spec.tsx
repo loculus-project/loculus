@@ -41,7 +41,7 @@ const mockMetadata: Metadata[] = [
         name: 'accession',
         displayName: 'Accession',
         type: 'string',
-        multiEntry: true,
+        multiEntryTextSearch: true,
     },
     {
         name: 'field1',

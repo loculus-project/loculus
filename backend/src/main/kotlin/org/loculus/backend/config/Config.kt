@@ -98,14 +98,14 @@ sealed class BaseMetadata {
     abstract val name: String
     abstract val type: MetadataType
     abstract val required: Boolean
-    open val multiEntry: Boolean = false
+    open val multiEntryTextSearch: Boolean = false
 }
 
 data class Metadata(
     override val name: String,
     override val type: MetadataType,
     override val required: Boolean = false,
-    override val multiEntry: Boolean = false,
+    override val multiEntryTextSearch: Boolean = false,
 ) : BaseMetadata()
 
 data class ExternalMetadata(
@@ -113,7 +113,7 @@ data class ExternalMetadata(
     override val name: String,
     override val type: MetadataType,
     override val required: Boolean = false,
-    override val multiEntry: Boolean = false,
+    override val multiEntryTextSearch: Boolean = false,
 ) : BaseMetadata()
 
 data class EarliestReleaseDate(val enabled: Boolean = false, val externalFields: List<String>)

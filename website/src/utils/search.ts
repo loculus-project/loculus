@@ -176,7 +176,7 @@ export class MetadataFilterSchema {
 
     public getMultiEntryFieldNames(): string[] {
         return this.ungroupedMetadataFilters()
-            .filter((metadataFilter) => metadataFilter.multiEntry === true)
+            .filter((metadataFilter) => metadataFilter.multiEntryTextSearch === true)
             .map((metadataFilter) => metadataFilter.name);
     }
 
