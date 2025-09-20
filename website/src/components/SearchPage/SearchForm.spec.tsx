@@ -19,6 +19,14 @@ const queryClient = new QueryClient();
 
 const defaultSearchFormFilters: MetadataFilter[] = [
     {
+        name: 'accession',
+        type: 'string',
+        displayName: 'Accession',
+        autocomplete: false,
+        initiallyVisible: true,
+        multiEntry: true,
+    },
+    {
         name: 'field1',
         type: 'string',
         autocomplete: false,
@@ -86,6 +94,13 @@ describe('SearchForm', () => {
         expect(screen.getByText('Field 1')).toBeInTheDocument();
         // For multi-select autocomplete fields, the label is in aria-label
         expect(screen.getByLabelText('Field 3')).toBeInTheDocument();
+    });
+
+    it('renders accession as multiline when configured', () => {
+        renderSearchForm();
+
+        const accessionInput = screen.getByLabelText('Accession');
+        expect(accessionInput.tagName).toBe('TEXTAREA');
     });
 
     it('handles field value changes', async () => {

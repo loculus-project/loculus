@@ -17,6 +17,7 @@ fields:
     type: string
     notSearchable: true
     hideOnSequenceDetailsPage: true
+    multiEntry: true
   - name: version
     type: int
     notSearchable: true

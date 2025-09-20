@@ -100,9 +100,15 @@ export class FieldFilterSet implements SequenceFilter {
                 delete sequenceFilters[filterName];
             }
         }
-
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        for (const [filterName, value] of Object.entries(sequenceFilters)) {
+            if (this.filterSchema.isMultiEntry(filterName) && typeof value === 'string') {
+                const entries = this.multiEntryTextToList(filterName, value);
+                if (entries.length === 0) {
+                    delete sequenceFilters[filterName];
+                } else {
+                    sequenceFilters[filterName] = entries;
+                }
+            }
         }
 
         delete sequenceFilters.mutation;
@@ -172,6 +178,10 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
+    private multiEntryTextToList(fieldName: string, text: string): string[] {
+        return splitMultiEntryText(text).map((value) => normalizeMultiEntry(fieldName, value));
+    }
+
     public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
         return new Map(
             Object.entries(this.fieldValues)
@@ -205,19 +215,20 @@ export class FieldFilterSet implements SequenceFilter {
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
+const splitMultiEntryText = (text: string): string[] =>
+    text
         .split(/[\t,;\n ]/)
         .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
-            }
-            return s;
-        });
+        .filter((s) => s !== '');
 
-    return accessions;
+const stripAccessionVersion = (accession: string): string =>
+    accession.includes('.') ? accession.split('.')[0] : accession;
+
+const normalizeMultiEntry = (fieldName: string, value: string): string => {
+    if (fieldName === 'accession') {
+        return stripAccessionVersion(value);
+    }
+    return value;
 };
 
 const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {

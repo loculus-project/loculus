@@ -154,6 +154,11 @@
           "type": "boolean",
           "description": "Whether this field should be included in metadata downloads by default."
         },
+        "multiEntry": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, the search UI treats the field as a multi-entry text area where multiple values can be provided separated by whitespace or punctuation."
+        },
         "perSegment": {
           "groups": ["metadata"],
           "type": "boolean",

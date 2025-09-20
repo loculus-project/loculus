@@ -57,6 +57,14 @@ export const SearchForm = ({
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
 
+    const accessionFilter: MetadataFilter = filterSchema.getFilter('accession') ?? {
+        name: 'accession',
+        type: 'string',
+        displayName: 'Accession',
+        autocomplete: false,
+        multiEntry: true,
+    };
+
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== 'accession') // Exclude accession field
         .map((filter) => ({
@@ -120,6 +128,7 @@ export const SearchForm = ({
                     <div className='flex flex-col'>
                         <div className='mb-1'>
                             <AccessionField
+                                field={accessionFilter}
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
                                 setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
@@ -233,6 +242,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     field={field}
                     fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                     setSomeFieldValues={setSomeFieldValues}
+                    multiline={field.multiEntry === true}
                 />
             );
     }

@@ -65,6 +65,7 @@ export const metadata = z.object({
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
+    multiEntry: z.boolean().optional(),
 });
 
 export const inputFieldOption = z.object({

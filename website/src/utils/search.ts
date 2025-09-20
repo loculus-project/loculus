@@ -164,14 +164,20 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
  */
 export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
+    private readonly metadataFilterByName: Map<string, MetadataFilter>;
 
     constructor(metadataSchema: Metadata[]) {
         const expandedFilters = getMetadataSchemaWithExpandedRanges(metadataSchema);
         this.filters = consolidateGroupedFields(expandedFilters);
+        this.metadataFilterByName = new Map(expandedFilters.map((filter) => [filter.name, filter]));
     }
 
     private ungroupedMetadataFilters(): MetadataFilter[] {
         return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
+    }
+
+    public getFilter(fieldName: string): MetadataFilter | undefined {
+        return this.metadataFilterByName.get(fieldName);
     }
 
     public getType(fieldName: string): MetadataType | undefined {
@@ -206,6 +212,10 @@ export class MetadataFilterSchema {
         );
     }
 
+    public isMultiEntry(fieldName: string): boolean {
+        return this.metadataFilterByName.get(fieldName)?.multiEntry === true;
+    }
+
     public filterNameToLabelMap(): Record<string, string> {
         return this.filters.reduce(
             (acc, field) => {
@@ -225,6 +235,15 @@ export class MetadataFilterSchema {
         for (const field of this.ungroupedMetadataFilters()) {
             const value = queryState[field.name];
             if (value === undefined) {
+                continue;
+            }
+            if (field.multiEntry === true) {
+                const stringValue = validateSingleValue(value, field.name);
+                if (field.name === 'accession') {
+                    values.accession = stringValue === '' ? undefined : stringValue;
+                } else {
+                    values[field.name] = stringValue;
+                }
                 continue;
             }
             // Handle arrays (multi-select) and single values

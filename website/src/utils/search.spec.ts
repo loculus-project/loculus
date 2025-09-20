@@ -26,4 +26,19 @@ describe('MetadataFilterSchema', () => {
         const result = schema.getFieldValuesFromQuery({ field1: [NULL_QUERY_VALUE, NULL_QUERY_VALUE] }, {});
         expect(result.field1).toEqual([null, null]);
     });
+
+    it('keeps multi-entry fields as strings when parsing query state', () => {
+        const schema = new MetadataFilterSchema([{ name: 'accession', type: 'string', multiEntry: true }]);
+        const result = schema.getFieldValuesFromQuery({ accession: 'LOC_1 LOC_2' }, {});
+        expect(result.accession).toBe('LOC_1 LOC_2');
+    });
+
+    it('identifies multi-entry fields', () => {
+        const schema = new MetadataFilterSchema([
+            { name: 'accession', type: 'string', multiEntry: true },
+            { name: 'field1', type: 'string' },
+        ]);
+        expect(schema.isMultiEntry('accession')).toBe(true);
+        expect(schema.isMultiEntry('field1')).toBe(false);
+    });
 });
