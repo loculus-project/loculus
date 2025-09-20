@@ -16,6 +16,7 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
+                multiEntry: true,
             }}
             setSomeFieldValues={([, filter]) => {
                 setTextValue(filter as string);

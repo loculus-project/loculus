@@ -38,6 +38,12 @@ const hiddenFieldValues = {
 
 const mockMetadata: Metadata[] = [
     {
+        name: 'accession',
+        displayName: 'Accession',
+        type: 'string',
+        multiEntry: true,
+    },
+    {
         name: 'field1',
         displayName: 'Field 1',
         type: 'string',
@@ -129,7 +135,7 @@ describe('DownloadDialog', () => {
     test('should generate the right download link from filters', async () => {
         await renderDialog({
             downloadParams: new FieldFilterSet(
-                new MetadataFilterSchema([]),
+                new MetadataFilterSchema(mockMetadata),
                 {
                     ...hiddenFieldValues,
                     accession: 'accession1,accession2',
@@ -267,7 +273,7 @@ describe('DownloadDialog', () => {
     test('should exclude empty parameters from the generated download URLs', async () => {
         await renderDialog({
             downloadParams: new FieldFilterSet(
-                new MetadataFilterSchema([]),
+                new MetadataFilterSchema(mockMetadata),
                 {
                     ...hiddenFieldValues,
                     field1: '',
@@ -317,7 +323,7 @@ describe('DownloadDialog', () => {
             await renderDialog({
                 richFastaHeaderFields: ['field1', 'field2'],
                 downloadParams: new FieldFilterSet(
-                    new MetadataFilterSchema([]),
+                    new MetadataFilterSchema(mockMetadata),
                     {
                         accession: 'accession1,accession2',
                         field1: 'value1',

@@ -233,6 +233,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                     field={field}
                     fieldValue={validateSingleValue(fieldValues[field.name], field.name)}
                     setSomeFieldValues={setSomeFieldValues}
+                    multiline={field.multiEntry === true}
                 />
             );
     }
