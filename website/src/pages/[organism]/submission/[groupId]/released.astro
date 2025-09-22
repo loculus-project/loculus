@@ -12,6 +12,7 @@ import {
 import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
 import { versionStatuses } from '../../../../types/lapis';
 import { getAccessToken } from '../../../../utils/getAccessToken';
+import { parseUrlSearchParams } from '../../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../../utils/serversideSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
@@ -39,10 +40,10 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
 
 const hiddenFieldValues = {
     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-    [GROUP_ID_FIELD]: group.groupId,
+    [GROUP_ID_FIELD]: String(group.groupId),
 };
 
-const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,

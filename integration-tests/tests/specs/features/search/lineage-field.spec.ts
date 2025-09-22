@@ -48,6 +48,7 @@ test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
     await search.testOrganismWithoutAlignment();
 
     await search.select('Host', uuid);
+
     await page.getByRole('checkbox', { name: 'include sublineages' }).check();
     await page.getByRole('textbox', { name: 'Lineage' }).click();
     // check diamond structure of A is correct

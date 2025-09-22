@@ -386,6 +386,9 @@ def update_db_where_conditions(
 ) -> int:
     updated_row_count = 0
     con = db_conn_pool.getconn()
+    logger.debug(
+        f"Updating '{table_name}' with conditions '{conditions}' and values '{update_values}'"
+    )
     try:
         with con, con.cursor(cursor_factory=RealDictCursor) as cur:
             # Prevent sql-injection with table_name and column_name validation
@@ -399,13 +402,25 @@ def update_db_where_conditions(
             query += set_clause
 
             where_clause = " AND ".join([f"{key}=%s" for key in conditions])
-            query += f" WHERE {where_clause}"
-            parameters = tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value
-                for value in update_values.values()
-            ) + tuple(
-                str(value) if (isinstance(value, (Status, StatusAll))) else value
-                for value in conditions.values()
+            # Avoid updating rows that would not change so the return value is actually the
+            # number of rows that were changed for real. See bug #4911
+            where_not_equal_clause = " OR ".join(
+                [f"{key} IS DISTINCT FROM %s" for key in update_values]
+            )
+            query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
+            parameters = (
+                tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in update_values.values()
+                )
+                + tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in conditions.values()
+                )
+                + tuple(
+                    str(value) if (isinstance(value, (Status, StatusAll))) else value
+                    for value in update_values.values()
+                )
             )
 
             cur.execute(query, parameters)
@@ -416,6 +431,10 @@ def update_db_where_conditions(
         logger.warning(f"update_db_where_conditions errored with: {e}")
     finally:
         db_conn_pool.putconn(con)
+    logger.debug(
+        f"Updated {updated_row_count} rows in '{table_name}' for conditions '{conditions}'"
+        f"and update values '{update_values}'"
+    )
     return updated_row_count
 
 

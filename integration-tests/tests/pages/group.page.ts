@@ -86,7 +86,8 @@ export class GroupPage {
         const groupLink = this.page
             .locator('li')
             .filter({ hasText: groupData.name })
-            .getByRole('link');
+            .getByRole('link')
+            .first();
 
         let groupId: number | null | undefined;
 
@@ -169,5 +170,16 @@ export class GroupPage {
         await button.waitFor({ state: 'visible' });
         await button.click();
         await this.page.getByRole('button', { name: 'Confirm' }).click();
+    }
+
+    async leaveGroup() {
+        const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
+        await leaveButton.waitFor({ state: 'visible' });
+        await leaveButton.click();
+
+        const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
+        await confirmButton.waitFor({ state: 'visible' });
+        await confirmButton.click();
+        await this.page.waitForURL(/\/user/);
     }
 }

@@ -10,6 +10,7 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import datetime
+import unicodedata
 
 import dateutil.parser as dateutil
 import pytz
@@ -55,17 +56,73 @@ def invalid_value_annotation(
     )
 
 
+def valid_name() -> str:
+    chars = (
+        r"\u0041-\u005A"  # A-Z
+        r"\u0061-\u007A"  # a-z
+        r"\u00C0-\u00D6"  # À-Ö
+        r"\u00D8-\u00F6"  # Ø-ö
+        r"\u00F8-\u00FF"  # ø-ÿ
+        r"\u0100-\u017F"  # Latin Extended-A
+        r"\u0180-\u024F"  # Latin Extended-B
+    )
+
+    alpha = rf"\s*[{chars}]"  # leading letter
+    name_chars = rf"[{chars}\s.\-']*"  # letters + space/.-'
+    return alpha + name_chars + r"," + name_chars
+
+
 def valid_authors(authors: str) -> bool:
-    alpha = r"\s*[a-zA-Z]"
-    name_chars = r"[a-zA-Z\s\.\-\']*"
-    name = alpha + name_chars + "," + name_chars
-    pattern = f"^{name}(;{name})*;?$"
-    return re.match(pattern, authors) is not None
+    name = valid_name()
+    pattern = rf"{name}(;{name})*;?"
+
+    return re.fullmatch(pattern, authors) is not None
+
+
+def get_invalid_author_names(authors: str) -> list[str]:
+    pattern = re.compile(f"^{valid_name()}$")
+    invalid = []
+    for author in authors.split(";"):
+        if author and pattern.fullmatch(author) is None:
+            invalid.append(author.strip())
+    return invalid
 
 
 def warn_potentially_invalid_authors(authors: str) -> bool:
     authors_split = re.split(r"[,\s]+", authors)
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
+
+
+def reformat_authors_from_latin_to_ascii(authors: str) -> str:
+    return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
+
+
+def check_latin_characters(
+    authors: str, input_fields: list[str], output_field: str
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    warnings: list[ProcessingAnnotation] = []
+    errors: list[ProcessingAnnotation] = []
+    # Check if all characters in the authors string are Latin letters or spaces (transformable to ASCII)
+    for char in authors:
+        # If character is already ASCII, skip
+        if ord(char) < 128:
+            continue
+        if char.isalpha() and not (0x0000 <= ord(char) <= 0x024F):
+            errors = [
+                ProcessingAnnotation(
+                    processedFields=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    unprocessedFields=[
+                        AnnotationSource(name=field, type=AnnotationSourceType.METADATA)
+                        for field in input_fields
+                    ],
+                    message=(
+                        f"Unsupported non-Latin character encountered: {char} (U+{ord(char):04X})."
+                    ),
+                )
+            ]
+    return (errors, warnings)
 
 
 def format_authors(authors: str) -> str:
@@ -580,9 +637,9 @@ class ProcessingFunctions:
                         [output_field],
                         AnnotationSourceType.METADATA,
                         message=(
-                            f"Internal Error: Function concatenate did not receive accession_version "
-                            f"ProcessingResult with input {input_data} and args {args}, "
-                            "please contact the administrator."
+                            "Internal Error: Function concatenate did not receive "
+                            f"accession_version ProcessingResult with input {input_data} "
+                            f"and args {args}, please contact the administrator."
                         ),
                     )
                 ],
@@ -713,30 +770,19 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        try:
-            authors.encode("ascii")
-        except UnicodeEncodeError:
-            error_message = (
-                f"The authors list '{authors}' contains non-ASCII characters. "
-                + author_format_description
-            )
+        errors, warnings = check_latin_characters(authors, input_fields, output_field)
+        if errors or warnings:
             return ProcessingResult(
                 datum=None,
-                errors=[
-                    ProcessingAnnotation.from_fields(
-                        input_fields,
-                        [output_field],
-                        AnnotationSourceType.METADATA,
-                        message=error_message,
-                    )
-                ],
                 warnings=warnings,
+                errors=errors,
             )
+
         if valid_authors(authors):
             formatted_authors = format_authors(authors)
             if warn_potentially_invalid_authors(authors):
                 warning_message = (
-                    f"The authors list '{authors}' might not be using the Loculus format. "
+                    "The authors list might not be using the Loculus format. "
                     + author_format_description
                 )
                 warnings.append(
@@ -749,7 +795,7 @@ class ProcessingFunctions:
                 )
             if " and " in authors:
                 warning_message = (
-                    f"Authors list '{authors}' contains 'and'. This may indicate a misformatted "
+                    "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 )
@@ -766,10 +812,16 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=errors,
             )
-        error_message = (
-            f"The authors list '{authors}' is not in a recognized format. "
-            + author_format_description
-        )
+        invalid_names = get_invalid_author_names(authors)
+        if invalid_names:
+            names_to_show = "; ".join(f"'{name}'" for name in invalid_names[:3])
+            if len(invalid_names) > 3:  # noqa: PLR2004
+                names_to_show += f" ... and {len(invalid_names) - 3} others"
+            error_message = f"Invalid name(s): {names_to_show}. " + author_format_description
+        else:
+            error_message = (
+                "The authors list is not in a recognized format. " + author_format_description
+            )
         return ProcessingResult(
             datum=None,
             errors=[
@@ -825,7 +877,10 @@ class ProcessingFunctions:
                 input_fields,
                 [output_field],
                 AnnotationSourceType.METADATA,
-                message=f"The value '{regex_field}' does not match the expected regex pattern: '{pattern}'.",
+                message=(
+                    f"The value '{regex_field}' does not match the expected regex "
+                    f"pattern: '{pattern}'."
+                ),
             )
         )
         return ProcessingResult(datum=None, warnings=warnings, errors=errors)

@@ -1,6 +1,6 @@
 import z from 'zod';
 
-import { mutationProportionCount, orderByType } from './lapis.ts';
+import { mutationProportionCount, orderDirection } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
@@ -146,7 +146,7 @@ export const schema = z.object({
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
-    defaultOrder: orderByType,
+    defaultOrder: orderDirection,
     submissionDataTypes: submissionDataTypesSchema,
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
@@ -203,9 +203,12 @@ export const websiteConfig = z.object({
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
 
+export type FieldValue = string | null | (string | null)[];
+export type FieldValueUpdate = [string, FieldValue];
+
 export type FieldValues = {
     mutation?: string;
     accession?: string;
-} & Record<string, string | number | null>;
-export type SetSomeFieldValues = (...fieldValuesToSet: [string, string | number | null][]) => void;
+} & Record<string, FieldValue>;
+export type SetSomeFieldValues = (...fieldValuesToSet: FieldValueUpdate[]) => void;
 export type SetAFieldValue = (fieldName: string, value: string | number | null) => void;

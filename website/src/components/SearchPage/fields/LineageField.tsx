@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC } from 'react';
 
-import { AutoCompleteField } from './AutoCompleteField';
+import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
 import type { MetadataFilter, SetSomeFieldValues } from '../../../types/config';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters';
 
@@ -45,7 +45,7 @@ export const LineageField: FC<LineageFieldProps> = ({
 
     return (
         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-            <AutoCompleteField
+            <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
                     type: 'lineage',

@@ -52,6 +52,12 @@ class SubmissionPage {
 
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
+        const confirmButton = this.page.getByRole('button', {
+            name: 'Continue under Open terms',
+        });
+        if (await confirmButton.isVisible()) {
+            await confirmButton.click();
+        }
         await this.page.waitForURL('**/review');
         return new ReviewPage(this.page);
     }

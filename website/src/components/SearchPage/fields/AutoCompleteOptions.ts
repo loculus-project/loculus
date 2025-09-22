@@ -2,10 +2,12 @@ import { useCallback } from 'react';
 
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
+import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
     option: string;
+    value: string; // Always a string, using NULL_QUERY_VALUE for nulls
     count: number | undefined;
 };
 
@@ -58,11 +60,16 @@ const createGenericOptionsHook = (
         const options: Option[] = (data?.data ?? [])
             .filter(
                 (it) =>
+                    it[fieldName] === null ||
                     typeof it[fieldName] === 'string' ||
                     typeof it[fieldName] === 'boolean' ||
                     typeof it[fieldName] === 'number',
             )
-            .map((it) => ({ option: it[fieldName]!.toString(), count: it.count }))
+            .map((it) => ({
+                option: it[fieldName] === null ? '(blank)' : it[fieldName].toString(),
+                value: it[fieldName] === null ? NULL_QUERY_VALUE : it[fieldName].toString(),
+                count: it.count,
+            }))
             .sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
         return {
@@ -199,7 +206,7 @@ const createLineageOptionsHook = (
             Object.keys(lineageDefinition).forEach((lineageName) => {
                 let count: number | undefined = aggregatedCounts.get(lineageName);
                 if (count === 0) count = undefined;
-                options.push({ option: lineageName, count });
+                options.push({ option: lineageName, value: lineageName, count });
             });
         }
 

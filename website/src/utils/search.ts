@@ -1,6 +1,8 @@
 import { sentenceCase } from 'change-case';
 
+import { validateSingleValue } from './extractFieldValue';
 import type { TableSequenceData } from '../components/SearchPage/Table';
+import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import type {
     FieldValues,
     GroupedMetadataFilter,
@@ -17,6 +19,7 @@ export const COLUMN_VISIBILITY_PREFIX = 'column_';
 export const ORDER_KEY = 'orderBy';
 export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
+export const NULL_QUERY_VALUE = '_null_';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -28,7 +31,7 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
-    state: Record<string, string>,
+    state: QueryState,
     visibilityPrefix: string,
     initiallyVisibleAccessor: InitialVisibilityAccessor,
     visibilitySelectableAccessor: VisiblitySelectableAccessor,
@@ -50,15 +53,16 @@ const getFieldOrColumnVisibilitiesFromQuery = (
     const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
 
     for (const key of visibilityKeys) {
-        visibilities.set(key.slice(visibilityPrefix.length), state[key] === 'true');
+        // Visibility values must always be single strings
+        const stringValue = validateSingleValue(state[key], key);
+        visibilities.set(key.slice(visibilityPrefix.length), stringValue === 'true');
     }
     return visibilities;
 };
 
-export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
+export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
-        field.notSearchable !== undefined ? !field.notSearchable : true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable !== true;
     return getFieldOrColumnVisibilitiesFromQuery(
         schema,
         state,
@@ -68,7 +72,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: Record<stri
     );
 };
 
-export const getColumnVisibilitiesFromQuery = (schema: Schema, state: Record<string, string>): Map<string, boolean> => {
+export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     const isFieldSelectable: VisiblitySelectableAccessor = (field) => !(field.hideInSearchResultsTable ?? false);
     return getFieldOrColumnVisibilitiesFromQuery(
@@ -216,18 +220,28 @@ export class MetadataFilterSchema {
      * @param queryState the key-values set in the URL.
      * @param hiddenFieldValues The default settings to use for all {@link FieldValues} as a starting point.
      */
-    public getFieldValuesFromQuery(queryState: Record<string, string>, hiddenFieldValues: FieldValues): FieldValues {
+    public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
         for (const field of this.ungroupedMetadataFilters()) {
-            if (field.name in queryState) {
-                values[field.name] = queryState[field.name];
+            const value = queryState[field.name];
+            if (value === undefined) {
+                continue;
+            }
+            // Handle arrays (multi-select) and single values
+            if (Array.isArray(value)) {
+                values[field.name] = value.map((v) => (v === NULL_QUERY_VALUE ? null : v));
+            } else {
+                values[field.name] = value === NULL_QUERY_VALUE ? null : value;
             }
         }
+        // Handle special fields - these must be single values
         if ('accession' in queryState) {
-            values.accession = queryState.accession;
+            const val = validateSingleValue(queryState.accession, 'accession');
+            values.accession = val === '' ? undefined : val;
         }
         if ('mutation' in queryState) {
-            values.mutation = queryState.mutation;
+            const val = validateSingleValue(queryState.mutation, 'mutation');
+            values.mutation = val === '' ? undefined : val;
         }
         return values;
     }

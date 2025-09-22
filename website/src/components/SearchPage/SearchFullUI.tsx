@@ -10,29 +10,36 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
-import useQueryAsState from './useQueryAsState.js';
+import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type Schema, type FieldValues, type SequenceFlaggingConfig } from '../../types/config.ts';
 import type { LinkOut } from '../../types/config.ts';
-import { type OrderBy } from '../../types/lapis.ts';
+import {
+    type FieldValues,
+    type FieldValueUpdate,
+    type Schema,
+    type SequenceFlaggingConfig,
+    type SetSomeFieldValues,
+} from '../../types/config.ts';
+import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
+    COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
-    VISIBILITY_PREFIX,
-    COLUMN_VISIBILITY_PREFIX,
     MetadataFilterSchema,
+    NULL_QUERY_VALUE,
+    VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -51,10 +58,6 @@ export interface InnerSearchFullUIProps {
     linkOuts?: LinkOut[];
 }
 
-interface QueryState {
-    [key: string]: string;
-}
-
 const buildSequenceCountText = (totalSequences: number | undefined, oldCount: number | null, initialCount: number) => {
     const sequenceCount = totalSequences ?? oldCount ?? initialCount;
 
@@ -64,7 +67,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return -- TODO(#3451) this component is a mess a needs to be refactored */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesSequenceNames,
@@ -133,12 +136,12 @@ export const InnerSearchFullUI = ({
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 
-    let orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    let orderByField = state.orderBy ?? schema.defaultOrderBy;
     if (!columnsToShow.includes(orderByField)) {
         orderByField = schema.primaryKey;
     }
 
-    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+    const orderDirection = state.order ?? schema.defaultOrder;
 
     const page = parseInt(state.page ?? '1', 10);
 
@@ -168,7 +171,7 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const setOrderDirection = (direction: string) => {
+    const setOrderDirection = (direction: OrderDirection) => {
         setState((prev: QueryState) => ({
             ...prev,
             order: direction,
@@ -188,10 +191,13 @@ export const InnerSearchFullUI = ({
     /**
      * Update field values (query parameters).
      * If value is '' or null, the query parameter is unset.
+     * For multi-select fields, we handle fieldValuesToSet as an array where:
+     * - If value is an array, it sets multiple values for that field
+     * - If value is '' or null, it clears the field
      */
-    const setSomeFieldValues = useCallback(
-        (...fieldValuesToSet: [string, string | number | null][]) => {
-            setState((prev: any) => {
+    const setSomeFieldValues: SetSomeFieldValues = useCallback(
+        (...fieldValuesToSet: FieldValueUpdate[]) => {
+            setState((prev: QueryState) => {
                 const newState = { ...prev };
                 fieldValuesToSet.forEach(([key, value]) => {
                     if (value === '' || value === null) {
@@ -202,6 +208,13 @@ export const InnerSearchFullUI = ({
                             // we can delete keys that are not in the hiddenFieldValues
                             delete newState[key];
                         }
+                    } else if (Array.isArray(value)) {
+                        // Handle array values for multi-select
+                        if (value.length === 0) {
+                            delete newState[key];
+                        } else {
+                            newState[key] = value.map((v) => v ?? NULL_QUERY_VALUE);
+                        }
                     } else {
                         newState[key] = value;
                     }
@@ -210,30 +223,51 @@ export const InnerSearchFullUI = ({
             });
             setPage(1);
         },
-        [setState, setPage],
+        [setState, setPage, hiddenFieldValues],
     );
 
     const removeFilter = (metadataFilterName: string) => {
         if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
-            setSomeFieldValues([metadataFilterName, hiddenFieldValues[metadataFilterName]]);
+            const hiddenValue = hiddenFieldValues[metadataFilterName];
+            // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
+            const valueToSet = Array.isArray(hiddenValue)
+                ? hiddenValue.filter((v): v is string => v !== null)
+                : hiddenValue;
+            setSomeFieldValues([metadataFilterName, valueToSet]);
         } else {
             setSomeFieldValues([metadataFilterName, null]);
         }
     };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => ({
-            ...prev,
-            [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
-        }));
-        // if visible is false, we should also remove the field from the fieldValues
+        setState((prev: QueryState) => {
+            const newState = { ...prev };
+            const key = `${VISIBILITY_PREFIX}${fieldName}`;
+            const metadataField = schema.metadata.find((field) => {
+                let name = field.name;
+                if (field.rangeOverlapSearch) {
+                    name = field.rangeOverlapSearch.rangeName;
+                }
+                return name === fieldName;
+            });
+            const defaultVisible = metadataField?.initiallyVisible === true;
+            if (visible === defaultVisible) {
+                delete newState[key];
+            } else {
+                newState[key] = visible ? 'true' : 'false';
+            }
+            if (!visible) {
+                delete newState[fieldName];
+            }
+            return newState;
+        });
         if (!visible) {
-            setSomeFieldValues([fieldName, '']);
+            setPage(1);
         }
     };
 
     const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => {
+        setState((prev: QueryState) => {
             const newState = { ...prev };
             const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
             const defaultVisible = schema.tableColumns.includes(fieldName);

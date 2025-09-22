@@ -20,6 +20,8 @@ test.describe('The submit page', () => {
         await submitPage.confirmationINSDCTerms.click();
         await submitPage.confirmationNoPII.click();
         await submitPage.submitButton.click();
+        await expect(submitPage.confirmOpenTermsButton).toBeVisible();
+        await submitPage.confirmOpenTermsButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`, {
             waitUntil: 'load',
@@ -34,7 +36,7 @@ test.describe('The submit page', () => {
 
         await submitPage.confirmationINSDCTerms.click();
         await submitPage.confirmationNoPII.click();
-        await submitPage.submitButton.click();
+        await submitPage.submit();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });
@@ -47,7 +49,7 @@ test.describe('The submit page', () => {
         await submitPage.selectRestrictedDataUseTerms();
         await submitPage.confirmationINSDCTerms.click();
         await submitPage.confirmationNoPII.click();
-        await submitPage.submitButton.click();
+        await submitPage.submit();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useMemo } from 'react';
+
+import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 
 type ParamType = 'string' | 'boolean' | 'nullable-string';
 
@@ -15,31 +17,34 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  */
 function useUrlParamState<T>(
     paramName: string,
-    queryState: Record<string, string>,
+    queryState: QueryState,
     defaultValue: T,
-    setState: (callback: (prev: Record<string, string>) => Record<string, string>) => void,
+    setState: Dispatch<SetStateAction<QueryState>>,
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
 ): [T, (newValue: T) => void] {
-    const [valueState, setValueState] = useState<T>(
-        paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue,
+    const valueState = useMemo(
+        () => (paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue),
+        [paramName, queryState, paramType, defaultValue],
     );
 
-    function parseUrlValue(urlValue: string, type: ParamType): T {
+    function parseUrlValue(urlValue: string | string[] | undefined, type: ParamType): T {
         switch (type) {
             case 'boolean':
                 return (urlValue === 'true') as T;
             case 'nullable-string':
-                return (urlValue || null) as T;
+                return (typeof urlValue === 'string' ? urlValue : null) as T;
             case 'string':
-            default:
-                return urlValue as T;
+                if (Array.isArray(urlValue)) {
+                    throw Error('Expected string, found array value in state.');
+                }
+                return (urlValue ?? '') as T;
         }
     }
 
     const updateUrlParam = useCallback(
         (newValue: T) => {
-            setState((prev: Record<string, string>) => {
+            setState((prev) => {
                 if (shouldRemove(newValue)) {
                     const newState = { ...prev };
                     delete newState[paramName];
@@ -55,23 +60,7 @@ function useUrlParamState<T>(
         [paramName, setState, shouldRemove],
     );
 
-    const setValue = useCallback(
-        (newValue: T) => {
-            setValueState(newValue);
-            updateUrlParam(newValue);
-        },
-        [updateUrlParam],
-    );
-
-    useEffect(() => {
-        const urlValue = paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue;
-
-        if (JSON.stringify(urlValue) !== JSON.stringify(valueState)) {
-            setValueState(urlValue);
-        }
-    }, [queryState, paramName, paramType, defaultValue, valueState]);
-
-    return [valueState, setValue];
+    return [valueState, updateUrlParam];
 }
 
 export default useUrlParamState;

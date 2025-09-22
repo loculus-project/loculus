@@ -18,9 +18,11 @@ The files will not be publicly accessible, until an associated sequence entry is
 
 When configuring this feature for an organism, you can configure file categories for which users can submit files, as well as file "output" categories, which will then be visible alongside other sequence data and metadata in the sequence detail view. You can also configure only submit files (which can then be used by the preprocessing pipeline in some way) or only "output" files, which the preprocessing pipeline can generate on its own. The preprocessing pipeline gets access to submitted files before they are released, and the pipeline can also upload its own new files.
 
-## Configuring an S3 bucket
+## Loculus configuration
 
-You need admin access to an S3 bucket, and have the credentials at hand.
+### Configuring an S3 bucket to use
+
+You need admin access to an S3 bucket, and have the [credentials](../../reference/glossary#s3-credentials) at hand.
 
 Enable S3 and configure the location of the bucket:
 
@@ -29,7 +31,7 @@ s3:
   enabled: true
   bucket:
     region: us-east-1
-    endpoint: my-s3.net
+    endpoint: https://my-s3.net
     bucket: loculus-data
 ```
 
@@ -50,10 +52,87 @@ secrets:
 ```
 
 :::note
-You can also use the `raw` secret type, but be aware that keeping credentials in plain text in your configuration file can be a security hazard.
+Alternatively, you can also use the `raw` secret type. If you do, ensure the configuration file is properly access-protected, since it will contain credentials in plain text.
+
+```
+secrets:
+  s3-bucket:
+    type: raw
+    clusterWide: 'true'
+    data:
+      accessKey: K93AK....
+      secretKey: DK37sAKJ....
+```
+
 :::
 
-## Set S3 policy
+### Configuring file submission
+
+Users can submit files along with sequence metadata and sequences (or also instead of sequences).
+For this, you need to enable the `files` submission type, and configure at least one file category that users can submit:
+
+```yaml
+my-organism:
+  schema:
+    submissionDataTypes:
+      files:
+        enabled: true # enable the feature
+        categories:
+          - name: rawReads # configure a submission category
+```
+
+The example above configures the `rawReads` file category.
+
+If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
+
+### Configuring output files
+
+By default, files are not shown in the sequence detail view as well.
+You need to configure output files as well, and the pipeline needs to set them.
+
+To configure:
+
+```yaml
+my-organism:
+  schema:
+    files:
+      - name: rawReads
+```
+
+:::note
+The name (`rawReads` in the example above) must not be a name that is also used by a metadata field!
+:::
+
+## S3 Configuration
+
+To ensure Loculus can access the bucket and allow reading files directly from S3, certain configuration settings are required. The default settings may depend on your S3 provider, meaning that some steps may be unnecessary or different.
+
+[`s3cmd`](https://github.com/s3tools/s3cmd) is a good tool to configure S3.
+Once installed, you can configure it to access your bucket with `s3cmd --configure`.
+
+### Set CORS bucket policy
+
+Depending on your S3 provider, you might have to configure a CORS policy for your bucket which allows access from the Loculus website to your bucket. Without it, your browser will raise an error when trying to upload files to S3.
+
+You can set a permissive CORS policy on your bucket with `s3cmd setcors cors.xml s3://<bucketname>`, where `<bucketname>` is the name of your bucket, and `cors.xml` is a file with this content:
+
+```xml
+<CORSConfiguration>
+  <CORSRule>
+    <AllowedHeaders>*</AllowedHeaders>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedMethod>POST</AllowedMethod>
+    <AllowedMethod>PUT</AllowedMethod>
+    <AllowedMethod>DELETE</AllowedMethod>
+    <AllowedOrigin>*</AllowedOrigin>
+  </CORSRule>
+</CORSConfiguration>
+```
+
+Also consult the documentation for you S3 provider to find out about CORS policy configuration. For example: [AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enabling-cors-examples.html) and [Hetzner](https://docs.hetzner.com/storage/object-storage/howto-protect-objects/cors/).
+
+### Set S3 policy
 
 :::note
 This step is only required if you wish to be able to have the files be set to public on your S3 instance, accessible without the need to request pre-signed URLs from the backend.
@@ -83,41 +162,4 @@ For this to work, you need to configure a bucket policy like this:
 }
 ```
 
-Consult the documentation of your particular S3 provider on how to configure bucket policies.
-
-## Configuring file submission
-
-Users can submit files along with sequence metadata and sequences (or also instead of sequences).
-For this, you need to enable the `files` submission type, and configure at least one file category that users can submit:
-
-```yaml
-my-organism:
-  schema:
-    submissionDataTypes:
-      files:
-        enabled: true # enable the feature
-        categories:
-          - name: rawReads # configure a submission category
-```
-
-The example above configures the `rawReads` file category.
-
-If a user submits these files, they will be passed along to the processing pipeline as well, and the pipeline can read them, pass them through as output files, or generate additional fields or process them in any other way.
-
-## Configuring output files
-
-By default, files are not shown in the sequence detail view as well.
-You need to configure output files as well, and the pipeline needs to set them.
-
-To configure:
-
-```yaml
-my-organism:
-  schema:
-    files:
-      - name: rawReads
-```
-
-:::note
-The name (`rawReads` in the example above) must not be a name that is also used by a metadata field!
-:::
+You can do this with `s3cmd`. Save the policy above in a file, `policy.json`, and then call `s3cmd setpolicy policy.json s3://<bucket-name>` (replace `<bucket-name>` with your bucket name).

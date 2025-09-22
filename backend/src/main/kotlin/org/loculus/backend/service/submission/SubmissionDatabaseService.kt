@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -125,6 +126,8 @@ class SubmissionDatabaseService(
     init {
         Database.connect(pool)
     }
+
+    private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
         numberOfSequenceEntries: Int,
@@ -1273,6 +1276,29 @@ class SubmissionDatabaseService(
         }
     }
 
+    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+        val latestUpdate = transaction {
+            UpdateTrackerTable
+                .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
+                .where { UpdateTrackerTable.tableNameColumn eq SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME }
+                .map { it[UpdateTrackerTable.lastTimeUpdatedDbColumn] }
+                .firstOrNull()
+        }
+
+        if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
+            log.info {
+                "No updates in $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME; skipping pipeline version check"
+            }
+            return emptyMap()
+        }
+
+        lastPreprocessedDataUpdate = latestUpdate
+
+        return SequenceEntriesTable.distinctOrganisms().associateWith { organismName ->
+            useNewerProcessingPipelineIfPossible(organismName)
+        }
+    }
+
     /**
      * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
      * the given organism and are older than the earliest preprocessing pipeline version to keep.
@@ -1299,14 +1325,6 @@ class SubmissionDatabaseService(
             )
         }
     }
-
-    /**
-     * Returns a map from organism names to new versions or null if version wasn't upgraded.
-     */
-    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> =
-        SequenceEntriesTable.distinctOrganisms().map { organismName ->
-            Pair(organismName, useNewerProcessingPipelineIfPossible(organismName))
-        }.toMap()
 
     /**
      * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];

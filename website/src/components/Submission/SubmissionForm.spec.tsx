@@ -105,7 +105,7 @@ describe('SubmitForm', () => {
             mockRequest.backend.submit(200, testResponse);
             mockRequest.backend.getGroupsOfUser();
 
-            const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode });
+            const { getByLabelText, getByRole, findByRole } = renderSubmissionForm({ inputMode });
 
             switch (inputMode) {
                 case 'form': {
@@ -129,6 +129,7 @@ describe('SubmitForm', () => {
 
             const submitButton = getByRole('button', { name: 'Submit sequences' });
             await userEvent.click(submitButton);
+            await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
@@ -271,7 +272,7 @@ describe('SubmitForm', () => {
     });
 
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
-        const { getByLabelText, getByRole } = renderSubmissionForm();
+        const { getByLabelText, getByRole, findByRole } = renderSubmissionForm();
 
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
@@ -284,6 +285,7 @@ describe('SubmitForm', () => {
 
         const submitButton = getByRole('button', { name: 'Submit sequences' });
         await userEvent.click(submitButton);
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
@@ -297,7 +299,7 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
-        const { getByLabelText, getByRole } = renderSubmissionForm({
+        const { getByLabelText, getByRole, findByRole } = renderSubmissionForm({
             allowSubmissionOfConsensusSequences: false,
         });
 
@@ -309,7 +311,9 @@ describe('SubmitForm', () => {
             getByLabelText(/I confirm that the data submitted is not sensitive or human-identifiable/i),
         );
 
-        await userEvent.click(getByRole('button', { name: 'Submit sequences' }));
+        const submitButton = getByRole('button', { name: 'Submit sequences' });
+        await userEvent.click(submitButton);
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();

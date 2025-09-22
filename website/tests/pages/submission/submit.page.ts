@@ -16,6 +16,7 @@ export class SubmitPage {
     public readonly confirmationNoPII: Locator;
     public readonly dataUseTermsDropdown: Locator;
     public readonly loginButton: Locator;
+    public readonly confirmOpenTermsButton: Locator;
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'submit' });
@@ -27,6 +28,9 @@ export class SubmitPage {
         );
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
         this.loginButton = page.locator('a', { hasText: 'Login or register' });
+        this.confirmOpenTermsButton = page.getByRole('button', {
+            name: 'Continue under Open terms',
+        });
     }
 
     public async goto(groupId: number) {
@@ -55,6 +59,14 @@ export class SubmitPage {
         await this.page.waitForSelector(restrictedSelector);
 
         await this.page.click(restrictedSelector);
+    }
+
+    public async submit() {
+        await this.submitButton.click();
+
+        if (await this.confirmOpenTermsButton.isVisible()) {
+            await this.confirmOpenTermsButton.click();
+        }
     }
 
     public async downloadTsvMetadataTemplate() {

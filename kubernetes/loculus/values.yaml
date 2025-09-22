@@ -51,6 +51,8 @@ lineageSystemDefinitions:
     2: https://raw.githubusercontent.com/loculus-project/loculus/c400348ea0ba0b8178aa43475d5c7539fc097997/preprocessing/dummy/lineage.yaml
   alternativeLineage:
     4: https://raw.githubusercontent.com/loculus-project/loculus/fe3b2974071acc9a25856d650350f8a952040a7c/preprocessing/dummy/lineage-alternative.yaml
+  cchfS:
+    1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-12/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
@@ -1279,6 +1281,17 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 2840
         preprocessing:
           inputs: {input: nextclade.frameShifts}
+      - name: totalStopCodons
+        type: int
+        header: "Alignment and QC metrics"
+        noInput: true
+        preprocessing:
+          inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
+      - name: stopCodons
+        header: "Alignment and QC metrics"
+        noInput: true
+        preprocessing:
+          inputs: {input: nextclade.qc.stopCodons.stopCodons}
       - name: completeness
         type: float
         header: "Alignment and QC metrics"
@@ -1315,6 +1328,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         genes: []
         batch_size: 100
         create_embl_file: true
+        nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
@@ -1388,17 +1402,6 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             inputs: {input: nextclade.clade}
-        - name: totalStopCodons
-          type: int
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
       website:
         <<: *website
         tableColumns:
@@ -1691,11 +1694,11 @@ defaultOrganisms:
       image: "/images/organisms/cchf_small.jpg"
       linkOuts:
         - name: "Nextclade (L)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/L&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:L+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/L"
         - name: "Nextclade (M)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/M&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:M+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/M"
         - name: "Nextclade (S)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=nextstrain/cchfv/linked/S&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:S+rich|fasta]}}&dataset-name=community/pathoplexus/cchfv/S"
       metadataAdd:
         - name: hostNameScientific
           generateIndex: true
@@ -1703,23 +1706,26 @@ defaultOrganisms:
           header: "Host"
           ingest: ncbiHostName
           initiallyVisible: true
-        - name: totalStopCodons
-          type: int
-          header: "Alignment and QC metrics"
+        - name: lineage
+          displayName: "Segment S Lineage"
+          header: "Lineage"
           noInput: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          includeInDownloadsByDefault: true
+          lineageSystem: cchfS
           preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
-        - name: stopCodons
-          header: "Alignment and QC metrics"
-          noInput: true
-          preprocessing:
-            inputs: {input: nextclade.qc.stopCodons.stopCodons}
+            args: 
+              segment: S
+            inputs: {input: nextclade.clade}
       website:
         <<: *website
         tableColumns:
           - sampleCollectionDate
           - geoLocCountry
           - geoLocAdmin1
+          - lineage
           - authors
           - authorAffiliations
           - ncbiReleaseDate
@@ -1734,8 +1740,7 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest
@@ -1744,8 +1749,7 @@ defaultOrganisms:
         taxon_id: 3052518
         segment_identification:
           method: "align"
-          nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+          nextclade_dataset_name: community/pathoplexus/cchfv
     enaDeposition:
       configFile:
         taxon_id: 3052518
@@ -1985,18 +1989,20 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.7.10"
-    pullPolicy: IfNotPresent
+    tag: "v0.7.10.1@sha256:96e431192d6493ed71ac10bc273710df21e7c520a77bebaa7d94ff859264d36c"
+    pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.11"
-    pullPolicy: IfNotPresent
+    tag: "0.5.14"
+    pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
     pullPolicy: Always
   backend:
     repository: "ghcr.io/loculus-project/backend"
     pullPolicy: Always
+silo:
+  apiThreadsForHttpConnections: 16
 secrets:
   smtp-password:
     type: raw

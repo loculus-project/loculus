@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
-import { type GroupedMetadataFilter, type FieldValues } from '../../../types/config';
+import { type GroupedMetadataFilter, type FieldValues, type SetSomeFieldValues } from '../../../types/config';
 
 describe('DateRangeField', () => {
     function createRangeOverlapSearch(bound: 'lower' | 'upper') {
@@ -164,7 +164,7 @@ describe('DateRangeField', () => {
                 collectionDateRangeUpperTo: '2024-12-31',
             });
 
-            const setValues = useCallback((...fieldValuesToSet: [string, string | number | null][]) => {
+            const setValues: SetSomeFieldValues = useCallback((...fieldValuesToSet) => {
                 _setValues((state) => {
                     const newState = { ...state };
                     fieldValuesToSet.forEach(([k, v]) => (newState[k] = v));

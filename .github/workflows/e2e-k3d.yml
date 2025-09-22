@@ -41,7 +41,7 @@ jobs:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
@@ -68,7 +68,7 @@ jobs:
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm

@@ -1,3 +1,4 @@
+import { validateSingleValue } from './extractFieldValue';
 import {
     ORDER_DIRECTION_KEY,
     ORDER_KEY,
@@ -8,13 +9,14 @@ import {
 } from './search';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
+import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
 
 export const performLapisSearchQueries = async (
-    state: Record<string, string>,
+    state: QueryState,
     schema: Schema,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
     hiddenFieldValues: FieldValues,
@@ -25,9 +27,14 @@ export const performLapisSearchQueries = async (
     const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
     const lapisSearchParameters = fieldFilter.toApiParams();
 
-    const orderByField = ORDER_KEY in state ? state[ORDER_KEY] : schema.defaultOrderBy;
-    const orderDirection = state[ORDER_DIRECTION_KEY] ?? schema.defaultOrder;
-    const page = state[PAGE_KEY] ? parseInt(state[PAGE_KEY], 10) : 1;
+    // Extract single-value parameters using validation
+    const orderByField = ORDER_KEY in state ? validateSingleValue(state[ORDER_KEY], ORDER_KEY) : schema.defaultOrderBy;
+    const orderDirection =
+        ORDER_DIRECTION_KEY in state
+            ? validateSingleValue(state[ORDER_DIRECTION_KEY], ORDER_DIRECTION_KEY)
+            : schema.defaultOrder;
+    const pageParam = PAGE_KEY in state ? validateSingleValue(state[PAGE_KEY], PAGE_KEY) : '';
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
 
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 

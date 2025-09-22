@@ -3,12 +3,12 @@ import z, { type ZodTypeAny } from 'zod';
 import { accessionVersion, type ProblemDetail } from './backend.ts';
 import { parseUnixTimestamp } from '../utils/parseUnixTimestamp.ts';
 
-export const orderByType = z.enum(['ascending', 'descending']);
-export type OrderByType = z.infer<typeof orderByType>;
+export const orderDirection = z.enum(['ascending', 'descending']);
+export type OrderDirection = z.infer<typeof orderDirection>;
 
 export const orderBy = z.object({
     field: z.string(),
-    type: orderByType,
+    type: orderDirection,
 });
 export type OrderBy = z.infer<typeof orderBy>;
 
@@ -19,7 +19,7 @@ export const lapisBaseRequest = z
         fields: z.array(z.string()).optional(),
         orderBy: z.array(orderBy).optional(),
     })
-    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string())]));
+    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string().nullable())]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });

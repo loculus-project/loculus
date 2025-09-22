@@ -21,3 +21,4 @@ dependencies:
   - types-pytz
   - types-python-dateutil
   - pytest
+  - unidecode

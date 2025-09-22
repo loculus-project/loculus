@@ -31,9 +31,9 @@ the headers of the fasta file must be of the form '>[$HEADER_TO_CONNECT_METADATA
 """
 
 const val FILE_MAPPING_DESCRIPTION = """
-"A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`. " +
-        "Files first need to be uploaded. Request pre-signed URLs to upload files using the " +
-        "/files/request-upload endpoint.",
+A JSON object. `{submissionID: {<fileCategory>: [{fileId: <fileId>, name: <fileName>}]}}`.
+Files first need to be uploaded. Request pre-signed URLs to upload files using the
+'/files/request-upload' endpoint.
 """
 
 const val GROUP_ID_DESCRIPTION = """

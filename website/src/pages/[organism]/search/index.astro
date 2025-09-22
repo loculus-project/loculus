@@ -13,6 +13,7 @@ import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
 import { versionStatuses } from '../../../types/lapis';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
+import { parseUrlSearchParams } from '../../../utils/parseUrlSearchParams';
 import { performLapisSearchQueries } from '../../../utils/serversideSearch';
 
 // These values are defaults that we already set
@@ -38,7 +39,8 @@ const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : []
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 
-const initialQueryDict = Object.fromEntries(Astro.url.searchParams.entries());
+// Build initialQueryDict with support for multi-value parameters
+const initialQueryDict = parseUrlSearchParams(Astro.url.searchParams);
 const { data, totalCount } = await performLapisSearchQueries(
     initialQueryDict,
     schema,

@@ -684,6 +684,11 @@ def test_reformat_authors_from_loculus_to_embl_style():
     desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
     assert result == desired_result
 
+    extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
+    result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
+    desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
+    assert result_extended == desired_result_extended
+
 
 def test_create_flatfile():
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)

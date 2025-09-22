@@ -358,7 +358,7 @@ test_case_definitions = [
                 ["authors"],
                 ["authors"],
                 (
-                    "The authors list 'Anna Smith, Cameron Tucker' might not be using the Loculus "
+                    "The authors list might not be using the Loculus "
                     "format. Please ensure that authors are separated by semi-colons. Each "
                     "author's name should be in the format 'last name, first name;'. Last name(s) "
                     "is mandatory, a comma is mandatory to separate first names/initials from last "
@@ -370,12 +370,12 @@ test_case_definitions = [
         ],
     ),
     Case(
-        name="non_ascii_authors",
+        name="non_latin_characters_authors",
         input_metadata={
-            "submissionId": "non_ascii_authors",
+            "submissionId": "non_latin_characters_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Møller, Anäis; Pérez, José",
+            "authors": "Pérez, José; Bailley, François; 汉",
         },
         accession_id="13",
         expected_metadata={
@@ -387,17 +387,27 @@ test_case_definitions = [
             ProcessingAnnotationHelper(
                 ["authors"],
                 ["authors"],
-                (
-                    "The authors list 'Møller, Anäis; Pérez, José' contains non-ASCII characters. "
-                    "Please ensure that authors are separated by semi-colons. Each author's name "
-                    "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
-                    "a comma is mandatory to separate first names/initials from last name. "
-                    "Only ASCII alphabetical characters A-Z are allowed. For example: "
-                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
-                    "unknown."
-                ),
+                "Unsupported non-Latin character encountered: 汉 (U+6C49).",
             ),
         ],
+    ),
+    Case(
+        name="diacritics_in_authors",
+        input_metadata={
+            "submissionId": "diacritics_in_authors",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech",
+        },
+        accession_id="13",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_13.1/2022-11-01",
+            "authors": "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech",
+        },
+        expected_errors=[],
+        expected_warnings=[],
     ),
     Case(
         name="nan_float",
@@ -459,7 +469,7 @@ test_case_definitions = [
                 ["authors"],
                 ["authors"],
                 (
-                    "Authors list 'Smith, Anna; Perez, Tom J. and Xu X.L.' contains 'and'. "
+                    "Authors list contains 'and'. "
                     "This may indicate a misformatted authors list. Authors should always be "
                     "separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
                 ),
@@ -472,17 +482,55 @@ test_case_definitions = [
             "submissionId": "trailing_dots_in_authors",
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith, John II; Doe, A.B.C.; Lee, J D; Smith, Anna; Perez, Tom J.; Xu, X.L.; SMITH, AMY; Smith, AD; Black, W. C. IV; Dantas, Pedro HLF; Diclaro, J.W.II; Ramirez, II II; Xu, X.L",
+            "authors": (
+                "Smith, John II; Doe, A.B.C.; Lee, J D; Smith, Anna; Perez, Tom J.; Xu, X.L.; "
+                "SMITH, AMY; Smith, AD; Black, W. C. IV; Dantas, Pedro HLF; Diclaro, J.W.II; "
+                "Ramirez, II II; Xu, X.L"
+            ),
         },
         accession_id="16",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_16.1/2022-11-01",
-            "authors": "Smith, John II; Doe, A. B. C.; Lee, J. D.; Smith, Anna; Perez, Tom J.; Xu, X. L.; SMITH, AMY; Smith, A. D.; Black, W. C. IV; Dantas, Pedro H. L. F.; Diclaro, J. W. II; Ramirez, I. I. II; Xu, X. L.",
+            "authors": (
+                "Smith, John II; Doe, A. B. C.; Lee, J. D.; Smith, Anna; Perez, Tom J.; "
+                "Xu, X. L.; SMITH, AMY; Smith, A. D.; Black, W. C. IV; Dantas, Pedro H. L. F.; "
+                "Diclaro, J. W. II; Ramirez, I. I. II; Xu, X. L."
+            ),
         },
         expected_errors=[],
         expected_warnings=[],
+    ),
+    Case(
+        name="invalid_author_names_listed",
+        input_metadata={
+            "submissionId": "invalid_author_names_listed",
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith, Anna; Invalid Name; BadFormat123; Perez, Tom J.; 12345; NoComma",
+        },
+        accession_id="17",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_17.1/2022-11-01",
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                ["authors"],
+                ["authors"],
+                (
+                    "Invalid name(s): 'Invalid Name'; 'BadFormat123'; '12345' ... and 1 others. "
+                    "Please ensure that authors are separated by semi-colons. Each author's name "
+                    "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
+                    "a comma is mandatory to separate first names/initials from last name. "
+                    "Only ASCII alphabetical characters A-Z are allowed. For example: "
+                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
+                    "unknown."
+                ),
+            ),
+        ],
     ),
     Case(
         name="strip_spaces_in_metadata",

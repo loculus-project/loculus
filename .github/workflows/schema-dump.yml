@@ -34,7 +34,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.head_ref }}
         fetch-depth: 0
@@ -57,6 +57,8 @@ jobs:
           -U postgres 
           -d postgres 
           --schema-only 
+          --no-security-labels
+          --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
     - name: Cat schema
       run: cat backend/docs/db/schema.sql

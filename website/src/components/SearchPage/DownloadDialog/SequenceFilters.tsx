@@ -26,12 +26,13 @@ export interface SequenceFilter {
     /**
      * Return the filter as params to build a URL from.
      */
-    toUrlSearchParams(): [string, string][];
+    toUrlSearchParams(): [string, string | string[]][];
 
     /**
      * Return a map of keys to human-readable descriptions of the filters to apply.
+     * null values are maintained as null.
      */
-    toDisplayStrings(): Map<string, [string, string]>;
+    toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]>;
 }
 
 /**
@@ -116,8 +117,8 @@ export class FieldFilterSet implements SequenceFilter {
         };
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
 
         // keys that need special handling
         const accessionKey = 'accession';
@@ -148,10 +149,17 @@ export class FieldFilterSet implements SequenceFilter {
             if (skipKeys.includes(key)) {
                 continue;
             }
-            const stringValue = String(value);
-            const trimmedValue = stringValue.trim();
-            if (trimmedValue.length > 0) {
-                result.push([key, trimmedValue]);
+
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                    result.push([key, value]);
+                }
+            } else {
+                const stringValue = String(value);
+                const trimmedValue = stringValue.trim();
+                if (trimmedValue.length > 0) {
+                    result.push([key, trimmedValue]);
+                }
             }
         }
 
@@ -164,24 +172,32 @@ export class FieldFilterSet implements SequenceFilter {
         );
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
         return new Map(
             Object.entries(this.fieldValues)
                 .filter(([name, filterValue]) => !this.isHiddenFieldValue(name, filterValue))
-                .map(([name, filterValue]): [string, [string, string]] => [
+                .map(([name, filterValue]): [string, [string, string | (string | null)[] | null]] => [
                     name,
-                    [this.filterSchema.getLabel(name), this.filterValueDisplayString(name, filterValue)],
+                    [
+                        this.filterSchema.getLabel(name),
+                        filterValue === null ? null : this.filterValueDisplayString(name, filterValue),
+                    ],
                 ]),
         );
     }
 
-    private filterValueDisplayString(fieldName: string, value: any): string {
+    private filterValueDisplayString(fieldName: string, value: any): string | (string | null)[] {
+        if (Array.isArray(value)) {
+            // Preserve arrays (including nulls) so ActiveFilters can render them correctly
+            return value as (string | null)[];
+        }
+
         let result = value;
         if (this.filterSchema.getType(fieldName) === 'timestamp') {
             const date = new Date(Number(value) * 1000);
             result = date.toISOString().split('T')[0]; // Extract YYYY-MM-DD
         }
-        if (result.length > 40) {
+        if (typeof result === 'string' && result.length > 40) {
             result = `${result.substring(0, 37)}...`;
         }
         return result;
@@ -231,8 +247,8 @@ export class SequenceEntrySelection implements SequenceFilter {
         return { accessionVersion: Array.from(this.selectedSequences).sort() };
     }
 
-    public toUrlSearchParams(): [string, string][] {
-        const result: [string, string][] = [];
+    public toUrlSearchParams(): [string, string | string[]][] {
+        const result: [string, string | string[]][] = [];
         Array.from(this.selectedSequences)
             .sort()
             .forEach((sequence) => {
@@ -241,7 +257,7 @@ export class SequenceEntrySelection implements SequenceFilter {
         return result;
     }
 
-    public toDisplayStrings(): Map<string, [string, string]> {
+    public toDisplayStrings(): Map<string, [string, string | (string | null)[] | null]> {
         const count = this.selectedSequences.size;
         if (count === 0) return new Map();
         const seqs = Array.from(this.selectedSequences).sort();
