@@ -62,7 +62,9 @@ if SEGMENTED:
                 "nextclade_dataset_server_map", {}
             ).get(
                 segment,
-                segment_identification.get("nextclade_dataset_server"),
+                segment_identification.get(
+                    "nextclade_dataset_server", config.get("nextclade_dataset_server")
+                ),
             )
             dataset_name_map[segment] = segment_identification.get(
                 "nextclade_dataset_name_map", {}
