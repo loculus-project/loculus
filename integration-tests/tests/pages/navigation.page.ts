@@ -12,10 +12,8 @@ export class NavigationPage {
     }
 
     private organismOption(name: string) {
-        return this.page
-            .getByRole('link', { name, exact: true })
-            .first()
-            .or(this.page.getByRole('menuitem', { name, exact: true }).first());
+        return this.page.getByRole('link', { name, exact: true }).first();
+
     }
 
     async selectOrganism(name: string) {
