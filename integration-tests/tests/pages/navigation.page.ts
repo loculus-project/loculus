@@ -20,4 +20,22 @@ export class NavigationPage {
     async expectTitle(title: string) {
         await expect(this.page).toHaveTitle(new RegExp(`^${title}`));
     }
+
+    async waitForOrganismNavigationLink(linkText: string) {
+        const organismNavigation = this.page.getByRole('navigation', { name: 'Organism navigation' });
+        await organismNavigation.waitFor({ state: 'visible' });
+        await organismNavigation.getByRole('link', { name: linkText, exact: true }).waitFor({ state: 'visible' });
+    }
+
+    async clickOrganismNavigationLink(linkText: string) {
+        await this.waitForOrganismNavigationLink(linkText);
+        await this.page
+            .getByRole('navigation', { name: 'Organism navigation' })
+            .getByRole('link', { name: linkText, exact: true })
+            .click();
+    }
+
+    async clickSubmitSequences() {
+        await this.clickOrganismNavigationLink('Submit sequences');
+    }
 }

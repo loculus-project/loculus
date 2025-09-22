@@ -24,7 +24,8 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                     {currentOrganismObject?.displayName || currentOrganism}
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
-                {sequenceRelatedItems.map(({ text, path, icon: Icon }) => {
+                {sequenceRelatedItems.map(({ text, path, icon }) => {
+                    const Icon = icon;
                     // Use startsWith to match path prefixes (e.g., /organism/search matches /organism/search/details)
                     const isActive = currentPath.startsWith(path);
                     return (

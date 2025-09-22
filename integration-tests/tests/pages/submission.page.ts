@@ -4,42 +4,27 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import Papa from 'papaparse';
+import { NavigationPage } from './navigation.page';
 
 class SubmissionPage {
     protected page: Page;
+    private navigation: NavigationPage;
 
     constructor(page: Page) {
         this.page = page;
+        this.navigation = new NavigationPage(page);
     }
 
     async navigateToOrganism(organism: string = 'Ebola Sudan') {
-        // First, ensure we're on the homepage
         await this.page.goto('/');
-
-        // Click on the organism dropdown button
-        const organismDropdown = this.page.getByRole('button', { name: /Organisms/ });
-        await organismDropdown.click();
-
-        // Wait for dropdown menu to be visible
-        await this.page
-            .locator('a')
-            .filter({ hasText: organism })
-            .first()
-            .waitFor({ state: 'visible' });
-
-        // Click on the specific organism in the dropdown menu
-        await this.page.locator('a').filter({ hasText: organism }).first().click();
-
-        // Wait for the submenu to appear with Submit link
-        await this.page
-            .getByRole('link', { name: 'Submit', exact: true })
-            .waitFor({ state: 'visible' });
+        await this.navigation.openOrganismNavigation();
+        await this.navigation.selectOrganism(organism);
+        await this.navigation.waitForOrganismNavigationLink('Submit sequences');
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await this.navigateToOrganism(organism);
-        // Now click Submit in the submenu
-        await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
+        await this.navigation.clickSubmitSequences();
 
         // Click on the submit upload link
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();

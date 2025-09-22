@@ -1,20 +1,26 @@
+import type { ComponentType } from 'react';
+
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
 import { extraStaticTopNavigationItems } from './extraTopNavigationItems.js';
 import { routes } from './routes.ts';
 import { getWebsiteConfig } from '../config.ts';
-import SearchIcon from '~icons/tabler/list-search';
 import UploadIcon from '~icons/material-symbols/upload';
+import SearchIcon from '~icons/tabler/list-search';
 
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,
 };
 
-export type TopNavigationItems = {
+type NavigationIcon = ComponentType<{ className?: string }>;
+
+export type TopNavigationItem = {
     text: string;
     path: string;
-    icon?: any;
-}[];
+    icon?: NavigationIcon;
+};
+
+export type TopNavigationItems = TopNavigationItem[];
 
 export function getSequenceRelatedItems(organism: string | undefined) {
     if (organism === undefined) {

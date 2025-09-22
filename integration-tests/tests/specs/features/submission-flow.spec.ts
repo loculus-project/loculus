@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { NavigationPage } from '../../pages/navigation.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -10,7 +11,8 @@ test.describe('Submission flow', () => {
         test.setTimeout(10000);
         const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
         await submissionPage.navigateToOrganism('Ebola Sudan');
-        await pageWithACreatedUser.getByRole('link', { name: 'Submit', exact: true }).click();
+        const navigation = new NavigationPage(pageWithACreatedUser);
+        await navigation.clickSubmitSequences();
         await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
