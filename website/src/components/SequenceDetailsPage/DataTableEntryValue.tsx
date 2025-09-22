@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
@@ -37,13 +37,40 @@ const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => 
         <ul>
             {fileEntries.map((fileEntry) => (
                 <li key={fileEntry.fileId}>
-                    <a href={fileEntry.url} className='underline'>
+                    <a href={fileEntry.url} className='underline mr-2'>
                         {fileEntry.name}
                     </a>
+                    <FileSizeComponent url={fileEntry.url} />
                 </li>
             ))}
         </ul>
     );
+};
+
+const FileSizeComponent: React.FC<{ url: string }> = ({ url }) => {
+    const [fileSize, setFileSize] = useState<number | null>(null);
+
+    useEffect(() => {
+        void fetch(url, { method: 'HEAD', redirect: 'follow' }).then((response) => {
+            const contentLength = response.headers.get('Content-Length');
+            setFileSize(Number.parseInt(contentLength!));
+        });
+    }, [url]);
+
+    if (fileSize === null) {
+        return <></>;
+    }
+
+    return <span className='text-gray-400'>({prettyFormatBytes(fileSize)})</span>;
+};
+
+const prettyFormatBytes = (bytes: number): string => {
+    if (bytes === 0) {
+        return '0 bytes';
+    }
+    const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1000));
+    return (bytes / 1000 ** i).toFixed() + ' ' + sizes[i];
 };
 
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {

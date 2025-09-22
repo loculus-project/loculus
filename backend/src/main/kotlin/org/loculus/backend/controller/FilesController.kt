@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import jakarta.servlet.http.HttpServletRequest
 import org.apache.http.HttpStatus
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.FileIdAndEtags
@@ -21,6 +22,7 @@ import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.generateFileId
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
@@ -56,8 +59,12 @@ class FilesController(
     @ApiResponse(responseCode = "401", description = "Authentication needed: the file is not public")
     @ApiResponse(responseCode = "403", description = "Not authorized to access this non-public file.")
     @ApiResponse(responseCode = "404", description = "File or accession version does not exist.")
-    @GetMapping("/get/{accession}/{version}/{fileCategory}/{fileName}")
+    @RequestMapping(
+        path = ["/get/{accession}/{version}/{fileCategory}/{fileName}"],
+        method = [RequestMethod.GET, RequestMethod.HEAD],
+    )
     fun getFileDownloadUrl(
+        request: HttpServletRequest,
         @HiddenParam user: User,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
@@ -85,10 +92,12 @@ class FilesController(
                 throw UnauthorizedException("Authentication needed: the file is not public")
             }
         }
-        val presignedUrl = s3Service.createUrlToReadPrivateFile(
-            fileId,
-            fileName,
-        )
+        val method = HttpMethod.valueOf(request.method)
+        val presignedUrl = when (method) {
+            HttpMethod.HEAD -> s3Service.createUrlToHeadPrivateFile(fileId)
+            HttpMethod.GET -> s3Service.createUrlToReadPrivateFile(fileId, fileName)
+            else -> throw RuntimeException("Unexpected error: /files/get was called with HTTP method $method")
+        }
         return ResponseEntity.status(HttpStatus.SC_TEMPORARY_REDIRECT)
             .location(URI.create(presignedUrl))
             .build()
