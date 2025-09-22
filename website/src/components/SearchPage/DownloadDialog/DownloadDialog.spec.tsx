@@ -35,6 +35,19 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
     },
 };
 
+const multiPathogenReferenceGenome: ReferenceGenomesSequenceNames = {
+    suborganism1: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+    suborganism2: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+};
+
 const defaultLapisUrl = 'https://lapis';
 const defaultOrganism = 'ebola';
 const hiddenFieldValues = {
@@ -64,12 +77,18 @@ async function renderDialog({
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
     metadata = mockMetadata,
+    selectedSuborganism = null,
+    suborganismIdentifierField,
+    referenceGenomesSequenceNames = defaultReferenceGenome,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
+    selectedSuborganism?: string | null;
+    suborganismIdentifierField?: string;
+    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
 } = {}) {
     render(
         <DownloadDialog
@@ -77,11 +96,13 @@ async function renderDialog({
                 new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
             }
             sequenceFilter={downloadParams}
-            referenceGenomesSequenceNames={defaultReferenceGenome}
+            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
             metadata={metadata}
             richFastaHeaderFields={richFastaHeaderFields}
+            selectedSuborganism={selectedSuborganism}
+            suborganismIdentifierField={suborganismIdentifierField}
         />,
     );
 
@@ -129,6 +150,8 @@ describe('DownloadDialog', () => {
     });
 
     const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
+    const alignedNucleotideSequencesLabel = /Aligned nucleotide sequences/;
+    const alignedAminoAcidSequencesLabel = /Aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
 
@@ -342,6 +365,30 @@ describe('DownloadDialog', () => {
             expect(query).toMatch(
                 /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&accession=accession1&accession=accession2&field1=value1/,
             );
+        });
+    });
+
+    describe('multi pathogen case', () => {
+        test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+            });
+
+            expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeDisabled();
+            expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeDisabled();
+        });
+
+        test('should enable the aligned sequence downloads when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
+            expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
         });
     });
 });
