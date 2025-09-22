@@ -1328,6 +1328,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         genes: []
         batch_size: 100
         create_embl_file: true
+        nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
@@ -1724,6 +1725,7 @@ defaultOrganisms:
           - sampleCollectionDate
           - geoLocCountry
           - geoLocAdmin1
+          - lineage
           - authors
           - authorAffiliations
           - ncbiReleaseDate
