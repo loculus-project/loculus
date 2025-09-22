@@ -1,0 +1,46 @@
+
+> loculus_integration_tests@0.0.1 test
+> npx playwright test
+
+
+Running 118 tests using 6 workers
+
+[1A[2K[1/118] [chromium-without-dep] › tests/specs/backend/authentication.spec.ts:49:5 › Backend authentication › rejects tokens that were not signed by Keycloak
+[1A[2K[2/118] [chromium-without-dep] › tests/specs/auth/login.spec.ts:11:9 › Login Flow › should login with valid credentials
+[1A[2K[3/118] [chromium-without-dep] › tests/specs/auth/logout.spec.ts:15:9 › Logout Flow › should logout from the account menu
+[1A[2K[4/118] [readonly setup] › tests/readonly.setup.ts:9:6 › Initialize a single ebola sequence as base data
+[1A[2K[5/118] [chromium-without-dep] › tests/specs/cli/auth.spec.ts:5:12 › CLI Authentication › should handle complete authentication workflow
+[1A[2K[6/118] [chromium-without-dep] › tests/specs/auth/registration.spec.ts:11:9 › Registration Flow › should successfully register a new user
+[1A[2K[7/118] [chromium-without-dep] › tests/specs/cli/end-to-end-flow.spec.ts:5:12 › CLI End-to-End Submission Flow › complete CLI workflow: submit → status → release → search
+[1A[2K[8/118] [chromium-without-dep] › tests/specs/cli/end-to-end-flow.spec.ts:201:12 › CLI End-to-End Submission Flow › CLI workflow with error handling
+[1A[2K[9/118] [chromium-without-dep] › tests/specs/cli/get.spec.ts:5:12 › CLI Get/Search › should handle complete search workflow
+[1A[2K[10/118] [chromium-without-dep] › tests/specs/cli/release.spec.ts:5:12 › CLI Release Command › should handle sequence release workflow
+[1A[2K[chromium-without-dep] › tests/specs/cli/auth.spec.ts:5:12 › CLI Authentication › should handle complete authentication workflow
+Failed login attempt (expected):
+❌ Exit code: 1
+STDERR: Error: Invalid username or password
+
+[1A[2K[11/118] [chromium-without-dep] › tests/specs/cli/release.spec.ts:104:12 › CLI Release Command › should handle quiet and verbose modes
+[1A[2K[12/118] [chromium-without-dep] › tests/specs/cli/status.spec.ts:5:12 › CLI Status Command › should show sequence status information with test data
+[1A[2K[13/118] [chromium-without-dep] › tests/specs/cli/status.spec.ts:104:12 › CLI Status Command › should handle status command errors gracefully
+[1A[2K[chromium-without-dep] › tests/specs/cli/get.spec.ts:5:12 › CLI Get/Search › should handle complete search workflow
+Invalid organism (expected failure):
+❌ Exit code: 1
+STDERR: Error: Organism 'invalid-organism-name-xyz' not found
+
+[1A[2K[14/118] [chromium-without-dep] › tests/specs/cli/status.spec.ts:140:12 › CLI Status Command › should handle specific sequence status lookup
+[1A[2K[chromium-without-dep] › tests/specs/cli/status.spec.ts:104:12 › CLI Status Command › should handle status command errors gracefully
+Invalid organism (expected failure):
+❌ Exit code: 1
+STDERR: Error: Organism 'invalid-organism' not found
+
+[1A[2KInvalid status filter (expected failure):
+❌ Exit code: 2
+STDERR: Usage: loculus status [OPTIONS]
+Try 'loculus status -h' for help.
+
+Error: Invalid value for '--status': 'INVALID_STATUS' is not one of 'RECEIVED', 'IN_PROCESSING', 'PROCESSED', 'APPROVED_FOR_RELEASE'.
+
+[1A[2K[15/118] [chromium-without-dep] › tests/specs/cli/status.spec.ts:167:12 › CLI Status Command › should handle group filtering
+[1A[2K[16/118] [chromium-without-dep] › tests/specs/cli/submit.spec.ts:14:12 › CLI Submission › should handle submission workflow
+[1A[2K[17/118] [chromium-without-dep] › tests/specs/features/authenticated.spec.ts:5:9 › Basic test of authenticated fixture › authenticated fixture runs and lands on user page

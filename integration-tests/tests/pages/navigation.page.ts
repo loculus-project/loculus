@@ -12,13 +12,17 @@ export class NavigationPage {
     }
 
     private organismOption(name: string) {
-        return this.page.getByRole('link', { name, exact: true }).first();
+        // Look for links that contain the organism name (they may have additional text/elements)
+        return this.page.locator(`a:has-text("${name}")`).first();
 
     }
 
     async selectOrganism(name: string) {
+        // Wait a bit for the dropdown to be fully rendered
+        await this.page.waitForTimeout(500);
+        
         const organismOption = this.organismOption(name);
-        await organismOption.waitFor({ state: 'visible' });
+        await organismOption.waitFor({ state: 'visible', timeout: 10000 });
         await organismOption.click();
     }
 
@@ -29,12 +33,14 @@ export class NavigationPage {
     async waitForOrganismNavigationLink(linkText: string) {
         const organismNavigation = this.page.getByRole('navigation', { name: 'Organism navigation' });
         await organismNavigation.waitFor({ state: 'visible' });
-        await this.organismOption(linkText).waitFor({ state: 'visible' });
+        // For navigation links, we want actual links, not menu items
+        await this.page.getByRole('link', { name: linkText, exact: true }).first().waitFor({ state: 'visible' });
     }
 
     async clickOrganismNavigationLink(linkText: string) {
         await this.waitForOrganismNavigationLink(linkText);
-        await this.organismOption(linkText).click();
+        // For navigation links, we want actual links, not menu items
+        await this.page.getByRole('link', { name: linkText, exact: true }).first().click();
     }
 
     async clickSubmitSequences() {
