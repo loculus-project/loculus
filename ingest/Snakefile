@@ -60,7 +60,12 @@ if SEGMENTED:
         for segment in config["nucleotide_sequences"]:
             dataset_server_map[segment] = segment_identification.get(
                 "nextclade_dataset_server_map", {}
-            ).get(segment, segment_identification.get("nextclade_dataset_server"))
+            ).get(
+                segment,
+                segment_identification.get(
+                    "nextclade_dataset_server", config.get("nextclade_dataset_server")
+                ),
+            )
             dataset_name_map[segment] = segment_identification.get(
                 "nextclade_dataset_name_map", {}
             ).get(
