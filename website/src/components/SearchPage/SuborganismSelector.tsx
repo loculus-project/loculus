@@ -80,8 +80,15 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                 )}
             </div>
             <p className='text-xs text-gray-600 mt-2'>
-                Select a {label} to enable mutation search and download of aligned sequences
+                Select a {formatLabel(label)} to enable mutation search and download of aligned sequences
             </p>
         </div>
     );
+};
+
+const formatLabel = (label: string) => {
+    if (label === label.toUpperCase()) {
+        return label; // all caps, keep as is
+    }
+    return label.charAt(0).toLowerCase() + label.slice(1);
 };
