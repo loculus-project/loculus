@@ -61,6 +61,10 @@ class SecurityConfig {
         "/files/get/**",
     )
 
+    private val headEndpointsThatArePublic = arrayOf(
+        "/files/get/**",
+    )
+
     private val debugEndpoints = arrayOf(
         "/debug/*",
     )
@@ -85,6 +89,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(
