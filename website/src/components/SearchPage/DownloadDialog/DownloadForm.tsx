@@ -22,6 +22,7 @@ type DownloadFormProps = {
     onSelectedFieldsChange: (fields: string[]) => void;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedSuborganism: string | null;
+    suborganismIdentifierField: string | undefined;
 };
 
 // Sort fields by their order in the search table and ensure accessionVersion is the first field
@@ -47,6 +48,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     onSelectedFieldsChange,
     richFastaHeaderFields,
     selectedSuborganism,
+    suborganismIdentifierField,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [dataType, setDataType] = useState(0);
@@ -113,6 +115,15 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         selectedFields,
     ]);
 
+    const disableAlignedSequences = stillRequiresSuborganismSelection(
+        referenceGenomesSequenceNames,
+        selectedSuborganism,
+    );
+    const alignedSequencesTitle =
+        disableAlignedSequences && suborganismIdentifierField !== undefined
+            ? `Please select a ${suborganismIdentifierField} to download aligned sequences`
+            : undefined;
+
     const metadataOption = {
         label: (
             <div className='flex items-center gap-3'>
@@ -172,7 +183,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ) : undefined,
-                  disabled: stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism),
+                  disabled: disableAlignedSequences,
+                  title: alignedSequencesTitle,
               },
               {
                   label: <>Aligned amino acid sequences</>,
@@ -189,7 +201,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ),
-                  disabled: stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism),
+                  disabled: disableAlignedSequences,
+                  title: alignedSequencesTitle,
               },
           ]
         : [metadataOption];

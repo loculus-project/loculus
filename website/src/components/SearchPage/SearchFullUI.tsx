@@ -513,6 +513,7 @@ export const InnerSearchFullUI = ({
                                 metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedSuborganism={selectedSuborganism}
+                                suborganismIdentifierField={schema.suborganismIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
