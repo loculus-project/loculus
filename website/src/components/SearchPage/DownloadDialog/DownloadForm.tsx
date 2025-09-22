@@ -10,6 +10,7 @@ import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
 import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -20,6 +21,7 @@ type DownloadFormProps = {
     selectedFields: string[];
     onSelectedFieldsChange: (fields: string[]) => void;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
+    selectedSuborganism: string | null;
 };
 
 // Sort fields by their order in the search table and ensure accessionVersion is the first field
@@ -44,6 +46,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     selectedFields,
     onSelectedFieldsChange,
     richFastaHeaderFields,
+    selectedSuborganism,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [dataType, setDataType] = useState(0);
@@ -169,7 +172,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ) : undefined,
-                  disabled: true,
+                  disabled: stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism),
               },
               {
                   label: <>Aligned amino acid sequences</>,
@@ -186,7 +189,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ),
-                  disabled: true,
+                  disabled: stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism),
               },
           ]
         : [metadataOption];
