@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
+import { getWebsiteConfig } from '../../config';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;
@@ -13,6 +14,8 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     const [isDownloading, setIsDownloading] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
     const [selectedCitation, setSelectedCitation] = useState(0);
+    
+    const databaseName = getWebsiteConfig().name;
 
     const formatYear = (date: string) => {
         const dateObj = new Date(date);
@@ -67,7 +70,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
         const citationKey = (seqSet.seqSetDOI ?? `${seqSet.seqSetId}.${seqSet.seqSetVersion}`).replace(/[^\w]/g, '_');
         const fields = [
             `title = {SeqSet: ${seqSet.name}}`,
-            `journal = {Pathoplexus}`,
+            `journal = {${databaseName}}`,
             `year = {${formatYear(seqSet.createdAt)}}`,
             `url = {${getSeqSetURL()}}`,
         ];
@@ -80,11 +83,11 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     };
 
     const getMLACitation = () => {
-        return `SeqSet: ${seqSet.name}. Pathoplexus, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
+        return `SeqSet: ${seqSet.name}. ${databaseName}, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
     };
 
     const getAPACitation = () => {
-        return `SeqSet: ${seqSet.name}. (${formatYear(seqSet.createdAt)}). Pathoplexus. ${getSeqSetURL()}`;
+        return `SeqSet: ${seqSet.name}. (${formatYear(seqSet.createdAt)}). ${databaseName}. ${getSeqSetURL()}`;
     };
 
     const getSelectedCitationText = () => {
