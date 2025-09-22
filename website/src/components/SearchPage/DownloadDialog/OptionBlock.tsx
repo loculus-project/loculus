@@ -1,12 +1,15 @@
 import type { FC, ReactElement } from 'react';
 
+export type OptionBlockOption = {
+    label: ReactElement;
+    subOptions?: ReactElement;
+    disabled?: boolean;
+};
+
 export type OptionBlockProps = {
     name: string;
     title?: string;
-    options: {
-        label: ReactElement;
-        subOptions?: ReactElement;
-    }[];
+    options: OptionBlockOption[];
     selected: number;
     onSelect: (index: number) => void;
     disabled?: boolean;
@@ -27,26 +30,29 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
             {title !== undefined && (
                 <h4 className={variant === 'nested' ? 'text-sm font-normal' : 'font-bold'}>{title}</h4>
             )}
-            {options.map((option, index) => (
-                <div key={index} className={disabled ? 'bg-gray-100' : ''}>
-                    <label className='label justify-start py-1 items-baseline'>
-                        <input
-                            type='radio'
-                            name={name}
-                            className='mr-4 text-primary-600 focus:ring-primary-600 relative bottom-[-0.2rem] disabled:opacity-50'
-                            checked={index === selected}
-                            onChange={() => onSelect(index)}
-                            disabled={disabled}
-                        />
-                        <span
-                            className={`label-text ${disabled ? 'text-gray-500' : ''} ${variant === 'nested' ? 'text-sm' : ''}`}
-                        >
-                            {option.label}
-                        </span>
-                    </label>
-                    {option.subOptions}
-                </div>
-            ))}
+            {options.map((option, index) => {
+                const optionDisabled = disabled || option.disabled;
+                return (
+                    <div key={index} className={optionDisabled ? 'bg-gray-100' : ''}>
+                        <label className='label justify-start py-1 items-baseline'>
+                            <input
+                                type='radio'
+                                name={name}
+                                className='mr-4 text-primary-600 focus:ring-primary-600 relative bottom-[-0.2rem] disabled:opacity-50'
+                                checked={index === selected}
+                                onChange={() => onSelect(index)}
+                                disabled={optionDisabled}
+                            />
+                            <span
+                                className={`label-text ${optionDisabled ? 'text-gray-500' : ''} ${variant === 'nested' ? 'text-sm' : ''}`}
+                            >
+                                {option.label}
+                            </span>
+                        </label>
+                        {option.subOptions}
+                    </div>
+                );
+            })}
         </div>
     );
 };

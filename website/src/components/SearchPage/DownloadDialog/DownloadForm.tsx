@@ -4,7 +4,7 @@ import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
 import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
-import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
+import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
@@ -122,7 +122,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             </div>
         ),
     };
-    const dataTypeOptions = allowSubmissionOfConsensusSequences
+    const dataTypeOptions: OptionBlockOption[] = allowSubmissionOfConsensusSequences
         ? [
               metadataOption,
               {
@@ -169,6 +169,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ) : undefined,
+                  disabled: true,
               },
               {
                   label: <>Aligned amino acid sequences</>,
@@ -185,6 +186,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                           />
                       </div>
                   ),
+                  disabled: true,
               },
           ]
         : [metadataOption];
