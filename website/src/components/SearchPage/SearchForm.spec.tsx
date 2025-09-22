@@ -13,7 +13,7 @@ import {
 } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
-global.ResizeObserver = class FakeResizeObserver {
+global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
     disconnect() {}
     unobserve() {}
@@ -51,6 +51,19 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     },
 };
 
+const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+    suborganism1: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+    suborganism2: {
+        nucleotideSequences: ['main'],
+        genes: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+};
+
 const searchVisibilities = new Map<string, boolean>([
     ['field1', true],
     ['field3', true],
@@ -58,12 +71,22 @@ const searchVisibilities = new Map<string, boolean>([
 
 const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
+const setSelectedSuborganism = vi.fn();
 
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
     referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
     lapisSearchParameters = {},
+    suborganismIdentifierField = undefined,
+    selectedSuborganism = null,
+}: {
+    filterSchema?: MetadataFilterSchema;
+    fieldValues?: Record<string, string>;
+    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    lapisSearchParameters?: Record<string, string>;
+    suborganismIdentifierField?: string;
+    selectedSuborganism?: string | null;
 } = {}) => {
     const props = {
         organism: testOrganism,
@@ -77,6 +100,9 @@ const renderSearchForm = ({
         referenceGenomesSequenceNames,
         lapisSearchParameters,
         showMutationSearch: true,
+        suborganismIdentifierField,
+        selectedSuborganism,
+        setSelectedSuborganism,
     };
 
     render(
@@ -109,5 +135,22 @@ describe('SearchForm', () => {
         const resetButton = screen.getByText('Reset');
         await userEvent.click(resetButton);
         expect(window.location.href).toMatch(/\/$/);
+    });
+
+    it('should render the suborganism selector in the multi pathogen case', async () => {
+        renderSearchForm({
+            filterSchema: new MetadataFilterSchema([
+                ...defaultSearchFormFilters,
+                { name: 'My genotype', type: 'string' },
+            ]),
+            suborganismIdentifierField: 'My genotype',
+            referenceGenomesSequenceNames: multiPathogenReferenceGenomesSequenceNames,
+        });
+
+        const suborganismSelector = screen.getByRole('combobox', { name: 'My genotype' });
+        expect(suborganismSelector).toBeInTheDocument();
+        await userEvent.selectOptions(suborganismSelector, 'suborganism1');
+
+        expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
     });
 });

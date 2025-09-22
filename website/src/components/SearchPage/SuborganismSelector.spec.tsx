@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SuborganismSelector } from './SuborganismSelector';
@@ -58,7 +59,7 @@ describe('SuborganismSelector', () => {
         expect(screen.getAllByRole('option')).toHaveLength(3); // Includes disabled option
     });
 
-    it('updates selection when changed', () => {
+    it('updates selection when changed', async () => {
         const setSelected = vi.fn();
         render(
             <SuborganismSelector
@@ -70,11 +71,11 @@ describe('SuborganismSelector', () => {
             />,
         );
 
-        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'suborganism1' } });
+        await userEvent.selectOptions(screen.getByRole('combobox'), 'suborganism1');
         expect(setSelected).toHaveBeenCalledWith('suborganism1');
     });
 
-    it('shows clear button and clears selection', () => {
+    it('shows clear button and clears selection', async () => {
         const setSelected = vi.fn();
         render(
             <SuborganismSelector
@@ -86,22 +87,8 @@ describe('SuborganismSelector', () => {
             />,
         );
 
-        fireEvent.click(screen.getByRole('button'));
+        await userEvent.click(screen.getByRole('button'));
         expect(setSelected).toHaveBeenCalledWith(null);
-    });
-
-    it('throws error when label is undefined in multi-pathogen case', () => {
-        expect(() =>
-            render(
-                <SuborganismSelector
-                    filterSchema={filterSchema}
-                    referenceGenomesSequenceNames={mockReferenceGenomes}
-                    suborganismIdentifierField={undefined}
-                    selectedSuborganism={null}
-                    setSelectedSuborganism={vi.fn()}
-                />,
-            ),
-        ).toThrow('Cannot render suborganism selector');
     });
 
     it('throws error when suborganism field is not in config', () => {

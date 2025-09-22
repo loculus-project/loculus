@@ -7,7 +7,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    suborganismIdentifierField: string | undefined;
+    suborganismIdentifierField: string;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
 };
@@ -30,7 +30,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     const isSinglePathogen = suborganismNames.length < 2;
 
     const label = useMemo(() => {
-        if (isSinglePathogen || suborganismIdentifierField === undefined) {
+        if (isSinglePathogen) {
             return undefined;
         }
 
@@ -43,7 +43,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
 
     if (label === undefined) {
         throw Error(
-            'Cannot render suborganism selector without a label for multi pathogen case. Did you configure a "suborganismIdentifierField"?',
+            'Cannot render suborganism selector without a label for multi pathogen case. Does the field that you specified in "suborganismIdentifierField" exist in the metadata?',
         );
     }
 
