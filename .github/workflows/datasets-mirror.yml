@@ -39,6 +39,7 @@ jobs:
           - 277944  # Coronavirus NL63
           - 290028  # Coronavirus HKU1
           - 1868215 # Orthopneumovirus
+          - 3048148 # Metapneumovirus hominis
           - 3048448 # West nile virus
           - 3050294 # Chickenpox virus
           - 3052460 # Orthoebolavirus sudanense
