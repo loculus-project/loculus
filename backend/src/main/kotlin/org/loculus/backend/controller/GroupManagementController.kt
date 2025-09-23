@@ -8,6 +8,7 @@ import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.auth.User as RequestingUser
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -51,10 +52,11 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups/{groupId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(
+        @HiddenParam requestingUser: RequestingUser,
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId)
+    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId, requestingUser)
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)

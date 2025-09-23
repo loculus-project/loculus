@@ -59,6 +59,7 @@ class SecurityConfig {
         "/get-author",
         "/*/get-released-data",
         "/files/get/**",
+        "/groups/*",
     )
 
     private val debugEndpoints = arrayOf(

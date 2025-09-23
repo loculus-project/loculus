@@ -13,6 +13,7 @@ import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.NewGroup
 import org.loculus.backend.api.User
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.User as RequestingUser
 import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
@@ -27,12 +28,13 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int): GroupDetails {
+    fun getDetailsOfGroup(groupId: Int, requestingUser: RequestingUser): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
         val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+        val shouldIncludeContactEmail = requestingUser is AuthenticatedUser
 
         return GroupDetails(
-            group = groupEntity.toGroup(),
+            group = groupEntity.toGroup(includeContactEmail = shouldIncludeContactEmail),
             users = users.map { User(it.userName) },
         )
     }
@@ -165,7 +167,7 @@ class GroupManagementDatabaseService(
         contactEmail = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(): Group = Group(
+    private fun GroupEntity.toGroup(includeContactEmail: Boolean = true): Group = Group(
         groupId = this.id.value,
         groupName = this.groupName,
         institution = this.institution,
@@ -177,6 +179,6 @@ class GroupManagementDatabaseService(
             state = this.addressState,
             country = this.addressCountry,
         ),
-        contactEmail = this.contactEmail,
+        contactEmail = if (includeContactEmail) this.contactEmail else null,
     )
 }

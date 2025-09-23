@@ -85,6 +85,19 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `GIVEN I am not authenticated WHEN getting group details THEN contact email is hidden`() {
+        val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.getDetailsOfGroup(groupId = groupId, jwt = null)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.group.groupName").value(DEFAULT_GROUP_NAME))
+            .andExpect(jsonPath("\$.group.contactEmail").doesNotExist())
+    }
+
+    @Test
     fun `GIVEN I created a group WHEN I query my groups THEN returns created group`() {
         val jwtForAnotherUser = generateJwtFor(UUID.randomUUID().toString() + "testuser")
 
@@ -416,7 +429,6 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.getDetailsOfGroup(groupId = 123, jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
             Scenario(
