@@ -13,6 +13,7 @@ type SandwichMenuProps = {
     knownOrganisms: Organism[];
     gitHubMainUrl: string | undefined;
     siteName: string;
+    activeTopNavigationItem?: string;
 };
 
 export const SandwichMenu: FC<SandwichMenuProps> = ({
@@ -21,6 +22,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
     knownOrganisms,
     gitHubMainUrl,
     siteName,
+    activeTopNavigationItem,
 }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
@@ -90,8 +92,18 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                     ))}
                                 </div>
                             </div>
-                            {topNavigationItems.map(({ text, path }) => (
-                                <OffCanvasNavItem key={path} text={text} level={1} path={path} />
+                            {topNavigationItems.map(({ text, path, id }) => (
+                                <OffCanvasNavItem
+                                    key={path}
+                                    text={text}
+                                    level={1}
+                                    path={path}
+                                    isActive={
+                                        activeTopNavigationItem !== undefined &&
+                                        (id === activeTopNavigationItem ||
+                                            (id === undefined && activeTopNavigationItem === path))
+                                    }
+                                />
                             ))}
                         </div>
                     </div>
@@ -122,9 +134,10 @@ type OffCanvasNavItemProps = {
     path: string | false;
     level: IndentLevel;
     type?: 'small';
+    isActive?: boolean;
 };
 
-const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }) => {
+const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type, isActive = false }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
     const indent: { [K in IndentLevel]: string } = {
@@ -132,10 +145,22 @@ const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }
         2: 'ml-8',
     };
 
+    const baseClass = `${indent[level]} ${height} block text-base transition-colors duration-150`;
+    const interactiveClass =
+        path === false
+            ? `${baseClass} text-gray-500`
+            : `${baseClass} ${isActive ? 'text-primary-700 font-semibold' : 'text-gray-700 hover:text-primary-600'}`;
+
     return (
         <div>
             <div className='flex items-center'>
-                <div className={`${indent[level]} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+                {path === false ? (
+                    <span className={interactiveClass}>{text}</span>
+                ) : (
+                    <a href={path} className={interactiveClass} aria-current={isActive ? 'page' : undefined}>
+                        {text}
+                    </a>
+                )}
             </div>
         </div>
     );

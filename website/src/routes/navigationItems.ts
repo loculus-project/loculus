@@ -17,6 +17,7 @@ type NavigationIcon = ComponentType<{ className?: string }>;
 export type TopNavigationItem = {
     text: string;
     path: string;
+    id?: string;
     icon?: NavigationIcon;
 };
 
@@ -52,6 +53,7 @@ function getSeqSetsItems() {
 
     return [
         {
+            id: 'seqsets',
             text: 'SeqSets',
             path: routes.seqSetsPage(),
         },
@@ -65,10 +67,12 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
 
     const accountItem = isLoggedIn
         ? {
+              id: 'account',
               text: 'My account',
               path: organism !== undefined ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
           }
         : {
+              id: 'login',
               text: 'Login',
               path: loginUrl,
           };

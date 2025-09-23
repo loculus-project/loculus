@@ -41,6 +41,7 @@ const userGroups = userGroupsResponse.match(
         (groupDetails) => groupDetails.group.groupName,
         () => 'Group error',
     )}
+    activeTopNavigationItem='account'
 >
     {
         !accessToken ? (

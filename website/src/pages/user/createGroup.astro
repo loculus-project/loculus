@@ -9,6 +9,6 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<BaseLayout title='Create group'>
+<BaseLayout title='Create group' activeTopNavigationItem='account'>
     <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} client:load />
 </BaseLayout>

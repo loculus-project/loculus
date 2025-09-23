@@ -28,9 +28,10 @@ interface Props {
     implicitOrganism?: string;
     fullWidth?: boolean;
     withoutMargin?: boolean;
+    activeTopNavigationItem?: string;
 }
 
-const { title, implicitOrganism, fullWidth, withoutMargin = false } = Astro.props;
+const { title, implicitOrganism, fullWidth, withoutMargin = false, activeTopNavigationItem } = Astro.props;
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
@@ -89,7 +90,11 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                             </div>
                         </div>
                     </div>
-                    <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
+                    <Navigation
+                        implicitOrganism={implicitOrganism}
+                        gitHubMainUrl={gitHubMainUrl}
+                        activeTopNavigationItem={activeTopNavigationItem}
+                    />
                 </nav>
 
                 <OrganismSubmenu

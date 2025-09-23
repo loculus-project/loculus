@@ -10,9 +10,10 @@ import { getAuthUrl } from '../../utils/getAuthUrl';
 interface Props {
     implicitOrganism?: string;
     gitHubMainUrl?: string;
+    activeTopNavigationItem?: string;
 }
 
-const { implicitOrganism, gitHubMainUrl } = Astro.props;
+const { implicitOrganism, gitHubMainUrl, activeTopNavigationItem } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
@@ -29,7 +30,29 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
 <div class='flex justify-end relative'>
     <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
         <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
-        {topNavigationItems.map(({ text, path }) => <a href={path}>{text}</a>)}
+        {
+            topNavigationItems.map(({ text, path, id }) => {
+                const itemIsActive =
+                    activeTopNavigationItem !== undefined
+                        ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
+                        : false;
+
+                return (
+                    <a
+                        href={path}
+                        class:list={[
+                            'px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 border border-transparent',
+                            itemIsActive
+                                ? 'text-primary-700 bg-primary-100 border border-primary-200 shadow-sm'
+                                : 'text-gray-700 hover:text-primary-700 hover:bg-primary-50',
+                        ]}
+                        aria-current={itemIsActive ? 'page' : undefined}
+                    >
+                        {text}
+                    </a>
+                );
+            })
+        }
         <AccessionSearchBox className='' client:load />
     </div>
 
@@ -40,6 +63,7 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
             knownOrganisms={knownOrganisms}
             gitHubMainUrl={gitHubMainUrl}
             siteName={siteName}
+            activeTopNavigationItem={activeTopNavigationItem}
             client:load
         />
     </div>
