@@ -20,7 +20,7 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 type GroupPageProps = {
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken?: string;
     username: string;
     userGroups: Group[];
     organisms: Organism[];
@@ -57,6 +57,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
+    const userIsLoggedIn = accessToken !== undefined && accessToken !== '';
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
         queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
@@ -150,7 +151,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     <tbody>
                         <TableRow label='Group ID'>{groupDetails.data?.group.groupId}</TableRow>
                         <TableRow label='Institution'>{groupDetails.data?.group.institution}</TableRow>
-                        <TableRow label='Contact email'>{groupDetails.data?.group.contactEmail}</TableRow>
+                        <TableRow label='Contact email'>
+                            {userIsLoggedIn ? groupDetails.data?.group.contactEmail : 'Log in to view contact email'}
+                        </TableRow>
                         <TableRow label='Address'>
                             <PostalAddress address={groupDetails.data?.group.address} />
                         </TableRow>

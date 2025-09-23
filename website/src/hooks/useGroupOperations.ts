@@ -10,7 +10,7 @@ import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 type UseGroupOperationsProps = {
     clientConfig: ClientConfig;
-    accessToken: string;
+    accessToken?: string;
     setErrorMessage: (message?: string) => void;
 };
 
@@ -38,6 +38,10 @@ export const useGroupPageHooks = ({
 
     const addUserToGroup = useCallback(
         async (username: string) => {
+            if (!accessToken) {
+                setErrorMessage('You need to be logged in to add users to a group.');
+                return;
+            }
             await callAddToGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
         },
         [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
@@ -45,6 +49,10 @@ export const useGroupPageHooks = ({
 
     const removeFromGroup = useCallback(
         async (username: string) => {
+            if (!accessToken) {
+                setErrorMessage('You need to be logged in to manage group members.');
+                return;
+            }
             await callRemoveFromGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
         },
         [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
