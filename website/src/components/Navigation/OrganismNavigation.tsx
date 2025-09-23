@@ -11,11 +11,24 @@ interface OrganismNavigationProps {
 
 export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentOrganism, knownOrganisms }) => {
     const displayName = 'Organisms';
+    const isOrganismSelected = currentOrganism !== undefined;
 
     return (
         <Menu as='div' className='relative'>
-            <MenuButton className='group flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-gray-100'>
+            <MenuButton
+                className={`group flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 border ${
+                    isOrganismSelected
+                        ? 'text-primary-700 bg-primary-100 border-primary-200 shadow-sm'
+                        : 'text-gray-700 border-transparent hover:bg-gray-100 hover:text-primary-700'
+                }`}
+                aria-current={isOrganismSelected ? 'page' : undefined}
+            >
                 <span>{displayName}</span>
+                {currentOrganism !== undefined && (
+                    <span className='hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-200/70 text-primary-800 text-xs font-semibold'>
+                        {currentOrganism.displayName}
+                    </span>
+                )}
                 <svg
                     className='w-4 h-4 transition-transform group-data-[open]:rotate-180'
                     fill='none'
@@ -37,37 +50,49 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
             >
                 <MenuItems className='absolute top-full mt-1 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[220px] z-50 focus:outline-none'>
                     <div className='py-1'>
-                        {knownOrganisms.map((organism) => (
-                            <MenuItem key={organism.key}>
-                                {({ focus }) => (
-                                    <a
-                                        href={`/${organism.key}/search`}
-                                        className={`flex items-center gap-3 px-4 py-2 transition-colors ${
-                                            focus ? 'bg-gray-50' : ''
-                                        }`}
-                                    >
-                                        {organism.image ? (
-                                            <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
-                                                <img
-                                                    src={organism.image}
-                                                    alt={organism.displayName}
-                                                    className='w-full h-full object-cover'
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.display = 'none';
-                                                    }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className='w-5 h-5 flex-shrink-0' />
-                                        )}
-                                        <span className='text-sm text-gray-700'>{organism.displayName}</span>
-                                        {organism === currentOrganism && (
-                                            <span className='ml-auto text-primary-600'>✓</span>
-                                        )}
-                                    </a>
-                                )}
-                            </MenuItem>
-                        ))}
+                        {knownOrganisms.map((organism) => {
+                            const isActive = currentOrganism?.key === organism.key;
+
+                            return (
+                                <MenuItem key={organism.key}>
+                                    {({ focus }) => {
+                                        const baseClasses =
+                                            'flex items-center gap-3 px-4 py-2 text-sm transition-colors';
+                                        const activeClasses = isActive
+                                            ? 'bg-primary-50 text-primary-700 font-semibold'
+                                            : 'text-gray-700';
+                                        const focusClasses = focus ? (isActive ? 'bg-primary-100' : 'bg-gray-50') : '';
+
+                                        return (
+                                            <a
+                                                href={`/${organism.key}/search`}
+                                                className={`${baseClasses} ${activeClasses} ${focusClasses}`}
+                                                aria-current={isActive ? 'page' : undefined}
+                                            >
+                                                {organism.image ? (
+                                                    <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
+                                                        <img
+                                                            src={organism.image}
+                                                            alt={organism.displayName}
+                                                            className='w-full h-full object-cover'
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className='w-5 h-5 flex-shrink-0' />
+                                                )}
+                                                <span className='text-sm'>{organism.displayName}</span>
+                                                {isActive && (
+                                                    <span className='ml-auto text-primary-600 font-bold'>✓</span>
+                                                )}
+                                            </a>
+                                        );
+                                    }}
+                                </MenuItem>
+                            );
+                        })}
                     </div>
                 </MenuItems>
             </Transition>
