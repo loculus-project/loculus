@@ -60,7 +60,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                     className='w-full px-2 py-1.5 rounded border border-gray-300 text-sm bg-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200'
                 >
                     <option key={''} value={''} disabled>
-                        Select {label}...
+                        Select {formatLabel(label)}...
                     </option>
                     {suborganismNames.map((suborganism) => (
                         <option key={suborganism} value={suborganism}>
