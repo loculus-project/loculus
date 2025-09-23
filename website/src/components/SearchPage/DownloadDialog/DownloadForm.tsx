@@ -10,6 +10,7 @@ import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
 import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
@@ -121,7 +122,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     );
     const alignedSequencesTitle =
         disableAlignedSequences && suborganismIdentifierField !== undefined
-            ? `Please select a ${suborganismIdentifierField} to download aligned sequences`
+            ? `Please select a ${formatLabel(suborganismIdentifierField)} to download aligned sequences`
             : undefined;
 
     const metadataOption = {
