@@ -1,5 +1,5 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
-import React, { useEffect, useState } from 'react';
+import { Fragment, type FC, useEffect, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
@@ -35,7 +35,7 @@ interface SeqPreviewModalProps {
 
 const logger = getClientLogger('SeqPreviewModal');
 
-export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
+export const SeqPreviewModal: FC<SeqPreviewModalProps> = ({
     seqId,
     accessToken,
     isOpen,
@@ -141,7 +141,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     );
 
     return (
-        <Transition appear show={isOpen} as={React.Fragment}>
+        <Transition appear show={isOpen} as={Fragment}>
             {isHalfScreen ? (
                 <div
                     className='fixed bottom-0 w-full left-0 z-40 bg-white p-6 border-t border-gray-400'
@@ -174,7 +174,7 @@ interface DownloadButtonProps {
     seqId: string;
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
+const DownloadButton: FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
     return (
         <div className='dropdown dropdown-hover relative inline-block'>
             <button className={BUTTONCLASS}>

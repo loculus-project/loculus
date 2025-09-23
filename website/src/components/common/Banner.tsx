@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC } from 'react';
 
 interface BannerProps {
     message?: string;
@@ -6,7 +6,7 @@ interface BannerProps {
     serverTime: number;
 }
 
-export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed, serverTime }) => {
+export const Banner: FC<BannerProps> = ({ message, lastTimeBannerWasClosed, serverTime }) => {
     const timeToKeepBannerClosed = 1000 * 60 * 60 * 24;
     if (
         message === undefined ||

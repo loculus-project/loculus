@@ -1,4 +1,4 @@
-import React from 'react';
+import { Fragment, type FC } from 'react';
 
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
@@ -18,7 +18,7 @@ interface Props {
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
     const refLength = reference.length;
     return reference.map((ref, index) => (
-        <React.Fragment key={index}>
+        <Fragment key={index}>
             <a
                 className='underline hover:text-primary-500'
                 target='_blank'
@@ -27,11 +27,11 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
                 {ref.insdcAccessionFull}
             </a>
             {index < refLength - 2 ? ', ' : index === refLength - 2 ? ' & ' : ''}
-        </React.Fragment>
+        </Fragment>
     ));
 };
 
-const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
+const DataTableComponent: FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (

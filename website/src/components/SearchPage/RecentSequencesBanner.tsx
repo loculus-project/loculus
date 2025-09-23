@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 
 export const getLastApprovalTimeKey = (organism: string) => organism + 'lastApprovalTime';
 import MdiClockOutline from '~icons/mdi/clock-outline';
@@ -6,7 +6,7 @@ interface RecentSequencesBannerProps {
     organism: string;
 }
 
-export const RecentSequencesBanner: React.FC<RecentSequencesBannerProps> = ({ organism }) => {
+export const RecentSequencesBanner: FC<RecentSequencesBannerProps> = ({ organism }) => {
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {

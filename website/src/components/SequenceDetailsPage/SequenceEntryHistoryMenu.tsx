@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC } from 'react';
 
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
@@ -12,11 +12,7 @@ interface Props {
     setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
-export const SequenceEntryHistoryMenu: React.FC<Props> = ({
-    sequenceEntryHistory,
-    accessionVersion,
-    setPreviewedSeqId,
-}) => {
+export const SequenceEntryHistoryMenu: FC<Props> = ({ sequenceEntryHistory, accessionVersion, setPreviewedSeqId }) => {
     const selectedVersion = sequenceEntryHistory.find((version) => version.accessionVersion === accessionVersion);
     return (
         <>

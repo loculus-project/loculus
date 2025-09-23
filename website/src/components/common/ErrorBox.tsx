@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC, type ReactNode } from 'react';
 
 import DangerousTwoToneIcon from '~icons/material-symbols/error-outline';
 import WarningTwoToneIcon from '~icons/material-symbols/warning-outline';
@@ -6,10 +6,10 @@ import WarningTwoToneIcon from '~icons/material-symbols/warning-outline';
 interface Props {
     title?: string;
     level?: 'error' | 'warning';
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
-const ErrorBox: React.FC<Props> = ({ title, children, level = 'error' }) => {
+const ErrorBox: FC<Props> = ({ title, children, level = 'error' }) => {
     const alertClass = `my-8 alert ${level === 'error' ? 'alert-error' : 'alert-warning'}`;
 
     return (

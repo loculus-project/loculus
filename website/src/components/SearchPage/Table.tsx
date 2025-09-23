@@ -3,7 +3,7 @@ import type { Dispatch, FC, ReactElement, SetStateAction } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 
-import ScrollContainer from './ScrollContainer.jsx';
+import ScrollContainer from './ScrollContainer.tsx';
 import { routes } from '../../routes/routes.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';

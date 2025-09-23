@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
+import { useState } from 'react';
 import { describe, expect, test } from 'vitest';
 
 import { Table, type TableSequenceData } from './Table';
@@ -20,7 +20,7 @@ const schema: Schema = {
 const data: TableSequenceData[] = [{ id: '1' }, { id: '2' }, { id: '3' }];
 
 const TestWrapper = () => {
-    const [selectedSeqs, setSelectedSeqs] = React.useState<Set<string>>(new Set());
+    const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     return (
         <Table
             schema={schema}

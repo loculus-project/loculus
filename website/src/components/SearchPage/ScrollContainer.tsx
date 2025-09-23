@@ -1,5 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import type { ReactNode, MouseEvent as ReactMouseEvent, UIEvent } from 'react';
+import {
+    useEffect,
+    useRef,
+    useState,
+    type FC,
+    type MouseEvent as ReactMouseEvent,
+    type ReactNode,
+    type UIEvent,
+} from 'react';
 
 interface ScrollContainerProps {
     children: ReactNode;
@@ -10,7 +17,7 @@ interface TrackStyle {
     width: number;
 }
 
-const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
+const ScrollContainer: FC<ScrollContainerProps> = ({ children }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [scrollLeft, setScrollLeft] = useState<number>(0);
     const [maxScroll, setMaxScroll] = useState<number>(0);

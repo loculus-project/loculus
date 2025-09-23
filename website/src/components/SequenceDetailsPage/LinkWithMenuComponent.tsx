@@ -1,5 +1,5 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import React from 'react';
+import { type FC } from 'react';
 
 import type { LinkMenuItem } from '../../types/config';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -9,7 +9,7 @@ interface LinkWithMenuComponentProps {
     linkMenuItems: LinkMenuItem[];
 }
 
-export const LinkWithMenuComponent: React.FC<LinkWithMenuComponentProps> = ({ value, linkMenuItems }) => {
+export const LinkWithMenuComponent: FC<LinkWithMenuComponentProps> = ({ value, linkMenuItems }) => {
     if (linkMenuItems.length === 0) {
         return <span>{value}</span>;
     }

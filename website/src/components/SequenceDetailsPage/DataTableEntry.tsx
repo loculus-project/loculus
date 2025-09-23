@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC, Fragment } from 'react';
 
 import DataTableEntryValue from './DataTableEntryValue';
 import { type TableDataEntry } from './types';
@@ -9,11 +9,11 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
+const DataTableComponent: FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { label, type } = data;
 
     return (
-        <>
+        <Fragment>
             {type.kind === 'metadata' && (
                 <div className='text-sm grid my-1' style={{ gridTemplateColumns: '200px 1fr' }}>
                     <div className='font-medium text-gray-900 break-inside-avoid pr-4'>{label}</div>
@@ -27,7 +27,7 @@ const DataTableComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
                     <DataTableEntryValue data={data} dataUseTermsHistory={dataUseTermsHistory} />
                 </div>
             )}
-        </>
+        </Fragment>
     );
 };
 

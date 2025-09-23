@@ -1,5 +1,5 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
-import React, { Fragment } from 'react';
+import { Fragment, type FC, useState } from 'react';
 
 import { type ReferenceAccession } from '../../types/referencesGenomes';
 import X from '~icons/material-symbols/close';
@@ -21,8 +21,8 @@ interface Props {
     reference: ReferenceAccession[];
 }
 
-const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
-    const [isOpen, setIsOpen] = React.useState(false);
+const ReferenceSequenceLinkButton: FC<Props> = ({ reference }) => {
+    const [isOpen, setIsOpen] = useState(false);
 
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);

@@ -1,11 +1,11 @@
-import React, { type ReactNode, useEffect, useState } from 'react';
+import { type FC, type MouseEvent, type ReactNode, useEffect, useState } from 'react';
 
 interface FloatingLabelContainerProps {
     label: string;
     isFocused: boolean;
     hasContent: boolean;
     children: ReactNode;
-    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (e: MouseEvent<HTMLDivElement>) => void;
     className?: string;
     borderClassName?: string;
     htmlFor?: string;
@@ -15,7 +15,7 @@ interface FloatingLabelContainerProps {
  * A shared container component that provides a floating label effect.
  * Used by AutoCompleteField and MutationField for consistent styling.
  */
-export const FloatingLabelContainer: React.FC<FloatingLabelContainerProps> = ({
+export const FloatingLabelContainer: FC<FloatingLabelContainerProps> = ({
     label,
     isFocused,
     hasContent,

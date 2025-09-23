@@ -1,11 +1,11 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
-import React, { Fragment } from 'react';
+import { Fragment, type FC, useState } from 'react';
 
 import X from '~icons/material-symbols/close';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 
-const DisplaySearchDocs: React.FC = () => {
-    const [isOpen, setIsOpen] = React.useState(false);
+const DisplaySearchDocs: FC = () => {
+    const [isOpen, setIsOpen] = useState(false);
 
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);

@@ -1,5 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import React, { type ReactNode } from 'react';
+import { type FC, type ReactNode } from 'react';
 
 interface BaseDialogProps {
     title: string;
@@ -9,7 +9,7 @@ interface BaseDialogProps {
     fullWidth?: boolean;
 }
 
-export const BaseDialog: React.FC<BaseDialogProps> = ({ title, isOpen, onClose, children, fullWidth = true }) => {
+export const BaseDialog: FC<BaseDialogProps> = ({ title, isOpen, onClose, children, fullWidth = true }) => {
     const fullWidthClasses = fullWidth ? 'w-full w-max-5xl' : '';
     return (
         <Dialog open={isOpen} onClose={onClose} className='relative z-40'>
@@ -35,7 +35,7 @@ interface CloseButtonProps {
     onClick: () => void;
 }
 
-const CloseButton: React.FC<CloseButtonProps> = ({ onClick }) => {
+const CloseButton: FC<CloseButtonProps> = ({ onClick }) => {
     return (
         <button className='absolute right-2 top-2 text-gray-400 hover:text-gray-500' onClick={onClick}>
             <span className='sr-only'>Close</span>

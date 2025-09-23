@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
@@ -12,7 +12,7 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-const GroupComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+const GroupComponent: FC<{ jsonString: string }> = ({ jsonString }) => {
     const values = JSON.parse(jsonString) as TableDataEntry[];
     const groupId = values.find((value) => value.name === 'groupId')?.value;
     const groupName = values.find((value) => value.name === 'groupName')?.value;
@@ -30,7 +30,7 @@ type FileEntry = {
     url: string;
 };
 
-const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+const FileListComponent: FC<{ jsonString: string }> = ({ jsonString }) => {
     const fileEntries = JSON.parse(jsonString) as FileEntry[];
 
     return (
@@ -46,7 +46,7 @@ const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => 
     );
 };
 
-const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
+const CustomDisplayComponent: FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
     return (
@@ -120,10 +120,10 @@ const computePreviewString = (value: string): string => {
     return value.slice(0, searchEnd).trim();
 };
 
-const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
-    const [showMore, setShowMore] = React.useState(false);
+const PlainValueDisplay: FC<{ value: TableDataEntry['value'] }> = ({ value }) => {
+    const [showMore, setShowMore] = useState(false);
 
-    const preview = React.useMemo(() => {
+    const preview = useMemo(() => {
         if (typeof value === 'string' && value.length > MAX_PLAIN_STRING_LENGTH) {
             return computePreviewString(value);
         }
