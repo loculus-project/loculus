@@ -10,7 +10,7 @@ interface OrganismNavigationProps {
 }
 
 export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentOrganism, knownOrganisms }) => {
-    const displayName = 'Organisms';
+    const displayName = 'Database';
     const isOrganismSelected = currentOrganism !== undefined;
 
     return (
