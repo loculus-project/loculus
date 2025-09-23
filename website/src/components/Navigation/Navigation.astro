@@ -41,10 +41,10 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
                     <a
                         href={path}
                         class:list={[
-                            'px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 border border-transparent',
+                            'flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
                             itemIsActive
-                                ? 'text-primary-700 bg-primary-100 border border-primary-200 shadow-sm'
-                                : 'text-gray-700 hover:text-primary-700 hover:bg-primary-50',
+                                ? 'bg-primary-100 text-gray-900 shadow-inner'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100',
                         ]}
                         aria-current={itemIsActive ? 'page' : undefined}
                     >

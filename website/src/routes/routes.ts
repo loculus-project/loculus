@@ -50,9 +50,8 @@ export const routes = {
         SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/submission/edit/${accessionVersion.accession}/${accessionVersion.version}`),
-    userOverviewPage: (organism?: string) => {
-        const userPagePath = `/user`;
-        return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
+    userOverviewPage: (_organism?: string) => {
+        return '/user';
     },
     groupOverviewPage: (groupId: number, intent?: ContinueSubmissionIntent) =>
         withSearchParams(`/group/${groupId}`, {

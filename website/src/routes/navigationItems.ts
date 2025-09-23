@@ -60,7 +60,7 @@ function getSeqSetsItems() {
     ];
 }
 
-function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string | undefined) {
+function getAccountItems(isLoggedIn: boolean, loginUrl: string, _organism: string | undefined) {
     if (!getWebsiteConfig().enableLoginNavigationItem) {
         return [];
     }
@@ -69,7 +69,7 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, organism: string
         ? {
               id: 'account',
               text: 'My account',
-              path: organism !== undefined ? routes.userOverviewPage(organism) : routes.userOverviewPage(),
+              path: routes.userOverviewPage(),
           }
         : {
               id: 'login',
