@@ -8,7 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
@@ -59,10 +59,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const [includeRichFastaHeaders, setIncludeRichFastaHeaders] = useState(0);
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
-
-    const { nucleotideSequences, genes } = getFirstSequenceNames(referenceGenomesSequenceNames);
-
-    const isMultiSegmented = nucleotideSequences.length > 1;
+    const { nucleotideSequences, genes, useMultiSegmentEndpoint } = getSequenceNames(
+        referenceGenomesSequenceNames,
+        selectedSuborganism,
+    );
 
     useEffect(() => {
         let downloadDataType: DownloadDataType;
@@ -73,14 +73,14 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             case 1:
                 downloadDataType = {
                     type: 'unalignedNucleotideSequences',
-                    segment: isMultiSegmented ? nucleotideSequences[unalignedNucleotideSequence] : undefined,
+                    segment: useMultiSegmentEndpoint ? nucleotideSequences[unalignedNucleotideSequence] : undefined,
                     includeRichFastaHeaders: includeRichFastaHeaders === 1,
                 };
                 break;
             case 2:
                 downloadDataType = {
                     type: 'alignedNucleotideSequences',
-                    segment: isMultiSegmented ? nucleotideSequences[alignedNucleotideSequence] : undefined,
+                    segment: useMultiSegmentEndpoint ? nucleotideSequences[alignedNucleotideSequence] : undefined,
                 };
                 break;
             case 3:
@@ -108,7 +108,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         alignedNucleotideSequence,
         alignedAminoAcidSequence,
         includeRichFastaHeaders,
-        isMultiSegmented,
+        useMultiSegmentEndpoint,
         nucleotideSequences,
         genes,
         onChange,
@@ -138,7 +138,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             label: <>Raw nucleotide sequences</>,
             subOptions: (
                 <div className='px-8'>
-                    {isMultiSegmented ? (
+                    {useMultiSegmentEndpoint ? (
                         <DropdownOptionBlock
                             name='unalignedNucleotideSequences'
                             options={nucleotideSequences.map((segment) => ({
@@ -177,7 +177,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             rawNucleotideSequencesOption,
             {
                 label: <>Aligned nucleotide sequences</>,
-                subOptions: isMultiSegmented ? (
+                subOptions: useMultiSegmentEndpoint ? (
                     <div className='px-8'>
                         <DropdownOptionBlock
                             name='alignedNucleotideSequences'
@@ -269,3 +269,24 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         </div>
     );
 };
+
+function getSequenceNames(
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    selectedSuborganism: string | null,
+) {
+    if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {
+        const { nucleotideSequences, genes } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
+        return { nucleotideSequences, genes, useMultiSegmentEndpoint: nucleotideSequences.length > 1 };
+    }
+
+    if (selectedSuborganism === null) {
+        return {
+            nucleotideSequences: [],
+            genes: [],
+            useMultiSegmentEndpoint: false, // LAPIS is multisegmented, since we're in multi pathogen case here. Use the endpoint that returns all segments.
+        };
+    }
+
+    const { nucleotideSequences, genes } = referenceGenomesSequenceNames[selectedSuborganism];
+    return { nucleotideSequences, genes, useMultiSegmentEndpoint: true }; // TODO segment names...
+}
