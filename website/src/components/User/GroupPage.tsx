@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { type FC, type FormEvent, useState, type ReactNode } from 'react';
+import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import type { ContinueSubmissionIntent, SubmissionJourneyPage } from '../../routes/routes.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -25,6 +26,15 @@ type GroupPageProps = {
     userGroups: Group[];
     organisms: Organism[];
     databaseName: string;
+    continueSubmissionIntent?: ContinueSubmissionIntent;
+};
+
+const buttonLabelByPage: Record<SubmissionJourneyPage, string> = {
+    portal: 'Open submission portal',
+    submit: 'Go to submission form',
+    revise: 'Go to revision upload',
+    review: 'Review submissions',
+    released: 'View released sequences',
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -35,6 +45,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     userGroups,
     organisms,
     databaseName,
+    continueSubmissionIntent,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -63,10 +74,50 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
     });
 
+    const continueSubmissionCta = useMemo(() => {
+        if (continueSubmissionIntent === undefined) {
+            return undefined;
+        }
+
+        const organismDetails = organisms.find((organism) => organism.key === continueSubmissionIntent.organism);
+        if (organismDetails === undefined) {
+            return undefined;
+        }
+
+        const href = buildContinueSubmissionHref(continueSubmissionIntent.page, organismDetails.key, groupId);
+        if (href === undefined) {
+            return undefined;
+        }
+
+        const buttonLabel = buttonLabelByPage[continueSubmissionIntent.page];
+
+        return {
+            href,
+            buttonLabel,
+            organismDisplayName: organismDetails.displayName,
+        };
+    }, [continueSubmissionIntent, organisms, groupId]);
+
     return (
         <div className='flex flex-col h-full p-4'>
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
+            )}
+
+            {continueSubmissionCta !== undefined && (
+                <div className='bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 text-blue-900'>
+                    <h2 className='font-semibold text-blue-900 text-lg'>Continue your submission</h2>
+                    <p className='mt-2 text-sm'>
+                        You are now part of the {groupName} group. Continue your submission journey for{' '}
+                        {continueSubmissionCta.organismDisplayName}.
+                    </p>
+                    <a
+                        href={continueSubmissionCta.href}
+                        className='inline-block mt-3 px-4 py-2 loculusColor text-white rounded'
+                    >
+                        {continueSubmissionCta.buttonLabel}
+                    </a>
+                </div>
             )}
 
             {userHasEditPrivileges ? (
@@ -233,6 +284,27 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         </div>
     );
 };
+
+function buildContinueSubmissionHref(
+    page: SubmissionJourneyPage,
+    organism: string,
+    groupId: number,
+): string | undefined {
+    switch (page) {
+        case 'portal':
+            return routes.submissionPage(organism, groupId);
+        case 'submit':
+            return routes.submitPage(organism, groupId);
+        case 'revise':
+            return routes.revisePage(organism, groupId);
+        case 'review':
+            return routes.userSequenceReviewPage(organism, groupId);
+        case 'released':
+            return routes.mySequencesPage(organism, groupId);
+        default:
+            return undefined;
+    }
+}
 
 async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
     const counts: Record<string, number> = {};
