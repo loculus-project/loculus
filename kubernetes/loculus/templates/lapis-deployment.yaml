@@ -45,7 +45,7 @@ spec:
               subPath: reference_genomes.json
           startupProbe:
             httpGet:
-              path: /actuator/health
+              path: /sample/info
               port: 8080
             periodSeconds: 5
             failureThreshold: 36 # 3 minutes to start
