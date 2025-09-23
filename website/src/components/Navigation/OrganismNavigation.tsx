@@ -15,18 +15,6 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
     return (
         <Menu as='div' className='relative'>
             <MenuButton className='group flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-gray-100'>
-                {currentOrganism?.image && (
-                    <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
-                        <img
-                            src={currentOrganism.image}
-                            alt={currentOrganism.displayName}
-                            className='w-full h-full object-cover'
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                        />
-                    </div>
-                )}
                 <span>{displayName}</span>
                 <svg
                     className='w-4 h-4 transition-transform group-data-[open]:rotate-180'
