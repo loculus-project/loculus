@@ -27,9 +27,10 @@ interface Props {
     title: string;
     implicitOrganism?: string;
     fullWidth?: boolean;
+    withoutMargin?: boolean;
 }
 
-const { title, implicitOrganism, fullWidth } = Astro.props;
+const { title, implicitOrganism, fullWidth, withoutMargin = false } = Astro.props;
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
@@ -100,13 +101,22 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                 <slot name='banner' />
             </header>
 
-            <div class:list={['flex-grow', 'mt-3', 'mb-5', fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full px-4']}>
+            <div
+                class:list={[
+                    'flex-grow',
+                    'mt-3',
+                    'mb-5',
+                    fullWidth ? (withoutMargin ? 'w-full mx-4' : 'mx-8 w-full') : 'max-w-7xl mx-auto w-full px-4',
+                ]}
+            >
                 <slot />
             </div>
 
             <hr class='border-t border-gray-1000' />
             <footer
-                class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${fullWidth ? 'mx-4' : 'max-w-7xl mx-auto w-full'}`}
+                class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${
+                    fullWidth ? (withoutMargin ? 'w-full' : 'mx-4 w-full') : 'max-w-7xl mx-auto w-full'
+                }`}
             >
                 <div class='flex gap-5'>
                     {
