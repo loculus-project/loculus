@@ -16,16 +16,16 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
     return (
         <Menu as='div' className='relative'>
             <MenuButton
-                className={`group flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 ${
+                className={`group flex items-center gap-1 px-4 pt-2.5 pb-1.5 text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2 ${
                     isOrganismSelected
-                        ? 'bg-primary-100 text-gray-900 shadow-inner'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'bg-white text-slate-900 border-slate-200 border-b-primary-400 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.25)]'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200'
                 }`}
                 aria-current={isOrganismSelected ? 'page' : undefined}
             >
                 <span>{displayName}</span>
                 {currentOrganism !== undefined && (
-                    <span className='hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/50 text-gray-700 text-xs font-semibold border border-primary-100'>
+                    <span className='hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200'>
                         {currentOrganism.displayName}
                     </span>
                 )}
@@ -60,7 +60,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                                             'flex items-center gap-3 px-4 py-2 text-sm transition-colors';
                                         const stateClasses = isActive
                                             ? 'bg-primary-100 text-gray-900 font-semibold'
-                                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100';
+                                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50';
                                         const focusClasses = focus ? (isActive ? 'bg-primary-100' : 'bg-gray-50') : '';
 
                                         return (

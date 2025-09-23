@@ -28,31 +28,33 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
 ---
 
 <div class='flex justify-end relative'>
-    <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
-        <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
-        {
-            topNavigationItems.map(({ text, path, id }) => {
-                const itemIsActive =
-                    activeTopNavigationItem !== undefined
-                        ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
-                        : false;
+    <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
+        <div class='flex items-end gap-1 border-b border-slate-200'>
+            <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
+            {
+                topNavigationItems.map(({ text, path, id }) => {
+                    const itemIsActive =
+                        activeTopNavigationItem !== undefined
+                            ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
+                            : false;
 
-                return (
-                    <a
-                        href={path}
-                        class:list={[
-                            'flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
-                            itemIsActive
-                                ? 'bg-primary-100 text-gray-900 shadow-inner'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100',
-                        ]}
-                        aria-current={itemIsActive ? 'page' : undefined}
-                    >
-                        {text}
-                    </a>
-                );
-            })
-        }
+                    return (
+                        <a
+                            href={path}
+                            class:list={[
+                                'flex items-center gap-1 px-4 pt-2.5 pb-1.5 text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2',
+                                itemIsActive
+                                    ? 'bg-white text-slate-900 border-slate-200 border-b-primary-400 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.25)]'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200',
+                            ]}
+                            aria-current={itemIsActive ? 'page' : undefined}
+                        >
+                            {text}
+                        </a>
+                    );
+                })
+            }
+        </div>
         <AccessionSearchBox className='' client:load />
     </div>
 
