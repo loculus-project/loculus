@@ -71,4 +71,5 @@ approve_timeout_min: "25" # Cronjobs run every 30min, make approve stop before i
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
-batch_chunk_size: 10000
+batch_chunk_size: 10000  # Batch size for submitting sequences to Loculus backend
+nextclade_dataset_server: https://data.clades.nextstrain.org/v3

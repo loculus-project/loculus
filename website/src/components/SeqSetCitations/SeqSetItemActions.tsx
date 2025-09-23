@@ -21,6 +21,7 @@ type SeqSetItemActionsProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
+    databaseName: string;
 };
 
 const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
@@ -29,6 +30,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     seqSet,
     seqSetRecords,
     isAdminView = false,
+    databaseName,
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
@@ -93,7 +95,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 />
             </Modal>
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
-                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} />
+                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
             </Modal>
         </div>
     );
