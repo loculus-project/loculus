@@ -161,7 +161,10 @@ class FilesController(
         @RequestParam
         numberParts: Int = 1,
     ): List<FileIdAndMultipartWriteUrl> {
-        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        filesPreconditionValidator.apply {
+            validateGroupExists(groupId)
+            validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
+        }
         val response = mutableListOf<FileIdAndMultipartWriteUrl>()
         repeat(numberFiles) {
             val fileId = generateFileId()
