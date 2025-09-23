@@ -10,7 +10,7 @@ interface OrganismNavigationProps {
 }
 
 export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentOrganism, knownOrganisms }) => {
-    const displayName = currentOrganism ? currentOrganism.displayName : 'Organisms';
+    const displayName = 'Organisms';
 
     return (
         <Menu as='div' className='relative'>
