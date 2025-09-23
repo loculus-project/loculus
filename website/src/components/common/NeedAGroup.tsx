@@ -1,15 +1,13 @@
 import { routes } from '../../routes/routes';
-import type { SubmissionJourneyPage } from '../../routes/routes';
 import DashiconsGroups from '~icons/dashicons/groups';
 
 interface NeedAGroupProps {
     continueSubmissionOrganism?: string;
-    continueSubmissionPage?: SubmissionJourneyPage;
 }
 
-export const NeedAGroup = ({ continueSubmissionOrganism, continueSubmissionPage = 'portal' }: NeedAGroupProps) => {
+export const NeedAGroup = ({ continueSubmissionOrganism }: NeedAGroupProps) => {
     const href = continueSubmissionOrganism
-        ? routes.createGroup({ organism: continueSubmissionOrganism, page: continueSubmissionPage })
+        ? routes.createGroup({ organism: continueSubmissionOrganism })
         : routes.createGroup();
 
     return (

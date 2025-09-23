@@ -2,7 +2,7 @@ import { type FC, useMemo } from 'react';
 
 import { useGroupCreation } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
-import type { ContinueSubmissionIntent, SubmissionJourneyPage } from '../../routes/routes.ts';
+import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import type { NewGroup } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Group/GroupForm.tsx';
@@ -13,8 +13,6 @@ interface GroupManagerProps {
     accessToken: string;
 }
 
-const validSubmissionPages: SubmissionJourneyPage[] = ['portal', 'submit', 'revise', 'review', 'released'];
-
 const getContinueSubmissionFromLocation = (): ContinueSubmissionIntent | undefined => {
     if (typeof window === 'undefined') {
         return undefined;
@@ -22,13 +20,11 @@ const getContinueSubmissionFromLocation = (): ContinueSubmissionIntent | undefin
 
     const searchParams = new URLSearchParams(window.location.search);
     const organism = searchParams.get('continueSubmissionOrganism');
-    const page = searchParams.get('continueSubmissionPage');
-
-    if (organism === null || page === null || !validSubmissionPages.includes(page as SubmissionJourneyPage)) {
+    if (organism === null) {
         return undefined;
     }
 
-    return { organism, page: page as SubmissionJourneyPage };
+    return { organism };
 };
 
 const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken }) => {

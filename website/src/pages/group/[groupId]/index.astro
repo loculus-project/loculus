@@ -4,7 +4,7 @@ import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import type { ContinueSubmissionIntent, SubmissionJourneyPage } from '../../../routes/routes';
+import type { ContinueSubmissionIntent } from '../../../routes/routes';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
@@ -17,15 +17,9 @@ const organisms = getConfiguredOrganisms();
 const databaseName = getWebsiteConfig().name;
 
 const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
-const continueSubmissionPage = Astro.url.searchParams.get('continueSubmissionPage');
-const validSubmissionPages: SubmissionJourneyPage[] = ['portal', 'submit', 'revise', 'review', 'released'];
 
 const continueSubmissionIntent: ContinueSubmissionIntent | undefined =
-    continueSubmissionOrganism !== null &&
-    continueSubmissionPage !== null &&
-    validSubmissionPages.includes(continueSubmissionPage as SubmissionJourneyPage)
-        ? { organism: continueSubmissionOrganism, page: continueSubmissionPage as SubmissionJourneyPage }
-        : undefined;
+    continueSubmissionOrganism !== null ? { organism: continueSubmissionOrganism } : undefined;
 
 if (isNaN(groupId)) {
     return new Response(undefined, {

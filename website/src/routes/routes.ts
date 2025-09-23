@@ -6,11 +6,8 @@ import { type AccessionVersion } from '../types/backend.ts';
 import { FileType } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
-export type SubmissionJourneyPage = 'portal' | 'submit' | 'revise' | 'review' | 'released';
-
 export type ContinueSubmissionIntent = {
     organism: string;
-    page: SubmissionJourneyPage;
 };
 
 export const approxMaxAcceptableUrlLength = 1900;
@@ -43,7 +40,6 @@ export const routes = {
     createGroup: (intent?: ContinueSubmissionIntent) =>
         withSearchParams('/user/createGroup', {
             continueSubmissionOrganism: intent?.organism,
-            continueSubmissionPage: intent?.page,
         }),
     submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
     submissionPage: (organism: string, groupId: number) =>
@@ -61,7 +57,6 @@ export const routes = {
     groupOverviewPage: (groupId: number, intent?: ContinueSubmissionIntent) =>
         withSearchParams(`/group/${groupId}`, {
             continueSubmissionOrganism: intent?.organism,
-            continueSubmissionPage: intent?.page,
         }),
     editGroupPage: (groupId: number) => `/group/${groupId}/edit`,
     userSequenceReviewPage: (organism: string, groupId: number) =>

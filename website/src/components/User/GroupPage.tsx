@@ -5,7 +5,7 @@ import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'reac
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
-import type { ContinueSubmissionIntent, SubmissionJourneyPage } from '../../routes/routes.ts';
+import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -27,14 +27,6 @@ type GroupPageProps = {
     organisms: Organism[];
     databaseName: string;
     continueSubmissionIntent?: ContinueSubmissionIntent;
-};
-
-const buttonLabelByPage: Record<SubmissionJourneyPage, string> = {
-    portal: 'Open submission portal',
-    submit: 'Go to submission form',
-    revise: 'Go to revision upload',
-    review: 'Review submissions',
-    released: 'View released sequences',
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -84,16 +76,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             return undefined;
         }
 
-        const href = buildContinueSubmissionHref(continueSubmissionIntent.page, organismDetails.key, groupId);
-        if (href === undefined) {
-            return undefined;
-        }
-
-        const buttonLabel = buttonLabelByPage[continueSubmissionIntent.page];
-
         return {
-            href,
-            buttonLabel,
+            href: routes.submissionPage(organismDetails.key, groupId),
             organismDisplayName: organismDetails.displayName,
         };
     }, [continueSubmissionIntent, organisms, groupId]);
@@ -115,7 +99,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         href={continueSubmissionCta.href}
                         className='inline-block mt-3 px-4 py-2 loculusColor text-white rounded'
                     >
-                        {continueSubmissionCta.buttonLabel}
+                        Open submission portal
                     </a>
                 </div>
             )}
@@ -284,27 +268,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         </div>
     );
 };
-
-function buildContinueSubmissionHref(
-    page: SubmissionJourneyPage,
-    organism: string,
-    groupId: number,
-): string | undefined {
-    switch (page) {
-        case 'portal':
-            return routes.submissionPage(organism, groupId);
-        case 'submit':
-            return routes.submitPage(organism, groupId);
-        case 'revise':
-            return routes.revisePage(organism, groupId);
-        case 'review':
-            return routes.userSequenceReviewPage(organism, groupId);
-        case 'released':
-            return routes.mySequencesPage(organism, groupId);
-        default:
-            return undefined;
-    }
-}
 
 async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
     const counts: Record<string, number> = {};
