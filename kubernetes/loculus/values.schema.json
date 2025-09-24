@@ -58,6 +58,11 @@
           "type": "boolean",
           "description": "If true, disable search for this field."
         },
+        "multiEntryTextSearch": {
+          "groups": ["metadata"],
+          "type": "boolean",
+          "description": "If true, allow multiple comma/space/tab/newline-separated entries in a single text field for searching."
+        },
         "generateIndex": {
           "groups": ["metadata"],
           "type": "boolean",

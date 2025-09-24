@@ -15,8 +15,8 @@ fields:
     includeInDownloadsByDefault: true
   - name: accession
     type: string
-    notSearchable: true
     hideOnSequenceDetailsPage: true
+    multiEntryTextSearch: true
   - name: version
     type: int
     notSearchable: true
@@ -297,6 +297,9 @@ organisms:
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
+  {{- if .multiEntryTextSearch }}
+  multiEntryTextSearch: {{ .multiEntryTextSearch }}
+  {{- end }}
   {{- if .customDisplay }}
   customDisplay:
     type: {{ quote .customDisplay.type }}
@@ -439,11 +442,17 @@ fields:
 {{- with $currentItem }}
   - name: {{ printf "%s_%s" .name $segment | quote }}
     type: {{ .type | default "string" | quote }}
+    {{- if .multiEntryTextSearch }}
+    multiEntryTextSearch: {{ .multiEntryTextSearch }}
+    {{- end }}
 {{- end }}
 {{- end}}
 {{- else }}
   - name: {{ quote .name }}
     type: {{ .type | default "string" | quote }}
+    {{- if .multiEntryTextSearch }}
+    multiEntryTextSearch: {{ .multiEntryTextSearch }}
+    {{- end }}
 {{- end}}
 {{- end}}
   - name: versionComment

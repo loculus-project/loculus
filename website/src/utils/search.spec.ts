@@ -26,4 +26,10 @@ describe('MetadataFilterSchema', () => {
         const result = schema.getFieldValuesFromQuery({ field1: [NULL_QUERY_VALUE, NULL_QUERY_VALUE] }, {});
         expect(result.field1).toEqual([null, null]);
     });
+
+    it('treats multi-entry fields as single strings from query state', () => {
+        const schema = new MetadataFilterSchema([{ name: 'field1', type: 'string', multiEntryTextSearch: true }]);
+        const result = schema.getFieldValuesFromQuery({ field1: 'value1,value2' }, {});
+        expect(result.field1).toBe('value1,value2');
+    });
 });

@@ -625,6 +625,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         perSegment: true
         oneHeader: true
+        multiEntryTextSearch: true
       - name: bioprojectAccession
         customDisplay:
           type: linkWithMenu
