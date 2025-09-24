@@ -9,10 +9,10 @@ import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.DatabaseConfig
-import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
+import org.loculus.backend.log.SqlQueryLogger
 import org.loculus.backend.service.submission.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
 import org.springdoc.core.customizers.OperationCustomizer
@@ -73,7 +73,7 @@ class BackendSpringConfig {
     @Bean
     fun databaseConfig() = DatabaseConfig {
         useNestedTransactions = true
-        sqlLogger = Slf4jSqlDebugLogger
+        sqlLogger = SqlQueryLogger()
     }
 
     @Bean
