@@ -376,8 +376,7 @@ describe('DownloadDialog', () => {
                 suborganismIdentifierField: 'genotype',
             });
 
-            expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeDisabled();
-            expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeDisabled();
+            expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
         });
 
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
