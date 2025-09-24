@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
@@ -12,7 +12,7 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
-import useUrlParamState from '../../hooks/useUrlParamState';
+import { routes } from '../../routes/routes.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -107,22 +107,71 @@ export const InnerSearchFullUI = ({
 
     const [state, setState] = useQueryAsState(initialQueryDict);
 
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => !value,
-    );
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
-        state,
-        false,
-        setState,
-        'boolean',
-        (value) => !value,
-    );
+    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
+    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
+
+    const previousSeqIdRef = useRef<string | null>(null);
+
+    // Extract sequence ID from URL path if it matches /seq/[id]
+    const getSequenceIdFromPath = (path: string): string | null => {
+        const seqMatch = /^\/seq\/([^/]+)$/.exec(path);
+        return seqMatch?.[1] ?? null;
+    };
+
+    // Check if we're on a /seq/ URL on initial load or navigation
+    useEffect(() => {
+        const syncModalWithUrl = () => {
+            const path = window.location.pathname;
+            const sequenceId = getSequenceIdFromPath(path);
+
+            if (sequenceId) {
+                // We're on a sequence URL, open the modal
+                setPreviewedSeqId(sequenceId);
+            } else if (path.includes('/search')) {
+                // We're back on search, close the modal
+                setPreviewedSeqId(null);
+                setPreviewHalfScreen(false);
+            }
+        };
+
+        // Check on mount
+        syncModalWithUrl();
+
+        // Check on popstate (back/forward navigation)
+        window.addEventListener('popstate', syncModalWithUrl);
+        return () => {
+            window.removeEventListener('popstate', syncModalWithUrl);
+        };
+    }, [setPreviewedSeqId, setPreviewHalfScreen]);
+
+    useEffect(() => {
+        if (previewedSeqId) {
+            if (!previewHalfScreen) {
+                // Full-screen mode: Update URL to /seq/[id]
+                const seqUrl = routes.sequenceEntryDetailsPage(previewedSeqId);
+                // Only push/replace state if we're not already on the sequence URL
+                if (!window.location.pathname.startsWith('/seq/')) {
+                    if (previousSeqIdRef.current === null) {
+                        window.history.pushState({ seqPreview: true }, '', seqUrl);
+                    } else {
+                        window.history.replaceState({ seqPreview: true }, '', seqUrl);
+                    }
+                }
+            } else {
+                // Docked mode: Restore search URL if we're currently on /seq/
+                if (window.location.pathname.startsWith('/seq/')) {
+                    const searchUrl = routes.searchPage(organism) + window.location.search;
+                    window.history.replaceState(null, '', searchUrl);
+                }
+            }
+            previousSeqIdRef.current = previewedSeqId;
+        } else if (previousSeqIdRef.current !== null) {
+            // When modal closes, restore the search page URL
+            const searchUrl = routes.searchPage(organism) + window.location.search;
+            window.history.replaceState(null, '', searchUrl);
+            previousSeqIdRef.current = null;
+        }
+    }, [previewedSeqId, organism, previewHalfScreen]);
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);

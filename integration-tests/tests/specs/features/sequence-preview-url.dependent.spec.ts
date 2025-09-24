@@ -9,79 +9,87 @@ test.describe('Sequence Preview URL Parameters', () => {
         searchPage = new SearchPage(page);
     });
 
-    test('should store the previewed sequence ID in the URL', async ({ page }) => {
+    test('should update URL to /seq/[id] when opening preview in full-screen mode', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        let urlParams = searchPage.getUrlParams();
-        expect(urlParams.has('selectedSeq')).toBe(false);
+        // Initially on search page
+        expect(page.url()).toContain('/search');
 
         await searchPage.clickOnSequence(0);
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        urlParams = searchPage.getUrlParams();
-        expect(urlParams.has('selectedSeq')).toBe(true);
-        expect(urlParams.get('selectedSeq')).not.toBeNull();
-        const selectedSeqId = urlParams.get('selectedSeq');
+        // URL should change to /seq/[id] for full-screen modal
+        expect(page.url()).toMatch(/\/seq\/[^/]+$/);
+        const seqMatch = page.url().match(/\/seq\/([^/]+)$/);
+        expect(seqMatch).not.toBeNull();
+        const selectedSeqId = seqMatch[1];
 
         await searchPage.closePreviewButton().click();
 
-        urlParams = searchPage.getUrlParams();
-        expect(urlParams.has('selectedSeq')).toBe(false);
+        // URL should return to search page
+        expect(page.url()).toContain('/search');
 
-        const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
-        await page.goto(currentUrl.toString());
+        // Direct navigation to /seq/[id] should open the modal
+        await page.goto(`/seq/${selectedSeqId}`);
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
     });
 
-    test('should store half-screen state in the URL', async ({ page }) => {
+    test('should NOT update URL when in docked mode (half-screen)', async ({ page }) => {
         await searchPage.ebolaSudan();
+
+        const searchUrl = page.url();
 
         await searchPage.clickOnSequence(0);
 
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
+        
+        // URL changes to /seq/[id] in full-screen mode
+        expect(page.url()).toMatch(/\/seq\/[^/]+$/);
+        const seqMatch = page.url().match(/\/seq\/([^/]+)$/);
+        const selectedSeqId = seqMatch[1];
 
         await searchPage.toggleHalfScreenButton().click();
-
-        let urlParams = searchPage.getUrlParams();
-        expect(urlParams.has('halfScreen')).toBe(true);
-        expect(urlParams.get('halfScreen')).toBe('true');
 
         await expect(page.locator('[data-testid="half-screen-preview"]')).toBeVisible();
+        
+        // URL should remain on search page when in docked mode
+        expect(page.url()).toContain('/search');
+        // Should preserve search parameters
+        expect(page.url()).toContain('country=Sudan');
 
         await searchPage.toggleHalfScreenButton().click();
 
-        urlParams = searchPage.getUrlParams();
-        expect(urlParams.has('halfScreen')).toBe(false);
-
+        // URL should change back to /seq/[id] when returning to full-screen
+        expect(page.url()).toContain(`/seq/${selectedSeqId}`);
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
     });
 
-    test('should restore state from URL parameters on page load', async ({ page }) => {
+    test('should handle navigation to /seq/[id] URL directly', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         await searchPage.clickOnSequence(0);
         await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        const urlParams = searchPage.getUrlParams();
-        const selectedSeqId = urlParams.get('selectedSeq');
-
-        await searchPage.toggleHalfScreenButton().click();
+        // Get the sequence ID from URL
+        const seqMatch = page.url().match(/\/seq\/([^/]+)$/);
+        expect(seqMatch).not.toBeNull();
+        const selectedSeqId = seqMatch[1];
 
         await searchPage.closePreviewButton().click();
 
-        const currentUrl = new URL(page.url());
-        currentUrl.searchParams.set('selectedSeq', selectedSeqId);
-        currentUrl.searchParams.set('halfScreen', 'true');
-        await page.goto(currentUrl.toString());
+        // Direct navigation to /seq/[id] should open the modal
+        await page.goto(`/seq/${selectedSeqId}`);
+        await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
 
-        await expect(page.locator('[data-testid="half-screen-preview"]')).toBeVisible();
-
-        await page.goto('/');
+        // Browser back should return to search
         await page.goBack();
-
-        await expect(page.locator('[data-testid="half-screen-preview"]')).toBeVisible();
+        expect(page.url()).toContain('/search');
+        
+        // Browser forward should reopen modal
+        await page.goForward();
+        await expect(page.locator('[data-testid="sequence-preview-modal"]')).toBeVisible();
+        expect(page.url()).toContain(`/seq/${selectedSeqId}`);
     });
 });
