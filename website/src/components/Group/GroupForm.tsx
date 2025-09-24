@@ -36,6 +36,10 @@ interface GroupFormProps {
      * @returns A submit success or error.
      */
     onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
+    /**
+     * Optional list of guidelines to display above the form.
+     */
+    guidelines?: string[];
 }
 
 export type GroupSubmitSuccess = {
@@ -48,7 +52,7 @@ export type GroupSubmitError = {
 };
 export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
-export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit }) => {
+export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit, guidelines }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const internalOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -75,6 +79,17 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
     return (
         <div className='p-4 max-w-6xl mx-auto'>
             <h2 className='title'>{title}</h2>
+
+            {guidelines !== undefined && guidelines.length > 0 && (
+                <div className='mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-gray-700'>
+                    <h3 className='text-base font-semibold leading-6 text-gray-900'>Group creation guidelines</h3>
+                    <ul className='mt-2 list-disc space-y-2 pl-5'>
+                        {guidelines.map((guideline, index) => (
+                            <li key={index}>{guideline}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
