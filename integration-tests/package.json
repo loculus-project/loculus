@@ -8,19 +8,19 @@
         "test": "npx playwright test"
     },
     "devDependencies": {
-        "@eslint/js": "^9.35.0",
+        "@eslint/js": "^9.36.0",
         "@lokalise/xlsx": "^0.20.3",
         "@playwright/test": "^1.55.0",
-        "@types/node": "^24.3.1",
+        "@types/node": "^24.5.2",
         "@types/papaparse": "^5.3.16",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.43.0",
-        "@typescript-eslint/parser": "^8.43.0",
-        "eslint": "^9.35.0",
+        "@typescript-eslint/eslint-plugin": "^8.44.1",
+        "@typescript-eslint/parser": "^8.44.1",
+        "eslint": "^9.36.0",
         "eslint-plugin-unicorn": "^61.0.2",
         "papaparse": "^5.5.3",
         "prettier": "^3.6.2",
-        "typescript-eslint": "^8.43.0",
+        "typescript-eslint": "^8.44.1",
         "uuid": "^13.0.0"
     }
 }
