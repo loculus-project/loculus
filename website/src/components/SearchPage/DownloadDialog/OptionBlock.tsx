@@ -4,7 +4,6 @@ export type OptionBlockOption = {
     label: ReactElement;
     subOptions?: ReactElement;
     disabled?: boolean;
-    title?: string;
 };
 
 export type OptionBlockProps = {
@@ -34,11 +33,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
             {options.map((option, index) => {
                 const optionDisabled = disabled || option.disabled;
                 return (
-                    <div
-                        key={index}
-                        className={optionDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}
-                        title={option.title}
-                    >
+                    <div key={index} className={optionDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}>
                         <label
                             className={`label justify-start py-1 items-baseline ${optionDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         >
