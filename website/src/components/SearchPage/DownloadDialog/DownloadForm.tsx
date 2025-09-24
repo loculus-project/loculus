@@ -9,13 +9,13 @@ import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
-import type { SequenceName } from '../../../utils/sequenceTypeHelpers.ts';
 import {
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-} from '../../SequenceDetailsPage/SequencesDisplay/getSequenceNames.tsx';
+    type SequenceName,
+} from '../../../utils/sequenceTypeHelpers.ts';
 import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
