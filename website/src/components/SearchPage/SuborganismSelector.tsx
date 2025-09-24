@@ -86,7 +86,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     );
 };
 
-const formatLabel = (label: string) => {
+export const formatLabel = (label: string) => {
     if (label === label.toUpperCase()) {
         return label; // all caps, keep as is
     }

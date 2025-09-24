@@ -10,6 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
@@ -368,7 +369,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        (Object.keys(referenceGenomesSequenceNames).length < 2 || selectedSuborganism !== null);
+        !stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -511,6 +512,8 @@ export const InnerSearchFullUI = ({
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
+                                selectedSuborganism={selectedSuborganism}
+                                suborganismIdentifierField={schema.suborganismIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu

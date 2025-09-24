@@ -4,12 +4,13 @@ import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
 import { FieldSelectorButton } from './FieldSelector/FieldSelectorButton.tsx';
 import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
-import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
+import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
-import type { Metadata } from '../../../types/config.ts';
-import type { Schema } from '../../../types/config.ts';
+import type { Metadata, Schema } from '../../../types/config.ts';
 import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { formatLabel } from '../SuborganismSelector.tsx';
+import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -20,6 +21,8 @@ type DownloadFormProps = {
     selectedFields: string[];
     onSelectedFieldsChange: (fields: string[]) => void;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
+    selectedSuborganism: string | null;
+    suborganismIdentifierField: string | undefined;
 };
 
 // Sort fields by their order in the search table and ensure accessionVersion is the first field
@@ -44,6 +47,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     selectedFields,
     onSelectedFieldsChange,
     richFastaHeaderFields,
+    selectedSuborganism,
+    suborganismIdentifierField,
 }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [dataType, setDataType] = useState(0);
@@ -110,84 +115,100 @@ export const DownloadForm: FC<DownloadFormProps> = ({
         selectedFields,
     ]);
 
-    const metadataOption = {
-        label: (
-            <div className='flex items-center gap-3'>
-                <span>Metadata</span>
-                <FieldSelectorButton
-                    onClick={() => setIsFieldSelectorOpen(true)}
-                    selectedFieldsCount={selectedFields.length}
-                    disabled={dataType !== 0}
-                />
-            </div>
-        ),
-    };
-    const dataTypeOptions = allowSubmissionOfConsensusSequences
-        ? [
-              metadataOption,
-              {
-                  label: <>Raw nucleotide sequences</>,
-                  subOptions: (
-                      <div className='px-8'>
-                          {isMultiSegmented ? (
-                              <DropdownOptionBlock
-                                  name='unalignedNucleotideSequences'
-                                  options={nucleotideSequences.map((segment) => ({
-                                      label: <>{segment}</>,
-                                  }))}
-                                  selected={unalignedNucleotideSequence}
-                                  onSelect={setUnalignedNucleotideSequence}
-                                  disabled={dataType !== 1}
-                              />
-                          ) : undefined}
-                          {richFastaHeaderFields && (
-                              <RadioOptionBlock
-                                  name='richFastaHeaders'
-                                  title='FASTA header style'
-                                  options={[{ label: <>Accession</> }, { label: <>Display name</> }]}
-                                  selected={includeRichFastaHeaders}
-                                  onSelect={setIncludeRichFastaHeaders}
-                                  disabled={dataType !== 1}
-                                  variant='nested'
-                              />
-                          )}
-                      </div>
-                  ),
-              },
-              {
-                  label: <>Aligned nucleotide sequences</>,
-                  subOptions: isMultiSegmented ? (
-                      <div className='px-8'>
-                          <DropdownOptionBlock
-                              name='alignedNucleotideSequences'
-                              options={nucleotideSequences.map((gene) => ({
-                                  label: <>{gene}</>,
-                              }))}
-                              selected={alignedNucleotideSequence}
-                              onSelect={setAlignedNucleotideSequence}
-                              disabled={dataType !== 2}
-                          />
-                      </div>
-                  ) : undefined,
-              },
-              {
-                  label: <>Aligned amino acid sequences</>,
-                  subOptions: (
-                      <div className='px-8'>
-                          <DropdownOptionBlock
-                              name='alignedAminoAcidSequences'
-                              options={genes.map((gene) => ({
-                                  label: <>{gene}</>,
-                              }))}
-                              selected={alignedAminoAcidSequence}
-                              onSelect={setAlignedAminoAcidSequence}
-                              disabled={dataType !== 3}
-                          />
-                      </div>
-                  ),
-              },
-          ]
-        : [metadataOption];
+    const disableAlignedSequences = stillRequiresSuborganismSelection(
+        referenceGenomesSequenceNames,
+        selectedSuborganism,
+    );
+
+    function getDataTypeOptions(): OptionBlockOption[] {
+        const metadataOption = {
+            label: (
+                <div className='flex items-center gap-3'>
+                    <span>Metadata</span>
+                    <FieldSelectorButton
+                        onClick={() => setIsFieldSelectorOpen(true)}
+                        selectedFieldsCount={selectedFields.length}
+                        disabled={dataType !== 0}
+                    />
+                </div>
+            ),
+        };
+
+        const rawNucleotideSequencesOption = {
+            label: <>Raw nucleotide sequences</>,
+            subOptions: (
+                <div className='px-8'>
+                    {isMultiSegmented ? (
+                        <DropdownOptionBlock
+                            name='unalignedNucleotideSequences'
+                            options={nucleotideSequences.map((segment) => ({
+                                label: <>{segment}</>,
+                            }))}
+                            selected={unalignedNucleotideSequence}
+                            onSelect={setUnalignedNucleotideSequence}
+                            disabled={dataType !== 1}
+                        />
+                    ) : undefined}
+                    {richFastaHeaderFields && (
+                        <RadioOptionBlock
+                            name='richFastaHeaders'
+                            title='FASTA header style'
+                            options={[{ label: <>Accession</> }, { label: <>Display name</> }]}
+                            selected={includeRichFastaHeaders}
+                            onSelect={setIncludeRichFastaHeaders}
+                            disabled={dataType !== 1}
+                            variant='nested'
+                        />
+                    )}
+                </div>
+            ),
+        };
+
+        if (!allowSubmissionOfConsensusSequences) {
+            return [metadataOption];
+        }
+
+        if (disableAlignedSequences) {
+            return [metadataOption, rawNucleotideSequencesOption];
+        }
+
+        return [
+            metadataOption,
+            rawNucleotideSequencesOption,
+            {
+                label: <>Aligned nucleotide sequences</>,
+                subOptions: isMultiSegmented ? (
+                    <div className='px-8'>
+                        <DropdownOptionBlock
+                            name='alignedNucleotideSequences'
+                            options={nucleotideSequences.map((gene) => ({
+                                label: <>{gene}</>,
+                            }))}
+                            selected={alignedNucleotideSequence}
+                            onSelect={setAlignedNucleotideSequence}
+                            disabled={dataType !== 2}
+                        />
+                    </div>
+                ) : undefined,
+            },
+            {
+                label: <>Aligned amino acid sequences</>,
+                subOptions: (
+                    <div className='px-8'>
+                        <DropdownOptionBlock
+                            name='alignedAminoAcidSequences'
+                            options={genes.map((gene) => ({
+                                label: <>{gene}</>,
+                            }))}
+                            selected={alignedAminoAcidSequence}
+                            onSelect={setAlignedAminoAcidSequence}
+                            disabled={dataType !== 3}
+                        />
+                    </div>
+                ),
+            },
+        ];
+    }
 
     return (
         <div className='flex flex-row flex-wrap mb-4 gap-y-2 py-4'>
@@ -214,13 +235,22 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     onSelect={setIncludeRestricted}
                 />
             )}
-            <RadioOptionBlock
-                name='dataType'
-                title='Data type'
-                options={dataTypeOptions}
-                selected={dataType}
-                onSelect={setDataType}
-            />
+            <div className='flex-1 min-w-0'>
+                <RadioOptionBlock
+                    name='dataType'
+                    title='Data type'
+                    options={getDataTypeOptions()}
+                    selected={dataType}
+                    onSelect={setDataType}
+                />
+                {disableAlignedSequences && suborganismIdentifierField !== undefined && (
+                    <div className='text-sm text-gray-400 mt-4 max-w-60'>
+                        Or select a {formatLabel(suborganismIdentifierField)} with the search UI to enable download of
+                        aligned sequences.
+                    </div>
+                )}
+            </div>
+
             <RadioOptionBlock
                 name='compression'
                 title='Compression'
