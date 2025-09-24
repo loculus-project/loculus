@@ -713,7 +713,7 @@ class ProcessingFunctions:
                     )
                 elif order[i] in input_data:
                     formatted_input_data.append(
-                        "" if input_data[order[i]] is None else str(input_data[order[i]])
+                        "" if input_data[order[i]] is None else str(input_data[order[i]]).strip()
                     )
                 else:
                     formatted_input_data.append(accession_version)

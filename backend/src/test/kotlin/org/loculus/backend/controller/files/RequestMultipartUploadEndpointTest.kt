@@ -112,6 +112,8 @@ class RequestMultipartUploadEndpointTest(
         val groupId = groupManagementClient.createNewGroup().andGetGroupId() + 100
         client.requestMultipartUploads(groupId = groupId, 1, 1)
             .andExpect(status().isNotFound)
+        client.requestMultipartUploads(groupId = groupId, 1, 1, jwt = jwtForProcessingPipeline)
+            .andExpect(status().isNotFound)
     }
 
     @Test
