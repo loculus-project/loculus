@@ -13,27 +13,37 @@ export function getSequenceNames(
 
     if (suborganism === SINGLE_REFERENCE) {
         return {
-            nucleotideSegmentNames: nucleotideSequences.map((name) => ({ lapisName: name, label: name })),
-            genes: genes.map((name) => ({ lapisName: name, label: name })),
+            nucleotideSegmentNames: nucleotideSequences.map(getSinglePathogenSequenceName),
+            genes: genes.map(getSinglePathogenSequenceName),
             isMultiSegmented: isMultiSegmented(nucleotideSequences),
         };
     }
 
-    const nucleotideSegmentNames =
-        nucleotideSequences.length === 1
-            ? [{ lapisName: suborganism, label: 'main' }]
-            : nucleotideSequences.map((name) => ({
-                  lapisName: `${suborganism}-${name}`,
-                  label: name,
-              }));
-
+    const nucleotideSegmentNames = getMultiPathogenNucleotideSequenceNames(nucleotideSequences, suborganism);
     return {
         nucleotideSegmentNames,
-        genes: genes.map((name) => ({
-            lapisName: `${suborganism}-${name}`,
-            label: name,
-        })),
+        genes: genes.map((name) => getMultiPathogenSequenceName(name, suborganism)),
         isMultiSegmented: true, // LAPIS treats the suborganisms as multiple nucleotide segments -> always true
+    };
+}
+
+export function getMultiPathogenNucleotideSequenceNames(nucleotideSequences: string[], suborganism: string) {
+    return nucleotideSequences.length === 1
+        ? [{ lapisName: suborganism, label: 'main' }]
+        : nucleotideSequences.map((name) => getMultiPathogenSequenceName(name, suborganism));
+}
+
+export function getSinglePathogenSequenceName(name: string): SequenceName {
+    return {
+        lapisName: name,
+        label: name,
+    };
+}
+
+export function getMultiPathogenSequenceName(name: string, suborganism: string): SequenceName {
+    return {
+        lapisName: `${suborganism}-${name}`,
+        label: name,
     };
 }
 
