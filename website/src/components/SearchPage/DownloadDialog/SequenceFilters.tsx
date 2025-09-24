@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
@@ -7,6 +7,7 @@ import { MetadataFilterSchema } from '../../../utils/search.ts';
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
 
 export type LapisSearchParameters = Record<string, any>;
+
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -74,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
         );
     }
 

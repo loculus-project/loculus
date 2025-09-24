@@ -62,7 +62,8 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
 export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
-    const isFieldSelectable: VisiblitySelectableAccessor = (field) => field.notSearchable !== true;
+    const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
+        field.notSearchable !== true && field.name !== schema.suborganismIdentifierField;
     return getFieldOrColumnVisibilitiesFromQuery(
         schema,
         state,

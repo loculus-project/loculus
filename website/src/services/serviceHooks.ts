@@ -72,17 +72,21 @@ function getSequenceHook(
 ) {
     if (isUnalignedSequence(sequenceType)) {
         return isMultiSegmented
-            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, { params: { segment: sequenceType.name } })
+            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
+                  params: { segment: sequenceType.name.lapisName },
+              })
             : hooks.useUnalignedNucleotideSequences(request);
     }
 
     if (isAlignedSequence(sequenceType)) {
         return isMultiSegmented
-            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, { params: { segment: sequenceType.name } })
+            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
+                  params: { segment: sequenceType.name.lapisName },
+              })
             : hooks.useAlignedNucleotideSequences(request);
     }
 
-    return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name } });
+    return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name.lapisName } });
 }
 
 export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
