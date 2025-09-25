@@ -117,7 +117,8 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
     runner.run_once()
 
     assert not paths.run_sentinel.exists()
-    assert not list(paths.input_dir.iterdir())
+    # No new timestamped directories should be present, but metadata files remain.
+    assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert read_text(paths.current_etag_file) == "W/\"old\""
     assert not clients
 

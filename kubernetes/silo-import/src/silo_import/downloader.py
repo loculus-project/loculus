@@ -94,7 +94,13 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
         _cleanup_directory(new_dir)
         raise RecordCountMismatch("record count mismatch")
 
-    _handle_previous_directory(paths.input_dir, new_dir, data_path)
+    _handle_previous_directory(
+        paths.input_dir,
+        new_dir,
+        data_path,
+        paths.current_etag_file,
+        etag_path.read_text(encoding="utf-8").strip(),
+    )
 
     prune_timestamped_directories(paths.input_dir)
 
@@ -144,7 +150,13 @@ def _analyse_ndjson(path: Path) -> tuple[int, Set[str]]:
     return record_count, pipeline_versions
 
 
-def _handle_previous_directory(input_dir: Path, new_dir: Path, new_data_path: Path) -> None:
+def _handle_previous_directory(
+    input_dir: Path,
+    new_dir: Path,
+    new_data_path: Path,
+    current_etag_file: Path,
+    new_etag: str,
+) -> None:
     previous_dirs = [p for p in input_dir.iterdir() if p.is_dir() and p.name.isdigit() and p != new_dir]
     if not previous_dirs:
         return
@@ -168,6 +180,7 @@ def _handle_previous_directory(input_dir: Path, new_dir: Path, new_data_path: Pa
     new_hash = md5_file(new_data_path)
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
+        write_text(current_etag_file, new_etag)
         _cleanup_directory(new_dir)
         raise HashUnchanged("hash unchanged")
 
