@@ -207,3 +207,35 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest
     assert not paths.run_sentinel.exists()
     assert not list(paths.input_dir.iterdir())
     assert not clients
+
+
+def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions=None,
+        hard_refresh_interval=1,
+        poll_interval=1,
+        silo_run_timeout=5,
+        root_dir=tmp_path,
+    )
+    paths = ImporterPaths.from_root(tmp_path)
+    paths.ensure_directories()
+
+    bad_body = b"not-a-zstd-payload"
+    release = FakeStreamResponse(
+        headers={"etag": "W/\"bad\"", "x-total-records": "1"},
+        body=bad_body,
+    )
+
+    clients: list[FakeHttpClient] = [FakeHttpClient(stream_responses=[release])]
+    factory = make_client_factory(clients)
+    monkeypatch.setattr(downloader, "_create_http_client", factory)
+
+    runner = ImporterRunner(config, paths)
+
+    with pytest.raises(RuntimeError):
+        runner.run_once()
+
+    # Ensure staging directory was removed despite the failure.
+    assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert not clients
