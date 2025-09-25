@@ -490,43 +490,43 @@
                 "type": "object",
                 "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
-                    "alignment_requirement": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "string",
-                      "enum": ["ALL", "ANY"],
-                      "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
-                    },
-                    "nextclade_dataset_server": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "string"
-                    },
-                    "nextclade_dataset_name": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "string",
-                      "description": "Required if sequences should be aligned"
-                    },
-                    "require_nextclade_sort_match": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "boolean",
-                      "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
-                    },
-                    "minimizer_url": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "string",
-                      "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
-                    },
-                    "accepted_dataset_matches": {
-                      "groups": ["nextcladePipelineConfigFile"],
-                      "docsIncludePrefix": false,
-                      "type": "array",
-                      "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
-                    }
+                  "alignment_requirement": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "enum": ["ALL", "ANY"],
+                    "description": "If multi-segmented viruses should require ALL segments (that the user provides) align or ANY segment aligns"
+                  },
+                  "nextclade_dataset_server": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "string"
+                  },
+                  "nextclade_dataset_name": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Required if sequences should be aligned"
+                  },
+                  "require_nextclade_sort_match": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "boolean",
+                    "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
+                  },
+                  "minimizer_url": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "string",
+                    "description": "Minimizer used for nextclade sort (if require_nextclade_sort_match is true), if not specified use default nextclade server minimizer"
+                  },
+                  "accepted_dataset_matches": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "array",
+                    "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
                   }
+                }
               }
             },
             "required": ["version", "image"]
@@ -1001,8 +1001,7 @@
               "groups": ["website"],
               "type": "object",
               "description": "Settings for the `public` section of the `runtime_config.json`",
-              "properties": {
-              }
+              "properties": {}
             }
           }
         }
@@ -1250,7 +1249,7 @@
       },
       "required": ["outputFileUrlType"],
       "additionalProperties": false
-    },    
+    },
     "s3": {
       "type": "object",
       "properties": {
@@ -1341,7 +1340,7 @@
     "enaDeposition": {
       "type": "object",
       "description": "TODO",
-      "properties":{
+      "properties": {
         "enaUniqueSuffix": {
           "type": "string",
           "description": "Suffix to add to ENA project alias",
@@ -1365,9 +1364,9 @@
         "enaGithubTestUrl": {
           "type": "string",
           "description": "URL to the test ENA github repository"
+        }
       }
-    }
-  },
+    },
     "images": {
       "groups": ["general"],
       "type": "object",
@@ -1382,7 +1381,7 @@
     },
     "silo": {
       "groups": ["silo"],
-      "type": "object", 
+      "type": "object",
       "description": "Configuration for the SILO component",
       "properties": {
         "apiThreadsForHttpConnections": {
@@ -1449,22 +1448,24 @@
         "organismSpecific": {
           "type": "object",
           "patternProperties": {
-              ".*": {
-                  "type": "object",
-                  "properties": {
-                      "website": { "$ref": "#/definitions/resourceSpec" },
-                      "ena-submission": { "$ref": "#/definitions/resourceSpec" },
-                      "ena-submission-list-cronjob": { "$ref": "#/definitions/resourceSpec" },
-                      "ingest": { "$ref": "#/definitions/resourceSpec" },
-                      "keycloak": { "$ref": "#/definitions/resourceSpec" },
-                      "silo": { "$ref": "#/definitions/resourceSpec" },
-                      "lapis": { "$ref": "#/definitions/resourceSpec" },
-                      "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
-                      "backend": { "$ref": "#/definitions/resourceSpec" },
-                      "preprocessing": { "$ref": "#/definitions/resourceSpec" }
-                  },
-                  "additionalProperties": false
-              }
+            ".*": {
+              "type": "object",
+              "properties": {
+                "website": { "$ref": "#/definitions/resourceSpec" },
+                "ena-submission": { "$ref": "#/definitions/resourceSpec" },
+                "ena-submission-list-cronjob": {
+                  "$ref": "#/definitions/resourceSpec"
+                },
+                "ingest": { "$ref": "#/definitions/resourceSpec" },
+                "keycloak": { "$ref": "#/definitions/resourceSpec" },
+                "silo": { "$ref": "#/definitions/resourceSpec" },
+                "lapis": { "$ref": "#/definitions/resourceSpec" },
+                "silo-preprocessing": { "$ref": "#/definitions/resourceSpec" },
+                "backend": { "$ref": "#/definitions/resourceSpec" },
+                "preprocessing": { "$ref": "#/definitions/resourceSpec" }
+              },
+              "additionalProperties": false
+            }
           },
           "additionalProperties": false
         }
@@ -1477,7 +1478,7 @@
       "type": "array",
       "description": "TODO",
       "items": {
-          "type": "string"
+        "type": "string"
       }
     },
     "previewDocs": {
