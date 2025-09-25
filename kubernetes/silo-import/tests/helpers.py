@@ -66,7 +66,13 @@ class FakeHttpClient:
     def __exit__(self, exc_type, exc, tb) -> None:
         return None
 
-    def stream(self, method: str, url: str, headers: Optional[dict[str, str]] = None) -> _FakeStreamContext:
+    def stream(
+        self,
+        method: str,
+        url: str,
+        headers: Optional[dict[str, str]] = None,
+        decode_content: bool = True,
+    ) -> _FakeStreamContext:
         if not self._stream_responses:
             raise AssertionError("No fake stream responses remaining")
         response = self._stream_responses.pop(0)
