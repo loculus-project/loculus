@@ -484,6 +484,19 @@
                 },
                 "description": "Array of Strings. Arguments passed to the preprocessing pipeline."
               },
+              "lineageDefinitions": {
+                "groups": ["preprocessing"],
+                "docsIncludePrefix": false,
+                "type": "object",
+                "description": "Map of lineage system names to their definition URLs. This allows defining lineage hierarchies per preprocessing version.",
+                "patternProperties": {
+                  "^[a-zA-Z0-9-_]+$": {
+                    "type": "string",
+                    "description": "URL pointing to the lineage definition file for this lineage system."
+                  }
+                },
+                "additionalProperties": false
+              },
               "configFile": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
@@ -528,19 +541,6 @@
                     }
                   }
               }
-            },
-            "lineageDefinitions": {
-              "groups": ["preprocessing"],
-              "docsIncludePrefix": false,
-              "type": "object",
-              "description": "Map of lineage system names to their definition URLs. This allows defining lineage hierarchies per preprocessing version.",
-              "patternProperties": {
-                ".*": {
-                  "type": "string",
-                  "description": "URL pointing to the lineage definition file for this lineage system."
-                }
-              },
-              "additionalProperties": false
             },
             "required": ["version", "image"]
           }
