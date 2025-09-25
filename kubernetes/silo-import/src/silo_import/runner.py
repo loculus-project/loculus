@@ -49,6 +49,11 @@ class ImporterRunner:
             if hard_refresh:
                 self._write_last_hard_refresh(int(time.time()))
             return
+        except DecompressionFailed as skip:
+            logger.warning("Skipping run due to decompression failure: %s", skip)
+            if hard_refresh:
+                self._write_last_hard_refresh(int(time.time()))
+            return
         except RecordCountMismatch as skip:
             logger.warning("Skipping run due to validation issue: %s", skip)
             return

@@ -233,9 +233,11 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
 
     runner = ImporterRunner(config, paths)
 
-    with pytest.raises(RuntimeError):
-        runner.run_once()
+    write_text(paths.current_etag_file, "W/\"old\"")
 
-    # Ensure staging directory was removed despite the failure.
+    runner.run_once()
+
+    assert not paths.run_sentinel.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert read_text(paths.current_etag_file) == "W/\"bad\""
     assert not clients
