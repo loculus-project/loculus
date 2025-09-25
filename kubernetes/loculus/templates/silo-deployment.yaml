@@ -84,7 +84,8 @@ spec:
             {{- range $lineageSystem := $uniqueLineageSystems }}
               {{- $lineageDefinitionsMap := dict }}
               {{- $missingVersions := list }}
-              {{- range $preprocessing := $organism.preprocessing }}
+              {{- $flattened := include "loculus.flattenPreprocessingVersions" $organism.preprocessing | fromJson }}
+              {{- range $preprocessing := $flattened.items }}
                 {{- if and $preprocessing.lineageDefinitions (hasKey $preprocessing.lineageDefinitions $lineageSystem) }}
                   {{- $lineageDefinitionsMap = set $lineageDefinitionsMap (printf "%d" (int $preprocessing.version)) (index $preprocessing.lineageDefinitions $lineageSystem) }}
                 {{- else }}
