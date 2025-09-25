@@ -298,7 +298,7 @@ function getSequenceNames(
         return {
             nucleotideSequences: [],
             genes: [],
-            useMultiSegmentEndpoint: false, // LAPIS is multisegmented, since we're in multi pathogen case here. Use the "download all segments" endpoint which we get by pretending we're single segmented.
+            useMultiSegmentEndpoint: false, // When no suborganism is selected, use the "all segments" endpoint to download all available segments, even though LAPIS is multisegmented. That endpoint is available at the same route as the single segmented endpoint.
         };
     }
 
