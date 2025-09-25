@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from .config import ImporterConfig
 from .downloader import DownloadResult, download_release
-from .errors import HashUnchanged, NotModified, RecordCountMismatch, SkipRun
+from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch, SkipRun
 from .lineage import update_lineage_definitions
 from .paths import ImporterPaths
 from .sentinels import SentinelManager
