@@ -82,7 +82,11 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
 
             expected_count = _parse_int_header(response.headers.get("x-total-records"))
 
-    record_count, pipeline_versions = _analyse_ndjson(data_path)
+    try:
+        record_count, pipeline_versions = _analyse_ndjson(data_path)
+    except RuntimeError:
+        _cleanup_directory(new_dir)
+        raise
     logger.info("Downloaded %s records (ETag %s)", record_count, etag_path.read_text(encoding="utf-8").strip())
 
     if expected_count is not None and record_count != expected_count:
