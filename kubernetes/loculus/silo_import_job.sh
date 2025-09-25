@@ -155,11 +155,15 @@ download_lineage_definitions() {
     return
   fi
 
-  pipelineVersion=$(zstd -d -c "$new_input_data_path" | jq -r '.metadata.pipelineVersion' | sort -u)
+  pipelineVersion=$(zstd -d -c "$new_input_data_path" \
+    | jq -r '.metadata.pipelineVersion // empty' \
+    | sed '/^$/d' \
+    | sed '/^null$/d' \
+    | sort -u)
 
   if [[ -z "$pipelineVersion" ]]; then
     echo "No pipeline version found. Writing empty lineage definition file."
-    echo "{}" > $lineage_definition_file
+    echo "{}" > "$lineage_definition_file"
   elif [[ $(echo "$pipelineVersion" | wc -l) -eq 1 ]]; then
     echo "Single pipeline version: $pipelineVersion"
 
