@@ -1,19 +1,15 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+from pathlib import Path
 from typing import Dict, Optional, Set
-
-import httpx
 
 from .config import ImporterConfig
 from .paths import ImporterPaths
 from .utils import write_text
 
 logger = logging.getLogger(__name__)
-
-
-def _create_http_client(**kwargs: object) -> httpx.Client:
-    return httpx.Client(**kwargs)
 
 
 def update_lineage_definitions(
@@ -42,10 +38,12 @@ def update_lineage_definitions(
         )
 
     logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
-    with _create_http_client(timeout=httpx.Timeout(60.0)) as client:
-        response = client.get(lineage_url)
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise RuntimeError(f"Failed to download lineage definitions: {exc}") from exc
-        write_text(paths.lineage_definition_file, response.text)
+    try:
+        _download_lineage_file(lineage_url, paths.lineage_definition_file)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"Failed to download lineage definitions: {exc}") from exc
+
+
+def _download_lineage_file(url: str, destination: Path) -> None:
+    cmd = ["curl", "-sS", "--fail", "-o", str(destination), url]
+    subprocess.run(cmd, check=True)
