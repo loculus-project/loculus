@@ -55,7 +55,12 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
     logger.info("Requesting released data from %s", config.released_data_endpoint)
     expected_count: Optional[int] = None
     with _create_http_client(timeout=httpx.Timeout(300.0)) as client:
-        with client.stream("GET", config.released_data_endpoint, headers=headers) as response:
+        with client.stream(
+            "GET",
+            config.released_data_endpoint,
+            headers=headers,
+            decode_content=False,
+        ) as response:
             if response.status_code == 304:
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 _cleanup_directory(new_dir)
@@ -91,6 +96,7 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
             data_path.stat().st_size if data_path.exists() else "missing",
             exc,
         )
+        write_text(paths.current_etag_file, "0")
         _cleanup_directory(new_dir)
         raise DecompressionFailed(f"decompression failed ({exc})") from exc
     logger.info("Downloaded %s records (ETag %s)", record_count, etag_value)
