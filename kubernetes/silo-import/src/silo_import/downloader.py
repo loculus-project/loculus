@@ -85,8 +85,12 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
     try:
         record_count, pipeline_versions = _analyse_ndjson(data_path)
     except RuntimeError as exc:
-        logger.warning("Failed to decompress %s: %s", data_path, exc)
-        write_text(paths.current_etag_file, etag_value)
+        logger.warning(
+            "Failed to decompress %s (size=%s bytes): %s",
+            data_path,
+            data_path.stat().st_size if data_path.exists() else "missing",
+            exc,
+        )
         _cleanup_directory(new_dir)
         raise DecompressionFailed(f"decompression failed ({exc})") from exc
     logger.info("Downloaded %s records (ETag %s)", record_count, etag_value)

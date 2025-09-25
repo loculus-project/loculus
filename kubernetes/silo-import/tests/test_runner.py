@@ -239,5 +239,6 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
 
     assert not paths.run_sentinel.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert read_text(paths.current_etag_file) == "W/\"bad\""
+    # ETag remains at previous value so the importer retries until download succeeds.
+    assert read_text(paths.current_etag_file) == "W/\"old\""
     assert not clients
