@@ -12,7 +12,7 @@ import httpx
 import zstandard
 
 from .config import ImporterConfig
-from .errors import HashUnchanged, NotModified, RecordCountMismatch
+from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .paths import ImporterPaths
 from .utils import md5_file, prune_timestamped_directories, safe_remove, write_text
 
