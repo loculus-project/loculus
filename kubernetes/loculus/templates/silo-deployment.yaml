@@ -66,7 +66,7 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
         - name: silo-importer
-          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag }}"
+          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag | default $dockerTag }}"
           imagePullPolicy: "{{ $.Values.images.siloImporter.pullPolicy }}"
           {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
           env:
