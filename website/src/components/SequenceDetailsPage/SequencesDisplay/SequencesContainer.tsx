@@ -1,7 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { getSequenceNames, isMultiSegmented } from './getSequenceNames.tsx';
+import { getSequenceNames } from './getSequenceNames.tsx';
 import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
@@ -9,6 +9,7 @@ import {
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
+    isMultiSegmented,
     isUnalignedSequence,
     type SequenceName,
     type SequenceType,

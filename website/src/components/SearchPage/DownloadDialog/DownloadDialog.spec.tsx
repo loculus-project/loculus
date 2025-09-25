@@ -170,8 +170,8 @@ describe('DownloadDialog', () => {
         });
         await checkAgreement();
 
-        let [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        let { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -179,8 +179,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -188,8 +188,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -199,8 +199,8 @@ describe('DownloadDialog', () => {
         await renderDialog({ downloadParams: new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2'])) });
         await checkAgreement();
 
-        let [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        let { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -208,8 +208,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -217,8 +217,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -240,7 +240,7 @@ describe('DownloadDialog', () => {
         await renderDialog({ metadata: orderedMetadata });
         await checkAgreement();
 
-        const [, query] = getDownloadHref()?.split('?') ?? [];
+        const { query } = parseDownloadHref();
         expect(query).toMatch(/fields=accessionVersion%2Cfield2%2Cfield1/);
     });
 
@@ -248,8 +248,8 @@ describe('DownloadDialog', () => {
         await renderDialog({ allowSubmissionOfConsensusSequences: false });
         await checkAgreement();
 
-        const [path] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        const { path } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
 
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
@@ -308,8 +308,8 @@ describe('DownloadDialog', () => {
         });
         await checkAgreement();
 
-        const [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        const { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
     });
@@ -361,7 +361,7 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe('https://lapis/sample/unalignedNucleotideSequences');
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
             expect(query).toMatch(
                 /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&accession=accession1&accession=accession2&field1=value1/,
             );
@@ -379,6 +379,20 @@ describe('DownloadDialog', () => {
             expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
         });
 
+        test('should download all raw segments when no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+        });
+
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomesSequenceNames: multiPathogenReferenceGenome,
@@ -388,6 +402,49 @@ describe('DownloadDialog', () => {
 
             expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
             expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
+        });
+
+        test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/suborganism1`);
+        });
+
+        test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(alignedNucleotideSequencesLabel));
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/suborganism1`);
+        });
+
+        test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesSequenceNames: multiPathogenReferenceGenome,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(alignedAminoAcidSequencesLabel));
+            await userEvent.selectOptions(screen.getByRole('combobox', { name: 'alignedAminoAcidSequences' }), 'gene2');
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
         });
     });
 });
@@ -400,4 +457,13 @@ async function checkAgreement() {
 function getDownloadHref() {
     const downloadButton = screen.getByRole('link', { name: 'Download' });
     return downloadButton.getAttribute('href');
+}
+
+function parseDownloadHref() {
+    const [path, query] = getDownloadHref()?.split('?') ?? [undefined, undefined];
+    return { path, query };
+}
+
+function expectRouteInPathMatches(path: string | undefined, route: string) {
+    expect(path).toBe(`${defaultLapisUrl}${route}`);
 }
