@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 log() {
   echo "$(date '+%Y-%m-%dT%H:%M:%S%z') [silo-runner] $*"
@@ -11,9 +11,9 @@ DONE_FILE="$INPUT_DIR/silo_done"
 SLEEP_SECONDS="${SILO_RUNNER_SLEEP_SECONDS:-1}"
 
 say_completion() {
-  local run_id="$1"
-  local status="$2"
-  local message="$3"
+  run_id="$1"
+  status="$2"
+  message="$3"
   {
     printf 'run_id=%s\n' "$run_id"
     printf 'status=%s\n' "$status"
