@@ -60,6 +60,7 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
             "GET",
             config.released_data_endpoint,
             headers=headers,
+            decode_content=False,
         ) as response:
             if response.status_code == 304:
                 logger.info("Backend returned 304 Not Modified; skipping import")
