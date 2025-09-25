@@ -20,7 +20,6 @@ class SentinelManager:
         temp_path = self._run_sentinel.with_suffix(".tmp")
         write_text(temp_path, f"run_id={run_id}\n")
         temp_path.replace(self._run_sentinel)
-        self._run_sentinel.touch()
         logger.info("Requested SILO preprocessing run %s", run_id)
 
     def wait_for_completion(self, run_id: str, timeout_seconds: int) -> None:
