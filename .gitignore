@@ -27,3 +27,6 @@ logs/
 __pycache__/
 
 .astro/
+
+
+.venv*
