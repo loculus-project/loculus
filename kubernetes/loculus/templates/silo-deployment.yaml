@@ -65,6 +65,37 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
+        - name: silo-importer
+          image: "{{ $.Values.images.siloImporter.repository }}:{{ $.Values.images.siloImporter.tag }}"
+          imagePullPolicy: "{{ $.Values.images.siloImporter.pullPolicy }}"
+          {{- include "loculus.resources" (list "silo-importer" $.Values) | nindent 10 }}
+          env:
+            - name: BACKEND_BASE_URL
+              {{- if $.Values.disableBackend }}
+              value: "http://host.k3d.internal:8079/{{ $key }}"
+              {{- else }}
+              value: "http://loculus-backend-service:8079/{{ $key }}"
+              {{- end }}
+            {{- if $lineageSystem }}
+            - name: LINEAGE_DEFINITIONS
+              value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
+            {{- end }}
+            - name: SILO_RUN_TIMEOUT_SECONDS
+              value: {{ $.Values.siloImportLimitSeconds | quote }}
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
         - name: silo-preprocessing
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
@@ -72,8 +103,7 @@ spec:
           command:
             - sh
             - -c
-            - |
-              apt-get update && apt-get install -y zstd && sh /silo_import_wrapper.sh
+            - sh /silo_import_wrapper.sh
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
@@ -99,9 +129,6 @@ spec:
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache
               mountPath: /preprocessing/input
-            - name: lapis-silo-database-config-processed
-              mountPath: /silo_import_job.sh
-              subPath: silo_import_job.sh
             - name: lapis-silo-database-config-processed
               mountPath: /silo_import_wrapper.sh
               subPath: silo_import_wrapper.sh
