@@ -1,5 +1,6 @@
 package org.loculus.backend.api
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class Address(
@@ -37,8 +38,13 @@ data class Group(
     val institution: String,
     @Schema(description = "The address of the institution.")
     val address: Address,
-    @Schema(description = "The contact email for the group.", example = "something@loculus.org")
-    val contactEmail: String,
+    @Schema(
+        description = "The contact email for the group.",
+        example = "something@loculus.org",
+        nullable = true,
+    )
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val contactEmail: String?,
 )
 
 data class User(val name: String)
