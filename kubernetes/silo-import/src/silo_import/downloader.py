@@ -84,10 +84,12 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
 
     try:
         record_count, pipeline_versions = _analyse_ndjson(data_path)
-    except RuntimeError:
+    except RuntimeError as exc:
+        logger.warning("Failed to decompress %s: %s", data_path, exc)
+        write_text(paths.current_etag_file, etag_path.read_text(encoding="utf-8").strip())
         _cleanup_directory(new_dir)
-        raise
-    logger.info("Downloaded %s records (ETag %s)", record_count, etag_path.read_text(encoding="utf-8").strip())
+        raise DecompressionFailed("decompression failed") from exc
+    logger.info("Downloaded %s records (ETag %s)", record_count, etag_value)
 
     if expected_count is not None and record_count != expected_count:
         logger.warning(
@@ -103,7 +105,7 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
         new_dir,
         data_path,
         paths.current_etag_file,
-        etag_path.read_text(encoding="utf-8").strip(),
+        etag_value,
     )
 
     prune_timestamped_directories(paths.input_dir)
@@ -114,7 +116,7 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
         header_path=header_path,
         etag_path=etag_path,
         processing_flag=processing_flag,
-        etag=etag_path.read_text(encoding="utf-8").strip(),
+        etag=etag_value,
         pipeline_versions=pipeline_versions,
     )
 
