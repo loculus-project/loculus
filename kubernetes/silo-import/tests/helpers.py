@@ -1,99 +1,11 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Iterable, List
 
-import httpx
 import zstandard
-
-
-class FakeStreamResponse:
-    def __init__(self, *, status_code: int = 200, headers: Optional[dict[str, str]] = None, body: bytes | Iterable[bytes] = b"") -> None:
-        self.status_code = status_code
-        self.headers = httpx.Headers(headers or {})
-        self._body = body
-        self.request = httpx.Request("GET", "http://fake")
-
-    def iter_bytes(self) -> Iterable[bytes]:
-        if isinstance(self._body, (bytes, bytearray)):
-            yield bytes(self._body)
-        else:
-            yield from self._body
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            response = httpx.Response(self.status_code, headers=self.headers, request=self.request)
-            raise httpx.HTTPStatusError("HTTP error", request=self.request, response=response)
-
-    def close(self) -> None:  # pragma: no cover - provided for symmetry
-        return
-
-
-class _FakeStreamContext:
-    def __init__(self, response: FakeStreamResponse) -> None:
-        self._response = response
-
-    def __enter__(self) -> FakeStreamResponse:
-        return self._response
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        self._response.close()
-
-
-class FakeGetResponse:
-    def __init__(self, *, text: str, status_code: int = 200) -> None:
-        self.text = text
-        self.status_code = status_code
-        self.headers = httpx.Headers()
-        self.request = httpx.Request("GET", "http://fake")
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            response = httpx.Response(self.status_code, headers=self.headers, request=self.request)
-            raise httpx.HTTPStatusError("HTTP error", request=self.request, response=response)
-
-
-class FakeHttpClient:
-    def __init__(self, *, stream_responses: Optional[List[FakeStreamResponse]] = None, get_responses: Optional[List[FakeGetResponse]] = None) -> None:
-        self._stream_responses = stream_responses or []
-        self._get_responses = get_responses or []
-
-    # Context manager support
-    def __enter__(self) -> "FakeHttpClient":
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        return None
-
-    def stream(
-        self,
-        method: str,
-        url: str,
-        headers: Optional[dict[str, str]] = None,
-        decode_content: bool = True,
-    ) -> _FakeStreamContext:
-        if not self._stream_responses:
-            raise AssertionError("No fake stream responses remaining")
-        response = self._stream_responses.pop(0)
-        response.request = httpx.Request(method, url, headers=headers)
-        return _FakeStreamContext(response)
-
-    def get(self, url: str) -> FakeGetResponse:
-        if not self._get_responses:
-            raise AssertionError("No fake GET responses remaining")
-        response = self._get_responses.pop(0)
-        response.request = httpx.Request("GET", url)
-        return response
-
-
-def make_client_factory(clients: List[FakeHttpClient]) -> Callable[..., FakeHttpClient]:
-    def _factory(**_: object) -> FakeHttpClient:
-        if not clients:
-            raise AssertionError("No fake clients available")
-        return clients.pop(0)
-
-    return _factory
 
 
 def compress_ndjson(records: Iterable[dict]) -> bytes:
@@ -107,3 +19,38 @@ def read_ndjson_file(path: Path) -> List[dict]:
     with path.open("rb") as handle:
         data = decompressor.decompress(handle.read())
     return [json.loads(line) for line in data.decode("utf-8").splitlines() if line]
+
+
+@dataclass
+class CurlResponse:
+    status: int
+    headers: dict
+    body: bytes = b""
+
+
+def make_curl_runner(responses: List[CurlResponse]) -> Callable[[List[str]], None]:
+    def _runner(cmd: List[str]) -> None:
+        if not responses:
+            raise AssertionError("No fake curl responses remaining")
+        response = responses.pop(0)
+
+        header_path: Path | None = None
+        data_path: Path | None = None
+        for idx, value in enumerate(cmd):
+            if value == "-D" and idx + 1 < len(cmd):
+                header_path = Path(cmd[idx + 1])
+            if value == "-o" and idx + 1 < len(cmd):
+                data_path = Path(cmd[idx + 1])
+
+        if header_path is None or data_path is None:
+            raise AssertionError("curl command missing header or output path")
+
+        header_lines = [f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"]
+        for key, value in (response.headers or {}).items():
+            header_lines.append(f"{key}: {value}")
+        header_lines.append("")
+        header_path.write_text("\n".join(header_lines), encoding="utf-8")
+
+        data_path.write_bytes(response.body or b"")
+
+    return _runner

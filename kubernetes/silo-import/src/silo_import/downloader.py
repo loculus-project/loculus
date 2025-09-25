@@ -3,23 +3,18 @@ from __future__ import annotations
 import io
 import json
 import logging
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Set
 
-import httpx
 import zstandard
 
 from .config import ImporterConfig
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .paths import ImporterPaths
 from .utils import md5_file, prune_timestamped_directories, safe_remove, write_text
-
-
-# shim to allow tests to patch the client factory
-def _create_http_client(**kwargs: object):
-    return httpx.Client(**kwargs)
 
 logger = logging.getLogger(__name__)
 
@@ -49,42 +44,40 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
     processing_flag = new_dir / "processing"
     processing_flag.touch()
 
-    headers = {}
+    curl_cmd = [
+        "curl",
+        "-sS",
+        "--fail",
+        "-D",
+        str(header_path),
+        "-o",
+        str(data_path),
+    ]
     if last_etag and last_etag != "0":
-        headers["If-None-Match"] = last_etag
+        curl_cmd.extend(["-H", f"If-None-Match: {last_etag}"])
+    curl_cmd.append(config.released_data_endpoint)
+
     logger.info("Requesting released data from %s", config.released_data_endpoint)
-    expected_count: Optional[int] = None
-    with _create_http_client(timeout=httpx.Timeout(300.0)) as client:
-        with client.stream(
-            "GET",
-            config.released_data_endpoint,
-            headers=headers,
-        ) as response:
-            if response.status_code == 304:
-                logger.info("Backend returned 304 Not Modified; skipping import")
-                _cleanup_directory(new_dir)
-                raise NotModified("Backend state unchanged")
 
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                _cleanup_directory(new_dir)
-                raise RuntimeError(f"Failed to download released data: {exc}") from exc
+    try:
+        _run_curl(curl_cmd)
+    except subprocess.CalledProcessError as exc:
+        _cleanup_directory(new_dir)
+        raise RuntimeError(f"Failed to download released data: {exc}") from exc
 
-            with data_path.open("wb") as handle:
-                for chunk in response.iter_bytes():
-                    handle.write(chunk)
+    status_code, response_headers = _parse_header_file(header_path)
+    if status_code == 304:
+        logger.info("Backend returned 304 Not Modified; skipping import")
+        _cleanup_directory(new_dir)
+        raise NotModified("Backend state unchanged")
 
-            header_lines = [f"{key}: {value}" for key, value in response.headers.multi_items()]
-            header_path.write_text("\n".join(header_lines) + "\n", encoding="utf-8")
+    etag_value = response_headers.get("etag")
+    if not etag_value:
+        _cleanup_directory(new_dir)
+        raise RuntimeError("Response did not contain an ETag header")
+    write_text(etag_path, etag_value)
 
-            etag_value = response.headers.get("etag")
-            if not etag_value:
-                _cleanup_directory(new_dir)
-                raise RuntimeError("Response did not contain an ETag header")
-            write_text(etag_path, etag_value)
-
-            expected_count = _parse_int_header(response.headers.get("x-total-records"))
+    expected_count = _parse_int_header(response_headers.get("x-total-records"))
 
     try:
         record_count, pipeline_versions = _analyse_ndjson(data_path)
@@ -128,6 +121,30 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
         etag=etag_value,
         pipeline_versions=pipeline_versions,
     )
+
+
+def _run_curl(cmd: list[str]) -> None:
+    subprocess.run(cmd, check=True)
+
+
+def _parse_header_file(path: Path) -> tuple[int, dict[str, str]]:
+    raw = path.read_text(encoding="utf-8")
+    blocks = [block for block in raw.split("\n\n") if block.strip()]
+    if not blocks:
+        raise RuntimeError("curl did not return any headers")
+    lines = blocks[-1].splitlines()
+    if not lines:
+        raise RuntimeError("Malformed curl headers")
+    parts = lines[0].split()
+    if len(parts) < 2:
+        raise RuntimeError("Malformed status line in headers")
+    status_code = int(parts[1])
+    headers: dict[str, str] = {}
+    for line in lines[1:]:
+        if ":" in line:
+            key, value = line.split(":", 1)
+            headers[key.strip().lower()] = value.strip()
+    return status_code, headers
 
 
 def _parse_int_header(value: Optional[str]) -> Optional[int]:
@@ -205,4 +222,3 @@ def _handle_previous_directory(
 
 def _cleanup_directory(directory: Path) -> None:
     safe_remove(directory)
-
