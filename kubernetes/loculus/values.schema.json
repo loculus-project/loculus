@@ -1165,7 +1165,9 @@
         "^[a-z0-9-]+$": { "$ref": "#/definitions/organism" }
       }
     },
-    "defaultOrganismConfig": { "$ref": "#/definitions/organism" },
+    "defaultOrganismConfig": {
+      "description": "Template configuration for organisms - can contain any partial organism configuration for YAML inheritance"
+    },
     "defaultOrganisms": {
       "type": "object",
       "patternProperties": {
@@ -1190,7 +1192,7 @@
               "placeholder": "pipelineVersion",
               "type": "string",
               "format": "uri",
-              "description": "The URL to the lineage defintion file for that lineage system and that pipeline version."
+              "description": "The URL to the lineage definition file for that lineage system and that pipeline version."
             }
           }
         }
