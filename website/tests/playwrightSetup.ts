@@ -108,6 +108,8 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
+    console.log('TMP DEBUG:', JSON.stringify(numberOfSequencesInLapisResult));
+
     if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
         return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
