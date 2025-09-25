@@ -12,3 +12,7 @@ class HashUnchanged(SkipRun):
 
 class RecordCountMismatch(SkipRun):
     """Mismatch between expected and actual record count."""
+
+
+class DecompressionFailed(SkipRun):
+    """Download could not be decompressed successfully."""
