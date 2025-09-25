@@ -22,6 +22,7 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
+  - ruff =0.13.1
   - tenacity
   - types-pytz
   - types-psycopg2
