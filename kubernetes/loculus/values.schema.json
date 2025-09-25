@@ -441,9 +441,21 @@
               "version": {
                 "groups": ["preprocessing"],
                 "docsIncludePrefix": false,
-                "type": "integer",
-                "minimum": 1,
-                "description": "Version of the preprocessing pipeline."
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "minItems": 1
+                  }
+                ],
+                "description": "Version of the preprocessing pipeline. Can be a single integer or an array of integers."
               },
               "image": {
                 "groups": ["preprocessing"],

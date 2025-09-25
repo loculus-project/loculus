@@ -3,7 +3,8 @@
 {{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
 {{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
 {{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
-{{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
+{{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
+{{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- if $processingConfig.configFile }}
 {{- /* Use the enaDepositionConfig as the base config */}}
 {{- $enaDepositionConfig := dig "enaDeposition" "configFile" dict $organismConfig }}
