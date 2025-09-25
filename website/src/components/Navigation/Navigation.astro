@@ -1,5 +1,6 @@
 ---
 import AccessionSearchBox from './AccessionSearchBox.tsx';
+import { OrganismNavigation } from './OrganismNavigation.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
@@ -9,13 +10,15 @@ import { getAuthUrl } from '../../utils/getAuthUrl';
 interface Props {
     implicitOrganism?: string;
     gitHubMainUrl?: string;
+    activeTopNavigationItem?: string;
 }
 
-const { implicitOrganism, gitHubMainUrl } = Astro.props;
+const { implicitOrganism, gitHubMainUrl, activeTopNavigationItem } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
-const siteName = getWebsiteConfig().name;
+const websiteConfig = getWebsiteConfig();
+const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
@@ -25,23 +28,44 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
 ---
 
 <div class='flex justify-end relative'>
-    <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
+    <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
+        <div class='flex items-end gap-1 border-b border-slate-200'>
+            <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
+            {
+                topNavigationItems.map(({ text, path, id }) => {
+                    const itemIsActive =
+                        activeTopNavigationItem !== undefined
+                            ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
+                            : false;
+
+                    return (
+                        <a
+                            href={path}
+                            class:list={[
+                                'flex items-center gap-1 px-4 pt-2.5 pb-1.5 text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2',
+                                itemIsActive
+                                    ? 'bg-white text-slate-900 border-slate-200 border-b-primary-400 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.25)]'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200',
+                            ]}
+                            aria-current={itemIsActive ? 'page' : undefined}
+                        >
+                            {text}
+                        </a>
+                    );
+                })
+            }
+        </div>
         <AccessionSearchBox className='' client:load />
-        {topNavigationItems.map(({ text, path }) => <a href={path}>{text}</a>)}
     </div>
 
-    <div
-        class='lg:hidden z-0'
-        style={{
-            position: 'absolute',
-            right: '1.5rem',
-            top: '-2rem',
-        }}
-    >
+    <div class='lg:hidden z-0 flex items-center'>
         <SandwichMenu
             topNavigationItems={topNavigationItems}
+            currentOrganism={selectedOrganism}
+            knownOrganisms={knownOrganisms}
             gitHubMainUrl={gitHubMainUrl}
             siteName={siteName}
+            activeTopNavigationItem={activeTopNavigationItem}
             client:load
         />
     </div>

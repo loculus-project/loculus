@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 
+import type { Organism } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
@@ -8,18 +9,28 @@ import AccessionSearchBox from './AccessionSearchBox';
 
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;
+    currentOrganism?: Organism;
+    knownOrganisms: Organism[];
     gitHubMainUrl: string | undefined;
     siteName: string;
+    activeTopNavigationItem?: string;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHubMainUrl, siteName }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({
+    topNavigationItems,
+    currentOrganism,
+    knownOrganisms,
+    gitHubMainUrl,
+    siteName,
+    activeTopNavigationItem,
+}) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
         <div className='relative'>
             {!isOpen ? (
                 <button
-                    className='absolute z-50 bg-transparent border-none cursor-pointer'
+                    className='z-50 bg-transparent border-none cursor-pointer'
                     onClick={toggleMenu}
                     aria-label='Open main menu'
                 >
@@ -50,8 +61,49 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ topNavigationItems, gitHub
                             <AccessionSearchBox defaultOpen fullWidth onSubmitSuccess={closeMenu} />
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            {topNavigationItems.map(({ text, path }) => (
-                                <OffCanvasNavItem key={path} text={text} level={1} path={path} />
+                            <div className='py-3'>
+                                <div className='ml-4 font-semibold text-gray-700 mb-3'>Organisms</div>
+                                <div className='ml-4 space-y-2'>
+                                    {knownOrganisms.map((organism) => (
+                                        <a
+                                            key={organism.key}
+                                            href={`/${organism.key}/search`}
+                                            className='flex items-center gap-3 py-1 text-gray-700 hover:text-primary-600'
+                                        >
+                                            {organism.image ? (
+                                                <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
+                                                    <img
+                                                        src={organism.image}
+                                                        alt={organism.displayName}
+                                                        className='w-full h-full object-cover'
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className='w-5 h-5' />
+                                            )}
+                                            <span>{organism.displayName}</span>
+                                            {organism === currentOrganism && (
+                                                <span className='ml-auto mr-4 text-primary-600'>✓</span>
+                                            )}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                            {topNavigationItems.map(({ text, path, id }) => (
+                                <OffCanvasNavItem
+                                    key={path}
+                                    text={text}
+                                    level={1}
+                                    path={path}
+                                    isActive={
+                                        activeTopNavigationItem !== undefined &&
+                                        (id === activeTopNavigationItem ||
+                                            (id === undefined && activeTopNavigationItem === path))
+                                    }
+                                />
                             ))}
                         </div>
                     </div>
@@ -82,9 +134,10 @@ type OffCanvasNavItemProps = {
     path: string | false;
     level: IndentLevel;
     type?: 'small';
+    isActive?: boolean;
 };
 
-const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }) => {
+const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type, isActive = false }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
     const indent: { [K in IndentLevel]: string } = {
@@ -92,10 +145,22 @@ const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }
         2: 'ml-8',
     };
 
+    const baseClass = `${indent[level]} ${height} block text-base transition-colors duration-150`;
+    const interactiveClass =
+        path === false
+            ? `${baseClass} text-gray-500`
+            : `${baseClass} ${isActive ? 'text-primary-700 font-semibold' : 'text-gray-700 hover:text-primary-600'}`;
+
     return (
         <div>
             <div className='flex items-center'>
-                <div className={`${indent[level]} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+                {path === false ? (
+                    <span className={interactiveClass}>{text}</span>
+                ) : (
+                    <a href={path} className={interactiveClass} aria-current={isActive ? 'page' : undefined}>
+                        {text}
+                    </a>
+                )}
             </div>
         </div>
     );

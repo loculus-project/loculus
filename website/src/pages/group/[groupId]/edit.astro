@@ -22,7 +22,7 @@ const groupManagementClient = GroupManagementClient.create();
 const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
 ---
 
-<BaseLayout title='Edit group'>
+<BaseLayout title='Edit group' activeTopNavigationItem='account'>
     {
         !accessToken ? (
             <NeedToLogin message='You need to be logged in to edit this group.' />

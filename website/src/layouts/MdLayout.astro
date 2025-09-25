@@ -3,9 +3,10 @@ import '../styles/mdcontainer.scss';
 import BaseLayout from './BaseLayout.astro';
 
 const { frontmatter } = Astro.props;
+const activeTopNavigationItem = frontmatter?.activeTopNavigationItem;
 ---
 
-<BaseLayout title={frontmatter.title}>
+<BaseLayout title={frontmatter.title} activeTopNavigationItem={activeTopNavigationItem}>
     <div class='mdContainer mdContainerItself'>
         <slot />
     </div>

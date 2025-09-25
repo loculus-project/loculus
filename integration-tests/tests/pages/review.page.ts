@@ -1,7 +1,9 @@
 import { Page, expect } from '@playwright/test';
+import { NavigationPage } from './navigation.page';
 
 export class ReviewPage {
     private page: Page;
+    private navigation: NavigationPage;
 
     private viewFilesButton = () => this.page.getByTestId(/view-files/).first();
     private filesDialog = () => this.page.locator('div:has(> div > h2:text("Files"))').first();
@@ -17,6 +19,7 @@ export class ReviewPage {
 
     constructor(page: Page) {
         this.page = page;
+        this.navigation = new NavigationPage(page);
     }
 
     async waitForZeroProcessing() {
@@ -27,8 +30,10 @@ export class ReviewPage {
     }
 
     async navigateToReviewPage() {
-        await this.page.getByRole('link', { name: 'Submit' }).click();
-        await this.page.getByRole('link', { name: 'Ebola Sudan' }).click();
+        await this.page.goto('/');
+        await this.navigation.openOrganismNavigation();
+        await this.navigation.selectOrganism('Ebola Sudan');
+        await this.navigation.clickSubmitSequences();
         await this.page.getByRole('link', { name: "Review Review your group's" }).click();
     }
 

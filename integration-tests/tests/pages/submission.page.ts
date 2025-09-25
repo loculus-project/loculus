@@ -4,26 +4,29 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import Papa from 'papaparse';
+import { NavigationPage } from './navigation.page';
 
 class SubmissionPage {
     protected page: Page;
+    private navigation: NavigationPage;
 
     constructor(page: Page) {
         this.page = page;
+        this.navigation = new NavigationPage(page);
+    }
+
+    async navigateToOrganism(organism: string = 'Ebola Sudan') {
+        await this.page.goto('/');
+        await this.navigation.openOrganismNavigation();
+        await this.navigation.selectOrganism(organism);
+        await this.navigation.waitForOrganismNavigationLink('Submit sequences');
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
-        await this.page.getByRole('link', { name: 'Submit', exact: true }).click();
+        await this.navigateToOrganism(organism);
+        await this.navigation.clickSubmitSequences();
 
-        // Depending on current state (organism selected or not), we need to switch
-        const organismSwitchLink = this.page.getByRole('link', { name: organism });
-        const organismLocator = this.page.locator('label').filter({ hasText: organism });
-
-        await Promise.race([
-            organismLocator.waitFor({ state: 'visible', timeout: 5000 }),
-            organismSwitchLink.click(),
-        ]);
-
+        // Click on the submit upload link
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
