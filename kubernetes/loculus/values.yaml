@@ -1993,7 +1993,6 @@ images:
     pullPolicy: Always
   siloImporter:
     repository: "ghcr.io/loculus-project/silo-import"
-    tag: "latest"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
