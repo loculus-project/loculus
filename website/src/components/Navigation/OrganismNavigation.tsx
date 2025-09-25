@@ -33,11 +33,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({
                 aria-current={isOrganismSelected ? 'page' : undefined}
             >
                 <span>{displayName}</span>
-                {currentOrganism !== undefined && (
-                    <span className='hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200'>
-                        {currentOrganism.displayName}
-                    </span>
-                )}
+               
                 <svg
                     className='w-4 h-4 transition-transform group-data-[open]:rotate-180'
                     fill='none'
