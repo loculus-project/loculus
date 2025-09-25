@@ -51,6 +51,7 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
     headers = {}
     if last_etag and last_etag != "0":
         headers["If-None-Match"] = last_etag
+    headers["Accept-Encoding"] = "identity"
 
     logger.info("Requesting released data from %s", config.released_data_endpoint)
     expected_count: Optional[int] = None
@@ -59,7 +60,6 @@ def download_release(config: ImporterConfig, paths: ImporterPaths, last_etag: st
             "GET",
             config.released_data_endpoint,
             headers=headers,
-            decode_content=False,
         ) as response:
             if response.status_code == 304:
                 logger.info("Backend returned 304 Not Modified; skipping import")
