@@ -7,11 +7,20 @@ import type { Organism } from '../../config';
 interface OrganismNavigationProps {
     currentOrganism?: Organism;
     knownOrganisms: Organism[];
+    isDataBrowsePage?: boolean;
 }
 
-export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentOrganism, knownOrganisms }) => {
-    const displayName = 'Organisms';
-    const isOrganismSelected = currentOrganism !== undefined;
+export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({
+    currentOrganism,
+    knownOrganisms,
+    isDataBrowsePage = false,
+}) => {
+    const displayName = isDataBrowsePage
+        ? 'Switch Organism'
+        : currentOrganism !== undefined
+          ? 'Organisms'
+          : 'Browse/Submit';
+    const isOrganismSelected = currentOrganism !== undefined && !isDataBrowsePage;
 
     return (
         <Menu as='div' className='relative'>

@@ -5,6 +5,7 @@ import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
 import { navigationItems } from '../../routes/navigationItems';
+import { routes } from '../../routes/routes';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 
 interface Props {
@@ -25,12 +26,19 @@ const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
 const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl);
+const isDataBrowsePage =
+    selectedOrganism !== undefined && Astro.url.pathname.startsWith(routes.searchPage(selectedOrganism.key));
 ---
 
 <div class='flex justify-end relative'>
     <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
         <div class='flex items-end gap-1 border-b border-slate-200'>
-            <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
+            <OrganismNavigation
+                currentOrganism={selectedOrganism}
+                knownOrganisms={knownOrganisms}
+                isDataBrowsePage={isDataBrowsePage}
+                client:load
+            />
             {
                 topNavigationItems.map(({ text, path, id }) => {
                     const itemIsActive =
