@@ -22,7 +22,7 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
-  - ruff =0.13.1
+  - ruff =0.13.1. # if changing update .pre-commit-config.yaml as well
   - tenacity
   - types-pytz
   - types-psycopg2
