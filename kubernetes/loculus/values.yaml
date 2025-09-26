@@ -1985,7 +1985,7 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+    tag: "v0.7.10.3@sha256:fe21e12b09ad178b2b7cc7208c9af348ad9d780b8d4d2a054f13fa58d7ba79da"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
