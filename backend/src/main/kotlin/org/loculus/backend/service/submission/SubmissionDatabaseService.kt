@@ -154,6 +154,40 @@ class SubmissionDatabaseService(
             .first()
     }
 
+    fun getLatestFinishedProcessingAt(organism: Organism, pipelineVersion: Long): String? {
+        val sql =
+            """
+            select
+                max(sep.finished_processing_at) as last_finished_processing_at
+            from sequence_entries_preprocessed_data sep
+            inner join sequence_entries se
+                on se.accession = sep.accession
+                and se.version = sep.version
+            where se.organism = ?
+                and sep.pipeline_version = ?
+                and sep.processing_status = ?
+            """
+                .trimIndent()
+
+        return transaction {
+            exec(
+                sql,
+                listOf(
+                    Pair(VarCharColumnType(), organism.name),
+                    Pair(LongColumnType(), pipelineVersion),
+                    Pair(VarCharColumnType(), PROCESSED.name),
+                ),
+                explicitStatementType = StatementType.SELECT,
+            ) { resultSet ->
+                if (!resultSet.next()) {
+                    null
+                } else {
+                    resultSet.getTimestamp("last_finished_processing_at")?.toInstant()?.toString()
+                }
+            }
+        }
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
