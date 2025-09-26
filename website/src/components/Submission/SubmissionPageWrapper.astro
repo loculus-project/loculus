@@ -14,7 +14,7 @@ const { title, disablePageTitle = false, groupsResult } = Astro.props;
 const { pathname, search } = Astro.url;
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} fullWidth>
     {
         groupsResult.match(
             ({ currentGroup: group, groupsOfUser }) => (
