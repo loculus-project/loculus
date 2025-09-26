@@ -7,7 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
-  replicas: 1
+  replicas: {{ $.Values.replicas.keycloak | default 1 }}1
   selector:
     matchLabels:
       app: loculus
