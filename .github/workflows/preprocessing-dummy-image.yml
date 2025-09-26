@@ -1,5 +1,6 @@
 name: preprocessing-dummy-image
 on:
+  merge_group:
   pull_request:
   push:
     branches:
