@@ -27,8 +27,8 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
 const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl);
 ---
 
-<div class='flex justify-end relative'>
-    <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
+<div class='flex justify-start relative w-full'>
+    <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5 w-full'>
         <div class='flex items-end gap-1 border-b border-slate-200'>
             <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
             {
@@ -55,7 +55,7 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
                 })
             }
         </div>
-        <AccessionSearchBox className='' client:load />
+        <AccessionSearchBox className='ml-auto pl-5' client:load />
     </div>
 
     <div class='lg:hidden z-0 flex items-center'>
