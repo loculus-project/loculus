@@ -1,8 +1,8 @@
 <PROJECT_SET>
-    <PROJECT center_name="Test institution" alias="2:Test organism:Test suffix">
-        <NAME>Test scientific name: Genome sequencing by Test group, Test institution</NAME>
-        <TITLE>Test scientific name: Genome sequencing by Test group, Test institution, Basel, Switzerland</TITLE>
-        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test group, Test institution, Basel, Switzerland to Loculus</DESCRIPTION>
+    <PROJECT center_name="Test institution with funny characters \ / &apos;&quot;!@#$%^&amp;*()" alias="2:Test organism:Test suffix">
+        <NAME>Test scientific name: Genome sequencing by Test group with funny characters \ / '&quot;!@#$%^&amp;*(), Test institution with funny characters \ / '&quot;!@#$%^&amp;*()</NAME>
+        <TITLE>Test scientific name: Genome sequencing by Test group with funny characters \ / '&quot;!@#$%^&amp;*(), Test institution with funny characters \ / '&quot;!@#$%^&amp;*(), Basel, Switzerland</TITLE>
+        <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Test group with funny characters \ / '&quot;!@#$%^&amp;*(), Test institution with funny characters \ / '&quot;!@#$%^&amp;*(), Basel, Switzerland to Loculus</DESCRIPTION>
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
