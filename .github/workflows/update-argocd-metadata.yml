@@ -26,56 +26,56 @@ jobs:
       # Waits are identical to the e2e-k3d.yml workflow file
       # Mirror changes to that file
       - name: Wait for Prepro Dummy Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Preprocessing dummy docker image build
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Config Processor Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build config-processor Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Backend Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Website Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Prepro Nextclade Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build preprocessing-nextclade Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Ingest Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build ingest Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Keycloakify Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build keycloakify Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for ENA Submission Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.0
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
           check-name: Build ena-submission Docker Image
