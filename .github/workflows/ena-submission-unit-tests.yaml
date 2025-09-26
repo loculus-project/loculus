@@ -19,19 +19,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/ruff-action@v3
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          args: "format --check --diff"
-          src: "ena-submission"
+          environment-file: "ena-submission/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff format check
+        run: ruff check . --fix --diff
+        shell: micromamba-shell {0}
+        working-directory: ena-submission
   lint:
     name: Lint code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/ruff-action@v3
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          args: "check"
-          src: "ena-submission"
+          environment-file: "ena-submission/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff check
+        run: ruff check .
+        shell: micromamba-shell {0}
+        working-directory: ena-submission
   unitTests:
     name: Unit Tests
     runs-on: ubuntu-latest
