@@ -31,7 +31,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
-    const { createSeqSet, updateSeqSet, validateSeqSetRecords, isLoading } = useActionHooks(
+    const { createSeqSet, updateSeqSet, validateSeqSetRecords, isPending } = useActionHooks(
         clientConfig,
         accessToken,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
@@ -202,10 +202,10 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             </div>
             <button
                 className='flex items-center btn loculusColor text-white hover:bg-primary-700'
-                disabled={isLoading || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
+                disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
-                {isLoading ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
+                {isPending ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
             </button>
         </div>
     );
@@ -276,6 +276,6 @@ function useActionHooks(
         createSeqSet: create.mutate,
         updateSeqSet: update.mutate,
         validateSeqSetRecords: validateRecords.mutate,
-        isLoading: create.isLoading || update.isLoading,
+        isPending: create.isPending || update.isPending,
     };
 }

@@ -63,7 +63,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
-    const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
@@ -211,14 +211,14 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated alsoDisabledIf={isLoading}>
+                    <DisabledUntilHydrated alsoDisabledIf={isPending}>
                         <button
                             name='submit'
                             type='submit'
                             className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                             onClick={(e) => void handleSubmit(e)}
                         >
-                            <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
+                            <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                                 <span className='loading loading-spinner loading-sm' />
                             </div>
                             <span className='flex-1 text-center mx-8'>Submit sequences</span>
@@ -461,7 +461,7 @@ function useSubmitFiles(
     return {
         submit: submit.mutate,
         revise: revise.mutate,
-        isLoading: submit.isLoading || revise.isLoading,
+        isPending: submit.isPending || revise.isPending,
     };
 }
 

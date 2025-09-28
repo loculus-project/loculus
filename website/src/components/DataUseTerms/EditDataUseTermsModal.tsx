@@ -112,7 +112,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const [state, setState] = useState<DataState>({ type: 'loading' });
 
     useEffect(() => {
-        if (detailsHook.isLoading) {
+        if (detailsHook.isPending) {
             return;
         }
         if (detailsHook.error !== null && state.type !== 'error') {
@@ -123,7 +123,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
             const newState = getLoadedState(detailsHook.data.data);
             setState(newState);
         }
-    }, [detailsHook.data, detailsHook.error, detailsHook.isLoading]);
+    }, [detailsHook.data, detailsHook.error, detailsHook.isPending]);
 
     const sequenceCount = sequenceFilter.sequenceCount();
     let buttonText = 'Edit data use terms (all sequences)';

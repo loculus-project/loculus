@@ -42,7 +42,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
 
-    const { mutate: submitRevision, isLoading: isRevisionLoading } = useSubmitRevision(
+    const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
         clientConfig,
         accessToken,
@@ -50,7 +50,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const { mutate: submitEdit, isLoading: isEditLoading } = useSubmitEdit(
+    const { mutate: submitEdit, isPending: isEditPending } = useSubmitEdit(
         organism,
         clientConfig,
         accessToken,
@@ -84,7 +84,7 @@ const InnerEditPage: FC<EditPageProps> = ({
         }
     };
 
-    const isLoading = isRevisionLoading || isEditLoading;
+    const isPending = isRevisionPending || isEditPending;
 
     return (
         <>
@@ -111,7 +111,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                         editableSequences={editableSequences}
                         setEditableSequences={setEditableSequences}
                         dataToEdit={dataToEdit}
-                        isLoading={isLoading}
+                        isLoading={isPending}
                     />
                 </div>
             )}
@@ -125,9 +125,9 @@ const InnerEditPage: FC<EditPageProps> = ({
                             onConfirmation: submitEditedDataForAccessionVersion,
                         })
                     }
-                    disabled={isLoading}
+                    disabled={isPending}
                 >
-                    {isLoading && <span className='loading loading-spinner loading-sm mr-2' />}
+                    {isPending && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
                 </button>
             </div>
