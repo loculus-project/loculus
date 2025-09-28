@@ -29,10 +29,8 @@ kotlin {
     compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
 }
 
-// Enable dependency locking for reproducible builds
 dependencyLocking {
     lockAllConfigurations()
-    // Lock dynamic versions and changing modules
     lockMode = LockMode.STRICT
 }
 
