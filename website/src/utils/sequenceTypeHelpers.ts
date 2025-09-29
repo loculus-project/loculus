@@ -32,24 +32,24 @@ export function isMultiSegmented(nucleotideSegmentNames: unknown[]) {
     return nucleotideSegmentNames.length > 1;
 }
 
-export const unalignedSequenceSegment = (segmentName: SegmentOrGeneInfo): SequenceType => ({
+export const unalignedSequenceSegment = (segmentOrGeneInfo: SegmentOrGeneInfo): SequenceType => ({
     type: 'nucleotide',
     aligned: false,
-    name: segmentName,
+    name: segmentOrGeneInfo,
 });
 
-export const alignedSequenceSegment = (segmentName: SegmentOrGeneInfo): SequenceType => ({
+export const alignedSequenceSegment = (segmentOrGeneInfo: SegmentOrGeneInfo): SequenceType => ({
     type: 'nucleotide',
     aligned: true,
-    name: segmentName,
+    name: segmentOrGeneInfo,
 });
 
-export const geneSequence = (gene: SegmentOrGeneInfo): SequenceType => ({
+export const geneSequence = (segmentOrGeneInfo: SegmentOrGeneInfo): SequenceType => ({
     type: 'aminoAcid',
     aligned: true,
-    name: gene,
+    name: segmentOrGeneInfo,
 });
 export const isUnalignedSequence = (type: SequenceType): boolean => type.type === 'nucleotide' && !type.aligned;
 export const isAlignedSequence = (type: SequenceType): boolean => type.type === 'nucleotide' && type.aligned;
-export const isGeneSequence = (gene: SegmentOrGeneInfo, type: SequenceType): boolean =>
-    type.type === 'aminoAcid' && type.name.lapisName === gene.lapisName;
+export const isGeneSequence = (segmentOrGeneInfo: SegmentOrGeneInfo, type: SequenceType): boolean =>
+    type.type === 'aminoAcid' && type.name.lapisName === segmentOrGeneInfo.lapisName;
