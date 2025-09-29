@@ -45,7 +45,7 @@ const defaultAccession: ReferenceAccession = {
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
@@ -53,12 +53,12 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = 
 
 const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     suborganism1: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
     suborganism2: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },

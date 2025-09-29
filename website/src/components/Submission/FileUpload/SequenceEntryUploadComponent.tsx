@@ -100,15 +100,18 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         unique <i>submissionId</i> for the full multi-segmented sample, e.g. <b>sample1</b>. Sequence
                         data should be a FASTA file with each header indicating the <i>submissionId</i> and the segment,
                         i.e.{' '}
-                        {getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.map((name, index) => (
-                            <span key={index} className='font-bold'>
-                                sample1_{name}
-                                {index !==
-                                getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.length - 1
-                                    ? ', '
-                                    : ''}
-                            </span>
-                        ))}
+                        {getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames.map(
+                            (name, index) => (
+                                <span key={index} className='font-bold'>
+                                    sample1_{name}
+                                    {index !==
+                                    getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames.length -
+                                        1
+                                        ? ', '
+                                        : ''}
+                                </span>
+                            ),
+                        )}
                         .
                     </p>
                 )}

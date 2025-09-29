@@ -63,10 +63,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     submissionDataTypes,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
-    const isMultiSegmented = getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences.length > 1;
+    const isMultiSegmented = getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSequences),
+        EditableSequences.fromSequenceNames(getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);

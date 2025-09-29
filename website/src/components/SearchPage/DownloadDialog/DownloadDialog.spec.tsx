@@ -29,7 +29,7 @@ const defaultAccession: ReferenceAccession = {
 
 const defaultReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
@@ -37,12 +37,12 @@ const defaultReferenceGenome: ReferenceGenomesLightweightSchema = {
 
 const multiPathogenReferenceGenome: ReferenceGenomesLightweightSchema = {
     suborganism1: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
     suborganism2: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
@@ -165,7 +165,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
+                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -303,7 +303,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
+                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -352,7 +352,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
+                    { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
                 ),
             });
 

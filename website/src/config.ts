@@ -251,7 +251,7 @@ export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGen
         Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
             suborganism,
             {
-                nucleotideSequences: referenceGenome.nucleotideSequences.map((n) => n.name),
+                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
                 genes: referenceGenome.genes.map((n) => n.name),
                 insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
             },

@@ -75,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
+            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
         );
     }
 

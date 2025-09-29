@@ -75,7 +75,7 @@ const defaultAccession: ReferenceAccession = {
 
 const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
+        nucleotideSegmentNames: ['main'],
         genes: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },

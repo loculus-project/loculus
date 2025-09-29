@@ -136,7 +136,7 @@ const isValidNucleotideInsertionQuery = (
     try {
         // TODO(#3984) make it multi pathogen aware
         const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
+        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -151,7 +151,7 @@ const isValidNucleotideInsertionQuery = (
             : ([undefined, ...split] as [undefined | string, string, string]);
         if (segment !== undefined) {
             const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
+                referenceGenomesSequenceNames.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;
@@ -173,13 +173,13 @@ const isValidNucleotideMutationQuery = (
     try {
         // TODO(#3984) make it multi pathogen aware
         const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
+        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         if (isMultiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
             const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
+                referenceGenomesSequenceNames.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;

@@ -44,7 +44,7 @@ function renderSingleReferenceSequenceViewer({
         {
             [SINGLE_REFERENCE]: {
                 genes,
-                nucleotideSequences: nucleotideSegmentNames,
+                nucleotideSegmentNames: nucleotideSegmentNames,
                 insdcAccessionFull: [],
             },
         },
@@ -145,12 +145,12 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(
                 {
                     [suborganism1]: {
-                        nucleotideSequences: ['main'],
+                        nucleotideSegmentNames: ['main'],
                         genes: [],
                         insdcAccessionFull: [],
                     },
                     [suborganism2]: {
-                        nucleotideSequences: ['main'],
+                        nucleotideSegmentNames: ['main'],
                         genes: [],
                         insdcAccessionFull: [],
                     },
@@ -189,12 +189,12 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(
                 {
                     [suborganism1]: {
-                        nucleotideSequences: ['main'],
+                        nucleotideSegmentNames: ['main'],
                         genes: [],
                         insdcAccessionFull: [],
                     },
                     [suborganism2]: {
-                        nucleotideSequences: ['segment1', 'segment2'],
+                        nucleotideSegmentNames: ['segment1', 'segment2'],
                         genes: [],
                         insdcAccessionFull: [],
                     },

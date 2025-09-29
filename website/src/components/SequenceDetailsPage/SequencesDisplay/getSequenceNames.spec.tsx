@@ -8,7 +8,7 @@ describe('getSequenceNames', () => {
         test('should return correct names for multi-segmented organism', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
-                    nucleotideSequences: ['segment1', 'segment2'],
+                    nucleotideSegmentNames: ['segment1', 'segment2'],
                     genes: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
@@ -32,7 +32,7 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented organism', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
-                    nucleotideSequences: ['main'],
+                    nucleotideSegmentNames: ['main'],
                     genes: ['gene1'],
                     insdcAccessionFull: [],
                 },
@@ -54,12 +54,12 @@ describe('getSequenceNames', () => {
         test('should return correct names for multi-segmented suborganism', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
-                    nucleotideSequences: ['segment1', 'segment2'],
+                    nucleotideSegmentNames: ['segment1', 'segment2'],
                     genes: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
-                    nucleotideSequences: ['segmentA', 'segmentB'],
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
                     genes: ['geneA'],
                     insdcAccessionFull: [],
                 },
@@ -83,12 +83,12 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented suborganism', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
-                    nucleotideSequences: ['main'],
+                    nucleotideSegmentNames: ['main'],
                     genes: ['gene1'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
-                    nucleotideSequences: ['segmentA', 'segmentB'],
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
                     genes: ['geneA', 'geneB'],
                     insdcAccessionFull: [],
                 },

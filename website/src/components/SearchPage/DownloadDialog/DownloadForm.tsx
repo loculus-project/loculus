@@ -286,11 +286,11 @@ function getSequenceNames(
     selectedSuborganism: string | null,
 ): { nucleotideSequences: SequenceName[]; genes: SequenceName[]; useMultiSegmentEndpoint: boolean } {
     if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {
-        const { nucleotideSequences, genes } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
+        const { nucleotideSegmentNames, genes } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
         return {
-            nucleotideSequences: nucleotideSequences.map(getSinglePathogenSequenceName),
+            nucleotideSequences: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
             genes: genes.map(getSinglePathogenSequenceName),
-            useMultiSegmentEndpoint: isMultiSegmented(nucleotideSequences),
+            useMultiSegmentEndpoint: isMultiSegmented(nucleotideSegmentNames),
         };
     }
 
@@ -302,9 +302,9 @@ function getSequenceNames(
         };
     }
 
-    const { nucleotideSequences, genes } = referenceGenomesSequenceNames[selectedSuborganism];
+    const { nucleotideSegmentNames, genes } = referenceGenomesSequenceNames[selectedSuborganism];
     return {
-        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSequences, selectedSuborganism),
+        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, selectedSuborganism),
         genes: genes.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),
         useMultiSegmentEndpoint: true,
     };

@@ -62,7 +62,7 @@ const MockSaveWrapper = ({
                 setFileFactory={setFileFactory}
                 referenceGenomeSequenceNames={{
                     [SINGLE_REFERENCE]: {
-                        nucleotideSequences: ['foo', 'bar'],
+                        nucleotideSegmentNames: ['foo', 'bar'],
                         genes: [],
                         insdcAccessionFull: [],
                     },

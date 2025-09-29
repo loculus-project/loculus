@@ -13,7 +13,7 @@ describe('mutation', () => {
     describe('single segment', () => {
         const mockReferenceGenomes: ReferenceGenomesLightweightSchema = {
             [SINGLE_REFERENCE]: {
-                nucleotideSequences: ['main'],
+                nucleotideSegmentNames: ['main'],
                 genes: ['GENE1', 'GENE2'],
                 insdcAccessionFull: [],
             },
@@ -40,7 +40,7 @@ describe('mutation', () => {
     describe('multi-segment', () => {
         const mockReferenceGenomes: ReferenceGenomesLightweightSchema = {
             [SINGLE_REFERENCE]: {
-                nucleotideSequences: ['SEQ1', 'SEQ2'],
+                nucleotideSegmentNames: ['SEQ1', 'SEQ2'],
                 genes: ['GENE1', 'GENE2'],
                 insdcAccessionFull: [],
             },

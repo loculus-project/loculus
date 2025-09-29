@@ -31,7 +31,7 @@ export type NucleotideSegmentNames = string[];
 export type ReferenceGenomesLightweightSchema = Record<
     Suborganism,
     {
-        nucleotideSequences: NucleotideSegmentNames;
+        nucleotideSegmentNames: NucleotideSegmentNames;
         genes: string[];
         insdcAccessionFull: ReferenceAccession[];
     }
