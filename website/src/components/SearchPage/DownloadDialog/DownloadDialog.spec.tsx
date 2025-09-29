@@ -30,7 +30,7 @@ const defaultAccession: ReferenceAccession = {
 const defaultReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['main'],
-        genes: ['gene1', 'gene2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
 };
@@ -38,12 +38,12 @@ const defaultReferenceGenome: ReferenceGenomesLightweightSchema = {
 const multiPathogenReferenceGenome: ReferenceGenomesLightweightSchema = {
     suborganism1: {
         nucleotideSegmentNames: ['main'],
-        genes: ['gene1', 'gene2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
     suborganism2: {
         nucleotideSegmentNames: ['main'],
-        genes: ['gene1', 'gene2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
 };
@@ -165,7 +165,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -303,7 +303,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
             ),
         });
         await checkAgreement();
@@ -352,7 +352,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                    { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
                 ),
             });
 

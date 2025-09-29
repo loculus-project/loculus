@@ -63,7 +63,7 @@ const MockSaveWrapper = ({
                 referenceGenomeSequenceNames={{
                     [SINGLE_REFERENCE]: {
                         nucleotideSegmentNames: ['foo', 'bar'],
-                        genes: [],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                 }}

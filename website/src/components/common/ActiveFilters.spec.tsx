@@ -24,7 +24,7 @@ describe('ActiveFilters', () => {
                             {
                                 [SINGLE_REFERENCE]: {
                                     nucleotideSegmentNames: ['main'],
-                                    genes: [],
+                                    geneNames: [],
                                     insdcAccessionFull: [],
                                 },
                             },
@@ -45,7 +45,13 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSegmentNames: [],
+                                    geneNames: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                 />,
@@ -68,7 +74,13 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSegmentNames: [],
+                                    geneNames: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -91,7 +103,13 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSegmentNames: [],
+                                    geneNames: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                 />,
@@ -111,7 +129,13 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], genes: [], insdcAccessionFull: [] } },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSegmentNames: [],
+                                    geneNames: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                 />,

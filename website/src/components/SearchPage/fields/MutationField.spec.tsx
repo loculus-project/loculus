@@ -17,7 +17,7 @@ const singleAccession: ReferenceAccession = {
 const singleSegmentedReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['main'],
-        genes: ['gene1', 'gene2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [singleAccession],
     },
 };
@@ -35,7 +35,7 @@ const multiAccession2: ReferenceAccession = {
 const multiSegmentedReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['seg1', 'seg2'],
-        genes: ['gene1', 'gene2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [multiAccession1, multiAccession2],
     },
 };

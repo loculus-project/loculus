@@ -100,7 +100,7 @@ const isValidAminoAcidInsertionQuery = (
         }
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenomesSequenceNames.geneNames.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
             return false;
         }
@@ -119,7 +119,7 @@ const isValidAminoAcidMutationQuery = (
         const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.genes.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenomesSequenceNames.geneNames.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene)) {
             return false;
         }

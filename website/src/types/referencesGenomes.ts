@@ -32,7 +32,7 @@ export type ReferenceGenomesLightweightSchema = Record<
     Suborganism,
     {
         nucleotideSegmentNames: NucleotideSegmentNames;
-        genes: string[];
+        geneNames: string[];
         insdcAccessionFull: ReferenceAccession[];
     }
 >;

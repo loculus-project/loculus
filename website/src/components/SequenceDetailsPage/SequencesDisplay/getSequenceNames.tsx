@@ -15,19 +15,19 @@ export function getSequenceNames(
     genes: SequenceName[];
     isMultiSegmented: boolean;
 } {
-    const { nucleotideSegmentNames, genes } = referenceGenomeSequenceNames[suborganism];
+    const { nucleotideSegmentNames, geneNames } = referenceGenomeSequenceNames[suborganism];
 
     if (suborganism === SINGLE_REFERENCE) {
         return {
             nucleotideSegmentNames: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
-            genes: genes.map(getSinglePathogenSequenceName),
+            genes: geneNames.map(getSinglePathogenSequenceName),
             isMultiSegmented: isMultiSegmented(nucleotideSegmentNames),
         };
     }
 
     return {
         nucleotideSegmentNames: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, suborganism),
-        genes: genes.map((name) => getMultiPathogenSequenceName(name, suborganism)),
+        genes: geneNames.map((name) => getMultiPathogenSequenceName(name, suborganism)),
         isMultiSegmented: true, // LAPIS treats the suborganisms as multiple nucleotide segments -> always true
     };
 }

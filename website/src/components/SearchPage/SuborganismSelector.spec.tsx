@@ -18,7 +18,7 @@ const filterSchema = new MetadataFilterSchema([
 
 const dummySequences = {
     nucleotideSegmentNames: [],
-    genes: [],
+    geneNames: [],
     insdcAccessionFull: [],
 };
 

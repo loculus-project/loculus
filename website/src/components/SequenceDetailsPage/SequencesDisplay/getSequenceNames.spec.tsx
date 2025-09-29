@@ -9,7 +9,7 @@ describe('getSequenceNames', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
                     nucleotideSegmentNames: ['segment1', 'segment2'],
-                    genes: ['gene1', 'gene2'],
+                    geneNames: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
             };
@@ -33,7 +33,7 @@ describe('getSequenceNames', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
                     nucleotideSegmentNames: ['main'],
-                    genes: ['gene1'],
+                    geneNames: ['gene1'],
                     insdcAccessionFull: [],
                 },
             };
@@ -55,12 +55,12 @@ describe('getSequenceNames', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
                     nucleotideSegmentNames: ['segment1', 'segment2'],
-                    genes: ['gene1', 'gene2'],
+                    geneNames: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
                     nucleotideSegmentNames: ['segmentA', 'segmentB'],
-                    genes: ['geneA'],
+                    geneNames: ['geneA'],
                     insdcAccessionFull: [],
                 },
             };
@@ -84,12 +84,12 @@ describe('getSequenceNames', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
                     nucleotideSegmentNames: ['main'],
-                    genes: ['gene1'],
+                    geneNames: ['gene1'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
                     nucleotideSegmentNames: ['segmentA', 'segmentB'],
-                    genes: ['geneA', 'geneB'],
+                    geneNames: ['geneA', 'geneB'],
                     insdcAccessionFull: [],
                 },
             };
