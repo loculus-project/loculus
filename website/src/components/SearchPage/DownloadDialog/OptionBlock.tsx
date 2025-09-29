@@ -67,6 +67,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
         <div className='max-w-80'>
             <select
                 name={name}
+                title={title ?? name}
                 className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
                 disabled={disabled}
                 value={selected}
