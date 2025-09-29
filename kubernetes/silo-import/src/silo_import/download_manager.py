@@ -21,7 +21,6 @@ from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCount
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
-from .state import save_etag
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
@@ -166,9 +165,8 @@ class DownloadManager:
                     data_path.stat().st_size if data_path.exists() else "missing",
                     exc,
                 )
-                save_etag(paths.current_etag_file, SPECIAL_ETAG_NONE)
                 safe_remove(download_dir)
-                raise DecompressionFailed(f"decompression failed ({exc})") from exc
+                raise DecompressionFailed(f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE) from exc
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
@@ -251,9 +249,8 @@ def _handle_previous_directory(
     new_hash = md5_file(new_data_path)
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
-        save_etag(paths.current_etag_file, new_etag)
         safe_remove(new_dir)
-        raise HashUnchanged("hash unchanged")
+        raise HashUnchanged("hash unchanged", new_etag=new_etag)
 
     # Remove previous directory since we have new data
     logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)

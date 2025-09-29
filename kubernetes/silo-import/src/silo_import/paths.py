@@ -10,8 +10,6 @@ class ImporterPaths:
     input_dir: Path
     output_dir: Path
     lineage_definition_file: Path
-    current_etag_file: Path
-    last_hard_refresh_file: Path
     silo_input_data_path: Path
     run_sentinel: Path
     done_sentinel: Path
@@ -26,8 +24,6 @@ class ImporterPaths:
             input_dir=input_dir,
             output_dir=output_dir,
             lineage_definition_file=input_dir / "lineage_definitions.yaml",
-            current_etag_file=input_dir / "etag.txt",
-            last_hard_refresh_file=input_dir / "last_hard_refresh_time.txt",
             silo_input_data_path=input_dir / "data.ndjson.zst",
             run_sentinel=input_dir / "run_silo",
             done_sentinel=input_dir / "silo_done",
