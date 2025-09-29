@@ -37,7 +37,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     inputMode: InputMode;
     group: Group;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
@@ -56,7 +56,7 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -157,7 +157,7 @@ const InnerDataUploadForm = ({
                             setFileFactory={setFileFactory}
                             organism={organism}
                             action={action}
-                            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                            referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                             metadataTemplateFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
                         />
@@ -168,7 +168,7 @@ const InnerDataUploadForm = ({
                         setFileFactory={setFileFactory}
                         organism={organism}
                         action={action}
-                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                         metadataTemplateFields={metadataTemplateFields}
                         submissionDataTypes={submissionDataTypes}
                     />

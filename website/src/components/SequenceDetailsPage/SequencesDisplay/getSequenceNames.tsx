@@ -8,14 +8,14 @@ import {
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export function getSequenceNames(
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     suborganism: string,
 ): {
     nucleotideSegmentNames: SegmentOrGeneInfo[];
     geneNames: SegmentOrGeneInfo[];
     isMultiSegmented: boolean;
 } {
-    const { nucleotideSegmentNames, geneNames } = referenceGenomeSequenceNames[suborganism];
+    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[suborganism];
 
     if (suborganism === SINGLE_REFERENCE) {
         return {

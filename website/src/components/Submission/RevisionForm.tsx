@@ -14,7 +14,7 @@ type RevisionFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
@@ -25,7 +25,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     organism,
     clientConfig,
     group,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -35,7 +35,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
             <DataUploadForm
                 accessToken={accessToken}
                 organism={organism}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'

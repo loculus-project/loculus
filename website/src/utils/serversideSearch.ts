@@ -18,13 +18,18 @@ import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenom
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
+    const fieldFilter = new FieldFilterSet(
+        filterSchema,
+        fieldValues,
+        hiddenFieldValues,
+        referenceGenomeLightweightSchema,
+    );
     const lapisSearchParameters = fieldFilter.toApiParams();
 
     // Extract single-value parameters using validation

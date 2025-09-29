@@ -66,7 +66,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataTableData={dataTableData}
                 suborganism={suborganism}
                 dataUseTermsHistory={dataUseTermsHistory}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
             />
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
@@ -75,7 +75,7 @@ export const SequenceDataUI: FC<Props> = ({
                         suborganism={suborganism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

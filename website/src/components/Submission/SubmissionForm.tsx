@@ -16,7 +16,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     inputMode: InputMode;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
@@ -28,7 +28,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     clientConfig,
     group,
     inputMode,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -38,7 +38,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
             <DataUploadForm
                 accessToken={accessToken}
                 organism={organism}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='submit'

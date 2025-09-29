@@ -20,7 +20,7 @@ import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
@@ -46,7 +46,7 @@ function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[
 }
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomesSequenceNames,
+    referenceGenomesLightweightSchema,
     onChange,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
@@ -67,8 +67,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSequences, genes, useMultiSegmentEndpoint } = useMemo(
-        () => getSequenceNames(referenceGenomesSequenceNames, selectedSuborganism),
-        [referenceGenomesSequenceNames, selectedSuborganism],
+        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
+        [referenceGenomesLightweightSchema, selectedSuborganism],
     );
 
     useEffect(() => {
@@ -127,7 +127,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     ]);
 
     const disableAlignedSequences = stillRequiresSuborganismSelection(
-        referenceGenomesSequenceNames,
+        referenceGenomesLightweightSchema,
         selectedSuborganism,
     );
 
@@ -282,11 +282,11 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 };
 
 function getSequenceNames(
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
 ): { nucleotideSequences: SegmentOrGeneInfo[]; genes: SegmentOrGeneInfo[]; useMultiSegmentEndpoint: boolean } {
-    if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {
-        const { nucleotideSegmentNames, geneNames } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
+    if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
+        const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
         return {
             nucleotideSequences: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
             genes: geneNames.map(getSinglePathogenSequenceName),
@@ -302,7 +302,7 @@ function getSequenceNames(
         };
     }
 
-    const { nucleotideSegmentNames, geneNames } = referenceGenomesSequenceNames[selectedSuborganism];
+    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[selectedSuborganism];
     return {
         nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, selectedSuborganism),
         genes: geneNames.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),

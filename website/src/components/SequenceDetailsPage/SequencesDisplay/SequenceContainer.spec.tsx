@@ -18,14 +18,17 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
-function renderSequenceViewer(referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema, suborganism: string) {
+function renderSequenceViewer(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string,
+) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 loadSequencesAutomatically={false}
                 suborganism={suborganism}
             />
@@ -44,7 +47,7 @@ function renderSingleReferenceSequenceViewer({
         {
             [SINGLE_REFERENCE]: {
                 geneNames: genes,
-                nucleotideSegmentNames: nucleotideSegmentNames,
+                nucleotideSegmentNames,
                 insdcAccessionFull: [],
             },
         },

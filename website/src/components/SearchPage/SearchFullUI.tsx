@@ -44,7 +44,7 @@ import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -71,7 +71,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     myGroups,
     organism,
     clientConfig,
@@ -312,8 +312,8 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
-        [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
+        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema),
+        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, filterSchema],
     );
 
     /**
@@ -369,7 +369,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism);
+        !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -393,7 +393,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomeSequenceNames={referenceGenomesSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -404,7 +404,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -507,7 +507,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}

@@ -10,25 +10,25 @@ import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     value: string;
     onChange: (mutationFilter: string) => void;
 }
 
-export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequenceNames, value, onChange }) => {
+export const MutationField: FC<MutationFieldProps> = ({ referenceGenomeLightweightSchema, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
 
     const selectedOptions = useMemo(
-        () => parseMutationsString(value, referenceGenomesSequenceNames),
-        [value, referenceGenomesSequenceNames],
+        () => parseMutationsString(value, referenceGenomeLightweightSchema),
+        [value, referenceGenomeLightweightSchema],
     );
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const mutQuery = parseMutationString(newValue, referenceGenomesSequenceNames);
+        const mutQuery = parseMutationString(newValue, referenceGenomeLightweightSchema);
         const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };

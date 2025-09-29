@@ -6,7 +6,7 @@ import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     suborganismIdentifierField: string;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
@@ -20,13 +20,13 @@ type SuborganismSelectorProps = {
  */
 export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     filterSchema,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     suborganismIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
 }) => {
     const selectId = useId();
-    const suborganismNames = Object.keys(referenceGenomesSequenceNames);
+    const suborganismNames = Object.keys(referenceGenomeLightweightSchema);
     const isSinglePathogen = suborganismNames.length < 2;
 
     const label = useMemo(() => {

@@ -44,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    private readonly referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -63,7 +63,7 @@ export class FieldFilterSet implements SequenceFilter {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
+        this.referenceGenomeLightweightSchema = referenceGenomeSequenceNames;
     }
 
     /**
@@ -109,7 +109,7 @@ export class FieldFilterSet implements SequenceFilter {
         delete sequenceFilters.mutation;
         const mutationSearchParams = intoMutationSearchParams(
             this.fieldValues.mutation,
-            this.referenceGenomeSequenceNames,
+            this.referenceGenomeLightweightSchema,
         );
 
         return {

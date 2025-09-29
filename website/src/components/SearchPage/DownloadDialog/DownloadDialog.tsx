@@ -16,7 +16,7 @@ import { BaseDialog } from '../../common/BaseDialog.tsx';
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     metadata: Metadata[];
@@ -28,7 +28,7 @@ type DownloadDialogProps = {
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     downloadUrlGenerator,
     sequenceFilter,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
     metadata,
@@ -57,7 +57,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </div>
                     )}
                     <DownloadForm
-                        referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                        referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
                         onChange={setDownloadOption}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}

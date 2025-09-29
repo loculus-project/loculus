@@ -245,7 +245,7 @@ const getAccession = (n: NamedSequence): ReferenceAccession => {
     };
 };
 
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesLightweightSchema => {
+export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
     const referenceGenomes = getReferenceGenomes(organism);
     return Object.fromEntries(
         Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [

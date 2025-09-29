@@ -1,5 +1,5 @@
 import type { BaseType } from './sequenceTypeHelpers';
-import { getFirstSequenceNames, type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
+import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -18,11 +18,11 @@ export type MutationSearchParams = {
 
 export const removeMutationQueries = (
     mutations: string,
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     baseType: BaseType,
     mutationType: MutationType,
 ): string => {
-    const mutationQueries = parseMutationsString(mutations, referenceGenomesSequenceNames);
+    const mutationQueries = parseMutationsString(mutations, referenceGenomeLightweightSchema);
     const filteredMutationQueries = mutationQueries.filter(
         (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
     );
@@ -31,11 +31,11 @@ export const removeMutationQueries = (
 
 export const parseMutationsString = (
     value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
 ): MutationQuery[] => {
     return value
         .split(',')
-        .map((mutation) => parseMutationString(mutation.trim(), referenceGenomesSequenceNames))
+        .map((mutation) => parseMutationString(mutation.trim(), referenceGenomeLightweightSchema))
         .filter(Boolean) as MutationQuery[];
 };
 
@@ -45,7 +45,7 @@ export const parseMutationsString = (
  */
 export const parseMutationString = (
     mutation: string,
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
 ): MutationQuery | undefined => {
     const tests = [
         { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
@@ -55,7 +55,7 @@ export const parseMutationString = (
     ] as const;
 
     for (const { baseType, mutationType, test } of tests) {
-        if (test(mutation, referenceGenomesSequenceNames)) {
+        if (test(mutation, referenceGenomeLightweightSchema)) {
             return { baseType, mutationType, text: mutation };
         }
     }
@@ -67,9 +67,9 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
 
 export const intoMutationSearchParams = (
     mutation: string | undefined,
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
 ): MutationSearchParams => {
-    const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomesSequenceNames);
+    const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomeLightweightSchema);
 
     return {
         nucleotideMutations: mutationFilter
@@ -89,18 +89,18 @@ export const intoMutationSearchParams = (
 
 const isValidAminoAcidInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
+        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
         }
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.geneNames.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
             return false;
         }
@@ -112,14 +112,14 @@ const isValidAminoAcidInsertionQuery = (
 
 const isValidAminoAcidMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
+        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomesSequenceNames.geneNames.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene)) {
             return false;
         }
@@ -131,12 +131,12 @@ const isValidAminoAcidMutationQuery = (
 
 const isValidNucleotideInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSegmentNames.length > 1;
+        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
+        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -151,7 +151,7 @@ const isValidNucleotideInsertionQuery = (
             : ([undefined, ...split] as [undefined | string, string, string]);
         if (segment !== undefined) {
             const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;
@@ -168,18 +168,18 @@ const isValidNucleotideInsertionQuery = (
 
 const isValidNucleotideMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
+    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
-        const referenceGenomesSequenceNames = getFirstSequenceNames(referenceGenomesSequenceNames_);
-        const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSegmentNames.length > 1;
+        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
+        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         if (isMultiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
             const existingSegments = new Set(
-                referenceGenomesSequenceNames.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;

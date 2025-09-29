@@ -23,7 +23,7 @@ type SequenceContainerProps = {
     suborganism: Suborganism;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     loadSequencesAutomatically: boolean;
 };
 
@@ -32,11 +32,11 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     suborganism,
     accessionVersion,
     clientConfig,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
     const { nucleotideSegmentNames, geneNames, isMultiSegmented } = getSequenceNames(
-        referenceGenomeSequenceNames,
+        referenceGenomeLightweightSchema,
         suborganism,
     );
 

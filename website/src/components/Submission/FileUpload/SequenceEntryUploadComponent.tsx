@@ -7,7 +7,7 @@ import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
-import { getFirstSequenceNames, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
+import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
 
@@ -20,7 +20,7 @@ type SequenceEntryUploadProps = {
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
     isMultiSegmented: boolean;
@@ -38,7 +38,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     setSequenceFile,
     columnMapping,
     setColumnMapping,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     enableConsensusSequences,
     isMultiSegmented,
@@ -100,12 +100,13 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                         unique <i>submissionId</i> for the full multi-segmented sample, e.g. <b>sample1</b>. Sequence
                         data should be a FASTA file with each header indicating the <i>submissionId</i> and the segment,
                         i.e.{' '}
-                        {getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames.map(
+                        {getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.map(
                             (name, index) => (
                                 <span key={index} className='font-bold'>
                                     sample1_{name}
                                     {index !==
-                                    getFirstSequenceNames(referenceGenomeSequenceNames).nucleotideSegmentNames.length -
+                                    getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames
+                                        .length -
                                         1
                                         ? ', '
                                         : ''}

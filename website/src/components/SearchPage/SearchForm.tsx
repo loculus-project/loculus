@@ -37,7 +37,7 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     suborganismIdentifierField: string | undefined;
@@ -52,7 +52,7 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     lapisSearchParameters,
     showMutationSearch,
     suborganismIdentifierField,
@@ -130,7 +130,7 @@ export const SearchForm = ({
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 suborganismIdentifierField={suborganismIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}
@@ -145,7 +145,7 @@ export const SearchForm = ({
 
                         {showMutationSearch && (
                             <MutationField
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />

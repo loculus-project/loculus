@@ -16,7 +16,7 @@ import AkarInfo from '~icons/ri/information-line';
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     suborganism: Suborganism;
 }
 
@@ -39,10 +39,10 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
 const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     suborganism,
 }) => {
-    const reference = referenceGenomeSequenceNames[suborganism].insdcAccessionFull;
+    const reference = referenceGenomeLightweightSchema[suborganism].insdcAccessionFull;
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (

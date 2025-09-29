@@ -38,8 +38,8 @@ export type ReferenceGenomesLightweightSchema = Record<
 >;
 
 // TODO(#3984) this should probably be removed when we're done with the feature
-export function getFirstSequenceNames(referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema) {
-    return Object.values(referenceGenomesSequenceNames)[0];
+export function getFirstLightweightSchema(referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema) {
+    return Object.values(referenceGenomeLightweightSchema)[0];
 }
 
 export const SINGLE_REFERENCE = 'singleReference';

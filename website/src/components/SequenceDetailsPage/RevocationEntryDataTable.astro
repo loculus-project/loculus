@@ -22,11 +22,11 @@ import type { ReferenceGenomesLightweightSchema, Suborganism } from '../../types
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     suborganism: Suborganism;
 }
 
-const { tableData, dataUseTermsHistory, referenceGenomeSequenceNames, suborganism } = Astro.props;
+const { tableData, dataUseTermsHistory, referenceGenomeLightweightSchema, suborganism } = Astro.props;
 
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
@@ -51,5 +51,5 @@ const dataTableData = getDataTableData(relevantData);
     dataTableData={dataTableData}
     dataUseTermsHistory={dataUseTermsHistory}
     suborganism={suborganism}
-    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
 />

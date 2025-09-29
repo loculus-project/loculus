@@ -48,7 +48,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['main'],
         geneNames: ['gene1', 'gene2'],
@@ -69,7 +69,7 @@ function renderSubmissionForm({
         <SubmissionForm
             inputMode={inputMode}
             accessToken={testAccessToken}
-            referenceGenomeSequenceNames={defaultReferenceGenomesSequenceNames}
+            referenceGenomeLightweightSchema={defaultReferenceGenomeLightweightSchema}
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}

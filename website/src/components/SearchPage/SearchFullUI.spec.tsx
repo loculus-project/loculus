@@ -73,7 +73,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['main'],
         geneNames: ['gene1', 'gene2'],
@@ -84,12 +84,12 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = 
 function renderSearchFullUI({
     searchFormFilters = [...defaultSearchFormFilters],
     clientConfig = testConfig.public,
-    referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     hiddenFieldValues = {},
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
-    referenceGenomesSequenceNames?: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     hiddenFieldValues?: FieldValues;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
@@ -99,7 +99,7 @@ function renderSearchFullUI({
 
     const props = {
         accessToken: 'dummyAccessToken',
-        referenceGenomesSequenceNames,
+        referenceGenomeLightweightSchema,
         myGroups: [],
         organism: testOrganism,
         clientConfig,

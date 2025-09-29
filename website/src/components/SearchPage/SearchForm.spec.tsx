@@ -43,7 +43,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
+const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSegmentNames: ['main'],
         geneNames: ['gene1', 'gene2'],
@@ -51,7 +51,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = 
     },
 };
 
-const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
+const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     suborganism1: {
         nucleotideSegmentNames: ['main'],
         geneNames: ['gene1', 'gene2'],
@@ -76,14 +76,14 @@ const setSelectedSuborganism = vi.fn();
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     lapisSearchParameters = {},
     suborganismIdentifierField = undefined,
     selectedSuborganism = null,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomesSequenceNames?: ReferenceGenomesLightweightSchema;
+    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     lapisSearchParameters?: Record<string, string>;
     suborganismIdentifierField?: string;
     selectedSuborganism?: string | null;
@@ -97,7 +97,7 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomesSequenceNames,
+        referenceGenomeLightweightSchema,
         lapisSearchParameters,
         showMutationSearch: true,
         suborganismIdentifierField,
@@ -144,7 +144,7 @@ describe('SearchForm', () => {
                 { name: 'My genotype', type: 'string' },
             ]),
             suborganismIdentifierField: 'My genotype',
-            referenceGenomesSequenceNames: multiPathogenReferenceGenomesSequenceNames,
+            referenceGenomeLightweightSchema: multiPathogenReferenceGenomesLightweightSchema,
         });
 
         const suborganismSelector = screen.getByRole('combobox', { name: 'My genotype' });
