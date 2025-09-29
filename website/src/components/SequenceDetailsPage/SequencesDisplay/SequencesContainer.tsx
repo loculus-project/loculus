@@ -35,7 +35,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     referenceGenomeSequenceNames,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentNames, genes, isMultiSegmented } = getSequenceNames(
+    const { nucleotideSegmentNames, geneNames, isMultiSegmented } = getSequenceNames(
         referenceGenomeSequenceNames,
         suborganism,
     );
@@ -64,7 +64,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             nucleotideSegmentNames={nucleotideSegmentNames}
             sequenceType={sequenceType}
             setType={setSequenceType}
-            genes={genes}
+            genes={geneNames}
             isMultiSegmented={isMultiSegmented}
         />
     );

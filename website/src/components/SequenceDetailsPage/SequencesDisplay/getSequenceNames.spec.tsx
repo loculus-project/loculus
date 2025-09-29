@@ -21,7 +21,7 @@ describe('getSequenceNames', () => {
                     { lapisName: 'segment1', label: 'segment1' },
                     { lapisName: 'segment2', label: 'segment2' },
                 ],
-                genes: [
+                geneNames: [
                     { lapisName: 'gene1', label: 'gene1' },
                     { lapisName: 'gene2', label: 'gene2' },
                 ],
@@ -42,7 +42,7 @@ describe('getSequenceNames', () => {
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'main', label: 'main' }],
-                genes: [{ lapisName: 'gene1', label: 'gene1' }],
+                geneNames: [{ lapisName: 'gene1', label: 'gene1' }],
                 isMultiSegmented: false,
             });
         });
@@ -72,7 +72,7 @@ describe('getSequenceNames', () => {
                     { lapisName: 'sub1-segment1', label: 'segment1' },
                     { lapisName: 'sub1-segment2', label: 'segment2' },
                 ],
-                genes: [
+                geneNames: [
                     { lapisName: 'sub1-gene1', label: 'gene1' },
                     { lapisName: 'sub1-gene2', label: 'gene2' },
                 ],
@@ -98,7 +98,7 @@ describe('getSequenceNames', () => {
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'sub1', label: 'main' }],
-                genes: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
+                geneNames: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
                 isMultiSegmented: true,
             });
         });
