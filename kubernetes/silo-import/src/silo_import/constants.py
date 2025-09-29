@@ -7,8 +7,6 @@ SPECIAL_ETAG_NONE = "0"
 
 # File names for downloaded data
 DATA_FILENAME = "data.ndjson.zst"
-HEADER_FILENAME = "header.txt"
-ETAG_FILENAME = "etag.txt"
 PROCESSING_FLAG_FILENAME = "processing"
 
 # Hash computation settings
