@@ -7,7 +7,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
@@ -43,7 +43,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -51,7 +51,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     },
 };
 
-const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     suborganism1: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -83,7 +83,7 @@ const renderSearchForm = ({
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames?: ReferenceGenomesLightweightSchema;
     lapisSearchParameters?: Record<string, string>;
     suborganismIdentifierField?: string;
     selectedSuborganism?: string | null;

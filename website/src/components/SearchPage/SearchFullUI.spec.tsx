@@ -9,7 +9,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
 import {
     type ReferenceAccession,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -73,7 +73,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -89,7 +89,7 @@ function renderSearchFullUI({
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
-    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames?: ReferenceGenomesLightweightSchema;
     hiddenFieldValues?: FieldValues;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({

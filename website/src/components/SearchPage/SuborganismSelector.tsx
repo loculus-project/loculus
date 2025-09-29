@@ -1,12 +1,12 @@
 import { type FC, useId, useMemo } from 'react';
 
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {
     filterSchema: MetadataFilterSchema;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     suborganismIdentifierField: string;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;

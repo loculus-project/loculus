@@ -8,7 +8,7 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
@@ -20,7 +20,7 @@ import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
@@ -282,7 +282,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 };
 
 function getSequenceNames(
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
 ): { nucleotideSequences: SequenceName[]; genes: SequenceName[]; useMultiSegmentEndpoint: boolean } {
     if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {

@@ -26,7 +26,7 @@ import {
     type SetSomeFieldValues,
 } from '../../types/config.ts';
 import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import {
@@ -44,7 +44,7 @@ import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;

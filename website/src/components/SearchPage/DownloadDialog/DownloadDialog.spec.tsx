@@ -10,7 +10,7 @@ import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts'
 import type { Metadata } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
 import {
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
@@ -27,7 +27,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -35,7 +35,7 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
     },
 };
 
-const multiPathogenReferenceGenome: ReferenceGenomesSequenceNames = {
+const multiPathogenReferenceGenome: ReferenceGenomesLightweightSchema = {
     suborganism1: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -88,7 +88,7 @@ async function renderDialog({
     metadata?: Metadata[];
     selectedSuborganism?: string | null;
     suborganismIdentifierField?: string;
-    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames?: ReferenceGenomesLightweightSchema;
 } = {}) {
     render(
         <DownloadDialog

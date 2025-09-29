@@ -17,7 +17,7 @@ import {
     type ReferenceAccession,
     type ReferenceGenome,
     type ReferenceGenomes,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -245,7 +245,7 @@ const getAccession = (n: NamedSequence): ReferenceAccession => {
     };
 };
 
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
+export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesLightweightSchema => {
     const referenceGenomes = getReferenceGenomes(organism);
     return Object.fromEntries(
         Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [

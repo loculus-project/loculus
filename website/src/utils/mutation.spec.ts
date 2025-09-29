@@ -7,11 +7,11 @@ import {
     removeMutationQueries,
     intoMutationSearchParams,
 } from './mutation';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../types/referencesGenomes';
 
 describe('mutation', () => {
     describe('single segment', () => {
-        const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
+        const mockReferenceGenomes: ReferenceGenomesLightweightSchema = {
             [SINGLE_REFERENCE]: {
                 nucleotideSequences: ['main'],
                 genes: ['GENE1', 'GENE2'],
@@ -38,7 +38,7 @@ describe('mutation', () => {
     });
 
     describe('multi-segment', () => {
-        const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
+        const mockReferenceGenomes: ReferenceGenomesLightweightSchema = {
             [SINGLE_REFERENCE]: {
                 nucleotideSequences: ['SEQ1', 'SEQ2'],
                 genes: ['GENE1', 'GENE2'],

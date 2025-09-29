@@ -28,7 +28,7 @@ export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
 
 export type NucleotideSegmentNames = string[];
 
-export type ReferenceGenomesSequenceNames = Record<
+export type ReferenceGenomesLightweightSchema = Record<
     Suborganism,
     {
         nucleotideSequences: NucleotideSegmentNames;
@@ -38,7 +38,7 @@ export type ReferenceGenomesSequenceNames = Record<
 >;
 
 // TODO(#3984) this should probably be removed when we're done with the feature
-export function getFirstSequenceNames(referenceGenomesSequenceNames: ReferenceGenomesSequenceNames) {
+export function getFirstSequenceNames(referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema) {
     return Object.values(referenceGenomesSequenceNames)[0];
 }
 

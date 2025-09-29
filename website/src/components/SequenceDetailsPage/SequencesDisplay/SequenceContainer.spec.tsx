@@ -7,7 +7,7 @@ import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
 import {
     type NucleotideSegmentNames,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
 
@@ -18,7 +18,7 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
-function renderSequenceViewer(referenceGenomeSequenceNames: ReferenceGenomesSequenceNames, suborganism: string) {
+function renderSequenceViewer(referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema, suborganism: string) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer

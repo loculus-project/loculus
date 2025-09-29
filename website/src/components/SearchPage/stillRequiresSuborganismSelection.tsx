@@ -1,7 +1,7 @@
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 export function stillRequiresSuborganismSelection(
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
 ) {
     return Object.keys(referenceGenomesSequenceNames).length > 1 && selectedSuborganism === null;

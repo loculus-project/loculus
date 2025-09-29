@@ -1,4 +1,4 @@
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
@@ -8,7 +8,7 @@ import {
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export function getSequenceNames(
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema,
     suborganism: string,
 ): {
     nucleotideSegmentNames: SequenceName[];

@@ -17,7 +17,7 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
@@ -37,7 +37,7 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     suborganismIdentifierField: string | undefined;

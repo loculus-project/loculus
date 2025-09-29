@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
 import {
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
@@ -14,7 +14,7 @@ const singleAccession: ReferenceAccession = {
     insdcAccessionFull: 'accession_main',
 };
 
-const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const singleSegmentedReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],
@@ -32,7 +32,7 @@ const multiAccession2: ReferenceAccession = {
     insdcAccessionFull: 'accession_seg2',
 };
 
-const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const multiSegmentedReferenceGenome: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['seg1', 'seg2'],
         genes: ['gene1', 'gene2'],
@@ -43,7 +43,7 @@ const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
 function renderField(
     value: string,
     onChange: (mutationFilter: string) => void,
-    referenceGenome: ReferenceGenomesSequenceNames,
+    referenceGenome: ReferenceGenomesLightweightSchema,
 ) {
     render(<MutationField value={value} onChange={onChange} referenceGenomesSequenceNames={referenceGenome} />);
 }

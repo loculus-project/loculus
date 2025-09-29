@@ -2,7 +2,7 @@ import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from
 
 import { SequencesViewer } from './SequenceViewer.tsx';
 import { getSequenceNames } from './getSequenceNames.tsx';
-import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
@@ -23,7 +23,7 @@ type SequenceContainerProps = {
     suborganism: Suborganism;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
     loadSequencesAutomatically: boolean;
 };
 

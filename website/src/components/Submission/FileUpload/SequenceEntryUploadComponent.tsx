@@ -7,7 +7,7 @@ import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
-import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 import type { ColumnMapping } from './ColumnMapping';
 
@@ -20,7 +20,7 @@ type SequenceEntryUploadProps = {
     setSequenceFile: Dispatch<SetStateAction<ProcessedFile | undefined>>;
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     enableConsensusSequences: boolean;
     isMultiSegmented: boolean;

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SuborganismSelector } from './SuborganismSelector';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const suborganismIdentifierField = 'genotype';
@@ -22,7 +22,7 @@ const dummySequences = {
     insdcAccessionFull: [],
 };
 
-const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
+const mockReferenceGenomes: ReferenceGenomesLightweightSchema = {
     suborganism1: dummySequences,
     suborganism2: dummySequences,
 };

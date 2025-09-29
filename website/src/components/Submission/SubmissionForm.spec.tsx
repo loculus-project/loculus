@@ -10,7 +10,7 @@ import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 import {
     type ReferenceAccession,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 
@@ -48,7 +48,7 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesSequenceNames: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
         nucleotideSequences: ['main'],
         genes: ['gene1', 'gene2'],

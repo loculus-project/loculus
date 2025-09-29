@@ -1,5 +1,5 @@
 import type { BaseType } from './sequenceTypeHelpers';
-import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -18,7 +18,7 @@ export type MutationSearchParams = {
 
 export const removeMutationQueries = (
     mutations: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
     baseType: BaseType,
     mutationType: MutationType,
 ): string => {
@@ -31,7 +31,7 @@ export const removeMutationQueries = (
 
 export const parseMutationsString = (
     value: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
 ): MutationQuery[] => {
     return value
         .split(',')
@@ -45,7 +45,7 @@ export const parseMutationsString = (
  */
 export const parseMutationString = (
     mutation: string,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
 ): MutationQuery | undefined => {
     const tests = [
         { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
@@ -67,7 +67,7 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
 
 export const intoMutationSearchParams = (
     mutation: string | undefined,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
 ): MutationSearchParams => {
     const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomesSequenceNames);
 
@@ -89,7 +89,7 @@ export const intoMutationSearchParams = (
 
 const isValidAminoAcidInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
@@ -112,7 +112,7 @@ const isValidAminoAcidInsertionQuery = (
 
 const isValidAminoAcidMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
@@ -131,7 +131,7 @@ const isValidAminoAcidMutationQuery = (
 
 const isValidNucleotideInsertionQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware
@@ -168,7 +168,7 @@ const isValidNucleotideInsertionQuery = (
 
 const isValidNucleotideMutationQuery = (
     text: string,
-    referenceGenomesSequenceNames_: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames_: ReferenceGenomesLightweightSchema,
 ): boolean => {
     try {
         // TODO(#3984) make it multi pathogen aware

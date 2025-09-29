@@ -7,7 +7,7 @@ import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type SubmissionFormProps = {
@@ -16,7 +16,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
     group: Group;
     inputMode: InputMode;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;

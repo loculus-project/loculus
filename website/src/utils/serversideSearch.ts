@@ -13,12 +13,12 @@ import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {

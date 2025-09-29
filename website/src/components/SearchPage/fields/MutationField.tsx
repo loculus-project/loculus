@@ -3,14 +3,14 @@ import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
 import { parseMutationsString, type MutationQuery, parseMutationString } from '../../../utils/mutation.ts';
 import { serializeMutationQueries } from '../../../utils/mutation.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     value: string;
     onChange: (mutationFilter: string) => void;
 }

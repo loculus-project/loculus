@@ -9,14 +9,14 @@ import type { SequenceFilter } from './SequenceFilters.tsx';
 import { routes } from '../../../routes/routes.ts';
 import type { Metadata } from '../../../types/config.ts';
 import type { Schema } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
 
 type DownloadDialogProps = {
     downloadUrlGenerator: DownloadUrlGenerator;
     sequenceFilter: SequenceFilter;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     metadata: Metadata[];

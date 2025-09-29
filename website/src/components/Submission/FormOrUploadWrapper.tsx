@@ -5,7 +5,7 @@ import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
-import { getFirstSequenceNames, type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import { getFirstSequenceNames, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 
@@ -41,7 +41,7 @@ type FormOrUploadWrapperProps = {
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
     organism: string;
     action: UploadAction;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
