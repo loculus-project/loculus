@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Protocol
+
+import requests
 
 
 @dataclass
@@ -45,8 +46,17 @@ class HttpClient(Protocol):
         ...
 
 
-class CurlHttpClient:
-    """HTTP client implementation using curl subprocess."""
+class RequestsHttpClient:
+    """HTTP client implementation using requests library."""
+
+    def __init__(self, timeout: int = 300) -> None:
+        """
+        Initialize the HTTP client.
+
+        Args:
+            timeout: Request timeout in seconds (default: 300)
+        """
+        self.timeout = timeout
 
     def get(
         self,
@@ -55,44 +65,44 @@ class CurlHttpClient:
         header_path: Path,
         etag: Optional[str] = None,
     ) -> HttpResponse:
-        """Download using curl subprocess."""
-        curl_cmd = [
-            "curl",
-            "-sS",
-            "--fail",
-            "-D",
-            str(header_path),
-            "-o",
-            str(output_path),
-        ]
+        """Download using requests library."""
+        headers = {}
         if etag and etag != "0":
-            curl_cmd.extend(["-H", f"If-None-Match: {etag}"])
-        curl_cmd.append(url)
+            headers["If-None-Match"] = etag
 
         try:
-            subprocess.run(curl_cmd, check=True)
-        except subprocess.CalledProcessError as exc:
+            # Create a session with custom adapter to disable automatic decompression
+            session = requests.Session()
+            session.headers.update(headers)
+
+            # Get raw response without automatic decompression
+            response = session.get(url, timeout=self.timeout, stream=True)
+
+            # Write response body to file (raw, no automatic decompression)
+            with output_path.open("wb") as f:
+                for chunk in response.raw.stream(8192, decode_content=False):
+                    if chunk:
+                        f.write(chunk)
+
+            # Write headers to file (mimicking curl's -D format)
+            self._write_header_file(header_path, response)
+
+            # Normalize headers to lowercase keys
+            normalized_headers = {k.lower(): v for k, v in response.headers.items()}
+
+            return HttpResponse(
+                status_code=response.status_code,
+                headers=normalized_headers,
+                body_path=output_path,
+            )
+
+        except requests.RequestException as exc:
             raise RuntimeError(f"Failed to download from {url}: {exc}") from exc
 
-        status_code, headers = self._parse_header_file(header_path)
-        return HttpResponse(status_code=status_code, headers=headers, body_path=output_path)
-
-    def _parse_header_file(self, path: Path) -> tuple[int, dict[str, str]]:
-        """Parse curl's header dump file."""
-        raw = path.read_text(encoding="utf-8")
-        blocks = [block for block in raw.split("\n\n") if block.strip()]
-        if not blocks:
-            raise RuntimeError("curl did not return any headers")
-        lines = blocks[-1].splitlines()
-        if not lines:
-            raise RuntimeError("Malformed curl headers")
-        parts = lines[0].split()
-        if len(parts) < 2:
-            raise RuntimeError("Malformed status line in headers")
-        status_code = int(parts[1])
-        headers: dict[str, str] = {}
-        for line in lines[1:]:
-            if ":" in line:
-                key, value = line.split(":", 1)
-                headers[key.strip().lower()] = value.strip()
-        return status_code, headers
+    def _write_header_file(self, path: Path, response: requests.Response) -> None:
+        """Write response headers to file in HTTP format."""
+        lines = [f"HTTP/1.1 {response.status_code} {response.reason}"]
+        for key, value in response.headers.items():
+            lines.append(f"{key}: {value}")
+        lines.append("")
+        path.write_text("\n".join(lines), encoding="utf-8")

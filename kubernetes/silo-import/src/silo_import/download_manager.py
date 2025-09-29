@@ -19,7 +19,7 @@ from .decompressor import analyze_ndjson
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
-from .http_client import CurlHttpClient, HttpClient
+from .http_client import HttpClient, RequestsHttpClient
 from .paths import ImporterPaths
 from .state import save_etag
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
@@ -42,7 +42,7 @@ class DownloadManager:
     """Manages downloading and validating data releases."""
 
     def __init__(self, http_client: Optional[HttpClient] = None) -> None:
-        self.http_client = http_client or CurlHttpClient()
+        self.http_client = http_client or RequestsHttpClient()
 
     def download_release(
         self,
