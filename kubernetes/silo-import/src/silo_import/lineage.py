@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
-import subprocess
 from pathlib import Path
 from typing import Dict, Optional, Set
 
+import requests
+
 from .config import ImporterConfig
+from .file_io import write_text
 from .paths import ImporterPaths
-from .utils import write_text
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +41,12 @@ def update_lineage_definitions(
     logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
     try:
         _download_lineage_file(lineage_url, paths.lineage_definition_file)
-    except subprocess.CalledProcessError as exc:
+    except requests.RequestException as exc:
         raise RuntimeError(f"Failed to download lineage definitions: {exc}") from exc
 
 
 def _download_lineage_file(url: str, destination: Path) -> None:
-    cmd = ["curl", "-sS", "--fail", "-o", str(destination), url]
-    subprocess.run(cmd, check=True)
+    response = requests.get(url, timeout=60)
+    response.raise_for_status()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(response.text, encoding="utf-8")

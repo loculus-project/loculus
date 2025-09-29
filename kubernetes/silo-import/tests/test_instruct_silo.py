@@ -6,16 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from silo_import.sentinels import SentinelManager
-from silo_import.utils import write_text
+from silo_import.file_io import write_text
+from silo_import.instruct_silo import SiloInstructor
 
 
-def test_sentinel_roundtrip(tmp_path: Path) -> None:
+def test_silo_roundtrip(tmp_path: Path) -> None:
     run_file = tmp_path / "run"
     done_file = tmp_path / "done"
-    manager = SentinelManager(run_file, done_file)
+    silo = SiloInstructor(run_file, done_file)
 
-    manager.request_run("abc")
+    silo.request_run("abc")
     assert run_file.exists()
 
     def complete() -> None:
@@ -25,14 +25,14 @@ def test_sentinel_roundtrip(tmp_path: Path) -> None:
 
     thread = threading.Thread(target=complete)
     thread.start()
-    manager.wait_for_completion("abc", timeout_seconds=5)
+    silo.wait_for_completion("abc", timeout_seconds=5)
     thread.join()
 
 
-def test_sentinel_timeout(tmp_path: Path) -> None:
+def test_silo_timeout(tmp_path: Path) -> None:
     run_file = tmp_path / "run"
     done_file = tmp_path / "done"
-    manager = SentinelManager(run_file, done_file)
-    manager.request_run("xyz")
+    silo = SiloInstructor(run_file, done_file)
+    silo.request_run("xyz")
     with pytest.raises(TimeoutError):
-        manager.wait_for_completion("xyz", timeout_seconds=0)
+        silo.wait_for_completion("xyz", timeout_seconds=0)
