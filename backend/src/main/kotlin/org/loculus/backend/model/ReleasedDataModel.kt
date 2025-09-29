@@ -69,7 +69,7 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
-    open fun getLatestFinishedProcessingAtForReleasedDataOfOrganismCurrentPipeline(organism: Organism): String {
+    open fun getOrganismReleasedLastProcessedTime(organism: Organism): String {
         val pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         val lastFinishedProcessingAt =
             submissionDatabaseService.getLatestFinishedProcessingAtForReleasedData(organism, pipelineVersion)
