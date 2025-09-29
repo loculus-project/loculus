@@ -31,8 +31,8 @@ class Group(BaseModel):
         """Create an example Group instance for tests"""
         return cls(
             groupId=-1,
-            groupName="Test group",
-            institution="Test institution",
+            groupName="Test group with funny characters \\ / '\"!@#$%^&*()",
+            institution="Test institution with funny characters \\ / '\"!@#$%^&*()",
             address=Address(
                 line1="1234",
                 line2="Apt 1",

@@ -7,7 +7,8 @@
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
 {{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
-{{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
+{{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
+{{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
 {{- $replicas := $processingConfig.replicas | default 1 }}
 ---
