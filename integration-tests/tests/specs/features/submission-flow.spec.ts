@@ -1,4 +1,4 @@
-CCHFCCHFCCHFCCHFimport { expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
