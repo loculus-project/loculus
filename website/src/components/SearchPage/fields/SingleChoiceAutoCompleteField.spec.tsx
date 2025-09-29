@@ -46,7 +46,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                     { testField: 'Option 2', count: 20 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -82,7 +82,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                     { testField: 'Option 2', count: 20 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -112,7 +112,7 @@ describe('SingleChoiceAutoCompleteField', () => {
     it('displays loading state when aggregated endpoint is loading', async () => {
         mockUseAggregated.mockReturnValue({
             data: null,
-            isLoading: true,
+            isPending: true,
             error: null,
             mutate: vi.fn(),
         });
@@ -138,7 +138,7 @@ describe('SingleChoiceAutoCompleteField', () => {
     it('displays fallback when aggregated endpoint returns an error', async () => {
         mockUseAggregated.mockReturnValue({
             data: null,
-            isLoading: false,
+            isPending: false,
             error: { message: 'Error message', stack: 'Error stack' },
             mutate: vi.fn(),
         });
@@ -169,7 +169,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                     { testField: 'Option 2', count: 20 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -203,7 +203,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                     { testField: 'Option 2', count: 20 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -235,7 +235,7 @@ describe('SingleChoiceAutoCompleteField', () => {
             data: {
                 data: [{ testField: null, count: 5 }],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -270,7 +270,7 @@ describe('SingleChoiceAutoCompleteField', () => {
             data: {
                 data,
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });

@@ -33,7 +33,7 @@ export type OptionsProvider = GenericOptionsProvider | LineageOptionsProvider;
 
 export type AutocompleteOptionsHook = () => {
     options: Option[];
-    isLoading: boolean;
+    isPending: boolean;
     error: Error | null;
     load: () => void;
 };
@@ -55,7 +55,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isLoading, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -74,7 +74,7 @@ const createGenericOptionsHook = (
 
         return {
             options,
-            isLoading,
+            isPending,
             error,
             load: () => mutate(lapisParams),
         };
@@ -165,7 +165,7 @@ const createLineageOptionsHook = (
     return function hook() {
         const {
             data,
-            isLoading: aggregateIsLoading,
+            isPending: aggregateIsPending,
             error: aggregateError,
             mutate,
         } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
@@ -214,7 +214,7 @@ const createLineageOptionsHook = (
 
         return {
             options,
-            isLoading: aggregateIsLoading || defIsLoading,
+            isPending: aggregateIsPending || defIsLoading,
             error: new AggregateError([aggregateError, defError].filter(Boolean)),
             load: () => mutate(lapisParams),
         };

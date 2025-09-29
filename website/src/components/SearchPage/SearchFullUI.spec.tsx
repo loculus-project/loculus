@@ -131,7 +131,7 @@ describe('SearchFullUI', () => {
             data: {
                 data: [{ count: 2 }],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             isError: false,
             mutate: vi.fn(),
@@ -144,7 +144,7 @@ describe('SearchFullUI', () => {
                     { accession: 'LOC_789012', field1: '2022-01-02', field3: 'Lineage 2' },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             isError: false,
             mutate: vi.fn(),

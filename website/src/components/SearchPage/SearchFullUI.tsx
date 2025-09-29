@@ -443,7 +443,7 @@ export const InnerSearchFullUI = ({
                         ${
                             !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
                                 ? 'cursor-wait pointer-events-none'
-                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                : detailsHook.isPending || aggregatedHook.isPending
                                   ? 'opacity-50 pointer-events-none'
                                   : ''
                         }
@@ -457,8 +457,8 @@ export const InnerSearchFullUI = ({
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isLoading ||
-                            aggregatedHook.isLoading ||
+                            {detailsHook.isPending ||
+                            aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
