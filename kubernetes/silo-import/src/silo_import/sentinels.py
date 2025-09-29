@@ -4,7 +4,8 @@ import logging
 import time
 from pathlib import Path
 
-from .utils import parse_key_value_file, safe_remove, write_text
+from .file_io import parse_key_value_file, write_text
+from .filesystem import safe_remove
 
 logger = logging.getLogger(__name__)
 

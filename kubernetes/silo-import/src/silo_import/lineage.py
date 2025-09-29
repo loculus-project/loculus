@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict, Optional, Set
 
 from .config import ImporterConfig
+from .file_io import write_text
 from .paths import ImporterPaths
-from .utils import write_text
 
 logger = logging.getLogger(__name__)
 

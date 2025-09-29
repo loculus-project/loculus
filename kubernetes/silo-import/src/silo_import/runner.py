@@ -3,23 +3,17 @@ from __future__ import annotations
 import logging
 import shutil
 import time
-from dataclasses import dataclass
 
 from .config import ImporterConfig
 from .downloader import DownloadResult, download_release
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch, SkipRun
+from .filesystem import prune_timestamped_directories, safe_remove
 from .lineage import update_lineage_definitions
 from .paths import ImporterPaths
 from .sentinels import SentinelManager
-from .utils import prune_timestamped_directories, read_text, safe_remove, write_text
+from .state import ImporterState
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class ImporterState:
-    current_etag: str
-    last_hard_refresh: int
 
 
 class ImporterRunner:
@@ -32,27 +26,26 @@ class ImporterRunner:
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
 
-        state = self._load_state()
-
-        hard_refresh = self._should_hard_refresh(state.last_hard_refresh)
-        last_etag = "0" if hard_refresh else state.current_etag
+        state = ImporterState.load(self.paths.current_etag_file, self.paths.last_hard_refresh_file)
+        hard_refresh = state.should_hard_refresh(self.config.hard_refresh_interval)
+        last_etag = state.get_etag_for_request(hard_refresh)
 
         try:
             download = download_release(self.config, self.paths, last_etag)
         except NotModified as skip:
             logger.info("Skipping run: %s", skip)
             if hard_refresh:
-                self._write_last_hard_refresh(int(time.time()))
+                state.save_hard_refresh(self.paths.last_hard_refresh_file)
             return
         except HashUnchanged as skip:
             logger.info("Skipping run: %s", skip)
             if hard_refresh:
-                self._write_last_hard_refresh(int(time.time()))
+                state.save_hard_refresh(self.paths.last_hard_refresh_file)
             return
         except DecompressionFailed as skip:
             logger.warning("Skipping run due to decompression failure: %s", skip)
             if hard_refresh:
-                self._write_last_hard_refresh(int(time.time()))
+                state.save_hard_refresh(self.paths.last_hard_refresh_file)
             return
         except RecordCountMismatch as skip:
             logger.warning("Skipping run due to validation issue: %s", skip)
@@ -78,31 +71,12 @@ class ImporterRunner:
             raise
 
         self._mark_processing_complete(download)
-        self._write_current_etag(download.etag)
+        state = state.save_etag(self.paths.current_etag_file, download.etag)
 
         if hard_refresh:
-            self._write_last_hard_refresh(int(time.time()))
+            state = state.save_hard_refresh(self.paths.last_hard_refresh_file)
 
         logger.info("Run complete; waiting %s seconds", self.config.poll_interval)
-
-    def _load_state(self) -> ImporterState:
-        current_etag = read_text(self.paths.current_etag_file, default="0")
-        last_refresh_str = read_text(self.paths.last_hard_refresh_file, default="0")
-        try:
-            last_refresh = int(last_refresh_str)
-        except ValueError:
-            last_refresh = 0
-        return ImporterState(current_etag=current_etag, last_hard_refresh=last_refresh)
-
-    def _should_hard_refresh(self, last_hard_refresh: int) -> bool:
-        now = int(time.time())
-        return now - last_hard_refresh >= self.config.hard_refresh_interval
-
-    def _write_current_etag(self, etag: str) -> None:
-        write_text(self.paths.current_etag_file, etag)
-
-    def _write_last_hard_refresh(self, timestamp: int) -> None:
-        write_text(self.paths.last_hard_refresh_file, str(timestamp))
 
     def _delete_new_input(self, download: DownloadResult) -> None:
         safe_remove(self.paths.silo_input_data_path)
