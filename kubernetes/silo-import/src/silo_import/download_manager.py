@@ -18,9 +18,11 @@ from .constants import (
 )
 from .decompressor import analyze_ndjson
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
+from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .http_client import CurlHttpClient, HttpClient
 from .paths import ImporterPaths
+from .state import save_etag
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
@@ -32,193 +34,169 @@ class DownloadResult:
 
     directory: Path
     data_path: Path
-    header_path: Path
-    etag_path: Path
     processing_flag: Path
     etag: str
     pipeline_versions: Set[str]
 
 
-class DownloadManager:
-    """Manages the download and validation of data releases."""
+def download_release(
+    config: ImporterConfig,
+    paths: ImporterPaths,
+    last_etag: str,
+    http_client: Optional[HttpClient] = None,
+) -> DownloadResult:
+    """
+    Download and validate a data release from the backend.
 
-    def __init__(
-        self,
-        config: ImporterConfig,
-        paths: ImporterPaths,
-        http_client: Optional[HttpClient] = None,
-    ) -> None:
-        self.config = config
-        self.paths = paths
-        self.http_client = http_client or CurlHttpClient()
+    Args:
+        config: Importer configuration
+        paths: Importer paths
+        last_etag: ETag from previous download for conditional request
+        http_client: Optional HTTP client (defaults to CurlHttpClient)
 
-    def download_release(self, last_etag: str) -> DownloadResult:
-        """
-        Download and validate a data release from the backend.
+    Returns:
+        DownloadResult with paths and metadata
 
-        Args:
-            last_etag: ETag from previous download for conditional request
+    Raises:
+        NotModified: Backend returned 304 (no new data)
+        HashUnchanged: Downloaded data matches previous hash
+        DecompressionFailed: Could not decompress downloaded data
+        RecordCountMismatch: Record count doesn't match header
+        RuntimeError: Other download or validation errors
+    """
+    if http_client is None:
+        http_client = CurlHttpClient()
 
-        Returns:
-            DownloadResult with paths and metadata
+    # Create timestamped directory for this download
+    download_dir = _create_download_directory(paths.input_dir)
+    data_path = download_dir / DATA_FILENAME
+    processing_flag = download_dir / PROCESSING_FLAG_FILENAME
+    processing_flag.touch()
 
-        Raises:
-            NotModified: Backend returned 304 (no new data)
-            HashUnchanged: Downloaded data matches previous hash
-            DecompressionFailed: Could not decompress downloaded data
-            RecordCountMismatch: Record count doesn't match header
-            RuntimeError: Other download or validation errors
-        """
-        # Create timestamped directory for this download
-        download_dir = self._create_download_directory()
-        data_path = download_dir / DATA_FILENAME
-        header_path = download_dir / HEADER_FILENAME
-        etag_path = download_dir / ETAG_FILENAME
-        processing_flag = download_dir / PROCESSING_FLAG_FILENAME
-        processing_flag.touch()
+    try:
+        # Download data from backend
+        logger.info("Requesting released data from %s", config.released_data_endpoint)
+        response = http_client.get(
+            url=config.released_data_endpoint,
+            output_path=data_path,
+            header_path=download_dir / HEADER_FILENAME,
+            etag=last_etag,
+        )
 
+        # Check for 304 Not Modified
+        if response.status_code == 304:
+            logger.info("Backend returned 304 Not Modified; skipping import")
+            safe_remove(download_dir)
+            raise NotModified("Backend state unchanged")
+
+        # Extract and validate ETag
+        etag_value = response.headers.get("etag")
+        if not etag_value:
+            safe_remove(download_dir)
+            raise RuntimeError("Response did not contain an ETag header")
+
+        # Parse expected record count from header
+        expected_count = parse_int_header(response.headers.get("x-total-records"))
+
+        # Decompress and analyze the data
         try:
-            # Download data from backend
-            logger.info("Requesting released data from %s", self.config.released_data_endpoint)
-            response = self.http_client.get(
-                url=self.config.released_data_endpoint,
-                output_path=data_path,
-                header_path=header_path,
-                etag=last_etag,
+            analysis = analyze_ndjson(data_path)
+        except RuntimeError as exc:
+            logger.warning(
+                "Failed to decompress %s (size=%s bytes): %s",
+                data_path,
+                data_path.stat().st_size if data_path.exists() else "missing",
+                exc,
             )
+            save_etag(paths.current_etag_file, SPECIAL_ETAG_NONE)
+            safe_remove(download_dir)
+            raise DecompressionFailed(f"decompression failed ({exc})") from exc
 
-            # Check for 304 Not Modified
-            if response.status_code == 304:
-                logger.info("Backend returned 304 Not Modified; skipping import")
-                self._cleanup_directory(download_dir)
-                raise NotModified("Backend state unchanged")
+        logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
-            # Extract and validate ETag
-            etag_value = response.headers.get("etag")
-            if not etag_value:
-                self._cleanup_directory(download_dir)
-                raise RuntimeError("Response did not contain an ETag header")
-            self._write_text(etag_path, etag_value)
+        # Validate record count
+        try:
+            validate_record_count(analysis.record_count, expected_count)
+        except RecordCountValidationError:
+            safe_remove(download_dir)
+            raise RecordCountMismatch("record count mismatch")
 
-            # Parse expected record count from header
-            expected_count = parse_int_header(response.headers.get("x-total-records"))
+        # Check against previous download to avoid reprocessing
+        _handle_previous_directory(paths, download_dir, data_path, etag_value)
 
-            # Decompress and analyze the data
-            try:
-                analysis = analyze_ndjson(data_path)
-            except RuntimeError as exc:
-                logger.warning(
-                    "Failed to decompress %s (size=%s bytes): %s",
-                    data_path,
-                    data_path.stat().st_size if data_path.exists() else "missing",
-                    exc,
-                )
-                self._write_text(self.paths.current_etag_file, SPECIAL_ETAG_NONE)
-                self._cleanup_directory(download_dir)
-                raise DecompressionFailed(f"decompression failed ({exc})") from exc
+        # Prune old directories
+        prune_timestamped_directories(paths.input_dir)
 
-            logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
+        return DownloadResult(
+            directory=download_dir,
+            data_path=data_path,
+            processing_flag=processing_flag,
+            etag=etag_value,
+            pipeline_versions=analysis.pipeline_versions,
+        )
 
-            # Validate record count
-            try:
-                validate_record_count(analysis.record_count, expected_count)
-            except RecordCountValidationError:
-                self._cleanup_directory(download_dir)
-                raise RecordCountMismatch("record count mismatch")
+    except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
+        # Re-raise these as they're expected skip conditions
+        raise
+    except Exception:
+        # Clean up on unexpected errors
+        safe_remove(download_dir)
+        raise
 
-            # Check against previous download to avoid reprocessing
-            self._handle_previous_directory(download_dir, data_path, etag_value)
 
-            # Prune old directories
-            self._prune_timestamped_directories()
+def _create_download_directory(input_dir: Path) -> Path:
+    """Create a new timestamped directory for download."""
+    timestamp = int(time.time())
+    new_dir = input_dir / str(timestamp)
+    while new_dir.exists():  # Guard against duplicate timestamps
+        timestamp += 1
+        new_dir = input_dir / str(timestamp)
+    new_dir.mkdir(parents=True)
+    return new_dir
 
-            return DownloadResult(
-                directory=download_dir,
-                data_path=data_path,
-                header_path=header_path,
-                etag_path=etag_path,
-                processing_flag=processing_flag,
-                etag=etag_value,
-                pipeline_versions=analysis.pipeline_versions,
-            )
 
-        except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
-            # Re-raise these as they're expected skip conditions
-            raise
-        except Exception:
-            # Clean up on unexpected errors
-            self._cleanup_directory(download_dir)
-            raise
+def _handle_previous_directory(
+    paths: ImporterPaths,
+    new_dir: Path,
+    new_data_path: Path,
+    new_etag: str,
+) -> None:
+    """Check previous download and clean up if needed."""
+    previous_dirs = [
+        p
+        for p in paths.input_dir.iterdir()
+        if p.is_dir() and p.name.isdigit() and p != new_dir
+    ]
+    if not previous_dirs:
+        return
 
-    def _create_download_directory(self) -> Path:
-        """Create a new timestamped directory for download."""
-        timestamp = int(time.time())
-        new_dir = self.paths.input_dir / str(timestamp)
-        while new_dir.exists():  # Guard against duplicate timestamps
-            timestamp += 1
-            new_dir = self.paths.input_dir / str(timestamp)
-        new_dir.mkdir(parents=True)
-        return new_dir
+    previous_dirs.sort(key=lambda item: int(item.name))
+    previous_dir = previous_dirs[-1]
 
-    def _handle_previous_directory(
-        self,
-        new_dir: Path,
-        new_data_path: Path,
-        new_etag: str,
-    ) -> None:
-        """Check previous download and clean up if needed."""
-        previous_dirs = [
-            p
-            for p in self.paths.input_dir.iterdir()
-            if p.is_dir() and p.name.isdigit() and p != new_dir
-        ]
-        if not previous_dirs:
-            return
+    processing_flag = previous_dir / PROCESSING_FLAG_FILENAME
+    previous_data_path = previous_dir / DATA_FILENAME
 
-        previous_dirs.sort(key=lambda item: int(item.name))
-        previous_dir = previous_dirs[-1]
+    # Clean up incomplete previous download
+    if processing_flag.exists():
+        logger.warning("Previous input directory %s was incomplete; deleting", previous_dir)
+        safe_remove(previous_dir)
+        return
 
-        processing_flag = previous_dir / PROCESSING_FLAG_FILENAME
-        previous_data_path = previous_dir / DATA_FILENAME
+    # Clean up previous directory with no data
+    if not previous_data_path.exists():
+        logger.info("Previous input directory %s did not contain data", previous_dir)
+        safe_remove(previous_dir)
+        return
 
-        # Clean up incomplete previous download
-        if processing_flag.exists():
-            logger.warning("Previous input directory %s was incomplete; deleting", previous_dir)
-            self._cleanup_directory(previous_dir)
-            return
+    # Compare hashes to detect duplicates
+    old_hash = md5_file(previous_data_path)
+    new_hash = md5_file(new_data_path)
+    if old_hash == new_hash:
+        logger.info("New data matches previous hash; skipping preprocessing")
+        save_etag(paths.current_etag_file, new_etag)
+        safe_remove(new_dir)
+        raise HashUnchanged("hash unchanged")
 
-        # Clean up previous directory with no data
-        if not previous_data_path.exists():
-            logger.info("Previous input directory %s did not contain data", previous_dir)
-            self._cleanup_directory(previous_dir)
-            return
-
-        # Compare hashes to detect duplicates
-        old_hash = md5_file(previous_data_path)
-        new_hash = md5_file(new_data_path)
-        if old_hash == new_hash:
-            logger.info("New data matches previous hash; skipping preprocessing")
-            self._write_text(self.paths.current_etag_file, new_etag)
-            self._cleanup_directory(new_dir)
-            raise HashUnchanged("hash unchanged")
-
-        # Remove previous directory since we have new data
-        logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)
-        self._cleanup_directory(previous_dir)
-
-    def _cleanup_directory(self, directory: Path) -> None:
-        """Safely remove a directory."""
-        from .filesystem import safe_remove
-
-        safe_remove(directory)
-
-    def _write_text(self, path: Path, value: str) -> None:
-        """Write text to a file."""
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(value, encoding="utf-8")
-
-    def _prune_timestamped_directories(self) -> None:
-        """Prune old timestamped directories."""
-        from .filesystem import prune_timestamped_directories
-
-        prune_timestamped_directories(self.paths.input_dir)
+    # Remove previous directory since we have new data
+    logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)
+    safe_remove(previous_dir)

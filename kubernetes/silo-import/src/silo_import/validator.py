@@ -8,11 +8,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-class ValidationError(Exception):
-    """Base class for validation errors."""
-
-
-class RecordCountValidationError(ValidationError):
+class RecordCountValidationError(Exception):
     """Record count does not match expected value."""
 
 

@@ -5,13 +5,20 @@ import shutil
 import time
 
 from .config import ImporterConfig
-from .downloader import DownloadResult, download_release
-from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch, SkipRun
+from .constants import SPECIAL_ETAG_NONE
+from .download_manager import DownloadResult, download_release
+from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .filesystem import prune_timestamped_directories, safe_remove
 from .lineage import update_lineage_definitions
 from .paths import ImporterPaths
 from .sentinels import SentinelManager
-from .state import ImporterState
+from .state import (
+    load_current_etag,
+    load_last_hard_refresh,
+    save_etag,
+    save_hard_refresh,
+    should_hard_refresh,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,39 +33,38 @@ class ImporterRunner:
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
 
-        state = ImporterState.load(self.paths.current_etag_file, self.paths.last_hard_refresh_file)
-        hard_refresh = state.should_hard_refresh(self.config.hard_refresh_interval)
-        last_etag = state.get_etag_for_request(hard_refresh)
+        # Load state and determine if hard refresh needed
+        current_etag = load_current_etag(self.paths.current_etag_file)
+        last_refresh = load_last_hard_refresh(self.paths.last_hard_refresh_file)
+        hard_refresh = should_hard_refresh(last_refresh, self.config.hard_refresh_interval)
+
+        # Use special ETag for hard refresh to force re-download
+        last_etag = SPECIAL_ETAG_NONE if hard_refresh else current_etag
 
         try:
             download = download_release(self.config, self.paths, last_etag)
-        except NotModified as skip:
+        except (NotModified, HashUnchanged) as skip:
             logger.info("Skipping run: %s", skip)
             if hard_refresh:
-                state.save_hard_refresh(self.paths.last_hard_refresh_file)
+                save_hard_refresh(self.paths.last_hard_refresh_file)
             return
-        except HashUnchanged as skip:
-            logger.info("Skipping run: %s", skip)
-            if hard_refresh:
-                state.save_hard_refresh(self.paths.last_hard_refresh_file)
-            return
-        except DecompressionFailed as skip:
-            logger.warning("Skipping run due to decompression failure: %s", skip)
-            if hard_refresh:
-                state.save_hard_refresh(self.paths.last_hard_refresh_file)
-            return
-        except RecordCountMismatch as skip:
-            logger.warning("Skipping run due to validation issue: %s", skip)
+        except (DecompressionFailed, RecordCountMismatch) as skip:
+            logger.warning("Skipping run: %s", skip)
+            if hard_refresh and isinstance(skip, DecompressionFailed):
+                save_hard_refresh(self.paths.last_hard_refresh_file)
             return
 
         try:
             update_lineage_definitions(download.pipeline_versions, self.config, self.paths)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
-            self._delete_new_input(download)
+            safe_remove(self.paths.silo_input_data_path)
+            safe_remove(download.directory)
             raise
 
-        self._prepare_silo_input(download)
+        # Prepare input for SILO
+        safe_remove(self.paths.silo_input_data_path)
+        shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
 
         run_id = str(int(time.time()))
         self.sentinels.request_run(run_id)
@@ -67,38 +73,27 @@ class ImporterRunner:
         except Exception:
             logger.exception("SILO preprocessing failed; cleaning up input")
             self.sentinels.clear_pending()
-            self._delete_new_input(download)
+            safe_remove(self.paths.silo_input_data_path)
+            safe_remove(download.directory)
             raise
 
-        self._mark_processing_complete(download)
-        state = state.save_etag(self.paths.current_etag_file, download.etag)
+        # Mark success and save state
+        if download.processing_flag.exists():
+            download.processing_flag.unlink()
+        save_etag(self.paths.current_etag_file, download.etag)
 
         if hard_refresh:
-            state = state.save_hard_refresh(self.paths.last_hard_refresh_file)
+            save_hard_refresh(self.paths.last_hard_refresh_file)
 
         logger.info("Run complete; waiting %s seconds", self.config.poll_interval)
 
-    def _delete_new_input(self, download: DownloadResult) -> None:
-        safe_remove(self.paths.silo_input_data_path)
-        safe_remove(download.directory)
-
-    def _prepare_silo_input(self, download: DownloadResult) -> None:
-        safe_remove(self.paths.silo_input_data_path)
-        shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
-
-    def _mark_processing_complete(self, download: DownloadResult) -> None:
-        if download.processing_flag.exists():
-            download.processing_flag.unlink()
-
 
 def run_forever(config: ImporterConfig, paths: ImporterPaths) -> None:
+    """Run the importer in an infinite loop."""
     runner = ImporterRunner(config, paths)
     while True:
         try:
             runner.run_once()
-        except SkipRun:
-            # SkipRun should already be handled; this is defensive
-            logger.info("Run skipped")
         except Exception:
             logger.exception("SILO import cycle failed")
         time.sleep(config.poll_interval)

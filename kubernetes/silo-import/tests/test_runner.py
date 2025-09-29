@@ -9,10 +9,10 @@ import pytest
 
 from silo_import import lineage
 from silo_import.config import ImporterConfig
+from silo_import.file_io import read_text, write_text
 from silo_import.http_client import HttpClient, HttpResponse
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
-from silo_import.utils import read_text, write_text
 
 from .helpers import CurlResponse, compress_ndjson, read_ndjson_file
 
@@ -92,14 +92,14 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ]
     mock_client = MockHttpClient(responses)
 
-    # Monkeypatch the download manager to use our mock client
+    # Monkeypatch download_manager to pass our mock client
     from silo_import import download_manager
-    original_init = download_manager.DownloadManager.__init__
+    original_download = download_manager.download_release
 
-    def patched_init(self, config, paths, http_client=None):
-        original_init(self, config, paths, http_client=mock_client)
+    def patched_download(config, paths, last_etag, http_client=None):
+        return original_download(config, paths, last_etag, http_client=mock_client)
 
-    monkeypatch.setattr(download_manager.DownloadManager, "__init__", patched_init)
+    monkeypatch.setattr(download_manager, "download_release", patched_download)
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
@@ -142,12 +142,12 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
     mock_client = MockHttpClient(responses)
 
     from silo_import import download_manager
-    original_init = download_manager.DownloadManager.__init__
+    original_download = download_manager.download_release
 
-    def patched_init(self, config, paths, http_client=None):
-        original_init(self, config, paths, http_client=mock_client)
+    def patched_download(config, paths, last_etag, http_client=None):
+        return original_download(config, paths, last_etag, http_client=mock_client)
 
-    monkeypatch.setattr(download_manager.DownloadManager, "__init__", patched_init)
+    monkeypatch.setattr(download_manager, "download_release", patched_download)
 
     runner = ImporterRunner(config, paths)
     runner.run_once()
@@ -180,12 +180,12 @@ def test_runner_skips_on_hash_match_updates_etag(tmp_path: Path, monkeypatch: py
     mock_client = MockHttpClient(responses)
 
     from silo_import import download_manager
-    original_init = download_manager.DownloadManager.__init__
+    original_download = download_manager.download_release
 
-    def patched_init(self, config, paths, http_client=None):
-        original_init(self, config, paths, http_client=mock_client)
+    def patched_download(config, paths, last_etag, http_client=None):
+        return original_download(config, paths, last_etag, http_client=mock_client)
 
-    monkeypatch.setattr(download_manager.DownloadManager, "__init__", patched_init)
+    monkeypatch.setattr(download_manager, "download_release", patched_download)
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
@@ -221,12 +221,12 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest
     mock_client = MockHttpClient(responses)
 
     from silo_import import download_manager
-    original_init = download_manager.DownloadManager.__init__
+    original_download = download_manager.download_release
 
-    def patched_init(self, config, paths, http_client=None):
-        original_init(self, config, paths, http_client=mock_client)
+    def patched_download(config, paths, last_etag, http_client=None):
+        return original_download(config, paths, last_etag, http_client=mock_client)
 
-    monkeypatch.setattr(download_manager.DownloadManager, "__init__", patched_init)
+    monkeypatch.setattr(download_manager, "download_release", patched_download)
 
     runner = ImporterRunner(config, paths)
     runner.run_once()
@@ -254,12 +254,12 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
     mock_client = MockHttpClient(responses)
 
     from silo_import import download_manager
-    original_init = download_manager.DownloadManager.__init__
+    original_download = download_manager.download_release
 
-    def patched_init(self, config, paths, http_client=None):
-        original_init(self, config, paths, http_client=mock_client)
+    def patched_download(config, paths, last_etag, http_client=None):
+        return original_download(config, paths, last_etag, http_client=mock_client)
 
-    monkeypatch.setattr(download_manager.DownloadManager, "__init__", patched_init)
+    monkeypatch.setattr(download_manager, "download_release", patched_download)
 
     runner = ImporterRunner(config, paths)
     write_text(paths.current_etag_file, "W/\"old\"")

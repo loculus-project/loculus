@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from silo_import.file_io import write_text
 from silo_import.sentinels import SentinelManager
-from silo_import.utils import write_text
 
 
 def test_sentinel_roundtrip(tmp_path: Path) -> None:
