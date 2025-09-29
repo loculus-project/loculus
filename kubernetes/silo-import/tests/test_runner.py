@@ -9,37 +9,22 @@ import pytest
 
 from silo_import import lineage
 from silo_import.config import ImporterConfig
+from silo_import.download_manager import HttpResponse
 from silo_import.file_io import read_text, write_text
-from silo_import.http_client import HttpClient, HttpResponse
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
 from .helpers import CurlResponse, compress_ndjson, read_ndjson_file
 
 
-class MockHttpClient:
-    """Mock HTTP client for testing."""
+def make_mock_download_func(responses: list[CurlResponse]):
+    """Create a mock download function for testing."""
+    responses_copy = list(responses)
 
-    def __init__(self, responses: list[CurlResponse]) -> None:
-        self.responses = responses
-
-    def get(
-        self,
-        url: str,
-        output_path: Path,
-        header_path: Path,
-        etag: Optional[str] = None,
-    ) -> HttpResponse:
-        if not self.responses:
+    def mock_download(url: str, output_path: Path, etag: Optional[str] = None, timeout: int = 300) -> HttpResponse:
+        if not responses_copy:
             raise AssertionError("No fake HTTP responses remaining")
-        response = self.responses.pop(0)
-
-        # Write header file
-        header_lines = [f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"]
-        for key, value in (response.headers or {}).items():
-            header_lines.append(f"{key}: {value}")
-        header_lines.append("")
-        header_path.write_text("\n".join(header_lines), encoding="utf-8")
+        response = responses_copy.pop(0)
 
         # Write body file
         output_path.write_bytes(response.body or b"")
@@ -47,7 +32,9 @@ class MockHttpClient:
         # Parse headers for response
         headers = {k.lower(): v for k, v in (response.headers or {}).items()}
 
-        return HttpResponse(status_code=response.status, headers=headers, body_path=output_path)
+        return HttpResponse(status_code=response.status, headers=headers)
+
+    return mock_download, responses_copy
 
 
 def _ack_on_success(paths: ImporterPaths, timeout: float = 5.0) -> threading.Thread:
@@ -90,15 +77,14 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             body=body,
         )
     ]
-    mock_client = MockHttpClient(responses)
+    mock_download, responses_list = make_mock_download_func(responses)
 
-    # Monkeypatch DownloadManager to use mock client
     from silo_import.download_manager import DownloadManager
 
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(http_client=mock_client)
+    runner.download_manager = DownloadManager(download_func=mock_download)
     ack_thread = _ack_on_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
@@ -117,7 +103,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert len(input_dirs) == 1
     assert not (input_dirs[0] / "processing").exists()
 
-    assert not mock_client.responses
+    assert not responses_list
 
 
 def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -135,18 +121,18 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
     write_text(paths.last_hard_refresh_file, str(int(time.time())))
 
     responses = [CurlResponse(status=304, headers={})]
-    mock_client = MockHttpClient(responses)
+    mock_download, responses_list = make_mock_download_func(responses)
 
     from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(http_client=mock_client)
+    runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
     assert not paths.run_sentinel.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert read_text(paths.current_etag_file) == "W/\"old\""
-    assert not mock_client.responses
+    assert not responses_list
 
 
 def test_runner_skips_on_hash_match_updates_etag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -168,14 +154,14 @@ def test_runner_skips_on_hash_match_updates_etag(tmp_path: Path, monkeypatch: py
         CurlResponse(status=200, headers={"ETag": "W/\"111\"", "x-total-records": "1"}, body=body),
         CurlResponse(status=200, headers={"ETag": "W/\"222\"", "x-total-records": "1"}, body=body),
     ]
-    mock_client = MockHttpClient(responses)
+    mock_download, responses_list = make_mock_download_func(responses)
 
     from silo_import.download_manager import DownloadManager
 
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(http_client=mock_client)
+    runner.download_manager = DownloadManager(download_func=mock_download)
     ack_thread = _ack_on_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
@@ -185,7 +171,7 @@ def test_runner_skips_on_hash_match_updates_etag(tmp_path: Path, monkeypatch: py
     assert read_text(paths.current_etag_file) == "W/\"222\""
     dirs_after = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(dirs_after) == 1
-    assert not mock_client.responses
+    assert not responses_list
 
 
 def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -205,17 +191,17 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest
     responses = [
         CurlResponse(status=200, headers={"ETag": "W/\"999\"", "x-total-records": "5"}, body=body)
     ]
-    mock_client = MockHttpClient(responses)
+    mock_download, responses_list = make_mock_download_func(responses)
 
     from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(http_client=mock_client)
+    runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
     assert not paths.run_sentinel.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert not mock_client.responses
+    assert not responses_list
 
 
 def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -233,12 +219,12 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
     responses = [
         CurlResponse(status=200, headers={"ETag": "W/\"bad\"", "x-total-records": "1"}, body=b"not-zstd"),
     ]
-    mock_client = MockHttpClient(responses)
+    mock_download, responses_list = make_mock_download_func(responses)
 
     from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(http_client=mock_client)
+    runner.download_manager = DownloadManager(download_func=mock_download)
     write_text(paths.current_etag_file, "W/\"old\"")
 
     runner.run_once()
@@ -246,4 +232,4 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
     assert not paths.run_sentinel.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert read_text(paths.current_etag_file) == "0"
-    assert not mock_client.responses
+    assert not responses_list

@@ -6,12 +6,13 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Set
+from typing import Callable, Optional, Set
+
+import requests
 
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
-    HEADER_FILENAME,
     PROCESSING_FLAG_FILENAME,
     SPECIAL_ETAG_NONE,
 )
@@ -19,12 +20,19 @@ from .decompressor import analyze_ndjson
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
-from .http_client import HttpClient, RequestsHttpClient
 from .paths import ImporterPaths
 from .state import save_etag
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class HttpResponse:
+    """Response from an HTTP request."""
+
+    status_code: int
+    headers: dict[str, str]
 
 
 @dataclass
@@ -38,11 +46,60 @@ class DownloadResult:
     pipeline_versions: Set[str]
 
 
+def _download_file(
+    url: str,
+    output_path: Path,
+    etag: Optional[str] = None,
+    timeout: int = 300,
+) -> HttpResponse:
+    """
+    Download a file using requests.
+
+    Args:
+        url: URL to download from
+        output_path: Where to save the response body
+        etag: Optional ETag for conditional request
+        timeout: Request timeout in seconds
+
+    Returns:
+        HttpResponse with status code and headers
+
+    Raises:
+        RuntimeError: If the download fails
+    """
+    headers = {}
+    if etag and etag != "0":
+        headers["If-None-Match"] = etag
+
+    try:
+        session = requests.Session()
+        session.headers.update(headers)
+        response = session.get(url, timeout=timeout, stream=True)
+
+        # Write response body to file (raw, no automatic decompression)
+        with output_path.open("wb") as f:
+            for chunk in response.raw.stream(8192, decode_content=False):
+                if chunk:
+                    f.write(chunk)
+
+        # Normalize headers to lowercase keys
+        normalized_headers = {k.lower(): v for k, v in response.headers.items()}
+
+        return HttpResponse(status_code=response.status_code, headers=normalized_headers)
+
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Failed to download from {url}: {exc}") from exc
+
+
+# Type for download function (allows test mocking)
+DownloadFunc = Callable[[str, Path, Optional[str], int], HttpResponse]
+
+
 class DownloadManager:
     """Manages downloading and validating data releases."""
 
-    def __init__(self, http_client: Optional[HttpClient] = None) -> None:
-        self.http_client = http_client or RequestsHttpClient()
+    def __init__(self, download_func: Optional[DownloadFunc] = None) -> None:
+        self.download_func = download_func or _download_file
 
     def download_release(
         self,
@@ -77,11 +134,11 @@ class DownloadManager:
         try:
             # Download data from backend
             logger.info("Requesting released data from %s", config.released_data_endpoint)
-            response = self.http_client.get(
-                url=config.released_data_endpoint,
-                output_path=data_path,
-                header_path=download_dir / HEADER_FILENAME,
-                etag=last_etag,
+            response = self.download_func(
+                config.released_data_endpoint,
+                data_path,
+                last_etag,
+                300,
             )
 
             # Check for 304 Not Modified
