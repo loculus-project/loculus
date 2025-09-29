@@ -166,6 +166,7 @@ class SubmissionDatabaseService(
             where se.organism = ?
                 and sep.pipeline_version = ?
                 and sep.processing_status = ?
+                and se.released_at is not null
             """
                 .trimIndent()
 
