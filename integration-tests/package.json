@@ -10,7 +10,7 @@
     "devDependencies": {
         "@eslint/js": "^9.36.0",
         "@lokalise/xlsx": "^0.20.3",
-        "@playwright/test": "^1.55.0",
+        "@playwright/test": "^1.55.1",
         "@types/node": "^24.5.2",
         "@types/papaparse": "^5.3.16",
         "@types/uuid": "^10.0.0",
