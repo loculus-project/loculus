@@ -92,17 +92,13 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ]
     mock_client = MockHttpClient(responses)
 
-    # Monkeypatch download_manager to pass our mock client
-    from silo_import import download_manager
-    original_download = download_manager.download_release
+    # Monkeypatch DownloadManager to use mock client
+    from silo_import.download_manager import DownloadManager
 
-    def patched_download(config, paths, last_etag, http_client=None):
-        return original_download(config, paths, last_etag, http_client=mock_client)
-
-    monkeypatch.setattr(download_manager, "download_release", patched_download)
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(http_client=mock_client)
     ack_thread = _ack_on_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
@@ -141,15 +137,10 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
     responses = [CurlResponse(status=304, headers={})]
     mock_client = MockHttpClient(responses)
 
-    from silo_import import download_manager
-    original_download = download_manager.download_release
-
-    def patched_download(config, paths, last_etag, http_client=None):
-        return original_download(config, paths, last_etag, http_client=mock_client)
-
-    monkeypatch.setattr(download_manager, "download_release", patched_download)
+    from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(http_client=mock_client)
     runner.run_once()
 
     assert not paths.run_sentinel.exists()
@@ -179,16 +170,12 @@ def test_runner_skips_on_hash_match_updates_etag(tmp_path: Path, monkeypatch: py
     ]
     mock_client = MockHttpClient(responses)
 
-    from silo_import import download_manager
-    original_download = download_manager.download_release
+    from silo_import.download_manager import DownloadManager
 
-    def patched_download(config, paths, last_etag, http_client=None):
-        return original_download(config, paths, last_etag, http_client=mock_client)
-
-    monkeypatch.setattr(download_manager, "download_release", patched_download)
     monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data"))
 
     runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(http_client=mock_client)
     ack_thread = _ack_on_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
@@ -220,15 +207,10 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest
     ]
     mock_client = MockHttpClient(responses)
 
-    from silo_import import download_manager
-    original_download = download_manager.download_release
-
-    def patched_download(config, paths, last_etag, http_client=None):
-        return original_download(config, paths, last_etag, http_client=mock_client)
-
-    monkeypatch.setattr(download_manager, "download_release", patched_download)
+    from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(http_client=mock_client)
     runner.run_once()
 
     assert not paths.run_sentinel.exists()
@@ -253,15 +235,10 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
     ]
     mock_client = MockHttpClient(responses)
 
-    from silo_import import download_manager
-    original_download = download_manager.download_release
-
-    def patched_download(config, paths, last_etag, http_client=None):
-        return original_download(config, paths, last_etag, http_client=mock_client)
-
-    monkeypatch.setattr(download_manager, "download_release", patched_download)
+    from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(http_client=mock_client)
     write_text(paths.current_etag_file, "W/\"old\"")
 
     runner.run_once()

@@ -11,7 +11,6 @@ from typing import Optional, Set
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
-    ETAG_FILENAME,
     HEADER_FILENAME,
     PROCESSING_FLAG_FILENAME,
     SPECIAL_ETAG_NONE,
@@ -39,109 +38,111 @@ class DownloadResult:
     pipeline_versions: Set[str]
 
 
-def download_release(
-    config: ImporterConfig,
-    paths: ImporterPaths,
-    last_etag: str,
-    http_client: Optional[HttpClient] = None,
-) -> DownloadResult:
-    """
-    Download and validate a data release from the backend.
+class DownloadManager:
+    """Manages downloading and validating data releases."""
 
-    Args:
-        config: Importer configuration
-        paths: Importer paths
-        last_etag: ETag from previous download for conditional request
-        http_client: Optional HTTP client (defaults to CurlHttpClient)
+    def __init__(self, http_client: Optional[HttpClient] = None) -> None:
+        self.http_client = http_client or CurlHttpClient()
 
-    Returns:
-        DownloadResult with paths and metadata
+    def download_release(
+        self,
+        config: ImporterConfig,
+        paths: ImporterPaths,
+        last_etag: str,
+    ) -> DownloadResult:
+        """
+        Download and validate a data release from the backend.
 
-    Raises:
-        NotModified: Backend returned 304 (no new data)
-        HashUnchanged: Downloaded data matches previous hash
-        DecompressionFailed: Could not decompress downloaded data
-        RecordCountMismatch: Record count doesn't match header
-        RuntimeError: Other download or validation errors
-    """
-    if http_client is None:
-        http_client = CurlHttpClient()
+        Args:
+            config: Importer configuration
+            paths: Importer paths
+            last_etag: ETag from previous download for conditional request
 
-    # Create timestamped directory for this download
-    download_dir = _create_download_directory(paths.input_dir)
-    data_path = download_dir / DATA_FILENAME
-    processing_flag = download_dir / PROCESSING_FLAG_FILENAME
-    processing_flag.touch()
+        Returns:
+            DownloadResult with paths and metadata
 
-    try:
-        # Download data from backend
-        logger.info("Requesting released data from %s", config.released_data_endpoint)
-        response = http_client.get(
-            url=config.released_data_endpoint,
-            output_path=data_path,
-            header_path=download_dir / HEADER_FILENAME,
-            etag=last_etag,
-        )
+        Raises:
+            NotModified: Backend returned 304 (no new data)
+            HashUnchanged: Downloaded data matches previous hash
+            DecompressionFailed: Could not decompress downloaded data
+            RecordCountMismatch: Record count doesn't match header
+            RuntimeError: Other download or validation errors
+        """
+        # Create timestamped directory for this download
+        download_dir = _create_download_directory(paths.input_dir)
+        data_path = download_dir / DATA_FILENAME
+        processing_flag = download_dir / PROCESSING_FLAG_FILENAME
+        processing_flag.touch()
 
-        # Check for 304 Not Modified
-        if response.status_code == 304:
-            logger.info("Backend returned 304 Not Modified; skipping import")
-            safe_remove(download_dir)
-            raise NotModified("Backend state unchanged")
-
-        # Extract and validate ETag
-        etag_value = response.headers.get("etag")
-        if not etag_value:
-            safe_remove(download_dir)
-            raise RuntimeError("Response did not contain an ETag header")
-
-        # Parse expected record count from header
-        expected_count = parse_int_header(response.headers.get("x-total-records"))
-
-        # Decompress and analyze the data
         try:
-            analysis = analyze_ndjson(data_path)
-        except RuntimeError as exc:
-            logger.warning(
-                "Failed to decompress %s (size=%s bytes): %s",
-                data_path,
-                data_path.stat().st_size if data_path.exists() else "missing",
-                exc,
+            # Download data from backend
+            logger.info("Requesting released data from %s", config.released_data_endpoint)
+            response = self.http_client.get(
+                url=config.released_data_endpoint,
+                output_path=data_path,
+                header_path=download_dir / HEADER_FILENAME,
+                etag=last_etag,
             )
-            save_etag(paths.current_etag_file, SPECIAL_ETAG_NONE)
+
+            # Check for 304 Not Modified
+            if response.status_code == 304:
+                logger.info("Backend returned 304 Not Modified; skipping import")
+                safe_remove(download_dir)
+                raise NotModified("Backend state unchanged")
+
+            # Extract and validate ETag
+            etag_value = response.headers.get("etag")
+            if not etag_value:
+                safe_remove(download_dir)
+                raise RuntimeError("Response did not contain an ETag header")
+
+            # Parse expected record count from header
+            expected_count = parse_int_header(response.headers.get("x-total-records"))
+
+            # Decompress and analyze the data
+            try:
+                analysis = analyze_ndjson(data_path)
+            except RuntimeError as exc:
+                logger.warning(
+                    "Failed to decompress %s (size=%s bytes): %s",
+                    data_path,
+                    data_path.stat().st_size if data_path.exists() else "missing",
+                    exc,
+                )
+                save_etag(paths.current_etag_file, SPECIAL_ETAG_NONE)
+                safe_remove(download_dir)
+                raise DecompressionFailed(f"decompression failed ({exc})") from exc
+
+            logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
+
+            # Validate record count
+            try:
+                validate_record_count(analysis.record_count, expected_count)
+            except RecordCountValidationError:
+                safe_remove(download_dir)
+                raise RecordCountMismatch("record count mismatch")
+
+            # Check against previous download to avoid reprocessing
+            _handle_previous_directory(paths, download_dir, data_path, etag_value)
+
+            # Prune old directories
+            prune_timestamped_directories(paths.input_dir)
+
+            return DownloadResult(
+                directory=download_dir,
+                data_path=data_path,
+                processing_flag=processing_flag,
+                etag=etag_value,
+                pipeline_versions=analysis.pipeline_versions,
+            )
+
+        except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
+            # Re-raise these as they're expected skip conditions
+            raise
+        except Exception:
+            # Clean up on unexpected errors
             safe_remove(download_dir)
-            raise DecompressionFailed(f"decompression failed ({exc})") from exc
-
-        logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
-
-        # Validate record count
-        try:
-            validate_record_count(analysis.record_count, expected_count)
-        except RecordCountValidationError:
-            safe_remove(download_dir)
-            raise RecordCountMismatch("record count mismatch")
-
-        # Check against previous download to avoid reprocessing
-        _handle_previous_directory(paths, download_dir, data_path, etag_value)
-
-        # Prune old directories
-        prune_timestamped_directories(paths.input_dir)
-
-        return DownloadResult(
-            directory=download_dir,
-            data_path=data_path,
-            processing_flag=processing_flag,
-            etag=etag_value,
-            pipeline_versions=analysis.pipeline_versions,
-        )
-
-    except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
-        # Re-raise these as they're expected skip conditions
-        raise
-    except Exception:
-        # Clean up on unexpected errors
-        safe_remove(download_dir)
-        raise
+            raise
 
 
 def _create_download_directory(input_dir: Path) -> Path:

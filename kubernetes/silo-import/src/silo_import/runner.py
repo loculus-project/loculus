@@ -6,7 +6,7 @@ import time
 
 from .config import ImporterConfig
 from .constants import SPECIAL_ETAG_NONE
-from .download_manager import DownloadResult, download_release
+from .download_manager import DownloadManager
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .filesystem import prune_timestamped_directories, safe_remove
 from .lineage import update_lineage_definitions
@@ -29,6 +29,7 @@ class ImporterRunner:
         self.paths = paths
         self.paths.ensure_directories()
         self.sentinels = SentinelManager(paths.run_sentinel, paths.done_sentinel)
+        self.download_manager = DownloadManager()
 
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
@@ -42,7 +43,7 @@ class ImporterRunner:
         last_etag = SPECIAL_ETAG_NONE if hard_refresh else current_etag
 
         try:
-            download = download_release(self.config, self.paths, last_etag)
+            download = self.download_manager.download_release(self.config, self.paths, last_etag)
         except (NotModified, HashUnchanged) as skip:
             logger.info("Skipping run: %s", skip)
             if hard_refresh:
