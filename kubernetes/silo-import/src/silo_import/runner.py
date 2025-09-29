@@ -9,9 +9,9 @@ from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
 from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
 from .filesystem import prune_timestamped_directories, safe_remove
+from .instruct_silo import SiloInstructor
 from .lineage import update_lineage_definitions
 from .paths import ImporterPaths
-from .sentinels import SentinelManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class ImporterRunner:
         self.config = config
         self.paths = paths
         self.paths.ensure_directories()
-        self.sentinels = SentinelManager(paths.run_sentinel, paths.done_sentinel)
+        self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh = 0
@@ -65,12 +65,12 @@ class ImporterRunner:
         shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
 
         run_id = str(int(time.time()))
-        self.sentinels.request_run(run_id)
+        self.silo.request_run(run_id)
         try:
-            self.sentinels.wait_for_completion(run_id, self.config.silo_run_timeout)
+            self.silo.wait_for_completion(run_id, self.config.silo_run_timeout)
         except Exception:
             logger.exception("SILO preprocessing failed; cleaning up input")
-            self.sentinels.clear_pending()
+            self.silo.clear_pending()
             safe_remove(self.paths.silo_input_data_path)
             safe_remove(download.directory)
             raise

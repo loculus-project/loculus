@@ -11,8 +11,8 @@ class ImporterPaths:
     output_dir: Path
     lineage_definition_file: Path
     silo_input_data_path: Path
-    run_sentinel: Path
-    done_sentinel: Path
+    run_silo: Path
+    silo_done: Path
 
     @classmethod
     def from_root(cls, root: Path) -> "ImporterPaths":
@@ -25,8 +25,8 @@ class ImporterPaths:
             output_dir=output_dir,
             lineage_definition_file=input_dir / "lineage_definitions.yaml",
             silo_input_data_path=input_dir / "data.ndjson.zst",
-            run_sentinel=input_dir / "run_silo",
-            done_sentinel=input_dir / "silo_done",
+            run_silo=input_dir / "run_silo",
+            silo_done=input_dir / "silo_done",
         )
 
     def ensure_directories(self) -> None:

@@ -41,15 +41,15 @@ def _ack_on_success(paths: ImporterPaths, timeout: float = 5.0) -> threading.Thr
     def _worker() -> None:
         deadline = time.time() + timeout
         while time.time() < deadline:
-            if paths.run_sentinel.exists():
-                content = paths.run_sentinel.read_text(encoding="utf-8").strip()
+            if paths.run_silo.exists():
+                content = paths.run_silo.read_text(encoding="utf-8").strip()
                 if content:
                     _, run_id = content.split("=", 1)
-                    paths.run_sentinel.unlink(missing_ok=True)
-                    write_text(paths.done_sentinel, f"run_id={run_id}\nstatus=success\n")
+                    paths.run_silo.unlink(missing_ok=True)
+                    write_text(paths.silo_done, f"run_id={run_id}\nstatus=success\n")
                     return
             time.sleep(0.01)
-        raise AssertionError("Timed out waiting for run sentinel")
+        raise AssertionError("Timed out waiting for run file")
 
     thread = threading.Thread(target=_worker, daemon=True)
     thread.start()
@@ -90,8 +90,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ack_thread.join(timeout=1)
     assert not ack_thread.is_alive()
 
-    assert not paths.run_sentinel.exists()
-    assert not paths.done_sentinel.exists()
+    assert not paths.run_silo.exists()
+    assert not paths.silo_done.exists()
 
     records_out = read_ndjson_file(paths.silo_input_data_path)
     assert records_out == records
@@ -129,7 +129,7 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
-    assert not paths.run_sentinel.exists()
+    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == "W/\"old\""
     assert not responses_list
@@ -199,7 +199,7 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path, monkeypatch: pytest
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
-    assert not paths.run_sentinel.exists()
+    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert not responses_list
 
@@ -229,7 +229,7 @@ def test_runner_cleans_up_on_decompress_failure(tmp_path: Path, monkeypatch: pyt
 
     runner.run_once()
 
-    assert not paths.run_sentinel.exists()
+    assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert runner.current_etag == "0"
     assert not responses_list
