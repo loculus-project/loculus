@@ -69,10 +69,10 @@ open class ReleasedDataModel(
     }
 
     @Transactional(readOnly = true)
-    open fun getReleasedDataETag(organism: Organism): String {
+    open fun getLatestFinishedProcessingAtForReleasedDataOfOrganismCurrentPipeline(organism: Organism): String {
         val pipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion(organism)
         val lastFinishedProcessingAt =
-            submissionDatabaseService.getLatestFinishedProcessingAt(organism, pipelineVersion)
+            submissionDatabaseService.getLatestFinishedProcessingAtForReleasedData(organism, pipelineVersion)
         val lastFinishedProcessingAtFormatted = lastFinishedProcessingAt ?: ""
         val etagValue = "$pipelineVersion:$lastFinishedProcessingAtFormatted"
         return "\"$etagValue\""

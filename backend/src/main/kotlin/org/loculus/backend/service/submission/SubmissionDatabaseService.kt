@@ -154,7 +154,7 @@ class SubmissionDatabaseService(
             .first()
     }
 
-    fun getLatestFinishedProcessingAt(organism: Organism, pipelineVersion: Long): String? {
+    fun getLatestFinishedProcessingAtForReleasedData(organism: Organism, pipelineVersion: Long): String? {
         val sql =
             """
             select
