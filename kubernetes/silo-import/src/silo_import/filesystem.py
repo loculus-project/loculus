@@ -6,8 +6,6 @@ import logging
 import shutil
 from pathlib import Path
 
-from .constants import DEFAULT_KEEP_DIRECTORIES
-
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +30,7 @@ def safe_remove(path: Path) -> None:
         logger.warning("Failed to remove %s: %s", path, exc)
 
 
-def prune_timestamped_directories(directory: Path, keep: int = DEFAULT_KEEP_DIRECTORIES) -> None:
+def prune_timestamped_directories(directory: Path, keep: int = 1) -> None:
     """
     Remove old timestamped directories, keeping only the most recent ones.
 

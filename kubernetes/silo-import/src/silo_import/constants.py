@@ -8,9 +8,3 @@ SPECIAL_ETAG_NONE = "0"
 # File names for downloaded data
 DATA_FILENAME = "data.ndjson.zst"
 PROCESSING_FLAG_FILENAME = "processing"
-
-# Hash computation settings
-MD5_CHUNK_SIZE = 1024 * 1024  # 1MB chunks
-
-# Directory pruning settings
-DEFAULT_KEEP_DIRECTORIES = 1
