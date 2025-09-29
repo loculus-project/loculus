@@ -294,7 +294,7 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
 
 
 def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that interrupted runs are cleaned up and hash matching skips re-processing."""
+    """Test that download directories are cleaned on startup and hash matching still works."""
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={"1.0.0": "http://lineage"},
@@ -329,30 +329,29 @@ def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pyte
     assert len(input_dirs) == 1
     first_dir = input_dirs[0]
 
-    # Processing flag should be removed after successful run
-    assert not (first_dir / "processing").exists(), "Processing flag should be removed after success"
+    # Create a new runner (simulating restart) - this should clear all download directories
+    runner2 = ImporterRunner(config, paths)
 
-    # Manually create a processing flag to simulate an interrupted run
-    (first_dir / "processing").touch()
+    # Download directories should be cleared on startup
+    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(input_dirs) == 0, "Download directories should be cleared on startup"
 
     # Second download with identical data (same hash) but new ETag
-    # Should clean up the incomplete first directory and detect hash match with cleaned-up dir
     responses_r2 = [
         MockHttpResponse(status=200, headers={"ETag": 'W/"v2"', "x-total-records": "1"}, body=body)
     ]
     mock_download_r2, _ = make_mock_download_func(responses_r2)
-    runner.download_manager = DownloadManager(download_func=mock_download_r2)
+    runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    # The processing flag causes the old dir to be deleted before hash comparison
-    # So it won't find a hash match and will proceed with SILO run
+    # Since there's no previous directory (cleared on startup), it will proceed with SILO run
     ack_thread_r2 = ack_on_success(paths)
-    runner.run_once()
+    runner2.run_once()
     ack_thread_r2.join(timeout=2)
 
     # ETag should be updated
-    assert runner.current_etag == 'W/"v2"', "ETag should be updated"
+    assert runner2.current_etag == 'W/"v2"', "ETag should be updated"
 
-    # Old incomplete directory should be gone, new one should exist
+    # New directory should exist
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert len(input_dirs) == 1, "Should have one directory after cleaning up incomplete one"
+    assert len(input_dirs) == 1, "Should have one directory after successful run"
     assert input_dirs[0] != first_dir, "Should be a new directory"

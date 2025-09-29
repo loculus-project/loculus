@@ -21,10 +21,20 @@ class ImporterRunner:
         self.config = config
         self.paths = paths
         self.paths.ensure_directories()
+        self._clear_download_directories()
         self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh = 0
+
+    def _clear_download_directories(self) -> None:
+        """Clear all timestamped download directories on startup."""
+        if not self.paths.input_dir.exists():
+            return
+        for item in self.paths.input_dir.iterdir():
+            if item.is_dir() and item.name.isdigit():
+                logger.info("Clearing download directory on startup: %s", item)
+                safe_remove(item)
 
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
@@ -76,8 +86,6 @@ class ImporterRunner:
             raise
 
         # Mark success and update state
-        if download.processing_flag.exists():
-            download.processing_flag.unlink()
         self.current_etag = download.etag
 
         if hard_refresh:

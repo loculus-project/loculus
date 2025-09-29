@@ -13,7 +13,6 @@ import requests
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
-    PROCESSING_FLAG_FILENAME,
     SPECIAL_ETAG_NONE,
 )
 from .decompressor import analyze_ndjson
@@ -40,7 +39,6 @@ class DownloadResult:
 
     directory: Path
     data_path: Path
-    processing_flag: Path
     etag: str
     pipeline_versions: Set[str]
 
@@ -127,8 +125,6 @@ class DownloadManager:
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
         data_path = download_dir / DATA_FILENAME
-        processing_flag = download_dir / PROCESSING_FLAG_FILENAME
-        processing_flag.touch()
 
         try:
             # Download data from backend
@@ -186,7 +182,6 @@ class DownloadManager:
             return DownloadResult(
                 directory=download_dir,
                 data_path=data_path,
-                processing_flag=processing_flag,
                 etag=etag_value,
                 pipeline_versions=analysis.pipeline_versions,
             )
@@ -229,14 +224,7 @@ def _handle_previous_directory(
     previous_dirs.sort(key=lambda item: int(item.name))
     previous_dir = previous_dirs[-1]
 
-    processing_flag = previous_dir / PROCESSING_FLAG_FILENAME
     previous_data_path = previous_dir / DATA_FILENAME
-
-    # Clean up incomplete previous download
-    if processing_flag.exists():
-        logger.warning("Previous input directory %s was incomplete; deleting", previous_dir)
-        safe_remove(previous_dir)
-        return
 
     # Clean up previous directory with no data
     if not previous_data_path.exists():
