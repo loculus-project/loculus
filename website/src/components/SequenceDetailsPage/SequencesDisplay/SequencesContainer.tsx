@@ -11,7 +11,7 @@ import {
     isGeneSequence,
     isMultiSegmented,
     isUnalignedSequence,
-    type SequenceName,
+    type SegmentOrGeneInfo,
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
@@ -76,10 +76,10 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    nucleotideSegmentNames: SequenceName[];
+    nucleotideSegmentNames: SegmentOrGeneInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
-    genes: SequenceName[];
+    genes: SegmentOrGeneInfo[];
     isMultiSegmented: boolean;
 };
 
@@ -147,7 +147,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 };
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: SequenceName[];
+    nucleotideSegmentNames: SegmentOrGeneInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
@@ -233,7 +233,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 };
 
 type GeneDropdownProps = {
-    genes: SequenceName[];
+    genes: SegmentOrGeneInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
 };

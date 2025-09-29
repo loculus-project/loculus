@@ -4,15 +4,15 @@ import {
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-    type SequenceName,
+    type SegmentOrGeneInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export function getSequenceNames(
     referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema,
     suborganism: string,
 ): {
-    nucleotideSegmentNames: SequenceName[];
-    geneNames: SequenceName[];
+    nucleotideSegmentNames: SegmentOrGeneInfo[];
+    geneNames: SegmentOrGeneInfo[];
     isMultiSegmented: boolean;
 } {
     const { nucleotideSegmentNames, geneNames } = referenceGenomeSequenceNames[suborganism];

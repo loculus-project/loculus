@@ -14,7 +14,7 @@ import {
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-    type SequenceName,
+    type SegmentOrGeneInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
@@ -284,7 +284,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 function getSequenceNames(
     referenceGenomesSequenceNames: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
-): { nucleotideSequences: SequenceName[]; genes: SequenceName[]; useMultiSegmentEndpoint: boolean } {
+): { nucleotideSequences: SegmentOrGeneInfo[]; genes: SegmentOrGeneInfo[]; useMultiSegmentEndpoint: boolean } {
     if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {
         const { nucleotideSegmentNames, geneNames } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
         return {
