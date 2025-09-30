@@ -7,14 +7,16 @@ import {
     removeMutationQueries,
     intoMutationSearchParams,
 } from './mutation';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../types/referencesGenomes';
 
 describe('mutation', () => {
     describe('single segment', () => {
         const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
-            nucleotideSequences: ['main'],
-            genes: ['GENE1', 'GENE2'],
-            insdcAccessionFull: [],
+            [SINGLE_REFERENCE]: {
+                nucleotideSequences: ['main'],
+                genes: ['GENE1', 'GENE2'],
+                insdcAccessionFull: [],
+            },
         };
 
         it('parses a valid mutation string', () => {
@@ -37,9 +39,11 @@ describe('mutation', () => {
 
     describe('multi-segment', () => {
         const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
-            nucleotideSequences: ['SEQ1', 'SEQ2'],
-            genes: ['GENE1', 'GENE2'],
-            insdcAccessionFull: [],
+            [SINGLE_REFERENCE]: {
+                nucleotideSequences: ['SEQ1', 'SEQ2'],
+                genes: ['GENE1', 'GENE2'],
+                insdcAccessionFull: [],
+            },
         };
 
         it('parses a valid mutation string', () => {

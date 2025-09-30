@@ -37,7 +37,7 @@ export const MultiChoiceAutoCompleteField = ({
     const MAX_VISIBLE_BADGES = 2;
 
     const hook = createOptionsProviderHook(optionsProvider);
-    const { options, isLoading: isOptionListLoading, error, load } = hook();
+    const { options, isPending: isOptionListPending, error, load } = hook();
 
     // Track selected values as a Set (NULL_QUERY_VALUE for nulls)
     const selectedValues = useMemo(() => new Set<string>(fieldValues.map((v) => v ?? NULL_QUERY_VALUE)), [fieldValues]);
@@ -172,7 +172,7 @@ export const MultiChoiceAutoCompleteField = ({
                             modal={false}
                             className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm min-h-32'
                         >
-                            {isOptionListLoading ? (
+                            {isOptionListPending ? (
                                 <div className='px-4 py-2 text-gray-500'>Loading...</div>
                             ) : filteredOptions.length === 0 ? (
                                 <div className='px-4 py-2 text-gray-500'>No options available</div>

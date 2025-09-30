@@ -7,9 +7,10 @@ import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 type ExportSeqSetProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
+    databaseName: string;
 };
 
-export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) => {
+export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, databaseName }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
     const [selectedCitation, setSelectedCitation] = useState(0);
@@ -64,20 +65,27 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     };
 
     const getBibtex = () => {
-        return `@online{${seqSet.name.replace(/\s/g, '_')},
-    author = {${seqSet.createdBy}},
-    title = {${seqSet.name}},
-    year = {${formatYear(seqSet.createdAt)}},
-    url = {${getSeqSetURL()}},${seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined ? '' : `\n\tdoi = {${seqSet.seqSetDOI}},`}
-}`;
+        const citationKey = (seqSet.seqSetDOI ?? `${seqSet.seqSetId}.${seqSet.seqSetVersion}`).replace(/[^\w]/g, '_');
+        const fields = [
+            `title = {SeqSet: ${seqSet.name}}`,
+            `journal = {${databaseName}}`,
+            `year = {${formatYear(seqSet.createdAt)}}`,
+            `url = {${getSeqSetURL()}}`,
+        ];
+
+        if (seqSet.seqSetDOI !== null && seqSet.seqSetDOI !== undefined) {
+            fields.push(`doi = {${seqSet.seqSetDOI}}`);
+        }
+
+        return `@dataset{${citationKey},\n\t${fields.join(',\n\t')}\n}`;
     };
 
     const getMLACitation = () => {
-        return `${seqSet.createdBy}. ${seqSet.name}, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
+        return `SeqSet: ${seqSet.name}. ${databaseName}, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
     };
 
     const getAPACitation = () => {
-        return `${seqSet.createdBy} (${formatYear(seqSet.createdAt)}). ${seqSet.name} (${seqSet.seqSetVersion}). ${getSeqSetURL()}`;
+        return `SeqSet: ${seqSet.name}. (${formatYear(seqSet.createdAt)}). ${databaseName}. ${getSeqSetURL()}`;
     };
 
     const getSelectedCitationText = () => {

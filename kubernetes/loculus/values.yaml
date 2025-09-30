@@ -56,12 +56,6 @@ lineageSystemDefinitions:
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
-    organismName: "Ebola Sudan"
-    image: "/images/organisms/ebolasudan_small.jpg"
-    linkOuts:
-      - name: "Nextclade"
-        maxNumberOfRecommendedEntries: 5
-        url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
     earliestReleaseDate:
       enabled: true
       externalFields:
@@ -1331,56 +1325,59 @@ defaultOrganismConfig: &defaultOrganismConfig
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
-    configFile: &ingestConfigFile
-      taxon_id: 3052460
-  enaDeposition:
-    configFile:
-      taxon_id: 186540
-      scientific_name: "Sudan ebolavirus"
-      molecule_type: "genomic RNA"
-  referenceGenomes:
-    singleReference:
-      nucleotideSequences:
-        - name: "main"
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
-          insdcAccessionFull: NC_002549.1
-      genes:
-        - name: NP
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
-        - name: VP35
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
-        - name: VP40
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
-        - name: GP
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
-        - name: ssGP
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
-        - name: sGP
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
-        - name: VP30
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
-        - name: VP24
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
-        - name: L
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
 defaultOrganisms:
   ebola-sudan:
     <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "Ebola Sudan"
+      image: "/images/organisms/ebolasudan_small.jpg"
+      linkOuts:
+        - name: "Nextclade"
+          maxNumberOfRecommendedEntries: 5
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences+rich|fasta]}}&dataset-name=nextstrain/ebola/sudan&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
     preprocessing:
       - <<: *preprocessing
-        version: 1
-        configFile:
-          <<: *preprocessingConfigFile      
-          genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
-          nextclade_dataset_name: nextstrain/ebola/sudan
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-      - <<: *preprocessing
-        version: 2
+        version: [1, 2]
         configFile:
           <<: *preprocessingConfigFile
           genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_name: nextstrain/ebola/sudan
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+    ingest:
+      <<: *ingest
+      configFile:
+        taxon_id: 3052460
+    enaDeposition:
+      configFile:
+        taxon_id: 186540
+        scientific_name: "Sudan ebolavirus"
+        molecule_type: "genomic RNA"
+    referenceGenomes:
+      singleReference:
+        nucleotideSequences:
+          - name: "main"
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/reference.fasta]]"
+            insdcAccessionFull: NC_002549.1
+        genes:
+          - name: NP
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
+          - name: VP35
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
+          - name: VP40
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
+          - name: GP
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
+          - name: ssGP
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
+          - name: sGP
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
+          - name: VP30
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
+          - name: VP24
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
+          - name: L
+            sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
@@ -1745,7 +1742,6 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        <<: *ingestConfigFile
         taxon_id: 3052518
         segment_identification:
           method: "align"
@@ -1776,7 +1772,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
-    enabled: false
+    enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
@@ -1847,6 +1843,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+        suborganismIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1858,7 +1855,6 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        <<: *ingestConfigFile
         taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
         segment_identification:
           method: "minimizer"
@@ -1989,7 +1985,7 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "v0.7.10.1@sha256:96e431192d6493ed71ac10bc273710df21e7c520a77bebaa7d94ff859264d36c"
+    tag: "v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"

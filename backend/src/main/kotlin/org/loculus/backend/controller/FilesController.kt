@@ -120,10 +120,7 @@ class FilesController(
         @RequestParam
         numberFiles: Int = 1,
     ): List<FileIdAndWriteUrl> {
-        filesPreconditionValidator.apply {
-            validateGroupExists(groupId)
-            validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
-        }
+        filesPreconditionValidator.validateUserIsAllowedToUploadFileForGroup(groupId, authenticatedUser)
         val response = mutableListOf<FileIdAndWriteUrl>()
         if (numberFiles < 1) {
             throw BadRequestException("Number of files must be at least 1")

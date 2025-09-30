@@ -98,6 +98,8 @@ class RequestUploadEndpointTest(
         val nonExistentGroupId = -1
         client.requestUploads(groupId = nonExistentGroupId, numberFiles = 1)
             .andExpect(status().isNotFound)
+        client.requestUploads(groupId = nonExistentGroupId, numberFiles = 1, jwt = jwtForProcessingPipeline)
+            .andExpect(status().isNotFound)
     }
 
     @Test

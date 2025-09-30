@@ -92,6 +92,7 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
                                 }}
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 isAdminView={seqSet.createdBy === username}
+                                databaseName={websiteConfig.name}
                                 client:only='react'
                             />
                         ) : (
