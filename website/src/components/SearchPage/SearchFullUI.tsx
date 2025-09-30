@@ -10,6 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
@@ -122,6 +123,14 @@ export const InnerSearchFullUI = ({
         setState,
         'boolean',
         (value) => !value,
+    );
+    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
+        schema.suborganismIdentifierField ?? '',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => value === null,
     );
 
     const searchVisibilities = useMemo(() => {
@@ -358,6 +367,10 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
+    const showMutationSearch =
+        schema.submissionDataTypes.consensusSequences &&
+        !stillRequiresSuborganismSelection(referenceGenomesSequenceNames, selectedSuborganism);
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <FieldSelectorModal
@@ -399,7 +412,10 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
-                    showMutationSearch={schema.submissionDataTypes.consensusSequences}
+                    showMutationSearch={showMutationSearch}
+                    suborganismIdentifierField={schema.suborganismIdentifierField}
+                    selectedSuborganism={selectedSuborganism}
+                    setSelectedSuborganism={setSelectedSuborganism}
                 />
             </div>
             <div
@@ -496,6 +512,8 @@ export const InnerSearchFullUI = ({
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
+                                selectedSuborganism={selectedSuborganism}
+                                suborganismIdentifierField={schema.suborganismIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActiveFilters } from './ActiveFilters';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../utils/search';
 import { FieldFilterSet, SequenceEntrySelection } from '../SearchPage/DownloadDialog/SequenceFilters';
 
@@ -20,7 +21,13 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1', mutations: 'A123T,G234C' },
                             {},
-                            { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
+                            {
+                                [SINGLE_REFERENCE]: {
+                                    nucleotideSequences: ['main'],
+                                    genes: [],
+                                    insdcAccessionFull: [],
+                                },
+                            },
                         )
                     }
                 />,
@@ -38,7 +45,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,
@@ -61,7 +68,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -84,7 +91,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,
@@ -104,7 +111,7 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
                         )
                     }
                 />,

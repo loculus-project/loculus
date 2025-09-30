@@ -1,12 +1,14 @@
 import type { FC, ReactElement } from 'react';
 
+export type OptionBlockOption = {
+    label: ReactElement;
+    subOptions?: ReactElement;
+};
+
 export type OptionBlockProps = {
     name: string;
     title?: string;
-    options: {
-        label: ReactElement;
-        subOptions?: ReactElement;
-    }[];
+    options: OptionBlockOption[];
     selected: number;
     onSelect: (index: number) => void;
     disabled?: boolean;
@@ -28,8 +30,10 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
                 <h4 className={variant === 'nested' ? 'text-sm font-normal' : 'font-bold'}>{title}</h4>
             )}
             {options.map((option, index) => (
-                <div key={index} className={disabled ? 'bg-gray-100' : ''}>
-                    <label className='label justify-start py-1 items-baseline'>
+                <div key={index} className={disabled ? 'bg-gray-100 cursor-not-allowed' : ''}>
+                    <label
+                        className={`label justify-start py-1 items-baseline ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
                         <input
                             type='radio'
                             name={name}
@@ -63,6 +67,7 @@ export const DropdownOptionBlock: FC<OptionBlockProps> = ({
         <div className='max-w-80'>
             <select
                 name={name}
+                title={title ?? name}
                 className='select select-bordered w-full max-w-xs min-h-0 h-auto py-0'
                 disabled={disabled}
                 value={selected}

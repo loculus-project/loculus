@@ -1,7 +1,6 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
 
-import type { SegmentedMutations } from '../../types/config';
-import type { MutationProportionCount } from '../../types/lapis';
+import type { MutationBadgeData, SegmentedMutations } from '../../types/config';
 
 export type SubProps = {
     position: number;
@@ -11,7 +10,7 @@ export type SubProps = {
 };
 
 export type Props = {
-    values: MutationProportionCount[];
+    values: MutationBadgeData[];
 };
 
 export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, sequenceName }) => {
