@@ -2,6 +2,7 @@
 import type { Organism } from '../../config';
 import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
 import { getSequenceRelatedItems } from '../../routes/navigationItems';
+import { SubmenuLink } from './SubmenuLink.tsx';
 
 interface Props {
     currentOrganism?: string;
@@ -26,31 +27,20 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                 <span class='text-gray-300 mr-2'>|</span>
                 {sequenceRelatedItems.map(({ text, path, icon }) => {
                     const Icon = icon;
-                    // Use startsWith to match path prefixes (e.g., /organism/search matches /organism/search/details)
                     const isActive = currentPath.startsWith(path);
                     return (
-                        <a
-                            href={path}
-                            class={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-sm transition-colors font-medium ${
-                                isActive ? 'bg-primary-100 text-gray-800' : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
+                        <SubmenuLink href={path} isActive={isActive}>
                             {Icon && <Icon className='w-4 h-4' />}
                             {text}
-                        </a>
+                        </SubmenuLink>
                     );
                 })}
                 {extraItems.map(({ text, path }) => {
                     const isActive = currentPath.startsWith(path);
                     return (
-                        <a
-                            href={path}
-                            class={`px-2.5 py-0.5 rounded text-sm transition-colors font-medium ${
-                                isActive ? 'bg-primary-100 text-gray-800' : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
+                        <SubmenuLink href={path} isActive={isActive}>
                             {text}
-                        </a>
+                        </SubmenuLink>
                     );
                 })}
             </div>

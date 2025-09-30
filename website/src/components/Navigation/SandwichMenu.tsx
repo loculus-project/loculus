@@ -28,66 +28,67 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
 
     return (
         <div className='relative'>
-            {!isOpen ? (
-                <button
-                    className='z-50 bg-transparent border-none cursor-pointer'
-                    onClick={toggleMenu}
-                    aria-label='Open main menu'
-                >
-                    <SandwichIcon isOpen={isOpen} />
-                </button>
-            ) : (
-                <OffCanvasOverlay onClick={closeMenu} />
-            )}
+            <button
+                className='relative z-50 p-2 -m-2'
+                onClick={toggleMenu}
+                aria-label='Open main menu'
+            >
+                <SandwichIcon isOpen={isOpen} />
+            </button>
+            {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
 
             <div
-                className={`fixed top-0 right-0 bg-white w-64 min-h-screen flex flex-col offCanvasTransform ${
+                className={`fixed top-0 right-0 z-50 w-64 min-h-screen bg-white flex flex-col transition-transform duration-300 ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
                 <button
-                    className='absolute z-50 bg-transparent border-none cursor-pointer right-3 top-4'
+                    className='absolute z-50 right-3 top-4 p-2'
                     onClick={toggleMenu}
                     aria-label='Close main menu'
                 >
                     <SandwichIcon isOpen={isOpen} />
                 </button>
-                <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
+                <div className='p-5 flex flex-col justify-between min-h-screen overflow-y-auto'>
                     <div>
-                        <div className='h-10'>
-                            <a href='/'>{siteName}</a>
+                        <div className='h-10 font-bold'>
+                            <a href='/' className='text-gray-900 hover:text-primary-600 transition-colors'>
+                                {siteName}
+                            </a>
                         </div>
                         <div className='py-3 pr-2'>
                             <AccessionSearchBox defaultOpen fullWidth onSubmitSuccess={closeMenu} />
                         </div>
-                        <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
+                        <div className='flex-grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
                             <div className='py-3'>
-                                <div className='ml-4 font-semibold text-gray-700 mb-3'>Organisms</div>
-                                <div className='ml-4 space-y-2'>
+                                <h3 className='ml-4 mb-3 font-semibold text-gray-700'>Organisms</h3>
+                                <div className='ml-4 space-y-1'>
                                     {knownOrganisms.map((organism) => (
                                         <a
                                             key={organism.key}
                                             href={`/${organism.key}/search`}
-                                            className='flex items-center gap-3 py-1 text-gray-700 hover:text-primary-600'
+                                            className={`
+                                                flex items-center gap-3 py-1.5 transition-colors
+                                                ${
+                                                    organism === currentOrganism
+                                                        ? 'text-primary-600 font-semibold'
+                                                        : 'text-gray-700 hover:text-primary-600'
+                                                }
+                                            `}
                                         >
                                             {organism.image ? (
-                                                <div className='w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0'>
-                                                    <img
-                                                        src={organism.image}
-                                                        alt={organism.displayName}
-                                                        className='w-full h-full object-cover'
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                    />
-                                                </div>
+                                                <img
+                                                    src={organism.image}
+                                                    alt=''
+                                                    className='w-5 h-5 rounded-full object-cover flex-shrink-0'
+                                                    onError={(e) => {
+                                                        e.currentTarget.classList.add('invisible');
+                                                    }}
+                                                />
                                             ) : (
                                                 <div className='w-5 h-5' />
                                             )}
                                             <span>{organism.displayName}</span>
-                                            {organism === currentOrganism && (
-                                                <span className='ml-auto mr-4 text-primary-600'>✓</span>
-                                            )}
                                         </a>
                                     ))}
                                 </div>
@@ -115,7 +116,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                             </a>
                         </div>
 
-                        <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
+                        <div className='divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
                             {navigationItems.bottom.map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} type='small' />
                             ))}
@@ -138,30 +139,27 @@ type OffCanvasNavItemProps = {
 };
 
 const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type, isActive = false }) => {
-    const height = type === 'small' ? 'py-1' : 'py-3';
+    const indent = level === 1 ? 'ml-4' : 'ml-8';
+    const padding = type === 'small' ? 'py-1' : 'py-3';
+    
+    const className = `
+        ${indent} ${padding} block text-base transition-colors
+        ${
+            path === false
+                ? 'text-gray-500 cursor-default'
+                : isActive
+                ? 'text-primary-700 font-semibold'
+                : 'text-gray-700 hover:text-primary-600'
+        }
+    `;
 
-    const indent: { [K in IndentLevel]: string } = {
-        1: 'ml-4',
-        2: 'ml-8',
-    };
-
-    const baseClass = `${indent[level]} ${height} block text-base transition-colors duration-150`;
-    const interactiveClass =
-        path === false
-            ? `${baseClass} text-gray-500`
-            : `${baseClass} ${isActive ? 'text-primary-700 font-semibold' : 'text-gray-700 hover:text-primary-600'}`;
+    if (path === false) {
+        return <span className={className}>{text}</span>;
+    }
 
     return (
-        <div>
-            <div className='flex items-center'>
-                {path === false ? (
-                    <span className={interactiveClass}>{text}</span>
-                ) : (
-                    <a href={path} className={interactiveClass} aria-current={isActive ? 'page' : undefined}>
-                        {text}
-                    </a>
-                )}
-            </div>
-        </div>
+        <a href={path} className={className} aria-current={isActive ? 'page' : undefined}>
+            {text}
+        </a>
     );
 };

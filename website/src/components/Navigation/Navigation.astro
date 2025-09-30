@@ -1,6 +1,7 @@
 ---
 import AccessionSearchBox from './AccessionSearchBox.tsx';
 import { OrganismNavigation } from './OrganismNavigation.tsx';
+import { NavigationTab } from './NavigationTab.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
@@ -39,18 +40,14 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
                             : false;
 
                     return (
-                        <a
+                        <NavigationTab
+                            as='a'
                             href={path}
-                            class:list={[
-                                'flex items-center gap-1 px-4 pt-2.5 pb-1.5 text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2',
-                                itemIsActive
-                                    ? 'bg-white text-slate-900 border-slate-200 border-b-primary-400 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.25)]'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-200',
-                            ]}
+                            isActive={itemIsActive}
                             aria-current={itemIsActive ? 'page' : undefined}
                         >
                             {text}
-                        </a>
+                        </NavigationTab>
                     );
                 })
             }
@@ -58,7 +55,7 @@ const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn
         <AccessionSearchBox className='' client:load />
     </div>
 
-    <div class='lg:hidden z-0 flex items-center'>
+    <div class='lg:hidden flex items-center pb-3'>
         <SandwichMenu
             topNavigationItems={topNavigationItems}
             currentOrganism={selectedOrganism}
