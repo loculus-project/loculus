@@ -60,7 +60,7 @@ function getSeqSetsItems() {
     ];
 }
 
-function getAccountItems(isLoggedIn: boolean, loginUrl: string, _organism: string | undefined) {
+function getAccountItems(isLoggedIn: boolean, loginUrl: string) {
     if (!getWebsiteConfig().enableLoginNavigationItem) {
         return [];
     }
@@ -79,9 +79,9 @@ function getAccountItems(isLoggedIn: boolean, loginUrl: string, _organism: strin
     return [accountItem];
 }
 
-function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string) {
+function topNavigationItems(isLoggedIn: boolean, loginUrl: string) {
     const seqSetsItems = getSeqSetsItems();
-    const accountItems = getAccountItems(isLoggedIn, loginUrl, organism);
+    const accountItems = getAccountItems(isLoggedIn, loginUrl);
 
     return [...seqSetsItems, ...extraStaticTopNavigationItems, ...accountItems];
 }
