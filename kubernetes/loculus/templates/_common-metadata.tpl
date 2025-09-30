@@ -503,7 +503,7 @@ fields:
 {{- define "loculus.generateENASubmissionConfig" }}
 organisms:
   {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
-  {{- if $instance.ingest }}
+  {{- if $instance.enaDeposition }}
   {{ $key }}:
     {{- with $instance.schema }}
     {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
