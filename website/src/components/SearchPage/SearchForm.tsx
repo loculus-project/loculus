@@ -5,6 +5,7 @@ import { useState } from 'react';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
+import { SuborganismSelector } from './SuborganismSelector.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -14,12 +15,13 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetSomeFieldValues } from '../../types/config.ts';
+import { ACCESSION_FIELD } from '../../settings.ts';
+import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { validateSingleValue, extractArrayValue } from '../../utils/extractFieldValue.ts';
-import type { MetadataFilterSchema } from '../../utils/search.ts';
-import { FieldSelectorModal, type FieldItem } from '../common/FieldSelectorModal.tsx';
+import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
+import { type MetadataFilterSchema } from '../../utils/search.ts';
+import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
@@ -38,6 +40,9 @@ interface SearchFormProps {
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
+    suborganismIdentifierField: string | undefined;
+    selectedSuborganism: string | null;
+    setSelectedSuborganism: (newValue: string | null) => void;
 }
 
 export const SearchForm = ({
@@ -50,6 +55,9 @@ export const SearchForm = ({
     referenceGenomesSequenceNames,
     lapisSearchParameters,
     showMutationSearch,
+    suborganismIdentifierField,
+    selectedSuborganism,
+    setSelectedSuborganism,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
@@ -58,7 +66,8 @@ export const SearchForm = ({
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
 
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter((filter) => filter.name !== 'accession') // Exclude accession field
+        .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
+        .filter((filter) => filter.name !== suborganismIdentifierField)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
@@ -118,6 +127,15 @@ export const SearchForm = ({
                         setFieldSelected={setASearchVisibility}
                     />
                     <div className='flex flex-col'>
+                        {suborganismIdentifierField !== undefined && (
+                            <SuborganismSelector
+                                filterSchema={filterSchema}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                suborganismIdentifierField={suborganismIdentifierField}
+                                selectedSuborganism={selectedSuborganism}
+                                setSelectedSuborganism={setSelectedSuborganism}
+                            />
+                        )}
                         <div className='mb-1'>
                             <AccessionField
                                 textValue={'accession' in fieldValues ? fieldValues.accession! : ''}

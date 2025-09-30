@@ -1,0 +1,24 @@
+name: Check values.schema.json formatting
+
+on:
+  push:
+    paths:
+      - 'kubernetes/loculus/values.schema.json'
+      - '.github/workflows/values-schema-prettier.yml'
+  pull_request:
+    paths:
+      - 'kubernetes/loculus/values.schema.json'
+      - '.github/workflows/values-schema-prettier.yml'
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Check Prettier formatting
+        uses: creyD/prettier_action@v4.6
+        with:
+          dry: true
+          prettier_version: '3.6.2'
+          prettier_options: --check kubernetes/loculus/values.schema.json

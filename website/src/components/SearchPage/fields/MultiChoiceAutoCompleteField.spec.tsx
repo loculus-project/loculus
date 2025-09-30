@@ -47,7 +47,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                     { testField: 'Option 3', count: 30 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });
@@ -116,7 +116,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                     { testField: 'Option 1', count: 10 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });

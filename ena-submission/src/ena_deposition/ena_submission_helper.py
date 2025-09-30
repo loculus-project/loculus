@@ -612,13 +612,13 @@ def post_webin_cli(
     subprocess_args_with_emtpy_strings: Final[list[str]] = [
         "ena-webin-cli",
         f"-username={config.ena_submission_username}",
-        f"-centername='{center_name}'" if center_name else "",
+        f"-centername={center_name}" if center_name else "",
         "-submit",
         "-context=genome",
-        f"-manifest='{manifest_filename}'",
-        f"-outputdir='{tmpdir.name}'",
+        f"-manifest={manifest_filename}",
+        f"-outputdir={tmpdir.name}",
         "-test" if test else "",
-        f"-password='{config.ena_submission_password}'",
+        f"-password={config.ena_submission_password}",
     ]
     # Remove empty strings from the list
     subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
@@ -626,7 +626,7 @@ def post_webin_cli(
         arg if not arg.startswith("-password") else "-password=<REDACTED>"
         for arg in subprocess_args
     ]
-    logger.debug(f"Invoking webin-cli with args: {redacted_args}")
+    logger.info(f"Invoking webin-cli with args: {redacted_args}")
     # config.ena_submission_password and config.ena_submission_username can be used for injection
     # however we don't spawn a shell (shell=False) and trust webin-cli to handle the arguments
     # safely.

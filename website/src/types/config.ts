@@ -14,9 +14,16 @@ export const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
+export const mutationBadgeData = mutationProportionCount.pick({
+    sequenceName: true,
+    mutationFrom: true,
+    position: true,
+    mutationTo: true,
+});
+
 export const segmentedMutations = z.object({
     segment: z.string(),
-    mutations: z.array(mutationProportionCount),
+    mutations: z.array(mutationBadgeData),
 });
 
 export const linkMenuItem = z.object({
@@ -89,6 +96,7 @@ export type LinkMenuItem = z.infer<typeof linkMenuItem>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
+export type MutationBadgeData = z.infer<typeof mutationBadgeData>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
@@ -151,6 +159,7 @@ export const schema = z.object({
     loadSequencesAutomatically: z.boolean().optional(),
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
+    suborganismIdentifierField: z.string().optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

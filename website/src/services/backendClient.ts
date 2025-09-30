@@ -130,7 +130,7 @@ export class BackendClient {
                 type: 'about:blank',
                 title: 'bad response',
                 status: 0,
-                detail: `Failed to make request: ${axiosError.cause?.message}`,
+                detail: `Failed to make request: ${axiosError.message}`,
             });
         }
     }
