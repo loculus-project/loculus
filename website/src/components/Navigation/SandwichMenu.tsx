@@ -28,11 +28,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
 
     return (
         <div className='relative'>
-            <button
-                className='relative z-50 p-2 -m-2'
-                onClick={toggleMenu}
-                aria-label='Open main menu'
-            >
+            <button className='relative z-50 p-2 -m-2' onClick={toggleMenu} aria-label='Open main menu'>
                 <SandwichIcon isOpen={isOpen} />
             </button>
             {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
@@ -42,11 +38,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
-                <button
-                    className='absolute z-50 right-3 top-4 p-2'
-                    onClick={toggleMenu}
-                    aria-label='Close main menu'
-                >
+                <button className='absolute z-50 right-3 top-4 p-2' onClick={toggleMenu} aria-label='Close main menu'>
                     <SandwichIcon isOpen={isOpen} />
                 </button>
                 <div className='p-5 flex flex-col justify-between min-h-screen overflow-y-auto'>
@@ -141,15 +133,15 @@ type OffCanvasNavItemProps = {
 const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type, isActive = false }) => {
     const indent = level === 1 ? 'ml-4' : 'ml-8';
     const padding = type === 'small' ? 'py-1' : 'py-3';
-    
+
     const className = `
         ${indent} ${padding} block text-base transition-colors
         ${
             path === false
                 ? 'text-gray-500 cursor-default'
                 : isActive
-                ? 'text-primary-700 font-semibold'
-                : 'text-gray-700 hover:text-primary-600'
+                  ? 'text-primary-700 font-semibold'
+                  : 'text-gray-700 hover:text-primary-600'
         }
     `;
 

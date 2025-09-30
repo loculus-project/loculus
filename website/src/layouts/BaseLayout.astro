@@ -107,7 +107,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
                     'flex-grow',
                     'mt-3',
                     'mb-5',
-                    fullWidth ? (withoutMargin ? 'w-full mx-4' : 'mx-8 w-full') : 'max-w-7xl mx-auto w-full px-4',
+                    fullWidth ? (withoutMargin ? 'px-4' : 'mx-8') : 'max-w-7xl mx-auto w-full px-4',
                 ]}
             >
                 <slot />
@@ -115,8 +115,8 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
 
             <hr class='border-t border-gray-1000' />
             <footer
-                class={`hidden sm:flex sm:z-6 justify-between items-center h-20 px-4 ${
-                    fullWidth ? (withoutMargin ? 'w-full' : 'mx-4 w-full') : 'max-w-7xl mx-auto w-full'
+                class={`hidden sm:flex sm:z-6 justify-between items-center h-20 ${
+                    fullWidth ? (withoutMargin ? 'px-4' : 'mx-8 px-4') : 'max-w-7xl mx-auto px-4'
                 }`}
             >
                 <div class='flex gap-5'>

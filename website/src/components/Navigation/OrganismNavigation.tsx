@@ -2,8 +2,8 @@ import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/r
 import React from 'react';
 import { Fragment } from 'react';
 
-import type { Organism } from '../../config';
 import { NavigationTab } from './NavigationTab';
+import type { Organism } from '../../config';
 
 interface OrganismNavigationProps {
     currentOrganism?: Organism;
@@ -15,13 +15,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
 
     return (
         <Menu as='div' className='relative'>
-            <MenuButton as={NavigationTab} 
-                isActive={!!currentOrganism}
-                className='group'
-                aria-current={currentOrganism ? 'page' : undefined}
-                aria-expanded={undefined}
-                aria-haspopup='menu'
-            >
+            <MenuButton as={NavigationTab} isActive={!!currentOrganism} className='group'>
                 <span>{displayName}</span>
                 {currentOrganism && (
                     <span className='hidden lg:inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-primary-50 text-primary-700 border border-primary-200'>
@@ -65,11 +59,7 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
                                                         ? 'bg-primary-100 text-gray-900 font-semibold'
                                                         : 'text-gray-700'
                                                 }
-                                                ${
-                                                    focus && !isActive
-                                                        ? 'bg-gray-50 text-gray-900'
-                                                        : ''
-                                                }
+                                                ${focus && !isActive ? 'bg-gray-50 text-gray-900' : ''}
                                             `}
                                             aria-current={isActive ? 'page' : undefined}
                                         >
