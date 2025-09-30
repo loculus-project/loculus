@@ -1,18 +1,19 @@
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
+    type GeneInfo,
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-    type SegmentOrGeneInfo,
+    type SegmentInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export function getSequenceNames(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     suborganism: string,
 ): {
-    nucleotideSegmentNames: SegmentOrGeneInfo[];
-    geneNames: SegmentOrGeneInfo[];
+    nucleotideSegmentNames: SegmentInfo[];
+    geneNames: GeneInfo[];
     isMultiSegmented: boolean;
 } {
     const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[suborganism];

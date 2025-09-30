@@ -10,11 +10,12 @@ import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
+    type GeneInfo,
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-    type SegmentOrGeneInfo,
+    type SegmentInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
@@ -284,7 +285,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 function getSequenceNames(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
-): { nucleotideSequences: SegmentOrGeneInfo[]; genes: SegmentOrGeneInfo[]; useMultiSegmentEndpoint: boolean } {
+): { nucleotideSequences: SegmentInfo[]; genes: GeneInfo[]; useMultiSegmentEndpoint: boolean } {
     if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
         const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
         return {

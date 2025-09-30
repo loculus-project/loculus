@@ -6,12 +6,13 @@ import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
+    type GeneInfo,
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
     isMultiSegmented,
     isUnalignedSequence,
-    type SegmentOrGeneInfo,
+    type SegmentInfo,
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
@@ -76,10 +77,10 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    nucleotideSegmentNames: SegmentOrGeneInfo[];
+    nucleotideSegmentNames: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
-    genes: SegmentOrGeneInfo[];
+    genes: GeneInfo[];
     isMultiSegmented: boolean;
 };
 
@@ -147,7 +148,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 };
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: SegmentOrGeneInfo[];
+    nucleotideSegmentNames: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
@@ -233,7 +234,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 };
 
 type GeneDropdownProps = {
-    genes: SegmentOrGeneInfo[];
+    genes: GeneInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
 };
