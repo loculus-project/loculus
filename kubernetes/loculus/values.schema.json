@@ -426,7 +426,7 @@
                 "suborganismIdentifierField": {
                   "groups": ["schema"],
                   "type": "string",
-                  "description": "Must be set in the multi pathogen case. This metadata field is used to determine which suborganism a sequence entry belongs to."
+                  "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
                 }
               }
             }
