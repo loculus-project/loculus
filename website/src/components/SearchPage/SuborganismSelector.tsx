@@ -43,7 +43,7 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
 
     if (label === undefined) {
         throw Error(
-            'Cannot render suborganism selector without a label for multi pathogen case. Does the field that you specified in "suborganismIdentifierField" exist in the metadata?',
+            'Cannot render suborganism selector without a label when using the suborganism feature. Does the field that you specified in "suborganismIdentifierField" exist in the metadata?',
         );
     }
 
