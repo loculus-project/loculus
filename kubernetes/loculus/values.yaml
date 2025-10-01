@@ -2064,6 +2064,7 @@ secrets:
       secretKey: "dummySecretKey"
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+dangerouslyExposeDevelopmentDatabase: false
 runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true

@@ -49,6 +49,7 @@ spec:
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $databaseHost := (printf "database%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -143,6 +144,23 @@ spec:
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
+---
+{{- if and $.Values.dangerouslyExposeDevelopmentDatabase $.Values.runDevelopmentMainDatabase $.Values.host }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: loculus-database-ingress
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostSNI(`{{ $databaseHost }}`)
+      services:
+        - name: loculus-database-service
+          port: 5432
+  tls:
+    passthrough: true
+{{- end }}
 ---
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
 apiVersion: networking.k8s.io/v1
