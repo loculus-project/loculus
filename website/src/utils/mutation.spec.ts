@@ -1,40 +1,106 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
+import type { SuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
 import {
-    parseMutationString,
-    parseMutationsString,
-    serializeMutationQueries,
-    removeMutationQueries,
     intoMutationSearchParams,
+    parseMutationsString,
+    parseMutationString,
+    removeMutationQueries,
+    serializeMutationQueries,
 } from './mutation';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../types/referencesGenomes';
 
 describe('mutation', () => {
     describe('single segment', () => {
-        const mockLightweightSchema: ReferenceGenomesLightweightSchema = {
-            [SINGLE_REFERENCE]: {
-                nucleotideSegmentNames: ['main'],
-                geneNames: ['GENE1', 'GENE2'],
-                insdcAccessionFull: [],
-            },
+        const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+            nucleotideSegmentInfos: [
+                {
+                    lapisName: 'lapisName-main',
+                    label: 'label-main',
+                },
+            ],
+            geneInfos: [
+                {
+                    lapisName: 'lapisName-gene1',
+                    label: 'label-gene1',
+                },
+                {
+                    lapisName: 'lapisName-gene2',
+                    label: 'label-gene2',
+                },
+            ],
+            isMultiSegmented: false,
         };
 
-        it('parses a valid mutation string', () => {
-            const result = parseMutationString('GENE1:A23T', mockLightweightSchema);
-            expect(result).toEqual({
-                baseType: 'aminoAcid',
-                mutationType: 'substitutionOrDeletion',
-                text: 'GENE1:A23T',
-            });
-        });
-
-        it('parses a valid mutation string with "."', () => {
-            const result = parseMutationString('A23.', mockLightweightSchema);
-            expect(result).toEqual({
-                baseType: 'nucleotide',
-                mutationType: 'substitutionOrDeletion',
-                text: 'A23.',
-            });
+        it.each([
+            [
+                'A23.',
+                { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: 'A23.', lapisQuery: 'A23.' },
+            ],
+            ['23T', { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: '23T', lapisQuery: '23T' }],
+            [
+                'A23T',
+                { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: 'A23T', lapisQuery: 'A23T' },
+            ],
+            ['23', { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: '23', lapisQuery: '23' }],
+            ['A23', { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: 'A23', lapisQuery: 'A23' }],
+            [
+                'label-GENE1:A23T',
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'label-GENE1:A23T',
+                    lapisQuery: 'lapisName-gene1:A23T',
+                },
+            ],
+            [
+                'label-GENE2:*23',
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'label-GENE2:*23',
+                    lapisQuery: 'lapisName-gene2:*23',
+                },
+            ],
+            [
+                'label-GENE1:23*',
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'label-GENE1:23*',
+                    lapisQuery: 'lapisName-gene1:23*',
+                },
+            ],
+            [
+                'label-GENE1:23.',
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'label-GENE1:23.',
+                    lapisQuery: 'lapisName-gene1:23.',
+                },
+            ],
+            [
+                'INS_100:G',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'insertion',
+                    text: 'INS_100:G',
+                    lapisQuery: 'ins_100:G',
+                },
+            ],
+            [
+                'INS_label-GENE1:23:T*?',
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'insertion',
+                    text: 'INS_label-GENE1:23:T*?',
+                    lapisQuery: 'ins_lapisName-gene1:23:T*?',
+                },
+            ],
+        ])('parses the valid mutation string "%s"', (input, expected) => {
+            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            expect(result).toEqual(expected);
         });
 
         it.each([
@@ -48,7 +114,7 @@ describe('mutation', () => {
             'ins_23:A:T',
             'INS_4:G:T',
         ])('returns undefined for invalid mutation string %s', (input) => {
-            const result = parseMutationString(input, mockLightweightSchema);
+            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
             expect(result).toBeUndefined();
         });
     });

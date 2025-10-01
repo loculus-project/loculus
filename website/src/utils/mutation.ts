@@ -1,5 +1,5 @@
-import type { BaseType } from './sequenceTypeHelpers';
 import type { SuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
+import { type BaseType, isMultiSegmented, type SegmentInfo } from './sequenceTypeHelpers';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -105,7 +105,9 @@ const isValidAminoAcidInsertionQuery = (
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
 
-        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find((geneInfo) => geneInfo.label === gene);
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
+            (geneInfo) => geneInfo.label.toUpperCase() === gene,
+        );
 
         if (geneInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
             return INVALID;
@@ -129,14 +131,21 @@ const isValidAminoAcidMutationQuery = (
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
 
-        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find((geneInfo) => geneInfo.label === gene);
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
+            (geneInfo) => geneInfo.label.toUpperCase() === gene,
+        );
 
-        if (geneInfo === undefined) {
-            return false;
+        if (geneInfo === undefined || !/^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation)) {
+            return INVALID;
         }
-        return /^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation);
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: `${geneInfo.lapisName}:${mutation}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
@@ -145,33 +154,37 @@ const isValidNucleotideInsertionQuery = (
     suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationTestResult => {
     try {
-        const isMultiSegmented = suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const multiSegmented = isMultiSegmented(suborganismSegmentAndGeneInfo.nucleotideSegmentInfos);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
-            return false;
+            return INVALID;
         }
         const query = textUpper.slice(4);
         const split = query.split(':');
-        if ((!isMultiSegmented && split.length > 2) || (isMultiSegmented && split.length > 3)) {
-            return false;
+        if ((!multiSegmented && split.length > 2) || (multiSegmented && split.length > 3)) {
+            return INVALID;
         }
-        const [segment, position, insertion] = isMultiSegmented
+        const [segment, position, insertion] = multiSegmented
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
+        let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
         if (segment !== undefined) {
-            const existingSegments = new Set(
-                suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+            segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
+                (info) => info.label.toUpperCase() === segment,
             );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
         }
-        if (!Number.isInteger(Number(position))) {
-            return false;
+        if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+            return INVALID;
         }
-        return /^[A-Z*?]+$/.test(insertion);
+        return {
+            valid: true,
+            text,
+            lapisQuery: suborganismSegmentAndGeneInfo.isMultiSegmented
+                ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
+                : `ins_${position}:${insertion}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
@@ -180,61 +193,29 @@ const isValidNucleotideMutationQuery = (
     suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationTestResult => {
     try {
-        const isMultiSegmented = suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const multiSegmented = isMultiSegmented(suborganismSegmentAndGeneInfo.nucleotideSegmentInfos);
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
-        if (isMultiSegmented) {
+        let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+
+        if (multiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(
-                suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+            segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
+                (info) => info.label.toUpperCase() === segment,
             );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
             mutation = _mutation;
         }
-        return /^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation);
+
+        if (segmentInfo === undefined || !/^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation)) {
+            return INVALID;
+        }
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: multiSegmented ? `${segmentInfo.lapisName}:${mutation}` : mutation,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
-
-class Mutation {
-    public readonly geneOrSegment?: string;
-    public readonly mutation: string;
-
-    constructor({ geneOrSegment, mutation }: { geneOrSegment?: string; mutation: string }) {
-        this.geneOrSegment = geneOrSegment;
-        this.mutation = mutation;
-    }
-
-    public toString(): string {
-        return this.geneOrSegment ? `${this.geneOrSegment}:${this.mutation}` : this.mutation;
-    }
-}
-
-class Insertion {
-    public readonly geneOrSegment?: string;
-    public readonly position: number;
-    public readonly insertion: string;
-
-    constructor({
-        geneOrSegment,
-        position,
-        insertion,
-    }: {
-        geneOrSegment?: string;
-        position: number;
-        insertion: string;
-    }) {
-        this.geneOrSegment = geneOrSegment;
-        this.position = position;
-        this.insertion = insertion;
-    }
-
-    public toString(): string {
-        return this.geneOrSegment
-            ? `ins_${this.geneOrSegment}:${this.position}:${this.insertion}`
-            : `ins_${this.position}:${this.insertion}`;
-    }
-}
