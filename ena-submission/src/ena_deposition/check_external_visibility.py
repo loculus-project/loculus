@@ -69,7 +69,7 @@ class ENAVisibilityChecker(VisibilityChecker):
         response = requests.get(
             f"https://www.ebi.ac.uk/ena/browser/api/{file_type}/{accession}",
             allow_redirects=False,
-            timeout=config.ena_http_timeout_seconds,
+            timeout=config.ena_public_search_timeout_seconds,
         )
         if response.status_code == HTTPStatus.OK:
             return datetime.now(pytz.UTC)
@@ -95,7 +95,7 @@ def _check_and_cache_ncbi_gca(config: Config, path_segments: GcaCacheKey) -> boo
     response = requests.get(
         f"https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/{url_path}/",
         allow_redirects=False,
-        timeout=config.ena_http_timeout_seconds,
+        timeout=config.ncbi_public_search_timeout_seconds,
     )
 
     if response.status_code == HTTPStatus.OK:
@@ -143,7 +143,7 @@ class NCBIVisibilityChecker(VisibilityChecker):
         response = requests.get(
             f"https://www.ncbi.nlm.nih.gov/{path}/{accession}/",
             allow_redirects=False,
-            timeout=getattr(config, "ncbi_http_timeout_seconds", 30),
+            timeout=config.ncbi_public_search_timeout_seconds,
         )
         if response.status_code == HTTPStatus.OK:
             return datetime.now(pytz.UTC)

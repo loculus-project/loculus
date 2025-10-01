@@ -47,6 +47,8 @@ class Config:
     ena_deposition_host: str
     ena_deposition_port: int
     ena_http_timeout_seconds: int = 60
+    ena_public_search_timeout_seconds: int = 120
+    ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
