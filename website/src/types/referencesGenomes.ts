@@ -28,14 +28,13 @@ export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
 
 export type NucleotideSegmentNames = string[];
 
-export type ReferenceGenomesLightweightSchema = Record<
-    Suborganism,
-    {
-        nucleotideSegmentNames: NucleotideSegmentNames;
-        geneNames: string[];
-        insdcAccessionFull: ReferenceAccession[];
-    }
->;
+export type SuborganismReferenceGenomesLightweightSchema = {
+    nucleotideSegmentNames: NucleotideSegmentNames;
+    geneNames: string[];
+    insdcAccessionFull: ReferenceAccession[];
+};
+
+export type ReferenceGenomesLightweightSchema = Record<Suborganism, SuborganismReferenceGenomesLightweightSchema>;
 
 // TODO(#3984) this should probably be removed when we're done with the feature
 export function getFirstLightweightSchema(referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema) {
