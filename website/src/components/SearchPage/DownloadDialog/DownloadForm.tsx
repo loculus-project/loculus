@@ -8,19 +8,20 @@ import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from '.
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
+    type GeneInfo,
     getMultiPathogenNucleotideSequenceNames,
     getMultiPathogenSequenceName,
     getSinglePathogenSequenceName,
     isMultiSegmented,
-    type SequenceName,
+    type SegmentInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { formatLabel } from '../SuborganismSelector.tsx';
 import { stillRequiresSuborganismSelection } from '../stillRequiresSuborganismSelection.tsx';
 
 type DownloadFormProps = {
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
     onChange: (value: DownloadOption) => void;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
@@ -46,7 +47,7 @@ function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[
 }
 
 export const DownloadForm: FC<DownloadFormProps> = ({
-    referenceGenomesSequenceNames,
+    referenceGenomesLightweightSchema,
     onChange,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
@@ -67,8 +68,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { nucleotideSequences, genes, useMultiSegmentEndpoint } = useMemo(
-        () => getSequenceNames(referenceGenomesSequenceNames, selectedSuborganism),
-        [referenceGenomesSequenceNames, selectedSuborganism],
+        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
+        [referenceGenomesLightweightSchema, selectedSuborganism],
     );
 
     useEffect(() => {
@@ -127,7 +128,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     ]);
 
     const disableAlignedSequences = stillRequiresSuborganismSelection(
-        referenceGenomesSequenceNames,
+        referenceGenomesLightweightSchema,
         selectedSuborganism,
     );
 
@@ -282,15 +283,15 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 };
 
 function getSequenceNames(
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
-): { nucleotideSequences: SequenceName[]; genes: SequenceName[]; useMultiSegmentEndpoint: boolean } {
-    if (SINGLE_REFERENCE in referenceGenomesSequenceNames) {
-        const { nucleotideSequences, genes } = referenceGenomesSequenceNames[SINGLE_REFERENCE];
+): { nucleotideSequences: SegmentInfo[]; genes: GeneInfo[]; useMultiSegmentEndpoint: boolean } {
+    if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
+        const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
         return {
-            nucleotideSequences: nucleotideSequences.map(getSinglePathogenSequenceName),
-            genes: genes.map(getSinglePathogenSequenceName),
-            useMultiSegmentEndpoint: isMultiSegmented(nucleotideSequences),
+            nucleotideSequences: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
+            genes: geneNames.map(getSinglePathogenSequenceName),
+            useMultiSegmentEndpoint: isMultiSegmented(nucleotideSegmentNames),
         };
     }
 
@@ -302,10 +303,10 @@ function getSequenceNames(
         };
     }
 
-    const { nucleotideSequences, genes } = referenceGenomesSequenceNames[selectedSuborganism];
+    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[selectedSuborganism];
     return {
-        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSequences, selectedSuborganism),
-        genes: genes.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),
+        nucleotideSequences: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, selectedSuborganism),
+        genes: geneNames.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),
         useMultiSegmentEndpoint: true,
     };
 }

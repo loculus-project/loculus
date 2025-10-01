@@ -8,8 +8,8 @@ describe('getSequenceNames', () => {
         test('should return correct names for multi-segmented organism', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
-                    nucleotideSequences: ['segment1', 'segment2'],
-                    genes: ['gene1', 'gene2'],
+                    nucleotideSegmentNames: ['segment1', 'segment2'],
+                    geneNames: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
             };
@@ -21,7 +21,7 @@ describe('getSequenceNames', () => {
                     { lapisName: 'segment1', label: 'segment1' },
                     { lapisName: 'segment2', label: 'segment2' },
                 ],
-                genes: [
+                geneNames: [
                     { lapisName: 'gene1', label: 'gene1' },
                     { lapisName: 'gene2', label: 'gene2' },
                 ],
@@ -32,8 +32,8 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented organism', () => {
             const referenceGenomeSequenceNames = {
                 [SINGLE_REFERENCE]: {
-                    nucleotideSequences: ['main'],
-                    genes: ['gene1'],
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
                     insdcAccessionFull: [],
                 },
             };
@@ -42,7 +42,7 @@ describe('getSequenceNames', () => {
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'main', label: 'main' }],
-                genes: [{ lapisName: 'gene1', label: 'gene1' }],
+                geneNames: [{ lapisName: 'gene1', label: 'gene1' }],
                 isMultiSegmented: false,
             });
         });
@@ -54,13 +54,13 @@ describe('getSequenceNames', () => {
         test('should return correct names for multi-segmented suborganism', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
-                    nucleotideSequences: ['segment1', 'segment2'],
-                    genes: ['gene1', 'gene2'],
+                    nucleotideSegmentNames: ['segment1', 'segment2'],
+                    geneNames: ['gene1', 'gene2'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
-                    nucleotideSequences: ['segmentA', 'segmentB'],
-                    genes: ['geneA'],
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
+                    geneNames: ['geneA'],
                     insdcAccessionFull: [],
                 },
             };
@@ -72,7 +72,7 @@ describe('getSequenceNames', () => {
                     { lapisName: 'sub1-segment1', label: 'segment1' },
                     { lapisName: 'sub1-segment2', label: 'segment2' },
                 ],
-                genes: [
+                geneNames: [
                     { lapisName: 'sub1-gene1', label: 'gene1' },
                     { lapisName: 'sub1-gene2', label: 'gene2' },
                 ],
@@ -83,13 +83,13 @@ describe('getSequenceNames', () => {
         test('should return correct names for single-segmented suborganism', () => {
             const referenceGenomeSequenceNames = {
                 [suborganism]: {
-                    nucleotideSequences: ['main'],
-                    genes: ['gene1'],
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
                     insdcAccessionFull: [],
                 },
                 anotherSuborganism: {
-                    nucleotideSequences: ['segmentA', 'segmentB'],
-                    genes: ['geneA', 'geneB'],
+                    nucleotideSegmentNames: ['segmentA', 'segmentB'],
+                    geneNames: ['geneA', 'geneB'],
                     insdcAccessionFull: [],
                 },
             };
@@ -98,7 +98,7 @@ describe('getSequenceNames', () => {
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'sub1', label: 'main' }],
-                genes: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
+                geneNames: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
                 isMultiSegmented: true,
             });
         });

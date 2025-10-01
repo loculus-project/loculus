@@ -2,16 +2,17 @@ import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from
 
 import { SequencesViewer } from './SequenceViewer.tsx';
 import { getSequenceNames } from './getSequenceNames.tsx';
-import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import {
     alignedSequenceSegment,
+    type GeneInfo,
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
     isMultiSegmented,
     isUnalignedSequence,
-    type SequenceName,
+    type SegmentInfo,
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
@@ -23,7 +24,7 @@ type SequenceContainerProps = {
     suborganism: Suborganism;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     loadSequencesAutomatically: boolean;
 };
 
@@ -32,11 +33,11 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     suborganism,
     accessionVersion,
     clientConfig,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentNames, genes, isMultiSegmented } = getSequenceNames(
-        referenceGenomeSequenceNames,
+    const { nucleotideSegmentNames, geneNames, isMultiSegmented } = getSequenceNames(
+        referenceGenomeLightweightSchema,
         suborganism,
     );
 
@@ -64,7 +65,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             nucleotideSegmentNames={nucleotideSegmentNames}
             sequenceType={sequenceType}
             setType={setSequenceType}
-            genes={genes}
+            genes={geneNames}
             isMultiSegmented={isMultiSegmented}
         />
     );
@@ -76,10 +77,10 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    nucleotideSegmentNames: SequenceName[];
+    nucleotideSegmentNames: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
-    genes: SequenceName[];
+    genes: GeneInfo[];
     isMultiSegmented: boolean;
 };
 
@@ -147,7 +148,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 };
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: SequenceName[];
+    nucleotideSegmentNames: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
@@ -233,7 +234,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 };
 
 type GeneDropdownProps = {
-    genes: SequenceName[];
+    genes: GeneInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
 };

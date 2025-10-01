@@ -60,10 +60,10 @@ const MockSaveWrapper = ({
                 action='submit'
                 organism='foo'
                 setFileFactory={setFileFactory}
-                referenceGenomeSequenceNames={{
+                referenceGenomeLightweightSchema={{
                     [SINGLE_REFERENCE]: {
-                        nucleotideSequences: ['foo', 'bar'],
-                        genes: [],
+                        nucleotideSegmentNames: ['foo', 'bar'],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                 }}

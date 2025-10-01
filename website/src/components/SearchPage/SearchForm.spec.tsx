@@ -7,7 +7,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
@@ -43,23 +43,23 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
 };
 
-const multiPathogenReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     suborganism1: {
-        nucleotideSequences: ['main'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
     suborganism2: {
-        nucleotideSequences: ['main'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
 };
@@ -76,14 +76,14 @@ const setSelectedSuborganism = vi.fn();
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
     fieldValues = {},
-    referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     lapisSearchParameters = {},
     suborganismIdentifierField = undefined,
     selectedSuborganism = null,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
-    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     lapisSearchParameters?: Record<string, string>;
     suborganismIdentifierField?: string;
     selectedSuborganism?: string | null;
@@ -97,7 +97,7 @@ const renderSearchForm = ({
         lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
-        referenceGenomesSequenceNames,
+        referenceGenomeLightweightSchema,
         lapisSearchParameters,
         showMutationSearch: true,
         suborganismIdentifierField,
@@ -144,7 +144,7 @@ describe('SearchForm', () => {
                 { name: 'My genotype', type: 'string' },
             ]),
             suborganismIdentifierField: 'My genotype',
-            referenceGenomesSequenceNames: multiPathogenReferenceGenomesSequenceNames,
+            referenceGenomeLightweightSchema: multiPathogenReferenceGenomesLightweightSchema,
         });
 
         const suborganismSelector = screen.getByRole('combobox', { name: 'My genotype' });
