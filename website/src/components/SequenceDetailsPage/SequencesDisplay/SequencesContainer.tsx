@@ -1,9 +1,9 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { getSequenceNames } from './getSequenceNames.tsx';
 import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
+import { getSuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     alignedSequenceSegment,
     type GeneInfo,
@@ -36,7 +36,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentNames, geneNames, isMultiSegmented } = getSequenceNames(
+    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSuborganismSegmentAndGeneInfo(
         referenceGenomeLightweightSchema,
         suborganism,
     );
@@ -47,7 +47,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setLoadSequences(true);
         }
     }, [loadSequencesAutomatically]);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[0]));
+    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
         return (
@@ -62,10 +62,10 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
-            nucleotideSegmentNames={nucleotideSegmentNames}
+            segments={nucleotideSegmentInfos}
             sequenceType={sequenceType}
             setType={setSequenceType}
-            genes={geneNames}
+            genes={geneInfos}
             isMultiSegmented={isMultiSegmented}
         />
     );
@@ -77,7 +77,7 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    nucleotideSegmentNames: SegmentInfo[];
+    segments: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     genes: GeneInfo[];
@@ -88,7 +88,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     organism,
     accessionVersion,
     clientConfig,
-    nucleotideSegmentNames,
+    segments,
     genes,
     sequenceType,
     setType,
@@ -110,14 +110,14 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
         <>
             <BoxWithTabsTabBar>
                 <UnalignedNucleotideSequenceTabs
-                    nucleotideSegmentNames={nucleotideSegmentNames}
+                    segments={segments}
                     sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'unaligned'}
                     setActiveTab={setActiveTab}
                 />
                 <AlignmentSequenceTabs
-                    nucleotideSegmentNames={nucleotideSegmentNames}
+                    segments={segments}
                     sequenceType={sequenceType}
                     setType={setType}
                     isActive={activeTab === 'aligned'}
@@ -148,7 +148,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
 };
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: SegmentInfo[];
+    segments: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
     isActive: boolean;
@@ -156,14 +156,14 @@ type NucleotideSequenceTabsProps = {
 };
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
-    nucleotideSegmentNames,
+    segments,
     sequenceType,
     setType,
     isActive,
     setActiveTab,
 }) => {
-    if (!isMultiSegmented(nucleotideSegmentNames)) {
-        const onlySegment = nucleotideSegmentNames[0];
+    if (!isMultiSegmented(segments)) {
+        const onlySegment = segments[0];
         return (
             <BoxWithTabsTab
                 key={onlySegment.lapisName}
@@ -179,7 +179,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 
     return (
         <>
-            {nucleotideSegmentNames.map((segmentName) => (
+            {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
                     isActive={isActive && isUnalignedSequence(sequenceType) && segmentName === sequenceType.name}
@@ -195,14 +195,14 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 };
 
 const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
-    nucleotideSegmentNames,
+    segments,
     sequenceType,
     setType,
     isActive,
     setActiveTab,
 }) => {
-    if (!isMultiSegmented(nucleotideSegmentNames)) {
-        const onlySegment = nucleotideSegmentNames[0];
+    if (!isMultiSegmented(segments)) {
+        const onlySegment = segments[0];
         return (
             <BoxWithTabsTab
                 key={onlySegment.lapisName}
@@ -218,7 +218,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
 
     return (
         <>
-            {nucleotideSegmentNames.map((segmentName) => (
+            {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
                     isActive={isActive && isAlignedSequence(sequenceType) && segmentName === sequenceType.name}
