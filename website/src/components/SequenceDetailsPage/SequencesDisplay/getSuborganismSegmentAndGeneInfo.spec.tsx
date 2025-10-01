@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 
-import { getSequenceNames } from './getSequenceNames.tsx';
+import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
 import { SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 
-describe('getSequenceNames', () => {
+describe('getSuborganismSegmentAndGeneInfo', () => {
     describe('with single reference', () => {
         test('should return correct names for multi-segmented organism', () => {
             const referenceGenomeSequenceNames = {
@@ -14,7 +14,7 @@ describe('getSequenceNames', () => {
                 },
             };
 
-            const result = getSequenceNames(referenceGenomeSequenceNames, SINGLE_REFERENCE);
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, SINGLE_REFERENCE);
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [
@@ -38,7 +38,7 @@ describe('getSequenceNames', () => {
                 },
             };
 
-            const result = getSequenceNames(referenceGenomeSequenceNames, SINGLE_REFERENCE);
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, SINGLE_REFERENCE);
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'main', label: 'main' }],
@@ -65,7 +65,7 @@ describe('getSequenceNames', () => {
                 },
             };
 
-            const result = getSequenceNames(referenceGenomeSequenceNames, suborganism);
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, suborganism);
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [
@@ -94,7 +94,7 @@ describe('getSequenceNames', () => {
                 },
             };
 
-            const result = getSequenceNames(referenceGenomeSequenceNames, suborganism);
+            const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, suborganism);
 
             expect(result).to.deep.equal({
                 nucleotideSegmentNames: [{ lapisName: 'sub1', label: 'main' }],

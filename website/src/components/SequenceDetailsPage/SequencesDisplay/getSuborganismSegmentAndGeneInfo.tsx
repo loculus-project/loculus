@@ -8,14 +8,16 @@ import {
     type SegmentInfo,
 } from '../../../utils/sequenceTypeHelpers.ts';
 
-export function getSequenceNames(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
-    suborganism: string,
-): {
+export type SuborganismSegmentAndGeneInfo = {
     nucleotideSegmentNames: SegmentInfo[];
     geneNames: GeneInfo[];
     isMultiSegmented: boolean;
-} {
+};
+
+export function getSuborganismSegmentAndGeneInfo(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string,
+): SuborganismSegmentAndGeneInfo {
     const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[suborganism];
 
     if (suborganism === SINGLE_REFERENCE) {
