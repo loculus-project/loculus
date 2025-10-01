@@ -8,8 +8,8 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
     // Then commit the changes
-    id 'org.jetbrains.kotlin.jvm' version '2.2.10'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.2.20'
     id 'org.jlleitschuh.gradle.ktlint' version '13.1.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -55,8 +55,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.6"
-    implementation("io.minio:minio:8.5.17")
-    implementation("software.amazon.awssdk:s3:2.33.4")
+    implementation("io.minio:minio:8.6.0")
+    implementation("software.amazon.awssdk:s3:2.34.6")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"

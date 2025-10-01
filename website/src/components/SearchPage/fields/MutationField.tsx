@@ -3,32 +3,32 @@ import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
 import { parseMutationsString, type MutationQuery, parseMutationString } from '../../../utils/mutation.ts';
 import { serializeMutationQueries } from '../../../utils/mutation.ts';
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     value: string;
     onChange: (mutationFilter: string) => void;
 }
 
-export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequenceNames, value, onChange }) => {
+export const MutationField: FC<MutationFieldProps> = ({ referenceGenomeLightweightSchema, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
 
     const selectedOptions = useMemo(
-        () => parseMutationsString(value, referenceGenomesSequenceNames),
-        [value, referenceGenomesSequenceNames],
+        () => parseMutationsString(value, referenceGenomeLightweightSchema),
+        [value, referenceGenomeLightweightSchema],
     );
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const mutQuery = parseMutationString(newValue, referenceGenomesSequenceNames);
+        const mutQuery = parseMutationString(newValue, referenceGenomeLightweightSchema);
         const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };

@@ -17,7 +17,7 @@ import {
     type ReferenceAccession,
     type ReferenceGenome,
     type ReferenceGenomes,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -245,14 +245,14 @@ const getAccession = (n: NamedSequence): ReferenceAccession => {
     };
 };
 
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
+export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
     const referenceGenomes = getReferenceGenomes(organism);
     return Object.fromEntries(
         Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
             suborganism,
             {
-                nucleotideSequences: referenceGenome.nucleotideSequences.map((n) => n.name),
-                genes: referenceGenome.genes.map((n) => n.name),
+                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
+                geneNames: referenceGenome.genes.map((n) => n.name),
                 insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
             },
         ]),

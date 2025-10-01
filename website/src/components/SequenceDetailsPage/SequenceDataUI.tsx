@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesSequenceNames, type Suborganism } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
@@ -27,7 +27,7 @@ interface Props {
     myGroups: Group[];
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
 }
 
 export const SequenceDataUI: FC<Props> = ({
@@ -66,7 +66,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataTableData={dataTableData}
                 suborganism={suborganism}
                 dataUseTermsHistory={dataUseTermsHistory}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
             />
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
@@ -75,7 +75,7 @@ export const SequenceDataUI: FC<Props> = ({
                         suborganism={suborganism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

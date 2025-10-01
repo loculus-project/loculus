@@ -6,7 +6,7 @@ import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type RevisionFormProps = {
@@ -14,7 +14,7 @@ type RevisionFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
@@ -25,7 +25,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     organism,
     clientConfig,
     group,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -35,7 +35,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
             <DataUploadForm
                 accessToken={accessToken}
                 organism={organism}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
                 clientConfig={clientConfig}
                 action='revise'

@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
 import {
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
@@ -14,10 +14,10 @@ const singleAccession: ReferenceAccession = {
     insdcAccessionFull: 'accession_main',
 };
 
-const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const singleReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [singleAccession],
     },
 };
@@ -32,10 +32,10 @@ const multiAccession2: ReferenceAccession = {
     insdcAccessionFull: 'accession_seg2',
 };
 
-const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const multiReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['seg1', 'seg2'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['seg1', 'seg2'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [multiAccession1, multiAccession2],
     },
 };
@@ -43,15 +43,15 @@ const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
 function renderField(
     value: string,
     onChange: (mutationFilter: string) => void,
-    referenceGenome: ReferenceGenomesSequenceNames,
+    referenceGenome: ReferenceGenomesLightweightSchema,
 ) {
-    render(<MutationField value={value} onChange={onChange} referenceGenomesSequenceNames={referenceGenome} />);
+    render(<MutationField value={value} onChange={onChange} referenceGenomeLightweightSchema={referenceGenome} />);
 }
 
 describe('MutationField', () => {
     test('should render provided value', () => {
         const handleChange = vi.fn();
-        renderField('gene1:10Y, A20T, ins_30:G?G', handleChange, singleSegmentedReferenceGenome);
+        renderField('gene1:10Y, A20T, ins_30:G?G', handleChange, singleReferenceGenomeLightweightSchema);
         expect(screen.queryByText('gene1:10Y')).toBeInTheDocument();
         expect(screen.queryByText('A20T')).toBeInTheDocument();
         expect(screen.queryByText('ins_30:G?G')).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('MutationField', () => {
 
     test('should accept input and dispatch events (single-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, singleSegmentedReferenceGenome);
+        renderField('', handleChange, singleReferenceGenomeLightweightSchema);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'G100A{enter}');
         expect(handleChange).toHaveBeenCalledWith('G100A');
@@ -67,7 +67,7 @@ describe('MutationField', () => {
 
     test('should accept input and dispatch events (multi-segmented)', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, multiSegmentedReferenceGenome);
+        renderField('', handleChange, multiReferenceGenomeLightweightSchema);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'seg1:G100A{enter}');
         expect(handleChange).toHaveBeenCalledWith('seg1:G100A');
@@ -75,7 +75,7 @@ describe('MutationField', () => {
 
     test('should reject invalid input', async () => {
         const handleChange = vi.fn();
-        renderField('', handleChange, singleSegmentedReferenceGenome);
+        renderField('', handleChange, singleReferenceGenomeLightweightSchema);
 
         await userEvent.type(screen.getByLabelText('Mutations'), 'main:G200A{enter}');
         expect(handleChange).toHaveBeenCalledTimes(0);

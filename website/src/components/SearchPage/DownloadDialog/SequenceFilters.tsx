@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
@@ -44,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    private readonly referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -58,12 +58,12 @@ export class FieldFilterSet implements SequenceFilter {
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
+        referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
+        this.referenceGenomeLightweightSchema = referenceGenomeSequenceNames;
     }
 
     /**
@@ -75,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { [SINGLE_REFERENCE]: { nucleotideSequences: [], genes: [], insdcAccessionFull: [] } },
+            { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
         );
     }
 
@@ -109,7 +109,7 @@ export class FieldFilterSet implements SequenceFilter {
         delete sequenceFilters.mutation;
         const mutationSearchParams = intoMutationSearchParams(
             this.fieldValues.mutation,
-            this.referenceGenomeSequenceNames,
+            this.referenceGenomeLightweightSchema,
         );
 
         return {

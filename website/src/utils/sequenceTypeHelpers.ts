@@ -1,9 +1,14 @@
 export type SequenceType =
-    | { type: 'nucleotide'; aligned: boolean; name: SequenceName }
-    | { type: 'aminoAcid'; aligned: true; name: SequenceName };
+    | { type: 'nucleotide'; aligned: boolean; name: SegmentInfo }
+    | { type: 'aminoAcid'; aligned: true; name: GeneInfo };
 export type BaseType = SequenceType['type'];
 
-export type SequenceName = {
+export type SegmentInfo = {
+    lapisName: string;
+    label: string;
+};
+
+export type GeneInfo = {
     lapisName: string;
     label: string;
 };
@@ -14,14 +19,14 @@ export function getMultiPathogenNucleotideSequenceNames(nucleotideSequences: str
         : nucleotideSequences.map((name) => getMultiPathogenSequenceName(name, suborganism));
 }
 
-export function getSinglePathogenSequenceName(name: string): SequenceName {
+export function getSinglePathogenSequenceName(name: string): SegmentInfo | GeneInfo {
     return {
         lapisName: name,
         label: name,
     };
 }
 
-export function getMultiPathogenSequenceName(name: string, suborganism: string): SequenceName {
+export function getMultiPathogenSequenceName(name: string, suborganism: string): SegmentInfo | GeneInfo {
     return {
         lapisName: `${suborganism}-${name}`,
         label: name,
@@ -32,24 +37,24 @@ export function isMultiSegmented(nucleotideSegmentNames: unknown[]) {
     return nucleotideSegmentNames.length > 1;
 }
 
-export const unalignedSequenceSegment = (segmentName: SequenceName): SequenceType => ({
+export const unalignedSequenceSegment = (segmentInfo: SegmentInfo): SequenceType => ({
     type: 'nucleotide',
     aligned: false,
-    name: segmentName,
+    name: segmentInfo,
 });
 
-export const alignedSequenceSegment = (segmentName: SequenceName): SequenceType => ({
+export const alignedSequenceSegment = (segmentInfo: SegmentInfo): SequenceType => ({
     type: 'nucleotide',
     aligned: true,
-    name: segmentName,
+    name: segmentInfo,
 });
 
-export const geneSequence = (gene: SequenceName): SequenceType => ({
+export const geneSequence = (geneInfo: GeneInfo): SequenceType => ({
     type: 'aminoAcid',
     aligned: true,
-    name: gene,
+    name: geneInfo,
 });
 export const isUnalignedSequence = (type: SequenceType): boolean => type.type === 'nucleotide' && !type.aligned;
 export const isAlignedSequence = (type: SequenceType): boolean => type.type === 'nucleotide' && type.aligned;
-export const isGeneSequence = (gene: SequenceName, type: SequenceType): boolean =>
-    type.type === 'aminoAcid' && type.name.lapisName === gene.lapisName;
+export const isGeneSequence = (segmentOrGeneInfo: SegmentInfo | GeneInfo, type: SequenceType): boolean =>
+    type.type === 'aminoAcid' && type.name.lapisName === segmentOrGeneInfo.lapisName;

@@ -17,7 +17,7 @@ import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
-import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
@@ -37,7 +37,7 @@ interface SearchFormProps {
     lapisUrl: string;
     searchVisibilities: Map<string, boolean>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
     suborganismIdentifierField: string | undefined;
@@ -52,7 +52,7 @@ export const SearchForm = ({
     lapisUrl,
     searchVisibilities,
     setASearchVisibility,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     lapisSearchParameters,
     showMutationSearch,
     suborganismIdentifierField,
@@ -130,7 +130,7 @@ export const SearchForm = ({
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 suborganismIdentifierField={suborganismIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}
@@ -145,7 +145,7 @@ export const SearchForm = ({
 
                         {showMutationSearch && (
                             <MutationField
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />
