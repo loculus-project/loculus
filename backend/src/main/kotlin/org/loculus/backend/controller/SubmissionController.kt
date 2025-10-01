@@ -406,10 +406,6 @@ open class SubmissionController(
             ),
         ],
     )
-    @ApiResponse(
-        responseCode = "423",
-        description = "Locked. New sequence entries are currently being uploaded.",
-    )
     @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getOriginalMetadata(
         @PathVariable @Valid organism: Organism,
@@ -425,11 +421,6 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
-        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
-
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         if (compression != null) {
