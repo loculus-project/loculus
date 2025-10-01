@@ -116,22 +116,22 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             <hr class='border-t border-gray-1000' />
             <footer class='hidden sm:flex sm:z-6 justify-between items-center h-20 px-8'>
                 <div class='w-full max-w-7xl mx-auto flex justify-between items-center'>
-                <div class='flex gap-5'>
-                    {
-                        navigationItems.bottom.map(({ text, path }) => (
-                            <a href={path} class='text-gray-600'>
-                                {text}
-                            </a>
-                        ))
-                    }
-                </div>
+                    <div class='flex gap-5'>
+                        {
+                            navigationItems.bottom.map(({ text, path }) => (
+                                <a href={path} class='text-gray-600'>
+                                    {text}
+                                </a>
+                            ))
+                        }
+                    </div>
 
-                <a
-                    href={gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'}
-                    class='flex items-center'
-                >
-                    <img src='/github-mark.svg' class='w-8 h-8' alt='github-icon' />
-                </a>
+                    <a
+                        href={gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'}
+                        class='flex items-center'
+                    >
+                        <img src='/github-mark.svg' class='w-8 h-8' alt='github-icon' />
+                    </a>
                 </div>
             </footer>
         </div>
