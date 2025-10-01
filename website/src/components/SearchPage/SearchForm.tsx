@@ -145,7 +145,7 @@ export const SearchForm = ({
 
                         {showMutationSearch && (
                             <MutationField
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                suborganismReferenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />

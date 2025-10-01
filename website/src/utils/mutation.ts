@@ -1,5 +1,5 @@
 import type { BaseType } from './sequenceTypeHelpers';
-import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
+import type { SuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
@@ -7,6 +7,7 @@ export type MutationQuery = {
     baseType: BaseType;
     mutationType: MutationType;
     text: string;
+    lapisQuery: string;
 };
 
 export type MutationSearchParams = {
@@ -18,11 +19,11 @@ export type MutationSearchParams = {
 
 export const removeMutationQueries = (
     mutations: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
     baseType: BaseType,
     mutationType: MutationType,
 ): string => {
-    const mutationQueries = parseMutationsString(mutations, referenceGenomeLightweightSchema);
+    const mutationQueries = parseMutationsString(mutations, suborganismSegmentAndGeneInfo);
     const filteredMutationQueries = mutationQueries.filter(
         (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
     );
@@ -31,11 +32,11 @@ export const removeMutationQueries = (
 
 export const parseMutationsString = (
     value: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationQuery[] => {
     return value
         .split(',')
-        .map((mutation) => parseMutationString(mutation.trim(), referenceGenomeLightweightSchema))
+        .map((mutation) => parseMutationString(mutation.trim(), suborganismSegmentAndGeneInfo))
         .filter(Boolean) as MutationQuery[];
 };
 
@@ -45,7 +46,7 @@ export const parseMutationsString = (
  */
 export const parseMutationString = (
     mutation: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationQuery | undefined => {
     const tests = [
         { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
@@ -55,8 +56,9 @@ export const parseMutationString = (
     ] as const;
 
     for (const { baseType, mutationType, test } of tests) {
-        if (test(mutation, referenceGenomeLightweightSchema)) {
-            return { baseType, mutationType, text: mutation };
+        const mutationTestResult = test(mutation, suborganismSegmentAndGeneInfo);
+        if (mutationTestResult.valid) {
+            return { baseType, mutationType, text: mutationTestResult.text, lapisQuery: mutationTestResult.lapisQuery };
         }
     }
 };
@@ -67,60 +69,69 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
 
 export const intoMutationSearchParams = (
     mutation: string | undefined,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationSearchParams => {
-    const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomeLightweightSchema);
+    const mutationFilter = parseMutationsString(mutation ?? '', suborganismSegmentAndGeneInfo);
 
     return {
         nucleotideMutations: mutationFilter
             .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         aminoAcidMutations: mutationFilter
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         nucleotideInsertions: mutationFilter
             .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         aminoAcidInsertions: mutationFilter
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
     };
 };
 
+type MutationTestResult = { valid: true; text: string; lapisQuery: string } | { valid: false };
+
+const INVALID: MutationTestResult = { valid: false };
+
 const isValidAminoAcidInsertionQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
-            return false;
+            return INVALID;
         }
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
-            return false;
+
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find((geneInfo) => geneInfo.label === gene);
+
+        if (geneInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+            return INVALID;
         }
-        return /^[A-Z*?]+$/.test(insertion);
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: `ins_${geneInfo.lapisName}:${position}:${insertion}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
 const isValidAminoAcidMutationQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene)) {
+
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find((geneInfo) => geneInfo.label === gene);
+
+        if (geneInfo === undefined) {
             return false;
         }
         return /^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation);
@@ -131,12 +142,10 @@ const isValidAminoAcidMutationQuery = (
 
 const isValidNucleotideInsertionQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
-        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const isMultiSegmented = suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -151,7 +160,7 @@ const isValidNucleotideInsertionQuery = (
             : ([undefined, ...split] as [undefined | string, string, string]);
         if (segment !== undefined) {
             const existingSegments = new Set(
-                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+                suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;
@@ -168,18 +177,16 @@ const isValidNucleotideInsertionQuery = (
 
 const isValidNucleotideMutationQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
-        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const isMultiSegmented = suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         if (isMultiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
             const existingSegments = new Set(
-                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+                suborganismReferenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
             );
             if (!existingSegments.has(segment)) {
                 return false;
@@ -191,3 +198,43 @@ const isValidNucleotideMutationQuery = (
         return false;
     }
 };
+
+class Mutation {
+    public readonly geneOrSegment?: string;
+    public readonly mutation: string;
+
+    constructor({ geneOrSegment, mutation }: { geneOrSegment?: string; mutation: string }) {
+        this.geneOrSegment = geneOrSegment;
+        this.mutation = mutation;
+    }
+
+    public toString(): string {
+        return this.geneOrSegment ? `${this.geneOrSegment}:${this.mutation}` : this.mutation;
+    }
+}
+
+class Insertion {
+    public readonly geneOrSegment?: string;
+    public readonly position: number;
+    public readonly insertion: string;
+
+    constructor({
+        geneOrSegment,
+        position,
+        insertion,
+    }: {
+        geneOrSegment?: string;
+        position: number;
+        insertion: string;
+    }) {
+        this.geneOrSegment = geneOrSegment;
+        this.position = position;
+        this.insertion = insertion;
+    }
+
+    public toString(): string {
+        return this.geneOrSegment
+            ? `ins_${this.geneOrSegment}:${this.position}:${this.insertion}`
+            : `ins_${this.position}:${this.insertion}`;
+    }
+}

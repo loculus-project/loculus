@@ -45,7 +45,13 @@ function renderField(
     onChange: (mutationFilter: string) => void,
     referenceGenome: ReferenceGenomesLightweightSchema,
 ) {
-    render(<MutationField value={value} onChange={onChange} referenceGenomeLightweightSchema={referenceGenome} />);
+    render(
+        <MutationField
+            value={value}
+            onChange={onChange}
+            suborganismReferenceGenomeLightweightSchema={referenceGenome}
+        />,
+    );
 }
 
 describe('MutationField', () => {
