@@ -9,8 +9,8 @@ import {
 } from '../../../utils/sequenceTypeHelpers.ts';
 
 export type SuborganismSegmentAndGeneInfo = {
-    nucleotideSegmentNames: SegmentInfo[];
-    geneNames: GeneInfo[];
+    nucleotideSegmentInfos: SegmentInfo[];
+    geneInfos: GeneInfo[];
     isMultiSegmented: boolean;
 };
 
@@ -22,15 +22,15 @@ export function getSuborganismSegmentAndGeneInfo(
 
     if (suborganism === SINGLE_REFERENCE) {
         return {
-            nucleotideSegmentNames: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
-            geneNames: geneNames.map(getSinglePathogenSequenceName),
+            nucleotideSegmentInfos: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
+            geneInfos: geneNames.map(getSinglePathogenSequenceName),
             isMultiSegmented: isMultiSegmented(nucleotideSegmentNames),
         };
     }
 
     return {
-        nucleotideSegmentNames: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, suborganism),
-        geneNames: geneNames.map((name) => getMultiPathogenSequenceName(name, suborganism)),
+        nucleotideSegmentInfos: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, suborganism),
+        geneInfos: geneNames.map((name) => getMultiPathogenSequenceName(name, suborganism)),
         isMultiSegmented: true, // LAPIS treats the suborganisms as multiple nucleotide segments -> always true
     };
 }

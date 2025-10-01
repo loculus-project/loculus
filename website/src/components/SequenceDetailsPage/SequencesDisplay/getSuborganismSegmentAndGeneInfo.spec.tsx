@@ -17,11 +17,11 @@ describe('getSuborganismSegmentAndGeneInfo', () => {
             const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, SINGLE_REFERENCE);
 
             expect(result).to.deep.equal({
-                nucleotideSegmentNames: [
+                nucleotideSegmentInfos: [
                     { lapisName: 'segment1', label: 'segment1' },
                     { lapisName: 'segment2', label: 'segment2' },
                 ],
-                geneNames: [
+                geneInfos: [
                     { lapisName: 'gene1', label: 'gene1' },
                     { lapisName: 'gene2', label: 'gene2' },
                 ],
@@ -41,8 +41,8 @@ describe('getSuborganismSegmentAndGeneInfo', () => {
             const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, SINGLE_REFERENCE);
 
             expect(result).to.deep.equal({
-                nucleotideSegmentNames: [{ lapisName: 'main', label: 'main' }],
-                geneNames: [{ lapisName: 'gene1', label: 'gene1' }],
+                nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
+                geneInfos: [{ lapisName: 'gene1', label: 'gene1' }],
                 isMultiSegmented: false,
             });
         });
@@ -68,11 +68,11 @@ describe('getSuborganismSegmentAndGeneInfo', () => {
             const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, suborganism);
 
             expect(result).to.deep.equal({
-                nucleotideSegmentNames: [
+                nucleotideSegmentInfos: [
                     { lapisName: 'sub1-segment1', label: 'segment1' },
                     { lapisName: 'sub1-segment2', label: 'segment2' },
                 ],
-                geneNames: [
+                geneInfos: [
                     { lapisName: 'sub1-gene1', label: 'gene1' },
                     { lapisName: 'sub1-gene2', label: 'gene2' },
                 ],
@@ -97,8 +97,8 @@ describe('getSuborganismSegmentAndGeneInfo', () => {
             const result = getSuborganismSegmentAndGeneInfo(referenceGenomeSequenceNames, suborganism);
 
             expect(result).to.deep.equal({
-                nucleotideSegmentNames: [{ lapisName: 'sub1', label: 'main' }],
-                geneNames: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
+                nucleotideSegmentInfos: [{ lapisName: 'sub1', label: 'main' }],
+                geneInfos: [{ lapisName: 'sub1-gene1', label: 'gene1' }],
                 isMultiSegmented: true,
             });
         });
