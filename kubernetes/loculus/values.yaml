@@ -1987,6 +1987,9 @@ images:
     repository: "ghcr.io/genspectrum/lapis-silo"
     tag: "v0.7.10.3@sha256:fe21e12b09ad178b2b7cc7208c9af348ad9d780b8d4d2a054f13fa58d7ba79da"
     pullPolicy: Always
+  siloImporter:
+    repository: "ghcr.io/loculus-project/silo-import"
+    pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
     tag: "0.5.14"
