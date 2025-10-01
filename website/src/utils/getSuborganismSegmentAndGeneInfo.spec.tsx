@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
-import { SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import { SINGLE_REFERENCE } from '../types/referencesGenomes.ts';
 
 describe('getSuborganismSegmentAndGeneInfo', () => {
     describe('with single reference', () => {

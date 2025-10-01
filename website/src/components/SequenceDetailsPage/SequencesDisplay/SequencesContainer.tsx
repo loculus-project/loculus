@@ -1,9 +1,9 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
 import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
+import { getSuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     alignedSequenceSegment,
     type GeneInfo,
@@ -130,9 +130,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                 />
             </BoxWithTabsTabBar>
             <BoxWithTabsBox>
-                {activeTab === 'gene' && (
-                    <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />
-                )}
+                {activeTab === 'gene' && <GeneDropdown genes={genes} sequenceType={sequenceType} setType={setType} />}
                 {activeTab !== 'gene' || isGeneSequence(sequenceType.name, sequenceType) ? (
                     <SequencesViewer
                         organism={organism}

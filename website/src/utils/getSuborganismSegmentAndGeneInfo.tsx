@@ -1,4 +1,3 @@
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
     type GeneInfo,
     getMultiPathogenNucleotideSequenceNames,
@@ -6,7 +5,8 @@ import {
     getSinglePathogenSequenceName,
     isMultiSegmented,
     type SegmentInfo,
-} from '../../../utils/sequenceTypeHelpers.ts';
+} from './sequenceTypeHelpers.ts';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../types/referencesGenomes.ts';
 
 export type SuborganismSegmentAndGeneInfo = {
     nucleotideSegmentInfos: SegmentInfo[];
