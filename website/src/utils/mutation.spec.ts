@@ -71,6 +71,93 @@ describe('mutation', () => {
         });
     });
 
+    describe('single segmented case with multiple suborganism', () => {
+        const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+            nucleotideSegmentInfos: [
+                {
+                    lapisName: 'lapisName-main',
+                    label: 'label-main',
+                },
+            ],
+            geneInfos,
+            isMultiSegmented: true,
+        };
+
+        const nucleotideMutationCases: [string, MutationQuery][] = [
+            [
+                'A23.',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'A23.',
+                    lapisQuery: 'lapisName-main:A23.',
+                },
+            ],
+            [
+                '23T',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: '23T',
+                    lapisQuery: 'lapisName-main:23T',
+                },
+            ],
+            [
+                'A23T',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'A23T',
+                    lapisQuery: 'lapisName-main:A23T',
+                },
+            ],
+            [
+                '23',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: '23',
+                    lapisQuery: 'lapisName-main:23',
+                },
+            ],
+            [
+                'A23',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'A23',
+                    lapisQuery: 'lapisName-main:A23',
+                },
+            ],
+        ];
+
+        it.each([
+            ...nucleotideMutationCases,
+            ...aminoAcidMutationCases,
+            [
+                'INS_100:G',
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'insertion',
+                    text: 'INS_100:G',
+                    lapisQuery: 'ins_lapisName-main:100:G',
+                },
+            ],
+            ...aminoAcidInsertionCases,
+        ])('parses the valid mutation string "%s"', (input, expected) => {
+            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            expect(result).toEqual(expected);
+        });
+
+        it.each(['lapisName-main:A123T', 'label-main:A123T'])(
+            'returns undefined for invalid mutation string %s',
+            (input) => {
+                const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+                expect(result).toBeUndefined();
+            },
+        );
+    });
+
     describe('multi-segment', () => {
         const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
