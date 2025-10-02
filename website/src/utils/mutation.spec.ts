@@ -10,68 +10,6 @@ import {
     serializeMutationQueries,
 } from './mutation';
 
-const aminoAcidMutationCases: [string, MutationQuery][] = [
-    [
-        'label-GENE1:A23T',
-        {
-            baseType: 'aminoAcid',
-            mutationType: 'substitutionOrDeletion',
-            text: 'label-GENE1:A23T',
-            lapisQuery: 'lapisName-gene1:A23T',
-        },
-    ],
-    [
-        'label-GENE2:*23',
-        {
-            baseType: 'aminoAcid',
-            mutationType: 'substitutionOrDeletion',
-            text: 'label-GENE2:*23',
-            lapisQuery: 'lapisName-gene2:*23',
-        },
-    ],
-    [
-        'label-GENE1:23*',
-        {
-            baseType: 'aminoAcid',
-            mutationType: 'substitutionOrDeletion',
-            text: 'label-GENE1:23*',
-            lapisQuery: 'lapisName-gene1:23*',
-        },
-    ],
-    [
-        'label-GENE1:23.',
-        {
-            baseType: 'aminoAcid',
-            mutationType: 'substitutionOrDeletion',
-            text: 'label-GENE1:23.',
-            lapisQuery: 'lapisName-gene1:23.',
-        },
-    ],
-];
-
-const aminoAcidInsertionCases: [string, MutationQuery][] = [
-    [
-        'INS_label-GENE1:23:T*?',
-        {
-            baseType: 'aminoAcid',
-            mutationType: 'insertion',
-            text: 'INS_label-GENE1:23:T*?',
-            lapisQuery: 'ins_lapisName-gene1:23:T*?',
-        },
-    ],
-];
-
-const geneInfos = [
-    {
-        lapisName: 'lapisName-gene1',
-        label: 'label-gene1',
-    },
-    {
-        lapisName: 'lapisName-gene2',
-        label: 'label-gene2',
-    },
-];
-
 describe('mutation', () => {
     describe('single segment', () => {
         const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
@@ -281,3 +219,65 @@ describe('mutation', () => {
         });
     });
 });
+
+const aminoAcidMutationCases: [string, MutationQuery][] = [
+    [
+        'label-GENE1:A23T',
+        {
+            baseType: 'aminoAcid',
+            mutationType: 'substitutionOrDeletion',
+            text: 'label-GENE1:A23T',
+            lapisQuery: 'lapisName-gene1:A23T',
+        },
+    ],
+    [
+        'label-GENE2:*23',
+        {
+            baseType: 'aminoAcid',
+            mutationType: 'substitutionOrDeletion',
+            text: 'label-GENE2:*23',
+            lapisQuery: 'lapisName-gene2:*23',
+        },
+    ],
+    [
+        'label-GENE1:23*',
+        {
+            baseType: 'aminoAcid',
+            mutationType: 'substitutionOrDeletion',
+            text: 'label-GENE1:23*',
+            lapisQuery: 'lapisName-gene1:23*',
+        },
+    ],
+    [
+        'label-GENE1:23.',
+        {
+            baseType: 'aminoAcid',
+            mutationType: 'substitutionOrDeletion',
+            text: 'label-GENE1:23.',
+            lapisQuery: 'lapisName-gene1:23.',
+        },
+    ],
+];
+
+const aminoAcidInsertionCases: [string, MutationQuery][] = [
+    [
+        'INS_label-GENE1:23:T*?',
+        {
+            baseType: 'aminoAcid',
+            mutationType: 'insertion',
+            text: 'INS_label-GENE1:23:T*?',
+            lapisQuery: 'ins_lapisName-gene1:23:T*?',
+        },
+    ],
+];
+
+const geneInfos = [
+    {
+        lapisName: 'lapisName-gene1',
+        label: 'label-gene1',
+    },
+    {
+        lapisName: 'lapisName-gene2',
+        label: 'label-gene2',
+    },
+];
