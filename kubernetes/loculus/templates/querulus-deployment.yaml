@@ -1,50 +1,48 @@
 {{- if .Values.useQuerulus }}
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-
-{{- range $key, $organism := (include "loculus.enabledOrganisms" . | fromJson) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-querulus-{{ $key }}
+  name: loculus-querulus
   annotations:
 spec:
-  replicas: {{ $.Values.replicas.querulus }}
+  replicas: {{ .Values.replicas.querulus }}
   selector:
     matchLabels:
       app: loculus
-      component: querulus-{{ $key }}
+      component: querulus
   template:
     metadata:
       annotations:
         timestamp: {{ now | quote }}
       labels:
         app: loculus
-        component: querulus-{{ $key }}
+        component: querulus
     spec:
-      {{- include "possiblePriorityClassName" $ | nindent 6 }}
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
         {{- include "loculus.configProcessor" (dict "name" "querulus-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: querulus
-          image: "{{ $.Values.images.querulus.repository }}:{{ $.Values.images.querulus.tag }}"
-          imagePullPolicy: "{{ $.Values.images.querulus.pullPolicy }}"
-          {{- include "loculus.resources" (list "querulus" $.Values $key) | nindent 10 }}
+          image: "{{ .Values.images.querulus.repository }}:{{ .Values.images.querulus.tag }}"
+          imagePullPolicy: "{{ .Values.images.querulus.pullPolicy }}"
+          {{- include "loculus.resources" (list "querulus" .Values) | nindent 10 }}
           ports:
             - containerPort: 8000
           env:
             - name: DB_HOST
-              value: {{ $.Values.databaseConfiguration.host }}
+              value: {{ .Values.databaseConfiguration.host }}
             - name: DB_PORT
-              value: {{ $.Values.databaseConfiguration.port | quote }}
+              value: {{ .Values.databaseConfiguration.port | quote }}
             - name: DB_NAME
-              value: {{ $.Values.databaseConfiguration.database }}
+              value: {{ .Values.databaseConfiguration.database }}
             - name: DB_USER
-              value: {{ $.Values.databaseConfiguration.username }}
+              value: {{ .Values.databaseConfiguration.username }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.databaseConfiguration.secretName }}
+                  name: {{ .Values.databaseConfiguration.secretName }}
                   key: password
           volumeMounts:
             - name: querulus-config-processed
@@ -71,6 +69,5 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 5
       volumes:
-        {{- include "loculus.configVolume" (dict "name" "querulus-config" "configmap" (printf "querulus-config-%s" $key)) | nindent 8 }}
-{{- end }}
+        {{- include "loculus.configVolume" (dict "name" "querulus-config" "configmap" "querulus-config") | nindent 8 }}
 {{- end }}

@@ -1,17 +1,15 @@
 {{- if .Values.useQuerulus }}
-{{- range $key, $organism := (include "loculus.enabledOrganisms" . | fromJson) }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: loculus-querulus-service-{{ $key }}
+  name: loculus-querulus-service
 spec:
   selector:
     app: loculus
-    component: querulus-{{ $key }}
+    component: querulus
   ports:
     - protocol: TCP
       port: 8080
       targetPort: 8000
-{{- end }}
 {{- end }}
