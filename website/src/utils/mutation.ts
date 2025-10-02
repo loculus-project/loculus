@@ -123,7 +123,7 @@ const isValidAminoAcidMutationQuery = (
         if (!existingGenes.has(gene)) {
             return false;
         }
-        return /^[A-Z*]?[0-9]+[A-Z-*\\.]?$/.test(mutation);
+        return /^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation);
     } catch (_) {
         return false;
     }
@@ -186,7 +186,7 @@ const isValidNucleotideMutationQuery = (
             }
             mutation = _mutation;
         }
-        return /^[A-Z]?[0-9]+[A-Z-\\.]?$/.test(mutation);
+        return /^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation);
     } catch (_) {
         return false;
     }

@@ -28,13 +28,29 @@ describe('mutation', () => {
             });
         });
 
-        it.each(['INVALID:MUTATION', 'AA-10T', 'INS_', 'GENE:', ':::', 'ins_A:23:T', 'ins_23:A:T', 'INS_4:G:T'])(
-            'returns undefined for invalid mutation string %s',
-            (input) => {
-                const result = parseMutationString(input, mockLightweightSchema);
-                expect(result).toBeUndefined();
-            },
-        );
+        it('parses a valid mutation string with "."', () => {
+            const result = parseMutationString('A23.', mockLightweightSchema);
+            expect(result).toEqual({
+                baseType: 'nucleotide',
+                mutationType: 'substitutionOrDeletion',
+                text: 'A23.',
+            });
+        });
+
+        it.each([
+            'INVALID:MUTATION',
+            'AA-10T',
+            '123\\',
+            'INS_',
+            'GENE:',
+            ':::',
+            'ins_A:23:T',
+            'ins_23:A:T',
+            'INS_4:G:T',
+        ])('returns undefined for invalid mutation string %s', (input) => {
+            const result = parseMutationString(input, mockLightweightSchema);
+            expect(result).toBeUndefined();
+        });
     });
 
     describe('multi-segment', () => {
@@ -58,6 +74,7 @@ describe('mutation', () => {
         it.each([
             'INVALID:MUTATION',
             '12345',
+            '12345\\',
             'AA-10T',
             'INS_',
             'GENE:',
