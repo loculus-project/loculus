@@ -9,7 +9,7 @@ metadata:
   name: loculus-querulus-{{ $key }}
   annotations:
 spec:
-  replicas: {{ $.Values.replicas.querulus | default 2 }}
+  replicas: {{ $.Values.replicas.querulus }}
   selector:
     matchLabels:
       app: loculus
@@ -34,17 +34,17 @@ spec:
             - containerPort: 8000
           env:
             - name: DB_HOST
-              value: {{ $.Values.databaseConfiguration.host | default "loculus-postgres-service" }}
+              value: {{ $.Values.databaseConfiguration.host }}
             - name: DB_PORT
-              value: {{ $.Values.databaseConfiguration.port | default "5432" | quote }}
+              value: {{ $.Values.databaseConfiguration.port | quote }}
             - name: DB_NAME
-              value: {{ $.Values.databaseConfiguration.database | default "loculus" }}
+              value: {{ $.Values.databaseConfiguration.database }}
             - name: DB_USER
-              value: {{ $.Values.databaseConfiguration.username | default "postgres" }}
+              value: {{ $.Values.databaseConfiguration.username }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $.Values.databaseConfiguration.secretName | default "loculus-postgres-secret" }}
+                  name: {{ $.Values.databaseConfiguration.secretName }}
                   key: password
           volumeMounts:
             - name: querulus-config-processed
