@@ -4,12 +4,16 @@ export type SequenceType =
 export type BaseType = SequenceType['type'];
 
 export type SegmentInfo = {
+    /** the segment name as it is called in LAPIS */
     lapisName: string;
+    /** the segment name as it should be displayed in the UI */
     label: string;
 };
 
 export type GeneInfo = {
+    /** the gene name as it is called in LAPIS */
     lapisName: string;
+    /** the gene name as it should be displayed in the UI */
     label: string;
 };
 
