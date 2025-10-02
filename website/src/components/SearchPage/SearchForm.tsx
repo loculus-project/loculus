@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -20,6 +20,7 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
+import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -73,6 +74,11 @@ export const SearchForm = ({
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
         }));
+
+    const suborganismSegmentAndGeneInfo = useMemo(
+        () => getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+        [referenceGenomeLightweightSchema, selectedSuborganism],
+    );
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -143,9 +149,9 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && (
+                        {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
                             <MutationField
-                                suborganismReferenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />

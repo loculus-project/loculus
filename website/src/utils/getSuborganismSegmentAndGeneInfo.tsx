@@ -14,19 +14,37 @@ export type SuborganismSegmentAndGeneInfo = {
     isMultiSegmented: boolean;
 };
 
+/**
+ * If we know that the suborganism is not null, then the result will also be non-null.
+ */
 export function getSuborganismSegmentAndGeneInfo(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     suborganism: string,
-): SuborganismSegmentAndGeneInfo {
-    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[suborganism];
+): SuborganismSegmentAndGeneInfo;
 
-    if (suborganism === SINGLE_REFERENCE) {
+export function getSuborganismSegmentAndGeneInfo(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string | null,
+): SuborganismSegmentAndGeneInfo | null;
+
+export function getSuborganismSegmentAndGeneInfo(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string | null,
+): SuborganismSegmentAndGeneInfo | null {
+    if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
+        const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
         return {
             nucleotideSegmentInfos: nucleotideSegmentNames.map(getSinglePathogenSequenceName),
             geneInfos: geneNames.map(getSinglePathogenSequenceName),
             isMultiSegmented: isMultiSegmented(nucleotideSegmentNames),
         };
     }
+
+    if (suborganism === null || !(suborganism in referenceGenomeLightweightSchema)) {
+        return null;
+    }
+
+    const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[suborganism];
 
     return {
         nucleotideSegmentInfos: getMultiPathogenNucleotideSequenceNames(nucleotideSegmentNames, suborganism),
