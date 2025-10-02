@@ -18,7 +18,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
-useQuerulus: false
+useQuerulus: true
 website:
   websiteConfig:
     enableLoginNavigationItem: true
