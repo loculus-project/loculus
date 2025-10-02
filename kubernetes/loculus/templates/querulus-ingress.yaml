@@ -34,7 +34,7 @@ spec:
           service:
             name: loculus-querulus-service
             port:
-              number: 8080
+              number: 8000
   {{- if eq $.Values.environment "server" }}
   tls:
   - hosts:
