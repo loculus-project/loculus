@@ -213,7 +213,9 @@ const isValidNucleotideMutationQuery = (
         return {
             valid: true,
             text,
-            lapisQuery: multiSegmented ? `${segmentInfo.lapisName}:${mutation}` : mutation,
+            lapisQuery: suborganismSegmentAndGeneInfo.isMultiSegmented
+                ? `${segmentInfo.lapisName}:${mutation}`
+                : mutation,
         };
     } catch (_) {
         return INVALID;
