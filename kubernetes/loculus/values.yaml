@@ -1994,7 +1994,7 @@ images:
     pullPolicy: Always
   querulus:
     repository: "ghcr.io/theosanderson/querulus"
-    tag: "latest"
+    tag: "commit-27e0857"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
