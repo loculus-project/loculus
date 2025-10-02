@@ -8,10 +8,18 @@ spec:
   type: ClusterIP
   selector:
     app: loculus
+    {{- if $.Values.useQuerulus }}
+    component: querulus-{{ $key }}
+    {{- else }}
     component: lapis-{{ $key }}
+    {{- end }}
   ports:
     - port: 8080
+      {{- if $.Values.useQuerulus }}
+      targetPort: 8000
+      {{- else }}
       targetPort: 8080
+      {{- end }}
       protocol: TCP
       name: http
 {{- end }}
