@@ -2,7 +2,7 @@ import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } 
 import { type ChangeEvent, type FC, Fragment, useMemo, useState } from 'react';
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
-import type { SuborganismReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     type MutationQuery,
     parseMutationsString,
@@ -13,29 +13,25 @@ import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    suborganismReferenceGenomeLightweightSchema: SuborganismReferenceGenomesLightweightSchema;
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo;
     value: string;
     onChange: (mutationFilter: string) => void;
 }
 
-export const MutationField: FC<MutationFieldProps> = ({
-    suborganismReferenceGenomeLightweightSchema,
-    value,
-    onChange,
-}) => {
+export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGeneInfo, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
 
     const selectedOptions = useMemo(
-        () => parseMutationsString(value, suborganismReferenceGenomeLightweightSchema),
-        [value, suborganismReferenceGenomeLightweightSchema],
+        () => parseMutationsString(value, suborganismSegmentAndGeneInfo),
+        [value, suborganismSegmentAndGeneInfo],
     );
 
     const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;
         setInputValue(newValue);
-        const mutQuery = parseMutationString(newValue, suborganismReferenceGenomeLightweightSchema);
+        const mutQuery = parseMutationString(newValue, suborganismSegmentAndGeneInfo);
         const newOptions = mutQuery ? [mutQuery] : [];
         setOptions(newOptions);
     };
