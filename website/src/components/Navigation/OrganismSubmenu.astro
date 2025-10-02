@@ -1,0 +1,49 @@
+---
+import { SubmenuLink } from './SubmenuLink.tsx';
+import type { Organism } from '../../config';
+import { extraSequenceRelatedTopNavigationItems } from '../../routes/extraTopNavigationItems';
+import { getSequenceRelatedItems } from '../../routes/navigationItems';
+
+interface Props {
+    currentOrganism?: string;
+    currentOrganismObject?: Organism;
+    currentPath: string;
+}
+
+const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
+
+// Get the navigation items for this organism
+const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
+const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
+---
+
+{
+    currentOrganism && (
+        <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
+            <div class='flex items-center gap-2 px-4 py-2 mx-4'>
+                <span class='text-gray-700 font-medium mr-3'>
+                    {currentOrganismObject?.displayName || currentOrganism}
+                </span>
+                <span class='text-gray-300 mr-2'>|</span>
+                {sequenceRelatedItems.map(({ text, path, icon }) => {
+                    const Icon = icon;
+                    const isActive = currentPath.startsWith(path);
+                    return (
+                        <SubmenuLink href={path} isActive={isActive}>
+                            {Icon && <Icon className='w-4 h-4' />}
+                            {text}
+                        </SubmenuLink>
+                    );
+                })}
+                {extraItems.map(({ text, path }) => {
+                    const isActive = currentPath.startsWith(path);
+                    return (
+                        <SubmenuLink href={path} isActive={isActive}>
+                            {text}
+                        </SubmenuLink>
+                    );
+                })}
+            </div>
+        </nav>
+    )
+}

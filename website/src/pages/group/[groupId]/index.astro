@@ -4,6 +4,7 @@ import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import type { ContinueSubmissionIntent } from '../../../routes/routes';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
@@ -14,6 +15,11 @@ const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
 const organisms = getConfiguredOrganisms();
 const databaseName = getWebsiteConfig().name;
+
+const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
+
+const continueSubmissionIntent: ContinueSubmissionIntent | undefined =
+    continueSubmissionOrganism !== null ? { organism: continueSubmissionOrganism } : undefined;
 
 if (isNaN(groupId)) {
     return new Response(undefined, {
@@ -35,6 +41,7 @@ const userGroups = userGroupsResponse.match(
         (groupDetails) => groupDetails.group.groupName,
         () => 'Group error',
     )}
+    activeTopNavigationItem='account'
 >
     {
         !accessToken ? (
@@ -50,6 +57,7 @@ const userGroups = userGroupsResponse.match(
                         userGroups={userGroups}
                         organisms={organisms}
                         databaseName={databaseName}
+                        continueSubmissionIntent={continueSubmissionIntent}
                         client:load
                     />
                 ),

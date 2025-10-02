@@ -419,7 +419,7 @@ export const InnerSearchFullUI = ({
                 />
             </div>
             <div
-                className={`md:w-[calc(100%-18.1rem)]`}
+                className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />

@@ -29,7 +29,7 @@ const authorResponse = await seqSetClient.getAuthor(username);
 const editAccountUrl = urlForKeycloakAccountPage(keycloakClient!) + '/#/personal-info';
 ---
 
-<BaseLayout title='SeqSets' data-testid='seqSets-list-container'>
+<BaseLayout title='SeqSets' data-testid='seqSets-list-container' activeTopNavigationItem='seqsets'>
     <div class='flex flex-col justify-center items-center'>
         {
             !accessToken ? (

@@ -1,5 +1,7 @@
 ---
 import AccessionSearchBox from './AccessionSearchBox.tsx';
+import { NavigationTab } from './NavigationTab.tsx';
+import { OrganismNavigation } from './OrganismNavigation.tsx';
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { getWebsiteConfig } from '../../config';
@@ -9,39 +11,53 @@ import { getAuthUrl } from '../../utils/getAuthUrl';
 interface Props {
     implicitOrganism?: string;
     gitHubMainUrl?: string;
+    activeTopNavigationItem?: string;
 }
 
-const { implicitOrganism, gitHubMainUrl } = Astro.props;
+const { implicitOrganism, gitHubMainUrl, activeTopNavigationItem } = Astro.props;
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 const selectedOrganism =
     implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
-const siteName = getWebsiteConfig().name;
+const websiteConfig = getWebsiteConfig();
+const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
 
-const topNavigationItems = navigationItems.top(selectedOrganism?.key, isLoggedIn, loginUrl);
+const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
 ---
 
 <div class='flex justify-end relative'>
-    <div class='subtitle hidden lg:flex lg:z-6 gap-4 items-center'>
-        <AccessionSearchBox className='' client:load />
-        {topNavigationItems.map(({ text, path }) => <a href={path}>{text}</a>)}
+    <div class='subtitle hidden lg:flex lg:z-6 items-center gap-5'>
+        <div class='flex items-end gap-1'>
+            <OrganismNavigation currentOrganism={selectedOrganism} knownOrganisms={knownOrganisms} client:load />
+            {
+                topNavigationItems.map(({ text, path, id }) => {
+                    const itemIsActive =
+                        activeTopNavigationItem !== undefined
+                            ? id === activeTopNavigationItem || (id === undefined && activeTopNavigationItem === path)
+                            : false;
+
+                    return (
+                        <NavigationTab as='a' href={path} isActive={itemIsActive}>
+                            {text}
+                        </NavigationTab>
+                    );
+                })
+            }
+        </div>
+        <AccessionSearchBox client:load />
     </div>
 
-    <div
-        class='lg:hidden z-0'
-        style={{
-            position: 'absolute',
-            right: '1.5rem',
-            top: '-2rem',
-        }}
-    >
+    <div class='lg:hidden flex items-center pb-3'>
         <SandwichMenu
             topNavigationItems={topNavigationItems}
+            currentOrganism={selectedOrganism}
+            knownOrganisms={knownOrganisms}
             gitHubMainUrl={gitHubMainUrl}
             siteName={siteName}
+            activeTopNavigationItem={activeTopNavigationItem}
             client:load
         />
     </div>

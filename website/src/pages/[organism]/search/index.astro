@@ -52,9 +52,7 @@ const { data, totalCount } = await performLapisSearchQueries(
 const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
 ---
 
-<BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
-    <h1 class='title px-3 py-2 ml-1'>Search</h1>
-
+<BaseLayout title={`${cleanedOrganism.displayName} - Browse`} fullWidth withoutMargin>
     <SearchFullUI
         client:load
         clientConfig={clientConfig}

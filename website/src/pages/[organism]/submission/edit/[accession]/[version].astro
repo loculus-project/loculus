@@ -35,7 +35,7 @@ const segmentNames = getFirstLightweightSchema(getReferenceGenomeLightweightSche
 const dataToEdit = await createBackendClient().getDataToEdit(organism, accessToken, accession, version);
 ---
 
-<BaseLayout title={`Edit ${accession}.${version}`}>
+<BaseLayout title={`Edit ${accession}.${version}`} fullWidth>
     {
         dataToEdit.match(
             (dataToEdit) => (

@@ -1,6 +1,5 @@
-import { expect } from '@playwright/test';
-
 import { test } from '../../fixtures/auth.fixture';
+import { NavigationPage } from '../../pages/navigation.page';
 
 const organismName = 'Test Dummy Organism';
 
@@ -10,33 +9,29 @@ const organismIndependentNavigationItems = [
 ];
 
 const organismNavigationItems = [
-    { link: 'Browse', title: '[Organism] - Browse' },
-    { link: 'Submit', title: 'Submission portal' },
+    { link: 'Browse data', title: '[Organism] - Browse' },
+    { link: 'Submit sequences', title: 'Submission portal' },
     { link: 'My account', title: 'My account' },
 ];
 
 test.describe('Top navigation', () => {
     test('should navigate to the expected pages', async ({ pageWithACreatedUser }) => {
-        const page = pageWithACreatedUser;
+        const navigation = new NavigationPage(pageWithACreatedUser);
 
-        const expectTitle = async (title: string) => {
-            await expect(page).toHaveTitle(new RegExp(`^${title}`));
-        };
-
-        await page.goto('/');
+        await navigation.page.goto('/');
 
         for (const { link, title } of organismIndependentNavigationItems) {
-            await page.getByRole('link', { name: link, exact: true }).click();
-            await expectTitle(title);
+            await navigation.clickLink(link);
+            await navigation.expectTitle(title);
         }
 
-        await page.locator('header').getByText('Organisms', { exact: true }).click();
-        await page.getByRole('link', { name: organismName, exact: true }).first().click();
-        await expectTitle(`${organismName} - Browse`);
+        await navigation.openOrganismNavigation();
+        await navigation.selectOrganism(organismName);
+        await navigation.expectTitle(`${organismName} - Browse`);
 
         for (const { link, title } of organismNavigationItems) {
-            await page.getByRole('link', { name: link, exact: true }).click();
-            await expectTitle(title.replace('[Organism]', organismName));
+            await navigation.clickLink(link);
+            await navigation.expectTitle(title.replace('[Organism]', organismName));
         }
     });
 });
