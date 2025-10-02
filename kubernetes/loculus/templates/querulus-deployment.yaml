@@ -31,18 +31,20 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: DB_HOST
-              value: {{ .Values.databaseConfiguration.host }}
-            - name: DB_PORT
-              value: {{ .Values.databaseConfiguration.port | quote }}
-            - name: DB_NAME
-              value: {{ .Values.databaseConfiguration.database }}
-            - name: DB_USER
-              value: {{ .Values.databaseConfiguration.username }}
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.databaseConfiguration.secretName }}
+                  name: database
                   key: password
           volumeMounts:
             - name: querulus-config-processed
