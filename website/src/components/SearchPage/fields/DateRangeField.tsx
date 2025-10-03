@@ -100,7 +100,7 @@ export const DateRangeField = ({ field, fieldValues, setSomeFieldValues }: DateR
     ]);
 
     return (
-        <div key={field.name} className='flex flex-col gap-6 border p-3 rounded-md border-gray-300'>
+        <div key={field.name} className='flex flex-col gap-1.5 border p-3 rounded-md border-gray-300'>
             <div className='flex flex-row justify-between items-baseline mb-2'>
                 <h3 className='text-gray-500 text-sm'>{field.displayName}</h3>
                 <CustomTooltip id={'strict-tooltip' + field.name}>
