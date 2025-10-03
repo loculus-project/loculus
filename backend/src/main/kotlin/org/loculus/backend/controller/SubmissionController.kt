@@ -37,6 +37,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.config.FileSizeConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
@@ -47,11 +48,13 @@ import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
+import org.loculus.backend.utils.formatBytesHuman
 import org.slf4j.MDC
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.util.unit.DataSize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -65,6 +68,8 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.server.PayloadTooLargeException
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -82,11 +87,13 @@ open class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
+    private val fileSizeConfig: FileSizeConfig,
     private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @ApiResponse(responseCode = "400", description = SUBMIT_ERROR_RESPONSE)
+    @ApiResponse(responseCode = "413", description = PAYLOAD_TOO_LARGE_ERROR_RESPONSE)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @PathVariable @Valid organism: Organism,
@@ -106,14 +113,16 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        var innerDataUseTermsType = DataUseTermsType.OPEN
-        if (backendConfig.dataUseTerms.enabled) {
-            if (dataUseTermsType == null) {
-                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
+        metadataFile.requireUnder(fileSizeConfig.maxMetadataFileSize, "metadata")
+        sequenceFile?.requireUnder(fileSizeConfig.maxSequenceFileSize, "sequence")
+        val innerDataUseTermsType =
+            if (backendConfig.dataUseTerms.enabled) {
+                dataUseTermsType ?: throw BadRequestException(
+                    "the 'dataUseTermsType' needs to be provided.",
+                )
             } else {
-                innerDataUseTermsType = dataUseTermsType
+                DataUseTermsType.OPEN
             }
-        }
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
@@ -130,6 +139,7 @@ open class SubmissionController(
 
     @Operation(description = REVISE_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "413", description = PAYLOAD_TOO_LARGE_ERROR_RESPONSE)
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
         @PathVariable @Valid organism: Organism,
@@ -138,6 +148,8 @@ open class SubmissionController(
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile?,
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
+        metadataFile.requireUnder(fileSizeConfig.maxMetadataFileSize, "metadata")
+        sequenceFile?.requireUnder(fileSizeConfig.maxSequenceFileSize, "sequence")
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
@@ -425,10 +437,11 @@ open class SubmissionController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
-        val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
-        if (stillProcessing) {
-            return ResponseEntity.status(HttpStatus.LOCKED).build()
-        }
+        // No longer works since we've removed the aux tables
+        // val stillProcessing = submitModel.checkIfStillProcessingSubmittedData()
+        // if (stillProcessing) {
+        //     return ResponseEntity.status(HttpStatus.LOCKED).build()
+        // }
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
@@ -542,5 +555,15 @@ open class SubmissionController(
             }
         }
         return fileMappingParsed
+    }
+}
+
+private fun MultipartFile.requireUnder(limitBytes: Long, name: String) {
+    if (size > limitBytes) {
+        val maxHuman = formatBytesHuman(limitBytes)
+        throw ResponseStatusException(
+            HttpStatus.PAYLOAD_TOO_LARGE,
+            "$name file is too large. Max $maxHuman.",
+        )
     }
 }

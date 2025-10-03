@@ -165,30 +165,31 @@ class GetOriginalMetadataEndpointTest(
         assertThat(responseAccessionVersions, `is`(expectedAccessionVersions))
     }
 
-    @Test
-    fun `GIVEN there are sequences currently being uploaded THEN returns locked`() {
-        val uploadId = "upload id"
-        val mockUser = mockk<AuthenticatedUser>()
-        every { mockUser.username }.returns("username")
-
-        uploadDatabaseService.batchInsertMetadataInAuxTable(
-            uploadId = uploadId,
-            authenticatedUser = mockUser,
-            groupId = 1,
-            submittedOrganism = Organism("organism"),
-            uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
-            uploadedAt = LocalDateTime(2024, 1, 1, 1, 1, 1),
-            null,
-        )
-
-        submissionControllerClient.getOriginalMetadata()
-            .andExpect(status().isLocked)
-
-        uploadDatabaseService.deleteUploadData(uploadId)
-
-        submissionControllerClient.getOriginalMetadata()
-            .andExpect(status().isOk)
-    }
+    // This test no longer works because we don't use the Aux table anymore
+//    @Test
+//    fun `GIVEN there are sequences currently being uploaded THEN returns locked`() {
+//        val uploadId = "upload id"
+//        val mockUser = mockk<AuthenticatedUser>()
+//        every { mockUser.username }.returns("username")
+//
+//        uploadDatabaseService.batchInsertMetadataInAuxTable(
+//            uploadId = uploadId,
+//            authenticatedUser = mockUser,
+//            groupId = 1,
+//            submittedOrganism = Organism("organism"),
+//            uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
+//            uploadedAt = LocalDateTime(2024, 1, 1, 1, 1, 1),
+//            null,
+//        )
+//
+//        submissionControllerClient.getOriginalMetadata()
+//            .andExpect(status().isLocked)
+//
+//        uploadDatabaseService.deleteUploadData(uploadId)
+//
+//        submissionControllerClient.getOriginalMetadata()
+//            .andExpect(status().isOk)
+//    }
 
     // Regression test for https://github.com/loculus-project/loculus/issues/4036
     @Test
