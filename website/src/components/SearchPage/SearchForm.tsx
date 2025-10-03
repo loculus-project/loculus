@@ -126,7 +126,7 @@ export const SearchForm = ({
                         }
                         setFieldSelected={setASearchVisibility}
                     />
-                    <div className='flex flex-col gap-1.5 my-1.5'>
+                    <div className='flex flex-col gap-2 py-2'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
