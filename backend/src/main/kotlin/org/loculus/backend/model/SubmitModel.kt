@@ -19,8 +19,6 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
-import org.loculus.backend.service.submission.MetadataUploadAuxTable
-import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -28,7 +26,6 @@ import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.loculus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedInputStream
 import java.io.File
@@ -422,15 +419,6 @@ class SubmitModel(
                 }
             }
         }
-    }
-
-    @Transactional(readOnly = true)
-    fun checkIfStillProcessingSubmittedData(): Boolean {
-        val metadataInAuxTable: Boolean =
-            MetadataUploadAuxTable.select(MetadataUploadAuxTable.submissionIdColumn).count() > 0
-        val sequencesInAuxTable: Boolean =
-            SequenceUploadAuxTable.select(SequenceUploadAuxTable.sequenceSubmissionIdColumn).count() > 0
-        return metadataInAuxTable || sequencesInAuxTable
     }
 
     private fun requiresConsensusSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)

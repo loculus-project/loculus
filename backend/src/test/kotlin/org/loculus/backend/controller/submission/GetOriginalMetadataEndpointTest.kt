@@ -166,7 +166,7 @@ class GetOriginalMetadataEndpointTest(
     }
 
     @Test
-    fun `GIVEN there are sequences currently being uploaded THEN returns locked`() {
+    fun `GIVEN there are sequences currently being uploaded THEN endpoint remains available`() {
         val uploadId = "upload id"
         val mockUser = mockk<AuthenticatedUser>()
         every { mockUser.username }.returns("username")
@@ -182,7 +182,7 @@ class GetOriginalMetadataEndpointTest(
         )
 
         submissionControllerClient.getOriginalMetadata()
-            .andExpect(status().isLocked)
+            .andExpect(status().isOk)
 
         uploadDatabaseService.deleteUploadData(uploadId)
 
