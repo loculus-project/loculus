@@ -126,7 +126,7 @@ export const SearchForm = ({
                         }
                         setFieldSelected={setASearchVisibility}
                     />
-                    <div className='flex flex-col gap-3'>
+                    <div className='flex flex-col gap-6 my-6'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
@@ -179,7 +179,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
-                <div key={field.name} className='flex flex-col gap-3 border p-3 rounded-md border-gray-300'>
+                <div key={field.name} className='flex flex-col gap-6 border p-3 rounded-md border-gray-300'>
                     <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.name}</h3>
 
                     {field.groupedFields.map((f) => (
