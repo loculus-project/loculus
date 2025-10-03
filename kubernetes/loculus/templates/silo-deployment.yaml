@@ -33,9 +33,6 @@ spec:
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
           imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
-          env:
-            - name: SPDLOG_LEVEL
-              value: "debug"
           ports:
             - containerPort: 8081
           args:
