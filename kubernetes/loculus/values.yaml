@@ -18,6 +18,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+useQuerulus: true
 website:
   websiteConfig:
     enableLoginNavigationItem: true
@@ -1991,6 +1992,10 @@ images:
     repository: "ghcr.io/genspectrum/lapis"
     tag: "0.5.14"
     pullPolicy: Always
+  querulus:
+    repository: "ghcr.io/theosanderson/querulus"
+    tag: "latest"
+    pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
     pullPolicy: Always
@@ -2065,7 +2070,7 @@ secrets:
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 runDevelopmentS3: true
-developmentDatabasePersistence: false
+developmentDatabasePersistence: true
 enforceHTTPS: true
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
@@ -2080,6 +2085,7 @@ replicas:
   website: 1
   backend: 1
   lapis: 1
+  querulus: 1
 gitHubEditLink: "https://github.com/loculus-project/loculus/edit/main/monorepo/website/"
 gitHubMainUrl: https://github.com/loculus-project/loculus
 resources:
@@ -2132,6 +2138,12 @@ resources:
       cpu: "100m"
     limits:
       memory: "5Gi"
+  querulus:
+    requests:
+      memory: "500Mi"
+      cpu: "100m"
+    limits:
+      memory: "2Gi"
   silo-preprocessing:
     requests:
       memory: "20Mi"

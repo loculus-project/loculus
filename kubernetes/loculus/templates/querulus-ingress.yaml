@@ -1,0 +1,43 @@
+{{- if .Values.useQuerulus }}
+{{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-all-origins
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "POST"
+      - "HEAD"
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    accessControlAllowHeaders:
+      - "*"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: querulus-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd"
+spec:
+  rules:
+  - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: loculus-querulus-service
+            port:
+              number: 8000
+  {{- if eq $.Values.environment "server" }}
+  tls:
+  - hosts:
+    - {{ $lapisHost }}
+  {{- end }}
+{{- end }}

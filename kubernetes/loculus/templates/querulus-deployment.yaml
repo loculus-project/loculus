@@ -1,0 +1,75 @@
+{{- if .Values.useQuerulus }}
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-querulus
+  annotations:
+spec:
+  replicas: {{ .Values.replicas.querulus }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: querulus
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: querulus
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      initContainers:
+        {{- include "loculus.configProcessor" (dict "name" "querulus-config" "dockerTag" $dockerTag) | nindent 8 }}
+      containers:
+        - name: querulus
+          image: "{{ .Values.images.querulus.repository }}:{{ .Values.images.querulus.tag }}"
+          imagePullPolicy: "{{ .Values.images.querulus.pullPolicy }}"
+          {{- include "loculus.resources" (list "querulus" .Values) | nindent 10 }}
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: url
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
+          volumeMounts:
+            - name: querulus-config-processed
+              mountPath: /app/config/querulus_config.json
+              subPath: querulus_config.json
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 5
+            failureThreshold: 36 # 3 minutes to start
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+      volumes:
+        {{- include "loculus.configVolume" (dict "name" "querulus-config" "configmap" "querulus-config") | nindent 8 }}
+{{- end }}

@@ -1,0 +1,15 @@
+{{- if .Values.useQuerulus }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-querulus-service
+spec:
+  selector:
+    app: loculus
+    component: querulus
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+{{- end }}
