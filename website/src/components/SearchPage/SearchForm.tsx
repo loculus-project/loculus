@@ -144,7 +144,7 @@ export const SearchForm = ({
                         }
                         setFieldSelected={setASearchVisibility}
                     />
-                    <div className='flex flex-col gap-4 py-2'>
+                    <div className='flex flex-col gap-3 py-2'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
@@ -154,40 +154,43 @@ export const SearchForm = ({
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />
                         )}
-                        <AccessionField
-                            textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
-                            setTextValue={(value) => setSomeFieldValues(['accession', value])}
-                        />
-
-                        {showMutationSearch && (
-                            <MutationField
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
-                                value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues(['mutation', value])}
+                        <section className='flex flex-col gap-1.5'>
+                            <AccessionField
+                                textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
+                                setTextValue={(value) => setSomeFieldValues(['accession', value])}
                             />
-                        )}
-                        {groupedFieldSections.map(({ header, fields }) => (
-                            <section
-                                key={header}
-                                className='rounded-xl border border-primary-100 bg-white px-4 py-4 shadow-sm'
-                            >
-                                <div className='mb-3 flex items-center gap-2 text-primary-700'>
-                                    <span className='h-5 w-1 rounded-full bg-primary-500'></span>
-                                    <h3 className='text-xs font-semibold uppercase tracking-wide'>{header}</h3>
-                                </div>
-                                <div className='flex flex-col gap-3'>
-                                    {fields.map((filter) => (
-                                        <SearchField
-                                            field={filter}
-                                            lapisUrl={lapisUrl}
-                                            fieldValues={fieldValues}
-                                            setSomeFieldValues={setSomeFieldValues}
-                                            key={filter.name}
-                                            lapisSearchParameters={lapisSearchParameters}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
+
+                            {showMutationSearch && (
+                                <MutationField
+                                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                    value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
+                                    onChange={(value) => setSomeFieldValues(['mutation', value])}
+                                />
+                            )}
+                        </section>
+                        <div className='h-px shadow -mx-4 my-0.5' />
+                        {groupedFieldSections.map(({ header, fields }, index) => (
+                            <>
+                                {index > 0 && <div className='h-px shadow -mx-4 my-0.5' />}
+                                <section key={header}>
+                                    <div className='flex items-center gap-2 mb-2'>
+                                        <span className='h-4 w-1 rounded-full bg-gray-300'></span>
+                                        <h3 className='text-xs uppercase tracking-wide text-gray-500'>{header}</h3>
+                                    </div>
+                                    <div className='flex flex-col gap-1.5'>
+                                        {fields.map((filter) => (
+                                            <SearchField
+                                                field={filter}
+                                                lapisUrl={lapisUrl}
+                                                fieldValues={fieldValues}
+                                                setSomeFieldValues={setSomeFieldValues}
+                                                key={filter.name}
+                                                lapisSearchParameters={lapisSearchParameters}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            </>
                         ))}
                     </div>
                 </div>
