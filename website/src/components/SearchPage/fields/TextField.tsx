@@ -138,7 +138,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     };
 
     return (
-        <div className='relative my-1'>
+        <div className='relative'>
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
