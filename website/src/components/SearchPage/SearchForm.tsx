@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -27,6 +27,7 @@ import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
 import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
+const DEFAULT_HEADER_LABEL = 'Other filters';
 
 interface SearchFormProps {
     organism: string;
@@ -60,6 +61,23 @@ export const SearchForm = ({
     setSelectedSuborganism,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
+
+    const groupedFieldSections = useMemo(() => {
+        const sections = new Map<string, (GroupedMetadataFilter | MetadataFilter)[]>();
+
+        for (const field of visibleFields) {
+            const rawHeader = 'header' in field ? field.header : undefined;
+            const header = rawHeader?.trim() ? rawHeader.trim() : DEFAULT_HEADER_LABEL;
+
+            if (!sections.has(header)) {
+                sections.set(header, []);
+            }
+
+            sections.get(header)!.push(field);
+        }
+
+        return Array.from(sections.entries()).map(([header, fields]) => ({ header, fields }));
+    }, [visibleFields]);
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -110,7 +128,7 @@ export const SearchForm = ({
                                     <MaterialSymbolsHelpOutline className='inline-block' /> Help
                                 </a>
                             </div>
-                        </div>{' '}
+                        </div>
                     </div>
                     <FieldSelectorModal
                         title='Add search fields'
@@ -126,7 +144,7 @@ export const SearchForm = ({
                         }
                         setFieldSelected={setASearchVisibility}
                     />
-                    <div className='flex flex-col gap-2 py-2'>
+                    <div className='flex flex-col gap-4 py-2'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
@@ -148,17 +166,30 @@ export const SearchForm = ({
                                 onChange={(value) => setSomeFieldValues(['mutation', value])}
                             />
                         )}
-                        {visibleFields.map((filter) => (
-                            <SearchField
-                                field={filter}
-                                lapisUrl={lapisUrl}
-                                fieldValues={fieldValues}
-                                setSomeFieldValues={setSomeFieldValues}
-                                key={filter.name}
-                                lapisSearchParameters={lapisSearchParameters}
-                            />
+                        {groupedFieldSections.map(({ header, fields }) => (
+                            <section
+                                key={header}
+                                className='rounded-xl border border-primary-100 bg-white px-4 py-4 shadow-sm'
+                            >
+                                <div className='mb-3 flex items-center gap-2 text-primary-700'>
+                                    <span className='h-5 w-1 rounded-full bg-primary-500'></span>
+                                    <h3 className='text-xs font-semibold uppercase tracking-wide'>{header}</h3>
+                                </div>
+                                <div className='flex flex-col gap-3'>
+                                    {fields.map((filter) => (
+                                        <SearchField
+                                            field={filter}
+                                            lapisUrl={lapisUrl}
+                                            fieldValues={fieldValues}
+                                            setSomeFieldValues={setSomeFieldValues}
+                                            key={filter.name}
+                                            lapisSearchParameters={lapisSearchParameters}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
                         ))}
-                    </div>{' '}
+                    </div>
                 </div>
             </div>
         </QueryClientProvider>
