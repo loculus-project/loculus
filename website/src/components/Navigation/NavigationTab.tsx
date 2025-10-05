@@ -3,8 +3,8 @@ import React from 'react';
 type NavigationTabProps = {
     isActive?: boolean;
     children: React.ReactNode;
-    as?: 'a';
-    href?: string;
+    as: 'a';
+    href: string;
     className?: string;
 } |  {
     isActive?: boolean;
@@ -14,14 +14,9 @@ type NavigationTabProps = {
     className?: string;
 }
 
-export const NavigationTab: React.FC<NavigationTabProps> = ({
-    isActive = false,
-    children,
-    as: component = 'button',
-    href,
-    onClick,
-    className = '',
-}) => {
+export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
+    const { isActive = false, children, className = '' } = props;
+    
     const baseClasses =
         'flex items-center gap-1 px-4 pt-2.5 pb-1.5 min-h-[3rem] text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2';
     const stateClasses = isActive
@@ -30,16 +25,16 @@ export const NavigationTab: React.FC<NavigationTabProps> = ({
 
     const combinedClassName = `${baseClasses} ${stateClasses} ${className}`.trim();
 
-    if (component === 'a') {
+    if (props.as === 'a') {
         return (
-            <a href={href} className={combinedClassName}>
+            <a href={props.href} className={combinedClassName}>
                 {children}
             </a>
         );
     }
 
     return (
-        <button onClick={onClick} className={combinedClassName}>
+        <button onClick={props.onClick} className={combinedClassName}>
             {children}
         </button>
     );
