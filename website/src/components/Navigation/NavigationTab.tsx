@@ -1,22 +1,24 @@
 import React from 'react';
 
-type NavigationTabProps = {
-    isActive?: boolean;
-    children: React.ReactNode;
-    as: 'a';
-    href: string;
-    className?: string;
-} |  {
-    isActive?: boolean;
-    children: React.ReactNode;
-    as?: 'button';
-    onClick?: () => void;
-    className?: string;
-}
+type NavigationTabProps =
+    | {
+          isActive?: boolean;
+          children: React.ReactNode;
+          as: 'a';
+          href: string;
+          className?: string;
+      }
+    | {
+          isActive?: boolean;
+          children: React.ReactNode;
+          as?: 'button';
+          onClick?: () => void;
+          className?: string;
+      };
 
 export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
     const { isActive = false, children, className = '' } = props;
-    
+
     const baseClasses =
         'flex items-center gap-1 px-4 pt-2.5 pb-1.5 min-h-[3rem] text-sm font-medium transition-colors duration-150 rounded-t-lg border border-transparent border-b-2';
     const stateClasses = isActive

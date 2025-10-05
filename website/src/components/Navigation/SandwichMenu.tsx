@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import type { Organism } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
+import { routes } from '../../routes/routes';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 import AccessionSearchBox from './AccessionSearchBox';
@@ -58,7 +59,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                                     {knownOrganisms.map((organism) => (
                                         <a
                                             key={organism.key}
-                                            href={`/${organism.key}/search`}
+                                            href={routes.searchPage(organism.key)}
                                             className={`
                                                 flex items-center gap-3 py-1.5 transition-colors
                                                 ${

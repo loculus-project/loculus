@@ -4,6 +4,7 @@ import { Fragment } from 'react';
 
 import { NavigationTab } from './NavigationTab';
 import type { Organism } from '../../config';
+import { routes } from '../../routes/routes';
 
 interface OrganismNavigationProps {
     currentOrganism?: Organism;
@@ -49,35 +50,38 @@ export const OrganismNavigation: React.FC<OrganismNavigationProps> = ({ currentO
 
                             return (
                                 <MenuItem key={organism.key}>
-                                    {({ focus }) => (
-                                        <a
-                                            href={`/${organism.key}/search`}
-                                            className={`
-                                                flex items-center gap-3 px-4 py-2 text-sm transition-colors
-                                                ${
-                                                    isActive
-                                                        ? 'bg-primary-100 text-gray-900 font-semibold'
-                                                        : 'text-gray-700'
-                                                }
-                                                ${focus && !isActive ? 'bg-gray-50 text-gray-900' : ''}
-                                            `}
-                                            aria-current={isActive ? 'page' : undefined}
-                                        >
-                                            {organism.image ? (
-                                                <img
-                                                    src={organism.image}
-                                                    alt=''
-                                                    className='w-5 h-5 rounded-full object-cover flex-shrink-0'
-                                                    onError={(e) => {
-                                                        e.currentTarget.classList.add('invisible');
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className='w-5 h-5 flex-shrink-0' />
-                                            )}
-                                            <span>{organism.displayName}</span>
-                                        </a>
-                                    )}
+                                    {({ focus }) => {
+                                        const baseClasses =
+                                            'flex items-center gap-3 px-4 py-2 text-sm transition-colors';
+                                        const stateClasses = isActive
+                                            ? 'bg-primary-100 text-gray-900 font-semibold'
+                                            : 'text-gray-700';
+                                        const focusClasses = focus && !isActive ? 'bg-gray-50 text-gray-900' : '';
+
+                                        const className = `${baseClasses} ${stateClasses} ${focusClasses}`.trim();
+
+                                        return (
+                                            <a
+                                                href={routes.searchPage(organism.key)}
+                                                className={className}
+                                                aria-current={isActive ? 'page' : undefined}
+                                            >
+                                                {organism.image ? (
+                                                    <img
+                                                        src={organism.image}
+                                                        alt=''
+                                                        className='w-5 h-5 rounded-full object-cover flex-shrink-0'
+                                                        onError={(e) => {
+                                                            e.currentTarget.classList.add('invisible');
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className='w-5 h-5 flex-shrink-0' />
+                                                )}
+                                                <span>{organism.displayName}</span>
+                                            </a>
+                                        );
+                                    }}
                                 </MenuItem>
                             );
                         })}

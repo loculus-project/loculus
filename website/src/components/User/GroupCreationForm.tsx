@@ -11,14 +11,11 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 interface GroupManagerProps {
     clientConfig: ClientConfig;
     accessToken: string;
+    searchParams: string;
 }
 
-const getContinueSubmissionFromLocation = (): ContinueSubmissionIntent | undefined => {
-    if (typeof window === 'undefined') {
-        return undefined;
-    }
-
-    const searchParams = new URLSearchParams(window.location.search);
+const getContinueSubmissionFromSearchParams = (searchParamsString: string): ContinueSubmissionIntent | undefined => {
+    const searchParams = new URLSearchParams(searchParamsString);
     const organism = searchParams.get('continueSubmissionOrganism');
     if (organism === null) {
         return undefined;
@@ -27,13 +24,13 @@ const getContinueSubmissionFromLocation = (): ContinueSubmissionIntent | undefin
     return { organism };
 };
 
-const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken }) => {
+const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, searchParams }) => {
     const { createGroup } = useGroupCreation({
         clientConfig,
         accessToken,
     });
 
-    const continueSubmission = useMemo(() => getContinueSubmissionFromLocation(), []);
+    const continueSubmission = useMemo(() => getContinueSubmissionFromSearchParams(searchParams), [searchParams]);
 
     const handleCreateGroup = async (group: NewGroup) => {
         const result = await createGroup(group);
