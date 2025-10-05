@@ -9,7 +9,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
 import {
     type ReferenceAccession,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -73,10 +73,10 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
     [SINGLE_REFERENCE]: {
-        nucleotideSequences: ['main'],
-        genes: ['gene1', 'gene2'],
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
         insdcAccessionFull: [defaultAccession],
     },
 };
@@ -84,12 +84,12 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
 function renderSearchFullUI({
     searchFormFilters = [...defaultSearchFormFilters],
     clientConfig = testConfig.public,
-    referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     hiddenFieldValues = {},
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
-    referenceGenomesSequenceNames?: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     hiddenFieldValues?: FieldValues;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
@@ -99,7 +99,7 @@ function renderSearchFullUI({
 
     const props = {
         accessToken: 'dummyAccessToken',
-        referenceGenomesSequenceNames,
+        referenceGenomeLightweightSchema,
         myGroups: [],
         organism: testOrganism,
         clientConfig,

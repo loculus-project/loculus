@@ -5,7 +5,7 @@ import SubmissionPageWrapper from '../../../../components/Submission/SubmissionP
 import {
     dataUseTermsAreEnabled,
     getGroupedInputFields,
-    getReferenceGenomesSequenceNames,
+    getReferenceGenomeLightweightSchema,
     getRuntimeConfig,
     getSchema,
 } from '../../../../config';
@@ -21,7 +21,7 @@ if (!cleanedOrganism) {
         body: 'Organism not found',
     };
 }
-const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+const referenceGenomeSequenceNames = getReferenceGenomeLightweightSchema(cleanedOrganism.key);
 const schema = getSchema(cleanedOrganism.key);
 const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'revise', true);
 
@@ -37,7 +37,7 @@ const clientConfig = getRuntimeConfig().public;
                 <RevisionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
                     organism={organism}
-                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
                     metadataTemplateFields={groupedInputFields}
                     clientConfig={clientConfig}
                     group={group}

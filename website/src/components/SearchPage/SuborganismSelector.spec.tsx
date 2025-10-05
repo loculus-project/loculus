@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SuborganismSelector } from './SuborganismSelector';
-import { type ReferenceGenomesSequenceNames, SINGLE_REFERENCE } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const suborganismIdentifierField = 'genotype';
@@ -17,12 +17,12 @@ const filterSchema = new MetadataFilterSchema([
 ]);
 
 const dummySequences = {
-    nucleotideSequences: [],
-    genes: [],
+    nucleotideSegmentNames: [],
+    geneNames: [],
     insdcAccessionFull: [],
 };
 
-const mockReferenceGenomes: ReferenceGenomesSequenceNames = {
+const mockReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
     suborganism1: dummySequences,
     suborganism2: dummySequences,
 };
@@ -32,7 +32,7 @@ describe('SuborganismSelector', () => {
         const { container } = render(
             <SuborganismSelector
                 filterSchema={filterSchema}
-                referenceGenomesSequenceNames={{ [SINGLE_REFERENCE]: dummySequences }}
+                referenceGenomeLightweightSchema={{ [SINGLE_REFERENCE]: dummySequences }}
                 suborganismIdentifierField={suborganismIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={vi.fn()}
@@ -47,7 +47,7 @@ describe('SuborganismSelector', () => {
         render(
             <SuborganismSelector
                 filterSchema={filterSchema}
-                referenceGenomesSequenceNames={mockReferenceGenomes}
+                referenceGenomeLightweightSchema={mockReferenceGenomeLightweightSchema}
                 suborganismIdentifierField={suborganismIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={setSelected}
@@ -64,7 +64,7 @@ describe('SuborganismSelector', () => {
         render(
             <SuborganismSelector
                 filterSchema={filterSchema}
-                referenceGenomesSequenceNames={mockReferenceGenomes}
+                referenceGenomeLightweightSchema={mockReferenceGenomeLightweightSchema}
                 suborganismIdentifierField={suborganismIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={setSelected}
@@ -80,7 +80,7 @@ describe('SuborganismSelector', () => {
         render(
             <SuborganismSelector
                 filterSchema={filterSchema}
-                referenceGenomesSequenceNames={mockReferenceGenomes}
+                referenceGenomeLightweightSchema={mockReferenceGenomeLightweightSchema}
                 suborganismIdentifierField={suborganismIdentifierField}
                 selectedSuborganism='Pathogen 1'
                 setSelectedSuborganism={setSelected}
@@ -96,7 +96,7 @@ describe('SuborganismSelector', () => {
             render(
                 <SuborganismSelector
                     filterSchema={new MetadataFilterSchema([])}
-                    referenceGenomesSequenceNames={mockReferenceGenomes}
+                    referenceGenomeLightweightSchema={mockReferenceGenomeLightweightSchema}
                     suborganismIdentifierField={suborganismIdentifierField}
                     selectedSuborganism={null}
                     setSelectedSuborganism={vi.fn()}

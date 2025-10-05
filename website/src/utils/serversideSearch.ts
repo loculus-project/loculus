@@ -13,18 +13,23 @@ import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
+    const fieldFilter = new FieldFilterSet(
+        filterSchema,
+        fieldValues,
+        hiddenFieldValues,
+        referenceGenomeLightweightSchema,
+    );
     const lapisSearchParameters = fieldFilter.toApiParams();
 
     // Extract single-value parameters using validation

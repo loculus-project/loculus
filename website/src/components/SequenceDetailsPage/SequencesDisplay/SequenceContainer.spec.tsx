@@ -7,7 +7,7 @@ import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
 import {
     type NucleotideSegmentNames,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomesLightweightSchema,
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
 
@@ -18,14 +18,17 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
-function renderSequenceViewer(referenceGenomeSequenceNames: ReferenceGenomesSequenceNames, suborganism: string) {
+function renderSequenceViewer(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string,
+) {
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}
-                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 loadSequencesAutomatically={false}
                 suborganism={suborganism}
             />
@@ -43,8 +46,8 @@ function renderSingleReferenceSequenceViewer({
     renderSequenceViewer(
         {
             [SINGLE_REFERENCE]: {
-                genes,
-                nucleotideSequences: nucleotideSegmentNames,
+                geneNames: genes,
+                nucleotideSegmentNames,
                 insdcAccessionFull: [],
             },
         },
@@ -145,13 +148,13 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(
                 {
                     [suborganism1]: {
-                        nucleotideSequences: ['main'],
-                        genes: [],
+                        nucleotideSegmentNames: ['main'],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                     [suborganism2]: {
-                        nucleotideSequences: ['main'],
-                        genes: [],
+                        nucleotideSegmentNames: ['main'],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                 },
@@ -189,13 +192,13 @@ describe('SequencesContainer', () => {
             renderSequenceViewer(
                 {
                     [suborganism1]: {
-                        nucleotideSequences: ['main'],
-                        genes: [],
+                        nucleotideSegmentNames: ['main'],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                     [suborganism2]: {
-                        nucleotideSequences: ['segment1', 'segment2'],
-                        genes: [],
+                        nucleotideSegmentNames: ['segment1', 'segment2'],
+                        geneNames: [],
                         insdcAccessionFull: [],
                     },
                 },
