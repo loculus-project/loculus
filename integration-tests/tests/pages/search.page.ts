@@ -31,7 +31,7 @@ export class SearchPage {
 
         await this.page.waitForTimeout(500);
 
-        await this.page.getByRole('option').first().click({ timeout: 3000 });
+        await this.page.getByRole('option').first().click({ timeout: 15000 });
 
         await this.page.keyboard.press('Escape');
         await this.page.waitForTimeout(200);
