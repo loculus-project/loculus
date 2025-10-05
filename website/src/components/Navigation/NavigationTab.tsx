@@ -1,10 +1,15 @@
 import React from 'react';
 
-interface NavigationTabProps {
+type NavigationTabProps = {
     isActive?: boolean;
     children: React.ReactNode;
-    as?: 'button' | 'a';
+    as?: 'a';
     href?: string;
+    className?: string;
+} |  {
+    isActive?: boolean;
+    children: React.ReactNode;
+    as?: 'button';
     onClick?: () => void;
     className?: string;
 }
@@ -25,7 +30,7 @@ export const NavigationTab: React.FC<NavigationTabProps> = ({
 
     const combinedClassName = `${baseClasses} ${stateClasses} ${className}`.trim();
 
-    if (component === 'a' && href) {
+    if (component === 'a') {
         return (
             <a href={href} className={combinedClassName}>
                 {children}
