@@ -151,11 +151,12 @@ class UploadDatabaseService(
         }
 
     fun deleteAuxTableEntriesOlderThan(thresholdDateTime: LocalDateTime): Int {
-
         val numberDeleted = MetadataUploadAuxTable.deleteWhere {
             uploadedAtColumn.less(thresholdDateTime)
         }
-        log.info { "Deleted $numberDeleted entries from ${MetadataUploadAuxTable.tableName} older than $thresholdDateTime" }
+        log.info {
+            "Deleted $numberDeleted entries from ${MetadataUploadAuxTable.tableName} older than $thresholdDateTime"
+        }
         return numberDeleted
     }
 
@@ -242,7 +243,7 @@ class UploadDatabaseService(
         auditLogger.log(
             username = submissionParams.authenticatedUser.username,
             description = "Submitted or revised ${insertionResult.size} sequences: " +
-                    insertionResult.joinToString { it.displayAccessionVersion() },
+                insertionResult.joinToString { it.displayAccessionVersion() },
         )
 
         return@transaction insertionResult
@@ -312,7 +313,7 @@ class UploadDatabaseService(
             generateAccessionFromNumberService.generateCustomId(it)
         }
 
-        if (submissionIds.size!=nextAccessions.size) {
+        if (submissionIds.size != nextAccessions.size) {
             throw IllegalStateException(
                 "Mismatched sizes: accessions=${submissionIds.size}, nextAccessions=${nextAccessions.size}",
             )

@@ -2,9 +2,9 @@ package org.loculus.backend.service.maintenance
 
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.utils.DateProvider
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import org.loculus.backend.utils.DateProvider
 
 private val log = mu.KotlinLogging.logger {}
 
