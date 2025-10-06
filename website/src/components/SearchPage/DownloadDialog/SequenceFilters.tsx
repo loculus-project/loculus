@@ -225,11 +225,10 @@ const makeCaseInsensitiveLiteralSubstringRegex = (input: string | string[]): str
   const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   if (Array.isArray(input)) {
-    // For arrays, join the escaped entries with | (OR) to match any of them
+    // Join the escaped entries with | (OR)
     const escapedParts = input.map(escapeRegex).join('|');
     return `(?i)(?:${escapedParts})`;
   } else {
-    // For single strings, escape and return directly
     return `(?i)${escapeRegex(input)}`;
   }
 };
