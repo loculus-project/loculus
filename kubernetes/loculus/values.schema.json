@@ -204,7 +204,15 @@
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
         }
       },
-      "required": ["name"]
+      "required": ["name"],
+      "allOf": [
+        {
+          "not": {
+            "description": "autocomplete and enableSubstringSearch cannot both be set",
+            "required": ["autocomplete", "enableSubstringSearch"]
+          }
+        }
+      ]
     },
     "organism": {
       "type": "object",
