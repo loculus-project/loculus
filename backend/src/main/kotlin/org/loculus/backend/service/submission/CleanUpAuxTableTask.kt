@@ -1,16 +1,17 @@
 package org.loculus.backend.service.maintenance
 
 import org.loculus.backend.log.AuditLogger
+import org.loculus.backend.service.submission.UploadDatabaseService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import org.loculus.backend.utils.DateProvider
 
 private val log = mu.KotlinLogging.logger {}
 
 @Component
 class CleanUpAuxTableTask(
-    private val auxTableService: MetadataUploadAuxTable,
+    private val uploadDatabaseService: UploadDatabaseService,
+    private val dateProvider: DateProvider,
     private val auditLogger: AuditLogger,
 ) {
 
@@ -19,8 +20,9 @@ class CleanUpAuxTableTask(
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
-        val cutoff = Instant.now().minus(2, ChronoUnit.HOURS)
-        val deletedCount = auxTableService.deleteOlderThan(cutoff)
+        val hourCutoff = 2L
+        val thresholdDateTime = dateProvider.getCurrentDateTime().minusHours(hourCutoff)
+        val deletedCount = uploadDatabaseService.deleteAuxTableEntriesOlderThan(thresholdDateTime)
 
         if (deletedCount > 0) {
             log.info { "Deleted $deletedCount auxTable entries older than $cutoff" }
