@@ -211,6 +211,78 @@
             "description": "autocomplete and enableSubstringSearch cannot both be set",
             "required": ["autocomplete", "enableSubstringSearch"]
           }
+        },
+        {
+          "if": {
+            "properties": { "generateIndex": { "const": true } },
+            "required": ["generateIndex"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "autocomplete": { "const": true } },
+            "required": ["autocomplete"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
+            },
+            "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "enableSubstringSearch": { "const": true } },
+            "required": ["enableSubstringSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "lineageSystem": { "type": "string" } },
+            "required": ["lineageSystem"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "rangeSearch": { "const": true } },
+            "required": ["rangeSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
+        },
+        {
+          "if": {
+            "properties": { "rangeOverlapSearch": { "type": "object" } },
+            "required": ["rangeOverlapSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
         }
       ]
     },
