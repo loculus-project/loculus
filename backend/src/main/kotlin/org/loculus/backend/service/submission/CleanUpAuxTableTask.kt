@@ -23,7 +23,7 @@ class CleanUpAuxTableTask(
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
-        val hourCutoff = 2L
+        val hourCutoff = 24L
         val now = dateProvider.getCurrentInstant()
         val thresholdInstant = now.minus(
             hourCutoff,
