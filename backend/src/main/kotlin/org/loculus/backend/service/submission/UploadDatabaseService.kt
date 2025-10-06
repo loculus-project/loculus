@@ -3,6 +3,7 @@ package org.loculus.backend.service.submission
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
@@ -112,20 +113,23 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        uploadedSequencesBatch.chunkedForDatabase({ batch ->
-            SequenceUploadAuxTable.batchInsert(batch) {
-                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-                this[sequenceSubmissionIdColumn] = submissionId
-                this[segmentNameColumn] = segmentName
-                this[sequenceUploadIdColumn] = uploadId
-                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                    it.sequence,
-                    segmentName,
-                    submittedOrganism,
-                )
-            }
-            emptyList<Unit>()
-        }, SEQUENCE_INSERT_COLUMNS)
+        uploadedSequencesBatch.chunkedForDatabase(
+            { batch ->
+                SequenceUploadAuxTable.batchInsert(batch) {
+                    val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
+                    this[sequenceSubmissionIdColumn] = submissionId
+                    this[segmentNameColumn] = segmentName
+                    this[sequenceUploadIdColumn] = uploadId
+                    this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                        it.sequence,
+                        segmentName,
+                        submittedOrganism,
+                    )
+                }
+                emptyList<Unit>()
+            },
+            SEQUENCE_INSERT_COLUMNS,
+        )
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
@@ -145,6 +149,16 @@ class UploadDatabaseService(
         .map {
             it[sequenceSubmissionIdColumn]
         }
+
+    fun deleteAuxTableEntriesOlderThan(thresholdDateTime: LocalDateTime): Int {
+        val numberDeleted = MetadataUploadAuxTable.deleteWhere {
+            uploadedAtColumn.less(thresholdDateTime)
+        }
+        log.info {
+            "Deleted $numberDeleted entries from ${MetadataUploadAuxTable.tableName} older than $thresholdDateTime"
+        }
+        return numberDeleted
+    }
 
     fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
         log.debug {
