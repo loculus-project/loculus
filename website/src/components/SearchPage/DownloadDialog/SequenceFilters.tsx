@@ -222,15 +222,15 @@ const textAccessionsToList = (text: string): string[] => {
 };
 
 const makeCaseInsensitiveLiteralSubstringRegex = (input: string | string[]): string => {
-  const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  if (Array.isArray(input)) {
-    // Join the escaped entries with | (OR)
-    const escapedParts = input.map(escapeRegex).join('|');
-    return `(?i)(?:${escapedParts})`;
-  } else {
-    return `(?i)${escapeRegex(input)}`;
-  }
+    if (Array.isArray(input)) {
+        // Join the escaped entries with | (OR)
+        const escapedParts = input.map(escapeRegex).join('|');
+        return `(?i)(?:${escapedParts})`;
+    } else {
+        return `(?i)${escapeRegex(input)}`;
+    }
 };
 
 /**
