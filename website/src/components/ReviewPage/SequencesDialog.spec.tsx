@@ -12,22 +12,22 @@ describe('SequencesDialog', () => {
         );
 
         await waitFor(() => {
-            expect(getByText('unalignedSequence1Genome')).toBeVisible();
+            expect(getByText('ATTTGCC')).toBeVisible();
         });
 
         await userEvent.click(getByRole('button', { name: `${sequence1} (aligned)` }));
         await waitFor(() => {
-            expect(getByText('alignedSequence1Genome')).toBeVisible();
+            expect(getByText('A-T-T-T-G-C-C')).toBeVisible();
         });
 
         await userEvent.click(getByRole('button', { name: `${sequence1} (unaligned)` }));
         await waitFor(() => {
-            expect(getByText('unalignedSequence1Genome')).toBeVisible();
+            expect(getByText('ATTTGCC')).toBeVisible();
         });
 
         await userEvent.click(getByRole('button', { name: `gene1` }));
         await waitFor(() => {
-            expect(getByText('alignedGene1Protein')).toBeVisible();
+            expect(getByText('MADS*')).toBeVisible();
         });
 
         expect(queryByText(new RegExp(sequence2))).not.toBeInTheDocument();
@@ -53,15 +53,15 @@ const dataToView: SequenceEntryToEdit = {
     processedData: {
         metadata: {},
         unalignedNucleotideSequences: {
-            [sequence1]: 'unalignedSequence1Genome',
+            [sequence1]: 'ATTTGCC',
             [sequence2]: null,
         },
         alignedNucleotideSequences: {
-            [sequence1]: 'alignedSequence1Genome',
+            [sequence1]: 'A-T-T-T-G-C-C',
             [sequence2]: null,
         },
         alignedAminoAcidSequences: {
-            [gene1]: 'alignedGene1Protein',
+            [gene1]: 'MADS*',
             [gene2]: null,
         },
         nucleotideInsertions: {},
