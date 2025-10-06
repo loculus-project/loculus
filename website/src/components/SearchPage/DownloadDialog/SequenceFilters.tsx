@@ -221,9 +221,17 @@ const textAccessionsToList = (text: string): string[] => {
     return accessions;
 };
 
-const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {
-    // takes raw string and escapes all special characters and prefixes (?i) for case insensitivity
-    return `(?i)${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+const makeCaseInsensitiveLiteralSubstringRegex = (input: string | string[]): string => {
+  const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  if (Array.isArray(input)) {
+    // For arrays, join the escaped entries with | (OR) to match any of them
+    const escapedParts = input.map(escapeRegex).join('|');
+    return `(?i)(?:${escapedParts})`;
+  } else {
+    // For single strings, escape and return directly
+    return `(?i)${escapeRegex(input)}`;
+  }
 };
 
 /**
