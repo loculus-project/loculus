@@ -578,7 +578,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Author affiliations
         desired: true
         enableSubstringSearch: true
-        autocomplete: true
         header: Authors
         ingest: ncbiSubmitterAffiliation
         includeInDownloadsByDefault: true
