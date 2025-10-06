@@ -207,15 +207,9 @@
       "required": ["name"],
       "allOf": [
         {
-          "if": {
-            "properties": { "autocomplete": { "const": true } },
-            "required": ["autocomplete"]
-          },
-          "then": {
-            "anyOf": [
-              { "not": { "required": ["enableSubstringSearch"] } },
-              { "properties": { "enableSubstringSearch": { "const": false } } }
-            ]
+          "not": {
+            "description": "autocomplete and enableSubstringSearch cannot both be set",
+            "required": ["autocomplete", "enableSubstringSearch"]
           }
         },
         {
@@ -237,9 +231,9 @@
           },
           "then": {
             "properties": {
-              "type": { "enum": ["string", "int", "float", "number", "boolean"] }
+              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
             },
-            "errorMessage": "When autocomplete is true, type must be 'string', 'int', 'float', 'number', or 'boolean'"
+            "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
           }
         },
         {
