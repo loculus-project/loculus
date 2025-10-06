@@ -1,5 +1,8 @@
 package org.loculus.backend.service.maintenance
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
@@ -21,12 +24,17 @@ class CleanUpAuxTableTask(
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
         val hourCutoff = 2L
-        val thresholdDateTime = dateProvider.getCurrentDateTime().minusHours(hourCutoff)
-        val deletedCount = uploadDatabaseService.deleteAuxTableEntriesOlderThan(thresholdDateTime)
+        val now = dateProvider.getCurrentInstant()
+        val thresholdInstant = now.minus(
+            hourCutoff,
+            DateTimeUnit.HOUR,
+            DateProvider.timeZone,
+        ).toLocalDateTime(DateProvider.timeZone)
+        val deletedCount = uploadDatabaseService.deleteAuxTableEntriesOlderThan(thresholdInstant)
 
         if (deletedCount > 0) {
-            log.info { "Deleted $deletedCount auxTable entries older than $cutoff" }
-            auditLogger.info("CLEANUP", "Deleted $deletedCount auxTable entries older than 2 hours.")
+            log.info { "Deleted $deletedCount auxTable entries older than $hourCutoff" }
+            auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than 2 hours.")
         }
     }
 }
