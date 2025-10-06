@@ -42,7 +42,7 @@ describe('FieldFilterSet', () => {
         expect(() => filterSet.toApiParams()).not.toThrow();
 
         const apiParams = filterSet.toApiParams();
-        expect(apiParams['authorAffiliations.regex']).toEqual(['(?i)University of Example', '(?i)Research Institute']);
+        expect(apiParams['authorAffiliations.regex']).toEqual('(?i)(?:University of Example|Research Institute)');
         expect(apiParams.authorAffiliations).toBeUndefined();
     });
 
