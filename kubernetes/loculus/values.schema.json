@@ -207,9 +207,15 @@
       "required": ["name"],
       "allOf": [
         {
-          "not": {
-            "description": "autocomplete and enableSubstringSearch cannot both be set",
-            "required": ["autocomplete", "enableSubstringSearch"]
+          "if": {
+            "properties": { "autocomplete": { "const": true } },
+            "required": ["autocomplete"]
+          },
+          "then": {
+            "anyOf": [
+              { "not": { "required": ["enableSubstringSearch"] } },
+              { "properties": { "enableSubstringSearch": { "const": false } } }
+            ]
           }
         },
         {
