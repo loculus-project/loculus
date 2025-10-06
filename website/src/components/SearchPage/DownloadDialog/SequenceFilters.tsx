@@ -95,9 +95,18 @@ export class FieldFilterSet implements SequenceFilter {
         );
         for (const filterName of Object.keys(sequenceFilters)) {
             if (this.filterSchema.isSubstringSearchEnabled(filterName) && sequenceFilters[filterName] !== undefined) {
-                sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
-                    sequenceFilters[filterName],
-                );
+                const filterValue = sequenceFilters[filterName];
+                if (Array.isArray(filterValue)) {
+                    // For array values (multi-select fields), apply regex to each element
+                    sequenceFilters[filterName.concat('.regex')] = filterValue.map((value: any) =>
+                        makeCaseInsensitiveLiteralSubstringRegex(String(value)),
+                    );
+                } else {
+                    // For string values, apply regex directly
+                    sequenceFilters[filterName.concat('.regex')] = makeCaseInsensitiveLiteralSubstringRegex(
+                        String(filterValue),
+                    );
+                }
                 delete sequenceFilters[filterName];
             }
         }
