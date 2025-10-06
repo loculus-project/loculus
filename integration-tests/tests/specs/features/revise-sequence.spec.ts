@@ -38,11 +38,13 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     await reviewPage.waitForZeroProcessing();
 
     await reviewPage.viewSequences();
-    await expect(reviewPage.sequenceViewerContent()).toBeHidden(); // L was deleted
 
     const tabs = await reviewPage.getAvailableSequenceTabs();
-    await reviewPage.switchSequenceTab(tabs[2]); // S tab
+    expect(tabs).not.toContain('L (aligned)');
+    expect(tabs).not.toContain('L (unaligned)');
 
+    expect(tabs).toContain('S (unaligned)');
+    await reviewPage.switchSequenceTab('S (unaligned)');
     expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
 
     await reviewPage.closeSequencesDialog();
