@@ -207,10 +207,43 @@
       "required": ["name"],
       "allOf": [
         {
+          "description": "autocomplete and enableSubstringSearch cannot both be set",
           "not": {
-            "description": "autocomplete and enableSubstringSearch cannot both be set",
             "required": ["autocomplete", "enableSubstringSearch"]
           }
+        },
+        {
+          "description": "generateIndex requires type string",
+          "anyOf": [{ "not": { "required": ["generateIndex"] } }, { "properties": { "type": { "const": "string" } } }]
+        },
+        {
+          "description": "autocomplete requires type string",
+          "anyOf": [{ "not": { "required": ["autocomplete"] } }, { "properties": { "type": { "const": "string" } } }]
+        },
+        {
+          "description": "enableSubstringSearch requires type string",
+          "anyOf": [
+            { "not": { "required": ["enableSubstringSearch"] } },
+            { "properties": { "type": { "const": "string" } } }
+          ]
+        },
+        {
+          "description": "lineageSystem requires type string",
+          "anyOf": [{ "not": { "required": ["lineageSystem"] } }, { "properties": { "type": { "const": "string" } } }]
+        },
+        {
+          "description": "rangeSearch requires numeric or date type",
+          "anyOf": [
+            { "not": { "required": ["rangeSearch"] } },
+            { "properties": { "type": { "enum": ["int", "float", "number", "date"] } } }
+          ]
+        },
+        {
+          "description": "rangeOverlapSearch requires numeric or date type",
+          "anyOf": [
+            { "not": { "required": ["rangeOverlapSearch"] } },
+            { "properties": { "type": { "enum": ["int", "float", "number", "date"] } } }
+          ]
         }
       ]
     },
