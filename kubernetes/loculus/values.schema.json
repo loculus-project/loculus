@@ -207,43 +207,82 @@
       "required": ["name"],
       "allOf": [
         {
-          "description": "autocomplete and enableSubstringSearch cannot both be set",
           "not": {
+            "description": "autocomplete and enableSubstringSearch cannot both be set",
             "required": ["autocomplete", "enableSubstringSearch"]
           }
         },
         {
-          "description": "generateIndex requires type string",
-          "anyOf": [{ "not": { "required": ["generateIndex"] } }, { "properties": { "type": { "const": "string" } } }]
+          "if": {
+            "properties": { "generateIndex": { "const": true } },
+            "required": ["generateIndex"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
+          }
         },
         {
-          "description": "autocomplete requires type string",
-          "anyOf": [{ "not": { "required": ["autocomplete"] } }, { "properties": { "type": { "const": "string" } } }]
+          "if": {
+            "properties": { "autocomplete": { "const": true } },
+            "required": ["autocomplete"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "int", "float", "number", "boolean"] }
+            },
+            "errorMessage": "When autocomplete is true, type must be 'string', 'int', 'float', 'number', or 'boolean'"
+          }
         },
         {
-          "description": "enableSubstringSearch requires type string",
-          "anyOf": [
-            { "not": { "required": ["enableSubstringSearch"] } },
-            { "properties": { "type": { "const": "string" } } }
-          ]
+          "if": {
+            "properties": { "enableSubstringSearch": { "const": true } },
+            "required": ["enableSubstringSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
+          }
         },
         {
-          "description": "lineageSystem requires type string",
-          "anyOf": [{ "not": { "required": ["lineageSystem"] } }, { "properties": { "type": { "const": "string" } } }]
+          "if": {
+            "properties": { "lineageSystem": { "type": "string" } },
+            "required": ["lineageSystem"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
         },
         {
-          "description": "rangeSearch requires numeric or date type",
-          "anyOf": [
-            { "not": { "required": ["rangeSearch"] } },
-            { "properties": { "type": { "enum": ["int", "float", "number", "date"] } } }
-          ]
+          "if": {
+            "properties": { "rangeSearch": { "const": true } },
+            "required": ["rangeSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
         },
         {
-          "description": "rangeOverlapSearch requires numeric or date type",
-          "anyOf": [
-            { "not": { "required": ["rangeOverlapSearch"] } },
-            { "properties": { "type": { "enum": ["int", "float", "number", "date"] } } }
-          ]
+          "if": {
+            "properties": { "rangeOverlapSearch": { "type": "object" } },
+            "required": ["rangeOverlapSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
         }
       ]
     },
