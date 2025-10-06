@@ -52,8 +52,8 @@ class CleanUpAuxTableTaskTest(
             null,
         )
         val uploadIdOld = "upload id old"
-        val threeHoursOld = now.minus(
-            3,
+        val oneDayOld = now.minus(
+            25,
             DateTimeUnit.HOUR,
             DateProvider.timeZone,
         ).toLocalDateTime(DateProvider.timeZone)
@@ -63,7 +63,7 @@ class CleanUpAuxTableTaskTest(
             groupId = 1,
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
-            uploadedAt = threeHoursOld,
+            uploadedAt = oneDayOld,
             null,
         )
 
