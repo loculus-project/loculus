@@ -10,3 +10,10 @@ repos:
     # Run the formatter.
     - id: ruff-format
       files: ^ena-submission/
+- repo: local
+  hooks:
+    - id: prettier-values-schema
+      name: prettier (values.schema.json)
+      entry: npx prettier@3.6.2 --write
+      language: system
+      files: ^kubernetes/loculus/values\.schema\.json$
