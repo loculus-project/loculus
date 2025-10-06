@@ -35,6 +35,7 @@ logging.basicConfig(
 class SubmissionResults:
     entries_to_submit: dict[AccessionVersion, dict[str, Any]]
     entries_with_ext_metadata_to_submit: dict[AccessionVersion, dict[str, Any]]
+    revoked_entries: dict[AccessionVersion, dict[str, Any]]
 
 
 def filter_for_submission(
@@ -54,9 +55,11 @@ def filter_for_submission(
         - as an extra check we send a notification if there are sequences with
           ena-specific-metadata fields (users can add these fields, nothing prohibits them
           from doing so)
+        - data has not been revoked
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
+    revoked_entries: set[Accession] = set()
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
     )
@@ -94,6 +97,11 @@ def filter_for_submission(
             )
             entries_with_external_metadata.add(accession)
         else:
+            # If lower version had external metadata and this one doesn't, remove it from that set
+            entries_with_external_metadata.discard(accession)
+        if entry["metadata"].get("isRevocation", True):
+            logger.info(f"Found revoked sequence: {accession_version}")
+            revoked_entries.add(accession)
             entries_with_external_metadata.discard(accession)
         entries_to_submit[accession] = entry
 
@@ -101,13 +109,19 @@ def filter_for_submission(
         entries_to_submit={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
-            if entry["metadata"]["accession"] not in entries_with_external_metadata
+            if entry["metadata"]["accession"]
+            not in (entries_with_external_metadata | revoked_entries)
         },
         entries_with_ext_metadata_to_submit={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
             if entry["metadata"]["accession"] in entries_with_external_metadata
         },
+        revoked_entries={
+            entry["metadata"]["accessionVersion"]: entry
+            for entry in entries_to_submit.values()
+            if entry["metadata"]["accession"] in revoked_entries
+        }
     )
 
 
@@ -203,6 +217,19 @@ def get_ena_submission_list(config_file) -> None:
                 slack_config,
                 message,
                 submission_results.entries_with_ext_metadata_to_submit,
+                output_file,
+            )
+        if submission_results.revoked_entries:
+            message = (
+                f"{config.backend_url}: {organism} - ENA Submission pipeline found "
+                f"{len(submission_results.revoked_entries)} sequences that have been revoked"
+                " investigate if these need to be suppressed on ENA."
+            )
+            output_file = f"{organism}_revoked_{output_file_suffix}"
+            send_slack_notification_with_file(
+                slack_config,
+                message,
+                submission_results.revoked_entries,
                 output_file,
             )
         all_entries_to_submit.update(submission_results.entries_to_submit)
