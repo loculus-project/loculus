@@ -12,7 +12,7 @@ type SequencesDialogProps = {
 
 type ProcessedSequence = {
     label: string;
-    sequence: string | null;
+    sequence: string;
 };
 
 export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView }) => {
@@ -48,14 +48,9 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dat
                         ))}
                     </BoxWithTabsTabBar>
                     <BoxWithTabsBox>
-                        {processedSequences[activeTab].sequence !== null && (
-                            <div className='overflow-auto' style={{ maxHeight: 'calc(80vh - 10rem)' }}>
-                                <FixedLengthTextViewer
-                                    text={processedSequences[activeTab].sequence}
-                                    maxLineLength={100}
-                                />
-                            </div>
-                        )}
+                        <div className='overflow-auto' style={{ maxHeight: 'calc(80vh - 10rem)' }}>
+                            <FixedLengthTextViewer text={processedSequences[activeTab].sequence} maxLineLength={100} />
+                        </div>
                     </BoxWithTabsBox>
                 </div>
             </div>
@@ -69,16 +64,18 @@ const extractProcessedSequences = (data: SequenceEntryToEdit): ProcessedSequence
         { type: 'aligned', sequences: data.processedData.alignedNucleotideSequences },
         { type: 'gene', sequences: data.processedData.alignedAminoAcidSequences },
     ].flatMap(({ type, sequences }) =>
-        Object.entries(sequences).map(([sequenceName, sequence]) => {
-            let label = sequenceName;
-            if (type !== 'gene') {
-                if (label === 'main') {
-                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
-                } else {
-                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+        Object.entries(sequences)
+            .filter((tuple): tuple is [string, string] => tuple[1] !== null)
+            .map(([sequenceName, sequence]) => {
+                let label = sequenceName;
+                if (type !== 'gene') {
+                    if (label === 'main') {
+                        label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                    } else {
+                        label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                    }
                 }
-            }
-            return { label, sequence };
-        }),
+                return { label, sequence };
+            }),
     );
 };
