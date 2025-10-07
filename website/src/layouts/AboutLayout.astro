@@ -4,8 +4,8 @@ import BaseLayout from './BaseLayout.astro';
 import DocsMenu from '../components/Navigation/DocsMenu';
 
 const { frontmatter } = Astro.props;
-const activeTopNavigationItem = frontmatter?.activeTopNavigationItem;
 const docsPages = await Astro.glob('../pages/about/**/*.mdx');
+const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/about';
 const currentPageUrl = Astro.url.pathname;
 ---
 

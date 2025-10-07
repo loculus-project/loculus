@@ -6,7 +6,7 @@ import { getWebsiteConfig } from '../config';
 import MdiGithub from '~icons/mdi/github';
 
 const { frontmatter } = Astro.props;
-const activeTopNavigationItem = frontmatter?.activeTopNavigationItem;
+const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/docs/';
 const file = Astro.props.file;
 const FILE_BEGINNING = 'src/pages/';
 const fileLocation = file.slice(file.indexOf(FILE_BEGINNING), file.length);
