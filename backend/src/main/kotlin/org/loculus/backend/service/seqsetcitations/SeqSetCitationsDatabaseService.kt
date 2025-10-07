@@ -435,15 +435,25 @@ class SeqSetCitationsDatabaseService(
     }
 
     fun getSeqSetCitedByPublication(seqSetId: String, version: Long): CitedBy {
-        // TODO: implement after registering to CrossRef API
-        // https://github.com/orgs/loculus-project/projects/3/views/1?pane=issue&itemId=50282833
-
         log.info { "Get seqSet cited by publication for seqSetId $seqSetId, version $version" }
 
-        val citedBy = CitedBy(
-            mutableListOf(),
-            mutableListOf(),
-        )
+        val record = SeqSetsTable
+            .select(SeqSetsTable.seqSetDOI)
+            .where { (SeqSetsTable.seqSetId eq seqSetId) and (SeqSetsTable.seqSetVersion eq version) }
+            .firstOrNull()
+
+        val citedBy = CitedBy(mutableListOf(), mutableListOf())
+
+        val doi = record?.get(SeqSetsTable.seqSetDOI)
+        if (doi.isNullOrBlank()) {
+            return citedBy
+        }
+
+        val citations = crossRefService.getCitationsPerYear(doi)
+        citations.toSortedMap().forEach { (year, count) ->
+            citedBy.years.add(year)
+            citedBy.citations.add(count)
+        }
 
         return citedBy
     }
