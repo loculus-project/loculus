@@ -55,7 +55,7 @@ const seqSet = seqSetResponse.isOk() ? getSeqSetByVersion(seqSetResponse.value, 
 const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSet.createdBy) : undefined;
 ---
 
-<BaseLayout title='SeqSets' data-testid='seqSets-item-container'>
+<BaseLayout title='SeqSets' data-testid='seqSets-item-container' activeTopNavigationItem='seqsets'>
     <div class='flex flex-col justify-center max-w-7xl'>
         {
             seqSet !== undefined ? (

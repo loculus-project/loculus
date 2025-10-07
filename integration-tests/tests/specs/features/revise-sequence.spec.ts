@@ -2,6 +2,7 @@ import { test } from '../../fixtures/sequence.fixture';
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { ReviewPage } from '../../pages/review.page';
+import { NavigationPage } from '../../pages/navigation.page';
 
 test('revising sequence data works: segment can be deleted; segment can be edited', async ({
     pageWithReleasedSequence: page,
@@ -11,7 +12,8 @@ test('revising sequence data works: segment can be deleted; segment can be edite
 
     await searchPage.cchf();
 
-    await page.getByRole('link', { name: 'Submit' }).click();
+    const navigation = new NavigationPage(page);
+    await navigation.clickSubmitSequences();
     await page.getByRole('link', { name: "View View your group's" }).click();
 
     const loculusId = await searchPage.waitForLoculusId();

@@ -6,6 +6,7 @@ import { getWebsiteConfig } from '../config';
 import MdiGithub from '~icons/mdi/github';
 
 const { frontmatter } = Astro.props;
+const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/docs/';
 const file = Astro.props.file;
 const FILE_BEGINNING = 'src/pages/';
 const fileLocation = file.slice(file.indexOf(FILE_BEGINNING), file.length);
@@ -15,7 +16,7 @@ const { gitHubEditLink } = getWebsiteConfig();
 const editUrl = `${gitHubEditLink}${fileLocation}`;
 ---
 
-<BaseLayout title={frontmatter.title}>
+<BaseLayout title={frontmatter.title} activeTopNavigationItem={activeTopNavigationItem}>
     <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
         <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title='Documentation' client:load />
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>

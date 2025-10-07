@@ -5,10 +5,11 @@ import DocsMenu from '../components/Navigation/DocsMenu';
 
 const { frontmatter } = Astro.props;
 const docsPages = await Astro.glob('../pages/about/**/*.mdx');
+const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/about';
 const currentPageUrl = Astro.url.pathname;
 ---
 
-<BaseLayout title={frontmatter.title}>
+<BaseLayout title={frontmatter.title} activeTopNavigationItem={activeTopNavigationItem}>
     <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
         <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title='About' client:load />
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>

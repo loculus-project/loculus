@@ -104,6 +104,7 @@ export function getMetadataDisplayNames(organism: string): Map<string, string> {
 export type Organism = {
     key: string;
     displayName: string;
+    image?: string;
 };
 
 export function getConfiguredOrganisms() {

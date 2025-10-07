@@ -7,8 +7,9 @@ import { getAccessToken } from '../../utils/getAccessToken';
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
+const searchParams = Astro.url.searchParams.toString();
 ---
 
-<BaseLayout title='Create group'>
-    <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} client:load />
+<BaseLayout title='Create group' activeTopNavigationItem='account'>
+    <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} searchParams={searchParams} client:load />
 </BaseLayout>

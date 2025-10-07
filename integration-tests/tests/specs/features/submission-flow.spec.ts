@@ -1,17 +1,19 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
-import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { NavigationPage } from '../../pages/navigation.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
         pageWithACreatedUser,
     }) => {
         test.setTimeout(10000);
-        const page = pageWithACreatedUser;
-        await page.getByRole('link', { name: 'Loculus' }).click();
-        await page.getByRole('link', { name: 'Submit' }).click();
-        await page.getByRole('link', { name: 'create a submitting group' }).click();
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
+        await submissionPage.navigateToOrganism('Ebola Sudan');
+        const navigation = new NavigationPage(pageWithACreatedUser);
+        await navigation.clickSubmitSequences();
+        await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
     test('basic file upload submission flow works', async ({ pageWithGroup }) => {
@@ -22,10 +24,8 @@ test.describe('Submission flow', () => {
         const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
         const metadataFile = join(testFilesDir, 'cchfv_test_metadata.tsv');
 
-        await page.getByRole('link', { name: 'Loculus' }).click();
-        await page.getByRole('link', { name: 'Submit' }).click();
-        await page.getByRole('link', { name: 'Crimean-Congo Hemorrhagic Fever Virus' }).click();
-        await page.getByRole('link', { name: 'Submit Upload New Sequences' }).click();
+        const submissionPage = new BulkSubmissionPage(page);
+        await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
 
         await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
         await page.getByTestId('metadata_file').setInputFiles(metadataFile);
