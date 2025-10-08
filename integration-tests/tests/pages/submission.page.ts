@@ -92,9 +92,9 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         await this.page.getByLabel('Date').fill(date);
     }
 
-    async fillSequenceData(sequenceData: Record<string, string>) {
-        for (const [key, value] of Object.entries(sequenceData)) {
-            await this.page.getByLabel(`${key} segment file`).setInputFiles({
+    async fillSequenceData(sequenceData: string[]) {
+        for (const value of sequenceData) {
+            await this.page.getByLabel('+ add new sequence segment file').setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
                 buffer: Buffer.from(value),
@@ -132,7 +132,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             authorAffiliations: string;
             groupId?: string;
         },
-        sequenceData: Record<string, string>,
+        sequenceData: string[],
     ): Promise<ReviewPage> {
         await this.navigateToSubmissionPage();
         if (groupId) {
