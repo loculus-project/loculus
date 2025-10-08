@@ -273,6 +273,13 @@ export function substitutionsMap(
             .get(sequenceKey)!
             .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
     }
+
+    if (segmentMutationsMap.size > 50) {
+        const flattenedMutations = Array.from(segmentMutationsMap.values()).flat();
+        result.push({ segment: '', mutations: flattenedMutations });
+        return result;
+    }
+
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
     }
