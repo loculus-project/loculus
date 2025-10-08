@@ -44,7 +44,7 @@ export const LineageField: FC<LineageFieldProps> = ({
     }
 
     return (
-        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
+        <div key={field.name} className='flex flex-col border p-3 rounded-md border-gray-300'>
             <SingleChoiceAutoCompleteField
                 field={field}
                 optionsProvider={{
