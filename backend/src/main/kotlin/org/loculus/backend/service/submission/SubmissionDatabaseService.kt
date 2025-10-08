@@ -154,6 +154,72 @@ class SubmissionDatabaseService(
             .first()
     }
 
+    fun getLatestFinishedProcessingAtForReleasedData(organism: Organism, pipelineVersion: Long): String? {
+        val sql =
+            """
+            select
+                max(sep.finished_processing_at) as last_finished_processing_at
+            from sequence_entries_preprocessed_data sep
+            inner join sequence_entries se
+                on se.accession = sep.accession
+                and se.version = sep.version
+            where se.organism = ?
+                and sep.pipeline_version = ?
+                and sep.processing_status = ?
+                and se.released_at is not null
+            """
+                .trimIndent()
+
+        return transaction {
+            exec(
+                sql,
+                listOf(
+                    Pair(VarCharColumnType(), organism.name),
+                    Pair(LongColumnType(), pipelineVersion),
+                    Pair(VarCharColumnType(), PROCESSED.name),
+                ),
+                explicitStatementType = StatementType.SELECT,
+            ) { resultSet ->
+                if (!resultSet.next()) {
+                    null
+                } else {
+                    resultSet.getTimestamp("last_finished_processing_at")?.toInstant()?.toString()
+                }
+            }
+        }
+    }
+
+    fun getLatestExternalMetadataUpdatedAtForReleasedData(organism: Organism): String? {
+        val sql =
+            """
+            select
+                max(em.updated_metadata_at) as last_updated_metadata_at
+            from external_metadata em
+            inner join sequence_entries se
+                on se.accession = em.accession
+                and se.version = em.version
+            where se.organism = ?
+                and se.released_at is not null
+            """
+                .trimIndent()
+
+        return transaction {
+            exec(
+                sql,
+                listOf(
+                    Pair(VarCharColumnType(), organism.name),
+                ),
+                explicitStatementType = StatementType.SELECT,
+            ) { resultSet ->
+                if (!resultSet.next()) {
+                    null
+                } else {
+                    resultSet.getTimestamp("last_updated_metadata_at")?.toInstant()?.toString()
+                }
+            }
+        }
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
