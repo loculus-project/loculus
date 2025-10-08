@@ -46,15 +46,15 @@ export const SequencesForm: FC<SequenceFormProps> = ({
         <>
             <h3 className='subtitle'>{`Nucleotide sequence${multiSegment ? 's' : ''}`}</h3>
             <div className='flex flex-col lg:flex-row gap-6'>
-                {editableSequences.rows.map((field, index) => (
-                    <div className='space-y-2 w-56' key={field.label}>
+                {editableSequences.rows.map((field) => (
+                    <div className='space-y-2 w-56' key={field.key}>
                         {multiSegment && (
                             <label className='text-gray-900 font-medium text-sm block'>{field.label}</label>
                         )}
                         <FileUploadComponent
                             setFile={async (file) => {
                                 const value = file ? await file.text() : null;
-                                setEditableSequences((editableSequences) => editableSequences.update(index, value));
+                                setEditableSequences((editableSequences) => editableSequences.update(field.key, value));
                             }}
                             name={`${field.label}_segment_file`}
                             ariaLabel={`${field.label} Segment File`}

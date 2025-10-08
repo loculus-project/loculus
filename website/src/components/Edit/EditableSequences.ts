@@ -2,11 +2,14 @@ import type { SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 type EditableSequenceFile = {
+    key: string;
     label?: string;
     value: string | null;
 };
 
 export class EditableSequences {
+    private static nextKey = 0;
+
     private readonly editableSequenceFiles: EditableSequenceFile[];
     private readonly maxNumberOfRows: number;
 
@@ -16,7 +19,11 @@ export class EditableSequences {
             label: row.label ?? `Segment ${i + 1}`,
         }));
         if (rows.length < this.maxNumberOfRows) {
-            rows.push({ label: `+ add new sequence`, value: null });
+            rows.push({
+                label: `+ add new sequence`,
+                value: null,
+                key: EditableSequences.getNextKey(),
+            });
         }
         return rows;
     }
@@ -42,6 +49,7 @@ export class EditableSequences {
             ([key, value]) => ({
                 label: `${key} segment`,
                 value: value,
+                key: EditableSequences.getNextKey(),
             }),
         );
         return new EditableSequences(existingDataRows, this.getMaxNumberOfRows(referenceGenomeLightweightSchema));
@@ -63,17 +71,23 @@ export class EditableSequences {
         );
     }
 
+    private static getNextKey(): string {
+        return (EditableSequences.nextKey++).toString();
+    }
+
     /**
      * Create a new {@link EditableSequences} object with the given row value updated.
      */
-    update(index: number, value: string | null): EditableSequences {
-        if (index >= this.maxNumberOfRows || index < 0) {
-            throw new Error(`Index ${index} is out of bounds for max number of rows ${this.maxNumberOfRows}`);
+    update(key: string, value: string | null): EditableSequences {
+        const existingFileIndex = this.editableSequenceFiles.findIndex((file) => file.key === key);
+
+        if (existingFileIndex === -1 && this.editableSequenceFiles.length === this.maxNumberOfRows) {
+            throw new Error(`Must not add more than ${this.maxNumberOfRows} sequence file(s).`);
         }
 
         const newSequenceFiles = [...this.editableSequenceFiles];
-        newSequenceFiles[index] = {
-            ...newSequenceFiles[index],
+        newSequenceFiles[existingFileIndex > -1 ? existingFileIndex : this.editableSequenceFiles.length] = {
+            ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key }),
             value: value,
         };
 
