@@ -100,9 +100,9 @@ describe('FormOrUploadWrapper', () => {
             expect(input).toHaveValue(value);
         }
 
-        async function uploadSegmentData(segment: string, data: string) {
+        async function uploadSegmentData(data: string) {
             const file = new File([data], 'foo.txt', { type: 'text/plain' });
-            await userEvent.upload(screen.getByLabelText(new RegExp(`${segment} segment file`, 'i')), file);
+            await userEvent.upload(screen.getByLabelText(new RegExp('\\+ add new sequence segment file', 'i')), file);
         }
 
         test('renders all metadata fields and sequence segments', () => {
@@ -113,8 +113,7 @@ describe('FormOrUploadWrapper', () => {
             const collectionCountryLabel = document.querySelector('label[for="collectionCountry"]');
             expect(collectionCountryLabel).toHaveTextContent('Collection country');
             expect(screen.getByText(/Host/)).toBeTruthy();
-            expect(screen.getByText(/foo/)).toBeTruthy();
-            expect(screen.getByText(/bar/)).toBeTruthy();
+            expect(screen.getByText(/\+ add new sequence/)).toBeTruthy();
         });
 
         test('error when nothing is entered', async () => {
@@ -147,8 +146,8 @@ describe('FormOrUploadWrapper', () => {
 
         test('error when only sequenceData is entered', async () => {
             renderForm(true);
-            await uploadSegmentData('foo', 'ACTG');
-            await uploadSegmentData('bar', 'ACTG');
+            await uploadSegmentData('ACTG');
+            await uploadSegmentData('ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -156,8 +155,8 @@ describe('FormOrUploadWrapper', () => {
         test('error when ID is omitted', async () => {
             renderForm(true);
             await enterInputValue('Host', 'human');
-            await uploadSegmentData('foo', 'ACTG');
-            await uploadSegmentData('bar', 'ACTG');
+            await uploadSegmentData('ACTG');
+            await uploadSegmentData('ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('error');
         });
@@ -166,8 +165,8 @@ describe('FormOrUploadWrapper', () => {
             renderForm(true);
             await enterInputValue('ID', 'foo');
             await enterInputValue('Host', 'human');
-            await uploadSegmentData('foo', 'ACTG');
-            await uploadSegmentData('bar', 'ACTG');
+            await uploadSegmentData('ACTG');
+            await uploadSegmentData('ACTG');
             const sequenceFileResult = await generateFiles();
             expect(sequenceFileResult.type).toBe('ok');
         });
