@@ -61,9 +61,11 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             fileKind={PLAIN_SEGMENT_KIND}
                             small={true}
                             initialValue={
-                                field.value !== null ? new VirtualFile(field.value, 'Existing data') : undefined
+                                field.initialValue !== null
+                                    ? new VirtualFile(field.initialValue, 'Existing data')
+                                    : undefined
                             }
-                            showUndo={true}
+                            showUndo={field.initialValue !== null}
                             onDownload={
                                 field.value !== null && dataToEdit
                                     ? () => {
