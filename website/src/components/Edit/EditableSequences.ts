@@ -5,6 +5,7 @@ type EditableSequenceFile = {
     key: string;
     label?: string;
     value: string | null;
+    initialValue: string | null;
 };
 
 export class EditableSequences {
@@ -22,6 +23,7 @@ export class EditableSequences {
             rows.push({
                 label: `+ add new sequence`,
                 value: null,
+                initialValue: null,
                 key: EditableSequences.getNextKey(),
             });
         }
@@ -49,6 +51,7 @@ export class EditableSequences {
             ([key, value]) => ({
                 label: `${key} segment`,
                 value: value,
+                initialValue: value,
                 key: EditableSequences.getNextKey(),
             }),
         );
@@ -87,7 +90,7 @@ export class EditableSequences {
 
         const newSequenceFiles = [...this.editableSequenceFiles];
         newSequenceFiles[existingFileIndex > -1 ? existingFileIndex : this.editableSequenceFiles.length] = {
-            ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key }),
+            ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key, initialValue: null }),
             value: value,
         };
 
