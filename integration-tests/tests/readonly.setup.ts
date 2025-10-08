@@ -38,9 +38,8 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
             authorAffiliations: 'Patho Institute, Paris',
             groupId: groupId.toString(),
         },
-        {
-            main:
-                'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
+        [
+            'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
                 'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
                 'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
                 'TGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCT' +
@@ -54,7 +53,7 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
                 'ATTCTGTTGCCCAAGCAAGGTTCTCTGGTCTTCTGATTGTAAAGACTGTTCTGGACCACATCCTACAAAA' +
                 'AACAGATCTTGGAGTACGACTTCATCCACTGGCCAGGACAGCAAAAGTCAAGAATGAGGTCAGTTCATTC' +
                 'AAGGCAGCTCTTGGCTCACTTGCCAAGCATGGAGAATATGCTCCATTTGCACGTCTCCTCAATCTTTCTG',
-        },
+        ],
     );
 
     await reviewPage.waitForZeroProcessing();
