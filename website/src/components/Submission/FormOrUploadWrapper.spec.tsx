@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -102,7 +102,9 @@ describe('FormOrUploadWrapper', () => {
 
         async function uploadSegmentData(data: string) {
             const file = new File([data], 'foo.txt', { type: 'text/plain' });
-            await userEvent.upload(screen.getByLabelText(new RegExp('\\+ add new sequence segment file', 'i')), file);
+            const uploadInput = () => screen.getByLabelText(new RegExp('\\+ add new sequence segment file', 'i'));
+            await waitFor(() => expect(uploadInput()).toBeVisible());
+            await userEvent.upload(uploadInput(), file);
         }
 
         test('renders all metadata fields and sequence segments', () => {
