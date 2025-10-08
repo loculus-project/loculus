@@ -21,10 +21,12 @@ describe('EditableSequences', () => {
         );
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).deep.equals([{ label: '+ add new sequence', value: null }]);
+        expect(initialRows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
+        const firstKey = initialRows[0].key;
 
+        let secondKey;
         {
-            editableSequences = editableSequences.update(0, 'ATCG');
+            editableSequences = editableSequences.update(firstKey, 'ATCG');
             const fasta = editableSequences.getSequenceFasta('subId');
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
@@ -32,14 +34,15 @@ describe('EditableSequences', () => {
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
-            expect(rows).deep.equals([
-                { label: 'Segment 1', value: 'ATCG' },
-                { label: '+ add new sequence', value: null },
+            expect(rows).toEqual([
+                { label: 'Segment 1', value: 'ATCG', key: firstKey },
+                { label: '+ add new sequence', value: null, key: expect.any(String) },
             ]);
+            secondKey = rows[1].key;
         }
 
         {
-            editableSequences = editableSequences.update(1, 'TT');
+            editableSequences = editableSequences.update(secondKey, 'TT');
             const fasta = editableSequences.getSequenceFasta('subId');
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
@@ -48,13 +51,13 @@ describe('EditableSequences', () => {
 
             const rows = editableSequences.rows;
             expect(rows).deep.equals([
-                { label: 'Segment 1', value: 'ATCG' },
-                { label: 'Segment 2', value: 'TT' },
+                { label: 'Segment 1', value: 'ATCG', key: firstKey },
+                { label: 'Segment 2', value: 'TT', key: secondKey },
             ]);
         }
 
-        expect(() => editableSequences.update(2, 'GG')).toThrowError(
-            'Index 2 is out of bounds for max number of rows 2',
+        expect(() => editableSequences.update('another key', 'GG')).toThrowError(
+            'Must not add more than 2 sequence file(s).',
         );
     });
 
@@ -62,9 +65,10 @@ describe('EditableSequences', () => {
         let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).deep.equals([{ label: '+ add new sequence', value: null }]);
+        expect(initialRows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
+        const key = initialRows[0].key;
 
-        editableSequences = editableSequences.update(0, 'ATCG');
+        editableSequences = editableSequences.update(key, 'ATCG');
         const fasta = editableSequences.getSequenceFasta('subId');
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
@@ -73,10 +77,10 @@ describe('EditableSequences', () => {
         expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: 'Segment 1', value: 'ATCG' }]);
+        expect(rows).deep.equals([{ label: 'Segment 1', value: 'ATCG', key }]);
 
-        expect(() => editableSequences.update(1, 'GG')).toThrowError(
-            'Index 1 is out of bounds for max number of rows 1',
+        expect(() => editableSequences.update('another key', 'GG')).toThrowError(
+            'Must not add more than 1 sequence file(s).',
         );
     });
 
@@ -85,14 +89,16 @@ describe('EditableSequences', () => {
             makeReferenceGenomeLightweightSchema(['foo', 'bar']),
         );
 
-        editableSequences = editableSequences.update(0, 'ATCG');
-        expect(editableSequences.rows).deep.equals([
-            { label: 'Segment 1', value: 'ATCG' },
-            { label: '+ add new sequence', value: null },
+        const key = editableSequences.rows[0].key;
+
+        editableSequences = editableSequences.update(key, 'ATCG');
+        expect(editableSequences.rows).toEqual([
+            { label: 'Segment 1', value: 'ATCG', key },
+            { label: '+ add new sequence', value: null, key: expect.any(String) },
         ]);
 
-        editableSequences = editableSequences.update(0, null);
-        expect(editableSequences.rows).deep.equals([{ label: '+ add new sequence', value: null }]);
+        editableSequences = editableSequences.update(key, null);
+        expect(editableSequences.rows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
     });
 
     test('GIVEN initial data with an empty segment THEN the fasta does not contain the empty segment', async () => {
@@ -100,7 +106,7 @@ describe('EditableSequences', () => {
             defaultReviewData,
             makeReferenceGenomeLightweightSchema(['originalSequenceName', 'anotherSequenceName']),
         );
-        editableSequences = editableSequences.update(0, 'ATCG');
+        editableSequences = editableSequences.update(editableSequences.rows[0].key, 'ATCG');
         const fasta = editableSequences.getSequenceFasta('subId');
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
@@ -115,20 +121,24 @@ describe('EditableSequences', () => {
             makeReferenceGenomeLightweightSchema(['originalSequenceName', 'anotherSequenceName']),
         );
 
-        expect(editableSequences.rows).deep.equals([
-            { label: 'originalSequenceName segment', value: 'originalUnalignedNucleotideSequencesValue' },
-            { label: '+ add new sequence', value: null },
+        expect(editableSequences.rows).toEqual([
+            {
+                label: 'originalSequenceName segment',
+                value: 'originalUnalignedNucleotideSequencesValue',
+                key: expect.any(String),
+            },
+            { label: '+ add new sequence', value: null, key: expect.any(String) },
         ]);
 
-        editableSequences = editableSequences.update(0, null);
+        editableSequences = editableSequences.update(editableSequences.rows[0].key, null);
         const fasta = editableSequences.getSequenceFasta('subId');
         expect(fasta).toBeUndefined();
 
         expect(editableSequences.getSequenceRecord()).deep.equals({});
 
-        expect(editableSequences.rows).deep.equals([
-            { label: 'originalSequenceName segment', value: null },
-            { label: '+ add new sequence', value: null },
+        expect(editableSequences.rows).toEqual([
+            { label: 'originalSequenceName segment', value: null, key: expect.any(String) },
+            { label: '+ add new sequence', value: null, key: expect.any(String) },
         ]);
     });
 });
