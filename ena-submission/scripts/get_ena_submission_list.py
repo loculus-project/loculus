@@ -55,7 +55,8 @@ def filter_for_submission(
         - as an extra check we send a notification if there are sequences with
           ena-specific-metadata fields (users can add these fields, nothing prohibits them
           from doing so)
-        - data has not been revoked
+        - the latest version is not a revocation entry
+          (if it is, we send a separate notification)
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
@@ -100,9 +101,11 @@ def filter_for_submission(
             # If lower version had external metadata and this one doesn't, remove it from that set
             entries_with_external_metadata.discard(accession)
         if entry["metadata"].get("isRevocation", True):
-            logger.info(f"Found revoked sequence: {accession_version}")
+            logger.debug(f"Found revoked sequence: {accession_version}")
             revoked_entries.add(accession)
             entries_with_external_metadata.discard(accession)
+        else:
+            revoked_entries.discard(accession)
         entries_to_submit[accession] = entry
 
     return SubmissionResults(
