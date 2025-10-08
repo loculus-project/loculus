@@ -21,7 +21,9 @@ describe('EditableSequences', () => {
         );
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
+        expect(initialRows).toEqual([
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+        ]);
         const firstKey = initialRows[0].key;
 
         let secondKey;
@@ -35,8 +37,8 @@ describe('EditableSequences', () => {
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', key: firstKey },
-                { label: '+ add new sequence', value: null, key: expect.any(String) },
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
+                { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
             ]);
             secondKey = rows[1].key;
         }
@@ -51,8 +53,8 @@ describe('EditableSequences', () => {
 
             const rows = editableSequences.rows;
             expect(rows).deep.equals([
-                { label: 'Segment 1', value: 'ATCG', key: firstKey },
-                { label: 'Segment 2', value: 'TT', key: secondKey },
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
+                { label: 'Segment 2', value: 'TT', initialValue: null, key: secondKey },
             ]);
         }
 
@@ -65,7 +67,9 @@ describe('EditableSequences', () => {
         let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
+        expect(initialRows).toEqual([
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+        ]);
         const key = initialRows[0].key;
 
         editableSequences = editableSequences.update(key, 'ATCG');
@@ -77,7 +81,7 @@ describe('EditableSequences', () => {
         expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: 'Segment 1', value: 'ATCG', key }]);
+        expect(rows).deep.equals([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key }]);
 
         expect(() => editableSequences.update('another key', 'GG')).toThrowError(
             'Must not add more than 1 sequence file(s).',
@@ -93,12 +97,14 @@ describe('EditableSequences', () => {
 
         editableSequences = editableSequences.update(key, 'ATCG');
         expect(editableSequences.rows).toEqual([
-            { label: 'Segment 1', value: 'ATCG', key },
-            { label: '+ add new sequence', value: null, key: expect.any(String) },
+            { label: 'Segment 1', value: 'ATCG', initialValue: null, key },
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
         ]);
 
         editableSequences = editableSequences.update(key, null);
-        expect(editableSequences.rows).toEqual([{ label: '+ add new sequence', value: null, key: expect.any(String) }]);
+        expect(editableSequences.rows).toEqual([
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+        ]);
     });
 
     test('GIVEN initial data with an empty segment THEN the fasta does not contain the empty segment', async () => {
@@ -125,9 +131,10 @@ describe('EditableSequences', () => {
             {
                 label: 'originalSequenceName segment',
                 value: 'originalUnalignedNucleotideSequencesValue',
+                initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
             },
-            { label: '+ add new sequence', value: null, key: expect.any(String) },
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
         ]);
 
         editableSequences = editableSequences.update(editableSequences.rows[0].key, null);
@@ -137,8 +144,13 @@ describe('EditableSequences', () => {
         expect(editableSequences.getSequenceRecord()).deep.equals({});
 
         expect(editableSequences.rows).toEqual([
-            { label: 'originalSequenceName segment', value: null, key: expect.any(String) },
-            { label: '+ add new sequence', value: null, key: expect.any(String) },
+            {
+                label: 'originalSequenceName segment',
+                value: null,
+                initialValue: 'originalUnalignedNucleotideSequencesValue',
+                key: expect.any(String),
+            },
+            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
         ]);
     });
 });
