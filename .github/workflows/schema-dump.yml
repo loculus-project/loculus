@@ -57,11 +57,6 @@ jobs:
           -U postgres 
           -d postgres 
           --schema-only 
-          bash -c "PGPASSWORD=postgres pg_dump
-          -h postgres
-          -U postgres
-          -d postgres
-          --schema-only
           --no-security-labels
           --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
