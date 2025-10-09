@@ -1,13 +1,15 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { EditableSequences } from './EditableSequences.ts';
 import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
-import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
+import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -18,7 +20,7 @@ type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
-    segmentNames: string[];
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -29,7 +31,7 @@ const logger = getClientLogger('EditPage');
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
-    segmentNames,
+    referenceGenomeLightweightSchema,
     clientConfig,
     accessToken,
     groupedInputFields,
@@ -37,7 +39,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromInitialData(dataToEdit, segmentNames),
+        EditableSequences.fromInitialData(dataToEdit, referenceGenomeLightweightSchema),
     );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;

@@ -6,8 +6,9 @@ import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
 import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
+import { EditableSequences } from '../Edit/EditableSequences.ts';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
-import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
+import { SequencesForm } from '../Edit/SequencesForm';
 
 export type InputMode = 'form' | 'bulk';
 
@@ -67,9 +68,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(
-            getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames,
-        ),
+        EditableSequences.fromSequenceNames(referenceGenomeLightweightSchema),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
