@@ -160,12 +160,15 @@ class UploadDatabaseService(
         return numberDeleted
     }
 
-    fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
+    fun insertFromAuxTablesIntoMainTable(
+        uploadId: String,
+        submissionParams: SubmissionParams,
+    ): List<SubmissionIdMapping> = transaction {
         log.debug {
-            "mapping and copying sequences with UploadId $uploadId and uploadType: $submissionParams.uploadType"
+            "Inserting sequences from staging view with UploadId $uploadId and uploadType: ${submissionParams.uploadType}"
         }
 
-        val mapAndCopySql = """
+        val insertFromAuxTablesSql = """
             INSERT INTO sequence_entries (
                 accession,
                 version,
@@ -177,43 +180,20 @@ class UploadDatabaseService(
                 original_data
             )
             SELECT
-                metadata_upload_aux_table.accession,
-                metadata_upload_aux_table.version,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at,
-                jsonb_build_object(
-                    'metadata', metadata_upload_aux_table.metadata,
-                    'files', metadata_upload_aux_table.files,
-                    'unalignedNucleotideSequences', 
-                    COALESCE(
-                        jsonb_object_agg(
-                            sequence_upload_aux_table.segment_name,
-                            sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
-                        '{}'::jsonb
-                    )
-                )
-            FROM
-                metadata_upload_aux_table
-            LEFT JOIN
-                sequence_upload_aux_table
-                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
-            WHERE metadata_upload_aux_table.upload_id = ?
-            GROUP BY
-                metadata_upload_aux_table.upload_id,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at
+                accession,
+                version,
+                organism,
+                submission_id,
+                submitter,
+                group_id,
+                submitted_at,
+                original_data
+            FROM sequence_entries_staging
+            WHERE upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()
         val insertionResult = exec(
-            mapAndCopySql,
+            insertFromAuxTablesSql,
             listOf(
                 Pair(VarCharColumnType(), uploadId),
             ),
