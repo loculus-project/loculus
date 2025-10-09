@@ -70,7 +70,7 @@ jobs:
 
     - name: Format SQL schema
       run: |
-        sql-formatter --language postgresql --indent 2 --uppercase --file backend/docs/db/schema.sql --output backend/docs/db/schema.sql
+        sql-formatter -l postgresql -o backend/docs/db/schema.sql backend/docs/db/schema.sql
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
