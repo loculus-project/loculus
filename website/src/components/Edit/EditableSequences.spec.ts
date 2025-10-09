@@ -22,7 +22,7 @@ describe('EditableSequences', () => {
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
         const firstKey = initialRows[0].key;
 
@@ -38,7 +38,7 @@ describe('EditableSequences', () => {
             const rows = editableSequences.rows;
             expect(rows).toEqual([
                 { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
-                { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+                { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
             ]);
             secondKey = rows[1].key;
         }
@@ -68,7 +68,7 @@ describe('EditableSequences', () => {
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
         const key = initialRows[0].key;
 
@@ -98,12 +98,12 @@ describe('EditableSequences', () => {
         editableSequences = editableSequences.update(key, 'ATCG');
         expect(editableSequences.rows).toEqual([
             { label: 'Segment 1', value: 'ATCG', initialValue: null, key },
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
 
         editableSequences = editableSequences.update(key, null);
         expect(editableSequences.rows).toEqual([
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
     });
 
@@ -134,7 +134,7 @@ describe('EditableSequences', () => {
                 initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
             },
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
 
         editableSequences = editableSequences.update(editableSequences.rows[0].key, null);
@@ -150,7 +150,7 @@ describe('EditableSequences', () => {
                 initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
             },
-            { label: '+ add new sequence', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
         ]);
     });
 });

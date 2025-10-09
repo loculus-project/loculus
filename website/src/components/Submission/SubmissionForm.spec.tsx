@@ -117,7 +117,7 @@ describe('SubmitForm', () => {
                 case 'form': {
                     await userEvent.type(getByLabelText(/ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
-                    await userEvent.upload(getByLabelText(/\+ add new sequence/i), sequenceFile);
+                    await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
                     break;
                 }
                 case 'bulk': {
@@ -201,7 +201,7 @@ describe('SubmitForm', () => {
         const { getByLabelText, getByRole } = renderSubmissionForm({ inputMode: 'form' });
 
         await userEvent.type(getByLabelText(/ID/), 'myId');
-        await userEvent.upload(getByLabelText(/\+ add new sequence/i), sequenceFile);
+        await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
         await userEvent.click(
             getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
         );
@@ -338,7 +338,7 @@ describe('SubmitForm', () => {
                 case 'form': {
                     await userEvent.type(getByLabelText(/ID/), 'myId');
                     await userEvent.type(getByLabelText(/Foo/), 'foo');
-                    await userEvent.upload(getByLabelText(/\+ add new sequence/i), sequenceFile);
+                    await userEvent.upload(getByLabelText(/Add a segment/i), sequenceFile);
                     break;
                 }
                 case 'bulk': {

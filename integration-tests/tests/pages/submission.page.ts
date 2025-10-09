@@ -94,7 +94,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
 
     async fillSequenceData(sequenceData: string[]) {
         for (const value of sequenceData) {
-            await this.page.getByLabel('+ add new sequence segment file').setInputFiles({
+            await this.page.getByLabel('Add a segment segment file').setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
                 buffer: Buffer.from(value),
