@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qDBml7x2KsGNI9cu8MhSw3c5To5BCZEC6NfG83TNfkWGdl4lrXuc8aZGWjo7aPD
+\restrict dummy
 
 -- Dumped from database version 15.14 (Debian 15.14-1.pgdg13+1)
 -- Dumped by pg_dump version 16.10 (Debian 16.10-1.pgdg13+1)
@@ -895,5 +895,5 @@ ALTER TABLE ONLY public.user_groups_table
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qDBml7x2KsGNI9cu8MhSw3c5To5BCZEC6NfG83TNfkWGdl4lrXuc8aZGWjo7aPD
+\unrestrict dummy
 
