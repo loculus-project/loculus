@@ -29,6 +29,7 @@ import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
@@ -312,8 +313,14 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema),
-        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, filterSchema],
+        () =>
+            new FieldFilterSet(
+                filterSchema,
+                fieldValues,
+                hiddenFieldValues,
+                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+            ),
+        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
     );
 
     /**

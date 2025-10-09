@@ -1,12 +1,20 @@
-import type { BaseType } from './sequenceTypeHelpers';
-import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../types/referencesGenomes';
+import type { SuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
+import { type BaseType, isMultiSegmented, type SegmentInfo } from './sequenceTypeHelpers';
 
 export type MutationType = 'substitutionOrDeletion' | 'insertion';
 
 export type MutationQuery = {
     baseType: BaseType;
     mutationType: MutationType;
+    /**
+     * The mutation as entered by the user and as displayed in the UI.
+     */
     text: string;
+    /**
+     * The mutation as sent to LAPIS for searching.
+     * This is usually different from `text` when there are several suborganisms.
+     */
+    lapisQuery: string;
 };
 
 export type MutationSearchParams = {
@@ -18,11 +26,11 @@ export type MutationSearchParams = {
 
 export const removeMutationQueries = (
     mutations: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
     baseType: BaseType,
     mutationType: MutationType,
 ): string => {
-    const mutationQueries = parseMutationsString(mutations, referenceGenomeLightweightSchema);
+    const mutationQueries = parseMutationsString(mutations, suborganismSegmentAndGeneInfo);
     const filteredMutationQueries = mutationQueries.filter(
         (mq) => !(mq.baseType === baseType && mq.mutationType === mutationType),
     );
@@ -31,11 +39,11 @@ export const removeMutationQueries = (
 
 export const parseMutationsString = (
     value: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationQuery[] => {
     return value
         .split(',')
-        .map((mutation) => parseMutationString(mutation.trim(), referenceGenomeLightweightSchema))
+        .map((mutation) => parseMutationString(mutation.trim(), suborganismSegmentAndGeneInfo))
         .filter(Boolean) as MutationQuery[];
 };
 
@@ -45,7 +53,7 @@ export const parseMutationsString = (
  */
 export const parseMutationString = (
     mutation: string,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationQuery | undefined => {
     const tests = [
         { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', test: isValidNucleotideMutationQuery },
@@ -55,8 +63,9 @@ export const parseMutationString = (
     ] as const;
 
     for (const { baseType, mutationType, test } of tests) {
-        if (test(mutation, referenceGenomeLightweightSchema)) {
-            return { baseType, mutationType, text: mutation };
+        const mutationTestResult = test(mutation, suborganismSegmentAndGeneInfo);
+        if (mutationTestResult.valid) {
+            return { baseType, mutationType, text: mutationTestResult.text, lapisQuery: mutationTestResult.lapisQuery };
         }
     }
 };
@@ -67,127 +76,157 @@ export const serializeMutationQueries = (selectedOptions: MutationQuery[]): stri
 
 export const intoMutationSearchParams = (
     mutation: string | undefined,
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
 ): MutationSearchParams => {
-    const mutationFilter = parseMutationsString(mutation ?? '', referenceGenomeLightweightSchema);
+    const mutationFilter = parseMutationsString(mutation ?? '', suborganismSegmentAndGeneInfo);
 
     return {
         nucleotideMutations: mutationFilter
             .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         aminoAcidMutations: mutationFilter
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         nucleotideInsertions: mutationFilter
             .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
         aminoAcidInsertions: mutationFilter
             .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-            .map((m) => m.text),
+            .map((m) => m.lapisQuery),
     };
 };
 
+type MutationTestResult = { valid: true; text: string; lapisQuery: string } | { valid: false };
+
+const INVALID: MutationTestResult = { valid: false };
+
 const isValidAminoAcidInsertionQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
-            return false;
+            return INVALID;
         }
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
-            return false;
+
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
+            (geneInfo) => geneInfo.label.toUpperCase() === gene,
+        );
+
+        if (geneInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+            return INVALID;
         }
-        return /^[A-Z*?]+$/.test(insertion);
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: `ins_${geneInfo.lapisName}:${position}:${insertion}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
 const isValidAminoAcidMutationQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomeLightweightSchema.geneNames.map((g) => g.toUpperCase()));
-        if (!existingGenes.has(gene)) {
-            return false;
+
+        const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
+            (geneInfo) => geneInfo.label.toUpperCase() === gene,
+        );
+
+        if (geneInfo === undefined || !/^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation)) {
+            return INVALID;
         }
-        return /^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation);
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: `${geneInfo.lapisName}:${mutation}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
 const isValidNucleotideInsertionQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
-        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const multiSegmented = isMultiSegmented(suborganismSegmentAndGeneInfo.nucleotideSegmentInfos);
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
-            return false;
+            return INVALID;
         }
         const query = textUpper.slice(4);
         const split = query.split(':');
-        if ((!isMultiSegmented && split.length > 2) || (isMultiSegmented && split.length > 3)) {
-            return false;
+        if ((!multiSegmented && split.length > 2) || (multiSegmented && split.length > 3)) {
+            return INVALID;
         }
-        const [segment, position, insertion] = isMultiSegmented
+        const [segment, position, insertion] = multiSegmented
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
-        if (segment !== undefined) {
-            const existingSegments = new Set(
-                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
-            );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
+
+        const segmentInfo =
+            segment !== undefined
+                ? suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
+                      (info) => info.label.toUpperCase() === segment,
+                  )
+                : suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+
+        if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+            return INVALID;
         }
-        if (!Number.isInteger(Number(position))) {
-            return false;
-        }
-        return /^[A-Z*?]+$/.test(insertion);
+        return {
+            valid: true,
+            text,
+            lapisQuery: suborganismSegmentAndGeneInfo.isMultiSegmented
+                ? `ins_${segmentInfo.lapisName}:${position}:${insertion}`
+                : `ins_${position}:${insertion}`,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
 
 const isValidNucleotideMutationQuery = (
     text: string,
-    referenceGenomeLightweightSchema_: ReferenceGenomesLightweightSchema,
-): boolean => {
+    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+): MutationTestResult => {
     try {
-        // TODO(#3984) make it multi pathogen aware
-        const referenceGenomeLightweightSchema = getFirstLightweightSchema(referenceGenomeLightweightSchema_);
-        const isMultiSegmented = referenceGenomeLightweightSchema.nucleotideSegmentNames.length > 1;
+        const multiSegmented = isMultiSegmented(suborganismSegmentAndGeneInfo.nucleotideSegmentInfos);
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
-        if (isMultiSegmented) {
+        let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+
+        if (multiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(
-                referenceGenomeLightweightSchema.nucleotideSegmentNames.map((n) => n.toUpperCase()),
+            segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
+                (info) => info.label.toUpperCase() === segment,
             );
-            if (!existingSegments.has(segment)) {
-                return false;
-            }
             mutation = _mutation;
         }
-        return /^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation);
+
+        if (segmentInfo === undefined || !/^[A-Z]?[0-9]+[A-Z-.]?$/.test(mutation)) {
+            return INVALID;
+        }
+
+        return {
+            valid: true,
+            text,
+            lapisQuery: suborganismSegmentAndGeneInfo.isMultiSegmented
+                ? `${segmentInfo.lapisName}:${mutation}`
+                : mutation,
+        };
     } catch (_) {
-        return false;
+        return INVALID;
     }
 };
