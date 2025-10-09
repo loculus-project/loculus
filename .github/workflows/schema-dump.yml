@@ -60,14 +60,14 @@ jobs:
           --no-security-labels
           --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
-    - name: Format schema output
-      uses: docker://darold/pgformatter:latest
-      with:
-        args: >
-          pg_format
-          /github/workspace/backend/docs/db/schema.sql
-          -o /github/workspace/backend/docs/db/schema.sql
-          -s 2
+    - name: Install pgFormatter
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pgformatter
+
+    - name: Format SQL schema
+      run: |
+        pg_format --inplace --spaces 4 --comma-start --keyword-case 2 --function-case 1 backend/docs/db/schema.sql
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
