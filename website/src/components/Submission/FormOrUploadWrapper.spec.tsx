@@ -102,7 +102,7 @@ describe('FormOrUploadWrapper', () => {
 
         async function uploadSegmentData(data: string) {
             const file = new File([data], 'foo.txt', { type: 'text/plain' });
-            const uploadInput = () => screen.getByLabelText(new RegExp('\\+ add new sequence segment file', 'i'));
+            const uploadInput = () => screen.getByLabelText(new RegExp('Add a segment', 'i'));
             await waitFor(() => expect(uploadInput()).toBeVisible());
             await userEvent.upload(uploadInput(), file);
         }
@@ -115,7 +115,7 @@ describe('FormOrUploadWrapper', () => {
             const collectionCountryLabel = document.querySelector('label[for="collectionCountry"]');
             expect(collectionCountryLabel).toHaveTextContent('Collection country');
             expect(screen.getByText(/Host/)).toBeTruthy();
-            expect(screen.getByText(/\+ add new sequence/)).toBeTruthy();
+            expect(screen.getByText(/Add a segment/)).toBeTruthy();
         });
 
         test('error when nothing is entered', async () => {

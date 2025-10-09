@@ -21,7 +21,7 @@ export class EditableSequences {
         }));
         if (rows.length < this.maxNumberOfRows) {
             rows.push({
-                label: `+ add new sequence`,
+                label: `Add a segment`,
                 value: null,
                 initialValue: null,
                 key: EditableSequences.getNextKey(),
