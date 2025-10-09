@@ -61,7 +61,7 @@ jobs:
           --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
     - name: Format schema output
-      uses: docker://darold/pgFormatter:5.6
+      uses: docker://darold/pgformatter:latest
       with:
         args: >
           pg_format
