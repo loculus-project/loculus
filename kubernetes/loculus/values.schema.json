@@ -1242,6 +1242,12 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "useQuerulus": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, uses Querulus as a drop-in replacement for LAPIS+SILO. When enabled, LAPIS and SILO deployments are disabled and Querulus is deployed instead."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -1415,6 +1421,11 @@
           "type": "integer",
           "description": "Number of replicas for the LAPIS deployment",
           "default": 1
+        },
+        "querulus": {
+          "type": "integer",
+          "description": "Number of replicas for the Querulus deployment (when useQuerulus is true)",
+          "default": 2
         }
       },
       "additionalProperties": false
@@ -1457,10 +1468,11 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `website` and `backend.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `querulus`, `website` and `backend.`",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
+        "querulus": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" }
       },

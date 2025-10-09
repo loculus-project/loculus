@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: querulus-config
+data:
+  querulus_config.json: |
+    {{ include "loculus.generateBackendConfig" . | fromYaml | toJson }}

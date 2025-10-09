@@ -1,3 +1,4 @@
+{{- if not .Values.useQuerulus }}
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $organismKeys := keys (include "loculus.enabledOrganisms" . | fromJson) }}
 apiVersion: traefik.containo.us/v1alpha1
@@ -97,3 +98,4 @@ spec:
             port:
               number: 8080
       {{- end }}
+{{- end }}
