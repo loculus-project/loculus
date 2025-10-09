@@ -60,14 +60,17 @@ jobs:
           --no-security-labels
           --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
-    - name: Install pgFormatter
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pgformatter
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install SQL formatter
+      run: npm install -g sql-formatter
 
     - name: Format SQL schema
       run: |
-        pg_format --inplace --spaces 2 --keyword-case 2 --function-case 1 --nogrouping backend/docs/db/schema.sql
+        sql-formatter --language postgresql --indent 2 --uppercase --file backend/docs/db/schema.sql --output backend/docs/db/schema.sql
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
