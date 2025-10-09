@@ -67,7 +67,7 @@ jobs:
 
     - name: Format SQL schema
       run: |
-        pg_format --inplace --spaces 4 --comma-start --keyword-case 2 --function-case 1 backend/docs/db/schema.sql
+        pg_format --inplace --spaces 2 --keyword-case 2 --function-case 1 --nogrouping backend/docs/db/schema.sql
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
