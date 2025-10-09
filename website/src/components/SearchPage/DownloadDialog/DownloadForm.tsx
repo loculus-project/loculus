@@ -67,7 +67,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     const [includeRichFastaHeaders, setIncludeRichFastaHeaders] = useState(0);
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
-    const { nucleotideSequences, genes, useMultiSegmentEndpoint } = useMemo(
+    const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
         () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
         [referenceGenomesLightweightSchema, selectedSuborganism],
     );
@@ -84,7 +84,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     segment: useMultiSegmentEndpoint
                         ? nucleotideSequences[unalignedNucleotideSequence].lapisName
                         : undefined,
-                    includeRichFastaHeaders: includeRichFastaHeaders === 1,
+                    includeRichFastaHeaders: includeRichFastaHeaders === 1 ? true : defaultFastaHeaderTemplate,
                 };
                 break;
             case 2:
@@ -285,7 +285,12 @@ export const DownloadForm: FC<DownloadFormProps> = ({
 function getSequenceNames(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     selectedSuborganism: string | null,
-): { nucleotideSequences: SegmentInfo[]; genes: GeneInfo[]; useMultiSegmentEndpoint: boolean } {
+): {
+    nucleotideSequences: SegmentInfo[];
+    genes: GeneInfo[];
+    useMultiSegmentEndpoint: boolean;
+    defaultFastaHeaderTemplate?: string;
+} {
     if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
         const { nucleotideSegmentNames, geneNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
         return {
@@ -300,6 +305,7 @@ function getSequenceNames(
             nucleotideSequences: [],
             genes: [],
             useMultiSegmentEndpoint: false, // When no suborganism is selected, use the "all segments" endpoint to download all available segments, even though LAPIS is multisegmented. That endpoint is available at the same route as the single segmented endpoint.
+            defaultFastaHeaderTemplate: `{${ACCESSION_VERSION_FIELD}}`, // make sure that the segment does not appear in the fasta header
         };
     }
 

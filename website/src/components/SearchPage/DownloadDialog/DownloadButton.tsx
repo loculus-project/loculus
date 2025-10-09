@@ -1,4 +1,4 @@
-import { type FC, type MouseEventHandler, useMemo, useState } from 'react';
+import { type FC, type MouseEvent, type MouseEventHandler, useMemo, useState } from 'react';
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
@@ -78,7 +78,8 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
 
         if (
             downloadOption.dataType.type === 'unalignedNucleotideSequences' &&
-            downloadOption.dataType.includeRichFastaHeaders
+            (downloadOption.dataType.includeRichFastaHeaders === true ||
+                typeof downloadOption.dataType.includeRichFastaHeaders === 'string')
         ) {
             return {
                 downloadUrl: '#',
@@ -90,7 +91,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
 
         return {
             downloadUrl: '#',
-            handleClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+            handleClick: (e: MouseEvent<HTMLAnchorElement>) => {
                 e.preventDefault();
                 downloadViaPostForm(baseUrl, params);
                 if (onClick !== undefined) {
