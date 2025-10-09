@@ -188,7 +188,7 @@ class UploadDatabaseService(
                 group_id,
                 submitted_at,
                 original_data
-            FROM sequence_entries_staging
+            FROM aux_tables_as_sequence_entries
             WHERE upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()

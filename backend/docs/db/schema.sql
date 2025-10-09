@@ -482,10 +482,10 @@ CREATE TABLE public.sequence_upload_aux_table (
 ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 --
--- Name: sequence_entries_staging; Type: VIEW; Schema: public; Owner: postgres
+-- Name: aux_tables_as_sequence_entries; Type: VIEW; Schema: public; Owner: postgres
 --
 
-CREATE VIEW public.sequence_entries_staging AS
+CREATE VIEW public.aux_tables_as_sequence_entries AS
  SELECT m.upload_id,
     m.accession,
     m.version,
@@ -500,7 +500,7 @@ CREATE VIEW public.sequence_entries_staging AS
   GROUP BY m.upload_id, m.accession, m.version, m.organism, m.submission_id, m.submitter, m.group_id, m.uploaded_at, m.metadata, m.files;
 
 
-ALTER VIEW public.sequence_entries_staging OWNER TO postgres;
+ALTER VIEW public.aux_tables_as_sequence_entries OWNER TO postgres;
 
 --
 -- Name: sequence_entries_view; Type: VIEW; Schema: public; Owner: postgres

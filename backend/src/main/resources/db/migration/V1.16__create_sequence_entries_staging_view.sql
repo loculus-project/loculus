@@ -1,4 +1,4 @@
-CREATE VIEW sequence_entries_staging AS
+CREATE VIEW aux_tables_as_sequence_entries AS
 SELECT
     m.upload_id,
     m.accession,
