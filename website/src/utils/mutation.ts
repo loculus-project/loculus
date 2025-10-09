@@ -174,12 +174,14 @@ const isValidNucleotideInsertionQuery = (
         const [segment, position, insertion] = multiSegmented
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
-        let segmentInfo: SegmentInfo | undefined = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
-        if (segment !== undefined) {
-            segmentInfo = suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
-                (info) => info.label.toUpperCase() === segment,
-            );
-        }
+
+        const segmentInfo =
+            segment !== undefined
+                ? suborganismSegmentAndGeneInfo.nucleotideSegmentInfos.find(
+                      (info) => info.label.toUpperCase() === segment,
+                  )
+                : suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
+
         if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
             return INVALID;
         }
