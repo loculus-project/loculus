@@ -3,10 +3,15 @@ export type DownloadDataType =
     | {
           type: 'unalignedNucleotideSequences';
           segment?: string;
-          includeRichFastaHeaders?: boolean;
+          /**
+           * - true: include rich FASTA headers as configure in the config
+           * - string: use this string as the FASTA header template
+           * - false or undefined: do not include rich FASTA headers
+           */
+          includeRichFastaHeaders?: boolean | string;
       }
-    | { type: 'alignedNucleotideSequences'; segment?: string; includeRichFastaHeaders?: boolean }
-    | { type: 'alignedAminoAcidSequences'; gene: string; includeRichFastaHeaders?: boolean };
+    | { type: 'alignedNucleotideSequences'; segment?: string; includeRichFastaHeaders?: boolean | string }
+    | { type: 'alignedAminoAcidSequences'; gene: string; includeRichFastaHeaders?: boolean | string };
 
 /**
  * Get a shortened kebab-case datatype including the gene and sequence as well.
