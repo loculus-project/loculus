@@ -6,7 +6,14 @@ export type MutationType = 'substitutionOrDeletion' | 'insertion';
 export type MutationQuery = {
     baseType: BaseType;
     mutationType: MutationType;
+    /**
+     * The mutation as entered by the user and as displayed in the UI.
+     */
     text: string;
+    /**
+     * The mutation as sent to LAPIS for searching.
+     * This is usually different from `text` when there are several suborganisms.
+     */
     lapisQuery: string;
 };
 
