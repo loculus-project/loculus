@@ -13,7 +13,7 @@ class WebConfig : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
             .allowedOrigins("*") // Allow requests from any origin
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
             .allowedHeaders("*")
             .maxAge(3600) // Max age of pre-flight requests
     }
