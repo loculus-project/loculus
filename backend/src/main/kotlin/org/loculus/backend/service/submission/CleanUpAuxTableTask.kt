@@ -19,7 +19,7 @@ class CleanUpAuxTableTask(
 ) {
 
     /**
-     * Runs every hour and deletes auxTable entries older than 2 hours.
+     * Runs every hour and deletes auxTable entries older than 24 hours.
      */
     @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
     fun task() {
@@ -34,7 +34,7 @@ class CleanUpAuxTableTask(
 
         if (deletedCount > 0) {
             log.info { "Deleted $deletedCount auxTable entries older than $hourCutoff" }
-            auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than 2 hours.")
+            auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than $hourCutoff hours.")
         }
     }
 }
