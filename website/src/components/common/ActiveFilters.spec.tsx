@@ -18,11 +18,11 @@ describe('ActiveFilters', () => {
                     sequenceFilter={
                         new FieldFilterSet(
                             new MetadataFilterSchema([]),
-                            { field1: 'value1', mutations: 'A123T,G234C' },
+                            { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
                             {
                                 nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
-                                geneInfos: [],
+                                geneInfos: [{ lapisName: 'gene', label: 'gene' }],
                                 isMultiSegmented: false,
                             },
                         )
@@ -31,7 +31,7 @@ describe('ActiveFilters', () => {
             );
             expect(screen.queryByText('field1:')).toBeInTheDocument();
             expect(screen.getByText('value1')).toBeInTheDocument();
-            expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
+            expect(screen.queryByText(/A123T,G234C,gene:A345T/)).toBeInTheDocument();
         });
 
         it('renders null values as (blank) in italics', () => {
