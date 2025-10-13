@@ -276,8 +276,18 @@ describe('mutation', () => {
 
         it('serializes mutation queries back to string', () => {
             const serialized = serializeMutationQueries([
-                { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: 'GENE1:A23T', lapisQuery: '' },
-                { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: 'SEQ1:123C', lapisQuery: '' },
+                {
+                    baseType: 'aminoAcid',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'GENE1:A23T',
+                    lapisQuery: 'lapisName-GENE1:A23T',
+                },
+                {
+                    baseType: 'nucleotide',
+                    mutationType: 'substitutionOrDeletion',
+                    text: 'SEQ1:123C',
+                    lapisQuery: 'lapisName-SEQ1:123C',
+                },
             ]);
             expect(serialized).toBe('GENE1:A23T, SEQ1:123C');
         });
