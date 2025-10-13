@@ -34,7 +34,7 @@ class CleanUpAuxTableTask(
 
         if (deletedCount > 0) {
             log.info { "Deleted $deletedCount auxTable entries older than $hourCutoff" }
-            auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than 24 hours.")
+            auditLogger.log("CLEANUP", "Deleted $deletedCount auxTable entries older than $hourCutoff hours.")
         }
     }
 }
