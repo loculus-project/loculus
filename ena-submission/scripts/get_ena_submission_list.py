@@ -110,7 +110,8 @@ def filter_for_submission(
         ]
         if ena_specific_metadata:
             logger.warning(
-                f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
+                f"Found sequence: {accession_version} with ena-specific-metadata fields: "
+                f"{ena_specific_metadata} and not "
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
                 f"{ena_specific_metadata}"
             )
