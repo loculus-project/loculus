@@ -16,6 +16,7 @@ import {
     warningsProcessingResult,
     errorsProcessingResult,
 } from '../../types/backend.ts';
+import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
 const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
 
@@ -30,6 +31,9 @@ function renderReviewPage() {
             accessToken={testAccessToken}
             clientConfig={testConfig.public}
             filesEnabled={false}
+            referenceGenomeLightweightSchema={{
+                [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] },
+            }}
         />,
     );
 }

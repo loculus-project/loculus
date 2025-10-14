@@ -8,6 +8,7 @@ type SequencesDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     dataToView: SequenceEntryToEdit | undefined;
+    segmentAndGeneDisplayNameMap: Map<string, string | null>;
 };
 
 type ProcessedSequence = {
@@ -15,12 +16,17 @@ type ProcessedSequence = {
     sequence: string;
 };
 
-export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dataToView }) => {
+export const SequencesDialog: FC<SequencesDialogProps> = ({
+    isOpen,
+    onClose,
+    dataToView,
+    segmentAndGeneDisplayNameMap,
+}) => {
     const [activeTab, setActiveTab] = useState(0);
 
     if (!isOpen || !dataToView) return null;
 
-    const processedSequences = extractProcessedSequences(dataToView);
+    const processedSequences = extractProcessedSequences(dataToView, segmentAndGeneDisplayNameMap);
 
     if (processedSequences.length === 0) {
         return null;
@@ -58,7 +64,10 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({ isOpen, onClose, dat
     );
 };
 
-const extractProcessedSequences = (data: SequenceEntryToEdit): ProcessedSequence[] => {
+const extractProcessedSequences = (
+    data: SequenceEntryToEdit,
+    segmentAndGeneDisplayNameMap: Map<string, string | null>,
+): ProcessedSequence[] => {
     return [
         { type: 'unaligned', sequences: data.processedData.unalignedNucleotideSequences },
         { type: 'aligned', sequences: data.processedData.alignedNucleotideSequences },
@@ -67,12 +76,12 @@ const extractProcessedSequences = (data: SequenceEntryToEdit): ProcessedSequence
         Object.entries(sequences)
             .filter((tuple): tuple is [string, string] => tuple[1] !== null)
             .map(([sequenceName, sequence]) => {
-                let label = sequenceName;
+                let label = segmentAndGeneDisplayNameMap.get(sequenceName) ?? sequenceName;
                 if (type !== 'gene') {
                     if (label === 'main') {
                         label = type === 'unaligned' ? 'Sequence' : 'Aligned';
                     } else {
-                        label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                        label = type === 'unaligned' ? `${label} (unaligned)` : `${label} (aligned)`;
                     }
                 }
                 return { label, sequence };
