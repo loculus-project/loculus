@@ -2049,7 +2049,7 @@ secrets:
   slack-notifications:
     type: raw
     data:
-      slack-hook: "dummy"
+      slack-hook: ""
       slack-token: "dummy"
       slack-channel-id: "dummy"
   ena-submission:
