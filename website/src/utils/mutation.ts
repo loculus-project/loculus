@@ -106,17 +106,21 @@ const isValidAminoAcidInsertionQuery = (
 ): MutationTestResult => {
     try {
         const textUpper = text.toUpperCase();
-        if (!textUpper.startsWith('INS_')) {
+
+        const regex = /^INS_(?<gene>[A-Z0-9_-]+):(?<position>\d+):(?<insertion>[A-Z*?]+)$/;
+        const match = regex.exec(textUpper);
+
+        if (match === null) {
             return INVALID;
         }
-        const query = textUpper.slice(4);
-        const [gene, position, insertion] = query.split(':');
+
+        const { gene, position, insertion } = match.groups as { gene: string; position: string; insertion: string };
 
         const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
             (geneInfo) => geneInfo.label.toUpperCase() === gene,
         );
 
-        if (geneInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+        if (geneInfo === undefined) {
             return INVALID;
         }
 
