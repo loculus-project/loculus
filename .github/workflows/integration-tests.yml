@@ -108,6 +108,8 @@ jobs:
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
+      - name: Run get-ena-submission-list cronjob
+        run: kubectl create job --from=cronjob/get-ena-submission-list -n loculus loculus-get-ena-submission-list-$(date +%s)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
