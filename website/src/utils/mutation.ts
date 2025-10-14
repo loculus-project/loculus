@@ -182,7 +182,7 @@ const isValidNucleotideInsertionQuery = (
                   )
                 : suborganismSegmentAndGeneInfo.nucleotideSegmentInfos[0];
 
-        if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z*?]+$/.test(insertion)) {
+        if (segmentInfo === undefined || !Number.isInteger(Number(position)) || !/^[A-Z?]+$/.test(insertion)) {
             return INVALID;
         }
         return {
