@@ -4,7 +4,7 @@ export type DownloadDataType =
           type: 'unalignedNucleotideSequences';
           segment?: string;
           /**
-           * - true: include rich FASTA headers as configure in the config
+           * - true: include rich FASTA headers as configured in the config
            * - string: use this string as the FASTA header template
            * - false or undefined: do not include rich FASTA headers
            */
