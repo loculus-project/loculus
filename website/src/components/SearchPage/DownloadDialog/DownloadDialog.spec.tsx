@@ -165,7 +165,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
@@ -303,7 +303,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
@@ -352,7 +352,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                    { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                 ),
             });
 
