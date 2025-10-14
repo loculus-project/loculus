@@ -109,7 +109,17 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
       - name: Run get-ena-submission-list cronjob
-        run: kubectl create job --from=cronjob/get-ena-submission-list -n loculus loculus-get-ena-submission-list-$(date +%s)
+        run: |
+          JOB_NAME=loculus-get-ena-submission-list-$(date +%s)
+          kubectl create job --from=cronjob/loculus-get-ena-submission-list-cronjob $JOB_NAME
+          echo "Waiting for job $JOB_NAME to complete..."
+          if kubectl wait --for=condition=complete job/$JOB_NAME --timeout=120s; then
+            echo "✅ Job completed successfully"
+          else
+            echo "⚠️ Job did not complete successfully. Checking logs..."
+            kubectl logs job/$JOB_NAME
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
