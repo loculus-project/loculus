@@ -136,13 +136,20 @@ const isValidAminoAcidMutationQuery = (
 ): MutationTestResult => {
     try {
         const textUpper = text.toUpperCase();
-        const [gene, mutation] = textUpper.split(':');
 
+        const regex = /^(?<gene>[A-Z0-9_-]+):(?<mutation>[A-Z*]?[0-9]+[A-Z-*.]?)$/;
+        const match = regex.exec(textUpper);
+
+        if (match === null) {
+            return INVALID;
+        }
+
+        const { gene, mutation } = match.groups as { gene: string; mutation: string };
         const geneInfo = suborganismSegmentAndGeneInfo.geneInfos.find(
             (geneInfo) => geneInfo.label.toUpperCase() === gene,
         );
 
-        if (geneInfo === undefined || !/^[A-Z*]?[0-9]+[A-Z-*.]?$/.test(mutation)) {
+        if (geneInfo === undefined) {
             return INVALID;
         }
 
