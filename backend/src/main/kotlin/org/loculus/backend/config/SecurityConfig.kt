@@ -77,7 +77,7 @@ class SecurityConfig {
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
-                "favicon.ico",
+                "/favicon.ico",
                 "/error/**",
                 "/actuator/**",
                 "/api-docs**",
