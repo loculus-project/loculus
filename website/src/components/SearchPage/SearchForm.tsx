@@ -132,7 +132,7 @@ export const SearchForm = ({
                         }
                         setFieldSelected={setASearchVisibility}
                     />
-                    <div className='flex flex-col'>
+                    <div className='flex flex-col gap-2 py-2'>
                         {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
@@ -142,12 +142,10 @@ export const SearchForm = ({
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />
                         )}
-                        <div className='mb-1'>
-                            <AccessionField
-                                textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
-                                setTextValue={(value) => setSomeFieldValues(['accession', value])}
-                            />
-                        </div>
+                        <AccessionField
+                            textValue={'accession' in fieldValues ? fieldValues.accession! : ''}
+                            setTextValue={(value) => setSomeFieldValues(['accession', value])}
+                        />
 
                         {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
                             <MutationField
@@ -187,7 +185,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
             return <DateRangeField field={field} fieldValues={fieldValues} setSomeFieldValues={setSomeFieldValues} />;
         } else {
             return (
-                <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
+                <div key={field.name} className='flex flex-col gap-1.5 border p-3 rounded-md border-gray-300'>
                     <h3 className='text-gray-500 text-sm mb-1'>{field.displayName ?? field.name}</h3>
 
                     {field.groupedFields.map((f) => (
