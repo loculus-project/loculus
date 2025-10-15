@@ -77,3 +77,60 @@ Run the tests:
 ```sh
 npx playwright test
 ```
+
+## Visual Regression Testing
+
+The integration tests include visual regression testing using Playwright's built-in screenshot comparison feature. Screenshots are automatically taken during test execution and compared against baseline images.
+
+**Note:** Visual regression tests are controlled by the `CHECK_SNAPSHOTS` environment variable. They run automatically in CI, but are skipped by default when running tests locally to avoid platform-specific rendering differences.
+
+### Adding Screenshot Assertions
+
+To add a visual regression test to your test file:
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { testScreenshot } from '../utils/screenshot';
+
+test('my test', async ({ page }) => {
+    await page.goto('/my-page');
+    await testScreenshot(page, 'my-page.png');
+});
+```
+
+### Generating Baseline Screenshots
+
+When you first add a screenshot assertion, run the tests with snapshot checking enabled to generate the baseline:
+
+```sh
+CHECK_SNAPSHOTS=true npx playwright test
+```
+
+This will create snapshot files in `<test-file>.spec.ts-snapshots/` directories. These are stored using Git LFS.
+
+### Updating Screenshots
+
+#### Locally
+
+When visual changes are intentional (e.g., UI updates), update the baseline screenshots:
+
+```sh
+CHECK_SNAPSHOTS=true npx playwright test --update-snapshots
+```
+
+#### In CI (Pull Requests)
+
+To update snapshots in a pull request, add the `update-snapshots` label to the PR. This will:
+
+1. Trigger a workflow that runs the integration tests with `--update-snapshots`
+2. Commit the updated snapshots back to the PR branch
+
+This is useful when you need to update snapshots for changes made in the PR without having to run the full test suite locally.
+
+### Screenshot Storage
+
+Screenshot baselines are stored with Git LFS to avoid bloating the repository. The `.gitattributes` file is configured to automatically track `**/*-snapshots/**/*.png` files with LFS.
+
+## Formatting and Linting
+
+Run `npm run format` to ensure proper formatting and linting before committing.

@@ -7,5 +7,6 @@ test.describe('Landing page', () => {
     test('shows featured organism', async ({ page }) => {
         await page.goto('/');
         await expect(page.getByRole('link', { name: ORGANISM_LINK_TEXT })).toBeVisible();
+        await expect(page).toHaveScreenshot('landing-page.png');
     });
 });

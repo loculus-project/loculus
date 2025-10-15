@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { test } from '../../fixtures/group.fixture';
 import { SearchPage } from '../../pages/search.page';
 import { SeqSetPage } from '../../pages/seqset.page';
+import { testScreenshot } from '../../utils/screenshot';
 
 const ACCESSION_PATTERN = /(LOC_[A-Z0-9]+)/;
 
@@ -53,6 +54,7 @@ test.describe('SeqSet management', () => {
 
         await seqSetPage.gotoList();
         await expect(seqSetPage.getCreateButton()).toBeVisible();
+        await testScreenshot(page, 'seqset-list.png');
 
         await seqSetPage.createSeqSet({
             name: seqSetName,
@@ -62,6 +64,7 @@ test.describe('SeqSet management', () => {
         });
 
         await seqSetPage.expectDetailLayout(seqSetName);
+        await testScreenshot(page, 'seqset-detail.png');
 
         const jsonDownload = await seqSetPage.exportSeqSet('json');
         expect(jsonDownload.suggestedFilename()).toContain(seqSetName);

@@ -3,6 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { GroupPage } from '../../pages/group.page';
 import { AuthPage } from '../../pages/auth.page';
 import { v4 as uuidv4 } from 'uuid';
+import { testScreenshot } from '../../utils/screenshot';
 
 // Tests covering group user management and editing
 
@@ -26,6 +27,7 @@ test.describe('Group management', () => {
 
         await groupPage.addNewUserToGroup(newAccount.username);
         await groupPage.verifyUserIsPresent(newAccount.username);
+        await testScreenshot(pageWithGroup, 'group-with-user.png');
 
         await groupPage.removeUserFromGroup(newAccount.username);
         await groupPage.verifyUserIsNotPresent(newAccount.username);
@@ -53,7 +55,6 @@ test.describe('Group management', () => {
         await groupPage.finishEditingGroup();
 
         await expect(pageWithGroup.getByRole('heading', { name: newName })).toBeVisible();
-        // Select the group details table, ignoring the sequence counts table
         const table = pageWithGroup.locator('table').filter({ hasText: 'Group ID' });
         await expect(table).toContainText(newInstitution);
         await expect(table).toContainText(newEmail);
@@ -61,5 +62,6 @@ test.describe('Group management', () => {
         await expect(table).toContainText(newCity);
         await expect(table).toContainText(newState);
         await expect(table).toContainText(newPostalCode);
+        await testScreenshot(pageWithGroup, 'group-edited.png');
     });
 });

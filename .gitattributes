@@ -1,0 +1,2 @@
+# Store screenshot images with Git LFS
+integration-tests/**/*-snapshots/**/*.png filter=lfs diff=lfs merge=lfs -text

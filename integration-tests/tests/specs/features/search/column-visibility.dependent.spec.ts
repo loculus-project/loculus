@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
+import { testScreenshot } from '../../../utils/screenshot';
 
 test.describe('Column Visibility', () => {
     let searchPage: SearchPage;
@@ -18,5 +19,6 @@ test.describe('Column Visibility', () => {
         await page.getByRole('checkbox', { name: 'Pango lineage' }).waitFor();
         await expect(page.getByRole('checkbox', { name: 'Pango lineage' })).toBeVisible();
         await expect(page.getByRole('checkbox', { name: 'Hidden Field' })).toBeHidden();
+        await testScreenshot(page, 'column-customization-modal.png');
     });
 });
