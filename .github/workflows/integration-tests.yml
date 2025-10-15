@@ -22,7 +22,7 @@ jobs:
     if: github.event.action != 'labeled' || github.event.label.name == 'update-snapshots'
     permissions:
       packages: read
-      contents: write # Required for updating snapshots
+      contents: read
       checks: read
       actions: read # Required by workflow-telemetry-action
     runs-on: ubuntu-latest
