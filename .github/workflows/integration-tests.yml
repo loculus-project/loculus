@@ -40,10 +40,12 @@ jobs:
       - name: Check if updating snapshots
         id: check-update-snapshots
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.event.action }}" == "labeled" ]] && [[ "${{ github.event.label.name }}" == "update-snapshots" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ contains(github.event.pull_request.labels.*.name, 'update-snapshots') }}" == "true" ]]; then
             echo "update_snapshots=true" >> $GITHUB_OUTPUT
+            echo "Updating snapshots: true"
           else
             echo "update_snapshots=false" >> $GITHUB_OUTPUT
+            echo "Updating snapshots: false"
           fi
 
       - name: Shorten sha
@@ -164,7 +166,7 @@ jobs:
           path: kubernetes_logs/
 
   commit-snapshots:
-    if: always() && github.event.label.name == 'update-snapshots'
+    if: always() && contains(github.event.pull_request.labels.*.name, 'update-snapshots')
     needs: integration-tests
     runs-on: ubuntu-latest
     permissions:
