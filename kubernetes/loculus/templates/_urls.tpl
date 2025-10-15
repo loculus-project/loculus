@@ -54,7 +54,7 @@
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
   {{ range $key, $_ := (include "loculus.enabledOrganisms" . | fromJson) }}
-    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
+    "{{ $key }}": "{{ if not $.Values.disableWebsite }}{{ if $.Values.useQuerulus }}http://loculus-querulus-service:8000/{{ $key }}{{ else }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ end }}{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
   {{ end }}
 {{ end }}
 
