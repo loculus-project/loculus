@@ -38,6 +38,9 @@ test.describe('Sequence view in review card', () => {
         const dialogTitle = page.getByText('Processed sequences', { exact: true });
         await expect(dialogTitle).toBeVisible();
 
+        // Visual regression test - sequence view dialog
+        await expect(page).toHaveScreenshot('sequence-view-dialog.png');
+
         const sequenceContent = await reviewPage.getSequenceContent();
 
         expect(sequenceContent.length).toBeGreaterThan(10);

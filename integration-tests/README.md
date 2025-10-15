@@ -77,3 +77,59 @@ Run the tests:
 ```sh
 npx playwright test
 ```
+
+## Visual Regression Testing
+
+The integration tests include visual regression testing using Playwright's built-in screenshot comparison feature. Screenshots are automatically taken during test execution and compared against baseline images.
+
+### Adding Screenshot Assertions
+
+To add a visual regression test to your test file:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('my test', async ({ page }) => {
+    await page.goto('/my-page');
+
+    // Take a screenshot and compare with baseline
+    await expect(page).toHaveScreenshot('my-page.png');
+});
+```
+
+### Generating Baseline Screenshots
+
+When you first add a screenshot assertion, run the tests to generate the baseline:
+
+```sh
+npx playwright test
+```
+
+This will create snapshot files in `<test-file>.spec.ts-snapshots/` directories. These are stored using Git LFS.
+
+### Updating Screenshots
+
+#### Locally
+
+When visual changes are intentional (e.g., UI updates), update the baseline screenshots:
+
+```sh
+npx playwright test --update-snapshots
+```
+
+#### In CI (Pull Requests)
+
+To update snapshots in a pull request, add the `update-snapshots` label to the PR. This will:
+
+1. Trigger a workflow that runs the integration tests with `--update-snapshots`
+2. Commit the updated snapshots back to the PR branch
+
+This is useful when you need to update snapshots for changes made in the PR without having to run the full test suite locally.
+
+### Screenshot Storage
+
+Screenshot baselines are stored with Git LFS to avoid bloating the repository. The `.gitattributes` file is configured to automatically track `**/*-snapshots/**/*.png` files with LFS.
+
+## Formatting and Linting
+
+Run `npm run format` to ensure proper formatting and linting before committing.

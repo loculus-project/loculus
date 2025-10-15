@@ -2,6 +2,7 @@ name: Integration tests
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "backend/**"
       - "keycloak/**"
@@ -17,9 +18,11 @@ on:
       - main
 jobs:
   integration-tests:
+    # Skip regular test run if only the label was added
+    if: github.event_name != 'pull_request' || github.event.action != 'labeled' || github.event.label.name == 'update-snapshots'
     permissions:
       packages: read
-      contents: read
+      contents: write # Required for updating snapshots
       checks: read
       actions: read # Required by workflow-telemetry-action
     runs-on: ubuntu-latest
@@ -34,12 +37,32 @@ jobs:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
       wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 600 }}
     steps:
+      - name: Check if updating snapshots
+        id: check-update-snapshots
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.event.action }}" == "labeled" ]] && [[ "${{ github.event.label.name }}" == "update-snapshots" ]]; then
+            echo "update_snapshots=true" >> $GITHUB_OUTPUT
+          else
+            echo "update_snapshots=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
+
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
-      - name: Checkout repository
+
+      - name: Checkout repository (normal)
+        if: steps.check-update-snapshots.outputs.update_snapshots != 'true'
         uses: actions/checkout@v5
+
+      - name: Checkout repository (for snapshot update)
+        if: steps.check-update-snapshots.outputs.update_snapshots == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          lfs: true
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
@@ -102,12 +125,23 @@ jobs:
           BROWSER: ${{ matrix.browser }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
+          UPDATE_FLAG=""
+          if [[ "${{ steps.check-update-snapshots.outputs.update_snapshots }}" == "true" ]]; then
+            UPDATE_FLAG="--update-snapshots"
+          fi
+          cd integration-tests && npx playwright test --workers=4 $UPDATE_FLAG 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
+
+      - name: Commit updated snapshots
+        if: steps.check-update-snapshots.outputs.update_snapshots == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(integration-tests): update ${{ matrix.browser }} snapshots"
+          file_pattern: "integration-tests/tests/**/*-snapshots/*.png"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -17,8 +17,14 @@ test.describe('Search', () => {
         await expect.soft(page.getByText('Collection country:France')).toBeVisible();
         await expect.soft(page.getByText('mutation:A23T')).toBeVisible();
 
+        // Visual regression test - search with filters
+        await expect(page).toHaveScreenshot('search-with-filters.png');
+
         await searchPage.resetSearchForm();
         expect(new URL(page.url()).searchParams.size).toBe(0);
+
+        // Visual regression test - search after reset
+        await expect(page).toHaveScreenshot('search-after-reset.png');
     });
 
     test('hidden field values are kept in the URL params', async ({ page }) => {

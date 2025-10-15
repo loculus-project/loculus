@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/auth.fixture';
 import { AuthPage } from '../../pages/auth.page';
 
@@ -14,5 +15,8 @@ test.describe('Login Flow', () => {
         await authPage.logout();
         await page.waitForTimeout(1000);
         await authPage.login(testAccount.username, testAccount.password);
+
+        // Visual regression test - logged in state
+        await expect(page).toHaveScreenshot('logged-in.png');
     });
 });
