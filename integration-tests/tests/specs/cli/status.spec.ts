@@ -113,7 +113,6 @@ cliTest.describe('CLI Status Command', () => {
         });
         expect(invalidOrganismResult.exitCode).not.toBe(0);
         expect(invalidOrganismResult.stderr).toMatch(/Error|error|fail|Abort/);
-        cliPage.logCliResult('Invalid organism (expected failure)', invalidOrganismResult);
 
         // Test invalid status filter
         const invalidStatusResult = await cliPage.execute([
@@ -124,7 +123,6 @@ cliTest.describe('CLI Status Command', () => {
         ]);
         expect(invalidStatusResult.exitCode).not.toBe(0);
         expect(invalidStatusResult.stderr).toMatch(/Invalid value|Error/);
-        cliPage.logCliResult('Invalid status filter (expected failure)', invalidStatusResult);
 
         // Test invalid result filter
         const invalidResultResult = await cliPage.execute([
