@@ -19,7 +19,7 @@ on:
 jobs:
   integration-tests:
     # Skip regular test run if only the label was added
-    if: github.event_name != 'pull_request' || github.event.action != 'labeled' || github.event.label.name == 'update-snapshots'
+    if: github.event.action != 'labeled' || github.event.label.name == 'update-snapshots'
     permissions:
       packages: read
       contents: write # Required for updating snapshots
