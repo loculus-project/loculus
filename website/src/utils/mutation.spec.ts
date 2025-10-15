@@ -71,6 +71,8 @@ describe('mutation', () => {
             'ins_A:23:T',
             'ins_23:A:T',
             'INS_4:G:T',
+            'INS_label-GENE1:23:TTT:',
+            'INS_label-GENE1:23:TTT:INVALID',
         ])('returns undefined for invalid mutation string %s', (input) => {
             const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
             expect(result).toBeUndefined();
