@@ -153,4 +153,20 @@ describe('SearchForm', () => {
 
         expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
     });
+
+    it('opens advanced options modal with version status and revocation fields', async () => {
+        renderSearchForm({
+            filterSchema: new MetadataFilterSchema([
+                ...defaultSearchFormFilters,
+                { name: 'versionStatus', type: 'string', displayName: 'Version status' },
+                { name: 'isRevocation', type: 'boolean', displayName: 'Is Revocation' },
+            ]),
+        });
+
+        const advancedOptionsButton = await screen.findByRole('button', { name: 'Advanced options' });
+        await userEvent.click(advancedOptionsButton);
+
+        expect(await screen.findByLabelText('Version status')).toBeInTheDocument();
+        expect(await screen.findByLabelText('Is Revocation')).toBeInTheDocument();
+    });
 });

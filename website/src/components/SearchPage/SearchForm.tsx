@@ -15,16 +15,18 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import { ACCESSION_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { type MetadataFilterSchema } from '../../utils/search.ts';
+import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 import MaterialSymbolsResetFocus from '~icons/material-symbols/reset-focus';
+import MaterialSymbolsTune from '~icons/material-symbols/tune';
 import StreamlineWrench from '~icons/streamline/wrench';
 
 const queryClient = new QueryClient();
@@ -63,8 +65,31 @@ export const SearchForm = ({
     const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
+    const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleFieldSelector = () => setIsFieldSelectorOpen(!isFieldSelectorOpen);
+    const closeAdvancedOptions = () => setIsAdvancedOptionsOpen(false);
+    const openAdvancedOptions = () => setIsAdvancedOptionsOpen(true);
+
+    const advancedOptionsFields = useMemo(() => {
+        const targets = [VERSION_STATUS_FIELD, IS_REVOCATION_FIELD];
+        const found = new Map<string, MetadataFilter>();
+
+        const collectField = (filter: GroupedMetadataFilter | MetadataFilter) => {
+            if (filter.grouped === true) {
+                filter.groupedFields.forEach(collectField);
+                return;
+            }
+
+            if (targets.includes(filter.name)) {
+                found.set(filter.name, filter);
+            }
+        };
+
+        filterSchema.filters.forEach(collectField);
+
+        return targets.map((name) => found.get(name)).filter((field): field is MetadataFilter => field !== undefined);
+    }, [filterSchema]);
 
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
@@ -99,11 +124,20 @@ export const SearchForm = ({
                     <div className='flex'>
                         <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
                             <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
-                                <DisabledUntilHydrated>
-                                    <button className='hover:underline' onClick={toggleFieldSelector}>
-                                        <StreamlineWrench className='inline-block' /> Add search fields
-                                    </button>
-                                </DisabledUntilHydrated>
+                                <div className='flex items-center gap-4'>
+                                    <DisabledUntilHydrated>
+                                        <button className='hover:underline' onClick={toggleFieldSelector}>
+                                            <StreamlineWrench className='inline-block' /> Add search fields
+                                        </button>
+                                    </DisabledUntilHydrated>
+                                    {advancedOptionsFields.length > 0 && (
+                                        <DisabledUntilHydrated>
+                                            <button className='hover:underline' onClick={openAdvancedOptions}>
+                                                <MaterialSymbolsTune className='inline-block' /> Advanced options
+                                            </button>
+                                        </DisabledUntilHydrated>
+                                    )}
+                                </div>
                                 <button
                                     className='hover:underline'
                                     onClick={() => {
@@ -131,6 +165,15 @@ export const SearchForm = ({
                             )
                         }
                         setFieldSelected={setASearchVisibility}
+                    />
+                    <AdvancedOptionsModal
+                        isOpen={isAdvancedOptionsOpen}
+                        onClose={closeAdvancedOptions}
+                        fields={advancedOptionsFields}
+                        fieldValues={fieldValues}
+                        setSomeFieldValues={setSomeFieldValues}
+                        lapisUrl={lapisUrl}
+                        lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
                         {suborganismIdentifierField !== undefined && (
@@ -260,4 +303,51 @@ const SearchField = ({ field, lapisUrl, fieldValues, setSomeFieldValues, lapisSe
                 />
             );
     }
+};
+
+interface AdvancedOptionsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    fields: MetadataFilter[];
+    fieldValues: FieldValues;
+    setSomeFieldValues: SetSomeFieldValues;
+    lapisUrl: string;
+    lapisSearchParameters: LapisSearchParameters;
+}
+
+const AdvancedOptionsModal = ({
+    isOpen,
+    onClose,
+    fields,
+    fieldValues,
+    setSomeFieldValues,
+    lapisUrl,
+    lapisSearchParameters,
+}: AdvancedOptionsModalProps) => {
+    if (fields.length === 0) {
+        return null;
+    }
+
+    return (
+        <BaseDialog title='Advanced options' isOpen={isOpen} onClose={onClose}>
+            <div className='space-y-4'>
+                {fields.map((field) => (
+                    <div key={field.name}>
+                        <SearchField
+                            field={field}
+                            fieldValues={fieldValues}
+                            setSomeFieldValues={setSomeFieldValues}
+                            lapisUrl={lapisUrl}
+                            lapisSearchParameters={lapisSearchParameters}
+                        />
+                    </div>
+                ))}
+            </div>
+            <div className='mt-6 flex justify-end'>
+                <button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                    Close
+                </button>
+            </div>
+        </BaseDialog>
+    );
 };
