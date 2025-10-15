@@ -78,7 +78,7 @@ const MAX_INITIAL_NUMBER_BADGES = 20;
 export const SubstitutionsContainers = ({ values }: { values: SegmentedMutations[] }) => {
     return values.map(({ segment, mutations }) => (
         <div key={segment}>
-            <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>
+            {segment !== '' && <h2 className='py-1 my-1 font-semibold border-b'>{segment}</h2>}
             <SubstitutionsContainer values={mutations} />
         </div>
     ));
