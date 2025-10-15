@@ -85,7 +85,9 @@ def status(
 
     current_user = auth_client.get_current_user()
     if not current_user:
-        console.print("[red]Not authenticated. Please run 'loculus auth login' first.[/red]")
+        console.print(
+            "[red]Not authenticated. Please run 'loculus auth login' first.[/red]"
+        )
         raise click.Abort()
 
     api_client = BackendClient(config, auth_client)
@@ -94,8 +96,10 @@ def status(
     organism = require_organism(instance, ctx.obj.get("organism"))
 
     # Get group with default (optional)
-    # Group is optional for status command - use if provided via top-level param
-    group = ctx.obj.get("group")
+    # Prefer explicit command option over top-level default when provided.
+    context_group = ctx.obj.get("group")
+    if group is None:
+        group = context_group
 
     # Validate options
     if accession and not version:

@@ -63,7 +63,9 @@ def release(
 
     current_user = auth_client.get_current_user()
     if not current_user:
-        console.print("[red]Not authenticated. Please run 'loculus auth login' first.[/red]")
+        console.print(
+            "[red]Not authenticated. Please run 'loculus auth login' first.[/red]"
+        )
         raise click.Abort()
 
     api_client = BackendClient(config, auth_client)
@@ -72,8 +74,11 @@ def release(
     organism = require_organism(instance, ctx.obj.get("organism"))
 
     # Get group with default (optional)
-    # Group is optional for release command - use if provided via top-level param
-    group = ctx.obj.get("group")
+    # Group is optional for release command - use top-level default only when
+    # the command did not specify one explicitly.
+    context_group = ctx.obj.get("group")
+    if group is None:
+        group = context_group
 
     # Validate options
     if accession and not version:
