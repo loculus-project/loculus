@@ -75,7 +75,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 dataType: {
                     type: dataType as DataType,
                     segment: segment,
-                    includeRichFastaHeaders: richHeaders ? true : undefined,
+                    richFastaHeaders: { include: richHeaders === true },
                 },
                 compression: undefined,
                 dataFormat: dataFormat,

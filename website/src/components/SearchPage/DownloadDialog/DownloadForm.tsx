@@ -84,7 +84,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     segment: useMultiSegmentEndpoint
                         ? nucleotideSequences[unalignedNucleotideSequence].lapisName
                         : undefined,
-                    includeRichFastaHeaders: includeRichFastaHeaders === 1 ? true : defaultFastaHeaderTemplate,
+                    richFastaHeaders:
+                        defaultFastaHeaderTemplate !== undefined
+                            ? { include: true, fastaHeaderOverride: defaultFastaHeaderTemplate }
+                            : { include: includeRichFastaHeaders === 1 },
                 };
                 break;
             case 2:
@@ -93,12 +96,14 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     segment: useMultiSegmentEndpoint
                         ? nucleotideSequences[alignedNucleotideSequence].lapisName
                         : undefined,
+                    richFastaHeaders: { include: false },
                 };
                 break;
             case 3:
                 downloadDataType = {
                     type: 'alignedAminoAcidSequences',
                     gene: genes[alignedAminoAcidSequence].lapisName,
+                    richFastaHeaders: { include: false },
                 };
                 break;
             default:

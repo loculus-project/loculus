@@ -78,8 +78,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
 
         if (
             downloadOption.dataType.type === 'unalignedNucleotideSequences' &&
-            (downloadOption.dataType.includeRichFastaHeaders === true ||
-                typeof downloadOption.dataType.includeRichFastaHeaders === 'string')
+            downloadOption.dataType.richFastaHeaders.include
         ) {
             return {
                 downloadUrl: '#',
