@@ -121,7 +121,7 @@ export const SearchForm = ({
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
-                    <div className='flex flex-col gap-2 mb-3 p-3 text-primary-700 text-sm bg-gray-50 rounded-md'>
+                    <div className='flex flex-col gap-2 mb-2 pb-2 px-3 text-primary-700 text-sm border-b border-gray-300'>
                         <div className='flex items-center justify-between'>
                             <DisabledUntilHydrated>
                                 <button className='hover:underline' onClick={toggleFieldSelector}>
