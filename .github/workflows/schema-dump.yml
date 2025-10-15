@@ -60,6 +60,18 @@ jobs:
           --no-security-labels
           --restrict-key='dummy'
           > /github/workspace/backend/docs/db/schema.sql"
+
+    - name: Remove restrict commands
+      run: |
+        tmp_file=$(mktemp)
+        grep -vE '\\(un)?restrict\\b' backend/docs/db/schema.sql > "$tmp_file"
+        mv "$tmp_file" backend/docs/db/schema.sql
+
+    - name: Install sqlfmt
+      run: python -m pip install shandy-sqlfmt
+
+    - name: Format schema with sqlfmt
+      run: python -m sqlfmt.cli backend/docs/db/schema.sql
     - name: Cat schema
       run: cat backend/docs/db/schema.sql
       
