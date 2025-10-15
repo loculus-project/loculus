@@ -82,27 +82,28 @@ npx playwright test
 
 The integration tests include visual regression testing using Playwright's built-in screenshot comparison feature. Screenshots are automatically taken during test execution and compared against baseline images.
 
+**Note:** Visual regression tests are controlled by the `CHECK_SNAPSHOTS` environment variable. They run automatically in CI, but are skipped by default when running tests locally to avoid platform-specific rendering differences.
+
 ### Adding Screenshot Assertions
 
 To add a visual regression test to your test file:
 
 ```typescript
 import { test, expect } from '@playwright/test';
+import { testScreenshot } from '../utils/screenshot';
 
 test('my test', async ({ page }) => {
     await page.goto('/my-page');
-
-    // Take a screenshot and compare with baseline
-    await expect(page).toHaveScreenshot('my-page.png');
+    await testScreenshot(page, 'my-page.png');
 });
 ```
 
 ### Generating Baseline Screenshots
 
-When you first add a screenshot assertion, run the tests to generate the baseline:
+When you first add a screenshot assertion, run the tests with snapshot checking enabled to generate the baseline:
 
 ```sh
-npx playwright test
+CHECK_SNAPSHOTS=true npx playwright test
 ```
 
 This will create snapshot files in `<test-file>.spec.ts-snapshots/` directories. These are stored using Git LFS.
@@ -114,7 +115,7 @@ This will create snapshot files in `<test-file>.spec.ts-snapshots/` directories.
 When visual changes are intentional (e.g., UI updates), update the baseline screenshots:
 
 ```sh
-npx playwright test --update-snapshots
+CHECK_SNAPSHOTS=true npx playwright test --update-snapshots
 ```
 
 #### In CI (Pull Requests)
