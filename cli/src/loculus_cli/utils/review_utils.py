@@ -6,8 +6,8 @@ from rich.text import Text
 from ..api.models import (
     ProcessingResult,
     SequenceEntry,
-    SequenceStatus,
     SequencesResponse,
+    SequenceStatus,
 )
 
 __all__ = [

@@ -13,8 +13,8 @@ from .models import (
     GroupInfo,
     InstanceInfo,
     ProcessingResult,
-    SequenceStatus,
     SequencesResponse,
+    SequenceStatus,
     SubmissionResponse,
     UnprocessedData,
 )
