@@ -121,36 +121,34 @@ export const SearchForm = ({
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
-                    <div className='flex'>
-                        <div className='flex items-center justify-between w-full mb-1 text-primary-700'>
-                            <div className='flex items-center justify-between w-full mb-1 text-primary-700 text-sm'>
-                                <div className='flex items-center gap-4'>
-                                    <DisabledUntilHydrated>
-                                        <button className='hover:underline' onClick={toggleFieldSelector}>
-                                            <StreamlineWrench className='inline-block' /> Add search fields
-                                        </button>
-                                    </DisabledUntilHydrated>
-                                    {advancedOptionsFields.length > 0 && (
-                                        <DisabledUntilHydrated>
-                                            <button className='hover:underline' onClick={openAdvancedOptions}>
-                                                <MaterialSymbolsTune className='inline-block' /> Advanced options
-                                            </button>
-                                        </DisabledUntilHydrated>
-                                    )}
-                                </div>
-                                <button
-                                    className='hover:underline'
-                                    onClick={() => {
-                                        window.location.href = './';
-                                    }}
-                                >
-                                    <MaterialSymbolsResetFocus className='inline-block' /> Reset
+                    <div className='flex flex-col gap-2 mb-3 p-3 text-primary-700 text-sm bg-gray-50 rounded-md'>
+                        <div className='flex items-center justify-between'>
+                            <DisabledUntilHydrated>
+                                <button className='hover:underline' onClick={toggleFieldSelector}>
+                                    <StreamlineWrench className='inline-block' /> Add search fields
                                 </button>
-                                <a href={searchFormHelpDocsUrl} target='_blank'>
-                                    <MaterialSymbolsHelpOutline className='inline-block' /> Help
-                                </a>
-                            </div>
-                        </div>{' '}
+                            </DisabledUntilHydrated>
+                            <a href={searchFormHelpDocsUrl} target='_blank'>
+                                <MaterialSymbolsHelpOutline className='inline-block' /> Help
+                            </a>
+                        </div>
+                        <div className='flex items-center justify-between'>
+                            {advancedOptionsFields.length > 0 && (
+                                <DisabledUntilHydrated>
+                                    <button className='hover:underline' onClick={openAdvancedOptions}>
+                                        <MaterialSymbolsTune className='inline-block' /> Advanced options
+                                    </button>
+                                </DisabledUntilHydrated>
+                            )}
+                            <button
+                                className='hover:underline'
+                                onClick={() => {
+                                    window.location.href = './';
+                                }}
+                            >
+                                <MaterialSymbolsResetFocus className='inline-block' /> Reset
+                            </button>
+                        </div>
                     </div>
                     <FieldSelectorModal
                         title='Add search fields'
