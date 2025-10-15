@@ -9,8 +9,6 @@ import click
 import orjsonl
 import requests
 import yaml
-from defusedxml.ElementTree import fromstring
-from loculus_client import revoke
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -24,16 +22,9 @@ logging.basicConfig(
 @dataclass
 class Config:
     organism: str
-    segmented: bool
+    segmented: str
     nucleotide_sequences: list[str]
-    slack_hook: str
-    backend_url: str
-    keycloak_token_url: str
-    keycloak_client_id: str
-    username: str
-    password: str
-    group_name: str
-    batch_chunk_size: int
+    slack_hook: str = ""
 
 
 InsdcAccession = str  # one per segment
@@ -266,93 +257,12 @@ def construct_submitted_dict(
 
 def get_approved_submitted_accessions(
     data: dict[InsdcAccession, LatestLoculusVersion],
-) -> dict[InsdcAccession, LatestLoculusVersion]:
-    approved = {}
+) -> set[InsdcAccession]:
+    approved = set()
     for insdc_accession, info in data.items():
         if info.status == "APPROVED_FOR_RELEASE":
-            approved[insdc_accession] = info
+            approved.add(insdc_accession)
     return approved
-
-
-def is_sequence_suppressed(nucleotide_id):
-    base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-    params = {"db": "nucleotide", "id": nucleotide_id, "retmode": "xml"}
-
-    try:
-        response = requests.get(base_url, params=params, timeout=30)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request failed: {e}")
-        return None
-
-    try:
-        root = fromstring(response.text)
-        parse_error_msg = "Response is in unexpected format."
-        for docsum in root.findall("DocSum"):
-            for item in docsum.findall("Item"):
-                if item.get("Name") == "Status":
-                    if not item.text:
-                        raise ValueError(parse_error_msg)
-                    status = item.text.strip().lower()
-                    return status in {"suppressed", "replaced", "withdrawn"}
-        logger.error(f"{parse_error_msg} for response {response.text}")
-        raise ValueError(parse_error_msg)
-    except Exception as e:
-        logger.error(f"Failed to parse XML: {e}")
-        return None
-
-
-def revoke_all(
-    insdc_accessions: list[InsdcAccession],
-    already_ingested_accessions: dict[InsdcAccession, LatestLoculusVersion],
-    config: Config,
-):
-    """
-    Get the loculus accession for the given INSDC accessions and revoke them.
-    """
-    comment = "Record has been suppressed on Genbank"
-    if config.segmented:
-        already_revoked = []
-        for insdc_accession in insdc_accessions:
-            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
-            if loculus_accession in already_revoked:
-                continue
-            already_revoked.append(loculus_accession)
-            revoke(loculus_accession, comment, config)
-    else:
-        for insdc_accession in insdc_accessions:
-            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
-            revoke(loculus_accession, comment, config)
-
-
-def try_to_revoke(
-    potentially_suppressed: set[InsdcAccession],
-    already_ingested_accessions: dict[InsdcAccession, LatestLoculusVersion],
-    config: Config,
-) -> None:
-    can_not_revoke = []
-    can_revoke = []
-    for accession in potentially_suppressed:
-        if is_sequence_suppressed(accession):
-            can_revoke.append(accession)
-            continue
-        can_not_revoke.append(accession)
-    if can_revoke:
-        logger.info(f"Revoking {len(can_revoke)} sequences that have been suppressed in INSDC")
-        revoke_all(can_revoke, already_ingested_accessions, config)
-    if can_not_revoke:
-        warning = (
-            f"Organism: {config.organism}; {len(can_not_revoke)} previously ingested "
-            "INSDC accessions not found in "
-            f"re-ingested metadata - {', '.join(can_not_revoke)}."
-            " The sequences were not suppressed, replaced or withdrawn in the INSDC database."
-            " Please check why this is happening, as this might indicate an ingest error."
-        )
-        logger.warning(warning)
-        notify(
-            config,
-            warning,
-        )
 
 
 @click.command()
@@ -501,9 +411,22 @@ def main(
         else:
             logger.info(f"{text}: {len(value)}")
 
-    potentially_suppressed = already_ingested_accessions.keys() - current_ingested_accessions
+    potentially_suppressed = already_ingested_accessions - current_ingested_accessions
     if len(potentially_suppressed) > 0:
-        try_to_revoke(potentially_suppressed, already_ingested_accessions, config)
+        warning = (
+            f"Organism: {config.organism}; {len(potentially_suppressed)} previously ingested "
+            "INSDC accessions not found in "
+            f"re-ingested metadata - {', '.join(potentially_suppressed)}."
+            " This might be due to these sequences being suppressed in the INSDC database."
+            " Please check the INSDC database for these accessions."
+            " If this is the case, please revoke these accessions in Loculus."
+            " If this is not the case, this indicates a potential ingest error."
+        )
+        logger.warning(warning)
+        notify(
+            config,
+            warning,
+        )
 
 
 if __name__ == "__main__":
