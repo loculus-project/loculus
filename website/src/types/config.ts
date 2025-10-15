@@ -59,6 +59,7 @@ export const metadata = z.object({
     type: metadataPossibleTypes,
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
+    multiEntryTextSearch: z.boolean().optional(),
     hideInSearchResultsTable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
     initiallyVisible: z.boolean().optional(),

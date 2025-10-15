@@ -1,9 +1,10 @@
+import { ACCESSION_FIELD } from '../../../settings.ts';
 import { type FieldValues } from '../../../types/config.ts';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return --
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
 
 export type LapisSearchParameters = Record<string, any>;
@@ -102,8 +103,18 @@ export class FieldFilterSet implements SequenceFilter {
             }
         }
 
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        const multiEntryFields = new Set(this.filterSchema.getMultiEntryFieldNames());
+        for (const fieldName of multiEntryFields) {
+            const fieldValue = sequenceFilters[fieldName];
+            if (fieldValue === '' || fieldValue === undefined || Array.isArray(fieldValue)) {
+                continue;
+            }
+            const entries = splitMultiEntryText(fieldName, fieldValue as string);
+            if (entries.length > 0) {
+                sequenceFilters[fieldName] = entries;
+            } else {
+                delete sequenceFilters[fieldName];
+            }
         }
 
         delete sequenceFilters.mutation;
@@ -127,21 +138,24 @@ export class FieldFilterSet implements SequenceFilter {
         const result: [string, string | string[]][] = [];
 
         // keys that need special handling
-        const accessionKey = 'accession';
         const mutationKeys = [
             'nucleotideMutations',
             'aminoAcidMutations',
             'nucleotideInsertions',
             'aminoAcidInsertions',
         ];
-        const skipKeys = mutationKeys.concat([accessionKey]);
+        const multiEntryKeys = new Set(this.filterSchema.getMultiEntryFieldNames());
+        const skipKeys = mutationKeys.concat(Array.from(multiEntryKeys));
 
         const lapisSearchParameters = this.toApiParams();
 
-        // accession
-        if (lapisSearchParameters.accession !== undefined) {
-            lapisSearchParameters.accession.forEach((a: any) => result.push(['accession', String(a)]));
-        }
+        // multi-entry fields
+        multiEntryKeys.forEach((key) => {
+            const value = lapisSearchParameters[key];
+            if (Array.isArray(value)) {
+                value.forEach((entry: any) => result.push([key, String(entry)]));
+            }
+        });
 
         // mutations
         mutationKeys.forEach((key) => {
@@ -209,21 +223,23 @@ export class FieldFilterSet implements SequenceFilter {
         return result;
     }
 }
-/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 
-const textAccessionsToList = (text: string): string[] => {
-    const accessions = text
+const splitMultiEntryText = (fieldName: string, text: string): string[] => {
+    const entries = text
         .split(/[\t,;\n ]/)
         .map((s) => s.trim())
-        .filter((s) => s !== '')
-        .map((s) => {
-            if (s.includes('.')) {
-                return s.split('.')[0];
-            }
-            return s;
-        });
+        .filter((s) => s !== '');
 
-    return accessions;
+    if (fieldName === ACCESSION_FIELD) {
+        return entries.map((entry) => {
+            if (entry.includes('.')) {
+                return entry.split('.')[0];
+            }
+            return entry;
+        });
+    }
+
+    return entries;
 };
 
 const makeCaseInsensitiveLiteralSubstringRegex = (s: string): string => {

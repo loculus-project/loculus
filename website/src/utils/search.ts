@@ -175,6 +175,12 @@ export class MetadataFilterSchema {
         return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
     }
 
+    public getMultiEntryFieldNames(): string[] {
+        return this.ungroupedMetadataFilters()
+            .filter((metadataFilter) => metadataFilter.multiEntryTextSearch === true)
+            .map((metadataFilter) => metadataFilter.name);
+    }
+
     public getType(fieldName: string): MetadataType | undefined {
         return this.ungroupedMetadataFilters().find((metadataFilter) => metadataFilter.name === fieldName)?.type;
     }
@@ -223,9 +229,19 @@ export class MetadataFilterSchema {
      */
     public getFieldValuesFromQuery(queryState: QueryState, hiddenFieldValues: FieldValues): FieldValues {
         const values: FieldValues = { ...hiddenFieldValues };
+        const multiEntryFields = new Set(this.getMultiEntryFieldNames());
         for (const field of this.ungroupedMetadataFilters()) {
             const value = queryState[field.name];
             if (value === undefined) {
+                continue;
+            }
+            if (multiEntryFields.has(field.name)) {
+                const stringValue = validateSingleValue(value, field.name);
+                if (stringValue === '') {
+                    delete (values as Record<string, unknown>)[field.name];
+                } else {
+                    values[field.name] = stringValue;
+                }
                 continue;
             }
             // Handle arrays (multi-select) and single values
@@ -234,11 +250,6 @@ export class MetadataFilterSchema {
             } else {
                 values[field.name] = value === NULL_QUERY_VALUE ? null : value;
             }
-        }
-        // Handle special fields - these must be single values
-        if ('accession' in queryState) {
-            const val = validateSingleValue(queryState.accession, 'accession');
-            values.accession = val === '' ? undefined : val;
         }
         if ('mutation' in queryState) {
             const val = validateSingleValue(queryState.mutation, 'mutation');
