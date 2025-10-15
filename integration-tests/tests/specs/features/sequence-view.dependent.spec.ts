@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { ReviewPage } from '../../pages/review.page';
+import { testScreenshot } from '../../utils/screenshot';
 
 test.describe('Sequence view in review card', () => {
     test('can view and navigate between sequence tabs in the review card dialog', async ({
@@ -37,9 +38,7 @@ test.describe('Sequence view in review card', () => {
 
         const dialogTitle = page.getByText('Processed sequences', { exact: true });
         await expect(dialogTitle).toBeVisible();
-
-        // Visual regression test - sequence view dialog
-        await expect(page).toHaveScreenshot('sequence-view-dialog.png');
+        await testScreenshot(page, 'sequence-view-dialog.png');
 
         const sequenceContent = await reviewPage.getSequenceContent();
 

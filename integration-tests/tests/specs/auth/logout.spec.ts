@@ -20,6 +20,7 @@ test.describe('Logout Flow', () => {
 
         await expect(page).toHaveURL(/\/logout$/);
         await expect(page.getByText('You have been logged out')).toBeVisible();
+        await expect(page).toHaveScreenshot('logged-out.png');
 
         const cookies = await page.context().cookies();
         const authCookies = cookies.filter((cookie) => AUTH_COOKIE_NAMES.includes(cookie.name));

@@ -42,7 +42,6 @@ const config = {
     expect: {
         toHaveScreenshot: {
             maxDiffPixels: 100,
-            // Animations can cause flakiness, allow some tolerance
             animations: 'disabled' as const,
         },
     },

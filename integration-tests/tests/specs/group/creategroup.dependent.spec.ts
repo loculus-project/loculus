@@ -1,11 +1,11 @@
 import { test } from '../../fixtures/auth.fixture';
 import { GroupPage } from '../../pages/group.page';
+import { testScreenshot } from '../../utils/screenshot';
 
 test.describe('Group creation', () => {
     test('can create group', async ({ pageWithACreatedUser }) => {
         const groupPage = new GroupPage(pageWithACreatedUser);
 
-        // Create a new group
         const groupData = {
             name: 'Test Group',
             email: 'test@example.com',
@@ -19,5 +19,6 @@ test.describe('Group creation', () => {
         };
 
         await groupPage.createGroup(groupData);
+        await testScreenshot(pageWithACreatedUser, 'group-created.png');
     });
 });

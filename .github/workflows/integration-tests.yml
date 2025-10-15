@@ -125,6 +125,7 @@ jobs:
       - name: Run Integration test
         env:
           BROWSER: ${{ matrix.browser }}
+          CHECK_SNAPSHOTS: true
         run: |
           set -o pipefail
           UPDATE_FLAG=""

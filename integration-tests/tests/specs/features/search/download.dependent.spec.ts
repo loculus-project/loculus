@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 import fs from 'fs';
+import { testScreenshot } from '../../../utils/screenshot';
 
 test('Download metadata and check number of cols', async ({ page }) => {
     const searchPage = new SearchPage(page);
@@ -9,6 +10,7 @@ test('Download metadata and check number of cols', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Download all entries' }).click();
     await page.getByLabel('I agree to the data use terms.').check();
+    await testScreenshot(page, 'download-dialog.png');
 
     await page.getByRole('button', { name: /Choose fields/ }).click();
     const fieldCheckboxes = await page.getByRole('checkbox').all();
