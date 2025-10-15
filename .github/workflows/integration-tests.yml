@@ -131,12 +131,13 @@ jobs:
           exit $EXIT_CODE
 
       - name: Upload updated snapshots
-        if: steps.check-update-snapshots.outputs.update_snapshots == 'true'
+        if: steps.check-update-snapshots.outputs.update_snapshots == 'true' && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: snapshots-${{ matrix.browser }}
           path: integration-tests/tests/**/*-snapshots/*.png
           retention-days: 1
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -163,7 +164,7 @@ jobs:
           path: kubernetes_logs/
 
   commit-snapshots:
-    if: github.event.label.name == 'update-snapshots'
+    if: always() && github.event.label.name == 'update-snapshots'
     needs: integration-tests
     runs-on: ubuntu-latest
     permissions:
