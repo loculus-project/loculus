@@ -44,8 +44,8 @@ class ResponseLogger : OncePerRequestFilter() {
         try {
             filterChain.doFilter(request, response)
 
-            val duration = System.currentTimeMillis() - startTime
             log.info {
+                val duration = System.currentTimeMillis() - startTime
                 "${request.method} ${request.requestURL} - Responding with status ${response.status} - took ${duration}ms"
             }
         } finally {
