@@ -16,6 +16,7 @@ import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
 import org.springdoc.core.customizers.OperationCustomizer
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
@@ -24,9 +25,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
-import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "loculus.config.path"
@@ -74,30 +75,6 @@ class BackendSpringConfig {
     fun databaseConfig() = DatabaseConfig {
         useNestedTransactions = true
         sqlLogger = Slf4jSqlDebugLogger
-    }
-
-    @Bean
-    @Profile("!test")
-    fun getFlyway(dataSource: DataSource, backendConfig: BackendConfig, dateProvider: DateProvider): Flyway {
-        val configuration = Flyway.configure()
-            .baselineOnMigrate(true)
-            .dataSource(dataSource)
-            .validateMigrationNaming(true)
-        val flyway = Flyway(configuration)
-        flyway.migrate()
-
-        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
-        // in code, because the configured organisms are not known in the SQL table definitions.
-        logger.info("Initializing CurrentProcessingPipelineTable")
-        transaction {
-            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
-                backendConfig.organisms.keys,
-                dateProvider.getCurrentDateTime(),
-            )
-            logger.info("$insertedRows inserted.")
-        }
-
-        return flyway
     }
 
     @Bean
@@ -159,8 +136,31 @@ class BackendSpringConfig {
     }
 }
 
+@Component
+@Profile("!test")
+class FlywayInit(
+    private val flyway: Flyway,
+    private val backendConfig: BackendConfig,
+    private val dateProvider: DateProvider,
+) : InitializingBean {
+    override fun afterPropertiesSet() {
+        flyway.migrate()
+
+        // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
+        // in code, because the configured organisms are not known in the SQL table definitions.
+        logger.info("Initializing CurrentProcessingPipelineTable")
+        transaction {
+            val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
+                backendConfig.organisms.keys,
+                dateProvider.getCurrentDateTime(),
+            )
+            logger.info("$insertedRows inserted.")
+        }
+    }
+}
+
 /**
- * Check whether configured metadatafields for earliestReleaseDate are actually fields and are of type date.
+ * Check whether configured metadata fields for earliestReleaseDate are actually fields and are of type date.
  * Returns a non-empty list of errors if validation errors were found.
  */
 internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<String> {
