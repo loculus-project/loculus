@@ -40,10 +40,14 @@ class ResponseLogger : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
+        val startTime = System.currentTimeMillis()
         try {
             filterChain.doFilter(request, response)
 
-            log.info { "${request.method} ${request.requestURL} - Responding with status ${response.status}" }
+            val duration = System.currentTimeMillis() - startTime
+            log.info {
+                "${request.method} ${request.requestURL} - Responding with status ${response.status} - took ${duration}ms"
+            }
         } finally {
             MDC.clear()
         }
