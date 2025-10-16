@@ -1,13 +1,14 @@
 import logging
 
 from .config import get_config
+from .logging_config import configure_logging
 from .prepro import run
 
 logger = logging.getLogger(__name__)
 
 
 def cli_entry() -> None:
-    logging.basicConfig(level=logging.INFO)
+    configure_logging(level=logging.INFO)
 
     config = get_config()
 

@@ -11,6 +11,7 @@ from typing import Any, get_args
 import yaml
 
 from loculus_preprocessing.datatypes import MoleculeType, Topology
+from loculus_preprocessing.logging_config import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +140,7 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     # Set just log level this early from env, so we can debug log during config loading
     env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
     if env_log_level:
-        logging.basicConfig(level=env_log_level)
+        configure_logging(level=env_log_level)
 
     if not ignore_args:
         parser = generate_argparse_from_dataclass(Config)
