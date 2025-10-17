@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.submission.dbtables
 
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
