@@ -81,8 +81,9 @@ class CompressionDictService(
     /**
      * Get dictionary for unaligned sequences (used when compressing submitted sequences)
      */
-    fun getDictForUnalignedSequence(organism: Organism): DictEntry? {
+    fun getDictForUnalignedSequence(organism: Organism): DictEntry {
         return unalignedDictCache[organism.name]
+            ?: throw RuntimeException("No unaligned dict found for organism: ${organism.name}")
     }
 
     /**
