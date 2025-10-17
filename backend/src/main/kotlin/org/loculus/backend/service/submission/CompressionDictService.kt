@@ -12,6 +12,10 @@ data class DictEntry(
     val dict: String,
 )
 
+/**
+ * An abstraction over the compression_dictionaries_table.
+ * Caches the contents in memory to avoid repeated DB lookups.
+ */
 @Service
 class CompressionDictService(
     private val backendConfig: BackendConfig,
