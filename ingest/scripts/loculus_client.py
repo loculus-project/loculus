@@ -29,6 +29,8 @@ class Config:
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
+    time_between_approve_requests_seconds: int = 30
+    backend_request_timeout_seconds: int = 600
 
 
 def backend_url(config: Config) -> str:
@@ -59,7 +61,7 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=600)
+    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
     response.raise_for_status()
 
     jwt_keycloak = response.json()
@@ -79,7 +81,7 @@ def make_request(  # noqa: PLR0913, PLR0917
     """
     jwt = get_jwt(config)
     headers = {"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"}
-    timeout = 600
+    timeout = config.backend_request_timeout_seconds
     match method:
         case HTTPMethod.GET:
             response = requests.get(url, headers=headers, params=params, timeout=timeout)
