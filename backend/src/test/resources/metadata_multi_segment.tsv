@@ -1,11 +1,11 @@
-submissionId	date	region	country	division	host    fastaId
-custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens    custom0_notOnlySegment,custom0_secondSegment
-custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens    custom1_notOnlySegment,custom1_secondSegment
-custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens    custom2_notOnlySegment,custom2_secondSegment
-custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens    custom3_notOnlySegment,custom3_secondSegment
-custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens    custom4_notOnlySegment,custom4_secondSegment
-custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens    custom5_notOnlySegment,custom5_secondSegment
-custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens    custom6_notOnlySegment,custom6_secondSegment
-custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens    custom7_notOnlySegment,custom7_secondSegment
-custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens    custom8_notOnlySegment,custom8_secondSegment
-custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens    custom9_notOnlySegment,custom9_secondSegment
+submissionId	date	region	country	division	host	fastaId
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	custom0_notOnlySegment
+custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	custom1_notOnlySegment,custom1_secondSegment
+custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	custom2_notOnlySegment
+custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens	custom3_notOnlySegment
+custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens	custom4_notOnlySegment,custom4_secondSegment
+custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens	custom5_notOnlySegment,custom5_secondSegment
+custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom6_notOnlySegment
+custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens	custom7_notOnlySegment
+custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom8_notOnlySegment
+custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	custom9_notOnlySegment,custom9_secondSegment
