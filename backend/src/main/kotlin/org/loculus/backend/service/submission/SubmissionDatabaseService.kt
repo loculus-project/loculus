@@ -14,7 +14,6 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -87,6 +86,8 @@ import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionVa
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version

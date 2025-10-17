@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.submission.dbtables
 
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.Table
