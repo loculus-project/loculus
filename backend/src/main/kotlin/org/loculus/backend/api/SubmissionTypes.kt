@@ -173,38 +173,7 @@ data class ProcessedData<SequenceType>(
     val files: FileCategoryFilesMap?,
 )
 
-data class ReleasedData(
-    @Schema(
-        example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
-        description = "Key value pairs of metadata, correctly typed",
-    )
-    val metadata: MetadataMap,
-    @Schema(
-        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
-        description = "The key is the segment name, the value is the nucleotide sequence",
-    )
-    val unalignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
-    @Schema(
-        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
-        description = "The key is the segment name, the value is the aligned nucleotide sequence",
-    )
-    val alignedNucleotideSequences: Map<SegmentName, GeneticSequence?>,
-    @Schema(
-        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
-        description = "The key is the segment name, the value is a list of nucleotide insertions",
-    )
-    val nucleotideInsertions: Map<SegmentName, List<Insertion>>,
-    @Schema(
-        example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
-        description = "The key is the gene name, the value is the amino acid sequence",
-    )
-    val alignedAminoAcidSequences: Map<GeneName, GeneticSequence?>,
-    @Schema(
-        example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
-        description = "The key is the gene name, the value is a list of amino acid insertions",
-    )
-    val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
-)
+typealias ReleasedData = Map<String, JsonNode>
 
 data class ExternalSubmittedData(
     override val accession: Accession,
