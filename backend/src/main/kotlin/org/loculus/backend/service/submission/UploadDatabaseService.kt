@@ -19,8 +19,8 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
-import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.FastaId
+import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
@@ -280,7 +280,7 @@ class UploadDatabaseService(
         auditLogger.log(
             username = submissionParams.authenticatedUser.username,
             description = "Submitted or revised ${insertionResult.size} sequences: " +
-                    insertionResult.joinToString { it.displayAccessionVersion() },
+                insertionResult.joinToString { it.displayAccessionVersion() },
         )
 
         return@transaction insertionResult
@@ -350,7 +350,7 @@ class UploadDatabaseService(
             generateAccessionFromNumberService.generateCustomId(it)
         }
 
-        if (submissionIds.size!=nextAccessions.size) {
+        if (submissionIds.size != nextAccessions.size) {
             throw IllegalStateException(
                 "Mismatched sizes: accessions=${submissionIds.size}, nextAccessions=${nextAccessions.size}",
             )

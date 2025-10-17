@@ -98,7 +98,7 @@ class SubmitEndpointTest(
                     "\$.detail",
                     containsString(
                         "User $otherUser is not a member of group(s) " +
-                                "$groupId. Action not allowed.",
+                            "$groupId. Action not allowed.",
                     ),
                 ),
             )
@@ -276,13 +276,13 @@ class SubmitEndpointTest(
                 DefaultFiles.sequencesFiles[CompressionAlgorithm.ZSTD],
             ),
         ) +
-                CompressionAlgorithm.entries.map { compression ->
-                    Arguments.of(
-                        "${compression.name} compressed metadata file and sequences file",
-                        DefaultFiles.metadataFiles[compression],
-                        DefaultFiles.sequencesFiles[compression],
-                    )
-                }
+            CompressionAlgorithm.entries.map { compression ->
+                Arguments.of(
+                    "${compression.name} compressed metadata file and sequences file",
+                    DefaultFiles.metadataFiles[compression],
+                    DefaultFiles.sequencesFiles[compression],
+                )
+            }
 
         @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {
@@ -316,11 +316,15 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                            ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                            ".${
-                                metadataFileTypes.getCompressedExtensions().filterKeys { it!=CompressionAlgorithm.NONE }
-                                    .flatMap { it.value }.joinToString(", .")
-                            } for compressed submissions",
+                        ".${metadataFileTypes.validExtensions.joinToString(
+                            ", .",
+                        )} for uncompressed submissions or " +
+                        ".${
+                            metadataFileTypes.getCompressedExtensions().filterKeys {
+                                it != CompressionAlgorithm.NONE
+                            }
+                                .flatMap { it.value }.joinToString(", .")
+                        } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -331,11 +335,15 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                            ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                            ".${
-                                sequenceFileTypes.getCompressedExtensions().filterKeys { it!=CompressionAlgorithm.NONE }
-                                    .flatMap { it.value }.joinToString(", .")
-                            } for compressed submissions",
+                        ".${sequenceFileTypes.validExtensions.joinToString(
+                            ", .",
+                        )} for uncompressed submissions or " +
+                        ".${
+                            sequenceFileTypes.getCompressedExtensions().filterKeys {
+                                it != CompressionAlgorithm.NONE
+                            }
+                                .flatMap { it.value }.joinToString(", .")
+                        } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -442,7 +450,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
+                    "Metadata file contains 1 Fasta ids that are not present in the sequence file: notInSequences",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -463,7 +471,7 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
-                            "name in the format <id>_<segment name>",
+                        "name in the format <id>_<segment name>",
                     OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),

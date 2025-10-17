@@ -192,7 +192,7 @@ class SubmitModel(
         }
 
         val sequenceFile = submissionParams.sequenceFile
-        if (sequenceFile==null) {
+        if (sequenceFile == null) {
             if (addFastaId) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
@@ -266,7 +266,7 @@ class SubmitModel(
     ) {
         log.debug {
             "intermediate storing uploaded metadata of type ${submissionParams.uploadType.name} " +
-                    "from $submissionParams.submitter with UploadId $uploadId"
+                "from $submissionParams.submitter with UploadId $uploadId"
         }
         val now = dateProvider.getCurrentDateTime()
         try {
@@ -303,7 +303,7 @@ class SubmitModel(
                 }
             }
         } catch (e: ExposedSQLException) {
-            if (e.sqlState==UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
+            if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw DuplicateKeyException(
                     "Metadata file contains at least one duplicate submissionId: ${e.cause?.cause}",
                 )
@@ -324,7 +324,7 @@ class SubmitModel(
                     batch,
                 )
             } catch (e: ExposedSQLException) {
-                if (e.sqlState==UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
+                if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                     throw DuplicateKeyException(
                         "Sequence file contains at least one duplicate submissionId: ${e.cause?.cause}",
                     )
@@ -345,12 +345,12 @@ class SubmitModel(
         }
 
         val allowedCompressionFormats = expectedFileType.getCompressedExtensions()
-            .filter { it.key!=CompressionAlgorithm.NONE }
+            .filter { it.key != CompressionAlgorithm.NONE }
             .flatMap { it.value }.joinToString(", .")
         throw BadRequestException(
             "${expectedFileType.displayName} has wrong extension. Must be " +
-                    ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                    ".$allowedCompressionFormats for compressed submissions",
+                ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                ".$allowedCompressionFormats for compressed submissions",
         )
     }
 
@@ -364,13 +364,14 @@ class SubmitModel(
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
                 "Metadata file contains ${metadataKeysNotInSequences.size} Fasta ids that are not present " +
-                        "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
                 "Sequence file contains ${sequenceKeysNotInMetadata.size} Fasta ids that are not associated with a " +
-                        "metadata entry in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+                    "metadata entry in the metadata file: " +
+                    sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""
             }
@@ -383,7 +384,7 @@ class SubmitModel(
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
                 "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
-                        "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
             )
         }
     }
@@ -407,7 +408,7 @@ class SubmitModel(
         }
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             fileGroups.forEach {
-                if (it.value!=submissionParams.groupId) {
+                if (it.value != submissionParams.groupId) {
                     throw BadRequestException(
                         "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
                     )
@@ -420,7 +421,7 @@ class SubmitModel(
                 val associatedFileIds = it.value.values.flatten().map { it.fileId }
                 associatedFileIds.forEach { fileId ->
                     val fileGroup = fileGroups[fileId]
-                    if (fileGroup!=submissionGroup) {
+                    if (fileGroup != submissionGroup) {
                         throw BadRequestException(
                             "File $fileId does not belong to group $submissionGroup.",
                         )

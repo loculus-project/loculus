@@ -141,7 +141,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
         val compressBound = Zstd.compressBound(input.size.toLong()).toInt()
         val outputBuffer = ByteArray(compressBound)
 
-        val compressionReturnCode: Long = if (dictionary==null) {
+        val compressionReturnCode: Long = if (dictionary == null) {
             Zstd.compress(outputBuffer, input, 3)
         } else {
             Zstd.compress(outputBuffer, input, dictionary, 3)
@@ -163,7 +163,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
             throw RuntimeException("reading Zstd decompressed size failed: error code $decompressedSize")
         }
         val decompressedBuffer = ByteArray(decompressedSize.toInt())
-        val decompressionReturnCode: Long = if (dictionary==null) {
+        val decompressionReturnCode: Long = if (dictionary == null) {
             Zstd.decompress(decompressedBuffer, compressed)
         } else {
             Zstd.decompress(decompressedBuffer, compressed, dictionary)

@@ -21,7 +21,8 @@ It must contain the column names.
 The field '$METADATA_ID_HEADER' is required and must be unique within the provided dataset.
 It is used to associate metadata to the sequences in the sequences fasta file.
 """
-//TODO: update description
+
+// TODO: update description
 const val SEQUENCE_FILE_DESCRIPTION = """
 A fasta file containing the unaligned nucleotide sequences of the submitted sequences.
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).

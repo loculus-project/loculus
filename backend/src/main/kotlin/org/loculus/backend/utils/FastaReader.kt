@@ -19,7 +19,7 @@ class FastaReader(inputStream: InputStream) :
         read()
     }
 
-    override fun hasNext(): Boolean = nextEntry!=null
+    override fun hasNext(): Boolean = nextEntry != null
 
     override fun next(): FastaEntry {
         val entry = nextEntry ?: throw NoSuchElementException("No element available")
@@ -31,7 +31,7 @@ class FastaReader(inputStream: InputStream) :
         var fastaId: String? = null
         val sequence = StringBuilder()
         while (true) {
-            if (nextLine==null) {
+            if (nextLine == null) {
                 break
             }
             if (nextLine!!.isBlank()) {
@@ -39,7 +39,7 @@ class FastaReader(inputStream: InputStream) :
                 continue
             }
             if (nextLine!!.startsWith(">")) {
-                if (fastaId!=null) {
+                if (fastaId != null) {
                     break
                 }
                 fastaId = nextLine!!.substring(1).split("\\s+".toRegex())[0]
@@ -48,7 +48,7 @@ class FastaReader(inputStream: InputStream) :
             }
             nextLine = reader.readLine()
         }
-        nextEntry = if (fastaId==null) {
+        nextEntry = if (fastaId == null) {
             null
         } else {
             if (sequence.isEmpty()) {

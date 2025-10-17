@@ -18,7 +18,7 @@ class FastaReaderTest {
             CCCGGG
         """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
-        assert(parsed.size==3)
+        assert(parsed.size == 3)
         assert(parsed[0].fastaId.equals("seq1"))
         assert(parsed[0].fastaId.equals("AAATTT"))
         assert(parsed[1].fastaId.equals("seq2"))

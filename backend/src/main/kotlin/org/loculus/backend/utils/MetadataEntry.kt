@@ -42,7 +42,10 @@ fun findAndValidateFastaIdHeader(headerNames: List<String>, submissionIdHeader: 
     return FASTA_ID_HEADER
 }
 
-fun metadataEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds: Boolean = true): Sequence<MetadataEntry> {
+fun metadataEntryStreamAsSequence(
+    metadataInputStream: InputStream,
+    addFastaIds: Boolean = true,
+): Sequence<MetadataEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
         .parse(InputStreamReader(metadataInputStream))
 
@@ -79,7 +82,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
                 .filter { it.isNotEmpty() }
         }
 
-        val metadata = record.toMap().filterKeys { it!=submissionIdHeader }
+        val metadata = record.toMap().filterKeys { it != submissionIdHeader }
         MetadataEntry(submissionId, metadata, fastaIds)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
@@ -90,7 +93,12 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
     }
 }
 
-data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>, val fastaIds: List<FastaId>? = null)
+data class RevisionEntry(
+    val submissionId: SubmissionId,
+    val accession: Accession,
+    val metadata: Map<String, String>,
+    val fastaIds: List<FastaId>? = null,
+)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds: Boolean): Sequence<RevisionEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
@@ -136,7 +144,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
                 .filter { it.isNotEmpty() }
         }
 
-        val metadata = record.toMap().filterKeys { it!=submissionIdHeader && it!=ACCESSION_HEADER }
+        val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != ACCESSION_HEADER }
         RevisionEntry(submissionId, accession, metadata, fastaIds)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {

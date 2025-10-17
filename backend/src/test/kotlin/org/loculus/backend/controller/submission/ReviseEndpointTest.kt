@@ -187,7 +187,7 @@ class ReviseEndpointTest(
         }
 
         client.reviseSequenceEntries(
-            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.getRevisedMultiSegmentedMetadataFile(accessions),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
@@ -602,7 +602,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains 1 ids that are not present in the sequence file: notInSequences",
+                "Metadata file contains 1 Fasta ids that are not present in the sequence file: notInSequences",
             ),
             Arguments.of(
                 "metadata file misses accession header",
