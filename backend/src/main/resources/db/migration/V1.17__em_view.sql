@@ -7,6 +7,7 @@
 -- Drop the existing view
 DROP VIEW IF EXISTS external_metadata_view CASCADE;
 
+
 -- Create optimized view with proper join order
 CREATE VIEW external_metadata_view AS
 SELECT
