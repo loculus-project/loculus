@@ -3,6 +3,8 @@ package org.loculus.backend.service.submission
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.service.submission.dbtables.CompressionDictionariesTable
+import org.loculus.backend.service.submission.dbtables.CompressionDictionaryEntity
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
