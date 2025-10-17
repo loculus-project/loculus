@@ -269,7 +269,7 @@ class UploadDatabaseService(
 
         accessions.processInDatabaseSafeChunks { chunk ->
             accessionPreconditionValidator.validate {
-                thatAccessionsExist(chunk)
+                thatAccessionsExistAndAreUnique(chunk)
                     .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                     .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
                     .andThatOrganismIs(organism)

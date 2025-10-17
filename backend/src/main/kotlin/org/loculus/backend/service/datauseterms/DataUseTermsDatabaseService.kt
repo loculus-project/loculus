@@ -33,7 +33,7 @@ class DataUseTermsDatabaseService(
 
         accessions.processInDatabaseSafeChunks { chunk ->
             accessionPreconditionValidator.validate {
-                thatAccessionsExist(chunk)
+                thatAccessionsExistAndAreUnique(chunk)
                     .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
             }
 

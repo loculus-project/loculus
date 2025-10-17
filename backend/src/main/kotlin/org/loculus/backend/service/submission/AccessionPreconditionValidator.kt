@@ -45,7 +45,7 @@ class AccessionPreconditionValidator(
             AccessionVersionPreconditions(listOf(accessionVersion), groupManagementPreconditionValidator)
                 .validateAccessionVersionsExist()
 
-        fun thatAccessionsExist(accessions: List<Accession>): CommonPreconditions = AccessionPreconditions(
+        fun thatAccessionsExistAndAreUnique(accessions: List<Accession>): CommonPreconditions = AccessionPreconditions(
             accessions,
             groupManagementPreconditionValidator,
         )
@@ -108,6 +108,15 @@ class AccessionPreconditionValidator(
         groupManagementPreconditionValidator = groupManagementPreconditionValidator,
     ) {
         fun validateAccessionsExist(): AccessionPreconditions {
+            val duplicates = accessions
+                .groupingBy { it }
+                .eachCount()
+                .filter { it.value > 1 }
+                .keys
+
+            if (duplicates.isNotEmpty()) {
+                throw UnprocessableEntityException("Duplicate accessions found: ${duplicates.joinToString(", ")}")
+            }
             if (sequenceEntries.count() == accessions.size.toLong()) {
                 return this
             }

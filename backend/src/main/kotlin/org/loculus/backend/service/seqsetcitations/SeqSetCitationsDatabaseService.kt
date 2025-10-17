@@ -464,7 +464,7 @@ class SeqSetCitationsDatabaseService(
 
         for (chunk in accessionsWithoutVersions.chunked(1000)) {
             accessionPreconditionValidator.validate {
-                thatAccessionsExist(chunk)
+                thatAccessionsExistAndAreUnique(chunk)
                     .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
             }
         }

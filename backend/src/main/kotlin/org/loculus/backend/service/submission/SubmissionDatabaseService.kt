@@ -910,7 +910,7 @@ class SubmissionDatabaseService(
         log.info { "revoking ${accessions.size} sequences" }
 
         accessionPreconditionValidator.validate {
-            thatAccessionsExist(accessions)
+            thatAccessionsExistAndAreUnique(accessions)
                 .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
                 .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
                 .andThatOrganismIs(organism)
