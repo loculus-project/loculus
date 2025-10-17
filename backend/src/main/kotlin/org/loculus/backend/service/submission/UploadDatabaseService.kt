@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.VarCharColumnType
@@ -17,7 +18,6 @@ import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
-import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
@@ -128,7 +128,9 @@ class UploadDatabaseService(
         } catch (e: ExposedSQLException) {
             log.error { "Error inserting revised metadata in aux table: ${e.message}" }
             val duplicateAccession = e.extractDuplicateAccession()
-                ?: throw UnprocessableEntityException("Error inserting revised metadata in aux table - please contact an administrator.")
+                ?: throw UnprocessableEntityException(
+                    "Error inserting revised metadata in aux table - please contact an administrator.",
+                )
             throw UnprocessableEntityException("Duplicate accession found: $duplicateAccession")
         }
     }
@@ -268,7 +270,7 @@ class UploadDatabaseService(
         auditLogger.log(
             username = submissionParams.authenticatedUser.username,
             description = "Submitted or revised ${insertionResult.size} sequences: " +
-                    insertionResult.joinToString { it.displayAccessionVersion() },
+                insertionResult.joinToString { it.displayAccessionVersion() },
         )
 
         return@transaction insertionResult
@@ -338,7 +340,7 @@ class UploadDatabaseService(
             generateAccessionFromNumberService.generateCustomId(it)
         }
 
-        if (submissionIds.size!=nextAccessions.size) {
+        if (submissionIds.size != nextAccessions.size) {
             throw IllegalStateException(
                 "Mismatched sizes: accessions=${submissionIds.size}, nextAccessions=${nextAccessions.size}",
             )
