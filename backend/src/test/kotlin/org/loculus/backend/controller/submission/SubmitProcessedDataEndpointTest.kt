@@ -602,7 +602,7 @@ class SubmitProcessedDataEndpointTest(
 
         // Step 6: check file is publicly accessible
         val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
-        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val filesJson = releasedData.first()["myFileCategory"]!!.asText()
         val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
         val fileUrl = fileList.first()["url"]!!
         val client = HttpClient.newHttpClient()
@@ -667,7 +667,7 @@ class SubmitProcessedDataEndpointTest(
 
         // Step 6: check file is publicly accessible
         val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
-        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val filesJson = releasedData.first()["myFileCategory"]!!.asText()
         val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
         val fileUrl = fileList.first()["url"]!!
         val client = HttpClient.newHttpClient()

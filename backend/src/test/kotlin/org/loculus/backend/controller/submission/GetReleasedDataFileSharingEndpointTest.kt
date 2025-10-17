@@ -72,8 +72,8 @@ class GetReleasedDataFileSharingEndpointTest(
         val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
         assertThat(responseBody, hasSize(accessionVersions.size))
         for (entry in responseBody) {
-            assertThat(entry.metadata, hasKey("myFileCategory"))
-            val myFileCategory = objectMapper.readTree(entry.metadata["myFileCategory"]!!.asText()).toList()
+            assertThat(entry, hasKey("myFileCategory"))
+            val myFileCategory = objectMapper.readTree(entry["myFileCategory"]!!.asText()).toList()
             assertThat(myFileCategory, hasSize(2))
             fileIds.forEachIndexed { i, id ->
                 val file = myFileCategory[i]
@@ -82,11 +82,11 @@ class GetReleasedDataFileSharingEndpointTest(
                 assertThat(file["url"].asText(), containsString(fileIds[i].toString()))
             }
 
-            assertThat(entry.metadata, hasKey("myOtherFileCategory"))
-            assertThat(entry.metadata["myOtherFileCategory"], `is`(NullNode.getInstance()))
+            assertThat(entry, hasKey("myOtherFileCategory"))
+            assertThat(entry["myOtherFileCategory"], `is`(NullNode.getInstance()))
 
-            assertThat(entry.metadata, hasKey("myProcessedOnlyFileCategory"))
-            assertThat(entry.metadata["myProcessedOnlyFileCategory"], `is`(NullNode.getInstance()))
+            assertThat(entry, hasKey("myProcessedOnlyFileCategory"))
+            assertThat(entry["myProcessedOnlyFileCategory"], `is`(NullNode.getInstance()))
         }
     }
 
@@ -96,12 +96,12 @@ class GetReleasedDataFileSharingEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
         val responseBody = response.expectNdjsonAndGetContent<ReleasedData>()
-        val revocationEntries = responseBody.filter { it.metadata["isRevocation"]!!.asBoolean() }
+        val revocationEntries = responseBody.filter { it["isRevocation"]!!.asBoolean() }
         assertThat(revocationEntries, hasSize(accessionVersions.size))
         for (entry in revocationEntries) {
             listOf("myFileCategory", "myOtherFileCategory", "myProcessedOnlyFileCategory").forEach {
-                assertThat(entry.metadata, hasKey(it))
-                assertThat(entry.metadata[it], `is`(NullNode.getInstance()))
+                assertThat(entry, hasKey(it))
+                assertThat(entry[it], `is`(NullNode.getInstance()))
             }
         }
     }
