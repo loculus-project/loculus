@@ -34,9 +34,9 @@ test.describe('The search page', () => {
         searchPage.page.getByText('Search returned 1 sequence');
         await expect(accessionLink).toBeVisible();
 
-        const rowLocator = searchPage.page.locator('tr');
-        await expect(rowLocator.getByText('2002-12-15')).toBeVisible();
-        await expect(rowLocator.getByText('A.1.1')).toBeVisible();
+        const specificRowLocator = searchPage.page.locator('tr').filter({ hasText: testAccessionVersion });
+        await expect(specificRowLocator.getByText('2002-12-15')).toBeVisible();
+        await expect(specificRowLocator.getByText('A.1.1')).toBeVisible();
 
         await accessionLink.click();
         await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
