@@ -156,6 +156,31 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revised data with duplicate accessions THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
+            it.accession
+        }
+
+        client.reviseSequenceEntries(
+            SubmitFiles.revisedMetadataFileWith(
+                content =
+                """
+                 accession	submissionId	firstColumn
+                    ${accessions.first()}	someHeader_main	someValue
+                    ${accessions.first()}	someHeader2_main	someOtherValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(),
+        ).andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Duplicate accession found: ${accessions.first()}",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM).map {
             it.accession

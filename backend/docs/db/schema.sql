@@ -674,6 +674,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: metadata_upload_aux_table metadata_upload_aux_table_upload_id_accession_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.metadata_upload_aux_table
+    ADD CONSTRAINT metadata_upload_aux_table_upload_id_accession_key UNIQUE (upload_id, accession);
+
+
+--
 -- Name: seqset_records seqset_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
