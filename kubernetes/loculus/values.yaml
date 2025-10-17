@@ -1989,7 +1989,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "v0.5.19"
+    tag: "v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
