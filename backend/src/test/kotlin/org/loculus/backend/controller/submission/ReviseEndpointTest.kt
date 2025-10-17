@@ -175,7 +175,7 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Duplicate accession found: ${accessions.first()}",
+                    "Duplicate accession found in metadata file: ${accessions.first()}",
                 ),
             )
     }
@@ -548,7 +548,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains at least one duplicate submissionId",
+                "Duplicate submission_id found in metadata file: sameHeader",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",

@@ -88,20 +88,19 @@ class UploadDatabaseService(
         }
     }
 
-    private val RX_PG_KEY_DETAIL =
+    private const val RX_PG_KEY_DETAIL =
         Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
 
-    fun ExposedSQLException.extractDuplicateAccession(): String? {
+    fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
         val text = this.cause?.message ?: this.message ?: return null
         val match = RX_PG_KEY_DETAIL.find(text) ?: return null
 
         val cols = match.groups["cols"]?.value?.split(",")?.map { it.trim() } ?: return null
         val vals = match.groups["vals"]?.value?.split(",")?.map { it.trim() } ?: return null
 
-        val idx = cols.indexOf("accession")
-        if (idx >= 0 && idx < vals.size) return vals[idx]
-
-        return vals.lastOrNull()
+        return cols.zip(vals)
+            .filter { (col, _) -> col in listOf("accession", "submission_id") }
+            .toMap()
     }
 
     fun batchInsertRevisedMetadataInAuxTable(
@@ -127,11 +126,13 @@ class UploadDatabaseService(
             }
         } catch (e: ExposedSQLException) {
             log.error { "Error inserting revised metadata in aux table: ${e.message}" }
-            val duplicateAccession = e.extractDuplicateAccession()
-                ?: throw UnprocessableEntityException(
-                    "Error inserting revised metadata in aux table - please contact an administrator.",
-                )
-            throw UnprocessableEntityException("Duplicate accession found: $duplicateAccession")
+            val duplicates = e.extractDuplicateColumns() ?: throw UnprocessableEntityException(
+                "Error inserting revised metadata in aux table - please contact an administrator.",
+            )
+            val details = duplicates.entries.joinToString(" ") { (col, value) ->
+                "Duplicate $col found in metadata file: $value"
+            }
+            throw UnprocessableEntityException(details)
         }
     }
 
