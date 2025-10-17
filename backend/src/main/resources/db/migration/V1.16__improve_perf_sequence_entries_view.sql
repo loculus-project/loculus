@@ -95,3 +95,4 @@ COMMENT ON INDEX idx_se_organism_released_at IS
 
 COMMENT ON INDEX idx_sepd_lookup IS 
 'Optimizes the JOIN between sequence_entries and sequence_entries_preprocessed_data';
+
