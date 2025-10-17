@@ -241,32 +241,28 @@ ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
 --
 
 CREATE VIEW public.external_metadata_view AS
- SELECT cpd.accession,
-    cpd.version,
-    all_external_metadata.updated_metadata_at,
+ SELECT sepd.accession,
+    sepd.version,
+    aem.updated_metadata_at,
         CASE
-            WHEN (all_external_metadata.external_metadata IS NULL) THEN jsonb_build_object('metadata', (cpd.processed_data -> 'metadata'::text))
-            ELSE jsonb_build_object('metadata', ((cpd.processed_data -> 'metadata'::text) || all_external_metadata.external_metadata))
+            WHEN (aem.external_metadata IS NULL) THEN jsonb_build_object('metadata', (sepd.processed_data -> 'metadata'::text))
+            ELSE jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata))
         END AS joint_metadata
-   FROM (( SELECT sequence_entries_preprocessed_data.accession,
-            sequence_entries_preprocessed_data.version,
-            sequence_entries_preprocessed_data.pipeline_version,
-            sequence_entries_preprocessed_data.processed_data,
-            sequence_entries_preprocessed_data.errors,
-            sequence_entries_preprocessed_data.warnings,
-            sequence_entries_preprocessed_data.processing_status,
-            sequence_entries_preprocessed_data.started_processing_at,
-            sequence_entries_preprocessed_data.finished_processing_at
-           FROM public.sequence_entries_preprocessed_data
-          WHERE (sequence_entries_preprocessed_data.pipeline_version = ( SELECT current_processing_pipeline.version
-                   FROM public.current_processing_pipeline
-                  WHERE (current_processing_pipeline.organism = ( SELECT se.organism
-                           FROM public.sequence_entries se
-                          WHERE ((se.accession = sequence_entries_preprocessed_data.accession) AND (se.version = sequence_entries_preprocessed_data.version))))))) cpd
-     LEFT JOIN public.all_external_metadata ON (((all_external_metadata.accession = cpd.accession) AND (all_external_metadata.version = cpd.version))));
+   FROM (((public.sequence_entries_preprocessed_data sepd
+     JOIN public.sequence_entries se ON (((se.accession = sepd.accession) AND (se.version = sepd.version))))
+     JOIN public.current_processing_pipeline ccp ON (((ccp.organism = se.organism) AND (ccp.version = sepd.pipeline_version))))
+     LEFT JOIN public.all_external_metadata aem ON (((aem.accession = sepd.accession) AND (aem.version = sepd.version))));
 
 
 ALTER VIEW public.external_metadata_view OWNER TO postgres;
+
+--
+-- Name: VIEW external_metadata_view; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON VIEW public.external_metadata_view IS 'Optimized view that joins sequence_entries and current_processing_pipeline early to avoid nested correlated subqueries.
+This eliminates the double-nested lookup: organism lookup → pipeline version lookup → filter.';
+
 
 --
 -- Name: files; Type: TABLE; Schema: public; Owner: postgres
@@ -519,8 +515,8 @@ ALTER VIEW public.sequence_entries_view OWNER TO postgres;
 -- Name: VIEW sequence_entries_view; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON VIEW public.sequence_entries_view IS 'Optimized view that joins current_processing_pipeline early to avoid correlated subqueries. 
-This reduces the number of pipeline lookups from O(n) to O(organisms).';
+COMMENT ON VIEW public.sequence_entries_view IS 'Optimized view that joins current_processing_pipeline early and uses the optimized external_metadata_view.
+Both optimizations eliminate correlated subqueries for better performance.';
 
 
 --
