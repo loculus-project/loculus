@@ -8,8 +8,10 @@ import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.controller.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
@@ -28,6 +30,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
+import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "loculus.config.path"
@@ -142,13 +145,19 @@ class FlywayInit(
     private val flyway: Flyway,
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
+    private val dataSource: DataSource,
 ) : InitializingBean {
     override fun afterPropertiesSet() {
+        if (TransactionManager.defaultDatabase == null) {
+            Database.connect(dataSource)
+        }
+
         flyway.migrate()
 
         // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
         // in code, because the configured organisms are not known in the SQL table definitions.
         logger.info("Initializing CurrentProcessingPipelineTable")
+
         transaction {
             val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
                 backendConfig.organisms.keys,

@@ -35,6 +35,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
@@ -126,7 +127,12 @@ class SubmissionDatabaseService(
 ) {
 
     init {
-        Database.connect(pool)
+        // TODO ?
+        log.info{"--------------maybe connecting to db------------------------"}
+        if (TransactionManager.defaultDatabase == null) {
+            log.info{"--------------actually connecting to db------------------------"}
+            Database.connect(pool)
+        }
     }
 
     private var lastPreprocessedDataUpdate: String? = null
