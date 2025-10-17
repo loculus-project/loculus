@@ -2,66 +2,69 @@ package org.loculus.backend.db.migration
 
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.service.submission.CompressionDictService
 import org.springframework.stereotype.Component
-import java.security.MessageDigest
 
 @Component
 class V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
     private val backendConfig: BackendConfig,
+    private val compressionDictService: CompressionDictService
 ) : BaseJavaMigration() {
 
     override fun migrate(context: Context) {
-        println("--------------------------- Migrating V3_Migration -------------------------------")
+        println("---------------------------  V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
         println(backendConfig)
 
-//        val connection = context.connection
-//
-//        connection.prepareStatement("""
-//            INSERT INTO dict_table (id, hash, dict_contents)
-//            VALUES (?, ?, ?)
-//            ON CONFLICT (hash) DO NOTHING
-//        """).use { insertStmt ->
-//
-//            // Insert dictionaries for aligned sequences (genes/segments)
-//            backendConfig.organismSchemas.forEach { organismSchema ->
-//                organismSchema.referenceSequences.forEach { referenceSequence ->
-//                    val dict = referenceSequence.sequence
-//                    val hash = md5(dict)
-//                    val id = generateDictId(organismSchema.organism, referenceSequence.name)
-//
-//                    insertStmt.setString(1, id)
-//                    insertStmt.setString(2, hash)
-//                    insertStmt.setString(3, dict)
-//                    insertStmt.addBatch()
-//                }
-//
-//                // Insert dictionary for unaligned sequences
-//                val unalignedDict = organismSchema.nucSequences.joinToString("") { it.sequence }
-//                val hash = md5(unalignedDict)
-//                val id = generateUnalignedDictId(organismSchema.organism)
-//
-//                insertStmt.setString(1, id)
-//                insertStmt.setString(2, hash)
-//                insertStmt.setString(3, unalignedDict)
-//                insertStmt.addBatch()
-//            }
-//
-//            insertStmt.executeBatch()
-//        }
-    }
+        val db = Database.connect(context.configuration.dataSource)
 
-    private fun md5(input: String): String {
-        val md = MessageDigest.getInstance("MD5")
-        val digest = md.digest(input.toByteArray())
-        return digest.joinToString("") { "%02x".format(it) }
-    }
+        // TODO vibe wip - check!
+        transaction(db) {
+            for ((organism, instanceConfig) in backendConfig.organisms) {
+                // Migrate unaligned sequences
+                val unalignedDictEntry = compressionDictService.getDictForUnalignedSequence(Organism(organism))
+                    ?: throw RuntimeException("No unaligned dict found for organism: $organism")
 
-    private fun generateDictId(organism: String, segmentOrGene: String): String {
-        return "${organism}_${segmentOrGene}"
-    }
+                exec(
+                    """
+                    UPDATE sequence_entries_preprocessed
+                    SET compression_dict_id = ?
+                    WHERE organism = ?
+                    """.trimIndent(),
+                    listOf(unalignedDictEntry.id, organism)
+                ) { }
 
-    private fun generateUnalignedDictId(organism: String): String {
-        return "${organism}_unaligned"
+                println("Migrated unaligned sequences for organism: $organism with dict_id: ${unalignedDictEntry.id}")
+
+                // Migrate aligned sequences (segments and genes)
+                val segmentsAndGenes =
+                    instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
+
+                for (referenceSequence in segmentsAndGenes) {
+                    val dictEntry = compressionDictService.getDictForSegmentOrGene(
+                        Organism(organism),
+                        referenceSequence.name
+                    ) ?: throw RuntimeException(
+                        "No dict found for organism: $organism, segment/gene: ${referenceSequence.name}"
+                    )
+
+                    exec(
+                        """
+                        UPDATE sequence_entries
+                        SET compression_dict_id = ?
+                        WHERE organism = ? AND segment_name = ?
+                        """.trimIndent(),
+                        listOf(dictEntry.id, organism, referenceSequence.name)
+                    ) { }
+
+                    println("Migrated aligned sequences for organism: $organism, segment/gene: ${referenceSequence.name} with dict_id: ${dictEntry.id}")
+                }
+            }
+        }
+
+        println("--------------------------- End V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
     }
 }
