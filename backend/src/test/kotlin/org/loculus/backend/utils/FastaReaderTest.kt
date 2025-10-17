@@ -18,12 +18,12 @@ class FastaReaderTest {
             CCCGGG
         """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
-        assert(parsed.size == 3)
-        assert(parsed[0].sampleName.equals("seq1"))
-        assert(parsed[0].sequence.equals("AAATTT"))
-        assert(parsed[1].sampleName.equals("seq2"))
+        assert(parsed.size==3)
+        assert(parsed[0].fastaId.equals("seq1"))
+        assert(parsed[0].fastaId.equals("AAATTT"))
+        assert(parsed[1].fastaId.equals("seq2"))
         assert(parsed[1].sequence.equals("TTTCCC"))
-        assert(parsed[2].sampleName.equals("seq3"))
+        assert(parsed[2].fastaId.equals("seq3"))
         assert(parsed[2].sequence.equals("CCCGGG"))
     }
 
@@ -34,7 +34,7 @@ class FastaReaderTest {
             CCCGGG
         """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
-        assert(parsed[0].sampleName.equals("seq1"))
+        assert(parsed[0].fastaId.equals("seq1"))
     }
 
     @Test
@@ -44,7 +44,7 @@ class FastaReaderTest {
             CCCGGG
         """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
-        assert(parsed[0].sampleName.equals("seq1"))
+        assert(parsed[0].fastaId.equals("seq1"))
     }
 
     @Test

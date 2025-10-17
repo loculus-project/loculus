@@ -3,37 +3,52 @@ package org.loculus.backend.utils
 import org.apache.commons.csv.CSVFormat
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
-import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
-import org.loculus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT
+import org.loculus.backend.model.FASTA_ID_HEADER
+import org.loculus.backend.model.FastaId
+import org.loculus.backend.model.METADATA_ID_HEADER
+import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
 import org.loculus.backend.model.SubmissionId
 import java.io.InputStream
 import java.io.InputStreamReader
 
-data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
+data class MetadataEntry(
+    val submissionId: SubmissionId,
+    val metadata: Map<String, String>,
+    val fastaIds: List<FastaId>? = null,
+)
 
 fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     val submissionIdHeaders = listOf(
-        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
-        HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT,
+        METADATA_ID_HEADER,
+        METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT,
     ).filter { headerNames.contains(it) }
 
     when {
         submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
-            "The metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
+            "The metadata file does not contain either header '$METADATA_ID_HEADER' or '$METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT'",
         )
+
         submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
-            "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
+            "The metadata file contains both '$METADATA_ID_HEADER' and '$METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )
     }
     return submissionIdHeaders.first()
 }
 
-fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
+fun findAndValidateFastaIdHeader(headerNames: List<String>, submissionIdHeader: String): String {
+    if (!headerNames.contains(FASTA_ID_HEADER)) {
+        return submissionIdHeader
+    }
+    return FASTA_ID_HEADER
+}
+
+fun metadataEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds: Boolean = true): Sequence<MetadataEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
         .parse(InputStreamReader(metadataInputStream))
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
+    val fastaIdHeader = findAndValidateFastaIdHeader(headerNames, submissionIdHeader)
 
     return csvParser.asSequence().map { record ->
         val submissionId = record[submissionIdHeader]
@@ -49,8 +64,23 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
             )
         }
 
-        val metadata = record.toMap().filterKeys { it != submissionIdHeader }
-        MetadataEntry(submissionId, metadata)
+        var fastaIds: List<FastaId>? = null
+
+        if (addFastaIds) {
+            val fastaId = record[fastaIdHeader]
+            if (fastaId.isNullOrEmpty()) {
+                throw UnprocessableEntityException(
+                    "A row in metadata file contains no $fastaIdHeader: $record",
+                )
+            }
+
+            fastaIds = fastaId.split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        }
+
+        val metadata = record.toMap().filterKeys { it!=submissionIdHeader }
+        MetadataEntry(submissionId, metadata, fastaIds)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
             throw UnprocessableEntityException(
@@ -60,14 +90,15 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     }
 }
 
-data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
+data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>, val fastaIds: List<FastaId>? = null)
 
-fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
+fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds: Boolean): Sequence<RevisionEntry> {
     val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
         .parse(InputStreamReader(metadataInputStream))
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
+    val fastaIdHeader = findAndValidateFastaIdHeader(headerNames, submissionIdHeader)
 
     if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(
@@ -90,8 +121,23 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
             )
         }
 
-        val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != ACCESSION_HEADER }
-        RevisionEntry(submissionId, accession, metadata)
+        var fastaIds: List<FastaId>? = null
+
+        if (addFastaIds) {
+            val fastaId = record[fastaIdHeader]
+            if (fastaId.isNullOrEmpty()) {
+                throw UnprocessableEntityException(
+                    "A row in metadata file contains no $fastaIdHeader: $record",
+                )
+            }
+
+            fastaIds = fastaId.split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        }
+
+        val metadata = record.toMap().filterKeys { it!=submissionIdHeader && it!=ACCESSION_HEADER }
+        RevisionEntry(submissionId, accession, metadata, fastaIds)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
             throw UnprocessableEntityException(

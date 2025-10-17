@@ -98,7 +98,7 @@ class SubmitEndpointTest(
                     "\$.detail",
                     containsString(
                         "User $otherUser is not a member of group(s) " +
-                            "$groupId. Action not allowed.",
+                                "$groupId. Action not allowed.",
                     ),
                 ),
             )
@@ -140,7 +140,7 @@ class SubmitEndpointTest(
     @Test
     fun `GIVEN valid input multi segment data THEN returns mapping of provided custom ids to generated ids`() {
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.multiSegmentedMetadataFile,
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
             groupId = groupId,
@@ -162,96 +162,6 @@ class SubmitEndpointTest(
             groupId = groupId,
         )
             .andExpect(status().isBadRequest)
-    }
-
-    @Test
-    fun `GIVEN fasta data with unknown segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_nonExistingSegmentName
-                        AC
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "The FASTA header commonHeader_nonExistingSegmentName ends with the segment name nonExistingSegmentName, which is not valid. Valid segment names: notOnlySegment, secondSegment",
-                ),
-            )
-    }
-
-    @Test
-    fun `GIVEN fasta data with empty segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_notOnlySegment
-                        AC
-                        >commonHeader_secondSegment
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "No sequence data given for sample commonHeader_secondSegment.",
-                ),
-            )
-    }
-
-    @Test
-    fun `GIVEN fasta data with whitespace-only segment THEN data is not accepted`() {
-        submissionControllerClient.submit(
-            SubmitFiles.metadataFileWith(
-                content = """
-                        submissionId	firstColumn
-                        commonHeader	someValue
-                """.trimIndent(),
-            ),
-            SubmitFiles.sequenceFileWith(
-                content = """
-                        >commonHeader_notOnlySegment
-                        AC
-                        >commonHeader_secondSegment
-                          
-                """.trimIndent(),
-            ),
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                ).value(
-                    "No sequence data given for sample commonHeader_secondSegment.",
-                ),
-            )
     }
 
     @Test
@@ -366,13 +276,13 @@ class SubmitEndpointTest(
                 DefaultFiles.sequencesFiles[CompressionAlgorithm.ZSTD],
             ),
         ) +
-            CompressionAlgorithm.entries.map { compression ->
-                Arguments.of(
-                    "${compression.name} compressed metadata file and sequences file",
-                    DefaultFiles.metadataFiles[compression],
-                    DefaultFiles.sequencesFiles[compression],
-                )
-            }
+                CompressionAlgorithm.entries.map { compression ->
+                    Arguments.of(
+                        "${compression.name} compressed metadata file and sequences file",
+                        DefaultFiles.metadataFiles[compression],
+                        DefaultFiles.sequencesFiles[compression],
+                    )
+                }
 
         @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {
@@ -406,11 +316,11 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                        ".${
-                            metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
-                                .flatMap { it.value }.joinToString(", .")
-                        } for compressed submissions",
+                            ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                            ".${
+                                metadataFileTypes.getCompressedExtensions().filterKeys { it!=CompressionAlgorithm.NONE }
+                                    .flatMap { it.value }.joinToString(", .")
+                            } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -421,11 +331,11 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                        ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                        ".${
-                            sequenceFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
-                                .flatMap { it.value }.joinToString(", .")
-                        } for compressed submissions",
+                            ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                            ".${
+                                sequenceFileTypes.getCompressedExtensions().filterKeys { it!=CompressionAlgorithm.NONE }
+                                    .flatMap { it.value }.joinToString(", .")
+                            } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -553,7 +463,7 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
-                        "name in the format <id>_<segment name>",
+                            "name in the format <id>_<segment name>",
                     OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),

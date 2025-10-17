@@ -5,7 +5,7 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 
-data class FastaEntry(val sampleName: String, val sequence: String)
+data class FastaEntry(val fastaId: String, val sequence: String)
 
 class FastaReader(inputStream: InputStream) :
     Iterator<FastaEntry>,
@@ -19,7 +19,7 @@ class FastaReader(inputStream: InputStream) :
         read()
     }
 
-    override fun hasNext(): Boolean = nextEntry != null
+    override fun hasNext(): Boolean = nextEntry!=null
 
     override fun next(): FastaEntry {
         val entry = nextEntry ?: throw NoSuchElementException("No element available")
@@ -28,10 +28,10 @@ class FastaReader(inputStream: InputStream) :
     }
 
     private fun read() {
-        var sampleName: String? = null
+        var fastaId: String? = null
         val sequence = StringBuilder()
         while (true) {
-            if (nextLine == null) {
+            if (nextLine==null) {
                 break
             }
             if (nextLine!!.isBlank()) {
@@ -39,22 +39,22 @@ class FastaReader(inputStream: InputStream) :
                 continue
             }
             if (nextLine!!.startsWith(">")) {
-                if (sampleName != null) {
+                if (fastaId!=null) {
                     break
                 }
-                sampleName = nextLine!!.substring(1).split("\\s+".toRegex())[0]
+                fastaId = nextLine!!.substring(1).split("\\s+".toRegex())[0]
             } else {
                 sequence.append(nextLine)
             }
             nextLine = reader.readLine()
         }
-        nextEntry = if (sampleName == null) {
+        nextEntry = if (fastaId==null) {
             null
         } else {
             if (sequence.isEmpty()) {
-                throw UnprocessableEntityException("No sequence data given for sample $sampleName.")
+                throw UnprocessableEntityException("No sequence data given for sample $fastaId.")
             }
-            FastaEntry(sampleName, sequence.toString())
+            FastaEntry(fastaId, sequence.toString())
         }
     }
 

@@ -25,22 +25,19 @@ enum class CompressionAlgorithm(val extension: String) {
 @Service
 class CompressionService(private val backendConfig: BackendConfig) {
 
-    fun compressNucleotideSequence(
-        uncompressedSequence: GeneticSequence,
-        segmentName: String,
-        organism: Organism,
-    ): CompressedSequence = compress(
-        uncompressedSequence,
-        getDictionaryForNucleotideSequenceSegment(segmentName, organism),
-    )
+    // TODO: this requires a compression migration!!!
+    fun compressNucleotideSequence(uncompressedSequence: GeneticSequence, organism: Organism): CompressedSequence =
+        compress(
+            uncompressedSequence,
+            getDictionaryForNucleotideSequences(organism),
+        )
 
     private fun decompressNucleotideSequence(
         compressedSequence: CompressedSequence,
-        segmentName: String,
         organism: Organism,
     ): GeneticSequence = decompress(
         compressedSequence,
-        getDictionaryForNucleotideSequenceSegment(segmentName, organism),
+        getDictionaryForNucleotideSequences(organism),
     )
 
     private fun compressAminoAcidSequence(
@@ -68,7 +65,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
                 .unalignedNucleotideSequences.mapValues {
                     when (val compressedSequence = it.value) {
                         null -> null
-                        else -> decompressNucleotideSequence(compressedSequence, it.key, organism)
+                        else -> decompressNucleotideSequence(compressedSequence, organism)
                     }
                 },
             originalData.files,
@@ -80,7 +77,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> compressNucleotideSequence(sequenceData, organism)
                 }
             },
         originalData.files,
@@ -93,13 +90,13 @@ class CompressionService(private val backendConfig: BackendConfig) {
                 .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                     when (sequenceData) {
                         null -> null
-                        else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
+                        else -> decompressNucleotideSequence(sequenceData, organism)
                     }
                 },
             processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> decompressNucleotideSequence(sequenceData, organism)
                 }
             },
             processedData.nucleotideInsertions,
@@ -119,13 +116,13 @@ class CompressionService(private val backendConfig: BackendConfig) {
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> compressNucleotideSequence(sequenceData, organism)
                 }
             },
         processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
             when (sequenceData) {
                 null -> null
-                else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                else -> compressNucleotideSequence(sequenceData, organism)
             }
         },
         processedData.nucleotideInsertions,
@@ -144,7 +141,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
         val compressBound = Zstd.compressBound(input.size.toLong()).toInt()
         val outputBuffer = ByteArray(compressBound)
 
-        val compressionReturnCode: Long = if (dictionary == null) {
+        val compressionReturnCode: Long = if (dictionary==null) {
             Zstd.compress(outputBuffer, input, 3)
         } else {
             Zstd.compress(outputBuffer, input, dictionary, 3)
@@ -166,7 +163,7 @@ class CompressionService(private val backendConfig: BackendConfig) {
             throw RuntimeException("reading Zstd decompressed size failed: error code $decompressedSize")
         }
         val decompressedBuffer = ByteArray(decompressedSize.toInt())
-        val decompressionReturnCode: Long = if (dictionary == null) {
+        val decompressionReturnCode: Long = if (dictionary==null) {
             Zstd.decompress(decompressedBuffer, compressed)
         } else {
             Zstd.decompress(decompressedBuffer, compressed, dictionary)
@@ -177,14 +174,10 @@ class CompressionService(private val backendConfig: BackendConfig) {
         return String(decompressedBuffer, 0, decompressionReturnCode.toInt(), StandardCharsets.UTF_8)
     }
 
-    private fun getDictionaryForNucleotideSequenceSegment(segmentName: String, organism: Organism): ByteArray? =
-        backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .getNucleotideSegmentReference(
-                segmentName,
-            )
-            ?.toByteArray()
+    private fun getDictionaryForNucleotideSequences(organism: Organism): ByteArray? = backendConfig
+        .getInstanceConfig(organism)
+        .referenceGenome.allSegmentsConcatenated()
+        ?.toByteArray()
 
     private fun getDictionaryForAminoAcidSequence(geneName: String, organism: Organism): ByteArray? = backendConfig
         .getInstanceConfig(organism)
