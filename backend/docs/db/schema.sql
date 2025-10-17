@@ -489,9 +489,7 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.processed_data,
     (sepd.processed_data || em.joint_metadata) AS joint_metadata,
         CASE
-            WHEN se.is_revocation THEN ( SELECT current_processing_pipeline.version
-               FROM public.current_processing_pipeline
-              WHERE (current_processing_pipeline.organism = se.organism))
+            WHEN se.is_revocation THEN ccp.version
             ELSE sepd.pipeline_version
         END AS pipeline_version,
     sepd.errors,
@@ -510,16 +508,20 @@ CREATE VIEW public.sequence_entries_view AS
             ELSE 'NO_ISSUES'::text
         END AS processing_result
    FROM (((public.sequence_entries se
-     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ( SELECT current_processing_pipeline.version
-           FROM public.current_processing_pipeline
-          WHERE (current_processing_pipeline.organism = ( SELECT se_1.organism
-                   FROM public.sequence_entries se_1
-                  WHERE ((se_1.accession = sepd.accession) AND (se_1.version = sepd.version)))))))))
-     LEFT JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
+     LEFT JOIN public.current_processing_pipeline ccp ON ((ccp.organism = se.organism)))
+     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ccp.version))))
      LEFT JOIN public.external_metadata_view em ON (((se.accession = em.accession) AND (se.version = em.version))));
 
 
 ALTER VIEW public.sequence_entries_view OWNER TO postgres;
+
+--
+-- Name: VIEW sequence_entries_view; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON VIEW public.sequence_entries_view IS 'Optimized view that joins current_processing_pipeline early to avoid correlated subqueries. 
+This reduces the number of pipeline lookups from O(n) to O(organisms).';
+
 
 --
 -- Name: sequence_upload_aux_table; Type: TABLE; Schema: public; Owner: postgres
@@ -757,6 +759,55 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: idx_se_group_organism; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_se_group_organism ON public.sequence_entries USING btree (group_id, organism);
+
+
+--
+-- Name: idx_se_organism_not_released; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_se_organism_not_released ON public.sequence_entries USING btree (organism, submitter) WHERE ((released_at IS NULL) AND (NOT is_revocation));
+
+
+--
+-- Name: idx_se_organism_released_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_se_organism_released_at ON public.sequence_entries USING btree (organism, released_at) WHERE (released_at IS NOT NULL);
+
+
+--
+-- Name: INDEX idx_se_organism_released_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_se_organism_released_at IS 'Optimizes COUNT(*) queries filtering by status=APPROVED_FOR_RELEASE and organism';
+
+
+--
+-- Name: idx_se_organism_submitter; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_se_organism_submitter ON public.sequence_entries USING btree (organism, submitter);
+
+
+--
+-- Name: idx_sepd_lookup; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_sepd_lookup ON public.sequence_entries_preprocessed_data USING btree (accession, version, pipeline_version);
+
+
+--
+-- Name: INDEX idx_sepd_lookup; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_sepd_lookup IS 'Optimizes the JOIN between sequence_entries and sequence_entries_preprocessed_data';
 
 
 --
