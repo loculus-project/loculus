@@ -28,7 +28,7 @@ class SubmitEndpointSingleSegmentedTest(
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
 ) {
     @Test
-    fun `GIVEN valid input data without segment name THEN data is accepted and shows segment name 'main'`() {
+    fun `GIVEN valid input data THEN data is accepted and shows fastaID`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
         submissionControllerClient.submit(
@@ -60,7 +60,7 @@ class SubmitEndpointSingleSegmentedTest(
             .data
             .unalignedNucleotideSequences
 
-        assertThat(unalignedNucleotideSequences, hasEntry(DEFAULT_SEQUENCE_NAME, "AC"))
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
     }
 
     @Test

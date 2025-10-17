@@ -1,11 +1,11 @@
 accession	submissionId	date	region	country	division	host	fastaId
-1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	custom0_notOnlySegment,custom0_secondSegment
+1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	custom0_notOnlySegment
 2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	custom1_notOnlySegment,custom1_secondSegment
-3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	custom2_notOnlySegment,custom2_secondSegment
-4	custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens	custom3_notOnlySegment,custom3_secondSegment
+3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	custom2_notOnlySegment
+4	custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens	custom3_notOnlySegment
 5	custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens	custom4_notOnlySegment,custom4_secondSegment
 6	custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens	custom5_notOnlySegment,custom5_secondSegment
-7	custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom6_notOnlySegment,custom6_secondSegment
-8	custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens	custom7_notOnlySegment,custom7_secondSegment
-9	custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom8_notOnlySegment,custom8_secondSegment
-10	custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	custom9_notOnlySegment,custom9_secondSegment
+7	custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom6_notOnlySegment
+8	custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens	custom7_notOnlySegment
+9	custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom8_secondSegment
+10	custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	custom9_secondSegment

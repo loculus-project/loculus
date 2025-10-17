@@ -7,5 +7,5 @@ custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens	custom4_notOnlySegmen
 custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens	custom5_notOnlySegment,custom5_secondSegment
 custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom6_notOnlySegment
 custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens	custom7_notOnlySegment
-custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom8_notOnlySegment
-custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	custom9_notOnlySegment,custom9_secondSegment
+custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	custom8_secondSegment
+custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	custom9_secondSegment
