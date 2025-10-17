@@ -678,6 +678,12 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
+                    },
+                    "backend_request_timeout": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Timeout in seconds for requests to the backend server for data to process"
                     }
                   },
                   "required": ["method"]
