@@ -369,8 +369,8 @@ class SubmitModel(
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} Fasta ids that are not associated with a " +
-                    "metadata entry in the metadata file: " +
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} Fasta ids that are not present " +
+                    "in the metadata file: " +
                     sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""

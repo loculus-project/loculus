@@ -583,7 +583,7 @@ class ReviseEndpointTest(
                 ),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
+                "Sequence file contains 1 Fasta ids that are not present in the metadata file: notInMetadata",
             ),
             Arguments.of(
                 "sequence file misses submissionIds",
