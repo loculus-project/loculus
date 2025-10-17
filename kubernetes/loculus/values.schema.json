@@ -679,7 +679,7 @@
                       "type": "string",
                       "description": "Required if method is minimizer"
                     },
-                    "backend_request_timeout": {
+                    "backend_request_timeout_seconds": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "integer",
