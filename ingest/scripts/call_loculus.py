@@ -113,7 +113,7 @@ def submit_to_loculus(
             logger.info("Approving sequences")
             response = approve(config)
             logger.info(f"Approved: {len(response)} sequences")
-            sleep(30)
+            sleep(config.time_between_approve_requests_seconds)
             if datetime.now(tz=pytz.utc) - timedelta(minutes=approve_timeout) > _start_time:
                 break
 
