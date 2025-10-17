@@ -156,6 +156,31 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revised data with duplicate accessions THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
+            it.accession
+        }
+
+        client.reviseSequenceEntries(
+            SubmitFiles.revisedMetadataFileWith(
+                content =
+                """
+                 accession	submissionId	firstColumn
+                    ${accessions.first()}	someHeader_main	someValue
+                    ${accessions.first()}	someHeader2_main	someOtherValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(),
+        ).andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Duplicate accession found: ${accessions.first()}",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM).map {
             it.accession
@@ -210,7 +235,7 @@ class ReviseEndpointTest(
                     "\$.detail",
                     containsString(
                         "Accession versions are not in one of the states [APPROVED_FOR_RELEASE]: " +
-                            "${accessions.first()}.1 - PROCESSED,",
+                                "${accessions.first()}.1 - PROCESSED,",
                     ),
                 ),
             )
@@ -293,11 +318,11 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf(
-                        "myFileCategory" to listOf(
-                            FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                        mapOf(
+                            "myFileCategory" to listOf(
+                                FileIdAndName(fileIdAndUrl.fileId, "foo.txt"),
+                            ),
                         ),
-                    ),
             ),
         )
             .andExpect(status().isOk)
@@ -315,13 +340,13 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
             fileMapping = mapOf(
                 "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+                        mapOf(
+                            "myFileCategory" to
+                                    listOf(
+                                        FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                        FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                    ),
+                        ),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -345,12 +370,12 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
             fileMapping = mapOf(
                 "foo" to
-                    mapOf(
-                        "unknownCategory" to
-                            listOf(
-                                FileIdAndName(UUID.randomUUID(), "foo.txt"),
-                            ),
-                    ),
+                        mapOf(
+                            "unknownCategory" to
+                                    listOf(
+                                        FileIdAndName(UUID.randomUUID(), "foo.txt"),
+                                    ),
+                        ),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -381,12 +406,12 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
             fileMapping = mapOf(
                 "foo" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileId, "foo.txt"),
-                            ),
-                    ),
+                        mapOf(
+                            "myFileCategory" to
+                                    listOf(
+                                        FileIdAndName(fileId, "foo.txt"),
+                                    ),
+                        ),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -438,12 +463,12 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFile,
             fileMapping = mapOf(
                 "custom0" to
-                    mapOf(
-                        "myFileCategory" to
-                            listOf(
-                                FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
-                            ),
-                    ),
+                        mapOf(
+                            "myFileCategory" to
+                                    listOf(
+                                        FileIdAndName(fileIdAndUrls.fileId, "foo.txt"),
+                                    ),
+                        ),
             ),
         )
             .andExpect(status().isOk)

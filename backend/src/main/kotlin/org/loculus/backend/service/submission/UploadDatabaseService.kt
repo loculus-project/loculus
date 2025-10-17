@@ -16,6 +16,8 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.controller.UnprocessableEntityException
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
@@ -86,6 +88,22 @@ class UploadDatabaseService(
         }
     }
 
+    private val RX_PG_KEY_DETAIL =
+        Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
+
+    fun ExposedSQLException.extractDuplicateAccession(): String? {
+        val text = this.cause?.message ?: this.message ?: return null
+        val match = RX_PG_KEY_DETAIL.find(text) ?: return null
+
+        val cols = match.groups["cols"]?.value?.split(",")?.map { it.trim() } ?: return null
+        val vals = match.groups["vals"]?.value?.split(",")?.map { it.trim() } ?: return null
+
+        val idx = cols.indexOf("accession")
+        if (idx >= 0 && idx < vals.size) return vals[idx]
+
+        return vals.lastOrNull()
+    }
+
     fun batchInsertRevisedMetadataInAuxTable(
         uploadId: String,
         authenticatedUser: AuthenticatedUser,
@@ -94,17 +112,24 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch) {
-                this[accessionColumn] = it.accession
-                this[submitterColumn] = authenticatedUser.username
-                this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
-                this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
-                this[organismColumn] = submittedOrganism.name
-                this[uploadIdColumn] = uploadId
+        try {
+            uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+                MetadataUploadAuxTable.batchInsert(batch) {
+                    this[accessionColumn] = it.accession
+                    this[submitterColumn] = authenticatedUser.username
+                    this[uploadedAtColumn] = uploadedAt
+                    this[submissionIdColumn] = it.submissionId
+                    this[metadataColumn] = it.metadata
+                    this[filesColumn] = files?.get(it.submissionId)
+                    this[organismColumn] = submittedOrganism.name
+                    this[uploadIdColumn] = uploadId
+                }
             }
+        } catch (e: ExposedSQLException) {
+            log.error { "Error inserting revised metadata in aux table: ${e.message}" }
+            val duplicateAccession = e.extractDuplicateAccession()
+                ?: throw UnprocessableEntityException("Error inserting revised metadata in aux table - please contact an administrator.")
+            throw UnprocessableEntityException("Duplicate accession found: $duplicateAccession")
         }
     }
 
@@ -243,7 +268,7 @@ class UploadDatabaseService(
         auditLogger.log(
             username = submissionParams.authenticatedUser.username,
             description = "Submitted or revised ${insertionResult.size} sequences: " +
-                insertionResult.joinToString { it.displayAccessionVersion() },
+                    insertionResult.joinToString { it.displayAccessionVersion() },
         )
 
         return@transaction insertionResult
@@ -313,7 +338,7 @@ class UploadDatabaseService(
             generateAccessionFromNumberService.generateCustomId(it)
         }
 
-        if (submissionIds.size != nextAccessions.size) {
+        if (submissionIds.size!=nextAccessions.size) {
             throw IllegalStateException(
                 "Mismatched sizes: accessions=${submissionIds.size}, nextAccessions=${nextAccessions.size}",
             )
