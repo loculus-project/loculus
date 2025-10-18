@@ -11,7 +11,7 @@ val defaultOriginalData = OriginalData(
         "country" to "Switzerland",
         "division" to "Bern",
     ),
-    mapOf("main" to "ACTG"),
+    mapOf("custom0" to "ACTG"),
 )
 
 val emptyOriginalData = OriginalData<GeneticSequence>(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())

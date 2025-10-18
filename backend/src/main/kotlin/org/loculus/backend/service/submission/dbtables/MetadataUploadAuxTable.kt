@@ -13,6 +13,7 @@ object MetadataUploadAuxTable : Table(METADATA_UPLOAD_AUX_TABLE_NAME) {
     val uploadIdColumn = varchar("upload_id", 255)
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
+    val fastaIdsColumn = jacksonSerializableJsonb<List<String>>("fasta_ids").nullable()
     val submitterColumn = varchar("submitter", 255)
     val groupIdColumn = integer("group_id").nullable()
     val uploadedAtColumn = datetime("uploaded_at")

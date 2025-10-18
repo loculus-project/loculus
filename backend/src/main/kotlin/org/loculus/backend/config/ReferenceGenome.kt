@@ -15,6 +15,8 @@ data class ReferenceGenome(val nucleotideSequences: List<ReferenceSequence>, val
         return "ReferenceGenome(nucleotideSequences=[$nucleotideSequencesString], genes=[$genesString])"
     }
 
+    fun allSegmentsConcatenated(): String = nucleotideSequences.joinToString(separator = "") { it.sequence }
+
     fun getNucleotideSegmentReference(segmentName: String): GeneticSequence? = nucleotideSequences
         .find { it.name == segmentName }
         ?.sequence
