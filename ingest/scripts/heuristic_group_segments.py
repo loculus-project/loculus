@@ -204,15 +204,18 @@ def main(
         # e.g. AF1234_S/AF1235_M/AF1236_L
         # Sort the segments per config.nucleotide_sequences
         row = {}
-        segments_list = [
+        joint_key = "/".join(
+            [
                 f"{group[segment]}.{segment}"
                 for segment in config.nucleotide_sequences
                 if segment in group
             ]
-        joint_key = "/".join(
-            segments_list
         )
-        segments_list_str = ", ".join(segments_list)
+        segments_list_str = ", ".join([
+                f"{group[segment]}.{segment}_{segment}"
+                for segment in config.nucleotide_sequences
+                if segment in group
+            ])
         for segment, accession in group.items():
             fasta_id_map[accession] = f"{joint_key}_{segment}"
 
