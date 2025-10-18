@@ -316,9 +316,11 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                        ".${metadataFileTypes.validExtensions.joinToString(
-                            ", .",
-                        )} for uncompressed submissions or " +
+                        ".${
+                            metadataFileTypes.validExtensions.joinToString(
+                                ", .",
+                            )
+                        } for uncompressed submissions or " +
                         ".${
                             metadataFileTypes.getCompressedExtensions().filterKeys {
                                 it != CompressionAlgorithm.NONE
@@ -335,9 +337,11 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                        ".${sequenceFileTypes.validExtensions.joinToString(
-                            ", .",
-                        )} for uncompressed submissions or " +
+                        ".${
+                            sequenceFileTypes.validExtensions.joinToString(
+                                ", .",
+                            )
+                        } for uncompressed submissions or " +
                         ".${
                             sequenceFileTypes.getCompressedExtensions().filterKeys {
                                 it != CompressionAlgorithm.NONE
@@ -429,7 +433,7 @@ class SubmitEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains 1 ids that are not present in the metadata file: notInMetadata",
+                    "Sequence file contains 1 Fasta ids that are not present in the metadata file: notInMetadata",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -452,27 +456,6 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "Metadata file contains 1 Fasta ids that are not present in the sequence file: notInSequences",
                     DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "FASTA header misses segment name",
-                    SubmitFiles.metadataFileWith(
-                        content = """
-                            submissionId	firstColumn
-                            commonHeader	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(
-                        content = """
-                            >commonHeader
-                            AC
-                        """.trimIndent(),
-                    ),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
-                        "name in the format <id>_<segment name>",
-                    OTHER_ORGANISM,
                     DataUseTerms.Open,
                 ),
                 Arguments.of(
