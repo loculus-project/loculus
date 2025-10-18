@@ -236,9 +236,11 @@ class UploadDatabaseService(
             LEFT JOIN
                 sequence_upload_aux_table
                 ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND sequence_upload_aux_table.fasta_id IN (
-                    SELECT jsonb_array_elements_text(metadata_upload_aux_table.fasta_ids)
-                )
+                AND EXISTS (
+                 SELECT 1
+                 FROM jsonb_array_elements_text(metadata_upload_aux_table.fasta_ids) v(value)
+                 WHERE v.value = sequence_upload_aux_table.fasta_id
+               )
             WHERE metadata_upload_aux_table.upload_id = ?
             GROUP BY
                 metadata_upload_aux_table.upload_id,
