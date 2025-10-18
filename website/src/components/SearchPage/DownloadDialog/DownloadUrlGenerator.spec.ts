@@ -26,7 +26,7 @@ describe('DownloadUrlGenerator', () => {
         const generator = new DownloadUrlGenerator(organism, lapisUrl, dataUseTermsEnabled);
 
         const result = generator.generateDownloadUrl(FieldFilterSet.empty(), {
-            dataType: { type: 'unalignedNucleotideSequences' },
+            dataType: { type: 'unalignedNucleotideSequences', richFastaHeaders: { include: false } },
             includeRestricted: false,
             compression: undefined,
             fields: ['field1', 'field2', 'field3'],
