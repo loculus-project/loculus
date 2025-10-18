@@ -19,7 +19,7 @@ private const val DEFAULT_MULTI_SEGMENTED_METADATA_FILE_NAME = "metadata_multi_s
 private const val REVISED_METADATA_FILE_NAME = "revised_metadata.tsv"
 private const val REVISED_MULTI_SEGMENTED_METADATA_FILE_NAME = "revised_metadata_multi_segment.tsv"
 private const val DEFAULT_SEQUENCES_FILE_NAME = "sequences.fasta"
-private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
+private const val DEFAULT_MULTI_SEGMENTED_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
 
 object SubmitFiles {
 
@@ -77,15 +77,15 @@ object SubmitFiles {
                 compression = it,
             )
         }
-        private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
+        private val metadataFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
             metadataFileWith(
                 content = getFileContent(DEFAULT_MULTI_SEGMENTED_METADATA_FILE_NAME),
                 compression = it,
             )
         }
-        private val metadataFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
+        private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
             sequenceFileWith(
-                content = getFileContent(DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME),
+                content = getFileContent(DEFAULT_MULTI_SEGMENTED_SEQUENCES_FILE_NAME),
                 compression = it,
             )
         }

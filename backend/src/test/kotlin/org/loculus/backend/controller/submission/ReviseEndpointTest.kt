@@ -131,6 +131,41 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `GIVEN revision of multi-segmented entries with status 'APPROVED_FOR_RELEASE' THEN successful`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMultiSegmentedMetadataFile(accessions),
+            DefaultFiles.sequencesFileMultiSegmented,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+            .assertStatusIs(RECEIVED)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
+
+        val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody, hasSize(10))
+
+        assertThat(
+            responseBody,
+            hasItem(
+                allOf(
+                    hasProperty<UnprocessedData>("accession", `is`(accessions.first())),
+                    hasProperty("version", `is`(2L)),
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun `WHEN submitting revised data with non-existing accessions THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
             it.accession
