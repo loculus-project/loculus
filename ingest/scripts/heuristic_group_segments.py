@@ -204,13 +204,15 @@ def main(
         # e.g. AF1234_S/AF1235_M/AF1236_L
         # Sort the segments per config.nucleotide_sequences
         row = {}
-        joint_key = "/".join(
-            [
+        segments_list = [
                 f"{group[segment]}.{segment}"
                 for segment in config.nucleotide_sequences
                 if segment in group
             ]
+        joint_key = "/".join(
+            segments_list
         )
+        segments_list_str = ", ".join(segments_list)
         for segment, accession in group.items():
             fasta_id_map[accession] = f"{joint_key}_{segment}"
 
@@ -233,14 +235,16 @@ def main(
                 )
 
         row["id"] = joint_key
+        row["fastaId"] = segments_list_str
 
         # Hash of all metadata fields should be the same if
         # 1. field is not in keys_to_keep and
         # 2. field is in keys_to_keep but is "" or None
         filtered_record = {k: str(v) for k, v in row.items() if v is not None and str(v)}
 
-        # rename "id" to "submissionId" for back-compatibility with old hashes
+        # rename "id" to "submissionId" and ignore fastaId for back-compatibility with old hashes
         filtered_record["submissionId"] = filtered_record.pop("id")
+        filtered_record.pop("fastaId", None)
 
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
