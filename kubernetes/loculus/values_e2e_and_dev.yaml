@@ -9,7 +9,7 @@ secrets:
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
-disableEnaSubmission: true
+disableEnaSubmission: false
 auth:
   verifyEmail: false
 host: localhost:3000
