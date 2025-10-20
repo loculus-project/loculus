@@ -921,7 +921,7 @@ def trigger_retry_if_exists(
             continue
 
         logger.info(
-            f"Retrying submission {key_fields} in {table_name} with error substring '{error_substring}'"
+            f"Retrying submission {key_fields} in {table_name} with error: '{entry.get('errors')}'"
         )
 
         conditions = {field: entry[field] for field in key_fields}
