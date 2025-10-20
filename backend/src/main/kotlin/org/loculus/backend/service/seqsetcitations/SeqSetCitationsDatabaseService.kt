@@ -458,13 +458,16 @@ class SeqSetCitationsDatabaseService(
             throw UnprocessableEntityException("SeqSet must not contain duplicate accessions")
         }
 
-        val accessionsWithoutVersions = seqSetRecords
+        // If users don't provide version, we require that at least version 1 is released
+        // If we check the latest version instead, that accessionVersion might exist (unknown to user) but not be released yet
+        val accessionsWithoutVersionsWithV1 = seqSetRecords
             .filter { !it.accession.contains('.') }
-            .map { it.accession }
+            .map { AccessionVersion(it.accession, 1) }
 
-        for (chunk in accessionsWithoutVersions.chunked(1000)) {
+
+        for (chunk in accessionsWithoutVersionsWithV1.chunked(1000)) {
             accessionPreconditionValidator.validate {
-                thatAccessionsExist(chunk)
+                thatAccessionVersionsExist(chunk)
                     .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
             }
         }
