@@ -723,6 +723,7 @@ def assembly_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
+    last_retry_time: datetime | None,
     submitting_time_threshold_min: int = 15,
     retry_threshold_hours: int = 4,
     waiting_threshold_hours: int = 48,
@@ -754,7 +755,7 @@ def assembly_table_handle_errors(
             key_fields=["accession", "version"],
             table_name=TableName.ASSEMBLY_TABLE,
             retry_threshold_hours=retry_threshold_hours,
-            last_retry=_last_retry_time,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
@@ -783,8 +784,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
-    global _last_retry_time  # noqa: PLW0603
-    _last_retry_time = None
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -796,5 +796,5 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
         assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
-        assembly_table_handle_errors(db_config, config, slack_config)
+        assembly_table_handle_errors(db_config, config, slack_config, last_retry_time)
         time.sleep(config.time_between_iterations)

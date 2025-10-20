@@ -421,6 +421,7 @@ def sample_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
+    last_retry_time: datetime | None,
     submitting_time_threshold_min: int = 15,
     retry_threshold_hours: int = 4,
     slack_retry_threshold_hours: int = 12,
@@ -451,7 +452,7 @@ def sample_table_handle_errors(
             key_fields=["accession", "version"],
             table_name=TableName.SAMPLE_TABLE,
             retry_threshold_hours=retry_threshold_hours,
-            last_retry=_last_retry_time,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created
         # If created update sample_table
@@ -465,8 +466,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
-    global _last_retry_time  # noqa: PLW0603
-    _last_retry_time = None
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -477,5 +477,5 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
-        sample_table_handle_errors(db_config, config, slack_config)
+        sample_table_handle_errors(db_config, config, slack_config, last_retry_time)
         time.sleep(config.time_between_iterations)

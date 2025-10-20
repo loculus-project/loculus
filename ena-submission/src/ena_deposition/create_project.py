@@ -367,6 +367,7 @@ def project_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
+    last_retry_time: datetime | None,
     submitting_time_threshold_min: int = 15,
     retry_threshold_hours: int = 4,
     slack_retry_threshold_hours: int = 12,
@@ -397,7 +398,7 @@ def project_table_handle_errors(
             key_fields=["group_id", "organism"],
             table_name=TableName.PROJECT_TABLE,
             retry_threshold_hours=retry_threshold_hours,
-            last_retry=_last_retry_time,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if project has in fact been created
         # If created update project_table
@@ -411,8 +412,7 @@ def create_project(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
-    global _last_retry_time  # noqa: PLW0603
-    _last_retry_time = None
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -423,5 +423,5 @@ def create_project(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
-        project_table_handle_errors(db_config, config, slack_config)
+        project_table_handle_errors(db_config, config, slack_config, last_retry_time)
         time.sleep(config.time_between_iterations)
