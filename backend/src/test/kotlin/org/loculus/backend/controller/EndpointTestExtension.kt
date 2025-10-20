@@ -215,7 +215,7 @@ class EndpointTestExtension :
 
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
-        env.postgres.exec(clearDatabaseStatement())
+//        env.postgres.exec(clearDatabaseStatement())
     }
 
     override fun afterEach(context: ExtensionContext?) {
