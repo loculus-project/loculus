@@ -69,12 +69,15 @@ export class DownloadUrlGenerator {
             (option.dataType.type === 'unalignedNucleotideSequences' ||
                 option.dataType.type === 'alignedNucleotideSequences' ||
                 option.dataType.type === 'alignedAminoAcidSequences') &&
-            option.dataType.includeRichFastaHeaders === true &&
-            this.richFastaHeaderFields &&
-            this.richFastaHeaderFields.length > 0
+            option.dataType.richFastaHeaders.include
         ) {
-            params.delete(dataFormat);
-            params.append('fastaHeaderTemplate', this.richFastaHeaderFields.map((field) => `{${field}}`).join('|'));
+            if (option.dataType.richFastaHeaders.fastaHeaderOverride !== undefined) {
+                params.delete(dataFormat);
+                params.append('fastaHeaderTemplate', option.dataType.richFastaHeaders.fastaHeaderOverride);
+            } else if (this.richFastaHeaderFields !== undefined && this.richFastaHeaderFields.length > 0) {
+                params.delete(dataFormat);
+                params.append('fastaHeaderTemplate', this.richFastaHeaderFields.map((field) => `{${field}}`).join('|'));
+            }
         }
 
         downloadParameters
