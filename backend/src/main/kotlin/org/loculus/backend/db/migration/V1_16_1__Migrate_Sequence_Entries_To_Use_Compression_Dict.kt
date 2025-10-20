@@ -3,6 +3,7 @@ package org.loculus.backend.db.migration
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
@@ -10,11 +11,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
+import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.jacksonSerializableJsonb
 import org.loculus.backend.service.submission.CompressionDictService
-import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
-import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
@@ -36,95 +36,143 @@ class V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                 .select(
                     Pre1_16_1_SequenceEntriesTable.accessionColumn,
                     Pre1_16_1_SequenceEntriesTable.versionColumn,
+                    Pre1_16_1_SequenceEntriesTable.organismColumn,
                     Pre1_16_1_SequenceEntriesTable.originalDataColumn,
                 )
-                .fetchBatchedResults(1000)
-                .forEach { batch ->
-                    for (row in batch) {
-                        val accession = row[Pre1_16_1_SequenceEntriesTable.accessionColumn]
-                        val version = row[Pre1_16_1_SequenceEntriesTable.versionColumn]
-                        val organism = row[Pre1_16_1_SequenceEntriesTable.organismColumn]
-                        val originalData = row[Pre1_16_1_SequenceEntriesTable.originalDataColumn] ?: continue
+                .fetchSize(1000)
+                .forEach { row ->
+                    val accession = row[Pre1_16_1_SequenceEntriesTable.accessionColumn]
+                    val version = row[Pre1_16_1_SequenceEntriesTable.versionColumn]
+                    val organism = row[Pre1_16_1_SequenceEntriesTable.organismColumn]
+                    val originalData = row[Pre1_16_1_SequenceEntriesTable.originalDataColumn] ?: return@forEach
 
-                        val migratedOriginalData = OriginalData(
-                            metadata = originalData.metadata,
-                            files = originalData.files,
-                            unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues {
-                                when (val value = it.value) {
-                                    null -> null
-                                    else -> Post1_16_1_CompressedSequence(
-                                        compressedSequence = value.compressedSequence,
-                                        compressionDictId = compressionDictService
-                                            .getDictForUnalignedSequence(Organism(organism))
-                                            .id,
-                                    )
-                                }
-                            },
-                        )
-
-                        Post1_16_1_SequenceEntriesTable.update(
-                            where = {
-                                SequenceEntriesTable.accessionVersionIs(
-                                    accession = accession,
-                                    version = version,
+                    val migratedOriginalData = OriginalData(
+                        metadata = originalData.metadata,
+                        files = originalData.files,
+                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues {
+                            when (val value = it.value) {
+                                null -> null
+                                else -> Post1_16_1_CompressedSequence(
+                                    compressedSequence = value.compressedSequence,
+                                    compressionDictId = compressionDictService
+                                        .getDictForUnalignedSequence(Organism(organism))
+                                        .id,
                                 )
-                            },
-                        ) {
-                            it[Post1_16_1_SequenceEntriesTable.originalDataColumn] = migratedOriginalData
-                        }
+                            }
+                        },
+                    )
+
+                    Post1_16_1_SequenceEntriesTable.update(
+                        where = {
+                            Post1_16_1_SequenceEntriesTable.accessionVersionIs(
+                                accession = accession,
+                                version = version,
+                            )
+                        },
+                    ) {
+                        it[Post1_16_1_SequenceEntriesTable.originalDataColumn] = migratedOriginalData
                     }
                 }
 
-            for ((organism, instanceConfig) in backendConfig.organisms) {
-                // Migrate unaligned sequences
-                val unalignedDictEntry = compressionDictService.getDictForUnalignedSequence(Organism(organism))
 
-                exec(
-                    """
-                    UPDATE sequence_entries_preprocessed
-                    SET compression_dict_id = ?
-                    WHERE organism = ?
-                    """.trimIndent(),
-                    listOf(unalignedDictEntry.id, organism),
-                ) { }
+            Pre1_16_1_SequenceEntriesPreprocessedDataTable
+                .join(
+                    Pre1_16_1_SequenceEntriesTable,
+                    joinType = JoinType.INNER,
+                    additionalConstraint = {
+                        (Pre1_16_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq Pre1_16_1_SequenceEntriesTable.accessionColumn) and
+                            (Pre1_16_1_SequenceEntriesPreprocessedDataTable.versionColumn eq Pre1_16_1_SequenceEntriesTable.versionColumn)
+                    },
+                )
+                .select(
+                    Pre1_16_1_SequenceEntriesPreprocessedDataTable.accessionColumn,
+                    Pre1_16_1_SequenceEntriesPreprocessedDataTable.versionColumn,
+                    Pre1_16_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
+                    Pre1_16_1_SequenceEntriesTable.organismColumn,
+                    Pre1_16_1_SequenceEntriesPreprocessedDataTable.processedDataColumn,
+                )
+                .fetchSize(1000)
+                .forEach { row ->
+                    val accession = row[Pre1_16_1_SequenceEntriesPreprocessedDataTable.accessionColumn]
+                    val version = row[Pre1_16_1_SequenceEntriesPreprocessedDataTable.versionColumn]
+                    val pipelineVersion = row[Pre1_16_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn]
+                    val organism = row[Pre1_16_1_SequenceEntriesTable.organismColumn]
+                    val processedData =
+                        row[Pre1_16_1_SequenceEntriesPreprocessedDataTable.processedDataColumn] ?: return@forEach
 
-                println("Migrated unaligned sequences for organism: $organism with dict_id: ${unalignedDictEntry.id}")
-
-                // Migrate aligned sequences (segments and genes)
-                val segmentsAndGenes =
-                    instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
-
-                for (referenceSequence in segmentsAndGenes) {
-                    val dictEntry = compressionDictService.getDictForSegmentOrGene(
-                        Organism(organism),
-                        referenceSequence.name,
-                    ) ?: throw RuntimeException(
-                        "No dict found for organism: $organism, segment/gene: ${referenceSequence.name}",
+                    val migratedProcessedData = ProcessedData(
+                        metadata = processedData.metadata,
+                        files = processedData.files,
+                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues {
+                            when (val value = it.value) {
+                                null -> null
+                                else -> Post1_16_1_CompressedSequence(
+                                    compressedSequence = value.compressedSequence,
+                                    compressionDictId = compressionDictService
+                                        .getDictForSegmentOrGene(Organism(organism), it.key)
+                                        .id,
+                                )
+                            }
+                        },
+                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues {
+                            when (val value = it.value) {
+                                null -> null
+                                else -> {
+                                    Post1_16_1_CompressedSequence(
+                                        compressedSequence = value.compressedSequence,
+                                        compressionDictId = compressionDictService
+                                            .getDictForSegmentOrGene(Organism(organism), it.key)
+                                            .id,
+                                    )
+                                }
+                            }
+                        },
+                        alignedAminoAcidSequences = processedData.alignedAminoAcidSequences.mapValues {
+                            when (val value = it.value) {
+                                null -> null
+                                else -> {
+                                    Post1_16_1_CompressedSequence(
+                                        compressedSequence = value.compressedSequence,
+                                        compressionDictId = compressionDictService
+                                            .getDictForSegmentOrGene(Organism(organism), it.key)
+                                            .id,
+                                    )
+                                }
+                            }
+                        },
+                        nucleotideInsertions = processedData.nucleotideInsertions,
+                        aminoAcidInsertions = processedData.aminoAcidInsertions,
                     )
 
-                    exec(
-                        """
-                        UPDATE sequence_entries
-                        SET compression_dict_id = ?
-                        WHERE organism = ? AND segment_name = ?
-                        """.trimIndent(),
-                        listOf(dictEntry.id, organism, referenceSequence.name),
-                    ) { }
-
-                    println("Migrated aligned sequences for organism: $organism, segment/gene: ${referenceSequence.name} with dict_id: ${dictEntry.id}")
+                    Post1_16_1_SequenceEntriesPreprocessedDataTable.update(
+                        where = {
+                            (Post1_16_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq accession) and
+                                (Post1_16_1_SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
+                                (Post1_16_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+                        },
+                    ) {
+                        it[Post1_16_1_SequenceEntriesPreprocessedDataTable.processedDataColumn] =
+                            migratedProcessedData
+                    }
                 }
-            }
         }
 
         println("--------------------------- End V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
     }
 }
 
+data class Pre1_16_1_CompressedSequence(val compressedSequence: String)
+
+data class Post1_16_1_CompressedSequence(
+    val compressedSequence: String,
+    val compressionDictId: Int,
+)
+
 /**
  * Only contains the columns needed for this migration.
  * We need a separate table object so that the `originalDataColumn` still has the old JSON schema.
  */
-object Pre1_16_1_SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
+object Pre1_16_1_SequenceEntriesTable : Table("sequence_entries") {
     val originalDataColumn =
         jacksonSerializableJsonb<OriginalData<Pre1_16_1_CompressedSequence>>("original_data").nullable()
 
@@ -135,15 +183,13 @@ object Pre1_16_1_SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 }
 
-data class Pre1_16_1_CompressedSequence(val compressedSequence: String)
-
-
 /**
+ * Only contains the columns needed for this migration.
  * We need this so that this migration script is decoupled from the actual `SequenceEntriesTable` object,
  * in case that object changes in the future.
  * We expect that this script doesn't need to change.
  */
-object Post1_16_1_SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
+object Post1_16_1_SequenceEntriesTable : Table("sequence_entries") {
     val originalDataColumn =
         jacksonSerializableJsonb<OriginalData<Post1_16_1_CompressedSequence>>("original_data").nullable()
 
@@ -153,10 +199,35 @@ object Post1_16_1_SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 
     fun accessionVersionIs(accession: Accession, version: Version) =
-        (SequenceEntriesTable.accessionColumn eq accession) and (SequenceEntriesTable.versionColumn eq version)
+        (accessionColumn eq accession) and (versionColumn eq version)
 }
 
-data class Post1_16_1_CompressedSequence(
-    val compressedSequence: String,
-    val compressionDictId: Int,
-)
+/**
+ * Only contains the columns needed for this migration.
+ * We need a separate table object so that the `processedDataColumn` still has the old JSON schema.
+ */
+object Pre1_16_1_SequenceEntriesPreprocessedDataTable : Table("sequence_entries_preprocessed_data") {
+    val accessionColumn = varchar("accession", 255)
+    val versionColumn = long("version")
+    val pipelineVersionColumn = long("pipeline_version")
+    val processedDataColumn =
+        jacksonSerializableJsonb<ProcessedData<Pre1_16_1_CompressedSequence>>("processed_data").nullable()
+
+    override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
+}
+
+/**
+ * Only contains the columns needed for this migration.
+ * We need this so that this migration script is decoupled from the actual `SequenceEntriesTable` object,
+ * in case that object changes in the future.
+ * We expect that this script doesn't need to change.
+ */
+object Post1_16_1_SequenceEntriesPreprocessedDataTable : Table("sequence_entries_preprocessed_data") {
+    val accessionColumn = varchar("accession", 255)
+    val versionColumn = long("version")
+    val pipelineVersionColumn = long("pipeline_version")
+    val processedDataColumn =
+        jacksonSerializableJsonb<ProcessedData<Post1_16_1_CompressedSequence>>("processed_data").nullable()
+
+    override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
+}
