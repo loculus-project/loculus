@@ -1,5 +1,7 @@
 package org.loculus.backend.dbmigration
 
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
@@ -15,5 +17,7 @@ class CompressionDictMigrationTest(
         val releasedData = convenienceClient.getReleasedData()
 
         println(releasedData)
+
+        assertThat(releasedData, hasSize(30))
     }
 }
