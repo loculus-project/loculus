@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
-data class DictEntry(
+class DictEntry(
     val id: Int,
-    val dict: String,
+    val dict: ByteArray,
 )
 
 /**
@@ -25,7 +25,7 @@ class CompressionDictService(
     private val caches: Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
-        ConcurrentHashMap<Int, String>,
+        ConcurrentHashMap<Int, ByteArray>,
         > by lazy {
         // Make sure the caches are only populated after the Flyway migration has run
         // The Spring bean is created, then Flyway run, i.e. we must not read from the DB when creating this class
@@ -34,33 +34,36 @@ class CompressionDictService(
 
     private val dictCache: Map<Pair<String, String>, DictEntry> get() = caches.first
     private val unalignedDictCache: Map<String, DictEntry> get() = caches.second
-    private val cacheById: ConcurrentHashMap<Int, String> get() = caches.third
+    private val cacheById: ConcurrentHashMap<Int, ByteArray> get() = caches.third
 
     private fun populateCaches(
     ): Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
-        ConcurrentHashMap<Int, String>,
+        ConcurrentHashMap<Int, ByteArray>,
         > {
         val dictCache = mutableMapOf<Pair<String, String>, DictEntry>()
         val unalignedDictCache = mutableMapOf<String, DictEntry>()
-        val cacheById = ConcurrentHashMap<Int, String>()
+        val cacheById = ConcurrentHashMap<Int, ByteArray>()
 
         transaction {
             backendConfig.organisms.forEach { (organism, instanceConfig) ->
                 val segmentsAndGenes =
                     instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
                 for (referenceSequence in segmentsAndGenes) {
-                    val dict = referenceSequence.sequence
-                    val dictId = getDictIdOrInsertNewEntry(dict)
+                    val reference = referenceSequence.sequence
+                    val dictId = getDictIdOrInsertNewEntry(reference)
+
+                    val dict = reference.toByteArray()
 
                     dictCache[Pair(organism, referenceSequence.name)] = DictEntry(dictId, dict)
                     cacheById[dictId] = dict
                 }
 
-                val unalignedDict = instanceConfig.referenceGenome.nucleotideSequences
+                val references = instanceConfig.referenceGenome.nucleotideSequences
                     .joinToString("") { it.sequence }
-                val dictId = getDictIdOrInsertNewEntry(unalignedDict)
+                val dictId = getDictIdOrInsertNewEntry(references)
+                val unalignedDict = references.toByteArray()
                 val dictEntry = DictEntry(dictId, unalignedDict)
 
                 unalignedDictCache[organism] = dictEntry
@@ -74,10 +77,8 @@ class CompressionDictService(
     /**
      * Get dictionary for a specific segment or gene (used when compressing processed sequences)
      */
-    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry {
-        return dictCache[Pair(organism.name, segmentOrGene)] ?: throw RuntimeException(
-            "No dict found for organism: ${organism.name}, segment/gene: $segmentOrGene",
-        )
+    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry? {
+        return dictCache[Pair(organism.name, segmentOrGene)]
     }
 
     /**
@@ -91,14 +92,17 @@ class CompressionDictService(
     /**
      * Get dictionary by ID (used when decompressing sequences)
      */
-    fun getDictById(id: Int): String {
+    fun getDictById(id: Int): ByteArray {
         val cachedDict = cacheById[id]
         if (cachedDict !== null) {
             return cachedDict
         }
 
         return transaction {
-            val dict = CompressionDictionaryEntity.findById(id)?.dictContents ?: throw RuntimeException("TODO")
+            val dict = CompressionDictionaryEntity.findById(id)
+                ?.dictContents
+                ?.toByteArray()
+                ?: throw RuntimeException("Did not find compression dictionary with id $id")
             cacheById[id] = dict
             dict
         }

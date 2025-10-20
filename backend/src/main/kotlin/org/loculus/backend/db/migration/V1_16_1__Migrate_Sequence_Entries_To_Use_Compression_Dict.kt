@@ -110,7 +110,7 @@ class V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = compressionDictService
                                         .getDictForSegmentOrGene(Organism(organism), it.key)
-                                        .id,
+                                        ?.id,
                                 )
                             }
                         },
@@ -122,7 +122,7 @@ class V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                                         compressedSequence = value.compressedSequence,
                                         compressionDictId = compressionDictService
                                             .getDictForSegmentOrGene(Organism(organism), it.key)
-                                            .id,
+                                            ?.id,
                                     )
                                 }
                             }
@@ -135,7 +135,7 @@ class V1_16_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                                         compressedSequence = value.compressedSequence,
                                         compressionDictId = compressionDictService
                                             .getDictForSegmentOrGene(Organism(organism), it.key)
-                                            .id,
+                                            ?.id,
                                     )
                                 }
                             }
@@ -165,7 +165,7 @@ data class Pre1_16_1_CompressedSequence(val compressedSequence: String)
 
 data class Post1_16_1_CompressedSequence(
     val compressedSequence: String,
-    val compressionDictId: Int,
+    val compressionDictId: Int?,
 )
 
 /**
