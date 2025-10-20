@@ -91,7 +91,7 @@ class UploadDatabaseService(
     private val keyDetail =
         Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
 
-    fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
+    private fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
         val text = this.cause?.message ?: this.message ?: return null
         val match = keyDetail.find(text) ?: return null
 
