@@ -879,7 +879,7 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
 class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
     @patch(
-        "ena_deposition.ena_submission_helper.trigger_retry_if_exists.update_with_retry",
+        "ena_deposition.ena_submission_helper.update_with_retry",
         autospec=True,
     )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
