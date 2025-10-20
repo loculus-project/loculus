@@ -1457,6 +1457,10 @@
         "enaApprovedListTestUrl": {
           "type": "string",
           "description": "URL to the test ENA approved sequence list (typically hosted on a Github repo)"
+        },
+        "enaSuppressedListUrl": {
+          "type": "string",
+          "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
         }
       }
     },
