@@ -34,7 +34,7 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
 
 
 def test_happy_path_single_upload_and_file_content(monkeypatch):
-    # Mock database calls
+    # Mock database calls, adding a LOC_submitted entry with version 1
     class DummyPool: ...
 
     monkeypatch.setattr(get_ena_submission_list_mod, "db_init", lambda **_: DummyPool())
