@@ -92,7 +92,8 @@ def filter_for_submission(
         ]
         if ena_specific_metadata:
             logger.warning(
-                f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
+                f"Found sequence: {accession_version} with ena-specific-metadata fields: "
+                f"{ena_specific_metadata} and not "
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
                 f"{ena_specific_metadata}"
             )
@@ -124,7 +125,7 @@ def filter_for_submission(
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
             if entry["metadata"]["accession"] in revoked_entries
-        }
+        },
     )
 
 

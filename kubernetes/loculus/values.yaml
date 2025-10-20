@@ -2075,6 +2075,7 @@ enaDeposition:
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
   enaIsBroker: False
+  enaGithubTestUrl: "https://loculus-project.github.io/ena-submission/approved/approved_ena_submission_list.json"
 subdomainSeparator: "-"
 replicas:
   website: 1

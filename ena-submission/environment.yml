@@ -33,3 +33,5 @@ dependencies:
   - python-dotenv
   - pytest
   - unidecode
+  - deepdiff
+  - orjsonl

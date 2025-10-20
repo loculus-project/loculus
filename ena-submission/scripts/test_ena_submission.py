@@ -333,7 +333,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "ADDRESS": "Fake center name, Basel, BS, Switzerland",
             "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
-            "AUTHORS": "M. Ammar M.S.;",
+            "AUTHORS": "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
             "COVERAGE": "1",
             "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
