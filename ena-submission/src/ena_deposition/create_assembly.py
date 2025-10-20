@@ -24,6 +24,8 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
+    get_molecule_type,
+    set_error_if_accession_not_exists,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -562,6 +564,20 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
         sample_accession, study_accession = get_project_and_sample_results(
             db_config, sample_data_in_submission_table[0]
         )
+
+        if (
+            "insdcRawReadsAccession" in row["metadata"]
+            and row["metadata"]["insdcRawReadsAccession"]
+        ):
+            run_ref = row["metadata"]["insdcRawReadsAccession"]
+            set_error_if_accession_not_exists(
+                conditions=seq_key,
+                accession=run_ref,
+                accession_type="RUN_REF",
+                db_pool=db_config,
+                config=config,
+            )
+            continue
 
         if is_revision(db_config, seq_key):
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
