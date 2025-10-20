@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import get_ena_submission_list as get_ena_submission_list_mod
+import orjsonl
 from deepdiff import DeepDiff
 
 CONFIG_FILE = "./test/test_config.yaml"
@@ -23,19 +24,13 @@ def json_diff(path_a, path_b):
 
 
 def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  # noqa: ARG001
-    items = []
-    with open(GET_RELEASED_ENTRIES_PATH, encoding="utf-8") as fh:
-        for line in fh:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            obj = json.loads(stripped)
-            items.append(
-                {k: v for k, v in obj.items() if k in {"metadata", "unalignedNucleotideSequences"}}
-            )
-    if organism == "cchf":
-        return iter(items)
-    return iter([])
+    if organism != "cchf":
+        return iter([])
+
+    return (
+        {k: v for k, v in record.items() if k in {"metadata", "unalignedNucleotideSequences"}}
+        for record in orjsonl.stream(GET_RELEASED_ENTRIES_PATH)
+    )
 
 
 def test_happy_path_single_upload_and_file_content(monkeypatch):
