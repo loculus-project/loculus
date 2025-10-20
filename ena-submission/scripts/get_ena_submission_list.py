@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+import requests
 from ena_deposition.call_loculus import fetch_released_entries
 from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import (
@@ -38,6 +39,22 @@ class SubmissionResults:
     revoked_entries: dict[AccessionVersion, dict[str, Any]]
 
 
+def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
+    """Return a set of accessions that are in the suppressed list."""
+    try:
+        response = requests.get(
+            config.suppressed_list_url,
+            timeout=60,
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(
+            f"Failed to retrieve list of suppressed sequences due to requests exception: {e}"
+        )
+        raise e
+    return {line.strip() for line in response.text.splitlines() if line.strip()}
+
+
 def filter_for_submission(
     config: Config,
     db_pool: SimpleConnectionPool,
@@ -64,6 +81,7 @@ def filter_for_submission(
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
     )
+    suppressed_accessions = fetch_suppressed_accessions(config)
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
         accession, version_str = accession_version.split(".")
@@ -100,13 +118,17 @@ def filter_for_submission(
         else:
             # If lower version had external metadata and this one doesn't, remove it from that set
             entries_with_external_metadata.discard(accession)
+        entries_to_submit[accession] = entry
         if entry["metadata"].get("isRevocation", True):
-            logger.debug(f"Found revoked sequence: {accession_version}")
-            revoked_entries.add(accession)
+            if accession_version in suppressed_accessions:
+                logger.debug(f"Skipping suppressed accession: {accession_version}")
+                entries_to_submit.pop(accession)
+            else:
+                logger.debug(f"Found revoked sequence: {accession_version}")
+                revoked_entries.add(accession)
             entries_with_external_metadata.discard(accession)
         else:
             revoked_entries.discard(accession)
-        entries_to_submit[accession] = entry
 
     return SubmissionResults(
         entries_to_submit={
@@ -124,7 +146,7 @@ def filter_for_submission(
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
             if entry["metadata"]["accession"] in revoked_entries
-        }
+        },
     )
 
 

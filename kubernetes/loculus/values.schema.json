@@ -1454,9 +1454,13 @@
           "description": "Name of Loculus instance in ENA",
           "default": "Loculus"
         },
-        "enaGithubTestUrl": {
+        "enaApprovedListTestUrl": {
           "type": "string",
-          "description": "URL to the test ENA github repository"
+          "description": "URL to the test ENA approved sequence list (typically hosted on a Github repo)"
+        },
+        "enaSuppressedListTestUrl": {
+          "type": "string",
+          "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
         }
       }
     },
