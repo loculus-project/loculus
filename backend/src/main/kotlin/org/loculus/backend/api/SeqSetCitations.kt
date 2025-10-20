@@ -6,9 +6,14 @@ import java.sql.Timestamp
 import java.util.*
 
 data class SubmittedSeqSetRecord(
+    @Schema(
+        description = "The accession of the sequence. Optionally includes a version suffix (e.g., LOC_123456.1).",
+        type = "string",
+        example = "PP_123456",
+    )
     val accession: Accession,
     @Schema(
-        description = "The type of the accession.",
+        description = "The type of accession (e.g., Loculus, INSDC, RefSeq).",
         type = "string",
         example = "Loculus",
     )
