@@ -85,9 +85,6 @@ def filter_for_submission(
     suppressed_entries = suppressed_accessions_set(config)
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
-        if accession_version in suppressed_entries:
-            logger.debug(f"Skipping suppressed accession: {accession_version}")
-            continue
         accession, version_str = accession_version.split(".")
         version = int(version_str)
         if entry["metadata"]["dataUseTerms"] != "OPEN":
@@ -122,13 +119,17 @@ def filter_for_submission(
         else:
             # If lower version had external metadata and this one doesn't, remove it from that set
             entries_with_external_metadata.discard(accession)
+        entries_to_submit[accession] = entry
         if entry["metadata"].get("isRevocation", True):
-            logger.debug(f"Found revoked sequence: {accession_version}")
-            revoked_entries.add(accession)
+            if accession_version in suppressed_entries:
+                logger.debug(f"Skipping suppressed accession: {accession_version}")
+                entries_to_submit.pop(accession)
+            else:
+                logger.debug(f"Found revoked sequence: {accession_version}")
+                revoked_entries.add(accession)
             entries_with_external_metadata.discard(accession)
         else:
             revoked_entries.discard(accession)
-        entries_to_submit[accession] = entry
 
     return SubmissionResults(
         entries_to_submit={
