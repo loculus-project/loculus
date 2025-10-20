@@ -240,7 +240,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: SimpleConnectionPool) -> None:
+def submission_table_start(db_config: SimpleConnectionPool, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -258,6 +258,20 @@ def submission_table_start(db_config: SimpleConnectionPool) -> None:
         )
     for row in ready_to_submit:
         seq_key = {"accession": row["accession"], "version": row["version"]}
+
+        if (
+            "insdcRawReadsAccession" in row["metadata"]
+            and row["metadata"]["insdcRawReadsAccession"]
+        ):
+            run_ref = row["metadata"]["insdcRawReadsAccession"]
+            set_error_if_accession_not_exists(
+                conditions=seq_key,
+                accession=run_ref,
+                accession_type="RUN_REF",
+                db_pool=db_config,
+                config=config,
+            )
+            continue
 
         # 1. check if there exists an entry in the assembly_table for seq_key
         corresponding_assembly = find_conditions_in_db(
@@ -566,20 +580,6 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             db_config, sample_data_in_submission_table[0]
         )
 
-        if (
-            "insdcRawReadsAccession" in row["metadata"]
-            and row["metadata"]["insdcRawReadsAccession"]
-        ):
-            run_ref = row["metadata"]["insdcRawReadsAccession"]
-            set_error_if_accession_not_exists(
-                conditions=seq_key,
-                accession=run_ref,
-                accession_type="RUN_REF",
-                db_pool=db_config,
-                config=config,
-            )
-            continue
-
         if is_revision(db_config, seq_key):
             logger.debug(f"Entry {row['accession']} is a revision, checking if it can be revised")
             if not can_be_revised(config, db_config, sample_data_in_submission_table[0]):
@@ -785,7 +785,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(db_config)
+        submission_table_start(db_config, config)
         submission_table_update(db_config)
 
         assembly_table_create(db_config, config, test=config.test)
