@@ -450,12 +450,22 @@ class SeqSetCitationsDatabaseService(
 
     fun validateSeqSetRecords(seqSetRecords: List<SubmittedSeqSetRecord>) {
         if (seqSetRecords.isEmpty()) {
-            throw UnprocessableEntityException("SeqSet must contain at least one record")
+            throw UnprocessableEntityException(
+                "No accessions provided. In order to create a SeqSet you must provide at least one accession.",
+            )
         }
 
         val uniqueAccessions = seqSetRecords.map { it.accession }.toSet()
         if (uniqueAccessions.size != seqSetRecords.size) {
-            throw UnprocessableEntityException("SeqSet must not contain duplicate accessions")
+            val duplicateAccessions = seqSetRecords
+                .groupingBy { it.accession }
+                .eachCount()
+                .filter { it.value > 1 }
+                .keys
+            throw UnprocessableEntityException(
+                "SeqSet must not contain duplicate accessions. " +
+                    "The following accessions appear at least twice: ${duplicateAccessions.joinToString(", ")}",
+            )
         }
 
         // If users don't provide version, we require that at least version 1 is released
@@ -470,15 +480,22 @@ class SeqSetCitationsDatabaseService(
                     .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
             }
         }
-        val accessionsWithVersions = try {
-            seqSetRecords
-                .filter { it.accession.contains('.') }
-                .map {
-                    val (accession, version) = it.accession.split('.')
-                    AccessionVersion(accession, version.toLong())
-                }
-        } catch (_: NumberFormatException) {
-            throw UnprocessableEntityException("Accession versions must be integers")
+        val accessionsWithVersions = mutableListOf<AccessionVersion>()
+        for (record in seqSetRecords.filter { it.accession.contains('.') }) {
+            val parts = record.accession.split('.')
+            if (parts.size != 2) {
+                throw UnprocessableEntityException(
+                    "Invalid accession format '${record.accession}': expected format 'ACCESSION.VERSION'",
+                )
+            }
+            val versionString = parts[1]
+            val version = versionString.toLongOrNull()
+            if (version == null) {
+                throw UnprocessableEntityException(
+                    "Invalid version in accession '${record.accession}': '$versionString' is not a valid integer",
+                )
+            }
+            accessionsWithVersions.add(AccessionVersion(parts[0], version))
         }
 
         for (chunk in accessionsWithVersions.chunked(1000)) {
