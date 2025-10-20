@@ -51,9 +51,11 @@ from .ena_types import (
     XmlNone,
 )
 from .submission_db_helper import (
+    AssemblyTableEntry,
     ProjectTableEntry,
     SampleTableEntry,
     Status,
+    add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
 )
@@ -857,7 +859,7 @@ def get_chromsome_accessions(
 def set_error_if_accession_not_exists(
     conditions: dict[str, str | dict[str, str]],
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
     db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
@@ -883,7 +885,7 @@ def set_error_if_accession_not_exists(
             result={"ena_sample_accession": accession, "biosample_accession": accession},
         )
         succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    else:
+    if accession_type == "BIOPROJECT":
         project_table_entry = ProjectTableEntry(
             **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
@@ -891,6 +893,14 @@ def set_error_if_accession_not_exists(
             result={"bioproject_accession": accession},
         )
         succeeded = add_to_project_table(db_pool, project_table_entry)
+    if accession_type == "RUN_REF":
+        assembly_table_entry = AssemblyTableEntry(
+            **conditions,  # type: ignore
+            status=Status.HAS_ERRORS,
+            errors=json.dumps([error_text]),
+            result={}, # type: ignore
+        )
+        succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
