@@ -464,7 +464,6 @@ class SeqSetCitationsDatabaseService(
             .filter { !it.accession.contains('.') }
             .map { AccessionVersion(it.accession, 1) }
 
-
         for (chunk in accessionsWithoutVersionsWithV1.chunked(1000)) {
             accessionPreconditionValidator.validate {
                 thatAccessionVersionsExist(chunk)
