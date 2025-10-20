@@ -5,9 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import requests
-
 import click
+import requests
 from ena_deposition.call_loculus import fetch_released_entries
 from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import (
