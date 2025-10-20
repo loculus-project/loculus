@@ -39,7 +39,9 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
 
     monkeypatch.setattr(get_ena_submission_list_mod, "db_init", lambda **_: DummyPool())
     monkeypatch.setattr(
-        get_ena_submission_list_mod, "highest_version_in_submission_table", lambda **_: {}
+        get_ena_submission_list_mod,
+        "highest_version_in_submission_table",
+        lambda **_: {"LOC_submitted": 1},
     )
 
     # Mock slack connection
@@ -77,7 +79,7 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
     get_ena_submission_list_mod.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
     assert upload_calls, "Expected a Slack file upload, but none happened"
     assert upload_calls[0]["message"].startswith(
-        "http://localhost:8079: cchf - ENA Submission pipeline wants to submit"
+        "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1"
     )
     assert upload_calls[1]["message"].startswith(
         "http://localhost:8079: cchf - ENA Submission pipeline found 1 sequences with ena"
