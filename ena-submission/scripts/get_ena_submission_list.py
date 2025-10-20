@@ -39,7 +39,7 @@ class SubmissionResults:
     revoked_entries: dict[AccessionVersion, dict[str, Any]]
 
 
-def suppressed_accessions_set(config: Config) -> set[AccessionVersion]:
+def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
     """Return a set of accessions that are in the suppressed list."""
     try:
         response = requests.get(
@@ -53,7 +53,7 @@ def suppressed_accessions_set(config: Config) -> set[AccessionVersion]:
         )
         raise e
     entries = {line.strip() for line in response.text.splitlines() if line.strip()}
-    return set(entries)
+    return entries
 
 
 def filter_for_submission(
@@ -82,7 +82,7 @@ def filter_for_submission(
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
     )
-    suppressed_entries = suppressed_accessions_set(config)
+    suppressed_accessions = fetch_suppressed_accessions(config)
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
         accession, version_str = accession_version.split(".")
@@ -121,7 +121,7 @@ def filter_for_submission(
             entries_with_external_metadata.discard(accession)
         entries_to_submit[accession] = entry
         if entry["metadata"].get("isRevocation", True):
-            if accession_version in suppressed_entries:
+            if accession_version in suppressed_accessions:
                 logger.debug(f"Skipping suppressed accession: {accession_version}")
                 entries_to_submit.pop(accession)
             else:
