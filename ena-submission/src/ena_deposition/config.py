@@ -30,8 +30,9 @@ class Config:
     ena_submission_password: str
     ena_submission_username: str
     ena_reports_service_url: str
-    github_url: str
-    github_test_url: str
+    approved_list_url: str
+    suppressed_list_url: str
+    approved_list_test_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -78,18 +79,17 @@ def secure_ena_connection(config: Config):
         config.test = True
         logger.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
-        if not config.github_test_url:
-            config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
-        else:
-            config.github_url = config.github_test_url
+        config.approved_list_url = config.approved_list_test_url or "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+        config.suppressed_list_url = config.suppressed_list_url or "https://pathoplexus.github.io/ena-submission/test/ppx-accessions-suppression-list.txt"
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
     if submit_to_ena_prod:
         config.test = False
         logger.warning("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
-        config.github_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
+        config.approved_list_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"
+        config.suppressed_list_url = "https://pathoplexus.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 
 
 def get_config(config_file: str) -> Config:

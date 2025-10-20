@@ -7,7 +7,7 @@
 {{- $enaDbName := .Values.enaDeposition.enaDbName | default false }}
 {{- $enaUniqueSuffix := .Values.enaDeposition.enaUniqueSuffix | default false }}
 {{- $enaIsBroker := .Values.enaDeposition.enaIsBroker | default false }}
-{{- $enaGithubTestUrl := .Values.enaDeposition.enaGithubTestUrl | default "" }}
+{{- $enaApprovedListTestUrl := .Values.enaDeposition.enaApprovedListTestUrl | default "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -22,6 +22,6 @@ data:
     backend_url: {{ $backendHost }}
     ena_deposition_host: {{ $enaDepositionHost }}
     keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
-    github_test_url: {{ $enaGithubTestUrl }}
+    approved_list_test_url: {{ $enaApprovedListTestUrl }}
     {{- include "loculus.generateENASubmissionConfig" . | nindent 4 }}
 {{- end }}

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import requests
+
 import click
 from ena_deposition.call_loculus import fetch_released_entries
 from ena_deposition.config import Config, get_config
@@ -38,6 +40,23 @@ class SubmissionResults:
     revoked_entries: dict[AccessionVersion, dict[str, Any]]
 
 
+def suppressed_accessions_set(config: Config) -> set[AccessionVersion]:
+    """Return a set of accessions that are in the suppressed list."""
+    try:
+        response = requests.get(
+            config.suppressed_list_url,
+            timeout=60,
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(
+            f"Failed to retrieve list of suppressed sequences due to requests exception: {e}"
+        )
+        raise e
+    entries = {line.strip() for line in response.text.splitlines() if line.strip()}
+    return set(entries)
+
+
 def filter_for_submission(
     config: Config,
     db_pool: SimpleConnectionPool,
@@ -66,6 +85,9 @@ def filter_for_submission(
     )
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
+        if accession_version in suppressed_accessions_set(config):
+            logger.debug(f"Skipping suppressed accession: {accession_version}")
+            continue
         accession, version_str = accession_version.split(".")
         version = int(version_str)
         if entry["metadata"]["dataUseTerms"] != "OPEN":
@@ -124,7 +146,7 @@ def filter_for_submission(
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
             if entry["metadata"]["accession"] in revoked_entries
-        }
+        },
     )
 
 
