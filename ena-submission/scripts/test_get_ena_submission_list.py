@@ -34,6 +34,7 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
 
 
 def test_happy_path_single_upload_and_file_content(monkeypatch):
+    # Mock database calls
     class DummyPool: ...
 
     monkeypatch.setattr(get_ena_submission_list_mod, "db_init", lambda **_: DummyPool())
@@ -41,18 +42,15 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
         get_ena_submission_list_mod, "highest_version_in_submission_table", lambda **_: {}
     )
 
+    # Mock slack connection
     slack_cfg = SimpleNamespace(
         slack_hook="dummy_hook",
         slack_token="dummy_token",  # noqa: S106
         slack_channel_id="dummy_channel",
     )
     monkeypatch.setattr(get_ena_submission_list_mod, "slack_conn_init", lambda **_: slack_cfg)
-    monkeypatch.setattr(
-        "get_ena_submission_list.notify",
-        lambda slack_config, comment: None,  # noqa: ARG005
-        raising=True,
-    )
 
+    # Mock slack upload_file_with_comment and notify functions and count number of calls
     upload_calls = []
 
     def fake_upload_file_with_comment(sc, path, message):
@@ -76,7 +74,7 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
         raising=True,
     )
 
-    get_ena_submission_list_mod.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))
+    get_ena_submission_list_mod.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
     assert upload_calls, "Expected a Slack file upload, but none happened"
     assert upload_calls[0]["message"].startswith(
         "http://localhost:8079: cchf - ENA Submission pipeline wants to submit"
