@@ -26,6 +26,7 @@ from .ena_submission_helper import (
     get_ena_analysis_process,
     get_molecule_type,
     set_error_if_accession_not_exists,
+    trigger_retry_if_exists,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -722,49 +723,52 @@ def assembly_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
-    time_threshold: int = 15,
-    time_threshold_waiting: int = 48,
-    slack_time_threshold: int = 12,
+    retry_threshold_min: int = 15,
+    waiting_threshold_hours: int = 48,
+    slack_retry_threshold_hours: int = 12,
 ):
     """
-    - time_threshold: (minutes)
-    - time_threshold_waiting: (hours)
-    - slack_time_threshold: (hours)
-    1. Find all entries in assembly_table in state HAS_ERRORS or SUBMITTING over time_threshold
-    2. If time since last slack_notification is over slack_time_threshold send notification
+    1. Find all entries in assembly_table in state HAS_ERRORS or SUBMITTING over retry_threshold_min
+    2. If time since last slack notification is over slack_retry_threshold_hours send notification
     """
     entries_with_errors = find_errors_in_db(
-        db_config, TableName.ASSEMBLY_TABLE, time_threshold=time_threshold
+        db_config, TableName.ASSEMBLY_TABLE, time_threshold=retry_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
             f"{len(entries_with_errors)} entries"
-            f" in assembly_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f" in assembly_table in status HAS_ERRORS or SUBMITTING for over {retry_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            time_threshold=slack_retry_threshold_hours,
+        )
+        trigger_retry_if_exists(
+            entries_with_errors,
+            db_config,
+            key_fields=["accession", "version"],
+            table_name=TableName.ASSEMBLY_TABLE,
         )
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
         # If not retry 3 times, then raise for manual intervention
     entries_waiting = find_waiting_in_db(
-        db_config, TableName.ASSEMBLY_TABLE, time_threshold=time_threshold_waiting
+        db_config, TableName.ASSEMBLY_TABLE, time_threshold=waiting_threshold_hours
     )
     if len(entries_waiting) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
             f"{len(entries_waiting)} entries in assembly_table in"
-            f" status WAITING for over {time_threshold_waiting}h"
+            f" status WAITING for over {waiting_threshold_hours}h"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            time_threshold=slack_retry_threshold_hours,
         )
 
 
