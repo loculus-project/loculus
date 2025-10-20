@@ -74,8 +74,10 @@ class CompressionDictService(
     /**
      * Get dictionary for a specific segment or gene (used when compressing processed sequences)
      */
-    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry? {
-        return dictCache[Pair(organism.name, segmentOrGene)]
+    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry {
+        return dictCache[Pair(organism.name, segmentOrGene)] ?: throw RuntimeException(
+            "No dict found for organism: ${organism.name}, segment/gene: $segmentOrGene",
+        )
     }
 
     /**
