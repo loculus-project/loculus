@@ -31,8 +31,9 @@ class Config:
     ena_submission_username: str
     ena_reports_service_url: str
     approved_list_url: str
-    suppressed_list_url: str
     approved_list_test_url: str
+    suppressed_list_url: str
+    suppressed_list_test_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -84,7 +85,7 @@ def secure_ena_connection(config: Config):
             or "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
         )
         config.suppressed_list_url = (
-            config.suppressed_list_url
+            config.suppressed_list_test_url
             or "https://pathoplexus.github.io/ena-submission/test/ppx-accessions-suppression-list.txt"
         )
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
