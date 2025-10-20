@@ -11,7 +11,7 @@ import tempfile
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import Field, dataclass, is_dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal, Protocol
 
@@ -915,7 +915,14 @@ def trigger_retry_if_exists(
     key_fields: list[str],
     table_name: TableName,
     error_substring: str = "does not exist in ENA",
+    retry_threshold_hours: int = 1,
+    last_retry: datetime | None = None,
 ):
+    if (
+        last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(hours=retry_threshold_hours) < last_retry
+    ):
+        return
     for entry in entries_with_errors:
         if error_substring not in str(entry.get("errors", "")):
             continue
@@ -932,10 +939,13 @@ def trigger_retry_if_exists(
             "finished_at": None,
             "result": None,
         }
-
-        update_with_retry(
-            db_config=db_config,
-            conditions=conditions,
-            update_values=update_values,
-            table_name=table_name,
-        )
+        try:
+            update_with_retry(
+                db_config=db_config,
+                conditions=conditions,
+                update_values=update_values,
+                table_name=table_name,
+            )
+            last_retry = datetime.now(tz=pytz.utc)
+        except Exception as e:
+            logger.error(f"Failed to update {table_name} entry for retry: {e!s}")

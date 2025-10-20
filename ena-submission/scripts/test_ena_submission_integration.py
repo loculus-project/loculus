@@ -424,7 +424,7 @@ def _test_assembly_submission_errored(
     assembly_table_create(db_config, config, test=config.test)
     check_assembly_submission_has_errors(db_config, sequences_to_upload)
 
-    assembly_table_handle_errors(db_config, config, slack_config, retry_threshold_min=0)
+    assembly_table_handle_errors(db_config, config, slack_config, submitting_time_threshold_min=0)
     msg = (
         f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in "
         "status HAS_ERRORS or SUBMITTING for over 0m"
@@ -835,7 +835,7 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
         project_table_handle_errors(
-            self.db_config, self.config, self.slack_config, retry_threshold_min=0
+            self.db_config, self.config, self.slack_config, submitting_time_threshold_min=0
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table "
@@ -910,7 +910,11 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         create_sample_submission_table_start(self.db_config, config=self.config)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
         sample_table_handle_errors(
-            self.db_config, self.config, self.slack_config, retry_threshold_min=0
+            self.db_config,
+            self.config,
+            self.slack_config,
+            submitting_time_threshold_min=0,
+            retry_threshold_hours=0,
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "
