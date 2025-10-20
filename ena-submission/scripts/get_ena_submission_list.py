@@ -83,9 +83,10 @@ def filter_for_submission(
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
     )
+    suppressed_entries = suppressed_accessions_set(config)
     for entry in entries_iterator:
         accession_version: str = entry["metadata"]["accessionVersion"]
-        if accession_version in suppressed_accessions_set(config):
+        if accession_version in suppressed_entries:
             logger.debug(f"Skipping suppressed accession: {accession_version}")
             continue
         accession, version_str = accession_version.split(".")
