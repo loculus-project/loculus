@@ -421,21 +421,23 @@ def sample_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
-    retry_threshold_min: int = 15,
+    submitting_time_threshold_min: int = 15,
+    retry_threshold_hours: int = 4,
     slack_retry_threshold_hours: int = 12,
 ):
     """
-    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING over retry_threshold_min
+    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING
+        over submitting_time_threshold_min
     2. If time since last slack_notification is over slack_retry_threshold_hours send notification
     """
     entries_with_errors = find_errors_in_db(
-        db_config, TableName.SAMPLE_TABLE, time_threshold=retry_threshold_min
+        db_config, TableName.SAMPLE_TABLE, time_threshold=submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_with_errors)} entries"
-            f" in sample_table in status HAS_ERRORS or SUBMITTING for over {retry_threshold_min}m"
+            f"{len(entries_with_errors)} entries in sample_table in status "
+            f"HAS_ERRORS or SUBMITTING for over {submitting_time_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
@@ -448,6 +450,8 @@ def sample_table_handle_errors(
             db_config,
             key_fields=["accession", "version"],
             table_name=TableName.SAMPLE_TABLE,
+            retry_threshold_hours=retry_threshold_hours,
+            last_retry=_last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created
         # If created update sample_table
@@ -461,6 +465,8 @@ def create_sample(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
+    global _last_retry_time  # noqa: PLW0603
+    _last_retry_time = None
 
     while True:
         if stop_event.is_set():
