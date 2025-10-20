@@ -27,7 +27,7 @@ class CompressionServiceTest(
         )
         val organism = Organism(backendConfig.organisms.keys.first())
         val compressed = compressor.compressSequencesInOriginalData(testData, organism)
-        val decompressed = compressor.decompressSequencesInOriginalData(compressed, organism)
+        val decompressed = compressor.decompressSequencesInOriginalData(compressed)
 
         assertEquals(testData, decompressed)
     }
