@@ -10,7 +10,7 @@ import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.service.submission.CompressionService
 import org.loculus.backend.service.submission.DictEntry
 
-class CompressionServiceTest() {
+class CompressionServiceTest {
     private val compressionDictServiceMock = mockk<CompressionDictService>()
 
     private val compressor = CompressionService(
