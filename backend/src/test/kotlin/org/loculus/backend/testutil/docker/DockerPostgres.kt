@@ -39,30 +39,7 @@ class DockerPostgres : PostgresProvider {
         }
     }
 
-    fun dump(outputFile: File) {
-        outputFile.parentFile?.mkdirs()
-
-        val result = container.execInContainer(
-            "pg_dump",
-            "-U",
-            container.username,
-            "-d",
-            container.databaseName,
-            "--clean",
-            "--if-exists",
-            "--inserts", // Use INSERT statements instead of COPY (more portable)
-        )
-
-        if (result.exitCode != 0) {
-            throw RuntimeException(
-                "pg_dump failed with exit code ${result.exitCode}. Stderr: ${result.stderr}",
-            )
-        }
-
-        outputFile.writeText(result.stdout)
-    }
-
-    fun restore(inputFile: File) {
+    override fun restore(inputFile: File) {
         require(inputFile.exists()) { "Dump file does not exist: ${inputFile.absolutePath}" }
 
         val result = container.execInContainer(

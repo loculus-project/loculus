@@ -1,23 +1,88 @@
 package org.loculus.backend.dbmigration
 
 import com.fasterxml.jackson.databind.node.TextNode
+import mu.KotlinLogging
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.PublicJwtKeyConfig
+import org.loculus.backend.controller.SPRING_DATASOURCE_PASSWORD
+import org.loculus.backend.controller.SPRING_DATASOURCE_URL
+import org.loculus.backend.controller.SPRING_DATASOURCE_USERNAME
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.controller.files.FilesClient
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
 import org.loculus.backend.controller.submission.SOME_LONG_GENE
 import org.loculus.backend.controller.submission.SOME_SHORT_GENE
+import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.testutil.TestEnvironment
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import java.io.File
 
-@EndpointTest
+private val log = KotlinLogging.logger { }
+
+@AutoConfigureMockMvc
+@SpringBootTest
+@ActiveProfiles("with-database")
+@Import(
+    SubmissionControllerClient::class,
+    SubmissionConvenienceClient::class,
+    GroupManagementControllerClient::class,
+    DataUseTermsControllerClient::class,
+    SeqSetCitationsControllerClient::class,
+    PublicJwtKeyConfig::class,
+    FilesClient::class,
+)
 class CompressionDictMigrationTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+    companion object {
+        private val env = TestEnvironment()
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            env.start()
+
+            env.postgres.restore(
+                File(
+                    CompressionDictMigrationTest::class.java.classLoader
+                        .getResource("MigrationTest_pg_dump.sql")!!.file, // TODO check nullability
+                ),
+            )
+
+            log.info("started Postgres for migration: ${env.postgres.jdbcUrl}")
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun afterAll() {
+            env.stop()
+        }
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add(SPRING_DATASOURCE_URL) { env.postgres.jdbcUrl }
+            registry.add(SPRING_DATASOURCE_USERNAME) { env.postgres.username }
+            registry.add(SPRING_DATASOURCE_PASSWORD) { env.postgres.password }
+        }
+    }
+
     @Test
     fun `single segmented released data should show uncompressed sequences`() {
         val releasedAccessionVersion = "LOC_000001Y.1"
