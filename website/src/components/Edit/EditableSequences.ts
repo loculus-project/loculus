@@ -49,7 +49,7 @@ export class EditableSequences {
     ): EditableSequences {
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => ({
-                label: `${key} segment`,
+                label: key,
                 value: value,
                 initialValue: value,
                 key: EditableSequences.getNextKey(),
