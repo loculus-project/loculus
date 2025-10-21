@@ -2,6 +2,7 @@
 
 package org.loculus.backend.db.migration
 
+import mu.KotlinLogging
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
 import org.jetbrains.exposed.sql.Database
@@ -21,15 +22,15 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
 
+private val log = KotlinLogging.logger { }
+
 @Component
 class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
     private val compressionDictService: CompressionDictService,
 ) : BaseJavaMigration() {
 
     override fun migrate(context: Context) {
-        println(
-            "---------------------------  V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------",
-        )
+        log.info { "Starting migration" }
 
         val db = Database.connect(context.configuration.dataSource)
 
@@ -167,9 +168,7 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                 }
         }
 
-        println(
-            "--------------------------- End V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------",
-        )
+        log.info { "Finished migration" }
     }
 }
 
