@@ -362,9 +362,14 @@ export class CliPage {
     }
 
     /**
-     * Log CLI result for debugging (always includes stderr if present)
+     * Log CLI result for debugging (only logs when DEBUG env var is set or force=true)
      */
-    logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
+    logCliResult(operation: string, result: CliResult, logStdout: boolean = false, force: boolean = false): void {
+        // Only log if DEBUG environment variable is set or force is true
+        if (!force && !process.env.DEBUG) {
+            return;
+        }
+
         const parts = [`${operation}:`];
 
         if (result.exitCode !== 0) {
