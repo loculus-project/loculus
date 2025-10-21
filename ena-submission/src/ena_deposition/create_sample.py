@@ -12,9 +12,9 @@ from psycopg2.pool import SimpleConnectionPool
 from .config import Config, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
+    check_accession_exists_and_set_error,
     create_ena_sample,
     get_alias,
-    set_error_if_accession_not_exists,
     trigger_retry_if_exists,
 )
 from .ena_types import (
@@ -164,7 +164,7 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
     if (
-        set_error_if_accession_not_exists(
+        check_accession_exists_and_set_error(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",

@@ -17,6 +17,7 @@ from ena_deposition import call_loculus
 from .config import Config, EnaOrganismDetails
 from .ena_submission_helper import (
     CreationResult,
+    check_accession_exists_and_set_error,
     create_chromosome_list,
     create_ena_assembly,
     create_flatfile,
@@ -25,7 +26,6 @@ from .ena_submission_helper import (
     get_description,
     get_ena_analysis_process,
     get_molecule_type,
-    set_error_if_accession_not_exists,
     trigger_retry_if_exists,
 )
 from .ena_types import (
@@ -264,14 +264,14 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config) -> N
             and row["metadata"]["insdcRawReadsAccession"]
         ):
             run_ref = row["metadata"]["insdcRawReadsAccession"]
-            set_error_if_accession_not_exists(
+            if check_accession_exists_and_set_error(
                 conditions=seq_key,
                 accession=run_ref,
                 accession_type="RUN_REF",
                 db_pool=db_config,
                 config=config,
-            )
-            continue
+            ) is False:
+                continue
 
         # 1. check if there exists an entry in the assembly_table for seq_key
         corresponding_assembly = find_conditions_in_db(

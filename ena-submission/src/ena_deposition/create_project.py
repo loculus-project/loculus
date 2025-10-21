@@ -12,9 +12,9 @@ from ena_deposition.loculus_models import Group
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
+    check_accession_exists_and_set_error,
     create_ena_project,
     get_alias,
-    set_error_if_accession_not_exists,
     trigger_retry_if_exists,
 )
 from .ena_types import (
@@ -132,7 +132,7 @@ def set_project_table_entry(db_config, config, row):
 
     logger.info("Checking if bioproject actually exists and is public")
     if (
-        set_error_if_accession_not_exists(
+        check_accession_exists_and_set_error(
             conditions=group_key,
             accession=bioproject,
             accession_type="BIOPROJECT",
