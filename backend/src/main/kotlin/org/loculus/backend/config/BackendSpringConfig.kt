@@ -148,9 +148,7 @@ class FlywayInit(
     private val dataSource: DataSource,
 ) : InitializingBean {
     override fun afterPropertiesSet() {
-        if (TransactionManager.defaultDatabase == null) {
-            Database.connect(dataSource)
-        }
+        Database.connect(dataSource)
 
         flyway.migrate()
 
