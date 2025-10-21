@@ -37,27 +37,30 @@ ATCGATCGATCGATCGATCGATCG`;
         expect(submitResult.stdout).toContain('Submission successful');
     });
 
-    cliTest('should reject malformed TSV with helpful error message', async ({ cliPage, groupId, testAccount }) => {
-        cliTest.setTimeout(60000);
-        await cliPage.configure();
-        await cliPage.login(testAccount.username, testAccount.password);
+    cliTest(
+        'should reject malformed TSV with helpful error message',
+        async ({ cliPage, groupId, testAccount }) => {
+            cliTest.setTimeout(60000);
+            await cliPage.configure();
+            await cliPage.login(testAccount.username, testAccount.password);
 
-        // Create malformed TSV with quoted fields separated by spaces instead of tabs
-        // This simulates the issue reported where tabs and spaces are mixed
-        const malformedMetadata = `"submissionId"	"sample_name"	"collection_date"		"location"  "host"
+            // Create malformed TSV with quoted fields separated by spaces instead of tabs
+            // This simulates the issue reported where tabs and spaces are mixed
+            const malformedMetadata = `"submissionId"	"sample_name"	"collection_date"		"location"  "host"
 test_003	sample3	2024-01-03	USA	human`;
 
-        const submitResult = await cliPage.submitSequences({
-            organism: 'west-nile',
-            metadata: malformedMetadata,
-            sequences: sampleSequences,
-            group: groupId,
-        });
+            const submitResult = await cliPage.submitSequences({
+                organism: 'west-nile',
+                metadata: malformedMetadata,
+                sequences: sampleSequences,
+                group: groupId,
+            });
 
-        // Should fail with unprocessable entity error
-        expect(submitResult.exitCode).not.toBe(0);
-        const errorOutput = submitResult.stderr || submitResult.stdout;
-        expect(errorOutput).toContain('not a valid TSV file');
-        expect(errorOutput).toContain('Common causes include');
-    });
+            // Should fail with unprocessable entity error
+            expect(submitResult.exitCode).not.toBe(0);
+            const errorOutput = submitResult.stderr || submitResult.stdout;
+            expect(errorOutput).toContain('not a valid TSV file');
+            expect(errorOutput).toContain('Common causes include');
+        },
+    );
 });
