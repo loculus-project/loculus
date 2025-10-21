@@ -1,5 +1,6 @@
 package org.loculus.backend.utils
 
+import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
@@ -29,8 +30,15 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
 }
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
-        .parse(InputStreamReader(metadataInputStream))
+    val csvParser = try {
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
+            .parse(InputStreamReader(metadataInputStream))
+    } catch (e: CSVException) {
+        throw UnprocessableEntityException(
+            "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
+                "and quoted fields are properly formatted. Error: ${e.message}",
+        )
+    }
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
@@ -63,8 +71,15 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
-    val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
-        .parse(InputStreamReader(metadataInputStream))
+    val csvParser = try {
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
+            .parse(InputStreamReader(metadataInputStream))
+    } catch (e: CSVException) {
+        throw UnprocessableEntityException(
+            "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
+                "and quoted fields are properly formatted. Error: ${e.message}",
+        )
+    }
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
