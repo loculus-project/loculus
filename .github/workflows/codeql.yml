@@ -55,7 +55,7 @@ jobs:
         run: |
           cd backend
           export JAVA_OPTS="-Xmx4096m"
-          ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx1g build --info --stacktrace -x ktlintCheck -x test
+          ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx1g assemble --info --stacktrace
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
