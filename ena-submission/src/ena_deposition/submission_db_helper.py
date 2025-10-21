@@ -125,6 +125,16 @@ def validate_column_name(table_name: str, column_name: str):
 
 
 @dataclass
+class SeqKey:
+    accession: str
+    version: int
+
+    def to_dict(self) -> dict:
+        """Convert SeqKey instance to a dictionary."""
+        return {"accession": self.accession, "version": self.version}
+
+
+@dataclass
 class SubmissionTableEntry:
     accession: str
     version: str
@@ -647,12 +657,12 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
-def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, Any]):
+def is_revision(db_config: SimpleConnectionPool, seq_key: SeqKey) -> bool:
     """Check if the entry is a revision"""
-    version = int(seq_key["version"])
+    version = seq_key.version
     if version == 1:
         return False
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
@@ -660,10 +670,10 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, Any]):
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
-def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, Any]) -> int | None:
+def last_version(db_config: SimpleConnectionPool, seq_key: SeqKey) -> int | None:
     if not is_revision(db_config, seq_key):
         return None
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
