@@ -48,17 +48,18 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
     return sequence {
         try {
-            csvParser.asSequence().forEach { record ->
+            csvParser.asSequence().withIndex().forEach { (index, record) ->
+                val lineNumber = index + 2 // Header is line 1, first data row is line 2
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in the metadata file contains no $submissionIdHeader: $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader': $record",
                     )
                 }
 
                 if (submissionId.any { it.isWhitespace() }) {
                     throw UnprocessableEntityException(
-                        "A value for $submissionIdHeader contains whitespace: $record",
+                        "Row at line $lineNumber: the value for '$submissionIdHeader' contains whitespace: $record",
                     )
                 }
 
@@ -67,7 +68,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in the metadata file contains no metadata columns: $entry",
+                        "Row at line $lineNumber in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
@@ -105,18 +106,19 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
     return sequence {
         try {
-            csvParser.asSequence().forEach { record ->
+            csvParser.asSequence().withIndex().forEach { (index, record) ->
+                val lineNumber = index + 2 // Header is line 1, first data row is line 2
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in the metadata file contains no $submissionIdHeader: $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader': $record",
                     )
                 }
 
                 val accession = record[ACCESSION_HEADER]
                 if (accession.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in the metadata file contains no $ACCESSION_HEADER: $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$ACCESSION_HEADER': $record",
                     )
                 }
 
@@ -125,7 +127,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in the metadata file contains no metadata columns: $entry",
+                        "Row at line $lineNumber in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
