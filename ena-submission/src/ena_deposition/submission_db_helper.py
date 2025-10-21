@@ -440,7 +440,7 @@ def update_db_where_conditions(
 
 def update_with_retry(
     db_config: SimpleConnectionPool,
-    conditions: dict[str, str],
+    conditions: dict[str, str | int],
     table_name: TableName,
     update_values: dict[str, Any],
     reraise: bool = True,
@@ -647,10 +647,10 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
-def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, Any]):
     """Check if the entry is a revision"""
-    version = seq_key["version"]
-    if version == "1":
+    version = int(seq_key["version"])
+    if version == 1:
         return False
     accession = {"accession": seq_key["accession"]}
     sample_data_in_submission_table = find_conditions_in_db(
@@ -660,7 +660,7 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
-def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, Any]) -> int | None:
     if not is_revision(db_config, seq_key):
         return None
     accession = {"accession": seq_key["accession"]}

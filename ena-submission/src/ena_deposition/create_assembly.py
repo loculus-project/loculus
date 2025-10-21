@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str], seq_key: dict[str, str], organism_metadata: dict[str, str]
+    unaligned_sequences: dict[str, str], seq_key: dict[str, Any], organism_metadata: dict[str, str]
 ) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
@@ -320,7 +320,7 @@ def submission_table_update(db_config: SimpleConnectionPool) -> None:
 def update_assembly_error(
     db_config: SimpleConnectionPool,
     error: str | list[str],
-    seq_key: dict[str, str],
+    seq_key: dict[str, Any],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
     logger.error(

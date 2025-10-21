@@ -295,7 +295,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, Any]):
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = int(seq_key["version"])
     accession = {"accession": seq_key["accession"]}
