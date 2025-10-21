@@ -35,6 +35,10 @@ import org.springframework.test.context.DynamicPropertySource
 
 private val log = KotlinLogging.logger { }
 
+/**
+ * Loads a dump from before this migration into the DB, runs the migration, and tests that sequence entries
+ * have been correctly updated to use compression dictionaries.
+ */
 @AutoConfigureMockMvc
 @SpringBootTest
 @ActiveProfiles("with-database")
