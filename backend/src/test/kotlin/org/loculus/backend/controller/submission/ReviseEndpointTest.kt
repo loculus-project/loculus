@@ -521,7 +521,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no id",
+                "contains no value for 'id'",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -630,7 +630,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no accession",
+                "contains no value for 'accession'",
             ),
         )
     }
