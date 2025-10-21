@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-data class CompressedSequence(
-    val compressedSequence: String,
-    val compressionDictId: Int?,
-)
+data class CompressedSequence(val compressedSequence: String, val compressionDictId: Int?)
 
 enum class CompressionAlgorithm(val extension: String) {
     NONE(""),
@@ -42,9 +39,7 @@ class CompressionService(private val compressionDictService: CompressionDictServ
         compressionDictService.getDictForSegmentOrGene(organism, segmentName),
     )
 
-    private fun decompressNucleotideSequence(
-        compressedSequence: CompressedSequence,
-    ): GeneticSequence = decompress(
+    private fun decompressNucleotideSequence(compressedSequence: CompressedSequence): GeneticSequence = decompress(
         compressedSequence,
     )
 
@@ -57,24 +52,21 @@ class CompressionService(private val compressionDictService: CompressionDictServ
         compressionDictService.getDictForSegmentOrGene(organism, gene),
     )
 
-    private fun decompressAminoAcidSequence(
-        compressedSequence: CompressedSequence,
-    ): GeneticSequence = decompress(
+    private fun decompressAminoAcidSequence(compressedSequence: CompressedSequence): GeneticSequence = decompress(
         compressedSequence,
     )
 
-    fun decompressSequencesInOriginalData(originalData: OriginalData<CompressedSequence>) =
-        OriginalData(
-            originalData.metadata,
-            originalData
-                .unalignedNucleotideSequences.mapValues {
-                    when (val compressedSequence = it.value) {
-                        null -> null
-                        else -> decompress(compressedSequence)
-                    }
-                },
-            originalData.files,
-        )
+    fun decompressSequencesInOriginalData(originalData: OriginalData<CompressedSequence>) = OriginalData(
+        originalData.metadata,
+        originalData
+            .unalignedNucleotideSequences.mapValues {
+                when (val compressedSequence = it.value) {
+                    null -> null
+                    else -> decompress(compressedSequence)
+                }
+            },
+        originalData.files,
+    )
 
     fun compressSequencesInOriginalData(originalData: OriginalData<GeneticSequence>, organism: Organism) = OriginalData(
         originalData.metadata,
@@ -91,32 +83,31 @@ class CompressionService(private val compressionDictService: CompressionDictServ
         originalData.files,
     )
 
-    fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>) =
-        ProcessedData(
-            processedData.metadata,
-            processedData
-                .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
-                    when (sequenceData) {
-                        null -> null
-                        else -> decompressNucleotideSequence(sequenceData)
-                    }
-                },
-            processedData.alignedNucleotideSequences.mapValues { (_, sequenceData) ->
+    fun decompressSequencesInProcessedData(processedData: ProcessedData<CompressedSequence>) = ProcessedData(
+        processedData.metadata,
+        processedData
+            .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
                     else -> decompressNucleotideSequence(sequenceData)
                 }
             },
-            processedData.nucleotideInsertions,
-            processedData.alignedAminoAcidSequences.mapValues { (_, sequenceData) ->
-                when (sequenceData) {
-                    null -> null
-                    else -> decompressAminoAcidSequence(sequenceData)
-                }
-            },
-            processedData.aminoAcidInsertions,
-            processedData.files,
-        )
+        processedData.alignedNucleotideSequences.mapValues { (_, sequenceData) ->
+            when (sequenceData) {
+                null -> null
+                else -> decompressNucleotideSequence(sequenceData)
+            }
+        },
+        processedData.nucleotideInsertions,
+        processedData.alignedAminoAcidSequences.mapValues { (_, sequenceData) ->
+            when (sequenceData) {
+                null -> null
+                else -> decompressAminoAcidSequence(sequenceData)
+            }
+        },
+        processedData.aminoAcidInsertions,
+        processedData.files,
+    )
 
     fun compressSequencesInProcessedData(processedData: ProcessedData<String>, organism: Organism) = ProcessedData(
         processedData.metadata,

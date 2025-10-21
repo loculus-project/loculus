@@ -5,7 +5,6 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 
-
 private const val COMPRESSION_DICTIONARIES_TABLE_NAME = "compression_dictionaries_table"
 
 object CompressionDictionariesTable : IntIdTable(COMPRESSION_DICTIONARIES_TABLE_NAME, "id") {
