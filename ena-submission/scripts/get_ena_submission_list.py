@@ -263,6 +263,10 @@ def get_ena_submission_list(config_file) -> None:
         comment = f"{config.backend_url}: No sequences found to submit to ENA"
         logger.info(comment)
         notify(slack_config, comment)
+    else:
+        logger.info(
+            f"Total of {len(all_entries_to_submit)} seq found to submit to ENA across all organisms"
+        )
 
 
 if __name__ == "__main__":
