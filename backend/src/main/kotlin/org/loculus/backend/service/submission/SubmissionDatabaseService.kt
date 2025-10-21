@@ -101,7 +101,6 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
-import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
 
@@ -117,7 +116,6 @@ class SubmissionDatabaseService(
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
-    pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
@@ -125,16 +123,6 @@ class SubmissionDatabaseService(
     private val dateProvider: DateProvider,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
-
-    init {
-        // TODO ?
-        log.info{"--------------maybe connecting to db------------------------"}
-        if (TransactionManager.defaultDatabase == null) {
-            log.info{"--------------actually connecting to db------------------------"}
-            Database.connect(pool)
-        }
-    }
-
     private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
