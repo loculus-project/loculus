@@ -52,7 +52,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in metadata file contains no $submissionIdHeader: $record",
+                        "A row in the metadata file contains no $submissionIdHeader: $record",
                     )
                 }
 
@@ -67,7 +67,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in metadata file contains no metadata columns: $entry",
+                        "A row in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
@@ -109,14 +109,14 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in metadata file contains no $submissionIdHeader: $record",
+                        "A row in the metadata file contains no $submissionIdHeader: $record",
                     )
                 }
 
                 val accession = record[ACCESSION_HEADER]
                 if (accession.isNullOrEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in metadata file contains no $ACCESSION_HEADER: $record",
+                        "A row in the metadata file contains no $ACCESSION_HEADER: $record",
                     )
                 }
 
@@ -125,7 +125,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "A row in metadata file contains no metadata columns: $entry",
+                        "A row in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
