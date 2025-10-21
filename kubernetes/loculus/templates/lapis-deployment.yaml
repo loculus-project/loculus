@@ -23,7 +23,7 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: lapis
           image: "{{ $.Values.images.lapis.repository }}:{{ $.Values.images.lapis.tag }}"
