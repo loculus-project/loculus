@@ -102,25 +102,23 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
     private fun getDictIdOrInsertNewEntry(dict: String): Int {
         val hash = hash(dict)
 
-        return transaction {
-            // TODO check SQL
-            val existingId = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
-                .firstOrNull()
-                ?.id
-                ?.value
+        // TODO check SQL
+        val existingId = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
+            .firstOrNull()
+            ?.id
+            ?.value
 
-            if (existingId != null) {
-                return@transaction existingId
-            }
-
-            CompressionDictionaryEntity
-                .new {
-                    this.hash = hash
-                    this.dictContents = dict
-                }
-                .id
-                .value
+        if (existingId != null) {
+            return existingId
         }
+
+        return CompressionDictionaryEntity
+            .new {
+                this.hash = hash
+                this.dictContents = dict
+            }
+            .id
+            .value
     }
 
     private fun hash(input: String): String {
