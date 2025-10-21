@@ -68,4 +68,25 @@ class MetadataEntryTest {
         }
         assert(exception.message!!.contains("whitespace"))
     }
+
+    @Test
+    fun `test malformed TSV with error during iteration throws UnprocessableEntityException`() {
+        // Create a large TSV with many valid rows followed by a malformed row
+        // This tests that errors during iteration (not just initialization) are caught
+        val headerLine = "\"id\"${'\t'}\"Country\"${'\t'}\"Date\"\n"
+        val validRows = (1..1000).joinToString("") { i ->
+            "$i${'\t'}Switzerland${'\t'}2025-01-01\n"
+        }
+        // Malformed row with quoted fields separated by spaces instead of tabs
+        val malformedRow = "1001${'\t'}\"Country\"  \"Date\"\n"
+
+        val str = headerLine + validRows + malformedRow
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("not a valid TSV file"))
+        assert(exception.message!!.contains("tabs"))
+    }
 }
