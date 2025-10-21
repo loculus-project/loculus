@@ -47,9 +47,7 @@ private val log = KotlinLogging.logger { }
     PublicJwtKeyConfig::class,
     FilesClient::class,
 )
-class CompressionDictMigrationTest(
-    @Autowired val convenienceClient: SubmissionConvenienceClient,
-) {
+class CompressionDictMigrationTest(@Autowired val convenienceClient: SubmissionConvenienceClient) {
     companion object {
         private val env = TestEnvironment()
 
