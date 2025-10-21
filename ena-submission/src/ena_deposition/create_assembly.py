@@ -743,6 +743,7 @@ def assembly_table_handle_errors(
             f"{len(entries_with_errors)} entries in assembly_table in status"
             f" HAS_ERRORS or SUBMITTING for over {submitting_time_threshold_min}m"
         )
+        logger.info(error_msg)
         send_slack_notification(
             error_msg,
             slack_config,
@@ -769,6 +770,7 @@ def assembly_table_handle_errors(
             f"{len(entries_waiting)} entries in assembly_table in"
             f" status WAITING for over {waiting_threshold_hours}h"
         )
+        logger.info(error_msg)
         send_slack_notification(
             error_msg,
             slack_config,
