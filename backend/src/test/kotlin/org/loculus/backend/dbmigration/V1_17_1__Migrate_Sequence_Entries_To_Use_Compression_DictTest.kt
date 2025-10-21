@@ -63,7 +63,9 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
         fun beforeAll() {
             env.start()
 
-            env.postgres.restore(TestResource("MigrationTest_pg_dump.sql").file)
+            env.postgres.restore(
+                TestResource("V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest_pg_dump.sql").file,
+            )
 
             log.info("started Postgres for migration: ${env.postgres.jdbcUrl}")
         }
