@@ -142,6 +142,7 @@ class BackendSpringConfig {
 @Component
 @Profile("!test")
 class FlywayInit(
+    // get Flyway from the Spring autoconfiguration so that Java based migrations can use Spring beans
     private val flyway: Flyway,
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
@@ -155,7 +156,6 @@ class FlywayInit(
         // Since migration V1.10 we need to initialize the CurrentProcessingPipelineTable
         // in code, because the configured organisms are not known in the SQL table definitions.
         logger.info("Initializing CurrentProcessingPipelineTable")
-
         transaction {
             val insertedRows = CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
                 backendConfig.organisms.keys,
