@@ -42,6 +42,49 @@ export class ReviewPage {
         await this.page.getByRole('button', { name: 'Release', exact: true }).click();
     }
 
+    async approveAll() {
+        await this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Approve', exact: true }).click();
+    }
+
+    async deleteAll() {
+        await this.page.getByRole('button', { name: /Delete \d+ erroneous sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Delete', exact: true }).click();
+    }
+
+    async getTotalSequenceCount(): Promise<number> {
+        const controlPanel = this.page.locator('[data-testid="review-page-control-panel"]');
+        const text = await controlPanel.textContent();
+
+        // Extract total from "X awaiting approval, Y approved, Z erroneous, W total sequences"
+        const match = text?.match(/(\d+)\s+total sequences/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
+    async waitForTotalSequenceCount(
+        expectedCount: number,
+        comparison: 'equal' | 'less' = 'equal',
+        timeout = 60000,
+    ) {
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    const count = await this.getTotalSequenceCount();
+                    if (comparison === 'equal') {
+                        return count === expectedCount;
+                    } else {
+                        return count < expectedCount;
+                    }
+                },
+                {
+                    message: `Total sequence count never became ${comparison} to ${expectedCount}.`,
+                    timeout,
+                },
+            )
+            .toBe(true);
+    }
+
     async viewSequences() {
         const button = this.viewSequencesButton();
         await expect(button).toBeVisible({ timeout: 15000 });
