@@ -58,7 +58,7 @@ jobs:
             --for-e2e \
             --enablePreprocessing \
             --use-localhost-ip
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm
