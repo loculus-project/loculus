@@ -610,6 +610,12 @@
                     "docsIncludePrefix": false,
                     "type": "array",
                     "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
+                  },
+                  "backend_request_timeout_seconds": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "integer",
+                    "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
                 }
               }
@@ -684,6 +690,12 @@
                       "docsIncludePrefix": false,
                       "type": "integer",
                       "description": "Timeout in seconds for requests to the backend server for data to process"
+                    },
+                    "time_between_approve_requests_seconds": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Time in seconds to wait between approve requests"
                     }
                   },
                   "required": ["method"]
