@@ -23,11 +23,11 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: website
           image: "{{ $.Values.images.website.repository }}:{{ $.Values.images.website.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.website.pullPolicy }}"
+          imagePullPolicy: "{{ $.Values.images.website.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           ports:
             - containerPort: 3000

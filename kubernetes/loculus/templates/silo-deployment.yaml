@@ -27,11 +27,11 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       initContainers:
-        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: silo
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"
+          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
@@ -67,7 +67,7 @@ spec:
             timeoutSeconds: 5
         - name: silo-preprocessing
           image: "{{ $.Values.images.lapisSilo.repository }}:{{ $.Values.images.lapisSilo.tag }}"
-          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy }}"
+          imagePullPolicy: "{{ $.Values.images.lapisSilo.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "silo-preprocessing" $.Values) | nindent 10 }}
           command:
             - sh

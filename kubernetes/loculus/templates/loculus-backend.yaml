@@ -23,11 +23,11 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
       containers:
         - name: backend
           image: "{{ $.Values.images.backend.repository }}:{{ $.Values.images.backend.tag | default $dockerTag }}"
-          imagePullPolicy: "{{ $.Values.images.backend.pullPolicy }}"
+          imagePullPolicy: "{{ $.Values.images.backend.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           startupProbe:
             httpGet:
