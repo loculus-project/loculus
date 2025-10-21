@@ -42,8 +42,10 @@ class MetadataEntryTest {
     @Test
     fun `test malformed TSV with quoted fields and spaces throws UnprocessableEntityException`() {
         // This simulates the issue where quoted fields are separated by spaces instead of tabs
-        val str = "\"id\"${'\t'}\"sampleCollectionDate\"${'\t'}\"geoLocCountry\"${'\t'}${'\t'}${'\t'}\"Host\"  \"authors\"\n" +
-            "123${'\t'}2025-01-01${'\t'}Switzerland  Homo Sapiens  Potter, H;\n"
+        val str =
+            "\"id\"${'\t'}\"sampleCollectionDate\"${'\t'}\"geoLocCountry\"${'\t'}${'\t'}${'\t'}" +
+                "\"Host\"  \"authors\"\n" +
+                "123${'\t'}2025-01-01${'\t'}Switzerland  Homo Sapiens  Potter, H;\n"
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
