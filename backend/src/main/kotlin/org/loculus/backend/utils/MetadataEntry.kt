@@ -12,6 +12,12 @@ import java.io.InputStreamReader
 
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
+private fun invalidTsvFormatException(originalException: Exception) = UnprocessableEntityException(
+    "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
+        "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
+        "Error: ${originalException.message}",
+)
+
 fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     val submissionIdHeaders = listOf(
         HEADER_TO_CONNECT_METADATA_AND_SEQUENCES,
@@ -34,11 +40,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(InputStreamReader(metadataInputStream))
     } catch (e: CSVException) {
-        throw UnprocessableEntityException(
-            "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
-                "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
-                "Error: ${e.message}",
-        )
+        throw invalidTsvFormatException(e)
     }
 
     val headerNames = csvParser.headerNames
@@ -75,11 +77,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
             // CSVException is wrapped in UncheckedIOException during iteration
             val cause = e.cause
             if (cause is CSVException) {
-                throw UnprocessableEntityException(
-                    "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
-                        "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
-                        "Error: ${cause.message}",
-                )
+                throw invalidTsvFormatException(cause)
             }
             throw e
         }
@@ -93,11 +91,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(InputStreamReader(metadataInputStream))
     } catch (e: CSVException) {
-        throw UnprocessableEntityException(
-            "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
-                "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
-                "Error: ${e.message}",
-        )
+        throw invalidTsvFormatException(e)
     }
 
     val headerNames = csvParser.headerNames
@@ -141,11 +135,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
             // CSVException is wrapped in UncheckedIOException during iteration
             val cause = e.cause
             if (cause is CSVException) {
-                throw UnprocessableEntityException(
-                    "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
-                        "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
-                        "Error: ${cause.message}",
-                )
+                throw invalidTsvFormatException(cause)
             }
             throw e
         }
