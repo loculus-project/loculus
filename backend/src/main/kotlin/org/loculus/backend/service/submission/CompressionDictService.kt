@@ -26,9 +26,9 @@ class CompressionDictService(
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
         ConcurrentHashMap<Int, ByteArray>,
-        > by lazy {
-        // Make sure the caches are only populated after the Flyway migration has run
-        // The Spring bean is created, then Flyway run, i.e. we must not read from the DB when creating this class
+    > by lazy {
+        // Must be lazy to make sure the caches are only populated after the Flyway migration has run
+        // The Spring bean is created before Flyway runs, i.e. we must not read from the DB when creating this class
         populateCaches()
     }
 
@@ -108,7 +108,7 @@ class CompressionDictService(
         }
     }
 
-    fun getDictIdOrInsertNewEntry(dict: String): Int {
+    private fun getDictIdOrInsertNewEntry(dict: String): Int {
         val hash = hash(dict)
 
         return transaction {
