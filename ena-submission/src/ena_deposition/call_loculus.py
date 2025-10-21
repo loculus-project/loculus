@@ -162,7 +162,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
         resp.raise_for_status()
 
         dctx = zstd.ZstdDecompressor()
-        with dctx.stream_reader(resp.raw) as zstream:
+        with dctx.stream_reader(resp.raw) as zstream:  # type: ignore
             # Turn bytes -> text -> lines without loading the whole body
             # BufferedReader improves .readline() performance significantly
             text = io.TextIOWrapper(
