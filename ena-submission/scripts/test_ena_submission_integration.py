@@ -59,7 +59,7 @@ from ena_deposition.create_sample import (
 )
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
-from ena_deposition.submission_db_helper import (
+from ena_deposition.db_helper import (
     Status,
     StatusAll,
     TableName,

@@ -23,7 +23,6 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from bs4 import BeautifulSoup
-from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 from tenacity import (
     RetryCallState,
@@ -50,12 +49,8 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
-from .submission_db_helper import (
-    ProjectTableEntry,
-    SampleTableEntry,
-    Status,
-    add_to_project_table,
-    add_to_sample_table,
+from .db_helper import (
+    Status
 )
 
 logger = logging.getLogger(__name__)
@@ -854,44 +849,44 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def set_error_if_accession_not_exists(
-    conditions: dict[str, str | dict[str, str]],
-    accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
-    db_pool: SimpleConnectionPool,
-    config: Config,
-) -> bool:
-    """Make request to ENA to check if an accession exists"""
-    url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
-    try:
-        response = ena_http_get_with_retry(config, url)
-        exists = int(response.json()["total"]) > 0
-        if exists:
-            return True
-    except Exception as e:
-        logger.error(f"Error checking if accession exists: {e!s}")
+# def set_error_if_accession_not_exists(
+#     conditions: dict[str, str | dict[str, str]],
+#     accession: str,
+#     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
+#     db_pool: SimpleConnectionPool,
+#     config: Config,
+# ) -> bool:
+#     """Make request to ENA to check if an accession exists"""
+#     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
+#     try:
+#         response = ena_http_get_with_retry(config, url)
+#         exists = int(response.json()["total"]) > 0
+#         if exists:
+#             return True
+#     except Exception as e:
+#         logger.error(f"Error checking if accession exists: {e!s}")
 
-    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
-    logger.error(error_text)
+#     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
+#     logger.error(error_text)
 
-    succeeded: bool | int | None
-    if accession_type == "BIOSAMPLE":
-        sample_table_entry = SampleTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"ena_sample_accession": accession, "biosample_accession": accession},
-        )
-        succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    else:
-        project_table_entry = ProjectTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"bioproject_accession": accession},
-        )
-        succeeded = add_to_project_table(db_pool, project_table_entry)
+#     succeeded: bool | int | None
+#     if accession_type == "BIOSAMPLE":
+#         sample_table_entry = SampleTableEntry(
+#             **conditions,  # type: ignore
+#             status=Status.HAS_ERRORS,
+#             errors=json.dumps([error_text]),
+#             result={"ena_sample_accession": accession, "biosample_accession": accession},
+#         )
+#         succeeded = add_to_sample_table(db_pool, sample_table_entry)
+#     else:
+#         project_table_entry = ProjectTableEntry(
+#             **conditions,  # type: ignore
+#             status=Status.HAS_ERRORS,
+#             errors=json.dumps([error_text]),
+#             result={"bioproject_accession": accession},
+#         )
+#         succeeded = add_to_project_table(db_pool, project_table_entry)
 
-    if not succeeded:
-        logger.warning(f"{accession_type} creation failed and DB update failed.")
-    return False
+#     if not succeeded:
+#         logger.warning(f"{accession_type} creation failed and DB update failed.")
+#     return False

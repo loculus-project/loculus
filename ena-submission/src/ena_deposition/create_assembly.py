@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from typing import Any, Literal
 
 import pytz
-from psycopg2.pool import SimpleConnectionPool
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
@@ -729,7 +728,7 @@ def assembly_table_handle_errors(
 
 def create_assembly(config: Config, stop_event: threading.Event):
     engine = db_init(config.db_password, config.db_username, config.db_url)
-    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -741,10 +740,10 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(SessionLocal)
-        submission_table_update(engine)
+        submission_table_start(session_local)
+        submission_table_update(session_local)
 
-        assembly_table_create(engine, config, test=config.test)
-        assembly_table_update(engine, config, time_threshold=config.min_between_ena_checks)
-        assembly_table_handle_errors(engine, config, slack_config)
+        assembly_table_create(session_local, config, test=config.test)
+        assembly_table_update(session_local, config, time_threshold=config.min_between_ena_checks)
+        assembly_table_handle_errors(session_local, config, slack_config)
         time.sleep(config.time_between_iterations)

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from ena_deposition.api import app
 from ena_deposition.config import Config, get_config
-from ena_deposition.submission_db_helper import db_init
+from ena_deposition.db_helper import db_init
 from fastapi.testclient import TestClient
 from requests.status_codes import codes
 

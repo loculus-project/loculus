@@ -17,7 +17,8 @@ dependencies:
   - PyYAML
   - requests
   - unzip
-  - psycopg2
+  - psycopg
+  - sqlalchemy
   - slack_sdk
   - xmltodict
   - biopython
@@ -25,7 +26,6 @@ dependencies:
   - ruff =0.13.1. # if changing update .pre-commit-config.yaml as well
   - tenacity
   - types-pytz
-  - types-psycopg2
   - types-requests
   - types-PyYAML
   - types-xmltodict

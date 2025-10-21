@@ -8,7 +8,7 @@ from psycopg2.pool import SimpleConnectionPool
 from pydantic import BaseModel
 
 from .config import Config
-from .submission_db_helper import db_init
+from .db_helper import db_init
 
 logger = logging.getLogger(__name__)
 

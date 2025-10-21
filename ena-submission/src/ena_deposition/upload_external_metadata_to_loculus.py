@@ -14,7 +14,7 @@ from ena_deposition.call_loculus import submit_external_metadata
 
 from .config import Config
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
-from .submission_db_helper import (
+from .db_helper import (
     StatusAll,
     TableName,
     db_init,

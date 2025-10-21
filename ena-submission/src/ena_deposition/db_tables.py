@@ -10,8 +10,16 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_as_dataclass,
+    mapped_column,
+    registry,
+    relationship,
+)
 
+mapper_registry = registry()
 
 class Base(DeclarativeBase):
     pass
@@ -57,6 +65,7 @@ class Project(Base):
 # -----------------------------
 # submission_table
 # -----------------------------
+@mapped_as_dataclass(mapper_registry)
 class Submission(Base):
     __tablename__ = "submission_table"
 

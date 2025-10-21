@@ -15,7 +15,7 @@ from ena_deposition.notifications import (
     slack_conn_init,
     upload_file_with_comment,
 )
-from ena_deposition.submission_db_helper import (
+from ena_deposition.db_helper import (
     Accession,
     AccessionVersion,
     db_init,
@@ -263,6 +263,10 @@ def get_ena_submission_list(config_file) -> None:
         comment = f"{config.backend_url}: No sequences found to submit to ENA"
         logger.info(comment)
         notify(slack_config, comment)
+    else:
+        logger.info(
+            f"Total of {len(all_entries_to_submit)} seq found to submit to ENA across all organisms"
+        )
 
 
 if __name__ == "__main__":
