@@ -29,8 +29,20 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
 }
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val csvParser = CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
-        .parse(InputStreamReader(metadataInputStream))
+    val reader = InputStreamReader(metadataInputStream, Charsets.UTF_8)
+
+    val csvParser = try {
+        CSVFormat.TDF.builder()
+            .setHeader()
+            .setSkipHeaderRecord(true)
+            .get()
+            .parse(reader)
+    } catch (e: CSVException) {
+        throw UnprocessableEntityException(
+            "Metadata TSV is malformed: ${e.message}. " +
+                "Make sure the file is tab-delimited, not space-separated or mixed with spaces.",
+        )
+    }
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
