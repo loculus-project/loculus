@@ -858,14 +858,17 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def set_error_if_accession_not_exists(
+def check_accession_exists_and_set_error(
     conditions: dict[str, str | dict[str, str]],
     accession: str,
     accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
     db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
-    """Make request to ENA to check if an accession exists"""
+    """Make request to ENA to check if an accession exists
+    If it does not exist, log error and update the relevant table with error status.
+    Returns True if accession exists, False otherwise.
+    """
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
