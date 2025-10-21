@@ -1,11 +1,13 @@
-import json
+import io
 import logging
 import os
 from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
+import orjsonl
 import requests
+import zstandard as zstd
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
@@ -146,19 +148,32 @@ def get_group_info(config: Config, group_id: int) -> Group:
 
 
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
-    """Get sequences that are ready for release"""
-
+    """
+    Stream zstd-compressed NDJSON and yield filtered dicts.
+    """
     url = f"{organism_url(config, organism)}/get-released-data"
+    params = {"compression": "ZSTD"}
+    headers = {
+        "Accept": "application/x-ndjson",
+    }
 
-    headers = {"Content-Type": "application/json"}
+    with requests.get(url, params=params, headers=headers, timeout=3600, stream=True) as resp:
+        resp.raise_for_status()
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
-        response.raise_for_status()
-        for line in response.iter_lines():
-            full_json = json.loads(line)
-            filtered_json = {
-                k: v
-                for k, v in full_json.items()
-                if k in {"metadata", "unalignedNucleotideSequences"}
-            }
-            yield filtered_json
+        dctx = zstd.ZstdDecompressor()
+        with dctx.stream_reader(resp.raw) as zstream:
+            # Turn bytes -> text -> lines without loading the whole body
+            # BufferedReader improves .readline() performance significantly
+            text = io.TextIOWrapper(
+                io.BufferedReader(zstream, buffer_size=1 << 16), encoding="utf-8"
+            )
+
+            wanted = {"metadata", "unalignedNucleotideSequences"}
+            for line in text:
+                if not line:
+                    break
+                line_stripped = line.strip()
+                if not line_stripped:
+                    continue
+                full_json = orjsonl.loads(line_stripped)
+                yield {k: v for k, v in full_json.items() if k in wanted}

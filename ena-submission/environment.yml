@@ -33,3 +33,4 @@ dependencies:
   - python-dotenv
   - pytest
   - unidecode
+  - orjsonl
