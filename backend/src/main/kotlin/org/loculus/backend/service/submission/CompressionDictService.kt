@@ -9,24 +9,19 @@ import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
-class DictEntry(
-    val id: Int,
-    val dict: ByteArray,
-)
+class DictEntry(val id: Int, val dict: ByteArray)
 
 /**
  * An abstraction over the compression_dictionaries_table.
  * Caches the contents in memory to avoid repeated DB lookups.
  */
 @Service
-class CompressionDictService(
-    private val backendConfig: BackendConfig,
-) {
+class CompressionDictService(private val backendConfig: BackendConfig) {
     private val caches: Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
         ConcurrentHashMap<Int, ByteArray>,
-    > by lazy {
+        > by lazy {
         // Must be lazy to make sure the caches are only populated after the Flyway migration has run
         // The Spring bean is created before Flyway runs, i.e. we must not read from the DB when creating this class
         populateCaches()
@@ -36,8 +31,7 @@ class CompressionDictService(
     private val unalignedDictCache: Map<String, DictEntry> get() = caches.second
     private val cacheById: ConcurrentHashMap<Int, ByteArray> get() = caches.third
 
-    private fun populateCaches(
-    ): Triple<
+    private fun populateCaches(): Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
         ConcurrentHashMap<Int, ByteArray>,
@@ -77,17 +71,14 @@ class CompressionDictService(
     /**
      * Get dictionary for a specific segment or gene (used when compressing processed sequences)
      */
-    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry? {
-        return dictCache[Pair(organism.name, segmentOrGene)]
-    }
+    fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry? =
+        dictCache[Pair(organism.name, segmentOrGene)]
 
     /**
      * Get dictionary for unaligned sequences (used when compressing submitted sequences)
      */
-    fun getDictForUnalignedSequence(organism: Organism): DictEntry {
-        return unalignedDictCache[organism.name]
-            ?: throw RuntimeException("No unaligned dict found for organism: ${organism.name}")
-    }
+    fun getDictForUnalignedSequence(organism: Organism): DictEntry = unalignedDictCache[organism.name]
+        ?: throw RuntimeException("No unaligned dict found for organism: ${organism.name}")
 
     /**
      * Get dictionary by ID (used when decompressing sequences)

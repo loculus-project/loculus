@@ -26,7 +26,9 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
 ) : BaseJavaMigration() {
 
     override fun migrate(context: Context) {
-        println("---------------------------  V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
+        println(
+            "---------------------------  V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------",
+        )
 
         val db = Database.connect(context.configuration.dataSource)
 
@@ -73,14 +75,19 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                     }
                 }
 
-
             Pre1_17_1_SequenceEntriesPreprocessedDataTable
                 .join(
                     Pre1_17_1_SequenceEntriesTable,
                     joinType = JoinType.INNER,
                     additionalConstraint = {
-                        (Pre1_17_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq Pre1_17_1_SequenceEntriesTable.accessionColumn) and
-                            (Pre1_17_1_SequenceEntriesPreprocessedDataTable.versionColumn eq Pre1_17_1_SequenceEntriesTable.versionColumn)
+                        (
+                            Pre1_17_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq
+                                Pre1_17_1_SequenceEntriesTable.accessionColumn
+                            ) and
+                            (
+                                Pre1_17_1_SequenceEntriesPreprocessedDataTable.versionColumn eq
+                                    Pre1_17_1_SequenceEntriesTable.versionColumn
+                                )
                     },
                 )
                 .select(
@@ -147,7 +154,10 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                         where = {
                             (Post1_17_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq accession) and
                                 (Post1_17_1_SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
-                                (Post1_17_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+                                (
+                                    Post1_17_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq
+                                        pipelineVersion
+                                    )
                         },
                     ) {
                         it[Post1_17_1_SequenceEntriesPreprocessedDataTable.processedDataColumn] =
@@ -156,16 +166,15 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                 }
         }
 
-        println("--------------------------- End V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
+        println(
+            "--------------------------- End V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------",
+        )
     }
 }
 
 data class Pre1_17_1_CompressedSequence(val compressedSequence: String)
 
-data class Post1_17_1_CompressedSequence(
-    val compressedSequence: String,
-    val compressionDictId: Int?,
-)
+data class Post1_17_1_CompressedSequence(val compressedSequence: String, val compressionDictId: Int?)
 
 /**
  * Only contains the columns needed for this migration.
