@@ -10,10 +10,18 @@ from typing import Any, Literal
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import select
+from sqlalchemy.orm import sessionmaker
 
 from ena_deposition import call_loculus
 
 from .config import Config
+from .db_helper import (
+    Status,
+    StatusAll,
+    db_init,
+)
+from .db_tables import Assembly, Submission
 from .ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
@@ -34,21 +42,6 @@ from .ena_types import (
     Topology,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
-from .submission_db_helper import (
-    AssemblyTableEntry,
-    Status,
-    StatusAll,
-    TableName,
-    add_to_assembly_table,
-    db_init,
-    find_conditions_in_db,
-    find_errors_in_db,
-    find_waiting_in_db,
-    is_revision,
-    last_version,
-    update_db_where_conditions,
-    update_with_retry,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +228,7 @@ def create_manifest_object(
     return manifest
 
 
-def submission_table_start(db_config: SimpleConnectionPool) -> None:
+def submission_table_start(session_local: sessionmaker) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
     2. If (exists an entry in the assembly_table for (accession, version)):
@@ -243,10 +236,9 @@ def submission_table_start(db_config: SimpleConnectionPool) -> None:
     b.      Else update state to SUBMITTING_ASSEMBLY
     3. Else create corresponding entry in assembly_table
     """
-    conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
-    ready_to_submit = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
+    with session_local() as session:
+        stmt = select(Submission).where(Submission.status_all == StatusAll.SUBMITTED_SAMPLE)
+        ready_to_submit = session.scalars(stmt).all()
     if len(ready_to_submit) > 0:
         logger.debug(
             f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_SAMPLE"
@@ -255,12 +247,14 @@ def submission_table_start(db_config: SimpleConnectionPool) -> None:
         seq_key = {"accession": row["accession"], "version": row["version"]}
 
         # 1. check if there exists an entry in the assembly_table for seq_key
-        corresponding_assembly = find_conditions_in_db(
-            db_config, table_name=TableName.ASSEMBLY_TABLE, conditions=seq_key
-        )
+        with session_local() as session:
+            stmt = select(Assembly).where(
+                Assembly.accession == row["accession"], Assembly.version == row["version"]
+            )
+            corresponding_assembly = session.scalars(stmt).all()
         status_all = None
         if len(corresponding_assembly) == 1:
-            if corresponding_assembly[0]["status"] == str(Status.SUBMITTED):
+            if corresponding_assembly[0].status == str(Status.SUBMITTED):
                 status_all = StatusAll.SUBMITTED_ALL
             else:
                 status_all = StatusAll.SUBMITTING_ASSEMBLY
@@ -734,7 +728,8 @@ def assembly_table_handle_errors(
 
 
 def create_assembly(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    engine = db_init(config.db_password, config.db_username, config.db_url)
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -746,10 +741,10 @@ def create_assembly(config: Config, stop_event: threading.Event):
             logger.warning("create_assembly stopped due to exception in another task")
             return
         logger.debug("Checking for assemblies to create")
-        submission_table_start(db_config)
-        submission_table_update(db_config)
+        submission_table_start(SessionLocal)
+        submission_table_update(engine)
 
-        assembly_table_create(db_config, config, test=config.test)
-        assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
-        assembly_table_handle_errors(db_config, config, slack_config)
+        assembly_table_create(engine, config, test=config.test)
+        assembly_table_update(engine, config, time_threshold=config.min_between_ena_checks)
+        assembly_table_handle_errors(engine, config, slack_config)
         time.sleep(config.time_between_iterations)

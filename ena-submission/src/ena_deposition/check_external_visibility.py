@@ -21,15 +21,8 @@ import requests
 from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition.config import Config
-from ena_deposition.submission_db_helper import (
-    AssemblyTableEntry,
-    ProjectTableEntry,
-    SampleTableEntry,
-    Status,
-    TableName,
+from ena_deposition.db_helper import (
     db_init,
-    find_conditions_in_db,
-    update_db_where_conditions,
 )
 
 logger = logging.getLogger(__name__)
