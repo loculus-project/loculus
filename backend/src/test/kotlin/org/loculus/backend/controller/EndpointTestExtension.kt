@@ -5,8 +5,6 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import io.minio.SetBucketPolicyArgs
 import mu.KotlinLogging
-import org.junit.jupiter.api.extension.AfterEachCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -33,14 +31,12 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.testutil.TestEnvironment
-import org.loculus.backend.testutil.docker.DockerPostgres
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
-import java.io.File
 
 /**
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
@@ -72,9 +68,9 @@ const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_da
 
 const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
 
-private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
-private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
-private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
+const val SPRING_DATASOURCE_URL = "spring.datasource.url"
+const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
+const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 const val DEFAULT_GROUP_NAME = "testGroup"
@@ -131,12 +127,10 @@ val MINIO_TEST_BUCKET = "testbucket"
 private val log = KotlinLogging.logger { }
 
 class EndpointTestExtension :
-    BeforeAllCallback,
     BeforeEachCallback,
-    AfterEachCallback,
     TestExecutionListener {
     companion object {
-        private val env = TestEnvironment
+        private val env = TestEnvironment()
 
         private var isStarted = false
         private var isBucketCreated = false
@@ -209,18 +203,9 @@ class EndpointTestExtension :
         }
     }
 
-    override fun beforeAll(context: ExtensionContext?) {
-        (env.postgres as DockerPostgres).restore(File(javaClass.classLoader.getResource("MigrationTest_pg_dump.sql").file))
-    }
-
     override fun beforeEach(context: ExtensionContext) {
         log.debug("Clearing database")
-//        env.postgres.exec(clearDatabaseStatement())
-    }
-
-    override fun afterEach(context: ExtensionContext?) {
-        log.debug("Dumping database")
-        (env.postgres as DockerPostgres).dump(File("dump.sql"))
+        env.postgres.exec(clearDatabaseStatement())
     }
 
     override fun testPlanExecutionFinished(testPlan: TestPlan) {
