@@ -20,7 +20,7 @@ spec:
     spec:
      {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag "imagePullPolicy" .Values.imagePullPolicy) | nindent 8 }}
         - name: keycloak-theme-prep
           resources:
             requests:
