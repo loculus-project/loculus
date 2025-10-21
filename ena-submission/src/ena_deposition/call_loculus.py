@@ -6,7 +6,6 @@ from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
-import orjsonl
 import requests
 import zstandard as zstd
 
@@ -176,5 +175,5 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                 line_stripped = line.strip()
                 if not line_stripped:
                     continue
-                full_json = orjsonl.loads(line_stripped)
+                full_json = json.loads(line_stripped)
                 yield {k: v for k, v in full_json.items() if k in wanted}
