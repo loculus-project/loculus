@@ -6,11 +6,15 @@ from datetime import datetime
 
 import pytz
 from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy import select
+from sqlalchemy.orm import Session, sessionmaker
 
 from ena_deposition import call_loculus
+from ena_deposition.db_tables import Project, Submission
 from ena_deposition.loculus_models import Group
 
 from .config import Config
+from .db_helper import Status, StatusAll, db_init
 from .ena_submission_helper import (
     CreationResult,
     create_ena_project,
@@ -28,18 +32,6 @@ from .ena_types import (
     XrefType,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
-from .submission_db_helper import (
-    ProjectTableEntry,
-    Status,
-    StatusAll,
-    TableName,
-    add_to_project_table,
-    db_init,
-    find_conditions_in_db,
-    find_errors_in_db,
-    update_db_where_conditions,
-    update_with_retry,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +168,7 @@ def set_project_table_entry(db_config, config, row):
         )
 
 
-def submission_table_start(db_config: SimpleConnectionPool, config: Config):
+def submission_table_start(session: Session, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists "bioproject" in "metadata"):
@@ -190,39 +182,37 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config):
     b.      Else update state to SUBMITTING_PROJECT
     4. Else create corresponding entry in project_table
     """
-    conditions = {"status_all": StatusAll.READY_TO_SUBMIT}
-    ready_to_submit = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
+    stmt = select(Submission).where(Submission.status_all == StatusAll.READY_TO_SUBMIT)
+    ready_to_submit = session.scalars(stmt).all()
     logger.debug(
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
     for row in ready_to_submit:
-        group_key = {"group_id": row["group_id"], "organism": row["organism"]}
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = {"accession": row.accession, "version": row.version}
 
         # Use custom bioprojectAccession if it exists
-        if "bioprojectAccession" in row["metadata"] and row["metadata"]["bioprojectAccession"]:
-            set_project_table_entry(db_config, config, row)
+        if row.metadata_ and row.metadata_.get("bioprojectAccession"):
+            set_project_table_entry(session, config, row)
             continue
 
         # Create a default project entry for (group_id, organism)
         # Check if there exists an entry in the project table for (group_id, organism)
-        corresponding_project = find_conditions_in_db(
-            db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
+        stmt = select(Project).where(
+            Project.group_id == row.group_id, Project.organism == row.organism
         )
+        corresponding_project = session.scalars(stmt).all()
         if len(corresponding_project) == 1:
-            if corresponding_project[0]["status"] == str(Status.SUBMITTED):
+            if corresponding_project[0].status == str(Status.SUBMITTED):
                 update_values = {
                     "status_all": StatusAll.SUBMITTED_PROJECT,
-                    "center_name": corresponding_project[0]["center_name"],
-                    "project_id": corresponding_project[0]["project_id"],
+                    "center_name": corresponding_project[0].center_name,
+                    "project_id": corresponding_project[0].project_id,
                 }
             else:
                 update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
         else:
             project_id = add_to_project_table(
-                db_config, ProjectTableEntry(group_id=row["group_id"], organism=row["organism"])
+                db_config, ProjectTableEntry(group_id=row.group_id, organism=row.organism)
             )
             if not project_id:
                 continue
@@ -400,7 +390,8 @@ def project_table_handle_errors(
 
 
 def create_project(config: Config, stop_event: threading.Event):
-    db_config = db_init(config.db_password, config.db_username, config.db_url)
+    engine = db_init(config.db_password, config.db_username, config.db_url)
+    session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     slack_config = slack_conn_init(
         slack_hook_default=config.slack_hook,
         slack_token_default=config.slack_token,
@@ -411,10 +402,11 @@ def create_project(config: Config, stop_event: threading.Event):
         if stop_event.is_set():
             logger.warning("create_project stopped due to exception in another task")
             return
-        logger.debug("Checking for projects to create")
-        submission_table_start(db_config, config)
-        submission_table_update(db_config)
+        with session_local() as session:
+            logger.debug("Checking for projects to create")
+            submission_table_start(session, config)
+            submission_table_update(session)
 
-        project_table_create(db_config, config, test=config.test)
-        project_table_handle_errors(db_config, config, slack_config)
-        time.sleep(config.time_between_iterations)
+            project_table_create(session, config, test=config.test)
+            project_table_handle_errors(session, config, slack_config)
+            time.sleep(config.time_between_iterations)
