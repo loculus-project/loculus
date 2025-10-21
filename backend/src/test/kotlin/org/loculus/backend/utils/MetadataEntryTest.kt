@@ -40,11 +40,11 @@ class MetadataEntryTest {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
         assert(exception.message!!.contains("whitespace"))
-        assert(exception.message!!.contains("line 2")) // First data row is line 2
+        assert(exception.message!!.contains("Record #1")) // First data record is #1
     }
 
     @Test
-    fun `test line numbers are included in error messages for missing submission ID`() {
+    fun `test record numbers are included in error messages for missing submission ID`() {
         val str = """
             submissionId${'\t'}Country
             ${'\t'}bar
@@ -53,12 +53,12 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("contains no value for"))
     }
 
     @Test
-    fun `test line numbers are correct for multiple rows`() {
+    fun `test record numbers are correct for multiple rows`() {
         val str = """
             submissionId${'\t'}Country
             foo1${'\t'}bar
@@ -69,8 +69,8 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        // The error should occur on line 4 (header=1, foo1=2, foo2=3, empty=4)
-        assert(exception.message!!.contains("line 4"))
+        // The error should occur on record #3 (foo1=1, foo2=2, empty=3)
+        assert(exception.message!!.contains("Record #3"))
     }
 
     @Test
@@ -187,7 +187,7 @@ class RevisionEntryTest {
     }
 
     @Test
-    fun `test line numbers are included in revision error messages`() {
+    fun `test record numbers are included in revision error messages`() {
         val str = """
             submissionId${'\t'}accession${'\t'}Country
             ${'\t'}ACC123${'\t'}bar
@@ -196,12 +196,12 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("contains no value for"))
     }
 
     @Test
-    fun `test line numbers for missing accession in revision`() {
+    fun `test record numbers for missing accession in revision`() {
         val str = """
             submissionId${'\t'}accession${'\t'}Country
             foo${'\t'}${'\t'}bar
@@ -210,7 +210,7 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("accession"))
     }
 }

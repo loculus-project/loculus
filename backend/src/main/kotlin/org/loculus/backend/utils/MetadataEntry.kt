@@ -49,18 +49,18 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     return sequence {
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
-                val lineNumber = index + 2 // Header is line 1, first data row is line 2
+                val recordNumber = index + 1 // First data record is #1 (header not counted)
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
+                        "Record #$recordNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
                     )
                 }
 
                 if (submissionId.any { it.isWhitespace() }) {
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: '$submissionId'",
+                        "Record #$recordNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: '$submissionId'",
                     )
                 }
 
@@ -69,7 +69,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no metadata columns: $entry",
+                        "Record #$recordNumber in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
@@ -108,12 +108,12 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
     return sequence {
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
-                val lineNumber = index + 2 // Header is line 1, first data row is line 2
+                val recordNumber = index + 1 // First data record is #1 (header not counted)
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
                     val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
+                        "Record #$recordNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
                     )
                 }
 
@@ -121,7 +121,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
                 if (accession.isNullOrEmpty()) {
                     val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$ACCESSION_HEADER'. Row: $rowValues",
+                        "Record #$recordNumber in the metadata file contains no value for '$ACCESSION_HEADER'. Row: $rowValues",
                     )
                 }
 
@@ -130,7 +130,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no metadata columns: $entry",
+                        "Record #$recordNumber in the metadata file contains no metadata columns: $entry",
                     )
                 }
 
