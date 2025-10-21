@@ -332,7 +332,7 @@ def update_assembly_error(
     )
     update_with_retry(
         db_config=db_config,
-        conditions={"accession": seq_key.accession, "version": seq_key.version},
+        conditions=seq_key.to_dict(),
         update_values={
             "status": Status.HAS_ERRORS,
             "errors": json.dumps(error),
