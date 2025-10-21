@@ -24,6 +24,7 @@ import org.loculus.backend.controller.submission.SOME_SHORT_GENE
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.testutil.TestEnvironment
+import org.loculus.backend.testutil.TestResource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -31,7 +32,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import java.io.File
 
 private val log = KotlinLogging.logger { }
 
@@ -58,12 +58,7 @@ class CompressionDictMigrationTest(
         fun beforeAll() {
             env.start()
 
-            env.postgres.restore(
-                File(
-                    CompressionDictMigrationTest::class.java.classLoader
-                        .getResource("MigrationTest_pg_dump.sql")!!.file, // TODO check nullability
-                ),
-            )
+            env.postgres.restore(TestResource("MigrationTest_pg_dump.sql").file)
 
             log.info("started Postgres for migration: ${env.postgres.jdbcUrl}")
         }
