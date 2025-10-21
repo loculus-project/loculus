@@ -35,8 +35,9 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
             .parse(InputStreamReader(metadataInputStream))
     } catch (e: CSVException) {
         throw UnprocessableEntityException(
-            "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
-                "and quoted fields are properly formatted. Error: ${e.message}",
+            "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
+                "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
+                "Error: ${e.message}",
         )
     }
 
@@ -75,8 +76,9 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
             val cause = e.cause
             if (cause is CSVException) {
                 throw UnprocessableEntityException(
-                    "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
-                        "and quoted fields are properly formatted. Error: ${cause.message}",
+                    "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
+                        "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
+                        "Error: ${cause.message}",
                 )
             }
             throw e
@@ -92,8 +94,9 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
             .parse(InputStreamReader(metadataInputStream))
     } catch (e: CSVException) {
         throw UnprocessableEntityException(
-            "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
-                "and quoted fields are properly formatted. Error: ${e.message}",
+            "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
+                "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
+                "Error: ${e.message}",
         )
     }
 
@@ -139,8 +142,9 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
             val cause = e.cause
             if (cause is CSVException) {
                 throw UnprocessableEntityException(
-                    "The metadata file is not a valid TSV file. Please ensure all fields are separated by tabs " +
-                        "and quoted fields are properly formatted. Error: ${cause.message}",
+                    "The metadata file is not a valid TSV file. Common causes include: fields not separated by tabs, " +
+                        "improperly formatted quoted fields, inconsistent number of fields per row, or empty lines. " +
+                        "Error: ${cause.message}",
                 )
             }
             throw e
