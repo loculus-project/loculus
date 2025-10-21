@@ -1,5 +1,5 @@
 import os
-from enum import Enum
+from enum import StrEnum
 from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine
@@ -29,30 +29,24 @@ def db_init(db_password_default: str, db_username_default: str, db_url_default: 
     )
 
 
-class StatusAll(Enum):
-    READY_TO_SUBMIT = 0
-    SUBMITTING_PROJECT = 1
-    SUBMITTED_PROJECT = 2
-    SUBMITTING_SAMPLE = 3
-    SUBMITTED_SAMPLE = 4
-    SUBMITTING_ASSEMBLY = 5
-    SUBMITTED_ALL = 6
-    SENT_TO_LOCULUS = 7
-    HAS_ERRORS_PROJECT = 8
-    HAS_ERRORS_ASSEMBLY = 9
-    HAS_ERRORS_SAMPLE = 10
-    HAS_ERRORS_EXT_METADATA_UPLOAD = 11
-
-    def __str__(self):
-        return self.name
+class StatusAll(StrEnum):
+    READY_TO_SUBMIT = "READY_TO_SUBMIT"
+    SUBMITTING_PROJECT = "SUBMITTING_PROJECT"
+    SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
+    SUBMITTING_SAMPLE = "SUBMITTING_SAMPLE"
+    SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
+    SUBMITTED_ALL = "SUBMITTED_ALL"
+    SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
+    HAS_ERRORS_PROJECT = "HAS_ERRORS_PROJECT"
+    HAS_ERRORS_ASSEMBLY = "HAS_ERRORS_ASSEMBLY"
+    HAS_ERRORS_SAMPLE = "HAS_ERRORS_SAMPLE"
+    HAS_ERRORS_EXT_METADATA_UPLOAD = "HAS_ERRORS_EXT_METADATA_UPLOAD"
 
 
-class Status(Enum):
-    READY = 0
-    SUBMITTING = 1
-    SUBMITTED = 2
-    HAS_ERRORS = 3
-    WAITING = 4  # Only for assembly creation
-
-    def __str__(self):
-        return self.name
+class Status(StrEnum):
+    READY = "READY"
+    SUBMITTING = "SUBMITTING"
+    SUBMITTED = "SUBMITTED"
+    HAS_ERRORS = "HAS_ERRORS"
+    WAITING = "WAITING"  # Only for assembly creation

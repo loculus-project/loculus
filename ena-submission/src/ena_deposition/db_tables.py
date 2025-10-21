@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytz
 from sqlalchemy import (
     BigInteger,
     DateTime,
+    Enum,
     ForeignKey,
     Index,
     Text,
@@ -19,7 +21,10 @@ from sqlalchemy.orm import (
     relationship,
 )
 
+from ena_deposition.db_helper import StatusAll
+
 mapper_registry = registry()
+
 
 class Base(DeclarativeBase):
     pass
@@ -78,7 +83,10 @@ class Submission(Base):
     errors: Mapped[dict | None] = mapped_column(JSONB)
     warnings: Mapped[dict | None] = mapped_column(JSONB)
 
-    status_all: Mapped[str] = mapped_column(Text, nullable=False)
+    status_all: Mapped[StatusAll] = mapped_column(
+        Enum(StatusAll, name="status_all_enum", native_enum=True),  # <— key line
+        nullable=False,
+    )
 
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
@@ -96,6 +104,35 @@ class Submission(Base):
     )
 
     project: Mapped[Project | None] = relationship(back_populates="submissions")
+
+    def __init__(
+        self,
+        *,
+        accession: str,
+        version: int,
+        organism: str,
+        group_id: int,
+        status_all: StatusAll = StatusAll.READY_TO_SUBMIT,
+        started_at: datetime | None = None,
+        metadata_: dict | None = None,
+        unaligned_nucleotide_sequences: dict | None = None,
+        external_metadata: dict | None = None,
+        center_name: str | None = None,
+        project_id: int | None = None,
+    ):
+        if not started_at:
+            started_at = datetime.now(tz=pytz.utc)
+        self.accession = accession
+        self.version = version
+        self.organism = organism
+        self.group_id = group_id
+        self.status_all = status_all
+        self.started_at = started_at
+        self.metadata_ = metadata_
+        self.unaligned_nucleotide_sequences = unaligned_nucleotide_sequences
+        self.external_metadata = external_metadata
+        self.center_name = center_name
+        self.project_id = project_id
 
 
 # -----------------------------

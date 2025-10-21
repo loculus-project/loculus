@@ -5,17 +5,14 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime
 from typing import Any
 
-import pytz
 import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from .config import Config
 from .db_helper import (
-    StatusAll,
     db_init,
 )
 from .db_tables import Submission
@@ -39,12 +36,8 @@ def upload_sequences(session: Session, sequences_to_upload: dict[str, Any]):
                     version=int(version),
                     group_id=data["metadata"]["groupId"],
                     organism=data["organism"],
-                    metadata=json.dumps(data["metadata"]),
-                    unaligned_nucleotide_sequences=json.dumps(
-                        data["unalignedNucleotideSequences"]
-                    ),
-                    status_all=str(StatusAll.READY_TO_SUBMIT),
-                    started_at=datetime.now(tz=pytz.utc),
+                    metadata_=data["metadata"],
+                    unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"]
                 )
             )
             session.commit()
