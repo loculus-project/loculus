@@ -1238,7 +1238,7 @@ class SubmissionDatabaseService(
             .fetchSize(streamBatchSize)
             .asSequence()
             .map {
-                // Revoked sequences have no original metdadata, hence null can happen
+                // Revoked sequences have no original metadata, hence null can happen
                 @Suppress("USELESS_ELVIS")
                 val metadata = it[originalMetadata] ?: null
                 val selectedMetadata = fields?.associateWith { field -> metadata?.get(field) }
