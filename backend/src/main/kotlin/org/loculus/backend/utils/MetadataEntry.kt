@@ -59,7 +59,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 if (submissionId.any { it.isWhitespace() }) {
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber: the value for '$submissionIdHeader' contains whitespace: $record",
+                        "Row at line $lineNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: $record",
                     )
                 }
 

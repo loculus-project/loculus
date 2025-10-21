@@ -36,7 +36,41 @@ class MetadataEntryTest {
             foo with spaces${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
-        assertThrows<UnprocessableEntityException> { metadataEntryStreamAsSequence(inputStream).toList() }
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("whitespace"))
+        assert(exception.message!!.contains("line 2")) // First data row is line 2
+    }
+
+    @Test
+    fun `test line numbers are included in error messages for missing submission ID`() {
+        val str = """
+            submissionId${'\t'}Country
+            ${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("contains no value for"))
+    }
+
+    @Test
+    fun `test line numbers are correct for multiple rows`() {
+        val str = """
+            submissionId${'\t'}Country
+            foo1${'\t'}bar
+            foo2${'\t'}bar
+            ${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream).toList()
+        }
+        // The error should occur on line 4 (header=1, foo1=2, foo2=3, empty=4)
+        assert(exception.message!!.contains("line 4"))
     }
 
     @Test
@@ -150,5 +184,33 @@ class RevisionEntryTest {
         }
         assert(exception.message!!.contains("not a valid TSV file"))
         assert(exception.message!!.contains("Common causes include"))
+    }
+
+    @Test
+    fun `test line numbers are included in revision error messages`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country
+            ${'\t'}ACC123${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("contains no value for"))
+    }
+
+    @Test
+    fun `test line numbers for missing accession in revision`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}Country
+            foo${'\t'}${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(inputStream).toList()
+        }
+        assert(exception.message!!.contains("line 2"))
+        assert(exception.message!!.contains("accession"))
     }
 }
