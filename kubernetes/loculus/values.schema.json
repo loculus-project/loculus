@@ -890,7 +890,7 @@
       "type": "string",
       "enum": ["Always", "IfNotPresent", "Never"],
       "default": "Always",
-      "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
+      "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section for some images. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
     },
     "localHost": {
       "groups": ["general"],
