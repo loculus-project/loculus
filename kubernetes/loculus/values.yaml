@@ -1,4 +1,5 @@
 environment: server
+imagePullPolicy: Always
 localHost: localhost
 robotsNoindexHeader: false
 seqSets:
