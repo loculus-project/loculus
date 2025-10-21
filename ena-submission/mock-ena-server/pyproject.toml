@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mock-ena-server"
+version = "0.1.0"
+description = "Simplified mock ENA server for testing ENA deposition code"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "python-multipart>=0.0.6",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "httpx>=0.26.0",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+mock-ena-server = "mock_ena.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
