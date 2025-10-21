@@ -4,9 +4,10 @@ import org.loculus.backend.testutil.binary.LocalMinio
 import org.loculus.backend.testutil.binary.LocalPostgres
 import org.loculus.backend.testutil.docker.DockerMinio
 import org.loculus.backend.testutil.docker.DockerPostgres
+import java.io.File
 import java.net.Socket
 
-object TestEnvironment {
+class TestEnvironment {
     val useNonDockerInfra: Boolean = System.getenv("USE_NONDOCKER_INFRA") == "true"
 
     val postgres: PostgresProvider = if (useNonDockerInfra) LocalPostgres() else DockerPostgres()
@@ -31,6 +32,7 @@ interface PostgresProvider {
     fun start()
     fun stop()
     fun exec(sql: String)
+    fun restore(inputFile: File)
 }
 
 interface MinioProvider {

@@ -27,7 +27,6 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
 
     override fun migrate(context: Context) {
         println("---------------------------  V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict -------------------------------")
-        println(backendConfig)
 
         val db = Database.connect(context.configuration.dataSource)
 
