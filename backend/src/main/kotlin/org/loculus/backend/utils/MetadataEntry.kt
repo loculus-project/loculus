@@ -52,14 +52,15 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
                 val lineNumber = index + 2 // Header is line 1, first data row is line 2
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
+                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader': $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
                     )
                 }
 
                 if (submissionId.any { it.isWhitespace() }) {
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: $record",
+                        "Row at line $lineNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: '$submissionId'",
                     )
                 }
 
@@ -110,15 +111,17 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
                 val lineNumber = index + 2 // Header is line 1, first data row is line 2
                 val submissionId = record[submissionIdHeader]
                 if (submissionId.isNullOrEmpty()) {
+                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader': $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
                     )
                 }
 
                 val accession = record[ACCESSION_HEADER]
                 if (accession.isNullOrEmpty()) {
+                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
                     throw UnprocessableEntityException(
-                        "Row at line $lineNumber in the metadata file contains no value for '$ACCESSION_HEADER': $record",
+                        "Row at line $lineNumber in the metadata file contains no value for '$ACCESSION_HEADER'. Row: $rowValues",
                     )
                 }
 
