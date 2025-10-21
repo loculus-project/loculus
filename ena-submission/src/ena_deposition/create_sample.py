@@ -221,9 +221,12 @@ def submission_table_start(session: Session, config: Config):
     )
     for row in ready_to_submit:
         seq_key = inspect(row).identity
+        if not seq_key:
+            logger.error(f"Could not get identity for row in submission_table: {row}")
+            continue
         # 1. check if there exists an entry in the sample table for seq_key
         stmt = select(Sample).where(Sample.accession == seq_key[0], Sample.version == seq_key[1])
-        corresponding_sample: list[Sample] = session.scalars(stmt).all()
+        corresponding_sample = session.scalars(stmt).all()
         if len(corresponding_sample) == 1:
             if corresponding_sample[0].status == str(Status.SUBMITTED):
                 status_all = StatusAll.SUBMITTED_SAMPLE
@@ -231,7 +234,7 @@ def submission_table_start(session: Session, config: Config):
                 status_all = StatusAll.SUBMITTING_SAMPLE
         else:
             # If not: create sample_entry, change status to SUBMITTING_SAMPLE
-            if "biosampleAccession" in row.metadata_ and row["metadata"]["biosampleAccession"]:
+            if row.metadata_ and row.metadata_.get("biosampleAccession"):
                 set_sample_table_entry(session, row, seq_key, config)
                 continue
             try:
@@ -249,6 +252,8 @@ def submission_table_start(session: Session, config: Config):
             status_all = StatusAll.SUBMITTING_SAMPLE
         try:
             submission = session.get(Submission, seq_key)
+            if not submission:
+                raise Exception
             submission.status_all = status_all
             session.commit()
         except Exception as e:
@@ -271,15 +276,20 @@ def submission_table_update(session: Session):
     )
     for row in submitting_sample:
         seq_key = inspect(row).identity
+        if not seq_key:
+            logger.error(f"Could not get identity for row in submission_table: {row}")
+            continue
 
         # 1. check if there exists an entry in the sample table for seq_key
         stmt = select(Sample).where(Sample.accession == seq_key[0], Sample.version == seq_key[1])
-        corresponding_sample: list[Sample] = session.scalars(stmt).all()
-        if len(corresponding_sample) == 1 and corresponding_sample[0]["status"] == str(
+        corresponding_sample = session.scalars(stmt).all()
+        if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
             Status.SUBMITTED
         ):
             try:
                 submission = session.get(Submission, seq_key)
+                if not submission:
+                    raise Exception
                 submission.status_all = StatusAll.SUBMITTED_SAMPLE
                 session.commit()
             except Exception as e:
