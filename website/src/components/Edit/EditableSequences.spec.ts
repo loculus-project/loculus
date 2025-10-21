@@ -116,9 +116,9 @@ describe('EditableSequences', () => {
         const fasta = editableSequences.getSequenceFasta('subId');
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
-        expect.soft(fastaText).toBe('>subId_originalSequenceNamesegment\nATCG');
+        expect.soft(fastaText).toBe('>subId_originalSequenceName\nATCG');
 
-        expect(editableSequences.getSequenceRecord()).deep.equals({ 'originalSequenceName segment': 'ATCG' });
+        expect(editableSequences.getSequenceRecord()).deep.equals({ originalSequenceName: 'ATCG' });
     });
 
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
@@ -129,7 +129,7 @@ describe('EditableSequences', () => {
 
         expect(editableSequences.rows).toEqual([
             {
-                label: 'originalSequenceName segment',
+                label: 'originalSequenceName',
                 value: 'originalUnalignedNucleotideSequencesValue',
                 initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
@@ -145,7 +145,7 @@ describe('EditableSequences', () => {
 
         expect(editableSequences.rows).toEqual([
             {
-                label: 'originalSequenceName segment',
+                label: 'originalSequenceName',
                 value: null,
                 initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
