@@ -1,5 +1,6 @@
 package org.loculus.backend.utils
 
+import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
@@ -21,6 +22,7 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
         submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
             "The metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
         )
+
         submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
             "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )
@@ -29,14 +31,12 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
 }
 
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
-    val reader = InputStreamReader(metadataInputStream, Charsets.UTF_8)
-
     val csvParser = try {
         CSVFormat.TDF.builder()
             .setHeader()
             .setSkipHeaderRecord(true)
             .get()
-            .parse(reader)
+            .parse(InputStreamReader(metadataInputStream, Charsets.UTF_8))
     } catch (e: CSVException) {
         throw UnprocessableEntityException(
             "Metadata TSV is malformed: ${e.message}. " +
