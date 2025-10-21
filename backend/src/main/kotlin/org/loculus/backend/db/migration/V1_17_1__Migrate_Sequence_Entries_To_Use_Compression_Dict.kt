@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename", "ktlint:standard:class-naming")
+
 package org.loculus.backend.db.migration
 
 import org.flywaydb.core.api.migration.BaseJavaMigration
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
-    private val backendConfig: BackendConfig,
     private val compressionDictService: CompressionDictService,
 ) : BaseJavaMigration() {
 
