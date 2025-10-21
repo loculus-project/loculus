@@ -93,4 +93,28 @@ export class ReviewPage {
 
         return tabNames;
     }
+
+    async getTotalSequenceCount(): Promise<number> {
+        const controlPanel = this.page.locator('[data-testid="review-page-control-panel"]');
+        const text = await controlPanel.textContent();
+        const match = text?.match(/(\d+) total/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
+    async waitForTotalSequenceCount(expectedCount: number, timeout = 60000) {
+        await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
+            `${expectedCount} total`,
+            { timeout },
+        );
+    }
+
+    async approveAll() {
+        await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Release', exact: true }).click();
+    }
+
+    async deleteAll() {
+        await this.page.getByRole('button', { name: /Delete \d+ sequence/ }).click();
+        await this.page.getByRole('button', { name: 'Delete', exact: true }).click();
+    }
 }
