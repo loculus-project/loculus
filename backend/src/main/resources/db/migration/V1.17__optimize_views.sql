@@ -16,7 +16,7 @@ join sequence_entries se
     and se.version = sepd.version
 join current_processing_pipeline cpp
     on cpp.organism = se.organism
-    and sepd.pipeline_version = cpp.version
+    and cpp.version = sepd.pipeline_version
 left join all_external_metadata aem
     on aem.accession = sepd.accession
     and aem.version = sepd.version;
