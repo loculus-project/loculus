@@ -1,25 +1,25 @@
 drop view if exists external_metadata_view cascade;
 
 create view external_metadata_view as
-select cpd.accession,
-       cpd.version,
-       all_external_metadata.updated_metadata_at,
+select sepd.accession,
+       sepd.version,
+       aem.updated_metadata_at,
        case
-           when all_external_metadata.external_metadata is null
-           then jsonb_build_object('metadata', cpd.processed_data -> 'metadata')
-           else jsonb_build_object('metadata', cpd.processed_data -> 'metadata' ||
-                all_external_metadata.external_metadata)
+           when aem.external_metadata is null
+           then jsonb_build_object('metadata', sepd.processed_data -> 'metadata')
+           else jsonb_build_object('metadata', sepd.processed_data -> 'metadata' ||
+                aem.external_metadata)
        end as joint_metadata
-from sequence_entries_preprocessed_data cpd
+from sequence_entries_preprocessed_data sepd
 join sequence_entries se
-    on se.accession = cpd.accession
-    and se.version = cpd.version
+    on se.accession = sepd.accession
+    and se.version = sepd.version
 join current_processing_pipeline cpp
     on cpp.organism = se.organism
-left join all_external_metadata
-    on all_external_metadata.accession = cpd.accession
-    and all_external_metadata.version = cpd.version
-where cpd.pipeline_version = cpp.version;
+    and sepd.pipeline_version = cpp.version
+left join all_external_metadata aem
+    on aem.accession = sepd.accession
+    and aem.version = sepd.version;
 
 drop view if exists sequence_entries_view;
 
