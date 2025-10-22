@@ -34,7 +34,7 @@ from ena_deposition.ena_types import (
     default_sample_set_type,
 )
 from ena_deposition.loculus_models import Group
-from ena_deposition.submission_db_helper import SeqKey
+from ena_deposition.submission_db_helper import AccessionVersion
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class AssemblyCreationTests(unittest.TestCase):
         self.unaligned_sequences = {
             "main": "CTTAACTTTGAGAGAGTGAATT",
         }
-        self.seq_key = SeqKey("LOC_0001TLY", 1)
+        self.seq_key = AccessionVersion("LOC_0001TLY", 1)
 
     def test_format_authors(self):
         authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"

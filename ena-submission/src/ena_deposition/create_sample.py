@@ -30,8 +30,8 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     SampleTableEntry,
-    SeqKey,
     Status,
     StatusAll,
     TableName,
@@ -296,7 +296,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: SeqKey) -> bool:
+def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if entry is incorrectly added older version - error and do not submit"""
     version = int(seq_key.version)
     accession = {"accession": seq_key.accession}
@@ -344,7 +344,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
-        seq_key = SeqKey(row["accession"], row["version"])
+        seq_key = AccessionVersion(row["accession"], row["version"])
         if is_old_version(db_config, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue

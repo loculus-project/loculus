@@ -124,13 +124,13 @@ def validate_column_name(table_name: str, column_name: str):
         raise ValueError(msg)
 
 
-@dataclass
-class SeqKey:
+@dataclass(frozen=True)  # Immutable so that it is hashable
+class AccessionVersion:
     accession: str
     version: int
 
     def to_dict(self) -> dict:
-        """Convert SeqKey instance to a dictionary."""
+        """Convert AccessionVersion instance to a dictionary."""
         return {"accession": self.accession, "version": self.version}
 
 
@@ -199,7 +199,6 @@ class AssemblyTableEntry:
 
 
 type Accession = str
-type AccessionVersion = str
 type Version = int
 
 
@@ -657,7 +656,7 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
-def is_revision(db_config: SimpleConnectionPool, seq_key: SeqKey) -> bool:
+def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
     version = seq_key.version
     if version == 1:
@@ -670,7 +669,7 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: SeqKey) -> bool:
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
-def last_version(db_config: SimpleConnectionPool, seq_key: SeqKey) -> int | None:
+def last_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> int | None:
     if not is_revision(db_config, seq_key):
         return None
     accession = {"accession": seq_key.accession}

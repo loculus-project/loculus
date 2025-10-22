@@ -35,8 +35,8 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     AssemblyTableEntry,
-    SeqKey,
     Status,
     StatusAll,
     TableName,
@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str], seq_key: SeqKey, organism_metadata: dict[str, str]
+    unaligned_sequences: dict[str, str], seq_key: AccessionVersion, organism_metadata: dict[str, str]
 ) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
@@ -203,7 +203,7 @@ def create_manifest_object(
     organism_metadata = config.organisms[submission_table_entry["organism"]]["enaDeposition"]
     chromosome_list_object = create_chromosome_list_object(
         unaligned_nucleotide_sequences,
-        SeqKey(submission_table_entry["accession"], submission_table_entry["version"]),
+        AccessionVersion(submission_table_entry["accession"], submission_table_entry["version"]),
         organism_metadata,
     )
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
@@ -323,7 +323,7 @@ def submission_table_update(db_config: SimpleConnectionPool) -> None:
 def update_assembly_error(
     db_config: SimpleConnectionPool,
     error: str | list[str],
-    seq_key: SeqKey,
+    seq_key: AccessionVersion,
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
     logger.error(
@@ -351,7 +351,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     3. Check if metadata fields in manifest have changed since previous version ->
        requires manual revision
     """
-    seq_key = SeqKey(entry["accession"], entry["version"])
+    seq_key = AccessionVersion(entry["accession"], entry["version"])
     if not is_revision(db_config, seq_key):
         return False
     version_to_revise = last_version(db_config, seq_key)
@@ -414,7 +414,7 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
-    seq_key = SeqKey(entry["accession"], entry["version"])
+    seq_key = AccessionVersion(entry["accession"], entry["version"])
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
@@ -458,7 +458,7 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
     return False
 
 
-def update_assembly_results_with_latest_version(db_config: SimpleConnectionPool, seq_key: SeqKey):
+def update_assembly_results_with_latest_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion):
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
@@ -533,7 +533,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
-        seq_key = SeqKey(row["accession"], row["version"])
+        seq_key = AccessionVersion(row["accession"], row["version"])
         sample_data_in_submission_table = find_conditions_in_db(
             db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key.to_dict()
         )
