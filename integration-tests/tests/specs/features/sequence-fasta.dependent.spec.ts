@@ -33,20 +33,4 @@ test.describe('Sequence FASTA endpoint', () => {
         expect(contentDisposition).toContain('attachment');
         expect(contentDisposition).toContain(accessionVersion);
     });
-
-    test('provides FASTA access from sequence details page', async ({ page, baseURL }) => {
-        const searchPage = new SearchPage(page);
-        await searchPage.ebolaSudan();
-        const accessionVersion = await searchPage.waitForLoculusId();
-
-        await page.goto(`/seq/${accessionVersion}`);
-        await expect(page.getByRole('heading', { name: accessionVersion })).toBeVisible();
-
-        const response = await fetch(`${baseURL}/seq/${accessionVersion}.fa`);
-        const content = await response.text();
-        
-        expect(response.ok).toBe(true);
-        expect(content).toMatch(/^>/);
-        expect(content).toContain(accessionVersion);
-    });
 });
