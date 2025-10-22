@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .config import Config
 from .db_helper import (
+    AccessionVersion,
     Status,
     StatusAll,
     db_init,
@@ -220,12 +221,11 @@ def submission_table_start(session: Session, config: Config):
         f"Found {len(ready_to_submit)} entries in submission_table in status SUBMITTED_PROJECT"
     )
     for row in ready_to_submit:
-        seq_key = inspect(row).identity
-        if not seq_key:
-            logger.error(f"Could not get identity for row in submission_table: {row}")
-            continue
+        accession_version = AccessionVersion(accession=row.accession, version=row.version)
         # 1. check if there exists an entry in the sample table for seq_key
-        stmt = select(Sample).where(Sample.accession == seq_key[0], Sample.version == seq_key[1])
+        stmt = select(Sample).where(
+            Sample.accession == row.accession, Sample.version == row.version
+        )
         corresponding_sample = session.scalars(stmt).all()
         if len(corresponding_sample) == 1:
             if corresponding_sample[0].status == str(Status.SUBMITTED):
@@ -235,30 +235,31 @@ def submission_table_start(session: Session, config: Config):
         else:
             # If not: create sample_entry, change status to SUBMITTING_SAMPLE
             if row.metadata_ and row.metadata_.get("biosampleAccession"):
-                set_sample_table_entry(session, row, seq_key, config)
+                set_sample_table_entry(session, row, accession_version, config)
                 continue
             try:
                 session.add(
                     Sample(
-                        identity=seq_key,
-                        status=str(Status.READY),
+                        accession=row.accession,
+                        version=row.version,
+                        status=Status.READY,
                     )
                 )
                 session.commit()
             except Exception as e:
                 session.rollback()
-                logger.error(f"Error adding entry to sample_table for {seq_key}: {e}. ")
+                logger.error(f"Error adding entry to sample_table for {accession_version}: {e}. ")
                 continue
             status_all = StatusAll.SUBMITTING_SAMPLE
         try:
-            submission = session.get(Submission, seq_key)
+            submission = session.get(Submission, inspect(row).identity)
             if not submission:
                 raise Exception
             submission.status_all = status_all
             session.commit()
         except Exception as e:
             session.rollback()
-            logger.error(f"Error updating entry in submission_table for {seq_key}: {e}. ")
+            logger.error(f"Error updating entry in submission_table for {accession_version}: {e}. ")
             continue
 
 
@@ -462,6 +463,6 @@ def create_sample(config: Config, stop_event: threading.Event):
             submission_table_start(session, config=config)
             submission_table_update(session)
 
-            #sample_table_create(session, config, test=config.test)
-            #sample_table_handle_errors(session, config, slack_config)
+            # sample_table_create(session, config, test=config.test)
+            # sample_table_handle_errors(session, config, slack_config)
             time.sleep(config.time_between_iterations)

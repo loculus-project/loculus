@@ -21,7 +21,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from ena_deposition.db_helper import StatusAll
+from ena_deposition.db_helper import Status, StatusAll
 
 mapper_registry = registry()
 
@@ -33,6 +33,7 @@ class Base(DeclarativeBase):
 # -----------------------------
 # project_table
 # -----------------------------
+@mapped_as_dataclass(mapper_registry)
 class Project(Base):
     __tablename__ = "project_table"
 
@@ -43,7 +44,10 @@ class Project(Base):
     errors: Mapped[dict | None] = mapped_column(JSONB)
     warnings: Mapped[dict | None] = mapped_column(JSONB)
 
-    status: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, name="status_enum", native_enum=True),
+        nullable=False,
+    )
 
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
@@ -66,6 +70,27 @@ class Project(Base):
         Index("idx_project_table_organism", "organism"),
     )
 
+    def __init__(
+        self,
+        *,
+        group_id: int,
+        organism: str,
+        center_name: str | None,
+        status: Status = Status.READY,
+        started_at: datetime | None = None,
+        finished_at: datetime | None = None,
+        result: dict | None = None,
+    ):
+        if not started_at:
+            started_at = datetime.now(tz=pytz.utc)
+        self.group_id = group_id
+        self.organism = organism
+        self.status = status
+        self.started_at = started_at
+        self.finished_at = finished_at
+        self.result = result
+        self.center_name = center_name
+
 
 # -----------------------------
 # submission_table
@@ -84,7 +109,7 @@ class Submission(Base):
     warnings: Mapped[dict | None] = mapped_column(JSONB)
 
     status_all: Mapped[StatusAll] = mapped_column(
-        Enum(StatusAll, name="status_all_enum", native_enum=True),  # <— key line
+        Enum(StatusAll, name="status_all_enum", native_enum=True),
         nullable=False,
     )
 
@@ -138,6 +163,7 @@ class Submission(Base):
 # -----------------------------
 # sample_table
 # -----------------------------
+@mapped_as_dataclass(mapper_registry)
 class Sample(Base):
     __tablename__ = "sample_table"
 
@@ -147,7 +173,10 @@ class Sample(Base):
     errors: Mapped[dict | None] = mapped_column(JSONB)
     warnings: Mapped[dict | None] = mapped_column(JSONB)
 
-    status: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, name="status_enum", native_enum=True),
+        nullable=False,
+    )
 
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
@@ -157,10 +186,34 @@ class Sample(Base):
     ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    def __init__(
+        self,
+        *,
+        accession: str,
+        version: int,
+        status: Status = Status.READY,
+        started_at: datetime | None = None,
+        finished_at: datetime | None = None,
+        result: dict | None = None,
+        ena_first_publicly_visible: datetime | None = None,
+        ncbi_first_publicly_visible: datetime | None = None,
+    ):
+        if not started_at:
+            started_at = datetime.now(tz=pytz.utc)
+        self.accession = accession
+        self.version = version
+        self.status = status
+        self.started_at = started_at
+        self.finished_at = finished_at
+        self.result = result
+        self.ena_first_publicly_visible = ena_first_publicly_visible
+        self.ncbi_first_publicly_visible = ncbi_first_publicly_visible
+
 
 # -----------------------------
 # assembly_table
 # -----------------------------
+@mapped_as_dataclass(mapper_registry)
 class Assembly(Base):
     __tablename__ = "assembly_table"
 
@@ -170,7 +223,10 @@ class Assembly(Base):
     errors: Mapped[dict | None] = mapped_column(JSONB)
     warnings: Mapped[dict | None] = mapped_column(JSONB)
 
-    status: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, name="status_enum", native_enum=True),
+        nullable=False,
+    )
 
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
@@ -187,3 +243,30 @@ class Assembly(Base):
     ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True)
     )
+
+    def __init__(
+        self,
+        *,
+        accession: str,
+        version: int,
+        status: Status = Status.READY,
+        started_at: datetime | None = None,
+        finished_at: datetime | None = None,
+        result: dict | None = None,
+        ena_nucleotide_first_publicly_visible: datetime | None = None,
+        ncbi_nucleotide_first_publicly_visible: datetime | None = None,
+        ena_gca_first_publicly_visible: datetime | None = None,
+        ncbi_gca_first_publicly_visible: datetime | None = None,
+    ):
+        if not started_at:
+            started_at = datetime.now(tz=pytz.utc)
+        self.accession = accession
+        self.version = version
+        self.status = status
+        self.started_at = started_at
+        self.finished_at = finished_at
+        self.result = result
+        self.ena_nucleotide_first_publicly_visible = ena_nucleotide_first_publicly_visible
+        self.ncbi_nucleotide_first_publicly_visible = ncbi_nucleotide_first_publicly_visible
+        self.ena_gca_first_publicly_visible = ena_gca_first_publicly_visible
+        self.ncbi_gca_first_publicly_visible = ncbi_gca_first_publicly_visible

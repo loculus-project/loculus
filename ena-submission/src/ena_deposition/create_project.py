@@ -5,7 +5,6 @@ import time
 from datetime import datetime
 
 import pytz
-from psycopg2.pool import SimpleConnectionPool
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -19,7 +18,6 @@ from .ena_submission_helper import (
     CreationResult,
     create_ena_project,
     get_alias,
-    set_error_if_accession_not_exists,
 )
 from .ena_types import (
     OrganismType,
@@ -92,20 +90,18 @@ def construct_project_set_object(
     return ProjectSet(project=[project_type])
 
 
-def set_project_table_entry(db_config, config, row):
+def set_project_table_entry(session: Session, config: Config, row: Submission, bioproject: str):
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
-    logger.debug(f"Accession {row['accession']} already has bioprojectAccession in metadata")
-    group_key = {"group_id": row["group_id"], "organism": row["organism"]}
-    seq_key = {"accession": row["accession"], "version": row["version"]}
-    bioproject = row["metadata"]["bioprojectAccession"]
+    logger.debug(f"Accession {row.accession} already has bioprojectAccession in metadata")
+    group_key = {"group_id": row.group_id, "organism": row.organism}
+    seq_key = {"accession": row.accession, "version": row.version}
 
-    corresponding_group = find_conditions_in_db(
-        db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
-    )
+    stmt = select(Project).where(Project.group_id == row.group_id, Project.organism == row.organism)
+    corresponding_group = session.scalars(stmt).all()
     corresponding_project = [
         project
         for project in corresponding_group
-        if project["result"].get("bioproject_accession") == bioproject
+        if project.result and project.result.get("bioproject_accession") == bioproject
     ]
     if len(corresponding_project) == 1:
         logger.debug(
@@ -113,8 +109,8 @@ def set_project_table_entry(db_config, config, row):
         )
         update_values = {
             "status_all": StatusAll.SUBMITTED_PROJECT,
-            "center_name": corresponding_project[0]["center_name"],
-            "project_id": corresponding_project[0]["project_id"],
+            "center_name": corresponding_project[0].center_name,
+            "project_id": corresponding_project[0].project_id,
         }
         update_db_where_conditions(
             db_config,
@@ -144,28 +140,39 @@ def set_project_table_entry(db_config, config, row):
         logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
         return
     center_name = group_details.institution
-    entry = {
-        "group_id": row["group_id"],
-        "organism": row["organism"],
-        "result": {"bioproject_accession": bioproject},
-        "status": Status.SUBMITTED,
-        "center_name": center_name,
-    }
-    project_table_entry = ProjectTableEntry(**entry)
-    succeeded = add_to_project_table(db_config, project_table_entry)
-    if succeeded:
-        logger.debug("Succeeding in adding bioprojectAccession to project_table")
-        update_values = {
-            "status_all": StatusAll.SUBMITTED_PROJECT,
-            "center_name": center_name,
-            "project_id": succeeded,
-        }
-        update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
-            conditions=seq_key,
-            update_values=update_values,
+    try:
+        project = Project(
+            group_id=row.group_id,
+            organism=row.organism,
+            center_name=center_name,
+            status=Status.SUBMITTED,
+            result={"bioproject_accession": bioproject},
         )
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+        project_id = project.project_id
+        if not project_id:
+            raise Exception
+        logger.debug("Succeeding in adding bioprojectAccession to project_table")
+    except Exception as e:
+        session.rollback()
+        logger.error(
+            f"Error adding entry to project_table for "
+            f"(group_id: {row.group_id}, organism: {row.organism}): {e}. "
+        )
+        return
+    update_values = {
+        "status_all": StatusAll.SUBMITTED_PROJECT,
+        "center_name": center_name,
+        "project_id": succeeded,
+    }
+    update_db_where_conditions(
+        db_config,
+        table_name=TableName.SUBMISSION_TABLE,
+        conditions=seq_key,
+        update_values=update_values,
+    )
 
 
 def submission_table_start(session: Session, config: Config):
@@ -188,11 +195,10 @@ def submission_table_start(session: Session, config: Config):
         f"Found {len(ready_to_submit)} entries in submission_table in status READY_TO_SUBMIT"
     )
     for row in ready_to_submit:
-        seq_key = {"accession": row.accession, "version": row.version}
-
         # Use custom bioprojectAccession if it exists
-        if row.metadata_ and row.metadata_.get("bioprojectAccession"):
-            set_project_table_entry(session, config, row)
+        bioprojectAccession = row.metadata_ and row.metadata_.get("bioprojectAccession")
+        if bioprojectAccession and type(bioprojectAccession) is str:
+            set_project_table_entry(session, config, row, bioprojectAccession)
             continue
 
         # Create a default project entry for (group_id, organism)
@@ -211,52 +217,69 @@ def submission_table_start(session: Session, config: Config):
             else:
                 update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
         else:
-            project_id = add_to_project_table(
-                db_config, ProjectTableEntry(group_id=row.group_id, organism=row.organism)
-            )
-            if not project_id:
+            try:
+                project = Project(group_id=row.group_id, organism=row.organism, center_name=None)
+                session.add(project)
+                session.commit()
+                session.refresh(project)
+                project_id = project.project_id
+                if not project_id:
+                    raise Exception
+            except Exception as e:
+                session.rollback()
+                logger.error(
+                    f"Error adding entry to project_table for "
+                    f"(group_id: {row.group_id}, organism: {row.organism}): {e}. "
+                )
                 continue
             update_values = {
                 "status_all": StatusAll.SUBMITTING_PROJECT,
                 "project_id": project_id,
             }
-        update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
-            conditions=seq_key,
-            update_values=update_values,
-        )
+        try:
+            submission = session.get(Submission, (row.accession, row.version))
+            if not submission:
+                raise Exception
+            for key, value in update_values.items():
+                setattr(submission, key, value)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(
+                f"Error updating entry in submission_table for "
+                f"(accession: {row.accession}, version: {row.version}): {e}. "
+            )
+            continue
 
 
-def submission_table_update(db_config: SimpleConnectionPool):
+def submission_table_update(session: Session):
     """
     1. Find all entries in submission_table in state SUBMITTING_PROJECT
     2. If (exists an entry in the project_table for (group_id, organism)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_PROJECT
     3. Else throw Error
     """
-    conditions = {"status_all": StatusAll.SUBMITTING_PROJECT}
-    submitting_project = find_conditions_in_db(
-        db_config, table_name=TableName.SUBMISSION_TABLE, conditions=conditions
-    )
+    stmt = select(Submission).where(Submission.status_all == StatusAll.SUBMITTING_PROJECT)
+    submitting_project = session.scalars(stmt).all()
     logger.debug(
         f"Found {len(submitting_project)} entries in submission_table in status SUBMITTING_PROJECT"
     )
     for row in submitting_project:
-        group_key = {"group_id": row["group_id"], "organism": row["organism"]}
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        group_key = {"group_id": row.group_id, "organism": row.organism}
+        seq_key = {"accession": row.accession, "version": row.version}
 
         # 1. check if there exists an entry in the project table for (group_id, organism)
-        corresponding_project = find_conditions_in_db(
-            db_config, table_name=TableName.PROJECT_TABLE, conditions=group_key
+        stmt = select(Project).where(
+            Project.group_id == group_key["group_id"], Project.organism == group_key["organism"]
         )
-        if len(corresponding_project) == 1 and corresponding_project[0]["status"] == str(
+        corresponding_project = session.scalars(stmt).all()
+        if len(corresponding_project) == 1 and corresponding_project[0].status == str(
             Status.SUBMITTED
         ):
             update_values = {
                 "status_all": StatusAll.SUBMITTED_PROJECT,
-                "center_name": corresponding_project[0]["center_name"],
-                "project_id": corresponding_project[0]["project_id"],
+                "center_name": corresponding_project[0].center_name,
+                "project_id": corresponding_project[0].project_id,
             }
             update_db_where_conditions(
                 db_config,
@@ -274,7 +297,7 @@ def submission_table_update(db_config: SimpleConnectionPool):
 
 # TODO Allow propagating updated group info https://github.com/loculus-project/loculus/issues/2939
 def project_table_create(
-    db_config: SimpleConnectionPool,
+    session: Session,
     config: Config,
     test: bool = False,
 ):
@@ -288,18 +311,17 @@ def project_table_create(
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     project for testing.
     """
-    conditions = {"status": Status.READY}
-    ready_to_submit_project = find_conditions_in_db(
-        db_config, table_name=TableName.PROJECT_TABLE, conditions=conditions
-    )
+    stmt = select(Project).where(Project.status == Status.READY)
+    ready_to_submit_project = session.scalars(stmt).all()
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
+
     for row in ready_to_submit_project:
-        group_key = {"group_id": row["group_id"], "organism": row["organism"]}
+        group_key = {"group_id": row.group_id, "organism": row.organism}
 
         try:
-            group_info = call_loculus.get_group_info(config, row["group_id"])
+            group_info = call_loculus.get_group_info(config, row.group_id)
         except Exception as e:
-            logger.error(f"Was unable to get group info for group: {row['group_id']}, {e}")
+            logger.error(f"Was unable to get group info for group: {row.group_id}, {e}")
             continue
 
         project_set = construct_project_set_object(group_info, config, row, test)
@@ -324,7 +346,7 @@ def project_table_create(
             )
             continue
         logger.info(
-            f"Starting Project creation for group_id {row['group_id']} organism {row['organism']}"
+            f"Starting Project creation for group_id {row.group_id} organism {row.organism}"
         )
         # Actual HTTP request to ENA happens here
         project_creation_results: CreationResult = create_ena_project(config, project_set)
@@ -335,8 +357,7 @@ def project_table_create(
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Project creation succeeded for group_id {row['group_id']} "
-                f"organism {row['organism']}"
+                f"Project creation succeeded for group_id {row.group_id} organism {row.organism}"
             )
         else:
             update_values = {
@@ -345,7 +366,7 @@ def project_table_create(
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
-                f"Project creation failed for group_id {row['group_id']} organism {row['organism']}"
+                f"Project creation failed for group_id {row.group_id} organism {row.organism}"
             )
         update_with_retry(
             db_config=db_config,
@@ -356,7 +377,7 @@ def project_table_create(
 
 
 def project_table_handle_errors(
-    db_config: SimpleConnectionPool,
+    session: Session,
     config: Config,
     slack_config: SlackConfig,
     time_threshold: int = 15,

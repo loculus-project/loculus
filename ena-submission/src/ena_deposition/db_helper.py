@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 from enum import StrEnum
 from urllib.parse import quote_plus
@@ -27,6 +28,12 @@ def db_init(db_password_default: str, db_username_default: str, db_url_default: 
         pool_pre_ping=True,  # automatically test connections
         pool_recycle=1800,  # recycle connections every 30min
     )
+
+
+@dataclass
+class AccessionVersion:
+    accession: str
+    version: int
 
 
 class StatusAll(StrEnum):
