@@ -143,21 +143,11 @@ export class SearchPage {
         ).toBeVisible();
     }
 
-    /**
-     * Navigate to search page filtered by group ID
-     * This ensures we only see sequences belonging to a specific group
-     */
     async searchByGroupId(organism: string, groupId: number) {
         await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
     }
 
-    /**
-     * Get all accessions from the current search results (without version)
-     * Returns an array of accession strings like ["LOC_0000001", "LOC_0000002"]
-     * Returns empty array if no sequences are found (useful for polling)
-     */
     async getAccessions(): Promise<string[]> {
-        // Check if any sequence rows exist (don't fail if they don't)
         const rows = this.getSequenceRows();
         const count = await rows.count();
 
@@ -168,7 +158,6 @@ export class SearchPage {
         const accessions: string[] = [];
         for (let i = 0; i < count; i++) {
             const rowText = await rows.nth(i).innerText();
-            // Match accession with version (LOC_XXXXXXX.1) and extract just the accession part
             const match = rowText.match(/LOC_[A-Z0-9]+/);
             if (match) {
                 accessions.push(match[0]);
@@ -179,11 +168,7 @@ export class SearchPage {
     }
 
     /**
-     * Wait for sequences to appear in search results after they've been released
-     * This handles the delay between release and indexing in the search system
-     * @param minCount Minimum number of sequences expected
-     * @param timeoutMs Maximum time to wait in milliseconds (default 60 seconds)
-     * @returns Array of accessions found
+     * Wait for sequences to appear in search after release (handles indexing delay)
      */
     async waitForSequencesInSearch(minCount: number, timeoutMs: number = 60000): Promise<string[]> {
         let accessions: string[] = [];

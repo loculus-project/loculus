@@ -12,10 +12,9 @@ import {
     EBOLA_SUDAN_SHORT_SEQUENCE,
 } from '../../test-helpers/test-data';
 
-// Test configuration constants
 const TEST_ORGANISM = 'ebola-sudan';
 const SEQUENCES_TO_REVISE = 3;
-const SEARCH_INDEXING_TIMEOUT = 60000; // 60 seconds for search indexing after release
+const SEARCH_INDEXING_TIMEOUT = 60000;
 const BULK_REVISION_TEST_TIMEOUT = 120000;
 
 groupTest.describe('Bulk sequence revision', () => {
@@ -25,7 +24,6 @@ groupTest.describe('Bulk sequence revision', () => {
             groupTest.setTimeout(BULK_REVISION_TEST_TIMEOUT);
             const page = pageWithGroup;
 
-            // Submit multiple sequences for testing bulk revision
             const submissionPage = new SingleSequenceSubmissionPage(page);
             const timestamp = Date.now();
             for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
@@ -35,13 +33,11 @@ groupTest.describe('Bulk sequence revision', () => {
                 );
             }
 
-            // Approve and release the sequences
             const reviewPage = new ReviewPage(page);
             await reviewPage.goto(groupId);
             await reviewPage.waitForZeroProcessing();
             await reviewPage.releaseValidSequences();
 
-            // Wait for sequences to appear in search after release
             const searchPage = new SearchPage(page);
             await searchPage.searchByGroupId(TEST_ORGANISM, groupId);
             const accessions = await searchPage.waitForSequencesInSearch(
@@ -49,7 +45,6 @@ groupTest.describe('Bulk sequence revision', () => {
                 SEARCH_INDEXING_TIMEOUT,
             );
 
-            // Prepare bulk revision files
             const accessionsToRevise = accessions.slice(0, SEQUENCES_TO_REVISE);
             const baseSubmissionId = `bulk-revise-updated-${Date.now()}`;
             const revisionMetadata = createRevisionMetadataTsv(
@@ -59,11 +54,10 @@ groupTest.describe('Bulk sequence revision', () => {
 
             const revisedSequences = accessionsToRevise.map((accession, i) => ({
                 id: `${baseSubmissionId}-${i}`,
-                sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG', // Modified sequence
+                sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
             }));
             const fastaContent = createFastaContent(revisedSequences);
 
-            // Submit the bulk revision
             const revisionPage = new RevisionPage(page);
             await revisionPage.goto(TEST_ORGANISM, groupId);
             await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
@@ -71,7 +65,6 @@ groupTest.describe('Bulk sequence revision', () => {
             await revisionPage.acceptTerms();
             await revisionPage.clickSubmit();
 
-            // Verify submission was successful
             await expect(page).toHaveURL(/\/review/);
             await reviewPage.waitForZeroProcessing();
 
