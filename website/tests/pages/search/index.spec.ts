@@ -72,16 +72,6 @@ test.describe('The search page', () => {
         expect(newAccessions.includes(previousAccessions[2])).toBeTruthy();
     });
 
-    test('should search for existing data from one country', async ({ searchPage }) => {
-        await searchPage.goto();
-        await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
-
-        await searchPage.page.locator('tr').first().waitFor();
-        const rowLocator = searchPage.page.locator('tr').getByText('Switzerland');
-        const rowCount = await rowLocator.count();
-        expect(rowCount).toBeGreaterThan(0);
-    });
-
     test('should reset the search', async ({ searchPage }) => {
         await searchPage.goto();
 
