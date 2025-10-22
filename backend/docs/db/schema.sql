@@ -168,23 +168,23 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 
 --
--- Name: compression_dictionaries_table; Type: TABLE; Schema: public; Owner: postgres
+-- Name: compression_dictionaries; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.compression_dictionaries_table (
+CREATE TABLE public.compression_dictionaries (
     id integer NOT NULL,
     hash text NOT NULL,
     dict_contents text NOT NULL
 );
 
 
-ALTER TABLE public.compression_dictionaries_table OWNER TO postgres;
+ALTER TABLE public.compression_dictionaries OWNER TO postgres;
 
 --
--- Name: compression_dictionaries_table_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: compression_dictionaries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.compression_dictionaries_table_id_seq
+CREATE SEQUENCE public.compression_dictionaries_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -193,13 +193,13 @@ CREATE SEQUENCE public.compression_dictionaries_table_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.compression_dictionaries_table_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.compression_dictionaries_id_seq OWNER TO postgres;
 
 --
--- Name: compression_dictionaries_table_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: compression_dictionaries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.compression_dictionaries_table_id_seq OWNED BY public.compression_dictionaries_table.id;
+ALTER SEQUENCE public.compression_dictionaries_id_seq OWNED BY public.compression_dictionaries.id;
 
 
 --
@@ -607,10 +607,10 @@ ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.au
 
 
 --
--- Name: compression_dictionaries_table id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: compression_dictionaries id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.compression_dictionaries_table ALTER COLUMN id SET DEFAULT nextval('public.compression_dictionaries_table_id_seq'::regclass);
+ALTER TABLE ONLY public.compression_dictionaries ALTER COLUMN id SET DEFAULT nextval('public.compression_dictionaries_id_seq'::regclass);
 
 
 --
@@ -650,19 +650,19 @@ ALTER TABLE ONLY public.audit_log
 
 
 --
--- Name: compression_dictionaries_table compression_dictionaries_table_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: compression_dictionaries compression_dictionaries_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.compression_dictionaries_table
-    ADD CONSTRAINT compression_dictionaries_table_hash_key UNIQUE (hash);
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_hash_key UNIQUE (hash);
 
 
 --
--- Name: compression_dictionaries_table compression_dictionaries_table_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: compression_dictionaries compression_dictionaries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.compression_dictionaries_table
-    ADD CONSTRAINT compression_dictionaries_table_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_pkey PRIMARY KEY (id);
 
 
 --
@@ -811,7 +811,7 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 -- Name: idx_dict_table_hash; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_dict_table_hash ON public.compression_dictionaries_table USING btree (hash);
+CREATE INDEX idx_dict_table_hash ON public.compression_dictionaries USING btree (hash);
 
 
 --
