@@ -55,7 +55,9 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str], seq_key: AccessionVersion, organism_metadata: dict[str, str]
+    unaligned_sequences: dict[str, str],
+    seq_key: AccessionVersion,
+    organism_metadata: dict[str, str],
 ) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
@@ -458,7 +460,9 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
     return False
 
 
-def update_assembly_results_with_latest_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion):
+def update_assembly_results_with_latest_version(
+    db_config: SimpleConnectionPool, seq_key: AccessionVersion
+):
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
