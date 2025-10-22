@@ -28,7 +28,7 @@ test.describe('Sequence FASTA endpoint', () => {
 
         expect(response.ok).toBe(true);
         expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
-        
+
         const contentDisposition = response.headers.get('Content-Disposition');
         expect(contentDisposition).toContain('attachment');
         expect(contentDisposition).toContain(accessionVersion);
