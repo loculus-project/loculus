@@ -393,6 +393,9 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
         for field in value.get("loculus_fields", []):
             last_entry = last_version_data[0]["metadata"].get(field)
             new_entry = entry["metadata"].get(field)
+            if field == "authors":
+                last_entry = get_authors(last_entry) if last_entry else last_entry
+                new_entry = get_authors(new_entry) if new_entry else new_entry
             if last_entry != new_entry:
                 differing_fields.append(field)
     if differing_fields:
