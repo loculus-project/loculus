@@ -1,10 +1,18 @@
-from dataclasses import dataclass
+import logging
 import os
+from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
+from typing import TypedDict
 from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+
+from ena_deposition.db_tables import Submission
+
+logger = logging.getLogger(__name__)
 
 
 def db_init(db_password_default: str, db_username_default: str, db_url_default: str) -> Engine:
@@ -57,3 +65,34 @@ class Status(StrEnum):
     SUBMITTED = "SUBMITTED"
     HAS_ERRORS = "HAS_ERRORS"
     WAITING = "WAITING"  # Only for assembly creation
+
+
+class SubmissionUpdate(TypedDict, total=False):
+    errors: dict | None
+    warnings: dict | None
+    status_all: StatusAll
+    started_at: datetime | None
+    finished_at: datetime | None
+    external_metadata: dict | None
+    center_name: str | None
+    project_id: int | None
+
+
+def update_submission(
+    session: Session, accession: str, version: int, update_values: SubmissionUpdate
+) -> bool:
+    try:
+        submission = session.get(Submission, (accession, version))
+        if not submission:
+            raise Exception
+        for key, value in update_values.items():
+            setattr(submission, key, value)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.error(
+            f"Error updating entry in submission_table for "
+            f"(accession: {accession}, version: {version}): {e}. "
+        )
+        return False
+    return True

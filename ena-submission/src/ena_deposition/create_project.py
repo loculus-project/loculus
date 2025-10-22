@@ -13,7 +13,7 @@ from ena_deposition.db_tables import Project, Submission
 from ena_deposition.loculus_models import Group
 
 from .config import Config
-from .db_helper import Status, StatusAll, db_init
+from .db_helper import Status, StatusAll, SubmissionUpdate, db_init, update_submission
 from .ena_submission_helper import (
     CreationResult,
     create_ena_project,
@@ -94,7 +94,6 @@ def set_project_table_entry(session: Session, config: Config, row: Submission, b
     """Set bioprojectAccession for entry with custom bioprojectAccession"""
     logger.debug(f"Accession {row.accession} already has bioprojectAccession in metadata")
     group_key = {"group_id": row.group_id, "organism": row.organism}
-    seq_key = {"accession": row.accession, "version": row.version}
 
     stmt = select(Project).where(Project.group_id == row.group_id, Project.organism == row.organism)
     corresponding_group = session.scalars(stmt).all()
@@ -107,17 +106,12 @@ def set_project_table_entry(session: Session, config: Config, row: Submission, b
         logger.debug(
             "bioprojectAccession is already in project_table - adding id to submission_table"
         )
-        update_values = {
-            "status_all": StatusAll.SUBMITTED_PROJECT,
-            "center_name": corresponding_project[0].center_name,
-            "project_id": corresponding_project[0].project_id,
-        }
-        update_db_where_conditions(
-            db_config,
-            table_name=TableName.SUBMISSION_TABLE,
-            conditions=seq_key,
-            update_values=update_values,
+        update_values = SubmissionUpdate(
+            status_all=StatusAll.SUBMITTED_PROJECT,
+            center_name=corresponding_project[0].center_name,
+            project_id=corresponding_project[0].project_id,
         )
+        update_submission(session, row.accession, row.version, update_values)
         return
 
     logger.info("Checking if bioproject actually exists and is public")
@@ -162,15 +156,13 @@ def set_project_table_entry(session: Session, config: Config, row: Submission, b
             f"(group_id: {row.group_id}, organism: {row.organism}): {e}. "
         )
         return
-    update_values = {
-        "status_all": StatusAll.SUBMITTED_PROJECT,
-        "center_name": center_name,
-        "project_id": succeeded,
-    }
-    update_db_where_conditions(
-        db_config,
-        table_name=TableName.SUBMISSION_TABLE,
-        conditions=seq_key,
+    update_values = SubmissionUpdate(
+        status_all=StatusAll.SUBMITTED_PROJECT, center_name=center_name, project_id=project_id
+    )
+    update_submission(
+        session,
+        accession=row.accession,
+        version=row.version,
         update_values=update_values,
     )
 
@@ -196,9 +188,9 @@ def submission_table_start(session: Session, config: Config):
     )
     for row in ready_to_submit:
         # Use custom bioprojectAccession if it exists
-        bioprojectAccession = row.metadata_ and row.metadata_.get("bioprojectAccession")
-        if bioprojectAccession and type(bioprojectAccession) is str:
-            set_project_table_entry(session, config, row, bioprojectAccession)
+        bioproject_accession = row.metadata_ and row.metadata_.get("bioprojectAccession")
+        if bioproject_accession and type(bioproject_accession) is str:
+            set_project_table_entry(session, config, row, bioproject_accession)
             continue
 
         # Create a default project entry for (group_id, organism)
@@ -209,13 +201,13 @@ def submission_table_start(session: Session, config: Config):
         corresponding_project = session.scalars(stmt).all()
         if len(corresponding_project) == 1:
             if corresponding_project[0].status == str(Status.SUBMITTED):
-                update_values = {
-                    "status_all": StatusAll.SUBMITTED_PROJECT,
-                    "center_name": corresponding_project[0].center_name,
-                    "project_id": corresponding_project[0].project_id,
-                }
+                update_values = SubmissionUpdate(
+                    status_all=StatusAll.SUBMITTED_PROJECT,
+                    center_name=corresponding_project[0].center_name,
+                    project_id=corresponding_project[0].project_id,
+                )
             else:
-                update_values = {"status_all": StatusAll.SUBMITTING_PROJECT}
+                update_values = SubmissionUpdate(status_all=StatusAll.SUBMITTING_PROJECT)
         else:
             try:
                 project = Project(group_id=row.group_id, organism=row.organism, center_name=None)
@@ -232,24 +224,15 @@ def submission_table_start(session: Session, config: Config):
                     f"(group_id: {row.group_id}, organism: {row.organism}): {e}. "
                 )
                 continue
-            update_values = {
-                "status_all": StatusAll.SUBMITTING_PROJECT,
-                "project_id": project_id,
-            }
-        try:
-            submission = session.get(Submission, (row.accession, row.version))
-            if not submission:
-                raise Exception
-            for key, value in update_values.items():
-                setattr(submission, key, value)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logger.error(
-                f"Error updating entry in submission_table for "
-                f"(accession: {row.accession}, version: {row.version}): {e}. "
+            update_values = SubmissionUpdate(
+                status_all=StatusAll.SUBMITTING_PROJECT, project_id=project_id
             )
-            continue
+        update_submission(
+            session,
+            accession=row.accession,
+            version=row.version,
+            update_values=update_values,
+        )
 
 
 def submission_table_update(session: Session):
@@ -265,26 +248,21 @@ def submission_table_update(session: Session):
         f"Found {len(submitting_project)} entries in submission_table in status SUBMITTING_PROJECT"
     )
     for row in submitting_project:
-        group_key = {"group_id": row.group_id, "organism": row.organism}
-        seq_key = {"accession": row.accession, "version": row.version}
-
         # 1. check if there exists an entry in the project table for (group_id, organism)
         stmt = select(Project).where(
-            Project.group_id == group_key["group_id"], Project.organism == group_key["organism"]
+            Project.group_id == row.group_id, Project.organism == row.organism
         )
         corresponding_project = session.scalars(stmt).all()
-        if len(corresponding_project) == 1 and corresponding_project[0].status == str(
-            Status.SUBMITTED
-        ):
-            update_values = {
-                "status_all": StatusAll.SUBMITTED_PROJECT,
-                "center_name": corresponding_project[0].center_name,
-                "project_id": corresponding_project[0].project_id,
-            }
-            update_db_where_conditions(
-                db_config,
-                table_name=TableName.SUBMISSION_TABLE,
-                conditions=seq_key,
+        if len(corresponding_project) == 1 and corresponding_project[0].status == Status.SUBMITTED:
+            update_values = SubmissionUpdate(
+                status_all=StatusAll.SUBMITTED_PROJECT,
+                center_name=corresponding_project[0].center_name,
+                project_id=corresponding_project[0].project_id,
+            )
+            update_submission(
+                session,
+                accession=row.accession,
+                version=row.version,
                 update_values=update_values,
             )
         if len(corresponding_project) == 0:

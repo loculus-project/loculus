@@ -17,6 +17,7 @@ from .db_helper import (
     Status,
     StatusAll,
     db_init,
+    update_submission,
 )
 from .db_tables import Sample, Submission
 from .ena_submission_helper import (
@@ -251,16 +252,12 @@ def submission_table_start(session: Session, config: Config):
                 logger.error(f"Error adding entry to sample_table for {accession_version}: {e}. ")
                 continue
             status_all = StatusAll.SUBMITTING_SAMPLE
-        try:
-            submission = session.get(Submission, inspect(row).identity)
-            if not submission:
-                raise Exception
-            submission.status_all = status_all
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logger.error(f"Error updating entry in submission_table for {accession_version}: {e}. ")
-            continue
+        update_submission(
+            session,
+            accession=row.accession,
+            version=row.version,
+            update_values={"status_all": status_all},
+        )
 
 
 def submission_table_update(session: Session):
@@ -287,15 +284,13 @@ def submission_table_update(session: Session):
         if len(corresponding_sample) == 1 and corresponding_sample[0].status == str(
             Status.SUBMITTED
         ):
-            try:
-                submission = session.get(Submission, seq_key)
-                if not submission:
-                    raise Exception
-                submission.status_all = StatusAll.SUBMITTED_SAMPLE
-                session.commit()
-            except Exception as e:
-                session.rollback()
-                logger.error(f"Error updating entry in submission_table for {seq_key}: {e}. ")
+            success = update_submission(
+                session,
+                accession=row.accession,
+                version=row.version,
+                update_values={"status_all": StatusAll.SUBMITTED_SAMPLE},
+            )
+            if not success:
                 continue
         if len(corresponding_sample) == 0:
             error_msg = (
