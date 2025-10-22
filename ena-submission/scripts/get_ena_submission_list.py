@@ -111,7 +111,6 @@ def filter_for_submission(  # noqa: PLR0912
             if entry["metadata"].get(field)
         ]
         if ena_specific_metadata:
-            # Check if all ena_specific_metadata_fields are present
             all_fields_present = all(
                 entry["metadata"].get(field) for field in ena_specific_metadata_fields
             )
