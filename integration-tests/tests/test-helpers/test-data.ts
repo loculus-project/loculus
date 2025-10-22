@@ -41,3 +41,25 @@ export function createTestSequenceData(sequence: string = EBOLA_SUDAN_SHORT_SEQU
         main: sequence,
     };
 }
+
+/**
+ * Helper function to create revision metadata TSV with accession column
+ * Used for bulk revision operations
+ * @param accessions - Array of accessions to revise
+ * @param baseSubmissionId - Base ID for submission IDs (will be appended with index)
+ */
+export function createRevisionMetadataTsv(accessions: string[], baseSubmissionId?: string): string {
+    const baseId = baseSubmissionId || `revision-${Date.now()}`;
+    const header = 'accession\tsubmissionId\tcollectionCountry\tcollectionDate\tauthorAffiliations';
+    const rows = accessions.map((accession, index) => {
+        return `${accession}\t${baseId}-${index}\tFrance\t2021-02-15\tRevision Institute`;
+    });
+    return [header, ...rows].join('\n');
+}
+
+/**
+ * Helper function to create FASTA content for multiple sequences
+ */
+export function createFastaContent(sequences: Array<{ id: string; sequence: string }>): string {
+    return sequences.map((seq) => `>${seq.id}\n${seq.sequence}`).join('\n');
+}
