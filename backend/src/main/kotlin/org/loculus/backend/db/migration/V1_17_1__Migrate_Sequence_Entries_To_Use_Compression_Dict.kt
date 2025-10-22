@@ -35,6 +35,13 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
         val db = Database.connect(context.configuration.dataSource)
 
         transaction(db) {
+            exec(
+                """
+                    LOCK TABLE sequence_entries IN EXCLUSIVE MODE;
+                    LOCK TABLE sequence_entries_preprocessed_data IN EXCLUSIVE MODE;
+                """,
+            )
+
             Pre1_17_1_SequenceEntriesTable
                 .select(
                     Pre1_17_1_SequenceEntriesTable.accessionColumn,
