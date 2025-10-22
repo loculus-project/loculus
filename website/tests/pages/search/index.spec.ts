@@ -97,5 +97,4 @@ test.describe('The search page', () => {
 
         await expect(searchPage.getAccessionField()).toHaveValue('');
     });
-
 });
