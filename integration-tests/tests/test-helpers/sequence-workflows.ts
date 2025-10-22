@@ -30,8 +30,8 @@ export async function submitAndReleaseSequence(
         createTestSequenceData(),
     );
 
+    // completeSubmission navigates to review page, so we should already be there
     const reviewPage = new ReviewPage(page);
-    await reviewPage.goto(groupId);
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseValidSequences();
 }
@@ -53,10 +53,15 @@ export async function submitRevision(
     sequenceModification: string,
     organism: string = 'ebola-sudan',
 ): Promise<void> {
-    await page.goto(`/${organism}/submission/${groupId}/revise`);
-    await page.getByLabel('Accession').fill(originalAccession);
-    await page.getByLabel('Submission Id').fill(revisedSubmissionId);
+    // Navigate to the sequence details page
+    await page.goto(`/${organism}/seq/${originalAccession}`);
+    await expect(page.getByRole('heading', { name: originalAccession })).toBeVisible();
 
+    // Click the "Revise this sequence" link
+    await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();
+
+    // Upload the revised sequence file
     const revisedSequence = EBOLA_SUDAN_SHORT_SEQUENCE + sequenceModification;
     await page.getByTestId('main_segment_file').setInputFiles({
         name: 'revised.fasta',
@@ -64,7 +69,7 @@ export async function submitRevision(
         buffer: Buffer.from(`>${revisedSubmissionId}\n${revisedSequence}`),
     });
 
-    await page.getByLabel('I agree to submit data').check();
+    // Submit the revision
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
 }
@@ -81,14 +86,19 @@ export async function releaseSequencesAndWaitForIndexing(
     organism: string = 'ebola-sudan',
 ): Promise<void> {
     const reviewPage = new ReviewPage(page);
-    await expect(page).toHaveURL(/\/review/);
+
+    // Ensure we're on the review page (navigate if needed)
+    if (!page.url().includes('/review')) {
+        await reviewPage.goto(groupId);
+    }
+
     await reviewPage.waitForZeroProcessing();
     await reviewPage.releaseValidSequences();
 
-    // Wait for search indexing
-    await page.waitForTimeout(5000);
+    // Wait for search indexing by searching and waiting for results
     const searchPage = new SearchPage(page);
     await searchPage.searchByGroupId(organism, groupId);
+    await page.waitForTimeout(3000); // Give search index time to update
 }
 
 /**
