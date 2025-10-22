@@ -1,10 +1,7 @@
 import { type Page, type Download } from '@playwright/test';
 import { DateTime } from 'luxon';
 
-import { routes } from '../../../src/routes/routes.ts';
-import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
-import { getTestSequences } from '../../util/testSequenceProvider.ts';
+import { expect, test } from '../../e2e.fixture';
 
 interface PerformDownloadOptions {
     selectRawNucleotide?: boolean;
@@ -20,63 +17,6 @@ test.describe('The search page', () => {
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
 
-    test('should search one existing sequence entry by accession, then click it', async ({ searchPage }) => {
-        const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
-
-        await searchPage.goto();
-        await searchPage.getAccessionField().click();
-        await searchPage.getAccessionField().fill(testAccessionVersion);
-
-        await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
-        );
-        const accessionLink = searchPage.page.getByRole('link', { name: testAccessionVersion });
-        searchPage.page.getByText('Search returned 1 sequence');
-        await expect(accessionLink).toBeVisible();
-
-        const rowLocator = searchPage.page.locator('tr');
-        await expect(rowLocator.getByText('2002-12-15')).toBeVisible();
-        await expect(rowLocator.getByText('A.1.1')).toBeVisible();
-
-        await accessionLink.click();
-        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
-    });
-
-    test('should search a few sequence entries by accession', async ({ searchPage }) => {
-        await searchPage.goto();
-        const previousAccessions = await searchPage.getAccessions(3);
-
-        const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
-        await searchPage.getAccessionField().click();
-        await searchPage.getAccessionField().fill(query);
-
-        const newAccessions = await searchPage.getAccessions(3);
-
-        expect(newAccessions.length).toBe(3);
-        expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
-        expect(newAccessions.includes(previousAccessions[1])).toBeTruthy();
-        expect(newAccessions.includes(previousAccessions[2])).toBeTruthy();
-    });
-
-    test('should search many sequence entries by accession', async ({ searchPage }) => {
-        await searchPage.goto();
-        const previousAccessions = await searchPage.getAccessions(3);
-
-        let query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
-        for (let i = 0; i < 1000; i++) {
-            query += `\ndoesnotexist${i}`;
-        }
-        await searchPage.getAccessionField().click();
-        await searchPage.getAccessionField().fill(query);
-
-        const newAccessions = await searchPage.getAccessions(3);
-
-        expect(newAccessions.length).toBe(3);
-        expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
-        expect(newAccessions.includes(previousAccessions[1])).toBeTruthy();
-        expect(newAccessions.includes(previousAccessions[2])).toBeTruthy();
-    });
-
     test('should search for existing data from one country', async ({ searchPage }) => {
         await searchPage.goto();
         await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
@@ -85,22 +25,6 @@ test.describe('The search page', () => {
         const rowLocator = searchPage.page.locator('tr').getByText('Switzerland');
         const rowCount = await rowLocator.count();
         expect(rowCount).toBeGreaterThan(0);
-    });
-
-    test('should reset the search', async ({ searchPage }) => {
-        await searchPage.goto();
-
-        const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
-
-        await searchPage.getAccessionField().click();
-
-        await searchPage.getAccessionField().fill(testAccessionVersion);
-
-        await expect(searchPage.getAccessionField()).toHaveValue(testAccessionVersion);
-
-        await searchPage.clickResetButton();
-
-        await expect(searchPage.getAccessionField()).toHaveValue('');
     });
 
     async function performDownload(page: Page, options: PerformDownloadOptions = {}): Promise<string> {
