@@ -241,18 +241,17 @@ ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
 --
 
 CREATE VIEW public.external_metadata_view AS
- SELECT cpd.accession,
-    cpd.version,
-    all_external_metadata.updated_metadata_at,
+ SELECT sepd.accession,
+    sepd.version,
+    aem.updated_metadata_at,
         CASE
-            WHEN (all_external_metadata.external_metadata IS NULL) THEN jsonb_build_object('metadata', (cpd.processed_data -> 'metadata'::text))
-            ELSE jsonb_build_object('metadata', ((cpd.processed_data -> 'metadata'::text) || all_external_metadata.external_metadata))
+            WHEN (aem.external_metadata IS NULL) THEN jsonb_build_object('metadata', (sepd.processed_data -> 'metadata'::text))
+            ELSE jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata))
         END AS joint_metadata
-   FROM (((public.sequence_entries_preprocessed_data cpd
-     JOIN public.sequence_entries se ON (((se.accession = cpd.accession) AND (se.version = cpd.version))))
-     JOIN public.current_processing_pipeline cpp ON ((cpp.organism = se.organism)))
-     LEFT JOIN public.all_external_metadata ON (((all_external_metadata.accession = cpd.accession) AND (all_external_metadata.version = cpd.version))))
-  WHERE (cpd.pipeline_version = cpp.version);
+   FROM (((public.sequence_entries_preprocessed_data sepd
+     JOIN public.sequence_entries se ON (((se.accession = sepd.accession) AND (se.version = sepd.version))))
+     JOIN public.current_processing_pipeline cpp ON (((cpp.organism = se.organism) AND (sepd.pipeline_version = cpp.version))))
+     LEFT JOIN public.all_external_metadata aem ON (((aem.accession = sepd.accession) AND (aem.version = sepd.version))));
 
 
 ALTER VIEW public.external_metadata_view OWNER TO postgres;
