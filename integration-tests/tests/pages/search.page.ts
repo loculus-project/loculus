@@ -142,4 +142,50 @@ export class SearchPage {
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
     }
+
+    async searchByGroupId(organism: string, groupId: number) {
+        await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
+    }
+
+    async getAccessions(): Promise<string[]> {
+        const rows = this.getSequenceRows();
+        const count = await rows.count();
+
+        if (count === 0) {
+            return [];
+        }
+
+        const accessions: string[] = [];
+        for (let i = 0; i < count; i++) {
+            const rowText = await rows.nth(i).innerText();
+            const match = rowText.match(/LOC_[A-Z0-9]+/);
+            if (match) {
+                accessions.push(match[0]);
+            }
+        }
+
+        return accessions;
+    }
+
+    /**
+     * Wait for sequences to appear in search after release (handles indexing delay)
+     */
+    async waitForSequencesInSearch(minCount: number, timeoutMs: number = 60000): Promise<string[]> {
+        let accessions: string[] = [];
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    accessions = await this.getAccessions();
+                    return accessions.length;
+                },
+                {
+                    message: `Expected at least ${minCount} sequences to appear in search results`,
+                    timeout: timeoutMs,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeGreaterThanOrEqual(minCount);
+        return accessions;
+    }
 }
