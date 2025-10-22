@@ -250,7 +250,7 @@ CREATE VIEW public.external_metadata_view AS
         END AS joint_metadata
    FROM (((public.sequence_entries_preprocessed_data sepd
      JOIN public.sequence_entries se ON (((se.accession = sepd.accession) AND (se.version = sepd.version))))
-     JOIN public.current_processing_pipeline cpp ON (((cpp.organism = se.organism) AND (sepd.pipeline_version = cpp.version))))
+     JOIN public.current_processing_pipeline cpp ON (((cpp.organism = se.organism) AND (cpp.version = sepd.pipeline_version))))
      LEFT JOIN public.all_external_metadata aem ON (((aem.accession = sepd.accession) AND (aem.version = sepd.version))));
 
 
