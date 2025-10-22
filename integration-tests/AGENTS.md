@@ -87,22 +87,6 @@ npx playwright test tests/specs/cli/auth.spec.ts --reporter=list
 BROWSER=firefox npx playwright test --workers=4 --reporter=list
 ```
 
-### Troubleshooting
-
-**Pods stuck in Pending/ImagePullBackOff:**
-- Use `--branch main` instead of a specific SHA to avoid missing images
-- Check pod status: `kubectl get pods`
-- View logs: `kubectl logs <pod-name>`
-
-**Tests timeout on first run:**
-- Preprocessing pipelines need time to start up (cold start)
-- Run tests again - they should pass once data is seeded
-- Check preprocessing logs: `kubectl logs -l component=preprocessing`
-
-**Database connection issues:**
-- Verify pods are ready: `kubectl get pods`
-- Check database pod: `kubectl logs <database-pod-name>`
-
 ## Running Against Remote Environments
 
 ```sh
