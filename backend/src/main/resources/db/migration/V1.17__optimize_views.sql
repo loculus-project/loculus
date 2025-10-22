@@ -51,12 +51,12 @@ select
     end as processing_result
 from
     sequence_entries se
-    left join current_processing_pipeline ccp on
-        se.organism = ccp.organism
+    left join current_processing_pipeline cpp on
+        se.organism = cpp.organism
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        and sepd.pipeline_version = ccp.version
+        and sepd.pipeline_version = cpp.version
     left join external_metadata_view em on
         se.accession = em.accession
         and se.version = em.version;
