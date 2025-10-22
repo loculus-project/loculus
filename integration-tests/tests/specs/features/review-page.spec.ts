@@ -1,34 +1,24 @@
 import { expect } from '@playwright/test';
-import { test } from '../../fixtures/console-warnings.fixture';
-import { AuthPage } from '../../pages/auth.page';
+import { test } from '../../fixtures/group.fixture';
 import { ReviewPage } from '../../pages/review.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
-import { readonlyUser } from '../../fixtures/user.fixture';
-import { createTestGroup } from '../../fixtures/group.fixture';
-import { GroupPage } from '../../pages/group.page';
+
+const TEST_SEQUENCE =
+    'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
+    'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG';
 
 test.describe('Review page functionality', () => {
     test('should show total sequences and increase when new submission occurs', async ({
-        page,
+        pageWithGroup,
+        groupId,
     }) => {
-        const authPage = new AuthPage(page);
-        await authPage.tryLoginOrRegister(readonlyUser);
-
-        const groupPage = new GroupPage(page);
-        const testGroup = createTestGroup();
-        const groupId = await groupPage.getOrCreateGroup(testGroup);
-
-        const reviewPage = new ReviewPage(page);
+        const reviewPage = new ReviewPage(pageWithGroup);
         await reviewPage.goto(groupId);
 
         const initialOverview = await reviewPage.getReviewPageOverview();
         const initialTotal = initialOverview.total;
 
-        const submissionPage = new SingleSequenceSubmissionPage(page);
-        const mainSequence =
-            'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
-            'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG';
-
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
         await submissionPage.completeSubmission(
             {
                 submissionId: `review-test-${Date.now()}`,
@@ -38,7 +28,7 @@ test.describe('Review page functionality', () => {
                 groupId: groupId.toString(),
             },
             {
-                main: mainSequence,
+                main: TEST_SEQUENCE,
             },
         );
 
@@ -49,18 +39,8 @@ test.describe('Review page functionality', () => {
         expect(newOverview.total).toBe(initialTotal + 1);
     });
 
-    test('should allow bulk approval of sequences', async ({ page }) => {
-        const authPage = new AuthPage(page);
-        await authPage.tryLoginOrRegister(readonlyUser);
-
-        const groupPage = new GroupPage(page);
-        const testGroup = createTestGroup();
-        const groupId = await groupPage.getOrCreateGroup(testGroup);
-
-        const submissionPage = new SingleSequenceSubmissionPage(page);
-        const mainSequence =
-            'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
-            'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG';
+    test('should allow bulk approval of sequences', async ({ pageWithGroup, groupId }) => {
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
         const reviewPage = await submissionPage.completeSubmission(
             {
@@ -71,7 +51,7 @@ test.describe('Review page functionality', () => {
                 groupId: groupId.toString(),
             },
             {
-                main: mainSequence,
+                main: TEST_SEQUENCE,
             },
         );
 
@@ -84,21 +64,11 @@ test.describe('Review page functionality', () => {
         await reviewPage.approveAll();
 
         // After approval, sequences are released and should no longer be in review
-        // Since we started with a fresh group, total should return to 0
         await reviewPage.waitForTotalSequenceCountCorrect(0);
     });
 
-    test('should allow bulk deletion of sequences', async ({ page }) => {
-        const authPage = new AuthPage(page);
-        await authPage.tryLoginOrRegister(readonlyUser);
-
-        const groupPage = new GroupPage(page);
-        const testGroup = createTestGroup();
-        const groupId = await groupPage.getOrCreateGroup(testGroup);
-
-        const submissionPage = new SingleSequenceSubmissionPage(page);
-        const mainSequence =
-            'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA';
+    test('should allow bulk deletion of sequences', async ({ pageWithGroup, groupId }) => {
+        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
         const reviewPage = await submissionPage.completeSubmission(
             {
@@ -109,7 +79,7 @@ test.describe('Review page functionality', () => {
                 groupId: groupId.toString(),
             },
             {
-                main: mainSequence,
+                main: TEST_SEQUENCE,
             },
         );
 
