@@ -1,6 +1,14 @@
+import type { Download, Page } from '@playwright/test';
 import { DateTime } from 'luxon';
 
-import { expect, test } from '../../e2e.fixture';
+import { routes } from '../../../src/routes/routes';
+import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion';
+import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
+import { getTestSequences } from '../../util/testSequenceProvider';
+
+type PerformDownloadOptions = {
+    selectRawNucleotide?: boolean;
+};
 
 test.describe('The search page', () => {
     test('should find no data in the future', async ({ searchPage }) => {
@@ -67,8 +75,8 @@ test.describe('The search page', () => {
         const filePath = await performDownload(page, { selectRawNucleotide: true });
 
         expect(filePath).toBeTruthy();
-     });
-  
+    });
+
     test('should search one existing sequence entry by accession, then click it', async ({ searchPage }) => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
