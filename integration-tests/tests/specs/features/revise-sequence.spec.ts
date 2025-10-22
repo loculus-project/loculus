@@ -4,6 +4,8 @@ import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
+import { NavigationPage } from '../../pages/navigation.page';
+
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import {
     createTestMetadata,
@@ -25,6 +27,9 @@ sequenceTest(
         const searchPage = new SearchPage(page);
 
         await searchPage.cchf();
+        const navigation = new NavigationPage(page);
+        await navigation.clickSubmitSequences();
+        await page.getByRole('link', { name: "View View your group's" }).click();
 
         const loculusId = await searchPage.waitForLoculusId();
         expect(loculusId).toBeTruthy();
