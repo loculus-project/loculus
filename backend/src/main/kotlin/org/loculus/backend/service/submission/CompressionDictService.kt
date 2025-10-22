@@ -77,8 +77,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
     /**
      * Get dictionary for unaligned sequences (used when compressing submitted sequences)
      */
-    fun getDictForUnalignedSequence(organism: Organism): DictEntry = unalignedDictCache[organism.name]
-        ?: throw RuntimeException("No unaligned dict found for organism: ${organism.name}")
+    fun getDictForUnalignedSequence(organism: Organism): DictEntry? = unalignedDictCache[organism.name]
 
     /**
      * Get dictionary by ID (used when decompressing sequences)
@@ -102,7 +101,6 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
     private fun getDictIdOrInsertNewEntry(dict: String): Int {
         val hash = hash(dict)
 
-        // TODO check SQL
         val existingId = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
             .firstOrNull()
             ?.id

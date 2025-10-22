@@ -5,7 +5,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 
-private const val COMPRESSION_DICTIONARIES_TABLE_NAME = "compression_dictionaries"
+const val COMPRESSION_DICTIONARIES_TABLE_NAME = "compression_dictionaries"
 
 object CompressionDictionariesTable : IntIdTable(COMPRESSION_DICTIONARIES_TABLE_NAME, "id") {
     val hashColumn = text("hash").uniqueIndex()
