@@ -4,7 +4,6 @@ import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 // This test must not be run in parallel with other tests that submit, approve or delete sequences.
 test.describe('The review page', () => {
-
     test('approve restricted sequences', async ({ reviewPage, loginAsTestUser, browserName }) => {
         test.skip(browserName === 'webkit', 'Webkit has false positive connection issues');
         const { token, groupId } = await loginAsTestUser();
