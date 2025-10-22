@@ -147,7 +147,10 @@ export class SearchPage {
         await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
     }
 
-    async getAccessions(): Promise<string[]> {
+    /**
+     * Helper method to extract identifiers from sequence rows using a regex pattern
+     */
+    private async extractIdentifiersFromRows(pattern: RegExp): Promise<string[]> {
         const rows = this.getSequenceRows();
         const count = await rows.count();
 
@@ -155,29 +158,52 @@ export class SearchPage {
             return [];
         }
 
-        const accessions: string[] = [];
+        const identifiers: string[] = [];
         for (let i = 0; i < count; i++) {
             const rowText = await rows.nth(i).innerText();
-            const match = rowText.match(/LOC_[A-Z0-9]+/);
+            const match = rowText.match(pattern);
             if (match) {
-                accessions.push(match[0]);
+                identifiers.push(match[0]);
             }
         }
 
-        return accessions;
+        return identifiers;
+    }
+
+    /**
+     * Get base accessions without version numbers (e.g., LOC_XXXXX)
+     */
+    async getAccessions(): Promise<string[]> {
+        return this.extractIdentifiersFromRows(/LOC_[A-Z0-9]+/);
+    }
+
+    /**
+     * Get full accession versions with version numbers (e.g., LOC_XXXXX.1)
+     */
+    async getAccessionVersions(): Promise<string[]> {
+        return this.extractIdentifiersFromRows(/LOC_[A-Z0-9]+\.[0-9]+/);
     }
 
     /**
      * Wait for sequences to appear in search after release (handles indexing delay)
+     * @param minCount Minimum number of sequences expected
+     * @param timeoutMs Timeout in milliseconds
+     * @param includeVersions If true, returns full accession versions (LOC_XXXXX.1), otherwise base accessions (LOC_XXXXX)
      */
-    async waitForSequencesInSearch(minCount: number, timeoutMs: number = 60000): Promise<string[]> {
-        let accessions: string[] = [];
+    async waitForSequencesInSearch(
+        minCount: number,
+        timeoutMs: number = 60000,
+        includeVersions: boolean = true,
+    ): Promise<string[]> {
+        let results: string[] = [];
         await expect
             .poll(
                 async () => {
                     await this.page.reload();
-                    accessions = await this.getAccessions();
-                    return accessions.length;
+                    results = includeVersions
+                        ? await this.getAccessionVersions()
+                        : await this.getAccessions();
+                    return results.length;
                 },
                 {
                     message: `Expected at least ${minCount} sequences to appear in search results`,
@@ -186,6 +212,6 @@ export class SearchPage {
                 },
             )
             .toBeGreaterThanOrEqual(minCount);
-        return accessions;
+        return results;
     }
 }
