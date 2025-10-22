@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.github.luben.zstd.Zstd
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
@@ -10,7 +11,11 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-data class CompressedSequence(val compressedSequence: String, val compressionDictId: Int?)
+data class CompressedSequence(
+    val compressedSequence: String,
+    @JsonProperty(required = true)
+    val compressionDictId: Int?,
+)
 
 enum class CompressionAlgorithm(val extension: String) {
     NONE(""),
