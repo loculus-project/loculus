@@ -59,7 +59,7 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = compressionDictService
                                         .getDictForUnalignedSequence(Organism(organism))
-                                        .id,
+                                        ?.id,
                                 )
                             }
                         },
