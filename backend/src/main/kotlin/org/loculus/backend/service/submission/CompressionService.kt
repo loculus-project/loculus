@@ -85,10 +85,10 @@ class CompressionService(
     fun compressSequencesInOriginalData(originalData: OriginalData<GeneticSequence>, organism: Organism) = OriginalData(
         originalData.metadata,
         originalData
-            .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
+            .unalignedNucleotideSequences.mapValues { (_, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> compressOriginalSequence(sequenceData, organism)
                 }
             },
         originalData.files,
