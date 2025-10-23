@@ -189,7 +189,6 @@ class SubmissionDatabaseService(
                 val chunkOfUnprocessedData = chunk.map {
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
-                        organism,
                     )
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
@@ -1140,7 +1139,6 @@ class SubmissionDatabaseService(
             ),
             originalData = compressionService.decompressSequencesInOriginalData(
                 selectedSequenceEntry[SequenceEntriesView.originalDataColumn]!!,
-                organism,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
