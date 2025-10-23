@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-data class CompressedSequence(
-    val compressedSequence: String,
-    val compressionDictId: Int?,
-)
+data class CompressedSequence(val compressedSequence: String, val compressionDictId: Int?)
 
 enum class CompressionAlgorithm(val extension: String) {
     NONE(""),
@@ -180,7 +177,9 @@ class CompressionService(
         }
 
         val dictionary = when {
-            compressedSequence.compressionDictId != null -> compressionDictService.getDictById(compressedSequence.compressionDictId)
+            compressedSequence.compressionDictId != null -> compressionDictService.getDictById(
+                compressedSequence.compressionDictId,
+            )
             else -> getFallbackDictionary()
         }
 
