@@ -53,7 +53,9 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
         )
         raise e
     return {
-        AccessionVersion(line.strip().split(".")[0], int(line.strip().split(".")[1]))
+        AccessionVersion(
+            accession=line.strip().split(".")[0], version=int(line.strip().split(".")[1])
+        )
         for line in response.text.splitlines()
         if line.strip()
     }

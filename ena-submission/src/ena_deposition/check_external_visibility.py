@@ -11,6 +11,7 @@ import logging
 import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -28,8 +29,12 @@ from ena_deposition.submission_db_helper import (
     Status,
     TableName,
     db_init,
-    find_conditions_in_db,
-    update_db_where_conditions,
+    find_conditions_in_assembly_db,
+    find_conditions_in_project_db,
+    find_conditions_in_sample_db,
+    update_assembly_db_where_conditions,
+    update_project_db_where_conditions,
+    update_sample_db_where_conditions,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,6 +56,8 @@ class ColumnCheckConfig:
     visibility_column: str
     accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
+    find_func: Callable  # Function to find conditions in DB
+    update_func: Callable  # Function to update DB rows
 
 
 class VisibilityChecker(ABC):
@@ -159,6 +166,8 @@ COLUMN_CONFIGS = {
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=ENAVisibilityChecker,
+        find_func=find_conditions_in_project_db,
+        update_func=update_project_db_where_conditions,
     ),
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.PROJECT_TABLE,
@@ -167,6 +176,8 @@ COLUMN_CONFIGS = {
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=NCBIVisibilityChecker,
+        find_func=find_conditions_in_project_db,
+        update_func=update_project_db_where_conditions,
     ),
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
@@ -175,6 +186,8 @@ COLUMN_CONFIGS = {
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
         checker_class=ENAVisibilityChecker,
+        find_func=find_conditions_in_sample_db,
+        update_func=update_sample_db_where_conditions,
     ),
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
@@ -183,6 +196,8 @@ COLUMN_CONFIGS = {
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
         checker_class=NCBIVisibilityChecker,
+        find_func=find_conditions_in_sample_db,
+        update_func=update_sample_db_where_conditions,
     ),
     # Assemblies - ENA nucleotide accessions
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
@@ -192,6 +207,8 @@ COLUMN_CONFIGS = {
         visibility_column="ena_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=ENAVisibilityChecker,
+        find_func=find_conditions_in_assembly_db,
+        update_func=update_assembly_db_where_conditions,
     ),
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
@@ -200,6 +217,8 @@ COLUMN_CONFIGS = {
         visibility_column="ncbi_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=NCBIVisibilityChecker,
+        find_func=find_conditions_in_assembly_db,
+        update_func=update_assembly_db_where_conditions,
     ),
     # Assemblies - ENA GCA accessions
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
@@ -209,6 +228,8 @@ COLUMN_CONFIGS = {
         visibility_column="ena_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
+        find_func=find_conditions_in_assembly_db,
+        update_func=update_assembly_db_where_conditions,
     ),
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
@@ -217,6 +238,8 @@ COLUMN_CONFIGS = {
         visibility_column="ncbi_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=NCBIVisibilityChecker,
+        find_func=find_conditions_in_assembly_db,
+        update_func=update_assembly_db_where_conditions,
     ),
 }
 
@@ -227,16 +250,13 @@ def get_entities_needing_column_check(
     """Get entities (db rows for Project/Sample/Assembly) that don't have a timestamp
     for a specific visibility column"""
 
-    data_in_submission_table: list[dict] = find_conditions_in_db(
+    return column_config.find_func(
         pool,
-        table_name=column_config.table_name,
         conditions={
             column_config.visibility_column: None,
             "status": Status.SUBMITTED,
         },
     )
-
-    return [column_config.entry_class(**row) for row in data_in_submission_table]
 
 
 def get_accessions_to_check(
@@ -327,9 +347,8 @@ def check_and_update_visibility_for_column(
                 f"{entity_type.value.title()} {entity_id} all accessions {accessions} are "
                 "publicly visible, updating database."
             )
-            updated_count = update_db_where_conditions(
+            updated_count = column_config.update_func(
                 pool,
-                table_name=column_config.table_name,
                 conditions=entity_id,
                 update_values={column_config.visibility_column: first_visible_timestamp},
             )
