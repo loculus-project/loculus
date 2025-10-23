@@ -52,7 +52,7 @@ private val log = KotlinLogging.logger { }
     FilesClient::class,
 )
 @Suppress("ktlint:standard:class-naming")
-class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
+class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     companion object {
@@ -64,7 +64,7 @@ class V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
             env.start()
 
             env.postgres.restore(
-                TestResource("V1_17_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest_pg_dump.sql").file,
+                TestResource("V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest_pg_dump.sql").file,
             )
 
             log.info("started Postgres for migration: ${env.postgres.jdbcUrl}")
