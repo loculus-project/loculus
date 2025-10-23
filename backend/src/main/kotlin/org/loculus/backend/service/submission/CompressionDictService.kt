@@ -84,7 +84,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
      */
     fun getDictById(id: Int): ByteArray {
         val cachedDict = cacheById[id]
-        if (cachedDict !== null) {
+        if (cachedDict != null) {
             return cachedDict
         }
 
