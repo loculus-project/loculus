@@ -297,6 +297,9 @@ organisms:
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
+  {{- if .onlyShowInSearchWhenSuborganismIs }}
+  onlyShowInSearchWhenSuborganismIs: {{ .onlyShowInSearchWhenSuborganismIs }}
+  {{- end }}
   {{- if .customDisplay }}
   customDisplay:
     type: {{ quote .customDisplay.type }}

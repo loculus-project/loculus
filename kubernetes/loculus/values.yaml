@@ -1133,7 +1133,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         initiallyVisible: true
-        perSegment: true
         displayName: Length
         orderOnDetailsPage: 2700
       - name: hostNameScientific
@@ -1792,6 +1791,7 @@ defaultOrganisms:
         - &evMetadataAdd
           name: clade_cv_a16
           displayName: Clade CV-A16
+          onlyShowInSearchWhenSuborganismIs: CV-A16
           header: "Clade"
           noInput: true
           generateIndex: true
@@ -1805,6 +1805,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_cv_a10
           displayName: Clade CV-A10
+          onlyShowInSearchWhenSuborganismIs: CV-A10
           preprocessing:
             args:
               segment: CV-A10
@@ -1812,6 +1813,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_a71
           displayName: Clade EV-A71
+          onlyShowInSearchWhenSuborganismIs: EV-A71
           preprocessing:
             args:
               segment: EV-A71
@@ -1819,6 +1821,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_d68
           displayName: Clade EV-D68
+          onlyShowInSearchWhenSuborganismIs: EV-D68
           preprocessing:
             args:
               segment: EV-D68
