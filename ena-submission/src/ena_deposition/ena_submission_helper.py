@@ -11,9 +11,9 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import Field, dataclass, is_dataclass
+from dataclasses import Field, dataclass, field, is_dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Final, Literal, Protocol
+from typing import Any, ClassVar, Final, Protocol
 
 import pytz
 import requests
@@ -23,7 +23,6 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from bs4 import BeautifulSoup
-from psycopg2.pool import SimpleConnectionPool
 from requests.auth import HTTPBasicAuth
 from tenacity import (
     RetryCallState,
@@ -50,13 +49,6 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
-from .submission_db_helper import (
-    ProjectTableEntry,
-    SampleTableEntry,
-    Status,
-    add_to_project_table,
-    add_to_sample_table,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +57,7 @@ logger = logging.getLogger(__name__)
 class CreationResult:
     errors: list[str]
     warnings: list[str]
-    result: dict[str, str | Sequence[str]] | None = None
+    result: dict[str, str | Sequence[str]] = field(default_factory=dict)
 
 
 def recursive_defaultdict():
@@ -234,7 +226,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -242,7 +234,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -256,7 +248,7 @@ def create_ena_project(config: Config, project_set: ProjectSet) -> CreationResul
         error_message = f"Response is in unexpected format: {e}. Response: {response.text}."
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     project_results = {
         "bioproject_accession": parsed_response["RECEIPT"]["PROJECT"]["@accession"],
         "ena_submission_accession": parsed_response["RECEIPT"]["SUBMISSION"]["@accession"],
@@ -298,7 +290,7 @@ def create_ena_sample(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
 
     if not response.ok:
         error_message = (
@@ -307,7 +299,7 @@ def create_ena_sample(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = xmltodict.parse(response.text)
         valid = (
@@ -328,7 +320,7 @@ def create_ena_sample(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     sample_results = {
         "ena_sample_accession": parsed_response["RECEIPT"]["SAMPLE"]["@accession"],
         "biosample_accession": parsed_response["RECEIPT"]["SAMPLE"]["EXT_ID"]["@accession"],
@@ -515,7 +507,7 @@ def create_flatfile(
 
 
 def create_fasta(
-    unaligned_sequences: dict[str, str],
+    unaligned_sequences: dict[str, str | None],
     chromosome_list: AssemblyChromosomeListFile,
     dir: str | None = None,
 ) -> str:
@@ -692,11 +684,11 @@ def create_ena_assembly(
             logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
         except Exception as e:
             logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
-    return CreationResult(result=None, errors=errors, warnings=warnings)
+    return CreationResult(errors=errors, warnings=warnings)
 
 
 def get_ena_analysis_process(
-    config: Config, erz_accession: str, segment_order: list[str]
+    config: Config, erz_accession: str, segment_order: Sequence[str]
 ) -> CreationResult:
     """
     Query ENA webin endpoint to get analysis outcomes: assembly (GCA) and nucleotide accessions
@@ -725,7 +717,7 @@ def get_ena_analysis_process(
         error_message = f"Request failed with exception: {e}."
         logger.error(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     if not response.ok:
         req = response.request
         headers = req.headers
@@ -745,12 +737,12 @@ def get_ena_analysis_process(
         logger.error(error_message)
         errors.append(error_message)
         logger.debug(f"First 1000 characters of ENA API response text: {response.text[:1000]}")
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     if response.text == "[]":
         # For some minutes the response will be empty, requests to
         # f"{config.ena_reports_service_url}/analysis-files/{erz_accession}?format=json"
         # should still succeed
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     try:
         parsed_response = json.loads(response.text)
         entry = parsed_response[0]["report"]
@@ -773,7 +765,7 @@ def get_ena_analysis_process(
                 )
                 assembly_results.update(chromosome_accessions_dict)
         else:
-            return CreationResult(result=None, errors=errors, warnings=warnings)
+            return CreationResult(errors=errors, warnings=warnings)
     except Exception:
         error_message = (
             f"ENA Check returned errors or is in unexpected format. "
@@ -781,14 +773,14 @@ def get_ena_analysis_process(
         )
         logger.warning(error_message)
         errors.append(error_message)
-        return CreationResult(result=None, errors=errors, warnings=warnings)
+        return CreationResult(errors=errors, warnings=warnings)
     return CreationResult(result=assembly_results, errors=errors, warnings=warnings)
 
 
 # TODO: Also pass the full segment list from config so we can handle someone submitting
 # a multi-segmented virus that has a main segment.
 def get_chromsome_accessions(
-    insdc_accession_range: str, segment_order: list[str]
+    insdc_accession_range: str, segment_order: Sequence[str]
 ) -> dict[str, str]:
     """
     ENA doesn't actually give us the version, we assume it's 1.
@@ -854,14 +846,10 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def set_error_if_accession_not_exists(
-    conditions: dict[str, str | dict[str, str]],
+def ena_accession_exists(
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
-    db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
-    """Make request to ENA to check if an accession exists"""
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
@@ -870,28 +858,4 @@ def set_error_if_accession_not_exists(
             return True
     except Exception as e:
         logger.error(f"Error checking if accession exists: {e!s}")
-
-    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
-    logger.error(error_text)
-
-    succeeded: bool | int | None
-    if accession_type == "BIOSAMPLE":
-        sample_table_entry = SampleTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"ena_sample_accession": accession, "biosample_accession": accession},
-        )
-        succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    else:
-        project_table_entry = ProjectTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
-            result={"bioproject_accession": accession},
-        )
-        succeeded = add_to_project_table(db_pool, project_table_entry)
-
-    if not succeeded:
-        logger.warning(f"{accession_type} creation failed and DB update failed.")
     return False

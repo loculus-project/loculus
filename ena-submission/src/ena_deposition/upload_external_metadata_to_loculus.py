@@ -1,9 +1,9 @@
 # This script collects the results of the ENA submission and uploads the results to Loculus
 
-import json
 import logging
 import threading
 import time
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
@@ -15,51 +15,29 @@ from ena_deposition.call_loculus import submit_external_metadata
 from .config import Config
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
+    ProjectId,
     StatusAll,
-    TableName,
+    SubmissionTableEntry,
     db_init,
-    find_conditions_in_db,
+    find_conditions_in_assembly_db,
+    find_conditions_in_project_db,
+    find_conditions_in_sample_db,
+    find_conditions_in_submission_db,
     find_stuck_in_submission_db,
-    update_with_retry,
+    update_submission_with_retry,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def _get_results_of_single_db_record(
-    db_config: SimpleConnectionPool,
-    table_name: TableName,
-    conditions: dict[str, Any],
-) -> dict[str, Any]:
-    """Helper to get a single record from database with validation."""
-    entries = find_conditions_in_db(db_config, table_name=table_name, conditions=conditions)
-
-    if not entries:
-        return {}
-
-    if len(entries) > 1:
-        msg = (
-            f"Expected 1 record in {table_name} for conditions: {conditions}, "
-            f"but found {len(entries)} records."
-        )
-        raise ValueError(msg)
-
-    if not isinstance(entries[0], dict) or "result" not in entries[0]:
-        msg = (
-            f"Expected a single record with 'result' in {table_name} for conditions: {conditions}, "
-            f"but found: {entries[0]}"
-        )
-        raise ValueError(msg)
-
-    return entries[0]["result"]
-
-
 def get_bioproject_accession_from_db(
-    db_config: SimpleConnectionPool, project_id: str
-) -> dict[str, str]:
-    result = _get_results_of_single_db_record(
-        db_config, TableName.PROJECT_TABLE, {"project_id": project_id}
-    )
+    db_config: SimpleConnectionPool, project_id: int
+) -> dict[str, str | Sequence[str]]:
+    entry = find_conditions_in_project_db(db_config, ProjectId(project_id=project_id))
+    if not entry:
+        return {}
+    result = entry[0].result
 
     if not result or "bioproject_accession" not in result:
         return {}
@@ -68,13 +46,15 @@ def get_bioproject_accession_from_db(
 
 
 def get_biosample_accession_from_db(
-    db_config: SimpleConnectionPool, accession: str, version: str
-) -> dict[str, str]:
-    result = _get_results_of_single_db_record(
+    db_config: SimpleConnectionPool, accession: str, version: int
+) -> dict[str, str | Sequence[str]]:
+    entry = find_conditions_in_sample_db(
         db_config,
-        TableName.SAMPLE_TABLE,
-        {"accession": accession, "version": version},
+        AccessionVersion(accession=accession, version=version),
     )
+    if not entry:
+        return {}
+    result = entry[0].result
 
     if not result or "biosample_accession" not in result:
         return {}
@@ -83,13 +63,15 @@ def get_biosample_accession_from_db(
 
 
 def get_assembly_accessions_from_db(
-    db_config: SimpleConnectionPool, accession: str, version: str
+    db_config: SimpleConnectionPool, accession: str, version: int
 ) -> tuple[dict[str, str], bool]:
-    result = _get_results_of_single_db_record(
+    entry = find_conditions_in_assembly_db(
         db_config,
-        TableName.ASSEMBLY_TABLE,
-        {"accession": accession, "version": version},
+        AccessionVersion(accession=accession, version=version),
     )
+    if not entry:
+        return {}, False
+    result = entry[0].result
 
     if not result:
         return {}, False
@@ -123,12 +105,15 @@ def get_assembly_accessions_from_db(
 
 
 def get_external_metadata_to_upload(
-    db_config: SimpleConnectionPool, entry: dict[str, Any]
+    db_config: SimpleConnectionPool, entry: SubmissionTableEntry
 ) -> tuple[dict[str, Any], bool]:
-    accession = entry["accession"]
-    version = entry["version"]
+    accession = entry.accession
+    version = entry.version
 
-    bioproject_accession = get_bioproject_accession_from_db(db_config, entry["project_id"])
+    if not entry.project_id:
+        return {}, False
+
+    bioproject_accession = get_bioproject_accession_from_db(db_config, entry.project_id)
     biosample_accession = get_biosample_accession_from_db(db_config, accession, version)
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
         db_config, accession, version
@@ -154,18 +139,16 @@ def get_external_metadata_and_send_to_loculus(
         StatusAll.SUBMITTING_ASSEMBLY,
         StatusAll.SUBMITTED_ALL,
     ):
-        for entry in find_conditions_in_db(
+        for entry in find_conditions_in_submission_db(
             db_config,
-            table_name=TableName.SUBMISSION_TABLE,
             conditions={"status_all": status},
         ):
-            accession = entry["accession"]
-            version = entry["version"]
+            accession = entry.accession
+            version = entry.version
             accession_version = f"{accession}.{version}"
             data, all_present = get_external_metadata_to_upload(db_config, entry)
-            seq_key = {"accession": accession, "version": version}
 
-            previously_uploaded: dict[str, Any] = entry.get("external_metadata", {})
+            previously_uploaded: dict[str, Any] = entry.external_metadata or {}
             new_external_metadata: dict[str, Any] = data.get("externalMetadata", {})
 
             if new_external_metadata and (
@@ -179,7 +162,7 @@ def get_external_metadata_and_send_to_loculus(
                     submit_external_metadata(
                         data,
                         config,
-                        entry["organism"],
+                        entry.organism,
                     )
                     logger.info(
                         f"External metadata update for {accession_version} succeeded. "
@@ -193,13 +176,12 @@ def get_external_metadata_and_send_to_loculus(
                     )
                     continue
                 try:
-                    update_with_retry(
+                    update_submission_with_retry(
                         db_config,
-                        conditions=seq_key,
+                        conditions={"accession": accession, "version": version},
                         update_values={
-                            "external_metadata": json.dumps(new_external_metadata),
+                            "external_metadata": new_external_metadata,
                         },
-                        table_name=TableName.SUBMISSION_TABLE,
                     )
                 except Exception as e:
                     logger.exception(
@@ -209,28 +191,26 @@ def get_external_metadata_and_send_to_loculus(
                     continue
             if status == StatusAll.SUBMITTED_ALL and all_present:
                 try:
-                    update_with_retry(
+                    update_submission_with_retry(
                         db_config,
-                        conditions=seq_key,
+                        conditions={"accession": accession, "version": version},
                         update_values={
                             "status_all": StatusAll.SENT_TO_LOCULUS,
                             "finished_at": datetime.now(tz=pytz.utc),
                         },
-                        table_name=TableName.SUBMISSION_TABLE,
                     )
                 except Exception as e:
                     logger.exception(
                         f"Failed to update status_all for {accession_version} to "
                         f"{StatusAll.SENT_TO_LOCULUS}: {e}"
                     )
-                    update_with_retry(
+                    update_submission_with_retry(
                         db_config,
-                        conditions=seq_key,
+                        conditions={"accession": accession, "version": version},
                         update_values={
                             "status_all": StatusAll.HAS_ERRORS_EXT_METADATA_UPLOAD,
                             "finished_at": datetime.now(tz=pytz.utc),
                         },
-                        table_name=TableName.SUBMISSION_TABLE,
                     )
 
 

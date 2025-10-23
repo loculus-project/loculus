@@ -52,7 +52,13 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
             f"Failed to retrieve list of suppressed sequences due to requests exception: {e}"
         )
         raise e
-    return {line.strip() for line in response.text.splitlines() if line.strip()}
+    return {
+        AccessionVersion(
+            accession=line.strip().split(".")[0], version=int(line.strip().split(".")[1])
+        )
+        for line in response.text.splitlines()
+        if line.strip()
+    }
 
 
 def filter_for_submission(
