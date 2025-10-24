@@ -86,7 +86,7 @@ def secure_ena_connection(config: Config):
         )
         config.suppressed_list_url = (
             config.suppressed_list_test_url
-            or "https://pathoplexus.github.io/ena-submission/test/ppx-accessions-suppression-list.txt"
+            or "https://pathoplexus.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
         )
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
