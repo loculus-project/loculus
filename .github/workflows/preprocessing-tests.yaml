@@ -11,6 +11,10 @@ on:
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-tests
   cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: preprocessing/nextclade/
 jobs:
   unitTests:
     name: Unit Tests
@@ -25,17 +29,27 @@ jobs:
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
+      - name: Install test dependencies
+        run: |
+          uv pip install --system '.[test]'
       - name: Run tests
         run: |
-          pip install -e '.[test]'
           pytest
-        shell: micromamba-shell {0}
-        working-directory: preprocessing/nextclade/
-      - name: Install mypy
+  typeCheck:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: preprocessing/nextclade/environment.yml
+          micromamba-version: 'latest'
+          cache-environment: true
+          post-cleanup: 'all'
+      - name: Install type checking dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install mypy
-      - name: Install missing mypy type stubs
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
+          uv pip install --system '.[test]'
       - name: Run mypy (checks type hints)
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade
+        run: mypy . --config-file .mypy.ini --non-interactive --install-types

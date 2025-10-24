@@ -269,8 +269,8 @@ def create_flatfile(  # noqa: PLR0914
                 "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
                 "topology": topology,
-                "references": [reference],
-            },  # type: ignore
+                "references": [reference],  # type: ignore[dict-item]
+            },
             description=description,
         )
 

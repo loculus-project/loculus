@@ -7,6 +7,7 @@ dependencies:
   # Core Python dependencies
   - python =3.12
   - pip >=24
+  - uv =0.9
   # Extra dependencies
   - beautifulsoup4
   - click
