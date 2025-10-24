@@ -27,17 +27,32 @@ jobs:
           post-cleanup: 'all'
       - name: Run tests
         run: |
-          uv pip install --system -e '.[test]'
+          uv pip install --system '.[test]'
           pytest
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
+  typeCheck:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: preprocessing/nextclade/environment.yml
+          micromamba-version: 'latest'
+          cache-environment: true
+          post-cleanup: 'all'
       - name: Install mypy
         run: |
-          uv pip install --system mypy
-        shell: micromamba-shell {0}
-      - name: Install missing mypy type stubs
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
+          uv pip install --system \
+            mypy \
+            types-docutils \
+            types-pexpect \
+            types-Pygments \
+            types-PySocks
         shell: micromamba-shell {0}
       - name: Run mypy (checks type hints)
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade
+        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
         shell: micromamba-shell {0}
