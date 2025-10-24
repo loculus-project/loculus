@@ -32,10 +32,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Install yaml package
-        run: pip3 install PyYAML requests
+        run: uv pip install --system PyYAML requests
       - name: Generate local test config
         run: ./generate_local_test_config.sh
       - name: Install dependencies

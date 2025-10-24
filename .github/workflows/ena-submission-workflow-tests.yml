@@ -61,7 +61,7 @@ jobs:
             cache-environment: true
       - name: Run tests
         run: |
-            pip install .
+            uv pip install --system .
             # The unit tests are run in ena-submission-unit-tests.yaml
             pytest \
               --ignore=./scripts/test_ena_submission.py

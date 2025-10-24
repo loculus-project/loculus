@@ -27,14 +27,13 @@ jobs:
           post-cleanup: 'all'
       - name: Run tests
         run: |
-          pip install -e '.[test]'
+          uv pip install --system -e '.[test]'
           pytest
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
       - name: Install mypy
         run: |
-          python -m pip install --upgrade pip
-          pip install mypy
+          uv pip install --system mypy
       - name: Install missing mypy type stubs
         run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
       - name: Run mypy (checks type hints)
