@@ -29,6 +29,7 @@ import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
+import org.loculus.backend.service.submission.dbtables.COMPRESSION_DICTIONARIES_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.testutil.TestEnvironment
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -68,9 +69,9 @@ const val DATA_USE_TERMS_DISABLED_CONFIG = "src/test/resources/backend_config_da
 
 const val S3_CONFIG = "src/test/resources/backend_config_s3.json"
 
-private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
-private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
-private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
+const val SPRING_DATASOURCE_URL = "spring.datasource.url"
+const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
+const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 const val DEFAULT_GROUP_NAME = "testGroup"
@@ -130,7 +131,7 @@ class EndpointTestExtension :
     BeforeEachCallback,
     TestExecutionListener {
     companion object {
-        private val env = TestEnvironment
+        private val env = TestEnvironment()
 
         private var isStarted = false
         private var isBucketCreated = false
@@ -235,6 +236,7 @@ private fun clearDatabaseStatement(): String = """
             $DATA_USE_TERMS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
+            $COMPRESSION_DICTIONARIES_TABLE_NAME,
             external_metadata,
             seqsets,
             seqset_records,
