@@ -49,18 +49,10 @@ class Config:
       authors:
         loculus_fields: [authors]
         function: reformat_authors
-      platform:
-        loculus_fields: [sequencingInstrument]
-        default: "Unknown"
       program:
         loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
         default: "Unknown"
-      coverage:
-        loculus_fields: [depthOfCoverage]
-        type: int
-        default: 1
-      run_ref:
-        loculus_fields: [insdcRawReadsAccession]
+      ... etc ...
     """
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str

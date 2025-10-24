@@ -392,12 +392,11 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
 
     differing_fields = {}
     for mapping in config.manifest_fields_mapping.values():
-        for loculus_field_names in mapping.get("loculus_fields", []):
-            # TODO: loculus_field_names is a list, no? How can it be used as a key here?
-            # Won't this fail with TypeError: unhashable type: 'list' ?
-            last_entry = last_version_entry["metadata"].get(loculus_field_names)
-            new_entry = entry["metadata"].get(loculus_field_names)
-            if loculus_field_names == "authors":
+        loculus_field_names = mapping.get("loculus_fields", [])
+        for loculus_field_name in loculus_field_names:
+            last_entry = last_version_entry["metadata"].get(loculus_field_name)
+            new_entry = entry["metadata"].get(loculus_field_name)
+            if loculus_field_name == "authors":
                 try:
                     last_entry = get_authors(last_entry) if last_entry else last_entry
                     new_entry = get_authors(new_entry) if new_entry else new_entry
@@ -406,14 +405,12 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                         f"Error formatting authors field for comparison: {e}. "
                         f"Traceback: {traceback.format_exc()}"
                     )
-                    differing_fields[str(loculus_field_names)] = (
+                    differing_fields[loculus_field_name] = (
                         f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
                     )
                     continue
             if last_entry != new_entry:
-                differing_fields[str(loculus_field_names)] = (
-                    f"Last: {last_entry}, New: {new_entry}, "
-                )
+                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
