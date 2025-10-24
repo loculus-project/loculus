@@ -44,6 +44,16 @@ class Config:
     # - (optional) units: units added to sample attribute
     # - (optional) default: default value if field not in input data
     metadata_mapping: dict[str, dict[str, str | list[str]]]
+    """
+    manifest_fields_mapping:
+      authors:
+        loculus_fields: [authors]
+        function: reformat_authors
+      program:
+        loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
+        default: "Unknown"
+      ... etc ...
+    """
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
