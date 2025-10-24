@@ -34,6 +34,7 @@ jobs:
       - name: Install mypy
         run: |
           uv pip install --system mypy
+        shell: micromamba-shell {0}
       - name: Install missing mypy type stubs
         run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
       - name: Run mypy (checks type hints)
