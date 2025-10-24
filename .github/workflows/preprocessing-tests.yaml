@@ -25,9 +25,13 @@ jobs:
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
-      - name: Run tests
+      - name: Install test dependencies
         run: |
           uv pip install --system '.[test]'
+        shell: micromamba-shell {0}
+        working-directory: preprocessing/nextclade/
+      - name: Run tests
+        run: |
           pytest
         shell: micromamba-shell {0}
         working-directory: preprocessing/nextclade/
@@ -44,15 +48,10 @@ jobs:
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
-      - name: Install mypy
+      - name: Install type checking dependencies
         run: |
-          uv pip install --system \
-            mypy \
-            types-docutils \
-            types-pexpect \
-            types-Pygments \
-            types-PySocks
+          uv pip install --system '.[test]'
         shell: micromamba-shell {0}
       - name: Run mypy (checks type hints)
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --install-types --non-interactive
+        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --non-interactive
         shell: micromamba-shell {0}
