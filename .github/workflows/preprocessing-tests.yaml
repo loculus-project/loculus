@@ -52,6 +52,8 @@ jobs:
         run: |
           uv pip install --system '.[test]'
         shell: micromamba-shell {0}
+        working-directory: preprocessing/nextclade/
       - name: Run mypy (checks type hints)
-        run: mypy --config-file preprocessing/nextclade/.mypy.ini preprocessing/nextclade --non-interactive
+        run: mypy . --config-file .mypy.ini --non-interactive
         shell: micromamba-shell {0}
+        working-directory: preprocessing/nextclade/
