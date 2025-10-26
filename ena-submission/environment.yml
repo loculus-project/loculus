@@ -6,7 +6,7 @@ channels:
 dependencies:
   # Core Python dependencies
   - python =3.12
-  - pip >=24
+  - pip >=25.2
   # Extra dependencies
   - beautifulsoup4
   - click
@@ -22,7 +22,7 @@ dependencies:
   - xmltodict
   - biopython
   - pytz
-  - ruff =0.13.1. # if changing update .pre-commit-config.yaml as well
+  - ruff =0.14.2 # if changing update .pre-commit-config.yaml as well
   - tenacity
   - types-pytz
   - types-psycopg2

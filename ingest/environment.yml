@@ -12,8 +12,8 @@ dependencies:
   - curl
   - ijson
   - jsonlines
-  - ncbi-datasets-cli >=16.40.1
-  - nextclade >=3.7.0
+  - ncbi-datasets-cli >=18.9.0
+  - nextclade >=3.18.0
   - orjsonl
   - pandas
   - psycopg2
