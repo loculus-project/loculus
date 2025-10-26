@@ -5,7 +5,7 @@ channels:
   - nodefaults
 dependencies:
   # Core Python dependencies
-  - python=3.12
+  - python=3.12.9  # Pinned to 3.12.x series, check for patch updates within 3.12
   # Extra dependencies
   - biopython=1.85
   - click=8.3.0

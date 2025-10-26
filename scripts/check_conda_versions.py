@@ -16,16 +16,72 @@ Usage:
 import subprocess
 import json
 import sys
+import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
 
-def get_latest_version(package_name: str) -> Optional[str]:
+def version_key(version_str: str) -> tuple:
+    """
+    Convert a version string into a sortable tuple.
+    Handles various version formats including:
+    - Standard versions: 1.2.3
+    - Post releases: 1.2.3.post0
+    - Date-based: 2025.10.26
+    - Mixed: 6.0.12.20250915
+
+    Args:
+        version_str: Version string to parse
+
+    Returns:
+        Tuple that can be used for sorting
+    """
+    # Split on dots and other separators
+    parts = re.split(r'[._-]', version_str.lower())
+    result = []
+
+    for part in parts:
+        # Try to convert to int if it's purely numeric
+        if part.isdigit():
+            result.append((0, int(part)))  # 0 = numeric, for sorting priority
+        elif part == 'post':
+            result.append((1, 0, 0))  # post marker
+        elif part.startswith('post'):
+            # Handle 'post0', 'post1', etc.
+            num = part[4:]
+            if num.isdigit():
+                result.append((1, 0, int(num)))
+            else:
+                result.append((2, part))  # fallback to string
+        else:
+            # String part (like 'rc', 'alpha', 'beta')
+            result.append((2, part))
+
+    return tuple(result)
+
+
+def is_prerelease(version_str: str) -> bool:
+    """
+    Check if a version string is a pre-release (alpha, beta, rc, dev).
+
+    Args:
+        version_str: Version string to check
+
+    Returns:
+        True if it's a pre-release version
+    """
+    prerelease_markers = ['rc', 'alpha', 'beta', 'dev', 'pre']
+    version_lower = version_str.lower()
+    return any(marker in version_lower for marker in prerelease_markers)
+
+
+def get_latest_version(package_name: str, include_prerelease: bool = False) -> Optional[str]:
     """
     Get the latest version of a conda package from conda-forge and bioconda.
 
     Args:
         package_name: Name of the package to check
+        include_prerelease: Whether to include pre-release versions (alpha, beta, rc, dev)
 
     Returns:
         Latest version string, or None if not found
@@ -48,15 +104,18 @@ def get_latest_version(package_name: str) -> Optional[str]:
         if not pkgs:
             return None
 
-        # Sort versions using a simple tuple-based comparison
-        # This handles most common version patterns
-        versions = sorted(
-            set(p['version'] for p in pkgs),
-            key=lambda x: tuple(
-                int(y) if y.isdigit() else y
-                for y in x.replace('post', '.').split('.')
-            )
-        )
+        # Get unique versions
+        all_versions = set(p['version'] for p in pkgs)
+
+        # Filter out pre-releases unless requested
+        if not include_prerelease:
+            all_versions = [v for v in all_versions if not is_prerelease(v)]
+
+        if not all_versions:
+            return None
+
+        # Sort versions and get the latest
+        versions = sorted(all_versions, key=version_key)
 
         return versions[-1] if versions else None
 
