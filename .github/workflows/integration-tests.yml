@@ -108,7 +108,7 @@ jobs:
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -128,7 +128,7 @@ jobs:
         run: ./.github/scripts/collect_kubernetes_logs.sh
       - name: Upload Kubernetes logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: kubernetes-logs-${{ matrix.browser }}
           path: kubernetes_logs/
