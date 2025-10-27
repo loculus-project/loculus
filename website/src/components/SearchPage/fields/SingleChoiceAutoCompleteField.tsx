@@ -6,7 +6,13 @@ import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
-import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/Combobox';
+import {
+    Combobox,
+    ComboboxButton,
+    ComboboxInput,
+    ComboboxOption,
+    ComboboxOptions,
+} from '../../common/headlessui/Combobox';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';

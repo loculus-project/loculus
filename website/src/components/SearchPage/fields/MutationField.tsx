@@ -9,7 +9,7 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/Combobox';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/headlessui/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {

@@ -3,7 +3,7 @@ import { type FC } from 'react';
 
 import type { InputFieldOption } from '../../types/config';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/Combobox';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/headlessui/Combobox';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {

@@ -7,7 +7,7 @@ import {
     ComboboxOptions,
 } from '@headlessui/react';
 
-import useClientFlag from '../../hooks/isClient';
+import useClientFlag from '../../../hooks/isClient';
 
 /**
  * Wrapper around Headless UI Combobox that automatically disables the component
