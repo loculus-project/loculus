@@ -123,6 +123,9 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            // Regression test for #5330: verify correct tab is highlighted
+            expectTabActive(`${multiSegmentName} (aligned)`);
+            expectTabNotActive('main (aligned)');
 
             click(`${multiSegmentName} (unaligned)`);
             await waitFor(() => {
@@ -132,6 +135,9 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            // Regression test for #5330: verify correct tab is highlighted
+            expectTabActive(`${multiSegmentName} (unaligned)`);
+            expectTabNotActive(`${multiSegmentName} (aligned)`);
         });
     });
 
@@ -221,5 +227,13 @@ describe('SequencesContainer', () => {
 
     function click(name: string) {
         act(() => screen.getByRole('button', { name }).click());
+    }
+
+    function expectTabActive(name: string) {
+        expect(screen.getByRole('button', { name })).toHaveClass('tab-active');
+    }
+
+    function expectTabNotActive(name: string) {
+        expect(screen.getByRole('button', { name })).not.toHaveClass('tab-active');
     }
 });
