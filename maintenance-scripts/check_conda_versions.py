@@ -10,7 +10,7 @@ Requirements:
 - Python 3.6+
 
 Usage:
-    python3 scripts/check_conda_versions.py
+    python3 maintenance-scripts/check_conda_versions.py
 """
 
 import subprocess
