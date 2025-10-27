@@ -182,7 +182,9 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
-                    isActive={isActive && isUnalignedSequence(sequenceType) && segmentName === sequenceType.name}
+                    isActive={
+                        isActive && isUnalignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                    }
                     onClick={() => {
                         setType(unalignedSequenceSegment(segmentName));
                         setActiveTab('unaligned');
@@ -221,7 +223,9 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {segments.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName.lapisName}
-                    isActive={isActive && isAlignedSequence(sequenceType) && segmentName === sequenceType.name}
+                    isActive={
+                        isActive && isAlignedSequence(sequenceType) && segmentName.label === sequenceType.name.label
+                    }
                     onClick={() => {
                         setType(alignedSequenceSegment(segmentName));
                         setActiveTab('aligned');
