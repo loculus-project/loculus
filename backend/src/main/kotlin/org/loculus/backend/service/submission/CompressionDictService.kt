@@ -99,7 +99,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
     }
 
     private fun getDictIdOrInsertNewEntry(dict: String): Int {
-        val hash = hash(dict)
+        val hash = computeHash(dict)
 
         val existingId = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
             .firstOrNull()
@@ -119,7 +119,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
             .value
     }
 
-    private fun hash(input: String): String {
+    private fun computeHash(input: String): String {
         val hashFunction = MessageDigest.getInstance("SHA-256")
         val digest = hashFunction.digest(input.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }
