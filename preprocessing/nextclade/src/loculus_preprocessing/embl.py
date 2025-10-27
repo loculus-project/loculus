@@ -275,7 +275,7 @@ def create_flatfile(  # noqa: PLR0914
         )
 
         source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
+            FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
                 "molecule_type": str(molecule_type),
