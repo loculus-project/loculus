@@ -1,13 +1,12 @@
-import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
 import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef } from 'react';
 
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import useClientFlag from '../../../hooks/isClient.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/Combobox';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
@@ -43,7 +42,6 @@ export const SingleChoiceAutoCompleteField = ({
     maxDisplayedOptions = 1000,
 }: SingleChoiceAutoCompleteFieldProps) => {
     const [query, setQuery] = useState('');
-    const isClient = useClientFlag();
 
     const hook = createOptionsProviderHook(optionsProvider);
     const { options, isPending: isOptionListPending, error, load } = hook();
@@ -74,7 +72,7 @@ export const SingleChoiceAutoCompleteField = ({
 
     return (
         <div className='w-full'>
-            <Combobox immediate value={fieldValue} onChange={handleChange} disabled={!isClient}>
+            <Combobox immediate value={fieldValue} onChange={handleChange}>
                 <div className='relative'>
                     <>
                         <ComboboxInput

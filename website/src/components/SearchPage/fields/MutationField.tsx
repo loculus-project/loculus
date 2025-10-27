@@ -1,4 +1,4 @@
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } from '@headlessui/react';
+import { Transition } from '@headlessui/react';
 import { type ChangeEvent, type FC, Fragment, useMemo, useState } from 'react';
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
@@ -9,7 +9,7 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
-import DisabledUntilHydrated from '../../DisabledUntilHydrated';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
@@ -57,9 +57,8 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
 
     return (
         <div className='flex relative mb-2 flex-row w-full'>
-            <DisabledUntilHydrated>
-                <Combobox value={selectedOptions} onChange={handleOptionClick}>
-                    <div className='w-full relative'>
+            <Combobox value={selectedOptions} onChange={handleOptionClick}>
+                <div className='w-full relative'>
                         <FloatingLabelContainer
                             label='Mutations'
                             isFocused={hasFocus}
@@ -143,7 +142,6 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                         </Transition>
                     </div>
                 </Combobox>
-            </DisabledUntilHydrated>
         </div>
     );
 };

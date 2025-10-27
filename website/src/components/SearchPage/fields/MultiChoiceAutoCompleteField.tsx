@@ -1,13 +1,12 @@
-import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
-import useClientFlag from '../../../hooks/isClient.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/Combobox';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MdiChevronUpDown from '~icons/mdi/chevron-up-down';
 import MdiTick from '~icons/mdi/tick';
@@ -32,7 +31,6 @@ export const MultiChoiceAutoCompleteField = ({
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
-    const isClient = useClientFlag();
 
     // Maximum number of badges to show before switching to summary
     const MAX_VISIBLE_BADGES = 2;
@@ -76,7 +74,7 @@ export const MultiChoiceAutoCompleteField = ({
 
     return (
         <div className='w-full'>
-            <Combobox immediate multiple value={multiSelectValue} onChange={handleChange} disabled={!isClient}>
+            <Combobox immediate multiple value={multiSelectValue} onChange={handleChange}>
                 <div className='relative'>
                     <FloatingLabelContainer
                         label={field.displayName ?? field.name}

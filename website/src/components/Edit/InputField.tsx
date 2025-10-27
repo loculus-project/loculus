@@ -1,8 +1,9 @@
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Input } from '@headlessui/react';
+import { Input } from '@headlessui/react';
 import { type FC } from 'react';
 
 import type { InputFieldOption } from '../../types/config';
 import DisabledUntilHydrated from '../DisabledUntilHydrated';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/Combobox';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
@@ -29,13 +30,12 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
     return (
         <>
             {options !== undefined ? (
-                <DisabledUntilHydrated>
-                    <Combobox
-                        immediate
-                        value={row.value}
-                        onChange={(value) => onChange({ ...row, value: value ?? '' })}
-                    >
-                        <div className='relative inline'>
+                <Combobox
+                    immediate
+                    value={row.value}
+                    onChange={(value: string | null) => onChange({ ...row, value: value ?? '' })}
+                >
+                    <div className='relative inline'>
                             <ComboboxInput
                                 id={row.key}
                                 name={row.key}
@@ -94,7 +94,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                             </ComboboxOptions>
                         </div>
                     </Combobox>
-                </DisabledUntilHydrated>
             ) : (
                 <DisabledUntilHydrated>
                     <Input
