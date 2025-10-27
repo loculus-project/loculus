@@ -16,9 +16,7 @@ import useClientFlag from '../../hooks/isClient';
  *
  * Usage: Import from this file instead of '@headlessui/react'
  */
-export function Combobox<T, TMultiple extends boolean | undefined = undefined>(
-    props: ComboboxProps<T, TMultiple>,
-) {
+export function Combobox<T, TMultiple extends boolean | undefined = undefined>(props: ComboboxProps<T, TMultiple>) {
     const isClient = useClientFlag();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     return <HeadlessCombobox {...props} disabled={(props as any).disabled ?? !isClient} />;
