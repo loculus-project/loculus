@@ -9,6 +9,7 @@ dependencies:
   - dpath=2.2.0
   - nextclade=3.18.0
   - pip=25.2
+  - uv=0.9.5
   - PyYAML=6.0.3
   - pyjwt=2.10.1
   - python-dateutil=2.9.0.post0
