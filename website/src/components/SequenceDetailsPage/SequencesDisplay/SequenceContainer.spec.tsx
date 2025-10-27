@@ -97,6 +97,7 @@ describe('SequencesContainer', () => {
                 ).toBeVisible();
             });
             expectTabActive('Aligned nucleotide sequence');
+            expectTabNotActive('Nucleotide sequence');
 
             click('Nucleotide sequence');
             await waitFor(() => {
@@ -107,6 +108,7 @@ describe('SequencesContainer', () => {
                 ).toBeVisible();
             });
             expectTabActive('Nucleotide sequence');
+            expectTabNotActive('Aligned nucleotide sequence');
         });
 
         test('should render multi segmented sequence', async () => {
@@ -175,12 +177,14 @@ describe('SequencesContainer', () => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
             expectTabActive('Aligned nucleotide sequence');
+            expectTabNotActive('Nucleotide sequence');
 
             click('Nucleotide sequence');
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
             expectTabActive('Nucleotide sequence');
+            expectTabNotActive('Aligned nucleotide sequence');
         });
 
         test('should render multi segmented sequences', async () => {
@@ -221,12 +225,14 @@ describe('SequencesContainer', () => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
             expectTabActive('segment1 (aligned)');
+            expectTabNotActive('segment1 (unaligned)');
 
             click('segment2 (unaligned)');
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
             expectTabActive('segment2 (unaligned)');
+            expectTabNotActive('segment1 (aligned)');
         });
     });
 
