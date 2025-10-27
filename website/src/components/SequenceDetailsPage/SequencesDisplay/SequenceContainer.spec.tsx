@@ -96,6 +96,7 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            expectTabActive('Aligned nucleotide sequence');
 
             click('Nucleotide sequence');
             await waitFor(() => {
@@ -105,6 +106,7 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
+            expectTabActive('Nucleotide sequence');
         });
 
         test('should render multi segmented sequence', async () => {
@@ -123,7 +125,7 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
-            // Regression test for #5330: verify correct tab is highlighted
+            // Regression test for #5330
             expectTabActive(`${multiSegmentName} (aligned)`);
             expectTabNotActive('main (aligned)');
 
@@ -135,7 +137,6 @@ describe('SequencesContainer', () => {
                     }),
                 ).toBeVisible();
             });
-            // Regression test for #5330: verify correct tab is highlighted
             expectTabActive(`${multiSegmentName} (unaligned)`);
             expectTabNotActive(`${multiSegmentName} (aligned)`);
         });
@@ -173,11 +174,13 @@ describe('SequencesContainer', () => {
             await waitFor(() => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
+            expectTabActive('Aligned nucleotide sequence');
 
             click('Nucleotide sequence');
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
+            expectTabActive('Nucleotide sequence');
         });
 
         test('should render multi segmented sequences', async () => {
@@ -217,11 +220,13 @@ describe('SequencesContainer', () => {
             await waitFor(() => {
                 expect(screen.getByText(alignedSequence, { exact: false })).toBeVisible();
             });
+            expectTabActive('segment1 (aligned)');
 
             click('segment2 (unaligned)');
             await waitFor(() => {
                 expect(screen.getByText(sequence, { exact: false })).toBeVisible();
             });
+            expectTabActive('segment2 (unaligned)');
         });
     });
 
