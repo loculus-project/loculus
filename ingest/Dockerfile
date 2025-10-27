@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:1.5.8
+FROM mambaorg/micromamba:2.3.3-ubuntu24.04
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
 COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
