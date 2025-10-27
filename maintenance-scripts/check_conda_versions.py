@@ -2,6 +2,11 @@
 """
 Check for updates to conda packages in environment.yml files.
 
+NOTE: This is a throwaway script written by Claude, primarily intended for use
+by Claude/Codex to simplify looking up latest versions. It is not production
+quality code. The output should always be reviewed by humans before making
+any version updates.
+
 This script scans all environment.yml files in the repository and checks
 whether newer versions are available in conda-forge and bioconda channels.
 
