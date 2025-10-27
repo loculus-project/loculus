@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Install dependencies and package
         run: uv sync --all-extras
         working-directory: cli
@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Install dependencies and package
         run: uv sync --all-extras
         working-directory: cli
@@ -62,7 +62,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Install dependencies and package
         run: uv sync --all-extras
         working-directory: cli
