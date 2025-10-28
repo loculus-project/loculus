@@ -123,18 +123,22 @@ export const SearchForm = ({
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex flex-col gap-2 mb-2 pb-2 px-3 text-primary-700 text-sm border-b border-gray-300'>
                         <div className='flex items-center justify-between'>
-                            <Button className='hover:underline' onClick={toggleFieldSelector}>
-                                <StreamlineWrench className='inline-block' /> Add search fields
-                            </Button>
+                            <>
+                                <Button className='hover:underline' onClick={toggleFieldSelector}>
+                                    <StreamlineWrench className='inline-block' /> Add search fields
+                                </Button>
+                            </>
                             <a href={searchFormHelpDocsUrl} target='_blank'>
                                 <MaterialSymbolsHelpOutline className='inline-block' /> Help
                             </a>
                         </div>
                         <div className='flex items-center justify-between'>
                             {advancedOptionsFields.length > 0 && (
-                                <Button className='hover:underline' onClick={openAdvancedOptions}>
-                                    <MaterialSymbolsTune className='inline-block' /> Advanced options
-                                </Button>
+                                <>
+                                    <Button className='hover:underline' onClick={openAdvancedOptions}>
+                                        <MaterialSymbolsTune className='inline-block' /> Advanced options
+                                    </Button>
+                                </>
                             )}
                             <Button
                                 className='hover:underline'
