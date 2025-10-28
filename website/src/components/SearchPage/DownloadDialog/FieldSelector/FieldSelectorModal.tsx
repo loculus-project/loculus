@@ -39,6 +39,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         header: field.header,
         alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
         disabled: field.name === ACCESSION_VERSION_FIELD,
+        isChecked: selectedFields.has(field.name),
     }));
 
     return (
@@ -47,7 +48,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             fields={fieldItems}
-            selectedFields={selectedFields}
             setFieldSelected={handleFieldSelection}
         />
     );

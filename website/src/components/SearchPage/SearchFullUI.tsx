@@ -94,20 +94,6 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const columnFieldItems: FieldItem[] = useMemo(
-        () =>
-            schema.metadata
-                .filter((field) => !(field.hideInSearchResultsTable ?? false))
-                .map((field) => ({
-                    name: field.name,
-                    displayName: field.displayName ?? field.name,
-                    header: field.header,
-                    alwaysSelected: field.name === schema.primaryKey,
-                    disabled: field.name === schema.primaryKey,
-                })),
-        [schema.metadata, schema.primaryKey],
-    );
-
     const [state, setState] = useQueryAsState(initialQueryDict);
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -140,6 +126,21 @@ export const InnerSearchFullUI = ({
     }, [schema, state]);
 
     const columnVisibilities = useMemo(() => getColumnVisibilitiesFromQuery(schema, state), [schema, state]);
+
+    const columnFieldItems: FieldItem[] = useMemo(
+        () =>
+            schema.metadata
+                .filter((field) => !(field.hideInSearchResultsTable ?? false))
+                .map((field) => ({
+                    name: field.name,
+                    displayName: field.displayName ?? field.name,
+                    header: field.header,
+                    alwaysSelected: field.name === schema.primaryKey,
+                    disabled: field.name === schema.primaryKey,
+                    isChecked: columnVisibilities.get(field.name) ?? false,
+                })),
+        [schema.metadata, schema.primaryKey, columnVisibilities],
+    );
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -386,13 +387,6 @@ export const InnerSearchFullUI = ({
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
                 fields={columnFieldItems}
-                selectedFields={
-                    new Set(
-                        Array.from(columnVisibilities.entries())
-                            .filter(([_, visible]) => visible)
-                            .map(([field]) => field),
-                    )
-                }
                 setFieldSelected={setAColumnVisibility}
             />
             <SeqPreviewModal

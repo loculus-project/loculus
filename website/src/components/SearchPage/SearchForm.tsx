@@ -98,6 +98,7 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
+            isChecked: searchVisibilities.get(filter.name) ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
@@ -151,13 +152,6 @@ export const SearchForm = ({
                         isOpen={isFieldSelectorOpen}
                         onClose={toggleFieldSelector}
                         fields={fieldItems}
-                        selectedFields={
-                            new Set(
-                                Array.from(searchVisibilities.entries())
-                                    .filter(([_, visible]) => visible)
-                                    .map(([field]) => field),
-                            )
-                        }
                         setFieldSelected={setASearchVisibility}
                     />
                     <AdvancedOptionsModal
