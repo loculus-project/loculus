@@ -59,7 +59,7 @@ describe('EditableSequences', () => {
         }
 
         expect(() => editableSequences.update('another key', 'GG')).toThrowError(
-            'Must not add more than 2 sequence file(s).',
+            'Maximum limit reached — you can add up to 2 sequence file(s) only.',
         );
     });
 
@@ -84,7 +84,7 @@ describe('EditableSequences', () => {
         expect(rows).deep.equals([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key }]);
 
         expect(() => editableSequences.update('another key', 'GG')).toThrowError(
-            'Must not add more than 1 sequence file(s).',
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
         );
     });
 
