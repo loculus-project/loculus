@@ -77,7 +77,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                                               accessionVersion,
                                               field.value,
                                               field.label,
-                                              multiSegment,
+                                              !multiSegment,
                                           );
                                       }
                                     : undefined
