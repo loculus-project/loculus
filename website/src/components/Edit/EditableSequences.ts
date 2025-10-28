@@ -85,7 +85,7 @@ export class EditableSequences {
         const existingFileIndex = this.editableSequenceFiles.findIndex((file) => file.key === key);
 
         if (existingFileIndex === -1 && this.editableSequenceFiles.length === this.maxNumberOfRows) {
-            throw new Error(`Must not add more than ${this.maxNumberOfRows} sequence file(s).`);
+            throw new Error(`Maximum limit reached — you can add up to ${this.maxNumberOfRows} sequence file(s) only.`);
         }
 
         const newSequenceFiles = [...this.editableSequenceFiles];
