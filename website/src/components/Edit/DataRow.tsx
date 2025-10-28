@@ -111,18 +111,3 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
         </>
     );
 };
-
-type ProcessedDataRowProps = {
-    label?: string;
-    row: KeyValuePair;
-};
-
-export const ProcessedDataRow: FC<ProcessedDataRowProps> = ({ label, row }) => (
-    <tr>
-        <td className={`w-1/4 `}>{label ?? row.key}:</td>
-        <td />
-        <td className='w-full'>
-            <div className='px-3'>{row.value}</div>
-        </td>
-    </tr>
-);
