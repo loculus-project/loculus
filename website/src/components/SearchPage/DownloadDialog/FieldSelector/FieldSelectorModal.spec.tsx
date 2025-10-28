@@ -100,32 +100,24 @@ describe('FieldSelectorModal', () => {
             const mockOnSave = vi.fn();
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
 
-            const checkbox = screen.getByLabelText(
-                accessionVersionField.renderedDisplayName,
-            ) as unknown as HTMLInputElement;
-            expect(checkbox.checked).toBe(true);
-            expect(checkbox.disabled).toBe(true);
+            const checkbox = screen.getByLabelText(accessionVersionField.renderedDisplayName);
+            expect(checkbox).toBeChecked();
+            expect(checkbox).toBeDisabled();
         });
 
         it('initializes with default selected fields if no initialSelectedFields provided', () => {
             render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={() => {}} />);
 
             // Check that fields with includeInDownloadsByDefault=true are checked
-            const field1Checkbox = screen.getByLabelText('Field 1') as Element;
-            const field2Checkbox = screen.getByLabelText('Field 2') as Element;
-            const field3Checkbox = screen.getByLabelText('Field 3') as Element;
-            const field4Checkbox = screen.getByLabelText('Field 4') as Element;
+            const field1Checkbox = screen.getByLabelText('Field 1');
+            const field2Checkbox = screen.getByLabelText('Field 2');
+            const field3Checkbox = screen.getByLabelText('Field 3');
+            const field4Checkbox = screen.getByLabelText('Field 4');
 
-            // Adding type assertion to properly access the checked property
-            const input1 = field1Checkbox as unknown as HTMLInputElement;
-            const input2 = field2Checkbox as unknown as HTMLInputElement;
-            const input3 = field3Checkbox as unknown as HTMLInputElement;
-            const input4 = field4Checkbox as unknown as HTMLInputElement;
-
-            expect(input1.checked).toBe(true);
-            expect(input2.checked).toBe(false);
-            expect(input3.checked).toBe(true);
-            expect(input4.checked).toBe(true);
+            expect(field1Checkbox).toBeChecked();
+            expect(field2Checkbox).not.toBeChecked();
+            expect(field3Checkbox).toBeChecked();
+            expect(field4Checkbox).toBeChecked();
         });
 
         it('calls onSave immediately when a field is toggled and ACCESSION_VERSION_FIELD is always included', () => {
@@ -163,10 +155,8 @@ describe('FieldSelectorModal', () => {
                 expect(input.checked).toBe(true);
             });
 
-            const accessionVersionInput = screen.getByLabelText(
-                accessionVersionField.renderedDisplayName,
-            ) as unknown as HTMLInputElement;
-            expect(accessionVersionInput.checked).toBe(true);
+            const accessionVersionInput = screen.getByLabelText(accessionVersionField.renderedDisplayName);
+            expect(accessionVersionInput).toBeChecked();
         });
 
         it('unselects all except accession version when "Select none" is clicked', () => {
@@ -182,10 +172,8 @@ describe('FieldSelectorModal', () => {
                 expect(input.checked).toBe(false);
             });
 
-            const accessionVersionInput = screen.getByLabelText(
-                accessionVersionField.renderedDisplayName,
-            ) as unknown as HTMLInputElement;
-            expect(accessionVersionInput.checked).toBe(true);
+            const accessionVersionInput = screen.getByLabelText(accessionVersionField.renderedDisplayName);
+            expect(accessionVersionInput).toBeChecked();
         });
     });
 });
