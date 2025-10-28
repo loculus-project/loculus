@@ -7,7 +7,7 @@ import {
     ComboboxOptions,
 } from '@headlessui/react';
 
-import useClientFlag from '../../../hooks/isClient';
+import { useDisabledUntilHydrated } from '../../../hooks/useDisabledUntilHydrated';
 
 /**
  * Wrapper around Headless UI Combobox that automatically disables the component
@@ -17,9 +17,9 @@ import useClientFlag from '../../../hooks/isClient';
  * Usage: Import from this file instead of '@headlessui/react'
  */
 export function Combobox<T, TMultiple extends boolean | undefined = undefined>(props: ComboboxProps<T, TMultiple>) {
-    const isClient = useClientFlag();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    return <HeadlessCombobox {...props} disabled={(props as any).disabled ?? !isClient} />;
+    const disabled = useDisabledUntilHydrated((props as any).disabled);
+    return <HeadlessCombobox {...props} disabled={disabled} />;
 }
 
 // Re-export all subcomponents unchanged
