@@ -7,8 +7,7 @@ export type FieldItem = {
     name: string;
     displayName?: string;
     header?: string;
-    disabled?: boolean;
-    alwaysSelected?: boolean;
+    displayState?: { type: 'alwaysChecked' | 'disabled' };
     isChecked: boolean;
 };
 
@@ -37,7 +36,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectAll = () => {
         fields.forEach((field) => {
-            if (!field.alwaysSelected && !field.disabled) {
+            if (!isDisabled(field)) {
                 setFieldSelected(field.name, true);
             }
         });
@@ -49,7 +48,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectNone = () => {
         fields.forEach((field) => {
-            if (!field.alwaysSelected && !field.disabled) {
+            if (!isDisabled(field)) {
                 setFieldSelected(field.name, false);
             }
         });
@@ -125,24 +124,20 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                             type='checkbox'
                                             id={`field-${field.name}`}
                                             className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                                                field.disabled || field.alwaysSelected
-                                                    ? 'opacity-60 cursor-not-allowed'
-                                                    : ''
+                                                isDisabled(field) ? 'opacity-60 cursor-not-allowed' : ''
                                             }`}
-                                            checked={field.isChecked || Boolean(field.alwaysSelected)}
+                                            checked={field.isChecked || isAlwaysChecked(field)}
                                             onChange={() => handleToggleField(field.name, !field.isChecked)}
-                                            disabled={Boolean(field.disabled) || Boolean(field.alwaysSelected)}
+                                            disabled={isDisabled(field)}
                                         />
                                         <label
                                             htmlFor={`field-${field.name}`}
                                             className={`ml-2 text-sm ${
-                                                field.disabled || field.alwaysSelected
-                                                    ? 'text-gray-500'
-                                                    : 'text-gray-700'
+                                                isDisabled(field) ? 'text-gray-500' : 'text-gray-700'
                                             }`}
                                         >
                                             {field.displayName ?? field.name}
-                                            {field.alwaysSelected ? ' (always included)' : ''}
+                                            {isAlwaysChecked(field) ? ' (always included)' : ''}
                                         </label>
                                     </div>
                                 ))}
@@ -164,3 +159,11 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         </BaseDialog>
     );
 };
+
+function isDisabled(fieldItem: FieldItem) {
+    return fieldItem.displayState?.type === 'alwaysChecked' || fieldItem.displayState?.type === 'disabled';
+}
+
+function isAlwaysChecked(fieldItem: FieldItem) {
+    return fieldItem.displayState?.type === 'alwaysChecked';
+}

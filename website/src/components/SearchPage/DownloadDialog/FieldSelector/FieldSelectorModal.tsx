@@ -37,8 +37,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
-        disabled: field.name === ACCESSION_VERSION_FIELD,
+        displayState: field.name === ACCESSION_VERSION_FIELD ? { type: 'alwaysChecked' } : undefined,
         isChecked: selectedFields.has(field.name),
     }));
 
