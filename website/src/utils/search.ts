@@ -160,8 +160,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
 };
 
 /**
- * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
- * (grouped) filters.
+ * Static information, derived from the Metadata schema (from the config).
+ * For some metadata fields, they are expanded into multiple (grouped) filters.
  */
 export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
