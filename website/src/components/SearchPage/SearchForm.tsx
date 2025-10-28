@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useMemo, useState } from 'react';
 
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
+import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { SuborganismSelector } from './SuborganismSelector.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
@@ -123,31 +123,27 @@ export const SearchForm = ({
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex flex-col gap-2 mb-2 pb-2 px-3 text-primary-700 text-sm border-b border-gray-300'>
                         <div className='flex items-center justify-between'>
-                            <DisabledUntilHydrated>
-                                <button className='hover:underline' onClick={toggleFieldSelector}>
-                                    <StreamlineWrench className='inline-block' /> Add search fields
-                                </button>
-                            </DisabledUntilHydrated>
+                            <Button className='hover:underline' onClick={toggleFieldSelector}>
+                                <StreamlineWrench className='inline-block' /> Add search fields
+                            </Button>
                             <a href={searchFormHelpDocsUrl} target='_blank'>
                                 <MaterialSymbolsHelpOutline className='inline-block' /> Help
                             </a>
                         </div>
                         <div className='flex items-center justify-between'>
                             {advancedOptionsFields.length > 0 && (
-                                <DisabledUntilHydrated>
-                                    <button className='hover:underline' onClick={openAdvancedOptions}>
-                                        <MaterialSymbolsTune className='inline-block' /> Advanced options
-                                    </button>
-                                </DisabledUntilHydrated>
+                                <Button className='hover:underline' onClick={openAdvancedOptions}>
+                                    <MaterialSymbolsTune className='inline-block' /> Advanced options
+                                </Button>
                             )}
-                            <button
+                            <Button
                                 className='hover:underline'
                                 onClick={() => {
                                     window.location.href = './';
                                 }}
                             >
                                 <MaterialSymbolsResetFocus className='inline-block' /> Reset
-                            </button>
+                            </Button>
                         </div>
                     </div>
                     <FieldSelectorModal

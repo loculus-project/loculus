@@ -14,8 +14,8 @@ import {
     groupFromFormData,
 } from './Inputs';
 import type { NewGroup } from '../../types/backend';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
+import { Button } from '../common/Button';
 
 interface GroupFormProps {
     /**
@@ -99,11 +99,9 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <DisabledUntilHydrated>
-                            <button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
-                                {buttonText}
-                            </button>
-                        </DisabledUntilHydrated>
+                        <Button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
+                            {buttonText}
+                        </Button>
                     </div>
                 </div>
             </form>
