@@ -1,7 +1,7 @@
 import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
-import { InputField as InputFieldComponent, type KeyValuePair, type Row } from './InputField.tsx';
+import { InputField as InputFieldComponent, type Row } from './InputField.tsx';
 import type { InputField } from '../../types/config.ts';
 import { InputFieldTooltip } from '../Submission/InputFieldTooltip.tsx';
 import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
