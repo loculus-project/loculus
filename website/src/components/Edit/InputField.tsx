@@ -27,6 +27,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
     const filteredOptions = (options ?? []).filter((o) => o.name.toLowerCase().includes(row.value.toLowerCase()));
 
     return (
+        <>
             {options !== undefined ? (
                     <Combobox
                         immediate
@@ -60,6 +61,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                                         }
                                     >
                                         {({ selected, focus }) => (
+                                            <>
                                                 <span
                                                     className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}
                                                 >
@@ -84,6 +86,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                                                         </svg>
                                                     </span>
                                                 )}
+                                            </>
                                         )}
                                     </ComboboxOption>
                                 ))}
@@ -115,5 +118,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                     </div>
                 )}
             </button>
+        </>
     );
 };

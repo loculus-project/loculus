@@ -142,6 +142,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </div>
                     </h1>
                     {userIsGroupMember && (
+                        <>
                             <a
                                 href={routes.editGroupPage(groupId)}
                                 className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
@@ -167,6 +168,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 >
                                     Leave group
                                 </Button>
+                        </>
                     )}
                 </div>
             ) : (
@@ -212,6 +214,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             </div>
 
             {userHasEditPrivileges && (
+                <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={(event) => void handleAddUser(event)}>
                         <div className='flex mb-4'>
@@ -254,6 +257,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             ))}
                         </ul>
                     </div>
+                </>
             )}
         </div>
     );
