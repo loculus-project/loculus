@@ -199,9 +199,11 @@ open class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
+        log.debug { "extract-unprocessed-data: Starting to prepare stream for $numberOfSequenceEntries entries, organism=$organism, pipelineVersion=$pipelineVersion, requestId=${requestIdContext.requestId}" }
         val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
+        log.debug { "extract-unprocessed-data: ResponseEntity created (streaming not started yet), requestId=${requestIdContext.requestId}" }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
@@ -499,7 +501,9 @@ open class SubmissionController(
         compressionFormat: CompressionFormat? = null,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
+        val streamStartTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+        log.debug { "streamTransactioned: Stream body execution started, requestId=${requestIdContext.requestId}" }
 
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
@@ -509,7 +513,11 @@ open class SubmissionController(
         outputStream.use { stream ->
             transaction {
                 try {
+                    val beforeStreamingTime = System.currentTimeMillis()
+                    log.debug { "streamTransactioned: Starting to stream NDJSON, requestId=${requestIdContext.requestId}" }
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                    val afterStreamingTime = System.currentTimeMillis()
+                    log.debug { "streamTransactioned: NDJSON streaming completed in ${afterStreamingTime - beforeStreamingTime}ms, requestId=${requestIdContext.requestId}" }
                 } catch (e: Exception) {
                     log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
                     stream.write(
@@ -518,6 +526,8 @@ open class SubmissionController(
                 }
             }
         }
+        val streamEndTime = System.currentTimeMillis()
+        log.debug { "streamTransactioned: Stream body execution completed, total time: ${streamEndTime - streamStartTime}ms, requestId=${requestIdContext.requestId}" }
         MDC.remove(REQUEST_ID_MDC_KEY)
     }
 

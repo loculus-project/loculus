@@ -136,13 +136,16 @@ class SubmissionDatabaseService(
         organism: Organism,
         pipelineVersion: Long,
     ): Sequence<UnprocessedData> {
+        val startTime = System.currentTimeMillis()
         log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism." }
 
-        return fetchUnprocessedEntriesAndUpdateToInProcessing(
+        val result = fetchUnprocessedEntriesAndUpdateToInProcessing(
             organism,
             numberOfSequenceEntries,
             pipelineVersion,
         )
+        log.debug { "streamUnprocessedSubmissions: Sequence prepared in ${System.currentTimeMillis() - startTime}ms (actual streaming will happen lazily)" }
+        return result
     }
 
     fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
@@ -192,11 +195,21 @@ class SubmissionDatabaseService(
             .asSequence()
             .chunked(streamBatchSize)
             .map { chunk ->
+                val chunkStartTime = System.currentTimeMillis()
+                log.debug { "Processing chunk of ${chunk.size} entries" }
+
+                var decompressionTime = 0L
+                var s3UrlTime = 0L
+
                 val chunkOfUnprocessedData = chunk.map {
+                    val decompStart = System.currentTimeMillis()
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
                         organism,
                     )
+                    decompressionTime += System.currentTimeMillis() - decompStart
+
+                    val s3Start = System.currentTimeMillis()
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
                         originalData.unalignedNucleotideSequences,
@@ -209,6 +222,8 @@ class SubmissionDatabaseService(
                             }
                         },
                     )
+                    s3UrlTime += System.currentTimeMillis() - s3Start
+
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
@@ -219,7 +234,14 @@ class SubmissionDatabaseService(
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
+
+                val beforeUpdateTime = System.currentTimeMillis()
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                val updateTime = System.currentTimeMillis() - beforeUpdateTime
+
+                val chunkTotalTime = System.currentTimeMillis() - chunkStartTime
+                log.debug { "Chunk processed in ${chunkTotalTime}ms: decompression=${decompressionTime}ms, s3Urls=${s3UrlTime}ms, statusUpdate=${updateTime}ms" }
+
                 chunkOfUnprocessedData
             }
             .flatten()
