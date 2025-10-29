@@ -99,9 +99,9 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                            <Button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
-                                {buttonText}
-                            </Button>
+                        <Button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
+                            {buttonText}
+                        </Button>
                     </div>
                 </div>
             </form>
