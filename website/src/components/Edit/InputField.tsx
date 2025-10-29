@@ -27,9 +27,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
     const filteredOptions = (options ?? []).filter((o) => o.name.toLowerCase().includes(row.value.toLowerCase()));
 
     return (
-        <>
             {options !== undefined ? (
-                <>
                     <Combobox
                         immediate
                         value={row.value}
@@ -62,7 +60,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                                         }
                                     >
                                         {({ selected, focus }) => (
-                                            <>
                                                 <span
                                                     className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}
                                                 >
@@ -87,16 +84,13 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                                                         </svg>
                                                     </span>
                                                 )}
-                                            </>
                                         )}
                                     </ComboboxOption>
                                 ))}
                             </ComboboxOptions>
                         </div>
                     </Combobox>
-                </>
             ) : (
-                <>
                     <Input
                         id={row.key}
                         name={row.key}
@@ -107,7 +101,6 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                         value={row.value}
                         onChange={(e) => onChange({ ...row, value: e.target.value })}
                     />
-                </>
             )}
             <button
                 className='bg-white bg-opacity-50 rounded-lg -m-12 px-3'
@@ -122,6 +115,5 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                     </div>
                 )}
             </button>
-        </>
     );
 };

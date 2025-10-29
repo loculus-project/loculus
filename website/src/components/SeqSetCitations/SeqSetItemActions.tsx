@@ -52,24 +52,19 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
-                        <>
                             <Button className='btn' onClick={() => setExportModalVisible(true)}>
                                 Export
                             </Button>
-                        </>
                     </div>
                     <div className='px-2'>
                         {isAdminView ? (
-                            <>
                                 <Button className='btn' onClick={() => setEditModalVisible(true)}>
                                     Edit
                                 </Button>
-                            </>
                         ) : null}
                     </div>
                     <div className='px-2'>
                         {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
-                            <>
                                 <Button
                                     className='btn'
                                     onClick={() =>
@@ -81,7 +76,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                                 >
                                     Delete
                                 </Button>
-                            </>
                         ) : null}
                     </div>
                 </div>

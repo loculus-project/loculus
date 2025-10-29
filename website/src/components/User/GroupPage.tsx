@@ -142,14 +142,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </div>
                     </h1>
                     {userIsGroupMember && (
-                        <>
                             <a
                                 href={routes.editGroupPage(groupId)}
                                 className='object-right p-2 loculusColor text-white rounded px-4 mr-2'
                             >
                                 Edit group
                             </a>
-                            <>
                                 <Button
                                     className='object-right p-2 loculusColor text-white rounded px-4'
                                     onClick={() => {
@@ -169,8 +167,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 >
                                     Leave group
                                 </Button>
-                            </>
-                        </>
                     )}
                 </div>
             ) : (
@@ -216,7 +212,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             </div>
 
             {userHasEditPrivileges && (
-                <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={(event) => void handleAddUser(event)}>
                         <div className='flex mb-4'>
@@ -228,11 +223,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='p-2 border border-gray-300 rounded mr-2'
                                 required
                             />
-                            <>
                                 <Button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
                                     Add user
                                 </Button>
-                            </>
                         </div>
                     </form>
                     <div className='flex-1 overflow-y-auto'>
@@ -241,7 +234,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (
-                                        <>
                                             <Button
                                                 onClick={() => {
                                                     displayConfirmationDialog({
@@ -257,13 +249,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                             >
                                                 Remove user
                                             </Button>
-                                        </>
                                     )}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                </>
             )}
         </div>
     );

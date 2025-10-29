@@ -149,7 +149,6 @@ const InnerDataUploadForm = ({
         <div className='text-left mt-3 max-w-4xl mb-3'>
             <div className='flex-col flex gap-8'>
                 {action === 'submit' ? (
-                    <>
                         <h1 className='title'>Submit sequences</h1>
                         <InputModeTabs organism={organism} groupId={group.groupId} currentInputMode={inputMode} />
                         <FormOrUploadWrapper
@@ -161,7 +160,6 @@ const InnerDataUploadForm = ({
                             metadataTemplateFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
                         />
-                    </>
                 ) : (
                     <FormOrUploadWrapper
                         inputMode='bulk'
@@ -175,7 +173,6 @@ const InnerDataUploadForm = ({
                 )}
                 <hr />
                 {extraFilesEnabled && (
-                    <>
                         <ExtraFilesUpload
                             fileCategories={submissionDataTypes.files?.categories ?? []}
                             accessToken={accessToken}
@@ -186,10 +183,8 @@ const InnerDataUploadForm = ({
                             setFileMapping={setFileMapping}
                         />
                         <hr />
-                    </>
                 )}
                 {action === 'submit' && dataUseTermsEnabled && (
-                    <>
                         <DataUseTerms
                             dataUseTermsType={dataUseTermsType}
                             setDataUseTermsType={setDataUseTermsType}
@@ -197,10 +192,8 @@ const InnerDataUploadForm = ({
                             setRestrictedUntil={setRestrictedUntil}
                         />
                         <hr />
-                    </>
                 )}
                 {dataUseTermsEnabled && (
-                    <>
                         <Acknowledgement
                             confirmedNoPII={confirmedNoPII}
                             setConfirmedNoPII={setConfirmedNoPII}
@@ -208,10 +201,8 @@ const InnerDataUploadForm = ({
                             setAgreedToINSDCUploadTerms={setAgreedToINSDCUploadTerms}
                         />
                         <hr />
-                    </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <>
                         <Button
                             name='submit'
                             type='submit'
@@ -224,7 +215,6 @@ const InnerDataUploadForm = ({
                             </div>
                             <span className='flex-1 text-center mx-8'>Submit sequences</span>
                         </Button>
-                    </>
                 </div>
             </div>
         </div>

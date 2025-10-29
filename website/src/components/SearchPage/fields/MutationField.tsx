@@ -57,7 +57,6 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
 
     return (
         <div className='flex relative mb-2 flex-row w-full'>
-            <>
                 <Combobox value={selectedOptions} onChange={handleOptionClick}>
                     <div className='w-full relative'>
                         <FloatingLabelContainer
@@ -143,7 +142,6 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                         </Transition>
                     </div>
                 </Combobox>
-            </>
         </div>
     );
 };
