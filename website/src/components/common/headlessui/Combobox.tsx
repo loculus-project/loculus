@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 import {
     Combobox as HeadlessCombobox,
     type ComboboxProps,
@@ -6,6 +7,7 @@ import {
     ComboboxOption,
     ComboboxOptions,
 } from '@headlessui/react';
+/* eslint-enable no-restricted-imports */
 
 import DisabledUntilHydrated from '../../DisabledUntilHydrated';
 

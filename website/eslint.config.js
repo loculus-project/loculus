@@ -174,12 +174,6 @@ export default defineConfig(
         },
     },
     {
-        files: ['src/components/common/headlessui/**/*.tsx'],
-        rules: {
-            'no-restricted-imports': 'off',
-        },
-    },
-    {
         files: ['**/*.spec.ts', '**/*.spec.tsx'],
         rules: {
             '@typescript-eslint/no-unsafe-member-access': 'off',
