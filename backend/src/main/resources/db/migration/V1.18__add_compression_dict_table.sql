@@ -1,6 +1,6 @@
 create table compression_dictionaries
 (
-    id            SERIAL primary key,
+    id            INTEGER generated always as identity primary key,
     hash          TEXT not null unique,
     dict_contents BYTEA not null
 );
