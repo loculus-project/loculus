@@ -12,7 +12,7 @@ export type FieldItem = {
     isChecked: boolean;
 };
 
-type FieldItemDisplayState = { type: 'alwaysChecked' | 'disabled' } | { type: 'greyedOut'; tooltip: string };
+export type FieldItemDisplayState = { type: 'alwaysChecked' | 'disabled' } | { type: 'greyedOut'; tooltip: string };
 
 type FieldSelectorModalProps = {
     isOpen: boolean;
