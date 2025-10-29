@@ -174,7 +174,7 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 CREATE TABLE public.compression_dictionaries (
     id integer NOT NULL,
     hash text NOT NULL,
-    dict_contents text NOT NULL
+    dict_contents bytea NOT NULL
 );
 
 
