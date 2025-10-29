@@ -201,7 +201,7 @@ open class SubmissionController(
         headers.eTag = lastDatabaseWriteETag
         log.debug { "extract-unprocessed-data: Starting to prepare stream for $numberOfSequenceEntries entries, organism=$organism, pipelineVersion=$pipelineVersion, requestId=${requestIdContext.requestId}" }
         val streamBody = streamTransactioned {
-            submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
+            submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion, requestIdContext.requestId)
         }
         log.debug { "extract-unprocessed-data: ResponseEntity created (streaming not started yet), requestId=${requestIdContext.requestId}" }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -515,7 +515,7 @@ open class SubmissionController(
                 try {
                     val beforeStreamingTime = System.currentTimeMillis()
                     log.debug { "streamTransactioned: Starting to stream NDJSON, requestId=${requestIdContext.requestId}" }
-                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream, requestIdContext.requestId)
                     val afterStreamingTime = System.currentTimeMillis()
                     log.debug { "streamTransactioned: NDJSON streaming completed in ${afterStreamingTime - beforeStreamingTime}ms, requestId=${requestIdContext.requestId}" }
                 } catch (e: Exception) {

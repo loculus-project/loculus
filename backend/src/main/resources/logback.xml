@@ -20,5 +20,6 @@
 
     <logger name="org.loculus.backend.controller.SubmissionController" level="debug" />
     <logger name="org.loculus.backend.service.submission.SubmissionDatabaseService" level="debug" />
+    <logger name="org.loculus.backend.utils.IteratorStreamer" level="debug" />
 
 </configuration>
