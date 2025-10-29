@@ -236,7 +236,6 @@ private fun clearDatabaseStatement(): String = """
             $DATA_USE_TERMS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
-            $COMPRESSION_DICTIONARIES_TABLE_NAME,
             external_metadata,
             seqsets,
             seqset_records,
