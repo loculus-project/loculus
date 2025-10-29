@@ -135,7 +135,10 @@ export const InnerSearchFullUI = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    displayState: field.name === schema.primaryKey ? { type: 'alwaysChecked' } : undefined,
+                    displayState:
+                        field.name === schema.primaryKey
+                            ? { type: 'alwaysChecked' }
+                            : { type: 'greyedOut', tooltip: 'test test test' },
                     isChecked: columnVisibilities.get(field.name) ?? false,
                 })),
         [schema.metadata, schema.primaryKey, columnVisibilities],
