@@ -5,6 +5,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.dbtables.CompressionDictionariesTable
 import org.loculus.backend.service.submission.dbtables.CompressionDictionaryEntity
+import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
@@ -16,7 +17,10 @@ class DictEntry(val id: Int, val dict: ByteArray)
  * Caches the contents in memory to avoid repeated DB lookups.
  */
 @Service
-class CompressionDictService(private val backendConfig: BackendConfig) {
+class CompressionDictService(
+    private val backendConfig: BackendConfig,
+    private val dateProvider: DateProvider,
+) {
     private val caches: Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
@@ -113,6 +117,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
             .new {
                 this.hash = hash
                 this.dictContents = dict.toByteArray()
+                this.createdAt = dateProvider.getCurrentDateTime()
             }
             .id
             .value
