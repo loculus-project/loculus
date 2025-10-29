@@ -43,7 +43,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<string[]>(getDefaultSelectedFields(metadata));
+    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
     return (
         <>

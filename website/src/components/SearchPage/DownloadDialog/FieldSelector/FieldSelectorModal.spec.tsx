@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
@@ -76,14 +77,13 @@ describe('FieldSelectorModal', () => {
                 { name: 'field1', type: 'string', includeInDownloadsByDefault: false },
                 { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: false },
             ]);
-            expect(result).toEqual([ACCESSION_VERSION_FIELD]);
+            expect(result).toEqual(new Set([ACCESSION_VERSION_FIELD]));
         });
     });
 
     describe('FieldSelectorModal component', () => {
         it('renders all fields grouped by header', () => {
-            const mockOnSave = vi.fn();
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+            renderFieldSelectorModal();
 
             // Check headers are rendered
             expect(screen.getByText('Group 1')).toBeInTheDocument();
@@ -97,83 +97,86 @@ describe('FieldSelectorModal', () => {
         });
 
         it('has ACCESSION_VERSION_FIELD checked and disabled', () => {
-            const mockOnSave = vi.fn();
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+            renderFieldSelectorModal();
 
             const checkbox = screen.getByLabelText(accessionVersionField.renderedDisplayName);
             expect(checkbox).toBeChecked();
             expect(checkbox).toBeDisabled();
         });
 
-        it('initializes with default selected fields if no initialSelectedFields provided', () => {
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={() => {}} />);
-
-            // Check that fields with includeInDownloadsByDefault=true are checked
-            const field1Checkbox = screen.getByLabelText('Field 1');
-            const field2Checkbox = screen.getByLabelText('Field 2');
-            const field3Checkbox = screen.getByLabelText('Field 3');
-            const field4Checkbox = screen.getByLabelText('Field 4');
-
-            expect(field1Checkbox).toBeChecked();
-            expect(field2Checkbox).not.toBeChecked();
-            expect(field3Checkbox).toBeChecked();
-            expect(field4Checkbox).toBeChecked();
-        });
-
-        it('calls onSave immediately when a field is toggled and ACCESSION_VERSION_FIELD is always included', () => {
-            const mockOnSave = vi.fn();
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+        it('calls onSelectedFieldsChange immediately when a field is toggled and ACCESSION_VERSION_FIELD is always included', () => {
+            const { getCurrentSelectedFields } = renderFieldSelectorModal();
 
             // Toggle one of the selected fields to unselect it
             fireEvent.click(screen.getByLabelText('Field 1'));
 
-            // Expect the onSave function to be called immediately with ACCESSION_VERSION_FIELD always included
-            expect(mockOnSave).toHaveBeenCalledWith(
-                expect.arrayContaining(['field3', 'field4', ACCESSION_VERSION_FIELD]),
-            );
-            expect(mockOnSave).not.toHaveBeenCalledWith(expect.arrayContaining(['field1']));
+            expect(getCurrentSelectedFields()).toEqual(new Set(['field3', 'field4', ACCESSION_VERSION_FIELD]));
 
             // Toggle another field to select it
             fireEvent.click(screen.getByLabelText('Field 2'));
 
-            // Expect onSave to be called again with updated selection and ACCESSION_VERSION_FIELD still included
-            expect(mockOnSave).toHaveBeenCalledWith(
-                expect.arrayContaining(['field3', 'field4', 'field2', ACCESSION_VERSION_FIELD]),
+            expect(getCurrentSelectedFields()).toEqual(
+                new Set(['field3', 'field4', 'field2', ACCESSION_VERSION_FIELD]),
             );
         });
 
-        it('selects all fields when "Select all" is clicked', () => {
-            const mockOnSave = vi.fn();
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+        it('selects all fields when "Select all" is clicked', async () => {
+            const { rerender, getCurrentSelectedFields } = renderFieldSelectorModal();
 
             fireEvent.click(screen.getByText('Select all'));
 
-            const normalInputs = normalFields.map(
-                (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,
+            rerender();
+
+            expect(getCurrentSelectedFields()).toEqual(
+                new Set(['field1', 'field2', 'field3', 'field4', ACCESSION_VERSION_FIELD]),
             );
-            normalInputs.forEach((input) => {
-                expect(input.checked).toBe(true);
-            });
+
+            const normalInputs = normalFields.map((field) => screen.getByLabelText(field.displayName!));
+            for (const input of normalInputs) {
+                await waitFor(() => expect(input).toBeChecked());
+            }
 
             const accessionVersionInput = screen.getByLabelText(accessionVersionField.renderedDisplayName);
             expect(accessionVersionInput).toBeChecked();
         });
 
         it('unselects all except accession version when "Select none" is clicked', () => {
-            const mockOnSave = vi.fn();
-            render(<FieldSelectorModal isOpen={true} onClose={() => {}} metadata={mockMetadata} onSave={mockOnSave} />);
+            const { rerender, getCurrentSelectedFields } = renderFieldSelectorModal();
 
             fireEvent.click(screen.getByText('Select none'));
 
-            const normalInputs = normalFields.map(
-                (field) => screen.getByLabelText(field.displayName!) as unknown as HTMLInputElement,
-            );
+            rerender();
+
+            expect(getCurrentSelectedFields()).toEqual(new Set([ACCESSION_VERSION_FIELD]));
+
+            const normalInputs = normalFields.map((field) => screen.getByLabelText(field.displayName!));
             normalInputs.forEach((input) => {
-                expect(input.checked).toBe(false);
+                expect(input).not.toBeChecked();
             });
 
             const accessionVersionInput = screen.getByLabelText(accessionVersionField.renderedDisplayName);
             expect(accessionVersionInput).toBeChecked();
         });
     });
+
+    function renderFieldSelectorModal() {
+        const { result } = renderHook(() => useState(getDefaultSelectedFields(mockMetadata)));
+
+        const getComponent = () => (
+            <FieldSelectorModal
+                isOpen={true}
+                onClose={() => {}}
+                metadata={mockMetadata}
+                selectedFields={result.current[0]}
+                onSelectedFieldsChange={result.current[1]}
+            />
+        );
+
+        const { rerender } = render(getComponent());
+
+        return {
+            rerender: () => rerender(getComponent()),
+            getCurrentSelectedFields: () => result.current[0],
+        };
+    }
 });

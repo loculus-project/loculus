@@ -1,4 +1,4 @@
-import { type FC, useEffect, useMemo, useState } from 'react';
+import { type Dispatch, type FC, type SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import type { DownloadDataType } from './DownloadDataType.ts';
 import type { DownloadOption } from './DownloadUrlGenerator.ts';
@@ -26,16 +26,16 @@ type DownloadFormProps = {
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
     metadata: Metadata[];
-    selectedFields: string[];
-    onSelectedFieldsChange: (fields: string[]) => void;
+    selectedFields: Set<string>;
+    onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedSuborganism: string | null;
     suborganismIdentifierField: string | undefined;
 };
 
 // Sort fields by their order in the search table and ensure accessionVersion is the first field
-function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[] {
-    const fieldsWithoutAccessionVersion = fields.filter((field) => field !== ACCESSION_VERSION_FIELD);
+function orderFieldsForDownload(fields: Set<string>, metadata: Metadata[]): string[] {
+    const fieldsWithoutAccessionVersion = [...fields].filter((field) => field !== ACCESSION_VERSION_FIELD);
     const orderMap = new Map<string, number>();
     for (const m of metadata) {
         orderMap.set(m.name, m.order ?? Number.MAX_SAFE_INTEGER);
@@ -144,7 +144,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     <span>Metadata</span>
                     <FieldSelectorButton
                         onClick={() => setIsFieldSelectorOpen(true)}
-                        selectedFieldsCount={selectedFields.length}
+                        selectedFieldsCount={selectedFields.size}
                         disabled={dataType !== 0}
                     />
                 </div>
@@ -280,8 +280,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                 isOpen={isFieldSelectorOpen}
                 onClose={() => setIsFieldSelectorOpen(false)}
                 metadata={metadata}
-                initialSelectedFields={selectedFields}
-                onSave={onSelectedFieldsChange}
+                selectedFields={selectedFields}
+                onSelectedFieldsChange={onSelectedFieldsChange}
             />
         </div>
     );
