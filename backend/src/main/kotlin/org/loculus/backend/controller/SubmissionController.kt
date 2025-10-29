@@ -202,7 +202,7 @@ open class SubmissionController(
         log.debug {
             "extract-unprocessed-data: Starting to prepare stream for $numberOfSequenceEntries entries, organism=$organism, pipelineVersion=$pipelineVersion, requestId=${requestIdContext.requestId}"
         }
-        val streamBody = streamTransactioned {
+        val streamBody = streamTransactioned(endpointName = "extract-unprocessed-data") {
             submissionDatabaseService.streamUnprocessedSubmissions(
                 numberOfSequenceEntries,
                 organism,
@@ -342,7 +342,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression, "get-released-data") { releasedDataModel.getReleasedData(organism) }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
@@ -451,7 +451,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) {
+        val streamBody = streamTransactioned(compression, "get-original-metadata") {
             submissionDatabaseService.streamOriginalMetadata(
                 authenticatedUser,
                 organism,
@@ -508,11 +508,12 @@ open class SubmissionController(
 
     private fun <T> streamTransactioned(
         compressionFormat: CompressionFormat? = null,
+        endpointName: String = "unknown",
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val streamStartTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
-        log.debug { "streamTransactioned: Stream body execution started, requestId=${requestIdContext.requestId}" }
+        log.debug { "streamTransactioned [$endpointName]: Stream body execution started" }
 
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
@@ -524,12 +525,12 @@ open class SubmissionController(
                 try {
                     val beforeStreamingTime = System.currentTimeMillis()
                     log.debug {
-                        "streamTransactioned: Starting to stream NDJSON, requestId=${requestIdContext.requestId}"
+                        "streamTransactioned [$endpointName]: Starting to stream NDJSON"
                     }
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream, requestIdContext.requestId)
                     val afterStreamingTime = System.currentTimeMillis()
                     log.debug {
-                        "streamTransactioned: NDJSON streaming completed in ${afterStreamingTime - beforeStreamingTime}ms, requestId=${requestIdContext.requestId}"
+                        "streamTransactioned [$endpointName]: NDJSON streaming completed in ${afterStreamingTime - beforeStreamingTime}ms"
                     }
                 } catch (e: Exception) {
                     log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
@@ -541,7 +542,7 @@ open class SubmissionController(
         }
         val streamEndTime = System.currentTimeMillis()
         log.debug {
-            "streamTransactioned: Stream body execution completed, total time: ${streamEndTime - streamStartTime}ms, requestId=${requestIdContext.requestId}"
+            "streamTransactioned [$endpointName]: Stream body execution completed, total time: ${streamEndTime - streamStartTime}ms"
         }
         MDC.remove(REQUEST_ID_MDC_KEY)
     }
