@@ -1,3 +1,3 @@
 ## Checklist before committing code
 
-Run `npm run test`, `npm run check-types`, `npm run format`.
+Run `CI=1 npm run test`, `npm run check-types`, `npm run format`.
