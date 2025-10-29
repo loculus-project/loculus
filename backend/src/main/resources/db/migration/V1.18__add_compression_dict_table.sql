@@ -5,5 +5,3 @@ create table compression_dictionaries
     dict_contents BYTEA not null,
     created_at    TIMESTAMPTZ not null default now()
 );
-
-create index idx_dict_table_hash on compression_dictionaries (hash);
