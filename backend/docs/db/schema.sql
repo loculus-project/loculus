@@ -173,8 +173,9 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 CREATE TABLE public.compression_dictionaries (
     id integer NOT NULL,
-    hash text NOT NULL,
-    dict_contents bytea NOT NULL
+    hash character(64) NOT NULL,
+    dict_contents bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -184,22 +185,14 @@ ALTER TABLE public.compression_dictionaries OWNER TO postgres;
 -- Name: compression_dictionaries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.compression_dictionaries_id_seq
-    AS integer
+ALTER TABLE public.compression_dictionaries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.compression_dictionaries_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.compression_dictionaries_id_seq OWNER TO postgres;
-
---
--- Name: compression_dictionaries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.compression_dictionaries_id_seq OWNED BY public.compression_dictionaries.id;
+    CACHE 1
+);
 
 
 --
@@ -607,13 +600,6 @@ ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.au
 
 
 --
--- Name: compression_dictionaries id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.compression_dictionaries ALTER COLUMN id SET DEFAULT nextval('public.compression_dictionaries_id_seq'::regclass);
-
-
---
 -- Name: groups_table group_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -805,13 +791,6 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
-
-
---
--- Name: idx_dict_table_hash; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_dict_table_hash ON public.compression_dictionaries USING btree (hash);
 
 
 --
