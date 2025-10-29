@@ -31,6 +31,8 @@ class IteratorStreamer(private val objectMapper: ObjectMapper) {
             count++
         }
 
-        log.debug { "streamAsNdjson: Streamed $count entries, serialization=${serializationTime}ms, write=${writeTime}ms, requestId=$requestId" }
+        log.debug {
+            "streamAsNdjson: Streamed $count entries, serialization=${serializationTime}ms, write=${writeTime}ms, requestId=$requestId"
+        }
     }
 }

@@ -138,7 +138,9 @@ class SubmissionDatabaseService(
         requestId: String? = null,
     ): Sequence<UnprocessedData> {
         val startTime = System.currentTimeMillis()
-        log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism, requestId=$requestId" }
+        log.info {
+            "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism, requestId=$requestId"
+        }
 
         val result = fetchUnprocessedEntriesAndUpdateToInProcessing(
             organism,
@@ -146,7 +148,9 @@ class SubmissionDatabaseService(
             pipelineVersion,
             requestId,
         )
-        log.debug { "streamUnprocessedSubmissions: Sequence prepared in ${System.currentTimeMillis() - startTime}ms (actual streaming will happen lazily), requestId=$requestId" }
+        log.debug {
+            "streamUnprocessedSubmissions: Sequence prepared in ${System.currentTimeMillis() - startTime}ms (actual streaming will happen lazily), requestId=$requestId"
+        }
         return result
     }
 
@@ -254,7 +258,9 @@ class SubmissionDatabaseService(
                 val chunkTotalTime = System.currentTimeMillis() - chunkStartTime
                 val avgDecomp = if (chunk.isNotEmpty()) totalDecompressionTime / chunk.size else 0
                 val avgS3 = if (chunk.isNotEmpty()) totalS3UrlTime / chunk.size else 0
-                log.debug { "Chunk processed in ${chunkTotalTime}ms: decompression=${totalDecompressionTime}ms (avg=${avgDecomp}ms, max=${maxDecompressionTime}ms), s3Urls=${totalS3UrlTime}ms (avg=${avgS3}ms, max=${maxS3UrlTime}ms, totalFiles=$totalFileCount), statusUpdate=${updateTime}ms, requestId=$requestId" }
+                log.debug {
+                    "Chunk processed in ${chunkTotalTime}ms: decompression=${totalDecompressionTime}ms (avg=${avgDecomp}ms, max=${maxDecompressionTime}ms), s3Urls=${totalS3UrlTime}ms (avg=${avgS3}ms, max=${maxS3UrlTime}ms, totalFiles=$totalFileCount), statusUpdate=${updateTime}ms, requestId=$requestId"
+                }
 
                 chunkOfUnprocessedData
             }
