@@ -9,7 +9,7 @@ const val COMPRESSION_DICTIONARIES_TABLE_NAME = "compression_dictionaries"
 
 object CompressionDictionariesTable : IntIdTable(COMPRESSION_DICTIONARIES_TABLE_NAME, "id") {
     val hashColumn = text("hash").uniqueIndex()
-    val dictContentsColumn = text("dict_contents")
+    val dictContentsColumn = binary("dict_contents")
 }
 
 class CompressionDictionaryEntity(id: EntityID<Int>) : IntEntity(id) {

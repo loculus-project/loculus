@@ -91,7 +91,6 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
         return transaction {
             val dict = CompressionDictionaryEntity.findById(id)
                 ?.dictContents
-                ?.toByteArray()
                 ?: throw RuntimeException("Did not find compression dictionary with id $id")
             cacheById[id] = dict
             dict
@@ -113,7 +112,7 @@ class CompressionDictService(private val backendConfig: BackendConfig) {
         return CompressionDictionaryEntity
             .new {
                 this.hash = hash
-                this.dictContents = dict
+                this.dictContents = dict.toByteArray()
             }
             .id
             .value
