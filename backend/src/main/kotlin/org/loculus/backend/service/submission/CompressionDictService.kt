@@ -17,10 +17,7 @@ class DictEntry(val id: Int, val dict: ByteArray)
  * Caches the contents in memory to avoid repeated DB lookups.
  */
 @Service
-class CompressionDictService(
-    private val backendConfig: BackendConfig,
-    private val dateProvider: DateProvider,
-) {
+class CompressionDictService(private val backendConfig: BackendConfig, private val dateProvider: DateProvider) {
     private val caches: Triple<
         Map<Pair<String, String>, DictEntry>,
         Map<String, DictEntry>,
