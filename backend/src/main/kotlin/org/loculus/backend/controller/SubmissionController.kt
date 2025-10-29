@@ -199,7 +199,7 @@ open class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned {
+        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data") {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -331,7 +331,9 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression, endpoint = "get-released-data") {
+            releasedDataModel.getReleasedData(organism)
+        }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }
 
@@ -440,7 +442,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression) {
+        val streamBody = streamTransactioned(compression, endpoint = "get-original-metadata") {
             submissionDatabaseService.streamOriginalMetadata(
                 authenticatedUser,
                 organism,
@@ -497,8 +499,10 @@ open class SubmissionController(
 
     private fun <T> streamTransactioned(
         compressionFormat: CompressionFormat? = null,
+        endpoint: String,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
+        val startTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
 
         val outputStream = when (compressionFormat) {
@@ -518,6 +522,10 @@ open class SubmissionController(
                 }
             }
         }
+
+        val duration = System.currentTimeMillis() - startTime
+        log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
+
         MDC.remove(REQUEST_ID_MDC_KEY)
     }
 
