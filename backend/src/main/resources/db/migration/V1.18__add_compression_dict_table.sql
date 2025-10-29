@@ -1,7 +1,7 @@
 create table compression_dictionaries
 (
     id            INTEGER generated always as identity primary key,
-    hash          TEXT not null unique,
+    hash          CHAR(64) not null unique,
     dict_contents BYTEA not null
 );
 
