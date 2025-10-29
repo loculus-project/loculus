@@ -148,9 +148,8 @@ class UploadDatabaseService(
                     this[sequenceSubmissionIdColumn] = submissionId
                     this[segmentNameColumn] = segmentName
                     this[sequenceUploadIdColumn] = uploadId
-                    this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                    this[compressedSequenceDataColumn] = compressor.compressOriginalSequence(
                         it.sequence,
-                        segmentName,
                         submittedOrganism,
                     )
                 }

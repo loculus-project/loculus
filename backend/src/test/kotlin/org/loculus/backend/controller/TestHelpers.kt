@@ -79,9 +79,8 @@ inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
 }
 
 fun awaitResponse(result: MvcResult): String {
-    await().until {
-        result.response.isCommitted
-    }
+    result.getAsyncResult()
+
     return result.response.contentAsString
 }
 
