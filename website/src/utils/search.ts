@@ -78,7 +78,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
-            field.onlyShowInSearchWhenSuborganismIs,
+            field.onlyForSuborganism,
         );
 
         visibilities.set(fieldName, visibility);

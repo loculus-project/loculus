@@ -71,7 +71,7 @@ function getDisplayState(
     if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
         return {
             type: 'disabled',
-            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyShowInSearchWhenSuborganismIs} is selected.`,
+            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
         };
     }
 

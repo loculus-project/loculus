@@ -297,8 +297,8 @@ organisms:
   {{- if .includeInDownloadsByDefault }}
   includeInDownloadsByDefault: {{ .includeInDownloadsByDefault }}
   {{- end }}
-  {{- if .onlyShowInSearchWhenSuborganismIs }}
-  onlyShowInSearchWhenSuborganismIs: {{ .onlyShowInSearchWhenSuborganismIs }}
+  {{- if .onlyForSuborganism }}
+  onlyForSuborganism: {{ .onlyForSuborganism }}
   {{- end }}
   {{- if .customDisplay }}
   customDisplay:
