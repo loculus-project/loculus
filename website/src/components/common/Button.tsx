@@ -5,9 +5,9 @@ import DisabledUntilHydrated from '../DisabledUntilHydrated';
 export const Button = forwardRef<
     HTMLButtonElement,
     ButtonHTMLAttributes<HTMLButtonElement> & { alsoDisabledIf?: boolean }
->(({ alsoDisabledIf, ...props }, ref) => {
+>(({ alsoDisabledIf, disabled, ...props }, ref) => {
     return (
-        <DisabledUntilHydrated alsoDisabledIf={alsoDisabledIf}>
+        <DisabledUntilHydrated alsoDisabledIf={alsoDisabledIf ?? disabled}>
             {/* eslint-disable-next-line no-restricted-syntax -- This is the wrapper component itself */}
             <button ref={ref} {...props} />
         </DisabledUntilHydrated>
