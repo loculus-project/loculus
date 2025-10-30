@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button } from "src/components/common/Button";
+
+import { Button } from './Button';
 
 interface BannerProps {
     message?: string;

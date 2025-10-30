@@ -1,7 +1,7 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import type { MutationBadgeData, SegmentedMutations } from '../../types/config';
+import { Button } from '../common/Button';
 
 export type SubProps = {
     position: number;

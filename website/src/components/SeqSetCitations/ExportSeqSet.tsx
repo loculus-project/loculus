@@ -1,9 +1,9 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
+import { Button } from '../common/Button';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;

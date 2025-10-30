@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
-import { Button } from "src/components/common/Button";
 
+import { Button } from '../common/Button';
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts.ts';

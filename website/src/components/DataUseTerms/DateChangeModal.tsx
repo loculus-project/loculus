@@ -1,9 +1,9 @@
 import { Datepicker, type FlowbiteDatepickerTheme } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { getClientLogger } from '../../clientLogger';
+import { Button } from '../common/Button';
 
 const logger = getClientLogger('DateChangeModal');
 

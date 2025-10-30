@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { Fragment } from 'react';
-import { Button } from "src/components/common/Button";
 
+import { Button } from './Button';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 

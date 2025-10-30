@@ -1,6 +1,5 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
@@ -11,6 +10,7 @@ import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
+import { Button } from '../common/Button';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';

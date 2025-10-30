@@ -1,7 +1,7 @@
 import { type FC } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { BaseDialog } from './BaseDialog.tsx';
+import { Button } from './Button';
 
 export type FieldItem = {
     name: string;

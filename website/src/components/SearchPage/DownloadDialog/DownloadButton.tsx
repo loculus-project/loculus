@@ -1,9 +1,9 @@
 import { type FC, type MouseEvent, type MouseEventHandler, useMemo, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
+import { Button } from '../../common/Button';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type DownloadButtonProps = {

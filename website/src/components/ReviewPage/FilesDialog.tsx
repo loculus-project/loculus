@@ -1,7 +1,7 @@
 import { type FC } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 
 type FilesDialogProps = {
     isOpen: boolean;

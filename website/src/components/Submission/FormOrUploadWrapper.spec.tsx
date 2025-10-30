@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { Button } from "src/components/common/Button";
 import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
 import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import { Button } from '../common/Button';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [

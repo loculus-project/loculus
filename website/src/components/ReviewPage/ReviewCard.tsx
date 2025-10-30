@@ -1,5 +1,4 @@
 import { type FC, useState, useRef, useEffect } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { FilesDialog } from './FilesDialog.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
@@ -22,6 +21,7 @@ import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
+import { Button } from '../common/Button';
 import BiTrash from '~icons/bi/trash';
 import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
 import Note from '~icons/fluent/note-24-filled';
