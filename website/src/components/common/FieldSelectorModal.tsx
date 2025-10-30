@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { BaseDialog } from './BaseDialog.tsx';
 
@@ -82,20 +83,20 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
             <div className='min-w-[1000px]'></div>
             <div className='mt-2 flex justify-between px-2'>
                 <div>
-                    <button
+                    <Button
                         type='button'
                         className='text-sm text-primary-600 hover:text-primary-900 font-medium mr-4'
                         onClick={handleSelectAll}
                     >
                         Select all
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type='button'
                         className='text-sm text-primary-600 hover:text-primary-900 font-medium'
                         onClick={handleSelectNone}
                     >
                         Select none
-                    </button>
+                    </Button>
                 </div>
             </div>
             <div className='mt-2 max-h-[60vh] overflow-y-auto p-2'>
@@ -153,14 +154,14 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                 ))}
 
                 <div className='mt-6 flex justify-end'>
-                    <button
+                    <Button
                         type='button'
                         className='btn loculusColor text-white -py-1'
                         onClick={onClose}
                         data-testid='field-selector-close-button'
                     >
                         Close
-                    </button>
+                    </Button>
                 </div>
             </div>
         </BaseDialog>

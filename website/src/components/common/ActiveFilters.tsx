@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from 'react';
 import { Fragment } from 'react';
+import { Button } from "src/components/common/Button";
 
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -98,9 +99,9 @@ const Badge: FC<BadgeProps> = ({ label, showX, onRemove, ariaLabel, children }) 
         <span className='text-primary-900 font-light pr-1'>{label}:</span>
         {children}
         {showX ? (
-            <button aria-label={ariaLabel} className='inline ml-2 mt-0.5 pr-2' onClick={onRemove}>
+            <Button aria-label={ariaLabel} className='inline ml-2 mt-0.5 pr-2' onClick={onRemove}>
                 <MaterialSymbolsClose className='w-3 h-4 text-primary-600' />
-            </button>
+            </Button>
         ) : (
             <div className='pr-4'></div>
         )}

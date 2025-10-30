@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 type FieldSelectorButtonProps = {
     onClick: () => void;
@@ -12,7 +13,7 @@ export const FieldSelectorButton: FC<FieldSelectorButtonProps> = ({
     disabled = false,
 }) => {
     return (
-        <button
+        <Button
             type='button'
             onClick={onClick}
             disabled={disabled}
@@ -24,6 +25,6 @@ export const FieldSelectorButton: FC<FieldSelectorButtonProps> = ({
                 }`}
         >
             <span>Choose fields ({selectedFieldsCount})</span>
-        </button>
+        </Button>
     );
 };

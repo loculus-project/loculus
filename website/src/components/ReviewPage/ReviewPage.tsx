@@ -2,6 +2,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Button } from "src/components/common/Button";
 
 import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
@@ -277,7 +278,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                         <div className='py-1'>
                             {errorCount > 0 && showErrors && (
                                 <MenuItem>
-                                    <button
+                                    <Button
                                         className={menuItemClassName}
                                         onClick={() =>
                                             displayConfirmationDialog({
@@ -295,11 +296,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                     >
                                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                         Discard {errorCount} sequence{errorCount > 1 ? 's' : ''} with errors
-                                    </button>
+                                    </Button>
                                 </MenuItem>
                             )}
                             <MenuItem>
-                                <button
+                                <Button
                                     className={menuItemClassName}
                                     onClick={() =>
                                         displayConfirmationDialog({
@@ -316,14 +317,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                                 >
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                                     Discard all {processedCount} processed sequences
-                                </button>
+                                </Button>
                             </MenuItem>
                         </div>
                     </MenuItems>
                 </Menu>
             )}
             {validCount > 0 && (
-                <button
+                <Button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
@@ -343,7 +344,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                     Release {validCount} valid sequence
                     {validCount > 1 ? 's' : ''}
-                </button>
+                </Button>
             )}
         </div>
     );

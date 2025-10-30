@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useMemo, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
@@ -108,9 +109,9 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
+                <Button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
                     Modify search query
-                </button>
+                </Button>
             </div>
             {isMobileOpen && <OffCanvasOverlay className='md:hidden' onClick={closeOnMobile} />}
             <div
@@ -338,9 +339,9 @@ const AdvancedOptionsModal = ({
                 ))}
             </div>
             <div className='mt-6 flex justify-end'>
-                <button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                <Button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
                     Close
-                </button>
+                </Button>
             </div>
         </BaseDialog>
     );

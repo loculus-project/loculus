@@ -1,4 +1,5 @@
 import { type FC, useState, useRef, useEffect } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { FilesDialog } from './FilesDialog.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
@@ -161,7 +162,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
             <div className='flex space-x-4'>
                 {filesEnabled && viewFiles && (
                     <>
-                        <button
+                        <Button
                             className={buttonBarClass(!hasFiles)}
                             onClick={viewFiles}
                             data-tooltip-id={'view-files-tooltip' + sequenceEntryStatus.accession}
@@ -170,7 +171,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                             disabled={!hasFiles}
                         >
                             <Files />
-                        </button>
+                        </Button>
                         <CustomTooltip
                             id={'view-files-tooltip' + sequenceEntryStatus.accession}
                             content={hasFiles ? 'View files' : 'No files for this entry'}
@@ -179,7 +180,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 )}
                 {viewSequences && (
                     <>
-                        <button
+                        <Button
                             className={buttonBarClass(false)}
                             onClick={viewSequences}
                             data-tooltip-id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
@@ -187,7 +188,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                             key={'view-sequences-button-' + sequenceEntryStatus.accession}
                         >
                             <RiDna />
-                        </button>
+                        </Button>
                         <CustomTooltip
                             id={'view-sequences-tooltip' + sequenceEntryStatus.accession}
                             content={'View processed sequences'}
@@ -195,7 +196,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     </>
                 )}
                 <div className='mx-3 h-5 mt-0.5 border-l border-gray-300'></div> {/* Vertical separator */}
-                <button
+                <Button
                     className={buttonBarClass(!approvable)}
                     onClick={approveAccessionVersion}
                     data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
@@ -203,7 +204,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     disabled={!approvable}
                 >
                     <WpfPaperPlane />
-                </button>
+                </Button>
                 <CustomTooltip
                     id={'approve-tooltip' + sequenceEntryStatus.accession}
                     content={
@@ -215,7 +216,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     }
                 />
                 {!sequenceEntryStatus.isRevocation && (
-                    <button
+                    <Button
                         className={buttonBarClass(notProcessed)}
                         data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
                         data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
@@ -224,13 +225,13 @@ const ButtonBar: FC<ButtonBarProps> = ({
                         disabled={notProcessed}
                     >
                         <ClarityNoteEditLine />
-                    </button>
+                    </Button>
                 )}
                 <CustomTooltip
                     id={'edit-tooltip' + sequenceEntryStatus.accession}
                     content={notProcessed ? 'Processing...' : 'Edit this sequence entry'}
                 />
-                <button
+                <Button
                     className={buttonBarClass(notProcessed)}
                     onClick={deleteAccessionVersion}
                     data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
@@ -238,7 +239,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     disabled={notProcessed}
                 >
                     <BiTrash />
-                </button>
+                </Button>
                 <CustomTooltip
                     id={'delete-tooltip' + sequenceEntryStatus.accession}
                     content={notProcessed ? 'Cannot discard. Wait for preprocessing.' : 'Discard this sequence entry'}

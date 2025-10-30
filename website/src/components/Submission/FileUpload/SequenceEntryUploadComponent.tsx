@@ -1,4 +1,5 @@
 import { useState, type Dispatch, type FC, type SetStateAction } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { routes } from '../../../routes/routes';
 import type { UploadAction } from '../DataUploadForm';
@@ -186,18 +187,17 @@ const DevExampleData = ({
     dataIsLoaded: boolean;
 }) => {
     return (
-        <p className='text-gray-800 text-xs mt-5 opacity-50'>
-            Add dev example data
-            <br />
+        <p className='text-gray-800 text-xs mt-5 opacity-50'>Add dev example data
+                        <br />
             <input
                 type='number'
                 value={exampleEntries ?? ''}
                 onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
                 className='w-32 h-6 rounded'
             />
-            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 ml-2 h-6'>
+            <Button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 ml-2 h-6'>
                 Load Example Data
-            </button>{' '}
+            </Button>{' '}
             <br />
             {dataIsLoaded && <span className='text-xs text-gray-500'>Data loaded</span>}
         </p>

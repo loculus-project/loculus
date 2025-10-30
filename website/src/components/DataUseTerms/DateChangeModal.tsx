@@ -1,6 +1,7 @@
 import { Datepicker, type FlowbiteDatepickerTheme } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { getClientLogger } from '../../clientLogger';
 
@@ -129,10 +130,10 @@ export const DateChangeModal = ({
                     />
                 </div>
                 <div className='flex justify-end gap-4 mt-4'>
-                    <button className='px-4 py-2 btn normal-case' onClick={() => setDateChangeModalOpen(false)}>
+                    <Button className='px-4 py-2 btn normal-case' onClick={() => setDateChangeModalOpen(false)}>
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className='px-4 py-2 btn loculusColor text-white normal-case'
                         onClick={() => {
                             setRestrictedUntil(DateTime.fromJSDate(date));
@@ -141,7 +142,7 @@ export const DateChangeModal = ({
                         }}
                     >
                         Save
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

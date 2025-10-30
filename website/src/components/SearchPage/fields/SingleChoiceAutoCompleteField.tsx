@@ -1,4 +1,5 @@
 import { type InputHTMLAttributes, useEffect, useMemo, useState, forwardRef } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { createOptionsProviderHook, type OptionsProvider } from './AutoCompleteOptions.ts';
 import { TextField } from './TextField.tsx';
@@ -94,14 +95,14 @@ export const SingleChoiceAutoCompleteField = ({
                             as={CustomInput}
                         />
                         {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
-                            <button
+                            <Button
                                 className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                                 onClick={handleClear}
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
                                 type='button'
                             >
                                 <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
-                            </button>
+                            </Button>
                         )}
                         <ComboboxButton className='absolute inset-y-0 right-0 flex items-center pr-2'>
                             <MdiChevronUpDown className='w-5 h-5 text-gray-400' />

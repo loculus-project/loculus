@@ -1,5 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { type ChangeEvent, type FC, Fragment, useMemo, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
@@ -79,7 +80,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                         }`}
                                     >
                                         {option.text}
-                                        <button
+                                        <Button
                                             type='button'
                                             onClick={(event) => {
                                                 event.stopPropagation();
@@ -88,7 +89,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                             className='ml-1 focus:outline-none'
                                         >
                                             &times;
-                                        </button>
+                                        </Button>
                                     </span>
                                 ))}
                             </div>

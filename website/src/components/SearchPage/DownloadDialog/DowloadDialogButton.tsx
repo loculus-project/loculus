@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { type SequenceFilter } from './SequenceFilters';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
@@ -26,8 +27,8 @@ export const DownloadDialogButton: FC<DownloadDialogButtonProps> = ({ onClick, s
         buttonWidthClass = 'w-[15rem]'; // this width is fine for up to two digit numbers
     }
     return (
-        <button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
+        <Button className={buttonWidthClass + ' outlineButton'} onClick={onClick}>
             {buttonText}
-        </button>
+        </Button>
     );
 };

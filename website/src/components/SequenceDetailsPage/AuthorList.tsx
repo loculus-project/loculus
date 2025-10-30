@@ -1,4 +1,5 @@
 import { type FC, useMemo, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 type AuthorsListProps = {
     authors: string[];
@@ -58,9 +59,9 @@ export const AuthorList: FC<AuthorsListProps> = ({ authors }) => {
         <div>
             {authorsElements}
             {data.showMoreNeeded && (
-                <button onClick={() => setShowMore(!showMore)} className='ml-2 underline'>
+                <Button onClick={() => setShowMore(!showMore)} className='ml-2 underline'>
                     {showMore ? 'Show less' : 'Show more'}
-                </button>
+                </Button>
             )}
         </div>
     );
