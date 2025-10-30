@@ -139,14 +139,14 @@ export const InnerSearchFullUI = ({
                         field.name === schema.primaryKey
                             ? { type: 'alwaysChecked' }
                             : { type: 'greyedOut', tooltip: 'test test test' },
-                    isChecked: columnVisibilities.get(field.name) ?? false,
+                    isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
         [schema.metadata, schema.primaryKey, columnVisibilities],
     );
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
-            .filter((field) => columnVisibilities.get(field.name) === true)
+            .filter((field) => columnVisibilities.get(field.name)?.isVisible(selectedSuborganism) === true)
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 

@@ -29,14 +29,43 @@ export type SearchResponse = {
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
 type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
+// TODO test
+export class MetadataVisibility {
+    public readonly isChecked: boolean;
+    private readonly onlyForSuborganism: string | undefined;
+
+    constructor(isChecked: boolean, onlyForSuborganism: string | undefined) {
+        this.isChecked = isChecked;
+        this.onlyForSuborganism = onlyForSuborganism;
+    }
+
+    public isVisible(selectedSuborganism: string | null) {
+        if (!this.isChecked) {
+            return false;
+        }
+
+        if (this.onlyForSuborganism === undefined || selectedSuborganism === null) {
+            return true;
+        }
+
+        return this.onlyForSuborganism === selectedSuborganism;
+    }
+}
+
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
     state: QueryState,
     visibilityPrefix: string,
     initiallyVisibleAccessor: InitialVisibilityAccessor,
     visibilitySelectableAccessor: VisiblitySelectableAccessor,
-): Map<string, boolean> => {
-    const visibilities = new Map<string, boolean>();
+): Map<string, MetadataVisibility> => {
+    const explicitVisibilitiesInUrlByFieldName = new Map(
+        Object.entries(state)
+            .filter(([key]) => key.startsWith(visibilityPrefix))
+            .map(([key, value]) => [key, validateSingleValue(value, key) === 'true']),
+    );
+
+    const visibilities = new Map<string, MetadataVisibility>();
     schema.metadata.forEach((field) => {
         if (!visibilitySelectableAccessor(field)) {
             return;
@@ -47,20 +76,19 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         if (field.rangeOverlapSearch) {
             fieldName = field.rangeOverlapSearch.rangeName;
         }
-        visibilities.set(fieldName, initiallyVisibleAccessor(field));
+
+        const visibility = new MetadataVisibility(
+            explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
+            field.onlyShowInSearchWhenSuborganismIs,
+        );
+
+        visibilities.set(fieldName, visibility);
     });
 
-    const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
-
-    for (const key of visibilityKeys) {
-        // Visibility values must always be single strings
-        const stringValue = validateSingleValue(state[key], key);
-        visibilities.set(key.slice(visibilityPrefix.length), stringValue === 'true');
-    }
     return visibilities;
 };
 
-export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
+export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, MetadataVisibility> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
     const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
         field.notSearchable !== true && field.name !== schema.suborganismIdentifierField;
@@ -73,7 +101,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState)
     );
 };
 
-export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
+export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, MetadataVisibility> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     const isFieldSelectable: VisiblitySelectableAccessor = (field) => !(field.hideInSearchResultsTable ?? false);
     return getFieldOrColumnVisibilitiesFromQuery(
