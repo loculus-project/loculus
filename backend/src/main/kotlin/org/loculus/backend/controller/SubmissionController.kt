@@ -518,7 +518,10 @@ open class SubmissionController(
                 try {
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
                 } catch (e: Exception) {
-                    log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
+                    val duration = System.currentTimeMillis() - startTime
+                    log.error(e) {
+                        "[$endpoint] An unexpected error occurred while streaming after ${duration}ms, aborting the stream: $e"
+                    }
                     stream.write(
                         "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
                     )
