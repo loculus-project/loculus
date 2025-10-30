@@ -46,6 +46,16 @@ const enableFromEslint = {
             ],
         },
     ],
+    'no-restricted-syntax': [
+        'error',
+        {
+            selector: 'JSXElement[openingElement.name.name="button"]',
+            message:
+                'Use Button from "src/components/common/Button" instead of native <button> elements. ' +
+                'The wrapped Button component automatically disables until hydration completes, ' +
+                'preventing race conditions in Playwright tests.',
+        },
+    ],
 };
 
 const disableFromTypescriptEsLint = {
