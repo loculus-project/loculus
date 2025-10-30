@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
 import { type FC, useState, useRef } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
@@ -46,16 +47,16 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
 
     return (
         <>
-            <button className='btn btn-sm' onClick={openDialog}>
+            <Button className='btn btn-sm' onClick={openDialog}>
                 Edit data use terms
-            </button>
+            </Button>
             <dialog ref={dialogRef} className='modal-box'>
-                <button
+                <Button
                     className='btn btn-sm btn-circle btn-ghost text-gray-900 absolute right-2 top-2'
                     onClick={closeDialog}
                 >
                     ✕
-                </button>
+                </Button>
                 <label className='block text-sm font-medium leading-6 text-gray-900'>Edit data use terms</label>
                 <p className='text-sm text-gray-900 mb-4 py-2'>
                     Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>
@@ -72,7 +73,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     </div>
                 </div>
                 <div className='flex items-center justify-end my-2'>
-                    <button
+                    <Button
                         className='btn btn-sm'
                         onClick={() => {
                             closeDialog();
@@ -83,7 +84,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                         }}
                     >
                         Submit
-                    </button>
+                    </Button>
                 </div>
             </dialog>
         </>

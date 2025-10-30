@@ -1,6 +1,7 @@
 import { produce } from 'immer';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
+import { Button } from "src/components/common/Button";
 
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
@@ -368,13 +369,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 </div>
             </div>
 
-            <button
+            <Button
                 onClick={() => setFileUploadState(undefined)}
                 data-testid={`discard_${fileField}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
                 Discard files
-            </button>
+            </Button>
         </div>
     );
 };

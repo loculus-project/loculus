@@ -1,4 +1,5 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { SequencesViewer } from './SequenceViewer.tsx';
 import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
@@ -51,9 +52,8 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     if (!loadSequences) {
         return (
-            <button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
-                Load sequences
-            </button>
+            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>Load sequences
+                            </Button>
         );
     }
 

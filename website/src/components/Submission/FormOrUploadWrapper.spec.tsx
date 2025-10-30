@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { Button } from "src/components/common/Button";
 import { describe, expect, test, vi } from 'vitest';
 
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
@@ -72,7 +73,7 @@ const MockSaveWrapper = ({
                     consensusSequences: enableConsensusSequences,
                 }}
             />
-            <button onClick={handler}>generate</button>
+            <Button onClick={handler}>generate</Button>
         </>
     );
 };

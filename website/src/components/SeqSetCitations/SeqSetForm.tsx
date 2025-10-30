@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { Button } from "src/components/common/Button";
 
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
@@ -200,13 +201,13 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                     </span>
                 </div>
             </div>
-            <button
+            <Button
                 className='flex items-center btn loculusColor text-white hover:bg-primary-700'
                 disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
                 {isPending ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
-            </button>
+            </Button>
         </div>
     );
 };

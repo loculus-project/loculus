@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 import type { Organism } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
@@ -29,19 +30,18 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
 
     return (
         <div className='relative'>
-            <button className='relative z-50 p-2 -m-2' onClick={toggleMenu} aria-label='Open main menu'>
+            <Button className='relative z-50 p-2 -m-2' onClick={toggleMenu} aria-label='Open main menu'>
                 <SandwichIcon isOpen={isOpen} />
-            </button>
+            </Button>
             {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
-
             <div
                 className={`fixed top-0 right-0 z-50 w-64 min-h-screen bg-white flex flex-col transition-transform duration-300 ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
-                <button className='absolute z-50 right-3 top-4 p-2' onClick={toggleMenu} aria-label='Close main menu'>
+                <Button className='absolute z-50 right-3 top-4 p-2' onClick={toggleMenu} aria-label='Close main menu'>
                     <SandwichIcon isOpen={isOpen} />
-                </button>
+                </Button>
                 <div className='p-5 flex flex-col justify-between min-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10 font-bold'>

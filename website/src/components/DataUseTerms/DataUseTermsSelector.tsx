@@ -1,6 +1,7 @@
 import { Datepicker } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import { useState, type FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { DateChangeModal, datePickerTheme } from './DateChangeModal.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -148,9 +149,9 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     <span className='py-4 text-sm ml-8'>
                         Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
                         {calendarUseModal && (
-                            <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                            <Button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
                                 Change date
-                            </button>
+                            </Button>
                         )}
                     </span>
                 )}

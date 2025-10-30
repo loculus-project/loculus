@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
+import { Button } from "src/components/common/Button";
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
@@ -102,9 +103,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'htmlTemplate' && customDisplay.html !== undefined && (
                     /* eslint-disable @typescript-eslint/naming-convention */
-                    <div
+                    (<div
                         dangerouslySetInnerHTML={{ __html: generateCleanHtml(customDisplay.html, value.toString()) }}
-                    />
+                    />)
                     /* eslint-enable @typescript-eslint/naming-convention */
                 )}
                 {customDisplay?.type === 'dataUseTerms' && (
@@ -165,9 +166,9 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
         return (
             <span>
                 {showMore ? value : `${preview}...`}{' '}
-                <button onClick={() => setShowMore(!showMore)} className={`underline${showMore ? ' block' : ''}`}>
+                <Button onClick={() => setShowMore(!showMore)} className={`underline${showMore ? ' block' : ''}`}>
                     {showMore ? 'Show less' : 'Show more'}
-                </button>
+                </Button>
             </span>
         );
     }

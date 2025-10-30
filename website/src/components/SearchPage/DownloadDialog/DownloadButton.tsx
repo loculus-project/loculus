@@ -1,4 +1,5 @@
 import { type FC, type MouseEvent, type MouseEventHandler, useMemo, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { type DownloadOption, type DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import type { SequenceFilter } from './SequenceFilters.tsx';
@@ -26,7 +27,7 @@ export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
             .catch(() => {});
     };
     return (
-        <button
+        <Button
             className='ml-2 p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100 transition-colors'
             onClick={handleCopy}
             data-testid='copy-download-url'
@@ -36,7 +37,7 @@ export const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
             {copied && (
                 <span className='absolute bg-gray-800 text-white text-xs px-2 py-1 rounded -mt-10 -ml-2'>Copied!</span>
             )}
-        </button>
+        </Button>
     );
 };
 
