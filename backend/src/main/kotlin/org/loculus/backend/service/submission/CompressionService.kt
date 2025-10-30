@@ -176,12 +176,9 @@ class CompressionService(
             throw RuntimeException("reading Zstd decompressed size failed: error code $decompressedSize")
         }
 
-        val dictionary = when {
-            compressedSequence.compressionDictId != null -> compressionDictService.getDictById(
-                compressedSequence.compressionDictId,
-            )
-            else -> getFallbackDictionary()
-        }
+        val dictionary = compressedSequence.compressionDictId
+            ?.let { compressionDictService.getDictById(it) }
+            ?: getFallbackDictionary()
 
         val decompressedBuffer = ByteArray(decompressedSize.toInt())
         val decompressionReturnCode: Long = if (dictionary == null) {
