@@ -1,6 +1,7 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { type ReactNode } from 'react';
-import { Button } from "src/components/common/Button";
+
+import { Button } from './Button';
 
 interface BaseDialogProps {
     title: string;

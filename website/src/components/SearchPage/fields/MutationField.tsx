@@ -1,6 +1,5 @@
 import { Transition } from '@headlessui/react';
 import { type ChangeEvent, type FC, Fragment, useMemo, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
 import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
@@ -10,6 +9,7 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
+import { Button } from '../../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/headlessui/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 

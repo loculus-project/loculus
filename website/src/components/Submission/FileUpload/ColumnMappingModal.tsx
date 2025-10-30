@@ -4,12 +4,12 @@ import Papa from 'papaparse';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 import { Tooltip } from 'react-tooltip';
-import { Button } from "src/components/common/Button";
 
 import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
+import { Button } from '../../common/Button';
 import { InputFieldTooltip } from '../InputFieldTooltip';
 
 interface ColumnMappingModalProps {

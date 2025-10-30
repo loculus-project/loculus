@@ -1,5 +1,6 @@
 import { type FC, useMemo, useState } from 'react';
-import { Button } from "src/components/common/Button";
+
+import { Button } from '../common/Button';
 
 type AuthorsListProps = {
     authors: string[];

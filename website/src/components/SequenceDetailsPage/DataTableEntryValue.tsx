@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
-import { Button } from "src/components/common/Button";
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { LinkWithMenuComponent } from './LinkWithMenuComponent';
 import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 
 interface Props {
     data: TableDataEntry;
@@ -103,9 +103,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'htmlTemplate' && customDisplay.html !== undefined && (
                     /* eslint-disable @typescript-eslint/naming-convention */
-                    (<div
+                    <div
                         dangerouslySetInnerHTML={{ __html: generateCleanHtml(customDisplay.html, value.toString()) }}
-                    />)
+                    />
                     /* eslint-enable @typescript-eslint/naming-convention */
                 )}
                 {customDisplay?.type === 'dataUseTerms' && (

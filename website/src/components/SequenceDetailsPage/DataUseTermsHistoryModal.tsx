@@ -1,8 +1,8 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 import { type FC, useRef } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsOption } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];

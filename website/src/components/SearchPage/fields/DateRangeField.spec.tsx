@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useState } from 'react';
-import { Button } from "src/components/common/Button";
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
 import { type GroupedMetadataFilter, type FieldValues, type SetSomeFieldValues } from '../../../types/config';
+import { Button } from '../../common/Button';
 
 describe('DateRangeField', () => {
     function createRangeOverlapSearch(bound: 'lower' | 'upper') {

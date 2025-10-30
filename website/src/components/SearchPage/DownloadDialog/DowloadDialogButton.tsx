@@ -1,8 +1,8 @@
 import type { FC } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type SequenceFilter } from './SequenceFilters';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
+import { Button } from '../../common/Button';
 
 type DownloadDialogButtonProps = {
     onClick: () => void;

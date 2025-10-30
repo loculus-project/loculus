@@ -1,12 +1,12 @@
 import { produce } from 'immer';
 import { useEffect, useState, type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import type { FilesBySubmissionId, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
+import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';

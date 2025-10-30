@@ -2,7 +2,6 @@ import { AxiosError } from 'axios';
 import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
@@ -12,6 +11,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
+import { Button } from '../common/Button';
 
 const logger = getClientLogger('SeqSetForm');
 
