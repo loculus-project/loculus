@@ -29,7 +29,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     }
 
     const browseItem = {
-        text: 'Browse data',
+        text: 'Data explorer',
         path: routes.searchPage(organism),
         icon: SearchIcon,
     };
@@ -39,7 +39,7 @@ export function getSequenceRelatedItems(organism: string | undefined) {
     }
 
     const submitItem = {
-        text: 'Submit sequences',
+        text: 'Sequence submission',
         path: routes.submissionPageWithoutGroup(organism),
         icon: UploadIcon,
     };

@@ -19,12 +19,12 @@ class SubmissionPage {
         await this.page.goto('/');
         await this.navigation.openOrganismNavigation();
         await this.navigation.selectOrganism(organism);
-        await this.navigation.waitForOrganismNavigationLink('Submit sequences');
+        await this.navigation.waitForOrganismNavigationLink('Sequence submission');
     }
 
     async navigateToSubmissionPage(organism: string = 'Ebola Sudan') {
         await this.navigateToOrganism(organism);
-        await this.navigation.clickSubmitSequences();
+        await this.navigation.clickSequenceSubmission();
 
         // Click on the submit upload link
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
