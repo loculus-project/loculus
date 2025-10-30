@@ -39,7 +39,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectAll = () => {
         fields.forEach((field) => {
-            if (!isDisabled(field.displayState)) {
+            if (!shouldDisableCheckbox(field.displayState)) {
                 setFieldSelected(field.name, true);
             }
         });
@@ -51,7 +51,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectNone = () => {
         fields.forEach((field) => {
-            if (!isDisabled(field.displayState)) {
+            if (!shouldDisableCheckbox(field.displayState)) {
                 setFieldSelected(field.name, false);
             }
         });
@@ -147,18 +147,20 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     );
 };
 
-function isDisabled(displayState: FieldItemDisplayState | undefined) {
+function shouldDisableCheckbox(displayState: FieldItemDisplayState | undefined) {
     return displayState?.type === 'alwaysChecked' || displayState?.type === 'disabled';
+}
+
+function shouldGreyOutLabel(displayState: FieldItemDisplayState | undefined) {
+    return displayState?.type === 'greyedOut' || shouldDisableCheckbox(displayState);
 }
 
 function isAlwaysChecked(displayState: FieldItemDisplayState | undefined) {
     return displayState?.type === 'alwaysChecked';
 }
 
-function shouldGreyOutLabel(
-    displayState: FieldItemDisplayState | undefined,
-): displayState is { type: 'greyedOut'; tooltip: string } {
-    return displayState?.type === 'greyedOut';
+function getTooltip(displayState: FieldItemDisplayState | undefined) {
+    return displayState?.type === 'greyedOut' || displayState?.type === 'disabled' ? displayState.tooltip : undefined;
 }
 
 type FieldSelectorModalFieldProps = {
@@ -169,9 +171,10 @@ type FieldSelectorModalFieldProps = {
 const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, handleToggleField }) => {
     const tooltipId = useId();
 
-    const disabled = isDisabled(field.displayState);
-    const alwaysChecked = isAlwaysChecked(field.displayState);
+    const disableCheckbox = shouldDisableCheckbox(field.displayState);
     const greyOutLabel = shouldGreyOutLabel(field.displayState);
+    const alwaysChecked = isAlwaysChecked(field.displayState);
+    const tooltip = getTooltip(field.displayState);
 
     return (
         <div className='flex items-center'>
@@ -179,22 +182,20 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
                 type='checkbox'
                 id={`field-${field.name}`}
                 className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                    disabled ? 'opacity-60 cursor-not-allowed' : ''
+                    disableCheckbox ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
                 checked={field.isChecked || alwaysChecked}
                 onChange={() => handleToggleField(field.name, !field.isChecked)}
-                disabled={disabled}
+                disabled={disableCheckbox}
             />
             <label
                 htmlFor={`field-${field.name}`}
-                className={`ml-2 text-sm ${disabled || greyOutLabel ? 'text-gray-400' : 'text-gray-700'}`}
+                className={`ml-2 text-sm ${greyOutLabel ? 'text-gray-400' : 'text-gray-700'}`}
                 data-tooltip-id={tooltipId}
             >
                 {field.displayName ?? field.name}
                 {alwaysChecked ? ' (always included)' : ''}
-                {shouldGreyOutLabel(field.displayState) && (
-                    <CustomTooltip id={tooltipId} content={field.displayState.tooltip} />
-                )}
+                {tooltip !== undefined && <CustomTooltip id={tooltipId} content={tooltip} />}
             </label>
         </div>
     );
