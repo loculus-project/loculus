@@ -38,6 +38,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
+import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
@@ -199,7 +200,7 @@ open class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         headers.eTag = lastDatabaseWriteETag
-        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data") {
+        val streamBody = streamTransactioned(endpoint = "extract-unprocessed-data", organism = organism) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -331,7 +332,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-released-data") {
+        val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
             releasedDataModel.getReleasedData(organism)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
@@ -442,7 +443,7 @@ open class SubmissionController(
         // We just need to make sure the etag used is from before the count
         // Alternatively, we could read once to file while counting and then stream the file
 
-        val streamBody = streamTransactioned(compression, endpoint = "get-original-metadata") {
+        val streamBody = streamTransactioned(compression, endpoint = "get-original-metadata", organism = organism) {
             submissionDatabaseService.streamOriginalMetadata(
                 authenticatedUser,
                 organism,
@@ -500,10 +501,12 @@ open class SubmissionController(
     private fun <T> streamTransactioned(
         compressionFormat: CompressionFormat? = null,
         endpoint: String,
+        organism: Organism,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val startTime = System.currentTimeMillis()
         MDC.put(REQUEST_ID_MDC_KEY, requestIdContext.requestId)
+        MDC.put(ORGANISM_MDC_KEY, organism.name)
 
         val outputStream = when (compressionFormat) {
             CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
@@ -530,6 +533,7 @@ open class SubmissionController(
         log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
 
         MDC.remove(REQUEST_ID_MDC_KEY)
+        MDC.remove(ORGANISM_MDC_KEY)
     }
 
     fun parseFileMapping(fileMapping: String?, organism: Organism): SubmissionIdFilesMap? {
