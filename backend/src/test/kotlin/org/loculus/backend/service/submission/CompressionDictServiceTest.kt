@@ -27,7 +27,7 @@ class CompressionDictServiceTest(@Autowired private val underTest: CompressionDi
     fun `gets dict for unprocessed unaligned sequences`() {
         val forUnalignedSequence = underTest.getDictForUnalignedSequence(Organism(OTHER_ORGANISM))!!
 
-        assertThat(forUnalignedSequence.dict, `is`(("ATCG" + "AAAAAAAAAAAAAAAA").toByteArray()))
+        assertThat(forUnalignedSequence.dict, `is`(("AAAAAAAAAAAAAAAA" + "ATCG").toByteArray()))
 
         val byId = underTest.getDictById(forUnalignedSequence.id)
 

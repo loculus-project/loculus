@@ -57,7 +57,9 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
                 }
 
                 val references = instanceConfig.referenceGenome.nucleotideSequences
-                    .joinToString("") { it.sequence }
+                    .map { it.sequence }
+                    .sortedBy { it }
+                    .joinToString("")
                 val dictId = getDictIdOrInsertNewEntry(references)
                 val unalignedDict = references.toByteArray()
                 val dictEntry = DictEntry(dictId, unalignedDict)
