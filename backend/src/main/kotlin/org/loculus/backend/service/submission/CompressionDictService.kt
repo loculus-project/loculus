@@ -35,6 +35,11 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
         populateCaches()
     }
 
+    /**
+     * Main responsibility: Make sure that all dictionaries that might be used for new data exist in the database.
+     *
+     * Also, already populates the caches.
+     */
     private fun populateCaches(): DictCaches {
         log.info { "Populating compression dictionary caches" }
 
