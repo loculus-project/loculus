@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { Button } from "src/components/common/Button";
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { LineageField } from './LineageField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config';
+import { Button } from '../../common/Button';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
+import { Button } from '../../common/Button';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 

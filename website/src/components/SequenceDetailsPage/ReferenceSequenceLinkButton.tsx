@@ -1,8 +1,8 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type ReferenceAccession } from '../../types/referencesGenomes';
+import { Button } from '../common/Button';
 import X from '~icons/material-symbols/close';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 

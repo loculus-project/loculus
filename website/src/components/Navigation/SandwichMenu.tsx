@@ -1,13 +1,13 @@
 import type { FC } from 'react';
-import { Button } from "src/components/common/Button";
 
+import AccessionSearchBox from './AccessionSearchBox';
 import type { Organism } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { navigationItems, type TopNavigationItems } from '../../routes/navigationItems';
 import { routes } from '../../routes/routes';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
-import AccessionSearchBox from './AccessionSearchBox';
+import { Button } from '../common/Button';
 
 type SandwichMenuProps = {
     topNavigationItems: TopNavigationItems;

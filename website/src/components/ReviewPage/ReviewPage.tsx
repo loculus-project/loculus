@@ -2,7 +2,6 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
@@ -28,6 +27,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getSegmentAndGeneDisplayNameMap } from './getSegmentAndGeneDisplayNameMap.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';

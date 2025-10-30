@@ -1,16 +1,16 @@
 import { useState, type Dispatch, type FC, type SetStateAction } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { routes } from '../../../routes/routes';
+import { Button } from '../../common/Button';
 import type { UploadAction } from '../DataUploadForm';
 import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
+import type { ColumnMapping } from './ColumnMapping';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
-import type { ColumnMapping } from './ColumnMapping';
 
 type SequenceEntryUploadProps = {
     organism: string;
@@ -187,8 +187,9 @@ const DevExampleData = ({
     dataIsLoaded: boolean;
 }) => {
     return (
-        <p className='text-gray-800 text-xs mt-5 opacity-50'>Add dev example data
-                        <br />
+        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+            Add dev example data
+            <br />
             <input
                 type='number'
                 value={exampleEntries ?? ''}

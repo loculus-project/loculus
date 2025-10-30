@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { SeqSetForm } from './SeqSetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import { Button } from '../common/Button';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider';
 import AddBoxIcon from '~icons/ic/baseline-library-add';

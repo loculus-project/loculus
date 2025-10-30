@@ -1,7 +1,7 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
-import { Button } from "src/components/common/Button";
 
+import { Button } from '../common/Button';
 import X from '~icons/material-symbols/close';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
 

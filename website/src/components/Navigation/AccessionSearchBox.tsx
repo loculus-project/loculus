@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FC, type FormEvent } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { routes } from '../../routes/routes';
+import { Button } from '../common/Button';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
