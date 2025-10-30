@@ -1,9 +1,10 @@
 import { type FC, useMemo } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
-import type { Schema } from '../../types/config.ts';
+import type { Metadata, Schema } from '../../types/config.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
 import { type FieldItem, type FieldItemDisplayState, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
+import { isActiveForSelectedSuborganism } from './isActiveForSelectedSuborganism.tsx';
 
 export type TableColumnSelectorModalProps = {
     isOpen: boolean;
@@ -48,7 +49,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
 };
 
 function getDisplayState(
-    field: Schema['metadata'][number],
+    field: Metadata,
     selectedSuborganism: string | null,
     schema: Schema,
 ): FieldItemDisplayState | undefined {
@@ -56,11 +57,7 @@ function getDisplayState(
         return { type: 'alwaysChecked' };
     }
 
-    if (
-        field.onlyShowInSearchWhenSuborganismIs !== undefined &&
-        selectedSuborganism !== null &&
-        field.onlyShowInSearchWhenSuborganismIs !== selectedSuborganism
-    ) {
+    if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
         return {
             type: 'greyedOut',
             tooltip: `This is only visible when the ${schema.suborganismIdentifierField} ${field.onlyShowInSearchWhenSuborganismIs} is selected.`,

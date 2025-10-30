@@ -7,6 +7,7 @@ import {
     type FieldItemDisplayState,
     FieldSelectorModal as CommonFieldSelectorModal,
 } from '../../../common/FieldSelectorModal.tsx';
+import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborganism.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
@@ -83,12 +84,4 @@ export function getDefaultSelectedFields(metadata: Metadata[], selectedSuborgani
     );
     defaultFields.add(ACCESSION_VERSION_FIELD);
     return defaultFields;
-}
-
-function isActiveForSelectedSuborganism(selectedSuborganism: string | null, field: Metadata) {
-    return (
-        selectedSuborganism === null ||
-        field.onlyShowInSearchWhenSuborganismIs === undefined ||
-        field.onlyShowInSearchWhenSuborganismIs === selectedSuborganism
-    );
 }
