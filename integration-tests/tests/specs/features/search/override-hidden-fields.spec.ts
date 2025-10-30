@@ -102,6 +102,7 @@ test('Override hidden fields', async ({ page, pageWithGroup }) => {
     await page.getByRole('button', { name: 'Reset' }).click();
     await search.enableSearchFields('Is revocation');
     await search.select('Is revocation', 'true');
+    await search.fill('Accession', revokedAccession, true);
     await expect(
         page.getByRole('link', { name: expectedRevocationAccessionVersion }),
     ).toBeVisible();

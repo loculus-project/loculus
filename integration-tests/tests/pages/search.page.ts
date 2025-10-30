@@ -49,8 +49,8 @@ export class SearchPage {
         await this.page.getByTestId('field-selector-close-button').click();
     }
 
-    async fill(fieldLabel: string, value: string) {
-        const field = this.page.getByRole('textbox', { name: fieldLabel });
+    async fill(fieldLabel: string, value: string, exact = false) {
+        const field = this.page.getByRole('textbox', { name: fieldLabel, exact });
         await field.fill(value);
         await field.press('Enter');
         await this.page.waitForTimeout(900); // how can we better ensure that the filter is applied?
