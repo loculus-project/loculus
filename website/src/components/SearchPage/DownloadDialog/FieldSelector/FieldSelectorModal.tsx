@@ -1,34 +1,26 @@
-import { useState, type FC } from 'react';
+import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata } from '../../../../types/config.ts';
-import { FieldSelectorModal as CommonFieldSelectorModal, type FieldItem } from '../../../common/FieldSelectorModal.tsx';
+import { type FieldItem, FieldSelectorModal as CommonFieldSelectorModal } from '../../../common/FieldSelectorModal.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
     onClose: () => void;
     metadata: Metadata[];
-    initialSelectedFields?: string[];
-    onSave: (selectedFields: string[]) => void;
+    selectedFields: Set<string>;
+    onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     isOpen,
     onClose,
     metadata,
-    initialSelectedFields,
-    onSave,
+    selectedFields,
+    onSelectedFieldsChange,
 }) => {
-    const getInitialSelectedFields = () => {
-        const fields = new Set(initialSelectedFields ?? getDefaultSelectedFields(metadata));
-        fields.add(ACCESSION_VERSION_FIELD);
-        return fields;
-    };
-
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getInitialSelectedFields());
-
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
-        setSelectedFields((prevSelectedFields) => {
+        onSelectedFieldsChange((prevSelectedFields) => {
             const newSelectedFields = new Set(prevSelectedFields);
 
             if (selected) {
@@ -37,7 +29,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
                 newSelectedFields.delete(fieldName);
             }
 
-            onSave(Array.from(newSelectedFields));
             return newSelectedFields;
         });
     };
@@ -66,13 +57,10 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
  * Gets the default list of field names that should be selected
  * based on the includeInDownloadsByDefault flag
  */
-export function getDefaultSelectedFields(metadata: Metadata[]): string[] {
-    const defaultFields = metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name);
-
-    // Ensure ACCESSION_VERSION_FIELD is always included
-    if (!defaultFields.includes(ACCESSION_VERSION_FIELD)) {
-        defaultFields.push(ACCESSION_VERSION_FIELD);
-    }
-
+export function getDefaultSelectedFields(metadata: Metadata[]): Set<string> {
+    const defaultFields = new Set(
+        metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name),
+    );
+    defaultFields.add(ACCESSION_VERSION_FIELD);
     return defaultFields;
 }
