@@ -12,6 +12,8 @@ import org.springframework.web.servlet.HandlerMapping
 
 private val log = KotlinLogging.logger {}
 
+const val ORGANISM_MDC_KEY = "organism"
+
 @Component
 class OrganismMdcInterceptor : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
@@ -26,7 +28,7 @@ class OrganismMdcInterceptor : HandlerInterceptor {
         }
 
         if (organism != null) {
-            MDC.put("organism", organism)
+            MDC.put(ORGANISM_MDC_KEY, organism)
         }
 
         return true
