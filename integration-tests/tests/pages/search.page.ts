@@ -142,4 +142,76 @@ export class SearchPage {
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
     }
+
+    async searchByGroupId(organism: string, groupId: number) {
+        await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
+    }
+
+    /**
+     * Helper method to extract identifiers from sequence rows using a regex pattern
+     */
+    private async extractIdentifiersFromRows(pattern: RegExp): Promise<string[]> {
+        const rows = this.getSequenceRows();
+        const count = await rows.count();
+
+        if (count === 0) {
+            return [];
+        }
+
+        const identifiers: string[] = [];
+        for (let i = 0; i < count; i++) {
+            const rowText = await rows.nth(i).innerText();
+            const match = rowText.match(pattern);
+            if (match) {
+                identifiers.push(match[0]);
+            }
+        }
+
+        return identifiers;
+    }
+
+    /**
+     * Get base accessions without version numbers (e.g., LOC_XXXXX)
+     */
+    async getAccessions(): Promise<string[]> {
+        return this.extractIdentifiersFromRows(/LOC_[A-Z0-9]+/);
+    }
+
+    /**
+     * Get full accession versions with version numbers (e.g., LOC_XXXXX.1)
+     */
+    async getAccessionVersions(): Promise<string[]> {
+        return this.extractIdentifiersFromRows(/LOC_[A-Z0-9]+\.[0-9]+/);
+    }
+
+    /**
+     * Wait for sequences to appear in search after release (handles indexing delay)
+     * @param minCount Minimum number of sequences expected
+     * @param timeoutMs Timeout in milliseconds
+     * @param includeVersions If true, returns full accession versions (LOC_XXXXX.1), otherwise base accessions (LOC_XXXXX)
+     */
+    async waitForSequencesInSearch(
+        minCount: number,
+        timeoutMs: number = 60000,
+        includeVersions: boolean = true,
+    ): Promise<string[]> {
+        let results: string[] = [];
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    results = includeVersions
+                        ? await this.getAccessionVersions()
+                        : await this.getAccessions();
+                    return results.length;
+                },
+                {
+                    message: `Expected at least ${minCount} sequences to appear in search results`,
+                    timeout: timeoutMs,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeGreaterThanOrEqual(minCount);
+        return results;
+    }
 }

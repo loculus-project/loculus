@@ -4,7 +4,7 @@ import { getRuntimeConfig } from '../../../../config';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 
-export const GET: APIRoute = async ({ params, locals }) => {
+async function proxyToBackend({ params, locals }: Parameters<APIRoute>[0], method: 'GET' | 'HEAD'): Promise<Response> {
     const runtimeConfig = getRuntimeConfig();
     const { accessionVersion, fileCategory, fileName } = params;
     const { accession, version } = parseAccessionVersionFromString(accessionVersion!);
@@ -14,6 +14,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const accessToken = getAccessToken(locals.session)!;
 
     const response = await fetch(backendUrl, {
+        method,
         redirect: 'manual',
         headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -31,9 +32,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             headers: { Location: s3Url },
         });
-    } else if (response.ok) {
-        return new Response(response.body, { status: response.status });
-    } else {
-        return new Response(response.body, { status: response.status });
     }
-};
+
+    return new Response(response.body, { status: response.status, headers: new Headers(response.headers) });
+}
+
+export const GET: APIRoute = (ctx) => proxyToBackend(ctx, 'GET');
+export const HEAD: APIRoute = (ctx) => proxyToBackend(ctx, 'HEAD');

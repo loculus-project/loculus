@@ -610,6 +610,12 @@
                     "docsIncludePrefix": false,
                     "type": "array",
                     "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
+                  },
+                  "backend_request_timeout_seconds": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "integer",
+                    "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
                 }
               }
@@ -678,6 +684,18 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
+                    },
+                    "backend_request_timeout_seconds": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Timeout in seconds for requests to the backend server for data to process"
+                    },
+                    "time_between_approve_requests_seconds": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Time in seconds to wait between approve requests"
                     }
                   },
                   "required": ["method"]
@@ -866,6 +884,13 @@
       "enum": ["local", "server"],
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
+    },
+    "imagePullPolicy": {
+      "groups": ["general"],
+      "type": "string",
+      "enum": ["Always", "IfNotPresent", "Never"],
+      "default": "Always",
+      "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section for some images. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
     },
     "localHost": {
       "groups": ["general"],
@@ -1448,9 +1473,13 @@
           "description": "Name of Loculus instance in ENA",
           "default": "Loculus"
         },
-        "enaGithubTestUrl": {
+        "enaApprovedListTestUrl": {
           "type": "string",
-          "description": "URL to the test ENA github repository"
+          "description": "URL to the test ENA approved sequence list (typically hosted on a Github repo)"
+        },
+        "enaSuppressedListTestUrl": {
+          "type": "string",
+          "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
         }
       }
     },

@@ -441,7 +441,7 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row in metadata file contains no id",
+                    "contains no value for 'id'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

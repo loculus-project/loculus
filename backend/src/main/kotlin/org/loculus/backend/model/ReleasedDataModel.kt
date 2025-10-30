@@ -20,8 +20,6 @@ import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
-import org.loculus.backend.service.submission.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
-import org.loculus.backend.service.submission.EXTERNAL_METADATA_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
@@ -29,6 +27,8 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UpdateTrackerTable
+import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+import org.loculus.backend.service.submission.dbtables.EXTERNAL_METADATA_TABLE_NAME
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.EarliestReleaseDateFinder

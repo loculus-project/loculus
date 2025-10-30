@@ -40,7 +40,7 @@ The ena_deposition package, runs the following functions in parallel (via thread
 
 ### trigger_submission_to_ena
 
-Download file in `github_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena-submission.submission_table`.
+Download file in `approved_list_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena-submission.submission_table`.
 
 ### create_project
 

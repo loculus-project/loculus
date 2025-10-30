@@ -1,0 +1,3 @@
+ALTER TABLE metadata_upload_aux_table
+ADD CONSTRAINT metadata_upload_aux_table_upload_id_accession_key
+UNIQUE (upload_id, accession);

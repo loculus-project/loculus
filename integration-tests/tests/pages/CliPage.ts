@@ -365,6 +365,15 @@ export class CliPage {
      * Log CLI result for debugging (always includes stderr if present)
      */
     logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
+        const shouldLog =
+            result.exitCode !== 0 ||
+            (result.stderr?.length ?? 0) > 0 ||
+            process.env.CLI_TEST_LOGS === '1';
+
+        if (!shouldLog) {
+            return;
+        }
+
         const parts = [`${operation}:`];
 
         if (result.exitCode !== 0) {

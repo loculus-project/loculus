@@ -121,7 +121,7 @@ def fetch_unprocessed_sequences(
         **({"If-None-Match": etag} if etag else {}),
     }
     logger.debug(f"Requesting data with ETag: {etag}")
-    response = requests.post(url, data=params, headers=headers, timeout=10)
+    response = requests.post(url, data=params, headers=headers, timeout=config.backend_request_timeout_seconds)
     logger.info(
         f"Unprocessed data from backend: status code {response.status_code}, "
         f"request id: {response.headers.get('x-request-id')}"

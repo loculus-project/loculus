@@ -241,29 +241,17 @@ ALTER TABLE public.sequence_entries_preprocessed_data OWNER TO postgres;
 --
 
 CREATE VIEW public.external_metadata_view AS
- SELECT cpd.accession,
-    cpd.version,
-    all_external_metadata.updated_metadata_at,
+ SELECT sepd.accession,
+    sepd.version,
+    aem.updated_metadata_at,
         CASE
-            WHEN (all_external_metadata.external_metadata IS NULL) THEN jsonb_build_object('metadata', (cpd.processed_data -> 'metadata'::text))
-            ELSE jsonb_build_object('metadata', ((cpd.processed_data -> 'metadata'::text) || all_external_metadata.external_metadata))
+            WHEN (aem.external_metadata IS NULL) THEN jsonb_build_object('metadata', (sepd.processed_data -> 'metadata'::text))
+            ELSE jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata))
         END AS joint_metadata
-   FROM (( SELECT sequence_entries_preprocessed_data.accession,
-            sequence_entries_preprocessed_data.version,
-            sequence_entries_preprocessed_data.pipeline_version,
-            sequence_entries_preprocessed_data.processed_data,
-            sequence_entries_preprocessed_data.errors,
-            sequence_entries_preprocessed_data.warnings,
-            sequence_entries_preprocessed_data.processing_status,
-            sequence_entries_preprocessed_data.started_processing_at,
-            sequence_entries_preprocessed_data.finished_processing_at
-           FROM public.sequence_entries_preprocessed_data
-          WHERE (sequence_entries_preprocessed_data.pipeline_version = ( SELECT current_processing_pipeline.version
-                   FROM public.current_processing_pipeline
-                  WHERE (current_processing_pipeline.organism = ( SELECT se.organism
-                           FROM public.sequence_entries se
-                          WHERE ((se.accession = sequence_entries_preprocessed_data.accession) AND (se.version = sequence_entries_preprocessed_data.version))))))) cpd
-     LEFT JOIN public.all_external_metadata ON (((all_external_metadata.accession = cpd.accession) AND (all_external_metadata.version = cpd.version))));
+   FROM (((public.sequence_entries_preprocessed_data sepd
+     JOIN public.sequence_entries se ON (((se.accession = sepd.accession) AND (se.version = sepd.version))))
+     JOIN public.current_processing_pipeline cpp ON (((cpp.organism = se.organism) AND (cpp.version = sepd.pipeline_version))))
+     LEFT JOIN public.all_external_metadata aem ON (((aem.accession = sepd.accession) AND (aem.version = sepd.version))));
 
 
 ALTER VIEW public.external_metadata_view OWNER TO postgres;
@@ -489,9 +477,7 @@ CREATE VIEW public.sequence_entries_view AS
     sepd.processed_data,
     (sepd.processed_data || em.joint_metadata) AS joint_metadata,
         CASE
-            WHEN se.is_revocation THEN ( SELECT current_processing_pipeline.version
-               FROM public.current_processing_pipeline
-              WHERE (current_processing_pipeline.organism = se.organism))
+            WHEN se.is_revocation THEN cpp.version
             ELSE sepd.pipeline_version
         END AS pipeline_version,
     sepd.errors,
@@ -510,12 +496,8 @@ CREATE VIEW public.sequence_entries_view AS
             ELSE 'NO_ISSUES'::text
         END AS processing_result
    FROM (((public.sequence_entries se
-     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = ( SELECT current_processing_pipeline.version
-           FROM public.current_processing_pipeline
-          WHERE (current_processing_pipeline.organism = ( SELECT se_1.organism
-                   FROM public.sequence_entries se_1
-                  WHERE ((se_1.accession = sepd.accession) AND (se_1.version = sepd.version)))))))))
-     LEFT JOIN public.current_processing_pipeline ccp ON (((se.organism = ccp.organism) AND (sepd.pipeline_version = ccp.version))))
+     LEFT JOIN public.current_processing_pipeline cpp ON ((se.organism = cpp.organism)))
+     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
      LEFT JOIN public.external_metadata_view em ON (((se.accession = em.accession) AND (se.version = em.version))));
 
 
@@ -671,6 +653,14 @@ ALTER TABLE ONLY public.groups_table
 
 ALTER TABLE ONLY public.metadata_upload_aux_table
     ADD CONSTRAINT metadata_upload_aux_table_pkey PRIMARY KEY (upload_id, submission_id);
+
+
+--
+-- Name: metadata_upload_aux_table metadata_upload_aux_table_upload_id_accession_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.metadata_upload_aux_table
+    ADD CONSTRAINT metadata_upload_aux_table_upload_id_accession_key UNIQUE (upload_id, accession);
 
 
 --

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.SeqSetCitationsConstants
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.crossref.CrossRefService
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,7 +41,7 @@ class SeqSetValidationEndpointsTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("Accessions ABCD do not exist"),
+                    containsString("Accession versions ABCD.1 do not exist"),
                 ),
             )
 
@@ -66,7 +67,7 @@ class SeqSetValidationEndpointsTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "Accession versions must be integers",
+                        "Invalid version in accession 'ABCD.EF'",
                     ),
                 ),
             )
@@ -170,7 +171,7 @@ class SeqSetValidationEndpointsTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("SeqSet must contain at least one record"),
+                    containsString("No accessions provided"),
                 ),
             )
         client.updateSeqSet(seqSetRecords = "[]")
@@ -179,7 +180,7 @@ class SeqSetValidationEndpointsTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("SeqSet must contain at least one record"),
+                    containsString("No accessions provided"),
                 ),
             )
     }
@@ -211,5 +212,36 @@ class SeqSetValidationEndpointsTest(
                     "User exceeded limit of ${SeqSetCitationsConstants.DOI_WEEKLY_RATE_LIMIT} DOIs created per week.",
                 ),
             )
+    }
+
+    @Test
+    fun `WHEN creating seqSet with unversioned accession that has unreleased v2 THEN succeeds if v1 is released`() {
+        // This test verifies the fix for issue #5113
+        // When a user adds an unversioned accession to a seqset, it should succeed as long as v1 is released,
+        // even if a newer version exists but hasn't been released yet (e.g., during revision)
+
+        // Step 1: Create and approve v1
+        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val allAccessions = accessions.map { it.accession }
+
+        // Step 2: Revise all sequences and process them, but don't approve them yet
+        // This creates v2 for all in AWAITING_APPROVAL state (not released)
+        submissionConvenienceClient.reviseDefaultProcessedSequenceEntries(allAccessions)
+        val extractedAccessionVersions = submissionConvenienceClient.extractUnprocessedData()
+        submissionConvenienceClient.submitProcessedData(
+            extractedAccessionVersions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) },
+        )
+        // Note: We intentionally do NOT approve v2, leaving it in AWAITING_APPROVAL
+
+        // Step 3: Try to create a seqset with the unversioned accession (first one)
+        // This should succeed because v1 is released, even though v2 exists and is not released
+        val accession = allAccessions.first()
+        val accessionJson = """[{"accession": "$accession", "type": "loculus"}]"""
+        client.createSeqSet(seqSetRecords = accessionJson)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
     }
 }

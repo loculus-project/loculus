@@ -165,7 +165,7 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
@@ -303,7 +303,7 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
@@ -352,7 +352,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { [SINGLE_REFERENCE]: { nucleotideSegmentNames: [], geneNames: [], insdcAccessionFull: [] } },
+                    { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                 ),
             });
 
@@ -389,8 +389,9 @@ describe('DownloadDialog', () => {
             await checkAgreement();
             await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
 
-            const { path } = parseDownloadHref();
+            const { path, query } = parseDownloadHref();
             expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
         });
 
         test('should enable the aligned sequence downloads when suborganism is selected', async () => {
