@@ -179,6 +179,11 @@
             }
           }
         },
+        "onlyForSuborganism": {
+          "groups": ["metadata"],
+          "type": "string",
+          "description": "On the search page of the website: Put the name of the suborganism in here if this field should only be visible if that suborganism is selected (in the search bar, as a table column, and in the metadata download)"
+        },
         "ontology_id": {
           "groups": ["metadata"],
           "type": "string"
