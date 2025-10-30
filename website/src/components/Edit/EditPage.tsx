@@ -1,6 +1,7 @@
 import { isErrorFromAlias } from '@zodios/core';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Button } from "src/components/common/Button";
 
 import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
 import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
@@ -130,9 +131,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-
             <div className='flex items-center gap-4 mt-4'>
-                <button
+                <Button
                     className='btn normal-case'
                     onClick={() =>
                         displayConfirmationDialog({
@@ -144,7 +144,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 >
                     {isPending && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
-                </button>
+                </Button>
             </div>
         </>
     );

@@ -1,4 +1,5 @@
 import { type FC, useId, useMemo } from 'react';
+import { Button } from "src/components/common/Button";
 
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
@@ -69,14 +70,14 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
                     ))}
                 </select>
                 {selectedSuborganism !== '' && selectedSuborganism !== null && (
-                    <button
+                    <Button
                         className='absolute top-2 right-6 flex items-center pr-2 h-5 bg-white rounded-sm'
                         onClick={() => setSelectedSuborganism(null)}
                         aria-label={`Clear ${label}`}
                         type='button'
                     >
                         <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
-                    </button>
+                    </Button>
                 )}
             </div>
             <p className='text-xs text-gray-600 mt-2'>

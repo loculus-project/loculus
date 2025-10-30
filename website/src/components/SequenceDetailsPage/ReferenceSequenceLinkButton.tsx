@@ -1,5 +1,6 @@
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from '@headlessui/react';
 import React, { Fragment } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { type ReferenceAccession } from '../../types/referencesGenomes';
 import X from '~icons/material-symbols/close';
@@ -31,9 +32,9 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
 
     return (
         <>
-            <button onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
+            <Button onClick={openDialog} className='text-gray-400 hover:text-primary-600 '>
                 <MaterialSymbolsInfoOutline className='inline-block h-6 w-5' />
-            </button>
+            </Button>
             <Transition appear show={isOpen} as={Fragment}>
                 <Dialog as='div' className='relative z-40' onClose={closeDialog}>
                     <TransitionChild
@@ -63,9 +64,9 @@ const ReferenceSequenceLinkButton: React.FC<Props> = ({ reference }) => {
                                     <DialogTitle as='h3' className='font-bold text-2xl mb-4 text-primary-700'>
                                         Reference sequence
                                     </DialogTitle>
-                                    <button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
+                                    <Button className='absolute right-2 top-2 p-1' onClick={closeDialog}>
                                         <X className='h-6 w-6' />
-                                    </button>
+                                    </Button>
                                     <div className='mt-4'>
                                         {reference.filter((item) => item.insdcAccessionFull !== undefined).length >
                                             0 && (

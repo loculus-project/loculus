@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Button } from "src/components/common/Button";
 
 import type { FileKind, ProcessedFile } from './fileProcessing.ts';
 import useClientFlag from '../../../hooks/isClient.ts';
@@ -166,18 +167,18 @@ export const FileUploadComponent = ({
             ) : (
                 <div className='flex flex-col items-center justify-center text-center flex-1 px-4 py-2'>
                     <div className='text-sm text-gray-500 mb-1'>{myFile.handle().name}</div>
-                    <button
+                    <Button
                         onClick={() => void setMyFile(null)}
                         data-testid={`discard_${name}`}
                         className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                     >
                         Discard file
-                    </button>
+                    </Button>
                 </div>
             )}
             {showUndo && isEdited && (
                 <div className='absolute top-1 right-2'>
-                    <button
+                    <Button
                         className='bg-transparent'
                         onClick={() => void reset()}
                         aria-label={`Undo ${name}`}
@@ -186,12 +187,12 @@ export const FileUploadComponent = ({
                         <div className='tooltip tooltip-info whitespace-pre-line' data-tip='Revert to initial data'>
                             <UndoTwoToneIcon color='action' />
                         </div>
-                    </button>
+                    </Button>
                 </div>
             )}
             {onDownload && myFile && (
                 <div className={`absolute top-1 ${showUndo && isEdited ? 'right-10' : 'right-2'}`}>
-                    <button
+                    <Button
                         className='bg-transparent'
                         onClick={onDownload}
                         disabled={downloadDisabled}
@@ -203,7 +204,7 @@ export const FileUploadComponent = ({
                                 className={`${downloadDisabled ? 'text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
                             />
                         </div>
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>

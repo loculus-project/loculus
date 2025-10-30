@@ -1,4 +1,5 @@
 import { type FC, type ReactElement, useMemo, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import type { MutationBadgeData, SegmentedMutations } from '../../types/config';
 
@@ -116,19 +117,19 @@ export const SubstitutionsContainer: FC<Props> = ({ values }) => {
                 (showMore ? (
                     <>
                         {initiallyHidden}
-                        <button onClick={() => setShowMore(false)} className='underline'>
+                        <Button onClick={() => setShowMore(false)} className='underline'>
                             Show less
-                        </button>
+                        </Button>
                     </>
                 ) : (
-                    <button
+                    <Button
                         onClick={() => {
                             setShowMore(true);
                         }}
                         className='underline'
                     >
                         Show more
-                    </button>
+                    </Button>
                 ))}
         </div>
     );
