@@ -10,9 +10,6 @@ jobs:
         taxon_id:
           - 10244    # Mpox
           - 11234    # Measles morbillivirus
-          - 11250    # RSV
-          - 208893   # RSV A
-          - 208895   # RSV B
           - 1868215  # Orthopneumovirus
           - 3048148  # Metapneumovirus hominis
           - 3048448  # West nile virus
