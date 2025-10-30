@@ -1,13 +1,13 @@
 import { type FC, useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
-import { Button } from "src/components/common/Button";
 
 import { routes } from '../../routes/routes';
 import { backendClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -56,8 +56,9 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
                     onConfirmation: handleRevokeSequenceEntry,
                 })
             }
-        >Revoke this sequence
-                    </Button>
+        >
+            Revoke this sequence
+        </Button>
     );
 };
 

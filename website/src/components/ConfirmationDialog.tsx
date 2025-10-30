@@ -1,6 +1,7 @@
 import { type FC } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
-import { Button } from "src/components/common/Button";
+
+import { Button } from '../components/common/Button';
 
 type ConfirmationDialogProps = {
     dialogText: string;

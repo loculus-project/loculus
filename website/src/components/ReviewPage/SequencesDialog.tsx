@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
+import { Button } from '../common/Button';
 import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 
 type SequencesDialogProps = {

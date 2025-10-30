@@ -1,8 +1,8 @@
 import { type FC, useId, useMemo } from 'react';
-import { Button } from "src/components/common/Button";
 
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { MetadataFilterSchema } from '../../utils/search.ts';
+import { Button } from '../common/Button';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 
 type SuborganismSelectorProps = {

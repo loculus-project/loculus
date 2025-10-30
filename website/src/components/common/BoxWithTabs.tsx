@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from 'react';
-import { Button } from "src/components/common/Button";
+
+import { Button } from './Button';
 
 type BoxWithTabsTabBarProps = {
     children: ReactNode;

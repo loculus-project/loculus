@@ -1,6 +1,5 @@
 import { DateTime } from 'luxon';
 import { useEffect, useState, type FC } from 'react';
-import { Button } from "src/components/common/Button";
 
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts';
@@ -20,6 +19,7 @@ import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
+import { Button } from '../common/Button';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;

@@ -1,8 +1,8 @@
 import { Input } from '@headlessui/react';
 import { type FC } from 'react';
-import { Button } from "src/components/common/Button";
 
 import type { InputFieldOption } from '../../types/config';
+import { Button } from '../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/headlessui/Combobox';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 

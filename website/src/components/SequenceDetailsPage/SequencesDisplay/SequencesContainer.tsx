@@ -1,5 +1,4 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
-import { Button } from "src/components/common/Button";
 
 import { SequencesViewer } from './SequenceViewer.tsx';
 import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
@@ -18,6 +17,7 @@ import {
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
+import { Button } from '../../common/Button';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
@@ -52,8 +52,9 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     if (!loadSequences) {
         return (
-            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>Load sequences
-                            </Button>
+            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+                Load sequences
+            </Button>
         );
     }
 
