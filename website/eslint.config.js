@@ -43,6 +43,14 @@ const enableFromEslint = {
                         'The wrapped version automatically disables the component until hydration completes, ' +
                         'preventing race conditions in Playwright tests.',
                 },
+                {
+                    name: '@headlessui/react',
+                    importNames: ['Input'],
+                    message:
+                        'Import Input from "src/components/common/headlessui/Input" instead. ' +
+                        'The wrapped version automatically disables the component until hydration completes, ' +
+                        'preventing race conditions in Playwright tests.',
+                },
             ],
         },
     ],

@@ -1,9 +1,9 @@
-import { Input } from '@headlessui/react';
 import { type FC } from 'react';
 
 import type { InputFieldOption } from '../../types/config';
 import { Button } from '../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/headlessui/Combobox';
+import { Input } from '../common/headlessui/Input';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
