@@ -8,6 +8,7 @@ export const Button: FC<ButtonHTMLAttributes<HTMLButtonElement> & { alsoDisabled
 }) => {
     return (
         <DisabledUntilHydrated alsoDisabledIf={alsoDisabledIf}>
+            {/* eslint-disable-next-line no-restricted-syntax -- This is the wrapper component itself */}
             <button {...props} />
         </DisabledUntilHydrated>
     );
