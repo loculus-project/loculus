@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FC, type FormEvent } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { routes } from '../../routes/routes';
 import SearchIcon from '~icons/material-symbols/search';
@@ -53,7 +54,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
             data-testid='nav-accession-search-form'
         >
             <div className='relative flex items-center'>
-                <button
+                <Button
                     type='submit'
                     onClick={() => setOpen(true)}
                     className='flex items-center justify-center text-primary-600 hover:text-primary-700 transition-colors'
@@ -61,7 +62,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                     data-testid='nav-accession-search-button'
                 >
                     <SearchIcon className='w-5 h-5' />
-                </button>
+                </Button>
                 <input
                     ref={inputRef}
                     type='text'

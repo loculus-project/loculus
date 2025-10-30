@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from "src/components/common/Button";
 
 type NavigationTabProps =
     | {
@@ -36,8 +37,8 @@ export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
     }
 
     return (
-        <button onClick={props.onClick} className={combinedClassName}>
+        <Button onClick={props.onClick} className={combinedClassName}>
             {children}
-        </button>
+        </Button>
     );
 };

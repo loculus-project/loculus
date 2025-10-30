@@ -1,5 +1,6 @@
 import { type FC } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
+import { Button } from "src/components/common/Button";
 
 type ConfirmationDialogProps = {
     dialogText: string;
@@ -26,26 +27,24 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({
     return (
         <div className='modal-box'>
             <form method='dialog'>
-                <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
                     ✕
-                </button>
+                </Button>
             </form>
-
             <h3 className='font-bold text-lg'>{dialogText}</h3>
-
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
                         {closeButtonText}
-                    </button>
+                    </Button>
                 </form>
                 <form method='dialog'>
-                    <button
+                    <Button
                         className='btn loculusColor text-white hover:bg-primary-700'
                         onClick={() => void onConfirmation()}
                     >
                         {confirmButtonText}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

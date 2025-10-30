@@ -1,4 +1,5 @@
 import { type FC, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
@@ -37,9 +38,9 @@ export const SequencesDialog: FC<SequencesDialogProps> = ({
             <div className='bg-white rounded-lg p-6 max-w-6xl mx-3 w-full max-h-[90vh] flex flex-col'>
                 <div className='flex justify-between items-center mb-4'>
                     <h2 className='text-xl font-semibold'>Processed sequences</h2>
-                    <button className='text-gray-500 hover:text-gray-700' onClick={onClose}>
+                    <Button className='text-gray-500 hover:text-gray-700' onClick={onClose}>
                         ✕
-                    </button>
+                    </Button>
                 </div>
 
                 <div className='flex-grow overflow-hidden flex flex-col'>

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { Button } from "src/components/common/Button";
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { LineageField } from './LineageField';
@@ -213,7 +214,7 @@ describe('LineageField', () => {
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
                     />
-                    <button onClick={() => setValue('')}>reset</button>
+                    <Button onClick={() => setValue('')}>reset</Button>
                 </>
             );
         };

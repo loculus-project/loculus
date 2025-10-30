@@ -1,4 +1,5 @@
 import { type FC, useState } from 'react';
+import { Button } from "src/components/common/Button";
 
 import { SeqSetForm } from './SeqSetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
@@ -17,14 +18,14 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
     return (
         <>
             <div className='pl-2 ml-auto'>
-                <button
+                <Button
                     data-testid='AddIcon'
                     className='btn btn-sm loculusColor text-white flex items-center gap-1'
                     onClick={() => setCreateModalVisible(true)}
                 >
                     <AddBoxIcon fontSize='large' />
                     Create SeqSet
-                </button>
+                </Button>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
                 <SeqSetForm clientConfig={clientConfig} accessToken={accessToken} />

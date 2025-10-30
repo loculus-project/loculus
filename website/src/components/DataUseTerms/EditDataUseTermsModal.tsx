@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
 import { useEffect, useState, type FC } from 'react';
+import { Button } from "src/components/common/Button";
 
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts';
@@ -135,9 +136,9 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 
     return (
         <>
-            <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
+            <Button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
                 {buttonText}
-            </button>
+            </Button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
@@ -291,10 +292,10 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
 
     return (
         <div className='flex flex-row gap-2 justify-end'>
-            <button className='btn' onClick={closeDialog}>
+            <Button className='btn' onClick={closeDialog}>
                 Cancel
-            </button>
-            <button
+            </Button>
+            <Button
                 className='btn loculusColor text-white'
                 disabled={!updatePossible}
                 onClick={() => {
@@ -307,7 +308,7 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
                 }}
             >
                 {buttonText}
-            </button>
+            </Button>
         </div>
     );
 };
