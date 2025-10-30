@@ -1,5 +1,6 @@
 package org.loculus.backend.service.submission
 
+import mu.KotlinLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
@@ -9,6 +10,8 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+
+private val log = KotlinLogging.logger { }
 
 class DictEntry(val id: Int, val dict: ByteArray)
 
@@ -36,6 +39,8 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
     }
 
     private fun populateCaches(): DictCaches {
+        log.info { "Populating compression dictionary caches" }
+
         val dictCache = mutableMapOf<DictKey, DictEntry>()
         val unalignedDictCache = mutableMapOf<Organism, DictEntry>()
         val cacheById = ConcurrentHashMap<Int, ByteArray>()
@@ -69,10 +74,15 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
             }
         }
 
+        log.info {
+            "Populated compression dictionary caches: ${dictCache.size} byOrganismAndName, " +
+                "${unalignedDictCache.size} unalignedByOrganism, ${cacheById.size} dictsById"
+        }
+
         return DictCaches(
             byOrganismAndName = dictCache.toMap(),
             unalignedByOrganism = unalignedDictCache.toMap(),
-            dictsById = cacheById
+            dictsById = cacheById,
         )
     }
 
@@ -123,6 +133,7 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
                 this.dictContents = dict.toByteArray()
                 this.createdAt = dateProvider.getCurrentDateTime()
             }
+            .also { log.debug { "Inserted new dict entry: id ${it.id.value} for dict ${dict.substring(0..10)}..." } }
             .id
             .value
     }
