@@ -18,31 +18,31 @@ class DictEntry(val id: Int, val dict: ByteArray)
  */
 @Service
 class CompressionDictService(private val backendConfig: BackendConfig, private val dateProvider: DateProvider) {
-    private val caches: Triple<
-        Map<Pair<String, String>, DictEntry>,
-        Map<String, DictEntry>,
-        ConcurrentHashMap<Int, ByteArray>,
-        > by lazy {
+    private data class DictKey(
+        val organism: Organism,
+        val segmentOrGene: String,
+    )
+
+    private data class DictCaches(
+        val byOrganismAndName: Map<DictKey, DictEntry>,
+        val unalignedByOrganism: Map<Organism, DictEntry>,
+        val dictsById: ConcurrentHashMap<Int, ByteArray>,
+    )
+
+    private val caches: DictCaches by lazy {
         // Must be lazy to make sure the caches are only populated after the Flyway migration has run
         // The Spring bean is created before Flyway runs, i.e. we must not read from the DB when creating this class
         populateCaches()
     }
 
-    private val dictCache: Map<Pair<String, String>, DictEntry> get() = caches.first
-    private val unalignedDictCache: Map<String, DictEntry> get() = caches.second
-    private val cacheById: ConcurrentHashMap<Int, ByteArray> get() = caches.third
-
-    private fun populateCaches(): Triple<
-        Map<Pair<String, String>, DictEntry>,
-        Map<String, DictEntry>,
-        ConcurrentHashMap<Int, ByteArray>,
-        > {
-        val dictCache = mutableMapOf<Pair<String, String>, DictEntry>()
-        val unalignedDictCache = mutableMapOf<String, DictEntry>()
+    private fun populateCaches(): DictCaches {
+        val dictCache = mutableMapOf<DictKey, DictEntry>()
+        val unalignedDictCache = mutableMapOf<Organism, DictEntry>()
         val cacheById = ConcurrentHashMap<Int, ByteArray>()
 
         transaction {
-            backendConfig.organisms.forEach { (organism, instanceConfig) ->
+            backendConfig.organisms.forEach { (organismString, instanceConfig) ->
+                val organism = Organism(organismString)
                 val segmentsAndGenes =
                     instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
                 for (referenceSequence in segmentsAndGenes) {
@@ -51,7 +51,8 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
 
                     val dict = reference.toByteArray()
 
-                    dictCache[Pair(organism, referenceSequence.name)] = DictEntry(dictId, dict)
+                    val dictKey = DictKey(organism = organism, segmentOrGene = referenceSequence.name)
+                    dictCache[dictKey] = DictEntry(dictId, dict)
                     cacheById[dictId] = dict
                 }
 
@@ -66,25 +67,29 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
             }
         }
 
-        return Triple(dictCache.toMap(), unalignedDictCache.toMap(), cacheById)
+        return DictCaches(
+            byOrganismAndName = dictCache.toMap(),
+            unalignedByOrganism = unalignedDictCache.toMap(),
+            dictsById = cacheById
+        )
     }
 
     /**
      * Get dictionary for a specific segment or gene (used when compressing processed sequences)
      */
     fun getDictForSegmentOrGene(organism: Organism, segmentOrGene: String): DictEntry? =
-        dictCache[Pair(organism.name, segmentOrGene)]
+        caches.byOrganismAndName[DictKey(organism = organism, segmentOrGene = segmentOrGene)]
 
     /**
      * Get dictionary for unaligned sequences (used when compressing submitted sequences)
      */
-    fun getDictForUnalignedSequence(organism: Organism): DictEntry? = unalignedDictCache[organism.name]
+    fun getDictForUnalignedSequence(organism: Organism): DictEntry? = caches.unalignedByOrganism[organism]
 
     /**
      * Get dictionary by ID (used when decompressing sequences)
      */
     fun getDictById(id: Int): ByteArray {
-        val cachedDict = cacheById[id]
+        val cachedDict = caches.dictsById[id]
         if (cachedDict != null) {
             return cachedDict
         }
@@ -93,7 +98,7 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
             val dict = CompressionDictionaryEntity.findById(id)
                 ?.dictContents
                 ?: throw RuntimeException("Did not find compression dictionary with id $id")
-            cacheById[id] = dict
+            caches.dictsById[id] = dict
             dict
         }
     }
