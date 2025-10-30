@@ -135,14 +135,23 @@ class SubmissionDatabaseService(
         numberOfSequenceEntries: Int,
         organism: Organism,
         pipelineVersion: Long,
+        requestId: String? = null,
     ): Sequence<UnprocessedData> {
-        log.info { "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism." }
+        val startTime = System.currentTimeMillis()
+        log.info {
+            "Request received to stream up to $numberOfSequenceEntries unprocessed submissions for $organism, requestId=$requestId"
+        }
 
-        return fetchUnprocessedEntriesAndUpdateToInProcessing(
+        val result = fetchUnprocessedEntriesAndUpdateToInProcessing(
             organism,
             numberOfSequenceEntries,
             pipelineVersion,
+            requestId,
         )
+        log.debug {
+            "streamUnprocessedSubmissions: Sequence prepared in ${System.currentTimeMillis() - startTime}ms (actual streaming will happen lazily), requestId=$requestId"
+        }
+        return result
     }
 
     fun getCurrentProcessingPipelineVersion(organism: Organism): Long {
@@ -160,6 +169,7 @@ class SubmissionDatabaseService(
         organism: Organism,
         numberOfSequenceEntries: Int,
         pipelineVersion: Long,
+        requestId: String? = null,
     ): Sequence<UnprocessedData> {
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
@@ -192,11 +202,28 @@ class SubmissionDatabaseService(
             .asSequence()
             .chunked(streamBatchSize)
             .map { chunk ->
+                val chunkStartTime = System.currentTimeMillis()
+                log.debug { "Processing chunk of ${chunk.size} entries, requestId=$requestId" }
+
+                var totalDecompressionTime = 0L
+                var totalS3UrlTime = 0L
+                var maxDecompressionTime = 0L
+                var maxS3UrlTime = 0L
+                var totalFileCount = 0
+
                 val chunkOfUnprocessedData = chunk.map {
+                    val decompStart = System.currentTimeMillis()
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
                         organism,
                     )
+                    val decompTime = System.currentTimeMillis() - decompStart
+                    totalDecompressionTime += decompTime
+                    maxDecompressionTime = maxOf(maxDecompressionTime, decompTime)
+
+                    val s3Start = System.currentTimeMillis()
+                    val fileCount = originalData.files?.values?.sumOf { it.size } ?: 0
+                    totalFileCount += fileCount
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
                         originalData.unalignedNucleotideSequences,
@@ -209,6 +236,10 @@ class SubmissionDatabaseService(
                             }
                         },
                     )
+                    val s3Time = System.currentTimeMillis() - s3Start
+                    totalS3UrlTime += s3Time
+                    maxS3UrlTime = maxOf(maxS3UrlTime, s3Time)
+
                     UnprocessedData(
                         accession = it[table.accessionColumn],
                         version = it[table.versionColumn],
@@ -219,7 +250,18 @@ class SubmissionDatabaseService(
                         submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
+
+                val beforeUpdateTime = System.currentTimeMillis()
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                val updateTime = System.currentTimeMillis() - beforeUpdateTime
+
+                val chunkTotalTime = System.currentTimeMillis() - chunkStartTime
+                val avgDecomp = if (chunk.isNotEmpty()) totalDecompressionTime / chunk.size else 0
+                val avgS3 = if (chunk.isNotEmpty()) totalS3UrlTime / chunk.size else 0
+                log.debug {
+                    "Chunk processed in ${chunkTotalTime}ms: decompression=${totalDecompressionTime}ms (avg=${avgDecomp}ms, max=${maxDecompressionTime}ms), s3Urls=${totalS3UrlTime}ms (avg=${avgS3}ms, max=${maxS3UrlTime}ms, totalFiles=$totalFileCount), statusUpdate=${updateTime}ms, requestId=$requestId"
+                }
+
                 chunkOfUnprocessedData
             }
             .flatten()
