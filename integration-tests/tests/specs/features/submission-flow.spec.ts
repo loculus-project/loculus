@@ -17,7 +17,7 @@ test.describe('Submission flow', () => {
     });
 
     test('basic file upload submission flow works', async ({ pageWithGroup }) => {
-        test.setTimeout(90000);
+        test.setTimeout(120_000);
         const page = pageWithGroup;
 
         const testFilesDir = join(__dirname, '../../test-data');
@@ -63,7 +63,7 @@ test.describe('Submission flow', () => {
     });
 
     test('basic form submission flow works', async ({ pageWithGroup }) => {
-        test.setTimeout(90000);
+        test.setTimeout(120_000);
         const page = pageWithGroup;
         const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 

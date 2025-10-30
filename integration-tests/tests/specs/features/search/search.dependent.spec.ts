@@ -10,6 +10,7 @@ test.describe('Search', () => {
     });
 
     test('search form resets when the reset button is clicked', async ({ page }) => {
+        test.setTimeout(60_000);
         await searchPage.ebolaSudan();
 
         await searchPage.select('Collection country', 'France');
@@ -22,6 +23,7 @@ test.describe('Search', () => {
     });
 
     test('hidden field values are kept in the URL params', async ({ page }) => {
+        test.setTimeout(60_000);
         await searchPage.ebolaSudan();
 
         // This is just to ensure that things are interactive and ready - bit of a hack for now

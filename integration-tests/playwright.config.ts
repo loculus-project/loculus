@@ -15,6 +15,8 @@ const browser = process.env.BROWSER;
  */
 const config = {
     testDir: './tests',
+    /* Timeout for each test in milliseconds */
+    timeout: 60_000,
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */

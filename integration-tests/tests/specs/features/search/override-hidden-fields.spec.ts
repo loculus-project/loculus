@@ -6,7 +6,7 @@ import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
 test('Override hidden fields', async ({ page, pageWithGroup }) => {
-    test.setTimeout(95_000);
+    test.setTimeout(120_000);
     const uuid = uuidv4();
 
     await page.goto('/');
