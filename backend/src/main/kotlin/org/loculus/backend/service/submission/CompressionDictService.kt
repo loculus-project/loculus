@@ -21,10 +21,7 @@ class DictEntry(val id: Int, val dict: ByteArray)
  */
 @Service
 class CompressionDictService(private val backendConfig: BackendConfig, private val dateProvider: DateProvider) {
-    private data class DictKey(
-        val organism: Organism,
-        val segmentOrGene: String,
-    )
+    private data class DictKey(val organism: Organism, val segmentOrGene: String)
 
     private data class DictCaches(
         val byOrganismAndName: Map<DictKey, DictEntry>,
