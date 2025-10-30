@@ -62,7 +62,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
     const explicitVisibilitiesInUrlByFieldName = new Map(
         Object.entries(state)
             .filter(([key]) => key.startsWith(visibilityPrefix))
-            .map(([key, value]) => [key, validateSingleValue(value, key) === 'true']),
+            .map(([key, value]) => [key.slice(visibilityPrefix.length), validateSingleValue(value, key) === 'true']),
     );
 
     const visibilities = new Map<string, MetadataVisibility>();

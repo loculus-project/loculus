@@ -11,6 +11,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
@@ -42,7 +43,6 @@ import {
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
-import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -126,23 +126,6 @@ export const InnerSearchFullUI = ({
     }, [schema, state]);
 
     const columnVisibilities = useMemo(() => getColumnVisibilitiesFromQuery(schema, state), [schema, state]);
-
-    const columnFieldItems: FieldItem[] = useMemo(
-        () =>
-            schema.metadata
-                .filter((field) => !(field.hideInSearchResultsTable ?? false))
-                .map((field) => ({
-                    name: field.name,
-                    displayName: field.displayName ?? field.name,
-                    header: field.header,
-                    displayState:
-                        field.name === schema.primaryKey
-                            ? { type: 'alwaysChecked' }
-                            : { type: 'greyedOut', tooltip: 'test test test' },
-                    isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
-                })),
-        [schema.metadata, schema.primaryKey, columnVisibilities],
-    );
 
     const columnsToShow = useMemo(() => {
         return schema.metadata
@@ -384,12 +367,13 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
-            <FieldSelectorModal
-                title='Customize columns'
+            <TableColumnSelectorModal
                 isOpen={isColumnModalOpen}
                 onClose={() => setIsColumnModalOpen(!isColumnModalOpen)}
-                fields={columnFieldItems}
-                setFieldSelected={setAColumnVisibility}
+                schema={schema}
+                columnVisibilities={columnVisibilities}
+                setAColumnVisibility={setAColumnVisibility}
+                selectedSuborganism={selectedSuborganism}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}

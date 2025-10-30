@@ -21,7 +21,7 @@ import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
-import { type MetadataFilterSchema } from '../../utils/search.ts';
+import { type MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -38,7 +38,7 @@ interface SearchFormProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
-    searchVisibilities: Map<string, boolean>;
+    searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
@@ -62,7 +62,9 @@ export const SearchForm = ({
     selectedSuborganism,
     setSelectedSuborganism,
 }: SearchFormProps) => {
-    const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.filters.filter(
+        (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
+    );
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -98,7 +100,7 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            isChecked: searchVisibilities.get(filter.name) ?? false,
+            isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(

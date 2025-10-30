@@ -187,7 +187,7 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
             />
             <label
                 htmlFor={`field-${field.name}`}
-                className={`ml-2 text-sm ${disabled || greyOutLabel ? 'text-gray-500' : 'text-gray-700'}`}
+                className={`ml-2 text-sm ${disabled || greyOutLabel ? 'text-gray-400' : 'text-gray-700'}`}
                 data-tooltip-id={tooltipId}
             >
                 {field.displayName ?? field.name}
