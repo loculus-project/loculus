@@ -35,19 +35,25 @@ class SubmissionPage {
         await this.page.getByText('I confirm I have not and will').click();
     }
 
+    // TODO: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
     async submitSequence(): Promise<ReviewPage> {
         await this.page.getByRole('button', { name: 'Submit sequences' }).click();
 
-        // TODO: improve this by passing in whether we accepted open terms to simplify and also test modal appearance/absence
         const confirmButton = this.page.getByRole('button', { name: 'Continue under Open terms' });
         // Confirm only shows if we are submitting under open terms - but we don't know in this function
         // Void because we're waiting for the review page anyway, so no need to wait for this specifically
-        void confirmButton
-            .waitFor({ state: 'visible', timeout: 8000 })
-            .then(() => confirmButton.click())
-            .catch(() => {});
+        void (async () => {
+            console.log('[submitSequence] Waiting for confirm modal...');
+            try {
+                await confirmButton.click();
+                console.log('[submitSequence] Confirm clicked.');
+            } catch (err) {
+                console.log('[submitSequence] Confirm click skipped:', (err as Error).message);
+            }
+        })();
 
         await this.page.waitForURL('**/review');
+        console.log('[submitSequence] Navigated to review page.');
         return new ReviewPage(this.page);
     }
 }
