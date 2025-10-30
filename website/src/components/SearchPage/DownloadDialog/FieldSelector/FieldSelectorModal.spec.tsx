@@ -64,7 +64,7 @@ describe('FieldSelectorModal', () => {
 
     describe('getDefaultSelectedFields', () => {
         it('returns fields with includeInDownloadsByDefault set to true and always includes ACCESSION_VERSION_FIELD', () => {
-            const result = getDefaultSelectedFields(mockMetadata);
+            const result = getDefaultSelectedFields(mockMetadata, null);
             // Should include all fields with includeInDownloadsByDefault=true and ACCESSION_VERSION_FIELD
             expect(result).toContain('field1');
             expect(result).toContain('field3');
@@ -73,11 +73,40 @@ describe('FieldSelectorModal', () => {
         });
 
         it('always includes ACCESSION_VERSION_FIELD even if no fields match criteria', () => {
-            const result = getDefaultSelectedFields([
-                { name: 'field1', type: 'string', includeInDownloadsByDefault: false },
-                { name: 'field2', type: 'string', hideOnSequenceDetailsPage: true, includeInDownloadsByDefault: false },
-            ]);
+            const result = getDefaultSelectedFields(
+                [
+                    { name: 'field1', type: 'string', includeInDownloadsByDefault: false },
+                    {
+                        name: 'field2',
+                        type: 'string',
+                        hideOnSequenceDetailsPage: true,
+                        includeInDownloadsByDefault: false,
+                    },
+                ],
+                null,
+            );
             expect(result).toEqual(new Set([ACCESSION_VERSION_FIELD]));
+        });
+
+        it('does not show field that is not for current suborganism', () => {
+            const result = getDefaultSelectedFields(
+                [
+                    {
+                        name: 'field1',
+                        type: 'string',
+                        includeInDownloadsByDefault: true,
+                        onlyShowInSearchWhenSuborganismIs: 'suborganism1',
+                    },
+                    {
+                        name: 'field2',
+                        type: 'string',
+                        includeInDownloadsByDefault: true,
+                        onlyShowInSearchWhenSuborganismIs: 'suborganism2',
+                    },
+                ],
+                'suborganism1',
+            );
+            expect(result).toEqual(new Set(['field1', ACCESSION_VERSION_FIELD]));
         });
     });
 
@@ -159,16 +188,28 @@ describe('FieldSelectorModal', () => {
         });
     });
 
-    function renderFieldSelectorModal() {
-        const { result } = renderHook(() => useState(getDefaultSelectedFields(mockMetadata)));
+    function renderFieldSelectorModal(selectedSuborganism: string | null = null) {
+        const { result } = renderHook(() => useState(getDefaultSelectedFields(mockMetadata, selectedSuborganism)));
 
         const getComponent = () => (
             <FieldSelectorModal
                 isOpen={true}
                 onClose={() => {}}
-                metadata={mockMetadata}
+                schema={{
+                    defaultOrder: 'ascending',
+                    defaultOrderBy: '',
+                    inputFields: [],
+                    organismName: 'dummy',
+                    primaryKey: ACCESSION_VERSION_FIELD,
+                    submissionDataTypes: {
+                        consensusSequences: true,
+                    },
+                    tableColumns: [],
+                    metadata: mockMetadata,
+                }}
                 selectedFields={result.current[0]}
                 onSelectedFieldsChange={result.current[1]}
+                selectedSuborganism={selectedSuborganism}
             />
         );
 

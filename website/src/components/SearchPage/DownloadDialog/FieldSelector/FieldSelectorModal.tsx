@@ -1,7 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
-import { type Metadata } from '../../../../types/config.ts';
+import { type Metadata, type Schema } from '../../../../types/config.ts';
 import {
     type FieldItem,
     type FieldItemDisplayState,
@@ -12,7 +12,7 @@ import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborga
 type FieldSelectorProps = {
     isOpen: boolean;
     onClose: () => void;
-    metadata: Metadata[];
+    schema: Schema;
     selectedFields: Set<string>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     selectedSuborganism: string | null;
@@ -21,7 +21,7 @@ type FieldSelectorProps = {
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     isOpen,
     onClose,
-    metadata,
+    schema,
     selectedFields,
     onSelectedFieldsChange,
     selectedSuborganism,
@@ -40,11 +40,11 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         });
     };
 
-    const fieldItems: FieldItem[] = metadata.map((field) => ({
+    const fieldItems: FieldItem[] = schema.metadata.map((field) => ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        displayState: getDisplayState(field, selectedSuborganism),
+        displayState: getDisplayState(field, selectedSuborganism, schema),
         isChecked: selectedFields.has(field.name),
     }));
 
@@ -59,13 +59,20 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     );
 };
 
-function getDisplayState(field: Metadata, selectedSuborganism: string | null): FieldItemDisplayState | undefined {
+function getDisplayState(
+    field: Metadata,
+    selectedSuborganism: string | null,
+    schema: Schema,
+): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: 'alwaysChecked' };
     }
 
     if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
-        return { type: 'disabled' };
+        return {
+            type: 'disabled',
+            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyShowInSearchWhenSuborganismIs} is selected.`,
+        };
     }
 
     return undefined;

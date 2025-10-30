@@ -1,10 +1,10 @@
 import { type FC, useMemo } from 'react';
 
+import { isActiveForSelectedSuborganism } from './isActiveForSelectedSuborganism.tsx';
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata, Schema } from '../../types/config.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
 import { type FieldItem, type FieldItemDisplayState, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
-import { isActiveForSelectedSuborganism } from './isActiveForSelectedSuborganism.tsx';
 
 export type TableColumnSelectorModalProps = {
     isOpen: boolean;

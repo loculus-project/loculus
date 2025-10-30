@@ -6,8 +6,8 @@ import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
-import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import type { Metadata } from '../../../types/config.ts';
+import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
+import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
 import {
     type ReferenceGenomesLightweightSchema,
@@ -90,6 +90,19 @@ async function renderDialog({
     suborganismIdentifierField?: string;
     referenceGenomesLightweightSchema?: ReferenceGenomesLightweightSchema;
 } = {}) {
+    const schema: Schema = {
+        defaultOrder: 'ascending',
+        defaultOrderBy: '',
+        inputFields: [],
+        organismName: 'dummy',
+        primaryKey: ACCESSION_VERSION_FIELD,
+        submissionDataTypes: {
+            consensusSequences: true,
+        },
+        tableColumns: [],
+        metadata,
+    };
+
     render(
         <DownloadDialog
             downloadUrlGenerator={
@@ -99,7 +112,7 @@ async function renderDialog({
             referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
-            metadata={metadata}
+            schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
             selectedSuborganism={selectedSuborganism}
             suborganismIdentifierField={suborganismIdentifierField}

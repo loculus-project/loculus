@@ -11,7 +11,7 @@ import {
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
-import { MetadataFilterSchema } from '../../utils/search.ts';
+import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -64,9 +64,9 @@ const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweigh
     },
 };
 
-const searchVisibilities = new Map<string, boolean>([
-    ['field1', true],
-    ['field3', true],
+const searchVisibilities = new Map<string, MetadataVisibility>([
+    ['field1', new MetadataVisibility(true, undefined)],
+    ['field3', new MetadataVisibility(true, undefined)],
 ]);
 
 const setSomeFieldValues = vi.fn();

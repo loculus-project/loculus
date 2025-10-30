@@ -21,7 +21,7 @@ type DownloadDialogProps = {
     referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
-    metadata: Metadata[];
+    schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedSuborganism: string | null;
     suborganismIdentifierField: string | undefined;
@@ -33,7 +33,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesLightweightSchema,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
-    metadata,
+    schema,
     richFastaHeaderFields,
     selectedSuborganism,
     suborganismIdentifierField,
@@ -56,7 +56,9 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     }, [nucleotideSequences, genes]);
 
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(metadata, selectedSuborganism)); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState<Set<string>>(
+        getDefaultSelectedFields(schema.metadata, selectedSuborganism),
+    ); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadOption = getDownloadOption({
         downloadFormState,
@@ -85,7 +87,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
-                        metadata={metadata}
+                        schema={schema}
                         selectedFields={selectedFields}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}

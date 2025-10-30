@@ -47,7 +47,7 @@ export const performLapisSearchQueries = async (
     const columnVisibilities = getColumnVisibilitiesFromQuery(schema, state);
 
     const columnsToShow = schema.metadata
-        .filter((field) => columnVisibilities.get(field.name) === true)
+        .filter((field) => columnVisibilities.get(field.name)?.isVisible(suborganism) === true)
         .map((field) => field.name);
 
     const client = LapisClient.createForOrganism(organism);

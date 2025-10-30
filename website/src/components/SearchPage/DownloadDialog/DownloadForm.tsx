@@ -36,7 +36,7 @@ type DownloadFormProps = {
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
-    metadata: Metadata[];
+    schema: Schema;
     selectedFields: Set<string>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
@@ -50,7 +50,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
-    metadata,
+    schema,
     selectedFields,
     onSelectedFieldsChange,
     richFastaHeaderFields,
@@ -251,7 +251,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             <FieldSelectorModal
                 isOpen={isFieldSelectorOpen}
                 onClose={() => setIsFieldSelectorOpen(false)}
-                metadata={metadata}
+                schema={schema}
                 selectedFields={selectedFields}
                 onSelectedFieldsChange={onSelectedFieldsChange}
                 selectedSuborganism={selectedSuborganism}
