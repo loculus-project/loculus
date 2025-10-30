@@ -5,6 +5,7 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +16,7 @@ class CompressionDictServiceTest(@Autowired private val underTest: CompressionDi
     fun `gets dict by segment name and id`() {
         val bySegment = underTest.getDictForSegmentOrGene(Organism(DEFAULT_ORGANISM), "main")!!
 
-        assertThat(bySegment.dict, `is`("ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT".toByteArray()))
+        assertThat(bySegment.dict, `is`(DUMMY_ORGANISM_MAIN_SEQUENCE.toByteArray()))
 
         val byId = underTest.getDictById(bySegment.id)
 
