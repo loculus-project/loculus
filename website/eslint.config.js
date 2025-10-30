@@ -31,6 +31,21 @@ const importRulesAstro = {
 
 const enableFromEslint = {
     'no-console': 'error',
+    'no-restricted-imports': [
+        'error',
+        {
+            paths: [
+                {
+                    name: '@headlessui/react',
+                    importNames: ['Combobox'],
+                    message:
+                        'Import Combobox from "src/components/common/headlessui/Combobox" instead. ' +
+                        'The wrapped version automatically disables the component until hydration completes, ' +
+                        'preventing race conditions in Playwright tests.',
+                },
+            ],
+        },
+    ],
 };
 
 const disableFromTypescriptEsLint = {
