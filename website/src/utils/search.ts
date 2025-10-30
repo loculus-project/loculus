@@ -29,7 +29,6 @@ export type SearchResponse = {
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
 type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
-// TODO test
 export class MetadataVisibility {
     public readonly isChecked: boolean;
     private readonly onlyForSuborganism: string | undefined;
