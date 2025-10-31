@@ -18,8 +18,8 @@ import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../ut
  * Applied automatically by lapisClientHooks wrappers.
  */
 const LAPIS_RETRY_OPTIONS = {
-    retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 6,
+    retryDelay: (attemptIndex: number) => Math.min(250 * 2 ** attemptIndex, 30000),
 };
 
 export function backendClientHooks(clientConfig: ClientConfig) {
@@ -29,59 +29,67 @@ export function backendClientHooks(clientConfig: ClientConfig) {
 export function lapisClientHooks(lapisUrl: string) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     return {
-        // Expose zodiosHooks for non-mutation endpoints (e.g., GET requests)
-        zodiosHooks,
-        // Ergonomic wrappers for mutation endpoints with retry options pre-configured
+        // All POST hooks must include retry options manually to enable retries
         useAggregated: (params = {}, options = {}) =>
             zodiosHooks.useAggregated(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
         useDetails: (params = {}, options = {}) =>
             zodiosHooks.useDetails(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
-        utilityHooks: {
-            useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
-                const { data, error, isLoading } = getSequenceHook(
-                    zodiosHooks,
-                    {
-                        accessionVersion,
-                        dataFormat: 'FASTA',
-                    },
-                    sequenceType,
-                    isMultiSegmented,
-                );
-
-                if (data === undefined) {
-                    if (isAxiosError(error)) {
-                        const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-
-                        const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
-
-                        if (problemDetailParseResult.success) {
-                            return { data: null, error: problemDetailParseResult.data, isLoading };
-                        }
-                    }
-
-                    return { data, error, isLoading };
-                }
-
-                const parseResult = fastaEntries.safeParse(data);
-
-                if (parseResult.success) {
-                    return {
-                        data: parseResult.data.length > 0 ? parseResult.data[0] : null,
-                        error,
-                        isLoading,
-                    };
-                }
-                return {
-                    data: undefined,
-                    error: parseResult.error,
-                    isLoading,
-                };
-            },
+        useLineageDefinition: zodiosHooks.useLineageDefinition,
+        useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
+            return getSequenceHook(
+                zodiosHooks,
+                {
+                    accessionVersion,
+                    dataFormat: 'FASTA',
+                },
+                sequenceType,
+                isMultiSegmented,
+            );
         },
     };
 }
 
 function getSequenceHook(
+    hooks: ZodiosHooksInstance<typeof lapisApi>,
+    request: SequenceRequest,
+    sequenceType: SequenceType,
+    isMultiSegmented: boolean,
+) {
+    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented);
+    const { data, error, isLoading } = rawResult;
+
+    if (data === undefined) {
+        if (isAxiosError(error)) {
+            const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+            const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
+
+            if (problemDetailParseResult.success) {
+                return { data: null, error: problemDetailParseResult.data, isLoading };
+            }
+        }
+
+        return { data, error, isLoading };
+    }
+
+    const parseResult = fastaEntries.safeParse(data);
+
+    if (parseResult.success) {
+        return {
+            data: parseResult.data.length > 0 ? parseResult.data[0] : null,
+            error,
+            isLoading,
+        };
+    }
+    return {
+        data: undefined,
+        error: parseResult.error,
+        isLoading,
+    };
+}
+
+// These are POST requests under the hood, so we have to pass retry options manually
+function selectSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
     request: SequenceRequest,
     sequenceType: SequenceType,
