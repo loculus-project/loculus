@@ -51,7 +51,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
 function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: SequenceRequest,
+    request: SequenceRequest, // request is a misnomer: these are request PARAMETERS
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
@@ -88,7 +88,6 @@ function getSequenceHook(
     };
 }
 
-// These are POST requests under the hood, so we have to pass retry options manually
 function selectSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
     request: SequenceRequest,
@@ -99,19 +98,24 @@ function selectSequenceHook(
         return isMultiSegmented
             ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
                   params: { segment: sequenceType.name.lapisName },
+                  ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useUnalignedNucleotideSequences(request);
+            : hooks.useUnalignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
     }
 
     if (isAlignedSequence(sequenceType)) {
         return isMultiSegmented
             ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
                   params: { segment: sequenceType.name.lapisName },
+                  ...LAPIS_RETRY_OPTIONS,
               })
-            : hooks.useAlignedNucleotideSequences(request);
+            : hooks.useAlignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
     }
 
-    return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name.lapisName } });
+    return hooks.useAlignedAminoAcidSequences(request, {
+        params: { gene: sequenceType.name.lapisName },
+        ...LAPIS_RETRY_OPTIONS,
+    });
 }
 
 export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
