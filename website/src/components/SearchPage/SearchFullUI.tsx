@@ -305,8 +305,14 @@ export const InnerSearchFullUI = ({
     );
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, {});
-    const detailsHook = hooks.useDetails({}, {});
+    // LAPIS queries are safe to retry even though they use POST
+    // Retry on network errors (e.g., ERR_INCOMPLETE_CHUNKED_ENCODING) but not on API errors (4xx, 5xx)
+    const lapisMutationOptions = {
+        retry: 3,
+        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    };
+    const aggregatedHook = hooks.useAggregated({}, lapisMutationOptions);
+    const detailsHook = hooks.useDetails({}, lapisMutationOptions);
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
