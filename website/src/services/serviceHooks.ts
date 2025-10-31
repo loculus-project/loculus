@@ -15,8 +15,9 @@ import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../ut
  * Retry configuration for LAPIS mutations.
  * LAPIS queries are safe to retry even though they use POST, as they only fetch data.
  * This configuration enables automatic retry on transient network errors.
+ * Applied automatically by lapisClientHooks wrappers.
  */
-export const LAPIS_RETRY_OPTIONS = {
+const LAPIS_RETRY_OPTIONS = {
     retry: 3,
     retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
 };
@@ -28,7 +29,13 @@ export function backendClientHooks(clientConfig: ClientConfig) {
 export function lapisClientHooks(lapisUrl: string) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     return {
+        // Expose zodiosHooks for non-mutation endpoints (e.g., GET requests)
         zodiosHooks,
+        // Ergonomic wrappers for mutation endpoints with retry options pre-configured
+        useAggregated: (params = {}, options = {}) =>
+            zodiosHooks.useAggregated(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
+        useDetails: (params = {}, options = {}) =>
+            zodiosHooks.useDetails(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
         utilityHooks: {
             useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
                 const { data, error, isLoading } = getSequenceHook(
