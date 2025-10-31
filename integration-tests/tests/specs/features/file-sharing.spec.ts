@@ -110,12 +110,14 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
 async function checkFileContent(page: Page, fileName: string, fileContent: string) {
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    // check response instead of page content, because the file might also trigger a download in some cases.
     const fileUrl = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    await Promise.all([
-        page.waitForResponse(
-            async (resp) => resp.status() === 200 && (await resp.text()) === fileContent,
-        ),
-        page.evaluate((url) => fetch(url), fileUrl),
-    ]);
+
+    const responsePromise = page.waitForResponse(
+        (resp) => resp.url().includes(fileUrl!) && resp.status() === 200,
+    );
+    await page.evaluate((url) => fetch(url), fileUrl);
+
+    const response = await responsePromise;
+    const actualContent = await response.text();
+    expect(actualContent).toBe(fileContent);
 }
