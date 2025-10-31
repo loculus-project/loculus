@@ -100,7 +100,12 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
+    // LAPIS queries are safe to retry even though they use POST
+    const lapisMutationOptions = {
+        retry: 3,
+        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    };
+    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, lapisMutationOptions);
 
     useEffect(() => {
         detailsHook.mutate({
