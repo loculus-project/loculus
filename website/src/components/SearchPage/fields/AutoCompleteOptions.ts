@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
+import { lapisClientHooks, LAPIS_RETRY_OPTIONS } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
@@ -55,14 +55,9 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        // LAPIS queries are safe to retry even though they use POST
-        const lapisMutationOptions = {
-            retry: 3,
-            retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        };
         const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated(
             {},
-            lapisMutationOptions,
+            LAPIS_RETRY_OPTIONS,
         );
 
         const options: Option[] = (data?.data ?? [])
@@ -171,17 +166,12 @@ const createLineageOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        // LAPIS queries are safe to retry even though they use POST
-        const lapisMutationOptions = {
-            retry: 3,
-            retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        };
         const {
             data,
             isPending: aggregateIsPending,
             error: aggregateError,
             mutate,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, lapisMutationOptions);
+        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, LAPIS_RETRY_OPTIONS);
 
         const {
             data: lineageDefinition,

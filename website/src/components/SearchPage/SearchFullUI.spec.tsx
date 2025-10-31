@@ -27,6 +27,10 @@ vi.mock('../../config', () => ({
 
 vi.mock('../../services/serviceHooks.ts', () => ({
     lapisClientHooks: vi.fn(),
+    LAPIS_RETRY_OPTIONS: {
+        retry: 3,
+        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
 }));
 
 vi.mock('../../clientLogger.ts', () => ({

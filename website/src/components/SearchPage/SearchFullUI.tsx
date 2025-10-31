@@ -14,7 +14,7 @@ import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSel
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
+import { lapisClientHooks, LAPIS_RETRY_OPTIONS } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
@@ -305,14 +305,8 @@ export const InnerSearchFullUI = ({
     );
 
     const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    // LAPIS queries are safe to retry even though they use POST
-    // Retry on network errors (e.g., ERR_INCOMPLETE_CHUNKED_ENCODING) but not on API errors (4xx, 5xx)
-    const lapisMutationOptions = {
-        retry: 3,
-        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    };
-    const aggregatedHook = hooks.useAggregated({}, lapisMutationOptions);
-    const detailsHook = hooks.useDetails({}, lapisMutationOptions);
+    const aggregatedHook = hooks.useAggregated({}, LAPIS_RETRY_OPTIONS);
+    const detailsHook = hooks.useDetails({}, LAPIS_RETRY_OPTIONS);
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
