@@ -30,10 +30,8 @@ export function lapisClientHooks(lapisUrl: string) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     return {
         // All POST hooks must include retry options manually to enable retries
-        useAggregated: (params = {}, options = {}) =>
-            zodiosHooks.useAggregated(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
-        useDetails: (params = {}, options = {}) =>
-            zodiosHooks.useDetails(params, { ...LAPIS_RETRY_OPTIONS, ...options }),
+        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
         useLineageDefinition: zodiosHooks.useLineageDefinition,
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
             return getSequenceHook(
@@ -51,7 +49,7 @@ export function lapisClientHooks(lapisUrl: string) {
 
 function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: SequenceRequest, // request is a misnomer: these are request PARAMETERS
+    request: SequenceRequest, // these are request PARAMETERS, not requests
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
