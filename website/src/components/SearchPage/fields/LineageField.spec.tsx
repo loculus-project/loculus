@@ -20,10 +20,7 @@ const mockUseLineageDefinition = vi.fn();
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
     useAggregated: mockUseAggregated,
-    zodiosHooks: {
-        useLineageDefinition: mockUseLineageDefinition,
-        useAggregated: mockUseAggregated,
-    },
+    useLineageDefinition: mockUseLineageDefinition,
 });
 
 describe('LineageField', () => {

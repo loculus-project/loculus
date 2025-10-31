@@ -174,7 +174,7 @@ const createLineageOptionsHook = (
             data: lineageDefinition,
             isLoading: defIsLoading,
             error: defError,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
+        } = lapisClientHooks(lapisUrl).useLineageDefinition(
             {
                 params: {
                     column: fieldName,
