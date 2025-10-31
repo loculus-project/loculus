@@ -10,6 +10,7 @@ import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import SequencesBanner from '../SequenceDetailsPage/SequencesBanner.tsx';
+import { Button } from '../common/Button';
 import CharmMenuKebab from '~icons/charm/menu-kebab';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -110,7 +111,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         setPreviewedSeqId={setPreviewedSeqId}
                     />
                 )}
-                <button
+                <Button
                     type='button'
                     className={BUTTONCLASS}
                     onClick={() => setIsHalfScreen(!isHalfScreen)}
@@ -122,12 +123,12 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     ) : (
                         <MdiDockBottom className='w-6 h-6' />
                     )}
-                </button>
+                </Button>
                 <DownloadButton seqId={seqId} />
                 <a href={routes.sequenceEntryDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
                     <OouiNewWindowLtr className='w-6 h-6' />
                 </a>
-                <button
+                <Button
                     type='button'
                     className={BUTTONCLASS}
                     onClick={onClose}
@@ -135,7 +136,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     data-testid='close-preview-button'
                 >
                     <MaterialSymbolsClose className='w-6 h-6' />
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -177,11 +178,11 @@ interface DownloadButtonProps {
 const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId }: { seqId: string }) => {
     return (
         <div className='dropdown dropdown-hover relative inline-block'>
-            <button className={BUTTONCLASS}>
+            <Button className={BUTTONCLASS}>
                 <IcBaselineDownload className='w-6 h-6' />
 
                 <CharmMenuKebab className=' w-4 h-6 -ml-1.5 pb-1 pt-1.5' />
-            </button>
+            </Button>
             <ul className='dropdown-content z-20 menu p-1 shadow bg-base-100 rounded-btn absolute top-full w-52 -left-32'>
                 <li>
                     <a href={routes.sequenceEntryFastaPage(seqId, true)} className='block px-4 py-2 hover:bg-gray-100'>

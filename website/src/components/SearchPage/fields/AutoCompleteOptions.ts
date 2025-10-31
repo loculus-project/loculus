@@ -55,7 +55,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -168,13 +168,13 @@ const createLineageOptionsHook = (
             isPending: aggregateIsPending,
             error: aggregateError,
             mutate,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
+        } = lapisClientHooks(lapisUrl).useAggregated();
 
         const {
             data: lineageDefinition,
             isLoading: defIsLoading,
             error: defError,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useLineageDefinition(
+        } = lapisClientHooks(lapisUrl).useLineageDefinition(
             {
                 params: {
                     column: fieldName,

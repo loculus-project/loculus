@@ -9,6 +9,7 @@ import { ColumnMapping } from './ColumnMapping';
 import { type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { BaseDialog } from '../../common/BaseDialog';
+import { Button } from '../../common/Button';
 import { InputFieldTooltip } from '../InputFieldTooltip';
 
 interface ColumnMappingModalProps {
@@ -83,7 +84,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
 
     return (
         <>
-            <button
+            <Button
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                 data-tooltip-id='columnMapping'
                 onClick={(e) => {
@@ -92,7 +93,7 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                 }}
             >
                 {openModalButtonText}
-            </button>
+            </Button>
             <Tooltip
                 id='columnMapping'
                 place='bottom'
@@ -136,25 +137,25 @@ export const ColumnMappingModal: FC<ColumnMappingModalProps> = ({
                         <div className='flex flex-row gap-2 justify-end'>
                             {columnMapping !== null && (
                                 <>
-                                    <button
+                                    <Button
                                         className='btn bg-white text-red-800 border-red-800'
                                         onClick={handleDiscard}
                                     >
                                         Discard Mapping
-                                    </button>
+                                    </Button>
                                     <div className='flex-1' />
                                 </>
                             )}
-                            <button className='btn' onClick={closeDialog}>
+                            <Button className='btn' onClick={closeDialog}>
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 className='btn loculusColor text-white'
                                 onClick={handleSubmit}
                                 disabled={!submittable}
                             >
                                 {saveButtonText}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}

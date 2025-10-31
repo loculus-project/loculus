@@ -22,7 +22,7 @@ const config = {
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
-    retries: process.env.CI ? 2 : 0,
+    retries: process.env.CI ? 0 : 0,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: 'html',
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -33,7 +33,7 @@ const config = {
         ignoreHTTPSErrors: process.env.PLAYWRIGHT_TEST_IGNORE_HTTPS_ERRORS === 'true',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: (process.env.CI ? 'on-first-retry' : 'on') as
+        trace: (process.env.CI ? 'retain-on-failure' : 'on') as
             | 'on'
             | 'off'
             | 'retain-on-failure'
@@ -61,6 +61,14 @@ const config = {
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
+        {
+            name: 'safari-with-dep',
+            use: {
+                ...devices['Desktop Safari'],
+            },
+            dependencies: ['readonly setup'],
+            testMatch: /.*\.dependent\.spec\.ts/,
+        },
 
         {
             name: 'chromium-without-dep',
@@ -70,6 +78,11 @@ const config = {
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
+            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+        },
+        {
+            name: 'safari-without-dep',
+            use: { ...devices['Desktop Safari'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
 

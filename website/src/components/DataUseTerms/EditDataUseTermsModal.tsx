@@ -19,6 +19,7 @@ import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
 import { BaseDialog } from '../common/BaseDialog';
+import { Button } from '../common/Button';
 
 interface EditDataUseTermsModalProps {
     lapisUrl: string;
@@ -100,7 +101,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
+    const detailsHook = lapisClientHooks(lapisUrl).useDetails();
 
     useEffect(() => {
         detailsHook.mutate({
@@ -135,9 +136,9 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 
     return (
         <>
-            <button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
+            <Button className='mr-4 underline text-primary-700 hover:text-primary-500' onClick={openDialog}>
                 {buttonText}
-            </button>
+            </Button>
             <BaseDialog title='Edit data use terms' isOpen={isOpen} onClose={closeDialog}>
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
@@ -291,10 +292,10 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
 
     return (
         <div className='flex flex-row gap-2 justify-end'>
-            <button className='btn' onClick={closeDialog}>
+            <Button className='btn' onClick={closeDialog}>
                 Cancel
-            </button>
-            <button
+            </Button>
+            <Button
                 className='btn loculusColor text-white'
                 disabled={!updatePossible}
                 onClick={() => {
@@ -307,7 +308,7 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
                 }}
             >
                 {buttonText}
-            </button>
+            </Button>
         </div>
     );
 };

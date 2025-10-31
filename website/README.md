@@ -76,6 +76,7 @@ When using interactive components (buttons, Headless UI components like Combobox
 
 -   **For buttons**: Use `Button` from `src/components/common/Button.tsx` instead of native `<button>`
 -   **For Headless UI Combobox**: Import from `src/components/common/headlessui/Combobox.tsx` instead of `@headlessui/react`
+-   **For Headless UI Input**: Import from `src/components/common/headlessui/Input.tsx` instead of `@headlessui/react`
 -   **For other interactive elements**: Consider wrapping with `DisabledUntilHydrated` or using the `useClientFlag` hook
 
 These wrappers automatically disable components until client-side hydration is complete, preventing Playwright from interacting with them before they're ready.

@@ -6,6 +6,7 @@ import { getClientLogger } from '../../../clientLogger.ts';
 import { type GroupedMetadataFilter, type MetadataFilter, type SetSomeFieldValues } from '../../../types/config.ts';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber.tsx';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
+import { Button } from '../../common/Button';
 import {
     Combobox,
     ComboboxButton,
@@ -97,7 +98,7 @@ export const MultiChoiceAutoCompleteField = ({
                         {selectedValues.size > 0 && (
                             <div className='flex flex-wrap gap-1 p-1 pt-3'>
                                 {selectedValues.size > MAX_VISIBLE_BADGES ? (
-                                    <button
+                                    <Button
                                         type='button'
                                         className='bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-200 transition-colors cursor-pointer'
                                         onClick={(e) => {
@@ -108,7 +109,7 @@ export const MultiChoiceAutoCompleteField = ({
                                         }}
                                     >
                                         {selectedValues.size} selected
-                                    </button>
+                                    </Button>
                                 ) : (
                                     Array.from(selectedValues).map((value) => {
                                         const displayValue = value === NULL_QUERY_VALUE ? '(blank)' : value;
@@ -118,7 +119,7 @@ export const MultiChoiceAutoCompleteField = ({
                                                 className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs flex items-center'
                                             >
                                                 {displayValue}
-                                                <button
+                                                <Button
                                                     className='ml-1 text-blue-500 hover:text-blue-700'
                                                     onClick={(e) => {
                                                         e.preventDefault();
@@ -130,7 +131,7 @@ export const MultiChoiceAutoCompleteField = ({
                                                     type='button'
                                                 >
                                                     <MaterialSymbolsClose className='w-3 h-3' />
-                                                </button>
+                                                </Button>
                                             </span>
                                         );
                                     })
@@ -156,14 +157,14 @@ export const MultiChoiceAutoCompleteField = ({
                             aria-label={field.displayName ?? field.name}
                         />
                         {(selectedValues.size > 0 || query !== '') && (
-                            <button
+                            <Button
                                 className='absolute inset-y-0 right-8 flex items-center pr-2'
                                 onClick={handleClear}
                                 aria-label={`Clear ${field.displayName ?? field.name}`}
                                 type='button'
                             >
                                 <MaterialSymbolsClose className='w-5 h-5 text-gray-400' />
-                            </button>
+                            </Button>
                         )}
                         <ComboboxButton className='absolute inset-y-0 right-0 flex items-center pr-2'>
                             <MdiChevronUpDown className='w-5 h-5 text-gray-400' />
@@ -181,7 +182,7 @@ export const MultiChoiceAutoCompleteField = ({
                         ) : (
                             <>
                                 <div className='flex justify-between px-4 py-2 text-xs text-gray-600 border-b border-gray-200'>
-                                    <button
+                                    <Button
                                         type='button'
                                         className='hover:text-blue-600 hover:underline'
                                         onClick={(e) => {
@@ -192,8 +193,8 @@ export const MultiChoiceAutoCompleteField = ({
                                         }}
                                     >
                                         Select all
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         type='button'
                                         className='hover:text-blue-600 hover:underline'
                                         onClick={(e) => {
@@ -203,7 +204,7 @@ export const MultiChoiceAutoCompleteField = ({
                                         }}
                                     >
                                         Select none
-                                    </button>
+                                    </Button>
                                 </div>
                                 {filteredOptions.map((option) => (
                                     <ComboboxOption
