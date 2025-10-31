@@ -10,6 +10,7 @@ import {
     restrictedDataUseTermsOption,
     type DataUseTerms,
 } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
@@ -148,9 +149,9 @@ const DataUseTermsSelector: FC<DataUseTermsSelectorProps> = ({
                     <span className='py-4 text-sm ml-8'>
                         Data use will be restricted until <b>{selectedDate.toFormat('yyyy-MM-dd')}</b>.{' '}
                         {calendarUseModal && (
-                            <button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
+                            <Button className='border rounded px-2 py-1' onClick={() => setDateChangeModalOpen(true)}>
                                 Change date
-                            </button>
+                            </Button>
                         )}
                     </span>
                 )}

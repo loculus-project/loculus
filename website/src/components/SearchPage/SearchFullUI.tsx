@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadDialog/DownloadUrlGenerator.ts';
 import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
@@ -496,19 +497,19 @@ export const InnerSearchFullUI = ({
                                     sequenceFilter={downloadFilter}
                                 />
                             )}
-                            <button
+                            <Button
                                 className='mr-4 underline text-primary-700 hover:text-primary-500'
                                 onClick={() => setIsColumnModalOpen(true)}
                             >
                                 Customize columns
-                            </button>
+                            </Button>
                             {sequencesSelected ? (
-                                <button
+                                <Button
                                     className='mr-4 underline text-primary-700 hover:text-primary-500'
                                     onClick={clearSelectedSeqs}
                                 >
                                     Clear selection
-                                </button>
+                                </Button>
                             ) : null}
 
                             <DownloadDialog

@@ -6,7 +6,8 @@ import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
 test('Override hidden fields', async ({ page, pageWithGroup }) => {
-    test.setTimeout(150_000);
+    // This test is really slow - it can take at least 150s. Speed depends on how much else is running, hence let's use buffer.
+    test.setTimeout(200_000);
     const uuid = uuidv4();
 
     await page.goto('/');
@@ -102,6 +103,7 @@ test('Override hidden fields', async ({ page, pageWithGroup }) => {
     await page.getByRole('button', { name: 'Reset' }).click();
     await search.enableSearchFields('Is revocation');
     await search.select('Is revocation', 'true');
+    await search.fill('Accession', revokedAccession, true);
     await expect(
         page.getByRole('link', { name: expectedRevocationAccessionVersion }),
     ).toBeVisible();

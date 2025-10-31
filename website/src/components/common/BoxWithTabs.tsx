@@ -1,5 +1,7 @@
 import type { FC, ReactNode } from 'react';
 
+import { Button } from './Button';
+
 type BoxWithTabsTabBarProps = {
     children: ReactNode;
 };
@@ -15,9 +17,9 @@ type BoxWithTabsTabProps = {
 };
 
 export const BoxWithTabsTab: FC<BoxWithTabsTabProps> = ({ isActive, label, onClick }) => (
-    <button className={`tab ${isActive ? 'tab-active font-semibold' : ''}`} onClick={onClick}>
+    <Button className={`tab ${isActive ? 'tab-active font-semibold' : ''}`} onClick={onClick}>
         {label}
-    </button>
+    </Button>
 );
 
 type BoxWithTabsBoxProps = {

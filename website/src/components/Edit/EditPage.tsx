@@ -12,6 +12,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
@@ -115,9 +116,8 @@ const InnerEditPage: FC<EditPageProps> = ({
                     />
                 </div>
             )}
-
             <div className='flex items-center gap-4 mt-4'>
-                <button
+                <Button
                     className='btn normal-case'
                     onClick={() =>
                         displayConfirmationDialog({
@@ -129,7 +129,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 >
                     {isPending && <span className='loading loading-spinner loading-sm mr-2' />}
                     Submit
-                </button>
+                </Button>
             </div>
         </>
     );
