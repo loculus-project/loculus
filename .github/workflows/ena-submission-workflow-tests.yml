@@ -1,5 +1,6 @@
 name: ena-submission-workflow-tests
 on:
+  merge_group:
   pull_request:
     paths:
       - "ena-submission/**"
