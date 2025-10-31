@@ -11,6 +11,16 @@ import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
+/**
+ * Retry configuration for LAPIS mutations.
+ * LAPIS queries are safe to retry even though they use POST, as they only fetch data.
+ * This configuration enables automatic retry on transient network errors.
+ */
+export const LAPIS_RETRY_OPTIONS = {
+    retry: 3,
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+};
+
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
