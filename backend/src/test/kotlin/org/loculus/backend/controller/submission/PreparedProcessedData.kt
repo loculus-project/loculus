@@ -15,6 +15,7 @@ import org.loculus.backend.api.PreprocessingAnnotationSourceType
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SegmentName
 import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
@@ -42,7 +43,7 @@ val defaultProcessedData = ProcessedData(
         MAIN_SEGMENT to "NNACTGNN",
     ),
     alignedNucleotideSequences = mapOf(
-        MAIN_SEGMENT to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
+        MAIN_SEGMENT to DUMMY_ORGANISM_MAIN_SEQUENCE,
     ),
     nucleotideInsertions = mapOf(
         MAIN_SEGMENT to listOf(

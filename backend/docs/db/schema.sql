@@ -168,6 +168,34 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 
 --
+-- Name: compression_dictionaries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.compression_dictionaries (
+    id integer NOT NULL,
+    hash character(64) NOT NULL,
+    dict_contents bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.compression_dictionaries OWNER TO postgres;
+
+--
+-- Name: compression_dictionaries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.compression_dictionaries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.compression_dictionaries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: current_processing_pipeline; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -605,6 +633,22 @@ ALTER TABLE ONLY public.user_groups_table ALTER COLUMN id SET DEFAULT nextval('p
 
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: compression_dictionaries compression_dictionaries_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_hash_key UNIQUE (hash);
+
+
+--
+-- Name: compression_dictionaries compression_dictionaries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_pkey PRIMARY KEY (id);
 
 
 --

@@ -2,6 +2,7 @@ package org.loculus.backend.testutil.binary
 
 import org.loculus.backend.testutil.PostgresProvider
 import org.loculus.backend.testutil.waitForPort
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -77,6 +78,23 @@ class LocalPostgres : PostgresProvider {
             dbName,
             "-c",
             sql,
+            env = mapOf("PGUSER" to user),
+        )
+    }
+
+    override fun restore(inputFile: File) {
+        require(inputFile.exists()) { "Dump file does not exist: ${inputFile.absolutePath}" }
+
+        runAsUser(
+            binDir.resolve("psql").toString(),
+            "-p",
+            port.toString(),
+            "-U",
+            user,
+            "-d",
+            dbName,
+            "-c",
+            inputFile.readText(),
             env = mapOf("PGUSER" to user),
         )
     }

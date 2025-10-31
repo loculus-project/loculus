@@ -5,6 +5,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.testutil.TestResource
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.mock.web.MockMultipartFile
@@ -30,7 +31,7 @@ object SubmitFiles {
         )
 
         fun getRevisedMetadataFile(accessions: List<Accession>): MockMultipartFile {
-            val fileContent = getFileContent(REVISED_METADATA_FILE_NAME)
+            val fileContent = TestResource(REVISED_METADATA_FILE_NAME).content
 
             val lines = fileContent.trim().split("\n").toMutableList()
             val headerLine = lines.removeFirst()
@@ -48,19 +49,19 @@ object SubmitFiles {
 
         val metadataFiles = CompressionAlgorithm.entries.associateWith {
             metadataFileWith(
-                content = getFileContent(DEFAULT_METADATA_FILE_NAME),
+                content = TestResource(DEFAULT_METADATA_FILE_NAME).content,
                 compression = it,
             )
         }
         val sequencesFiles = CompressionAlgorithm.entries.associateWith {
             sequenceFileWith(
-                content = getFileContent(DEFAULT_SEQUENCES_FILE_NAME),
+                content = TestResource(DEFAULT_SEQUENCES_FILE_NAME).content,
                 compression = it,
             )
         }
         private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
             sequenceFileWith(
-                content = getFileContent(DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME),
+                content = TestResource(DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME).content,
                 compression = it,
             )
         }
@@ -72,12 +73,6 @@ object SubmitFiles {
         val submissionIds = List(10) { "custom$it" }
 
         const val NUMBER_OF_SEQUENCES = 10
-
-        private fun getFileContent(file: String): String = String(
-            this::class.java.classLoader.getResourceAsStream(file)?.readBytes() ?: error(
-                "$file resource for tests not found",
-            ),
-        )
     }
 
     fun metadataFileWith(

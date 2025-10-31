@@ -41,6 +41,11 @@ val DEFAULT_MULTIPART_FILE_PARTS = listOf(
 )
 val DEFAULT_MULTIPART_FILE_CONTENT = DEFAULT_MULTIPART_FILE_PARTS.joinToString("")
 
+/**
+ * As defined in the test backend configs
+ */
+const val DUMMY_ORGANISM_MAIN_SEQUENCE = "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+
 fun dateMonthsFromNow(months: Int) = Clock.System.now().toLocalDateTime(DateProvider.timeZone).date.plus(months, MONTH)
 
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
@@ -79,9 +84,8 @@ inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
 }
 
 fun awaitResponse(result: MvcResult): String {
-    await().until {
-        result.response.isCommitted
-    }
+    result.getAsyncResult()
+
     return result.response.contentAsString
 }
 
