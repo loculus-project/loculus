@@ -14,7 +14,7 @@ import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSel
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
-import { lapisClientHooks, LAPIS_RETRY_OPTIONS } from '../../services/serviceHooks.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
@@ -304,9 +304,9 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, LAPIS_RETRY_OPTIONS);
-    const detailsHook = hooks.useDetails({}, LAPIS_RETRY_OPTIONS);
+    const hooks = lapisClientHooks(lapisUrl);
+    const aggregatedHook = hooks.useAggregated();
+    const detailsHook = hooks.useDetails();
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;

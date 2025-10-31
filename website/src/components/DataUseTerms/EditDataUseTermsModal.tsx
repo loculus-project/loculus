@@ -4,7 +4,7 @@ import { useEffect, useState, type FC } from 'react';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts';
 import { routes } from '../../routes/routes';
-import { backendClientHooks, lapisClientHooks, LAPIS_RETRY_OPTIONS } from '../../services/serviceHooks';
+import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import {
     openDataUseTermsOption,
@@ -100,7 +100,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, LAPIS_RETRY_OPTIONS);
+    const detailsHook = lapisClientHooks(lapisUrl).useDetails();
 
     useEffect(() => {
         detailsHook.mutate({
