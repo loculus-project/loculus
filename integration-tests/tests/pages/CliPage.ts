@@ -363,25 +363,14 @@ export class CliPage {
 
     /**
      * Log CLI result for debugging (always includes stderr if present)
+     * Note: This method no longer outputs to console to avoid polluting test output.
+     * CLI results are captured in the CliResult object and will be included in
+     * test failure messages via assertSuccess() and formatCliError() when needed.
      */
-    logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
-        const parts = [`${operation}:`];
-
-        if (result.exitCode !== 0) {
-            parts.push(`❌ Exit code: ${result.exitCode}`);
-        } else {
-            parts.push(`✅ Success`);
-        }
-
-        if (logStdout && result.stdout) {
-            parts.push(`STDOUT: ${result.stdout}`);
-        }
-
-        if (result.stderr) {
-            parts.push(`STDERR: ${result.stderr}`);
-        }
-
-        console.log(parts.join('\n'));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    logCliResult(_operation: string, _result: CliResult, _logStdout?: boolean): void {
+        // Intentionally empty - CLI results are captured in test failures
+        // This method is kept for backwards compatibility but no longer logs to console
     }
 
     /**
