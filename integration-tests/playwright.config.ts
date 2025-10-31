@@ -61,6 +61,14 @@ const config = {
             dependencies: ['readonly setup'],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
+        {
+            name: 'safari-with-dep',
+            use: {
+                ...devices['Desktop Safari'],
+            },
+            dependencies: ['readonly setup'],
+            testMatch: /.*\.dependent\.spec\.ts/,
+        },
 
         {
             name: 'chromium-without-dep',
@@ -70,6 +78,11 @@ const config = {
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
+            testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+        },
+        {
+            name: 'safari-without-dep',
+            use: { ...devices['Desktop Safari'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
         },
 
