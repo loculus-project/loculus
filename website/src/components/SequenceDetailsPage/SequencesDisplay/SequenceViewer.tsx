@@ -24,9 +24,11 @@ export const SequencesViewer: FC<Props> = ({
     sequenceType,
     isMultiSegmented,
 }) => {
-    const { data, error, isLoading } = lapisClientHooks(
-        getLapisUrl(clientConfig, organism),
-    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, isMultiSegmented);
+    const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
+        accessionVersion,
+        sequenceType,
+        isMultiSegmented,
+    );
 
     if (error !== null) {
         return (
