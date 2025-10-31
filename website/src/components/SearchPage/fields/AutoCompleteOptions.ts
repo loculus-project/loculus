@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { lapisClientHooks, LAPIS_RETRY_OPTIONS } from '../../../services/serviceHooks.ts';
+import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
@@ -55,10 +55,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated(
-            {},
-            LAPIS_RETRY_OPTIONS,
-        );
+        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -171,7 +168,7 @@ const createLineageOptionsHook = (
             isPending: aggregateIsPending,
             error: aggregateError,
             mutate,
-        } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, LAPIS_RETRY_OPTIONS);
+        } = lapisClientHooks(lapisUrl).useAggregated();
 
         const {
             data: lineageDefinition,
