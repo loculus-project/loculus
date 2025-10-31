@@ -100,7 +100,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).zodiosHooks.useDetails({}, {});
+    const detailsHook = lapisClientHooks(lapisUrl).useDetails();
 
     useEffect(() => {
         detailsHook.mutate({
