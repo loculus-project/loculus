@@ -6,6 +6,7 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { SuborganismSelector } from './SuborganismSelector.tsx';
+import { getDisplayState } from './TableColumnSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -16,7 +17,13 @@ import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
-import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
+import type {
+    FieldValues,
+    GroupedMetadataFilter,
+    MetadataFilter,
+    Schema,
+    SetSomeFieldValues,
+} from '../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
@@ -43,7 +50,7 @@ interface SearchFormProps {
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    suborganismIdentifierField: string | undefined;
+    schema: Schema;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
 }
@@ -58,7 +65,7 @@ export const SearchForm = ({
     referenceGenomeLightweightSchema,
     lapisSearchParameters,
     showMutationSearch,
-    suborganismIdentifierField,
+    schema,
     selectedSuborganism,
     setSelectedSuborganism,
 }: SearchFormProps) => {
@@ -95,11 +102,12 @@ export const SearchForm = ({
 
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
-        .filter((filter) => filter.name !== suborganismIdentifierField)
+        .filter((filter) => filter.name !== schema.suborganismIdentifierField)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
+            displayState: getDisplayState(filter, selectedSuborganism, schema),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
@@ -166,11 +174,11 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {suborganismIdentifierField !== undefined && (
+                        {schema.suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
                                 referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
-                                suborganismIdentifierField={suborganismIdentifierField}
+                                suborganismIdentifierField={schema.suborganismIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />

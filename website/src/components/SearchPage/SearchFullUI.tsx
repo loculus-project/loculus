@@ -401,7 +401,7 @@ export const InnerSearchFullUI = ({
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                     showMutationSearch={showMutationSearch}
-                    suborganismIdentifierField={schema.suborganismIdentifierField}
+                    schema={schema}
                     selectedSuborganism={selectedSuborganism}
                     setSelectedSuborganism={setSelectedSuborganism}
                 />

@@ -48,7 +48,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
     );
 };
 
-function getDisplayState(
+export function getDisplayState(
     field: Metadata,
     selectedSuborganism: string | null,
     schema: Schema,
