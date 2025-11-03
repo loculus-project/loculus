@@ -15,7 +15,7 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -92,7 +92,8 @@ export const SearchForm = ({
     }, [filterSchema]);
 
     const fieldItems: FieldItem[] = filterSchema.filters
-        .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
+        .filter((filter) => filter.name !== ACCESSION_FIELD)
+        .filter((filter) => filter.name !== ACCESSION_VERSION_FIELD)
         .filter((filter) => filter.name !== suborganismIdentifierField)
         .map((filter) => ({
             name: filter.name,
