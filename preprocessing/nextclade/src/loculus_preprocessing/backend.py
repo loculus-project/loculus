@@ -27,11 +27,6 @@ from .processing_functions import trim_ns
 logger = logging.getLogger(__name__)
 
 
-def _log_with_request_id(request_id: str) -> logging.LoggerAdapter:
-    """Create a logger adapter that automatically includes the request_id in all log messages."""
-    return logging.LoggerAdapter(logger, {"request_id": request_id})
-
-
 class JwtCache:
     def __init__(self) -> None:
         self.token: str = ""
@@ -119,20 +114,19 @@ def fetch_unprocessed_sequences(
     etag: str | None, config: Config
 ) -> tuple[str | None, Sequence[UnprocessedEntry] | None]:
     request_id = str(uuid.uuid4())
-    log = _log_with_request_id(request_id)
     n = config.batch_size
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
-    log.debug(f"Fetching {n} unprocessed sequences from {url}")
+    logger.debug(f"[{request_id}] Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,
         **({"If-None-Match": etag} if etag else {}),
     }
-    log.debug(f"Requesting data with ETag: {etag}")
+    logger.debug(f"[{request_id}] Requesting data with ETag: {etag}")
     response = requests.post(url, data=params, headers=headers, timeout=config.backend_request_timeout_seconds)
-    log.info(
-        f"Unprocessed data from backend: status code {response.status_code}, "
+    logger.info(
+        f"[{request_id}] Unprocessed data from backend: status code {response.status_code}, "
         f"request id: {response.headers.get('x-request-id')}"
     )
     match response.status_code:
@@ -142,16 +136,16 @@ def fetch_unprocessed_sequences(
             try:
                 parsed_ndjson = parse_ndjson(response.text)
             except ValueError as e:
-                log.error(str(e))
+                logger.error(f"[{request_id}] {e}")
                 time.sleep(10 * 1)
                 return None, None
             return response.headers["ETag"], parsed_ndjson
         case HTTPStatus.UNPROCESSABLE_ENTITY:
-            log.debug(f"{response.text}.\nSleeping for a while.")
+            logger.debug(f"[{request_id}] {response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
             return None, None
         case _:
-            msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
+            msg = f"[{request_id}] Fetching unprocessed data failed. Status code: {response.status_code}"
             raise Exception(
                 msg,
                 response.text,
@@ -162,7 +156,6 @@ def submit_processed_sequences(
     processed: Sequence[ProcessedEntry], dataset_dir: str, config: Config
 ) -> None:
     request_id = str(uuid.uuid4())
-    log = _log_with_request_id(request_id)
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     if config.keep_tmp_dir:
         # For debugging: write all submit requests to submission_requests.json
@@ -177,23 +170,22 @@ def submit_processed_sequences(
         "x-request-id": request_id,
     }
     params = {"pipelineVersion": config.pipeline_version}
-    log.info(f"Submitting {len(processed)} processed sequences to {url}")
+    logger.info(f"[{request_id}] Submitting {len(processed)} processed sequences to {url}")
     response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
     if not response.ok:
         Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
-            f"Submitting processed data failed. Status code: {response.status_code}, "
+            f"[{request_id}] Submitting processed data failed. Status code: {response.status_code}, "
             f"request id: {response.headers.get('x-request-id')}\n"
             f"Response: {response.text}\n"
             f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
-    log.info(f"Processed data submitted successfully, request id: {response.headers.get('x-request-id')}")
+    logger.info(f"[{request_id}] Processed data submitted successfully, request id: {response.headers.get('x-request-id')}")
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
     request_id = str(uuid.uuid4())
-    log = _log_with_request_id(request_id)
     # we need to parse the backend URL, to extract the API path without the organism component
     parsed = urlparse(config.backend_host)
 
@@ -204,12 +196,12 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,
     }
-    log.info(f"Requesting upload for {number_of_files} files, group_id: {group_id}")
+    logger.info(f"[{request_id}] Requesting upload for {number_of_files} files, group_id: {group_id}")
     response = requests.post(url, headers=headers, params=params, timeout=10)
     if not response.ok:
-        msg = f"Upload request failed: {response.status_code}, request id: {response.headers.get('x-request-id')}, {response.text}"
+        msg = f"[{request_id}] Upload request failed: {response.status_code}, request id: {response.headers.get('x-request-id')}, {response.text}"
         raise RuntimeError(msg)
-    log.info(f"Upload request successful, request id: {response.headers.get('x-request-id')}")
+    logger.info(f"[{request_id}] Upload request successful, request id: {response.headers.get('x-request-id')}")
     return [FileUploadInfo(**item) for item in response.json()]
 
 

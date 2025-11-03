@@ -7,11 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def cli_entry() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format='[%(request_id)s] %(levelname)s - %(name)s - %(message)s',
-        defaults={'request_id': 'N/A'}
-    )
+    logging.basicConfig(level=logging.INFO)
 
     config = get_config()
 
