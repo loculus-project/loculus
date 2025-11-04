@@ -152,7 +152,7 @@ class DownloadManager:
             etag_value = response.headers.get("etag")
             if not etag_value:
                 safe_remove(download_dir)
-                msg = "Response did not contain an ETag header"
+                msg = f"Response headers: {response.headers} did not contain an ETag header"
                 raise RuntimeError(msg)
 
             # Parse expected record count from header
