@@ -4,7 +4,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from silo_import import lineage
 from silo_import.config import ImporterConfig
 from silo_import.paths import ImporterPaths

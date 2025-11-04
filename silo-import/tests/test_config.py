@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from silo_import.config import ImporterConfig
 
 

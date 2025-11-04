@@ -27,21 +27,24 @@ def update_lineage_definitions(
         return
 
     if len(pipeline_versions) > 1:
-        raise RuntimeError("Multiple pipeline versions found in released data")
+        msg = "Multiple pipeline versions found in released data"
+        raise RuntimeError(msg)
 
     lineage_map: dict[str, str] = config.lineage_definitions
     pipeline_version = next(iter(pipeline_versions))
     lineage_url: str | None = lineage_map.get(pipeline_version)
     if not lineage_url:
+        msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
         raise RuntimeError(
-            f"No lineage definition URL configured for pipeline version {pipeline_version}"
+            msg
         )
 
     logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
     try:
         _download_lineage_file(lineage_url, paths.lineage_definition_file)
     except requests.RequestException as exc:
-        raise RuntimeError(f"Failed to download lineage definitions: {exc}") from exc
+        msg = f"Failed to download lineage definitions: {exc}"
+        raise RuntimeError(msg) from exc
 
 
 def _download_lineage_file(url: str, destination: Path) -> None:
