@@ -90,7 +90,8 @@ def _download_file(
         return HttpResponse(status_code=response.status_code, headers=normalized_headers)
 
     except requests.RequestException as exc:
-        raise RuntimeError(f"Failed to download from {url}: {exc}") from exc
+        msg = f"Failed to download from {url}: {exc}"
+        raise RuntimeError(msg) from exc
 
 
 # Type for download function (allows test mocking)
@@ -142,16 +143,17 @@ class DownloadManager:
             )
 
             # Check for 304 Not Modified
-            if response.status_code == 304:
+            if response.status_code == 304:  # noqa: PLR2004
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 safe_remove(download_dir)
-                raise NotModifiedError("Backend state unchanged")
+                raise NotModifiedError
 
             # Extract and validate ETag
             etag_value = response.headers.get("etag")
             if not etag_value:
                 safe_remove(download_dir)
-                raise RuntimeError("Response did not contain an ETag header")
+                msg = "Response did not contain an ETag header"
+                raise RuntimeError(msg)
 
             # Parse expected record count from header
             expected_count = parse_int_header(response.headers.get("x-total-records"))
@@ -167,8 +169,9 @@ class DownloadManager:
                     exc,
                 )
                 safe_remove(download_dir)
+                message = f"Decompression failed ({exc})"
                 raise DecompressionFailedError(
-                    f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE
+                    message, new_etag=SPECIAL_ETAG_NONE
                 ) from exc
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
@@ -176,9 +179,9 @@ class DownloadManager:
             # Validate record count
             try:
                 validate_record_count(analysis.record_count, expected_count)
-            except RecordCountValidationError:
+            except RecordCountValidationError as err:
                 safe_remove(download_dir)
-                raise RecordCountMismatchError("record count mismatch")
+                raise err
 
             # Check against previous download to avoid reprocessing
             _handle_previous_directory(paths, download_dir, data_path, etag_value)
@@ -193,7 +196,12 @@ class DownloadManager:
                 pipeline_versions=analysis.pipeline_versions,
             )
 
-        except (NotModifiedError, HashUnchangedError, DecompressionFailedError, RecordCountMismatchError):
+        except (
+            NotModifiedError,
+            HashUnchangedError,
+            DecompressionFailedError,
+            RecordCountMismatchError,
+        ):
             # Re-raise these as they're expected skip conditions
             raise
         except Exception:
@@ -243,7 +251,7 @@ def _handle_previous_directory(
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
         safe_remove(new_dir)
-        raise HashUnchangedError("hash unchanged", new_etag=new_etag)
+        raise HashUnchangedError(new_etag=new_etag)
 
     # Remove previous directory since we have new data
     logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)

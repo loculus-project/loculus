@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from __future__ import annotations
 
 import time
@@ -6,6 +7,7 @@ from pathlib import Path
 import pytest
 from silo_import import lineage
 from silo_import.config import ImporterConfig
+from silo_import.download_manager import DownloadManager
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
@@ -41,10 +43,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ]
     mock_download, responses_list = make_mock_download_func(responses)
 
-    from silo_import.download_manager import DownloadManager
-
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -70,7 +70,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert not responses_list
 
 
-def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
@@ -84,8 +84,6 @@ def test_runner_skips_on_not_modified(tmp_path: Path, monkeypatch: pytest.Monkey
 
     responses = [MockHttpResponse(status=304, headers={})]
     mock_download, responses_list = make_mock_download_func(responses)
-
-    from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
     runner.current_etag = 'W/"old"'
@@ -126,10 +124,8 @@ def test_runner_skips_on_hash_match_updates_etag(
     ]
     mock_download, responses_list = make_mock_download_func(responses)
 
-    from silo_import.download_manager import DownloadManager
-
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -146,9 +142,7 @@ def test_runner_skips_on_hash_match_updates_etag(
     assert not responses_list
 
 
-def test_runner_cleans_up_on_record_mismatch(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
@@ -167,8 +161,6 @@ def test_runner_cleans_up_on_record_mismatch(
     ]
     mock_download, responses_list = make_mock_download_func(responses)
 
-    from silo_import.download_manager import DownloadManager
-
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
@@ -179,7 +171,7 @@ def test_runner_cleans_up_on_record_mismatch(
 
 
 def test_runner_cleans_up_on_decompress_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
@@ -198,8 +190,6 @@ def test_runner_cleans_up_on_decompress_failure(
         ),
     ]
     mock_download, responses_list = make_mock_download_func(responses)
-
-    from silo_import.download_manager import DownloadManager
 
     runner = ImporterRunner(config, paths)
     runner.current_etag = 'W/"old"'

@@ -42,14 +42,15 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
         with path.open("rb") as compressed, decompressor.stream_reader(compressed) as reader:
             text_stream = io.TextIOWrapper(reader, encoding="utf-8")
             for line in text_stream:
-                line = line.strip()
-                if not line:
+                line_stripped = line.strip()
+                if not line_stripped:
                     continue
                 record_count += 1
                 try:
-                    obj = json.loads(line)
+                    obj = json.loads(line_stripped)
                 except json.JSONDecodeError as exc:
-                    raise RuntimeError(f"Invalid JSON record: {exc}") from exc
+                    msg = f"Invalid JSON record: {exc}"
+                    raise RuntimeError(msg) from exc
 
                 metadata = obj.get("metadata") if isinstance(obj, dict) else None
                 if isinstance(metadata, dict):
@@ -57,6 +58,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
                     if pipeline_version:
                         pipeline_versions.add(str(pipeline_version))
     except zstandard.ZstdError as exc:
-        raise RuntimeError(f"Failed to decompress {path}: {exc}") from exc
+        msg = f"Failed to decompress {path}: {exc}"
+        raise RuntimeError(msg) from exc
 
     return NdjsonAnalysis(record_count=record_count, pipeline_versions=pipeline_versions)

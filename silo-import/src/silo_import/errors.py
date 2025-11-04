@@ -1,4 +1,4 @@
-class SkipRun(Exception):
+class SkipRunError(Exception):
     """Raised when the importer should skip invoking SILO without error."""
 
     def __init__(self, message: str, new_etag: str | None = None) -> None:
@@ -6,17 +6,37 @@ class SkipRun(Exception):
         self.new_etag = new_etag
 
 
-class NotModified(SkipRun):
+class NotModifiedError(SkipRunError):
     """Backend indicated no new data via HTTP 304."""
 
+    def __init__(self, new_etag: str | None = None) -> None:
+        super().__init__("Backend indicated no new data via HTTP 304.")
+        self.new_etag = new_etag
 
-class HashUnchanged(SkipRun):
+
+class HashUnchangedError(SkipRunError):
     """New payload matches the previous run's hash."""
 
+    def __init__(self, new_etag: str | None = None) -> None:
+        super().__init__("New payload matches the previous run's hash.")
+        self.new_etag = new_etag
 
-class RecordCountMismatch(SkipRun):
+
+class RecordCountMismatchError(SkipRunError):
     """Mismatch between expected and actual record count."""
 
+    def __init__(self, new_etag: str | None = None) -> None:
+        super().__init__("New payload matches the previous run's hash.")
+        self.new_etag = new_etag
 
-class DecompressionFailed(SkipRun):
+
+class DecompressionFailedError(SkipRunError):
     """Download could not be decompressed successfully."""
+
+    def __init__(
+        self,
+        message: str = "Download could not be decompressed successfully.",
+        new_etag: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.new_etag = new_etag
