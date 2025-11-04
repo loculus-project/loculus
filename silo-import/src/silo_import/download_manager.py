@@ -16,7 +16,12 @@ from .constants import (
     SPECIAL_ETAG_NONE,
 )
 from .decompressor import analyze_ndjson
-from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
+from .errors import (
+    DecompressionFailedError,
+    HashUnchangedError,
+    NotModifiedError,
+    RecordCountMismatchError,
+)
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
@@ -140,7 +145,7 @@ class DownloadManager:
             if response.status_code == 304:
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 safe_remove(download_dir)
-                raise NotModified("Backend state unchanged")
+                raise NotModifiedError("Backend state unchanged")
 
             # Extract and validate ETag
             etag_value = response.headers.get("etag")
@@ -162,7 +167,7 @@ class DownloadManager:
                     exc,
                 )
                 safe_remove(download_dir)
-                raise DecompressionFailed(
+                raise DecompressionFailedError(
                     f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE
                 ) from exc
 
@@ -173,7 +178,7 @@ class DownloadManager:
                 validate_record_count(analysis.record_count, expected_count)
             except RecordCountValidationError:
                 safe_remove(download_dir)
-                raise RecordCountMismatch("record count mismatch")
+                raise RecordCountMismatchError("record count mismatch")
 
             # Check against previous download to avoid reprocessing
             _handle_previous_directory(paths, download_dir, data_path, etag_value)
@@ -188,7 +193,7 @@ class DownloadManager:
                 pipeline_versions=analysis.pipeline_versions,
             )
 
-        except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
+        except (NotModifiedError, HashUnchangedError, DecompressionFailedError, RecordCountMismatchError):
             # Re-raise these as they're expected skip conditions
             raise
         except Exception:
@@ -238,7 +243,7 @@ def _handle_previous_directory(
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
         safe_remove(new_dir)
-        raise HashUnchanged("hash unchanged", new_etag=new_etag)
+        raise HashUnchangedError("hash unchanged", new_etag=new_etag)
 
     # Remove previous directory since we have new data
     logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)

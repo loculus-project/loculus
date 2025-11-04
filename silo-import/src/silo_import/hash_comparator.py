@@ -16,7 +16,7 @@ def md5_file(path: Path) -> str:
     Returns:
         Hex digest of MD5 hash
     """
-    digest = hashlib.md5()
+    digest = hashlib.md5()  # noqa: S324
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):  # 1MB chunks
             digest.update(chunk)

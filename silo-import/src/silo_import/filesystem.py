@@ -43,7 +43,8 @@ def prune_timestamped_directories(directory: Path, keep: int = 1) -> None:
         Non-critical cleanup failures are logged as warnings.
     """
     if keep < 0:
-        raise ValueError("keep must be >= 0")
+        msg = "keep must be >= 0"
+        raise ValueError(msg)
     if not directory.exists():
         return
 
