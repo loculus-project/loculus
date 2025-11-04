@@ -1,4 +1,4 @@
-import { type FC, useMemo, useState } from 'react';
+import { type FC, useEffect, useMemo, useState } from 'react';
 
 import { DownloadDialogButton } from './DowloadDialogButton.tsx';
 import { DownloadButton } from './DownloadButton.tsx';
@@ -48,15 +48,13 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         [referenceGenomesLightweightSchema, selectedSuborganism],
     );
 
-    const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>({
-        includeRestricted: false,
-        dataType: 'metadata',
-        compression: undefined,
-        unalignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
-        alignedAminoAcidSequence: genes[0]?.lapisName ?? '',
-        includeRichFastaHeaders: false,
-    });
+    const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
+        getDefaultDownloadFormState(nucleotideSequences, genes),
+    );
+    useEffect(() => {
+        setDownloadFormState(getDefaultDownloadFormState(nucleotideSequences, genes));
+    }, [nucleotideSequences, genes]);
+
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
     const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
@@ -131,6 +129,18 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         </>
     );
 };
+
+function getDefaultDownloadFormState(nucleotideSequences: SegmentInfo[], genes: GeneInfo[]): DownloadFormState {
+    return {
+        includeRestricted: false,
+        dataType: 'metadata',
+        compression: undefined,
+        unalignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
+        alignedNucleotideSequence: nucleotideSequences[0]?.lapisName ?? '',
+        alignedAminoAcidSequence: genes[0]?.lapisName ?? '',
+        includeRichFastaHeaders: false,
+    };
+}
 
 function getDownloadOption({
     downloadFormState,
