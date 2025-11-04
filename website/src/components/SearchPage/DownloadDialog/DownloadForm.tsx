@@ -30,27 +30,6 @@ export type DownloadFormState = {
     includeRichFastaHeaders: boolean;
 };
 
-const optionToDataTypeMap: DownloadDataType['type'][] = [
-    'metadata',
-    'unalignedNucleotideSequences',
-    'alignedNucleotideSequences',
-    'alignedAminoAcidSequences',
-];
-
-const dataTypeToOptionMap = optionToDataTypeMap.reduce(
-    (acc, value, index) => ({
-        ...acc,
-        [value]: index,
-    }),
-    {} as Record<DownloadDataType['type'], number>,
-);
-
-const optionToCompressionMap: Compression[] = [undefined, 'zstd', 'gzip'];
-
-function mapCompressionToOption(compression: Compression) {
-    return optionToCompressionMap.findIndex((it) => it === compression);
-}
-
 type DownloadFormProps = {
     referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
     downloadFormState: DownloadFormState;
@@ -313,4 +292,25 @@ export function getSequenceNames(
         genes: geneNames.map((name) => getMultiPathogenSequenceName(name, selectedSuborganism)),
         useMultiSegmentEndpoint: true,
     };
+}
+
+const optionToDataTypeMap: DownloadDataType['type'][] = [
+    'metadata',
+    'unalignedNucleotideSequences',
+    'alignedNucleotideSequences',
+    'alignedAminoAcidSequences',
+];
+
+const dataTypeToOptionMap = optionToDataTypeMap.reduce(
+    (acc, value, index) => ({
+        ...acc,
+        [value]: index,
+    }),
+    {} as Record<DownloadDataType['type'], number>,
+);
+
+const optionToCompressionMap: Compression[] = [undefined, 'zstd', 'gzip'];
+
+function mapCompressionToOption(compression: Compression) {
+    return optionToCompressionMap.findIndex((it) => it === compression);
 }

@@ -1,5 +1,5 @@
 export type DownloadDataType =
-    | { type: 'metadata', fields: string[] }
+    | { type: 'metadata'; fields: string[] }
     | {
           type: 'unalignedNucleotideSequences';
           segment?: string;
