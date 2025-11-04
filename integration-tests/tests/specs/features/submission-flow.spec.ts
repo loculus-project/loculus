@@ -12,7 +12,7 @@ test.describe('Submission flow', () => {
         const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
         await submissionPage.navigateToOrganism('Ebola Sudan');
         const navigation = new NavigationPage(pageWithACreatedUser);
-        await navigation.clickSubmitSequences();
+        await navigation.clickSequenceSubmission();
         await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
     });
 

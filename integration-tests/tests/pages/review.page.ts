@@ -33,7 +33,7 @@ export class ReviewPage {
         await this.page.goto('/');
         await this.navigation.openOrganismNavigation();
         await this.navigation.selectOrganism('Ebola Sudan');
-        await this.navigation.clickSubmitSequences();
+        await this.navigation.clickSequenceSubmission();
         await this.page.getByRole('link', { name: "Review Review your group's" }).click();
     }
 

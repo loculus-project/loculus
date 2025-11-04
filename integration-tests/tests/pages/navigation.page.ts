@@ -47,7 +47,7 @@ export class NavigationPage {
         await this.page.getByRole('link', { name: linkText, exact: true }).first().click();
     }
 
-    async clickSubmitSequences() {
-        await this.clickOrganismNavigationLink('Submit sequences');
+    async clickSequenceSubmission() {
+        await this.clickOrganismNavigationLink('Sequence submission');
     }
 }

@@ -13,7 +13,7 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     await searchPage.cchf();
 
     const navigation = new NavigationPage(page);
-    await navigation.clickSubmitSequences();
+    await navigation.clickSequenceSubmission();
     await page.getByRole('link', { name: "View View your group's" }).click();
 
     const loculusId = await searchPage.waitForLoculusId();
