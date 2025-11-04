@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 
 from .config import ImporterConfig
+from .file_io import write_text
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,10 @@ def update_lineage_definitions(
         return
 
     if not pipeline_versions:
-        msg = "No pipeline version found"
-        raise RuntimeError(msg)
+        # required for dummy organisms
+        logger.info("No pipeline version found; writing empty lineage definitions")
+        write_text(paths.lineage_definition_file, "{}\n")
+        return
 
     if len(pipeline_versions) > 1:
         msg = "Multiple pipeline versions found in released data"
