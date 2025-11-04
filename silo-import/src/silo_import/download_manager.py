@@ -181,7 +181,7 @@ class DownloadManager:
                 validate_record_count(analysis.record_count, expected_count)
             except RecordCountValidationError as err:
                 safe_remove(download_dir)
-                raise err
+                raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
             _handle_previous_directory(paths, download_dir, data_path, etag_value)
@@ -243,6 +243,7 @@ def _handle_previous_directory(
     if not previous_data_path.exists():
         logger.info("Previous input directory %s did not contain data", previous_dir)
         safe_remove(previous_dir)
+        # probably unneeded as this will be removed in prune_timestamped_directories
         return
 
     # Compare hashes to detect duplicates
@@ -254,5 +255,6 @@ def _handle_previous_directory(
         raise HashUnchangedError(new_etag=new_etag)
 
     # Remove previous directory since we have new data
+    # same here
     logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)
     safe_remove(previous_dir)

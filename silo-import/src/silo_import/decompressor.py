@@ -35,7 +35,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
         RuntimeError: If decompression or JSON parsing fails
     """
     record_count = 0
-    pipeline_versions: set[str] = set()
+    pipeline_versions: set[int] = set()
     decompressor = zstandard.ZstdDecompressor()
 
     try:
@@ -56,7 +56,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
                 if isinstance(metadata, dict):
                     pipeline_version = metadata.get("pipelineVersion")
                     if pipeline_version:
-                        pipeline_versions.add(str(pipeline_version))
+                        pipeline_versions.add(int(pipeline_version))
     except zstandard.ZstdError as exc:
         msg = f"Failed to decompress {path}: {exc}"
         raise RuntimeError(msg) from exc

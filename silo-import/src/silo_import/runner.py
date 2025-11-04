@@ -63,8 +63,6 @@ class ImporterRunner:
             logger.warning("Skipping run: %s", skip)
             if skip.new_etag is not None:
                 self.current_etag = skip.new_etag
-            if hard_refresh and isinstance(skip, DecompressionFailedError):
-                self.last_hard_refresh = time.time()
             return
 
         try:
