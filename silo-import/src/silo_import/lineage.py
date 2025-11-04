@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Set
 
 import requests
 
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def update_lineage_definitions(
-    pipeline_versions: Set[str],
+    pipeline_versions: set[str],
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:
@@ -30,9 +29,9 @@ def update_lineage_definitions(
     if len(pipeline_versions) > 1:
         raise RuntimeError("Multiple pipeline versions found in released data")
 
-    lineage_map: Dict[str, str] = config.lineage_definitions
+    lineage_map: dict[str, str] = config.lineage_definitions
     pipeline_version = next(iter(pipeline_versions))
-    lineage_url: Optional[str] = lineage_map.get(pipeline_version)
+    lineage_url: str | None = lineage_map.get(pipeline_version)
     if not lineage_url:
         raise RuntimeError(
             f"No lineage definition URL configured for pipeline version {pipeline_version}"

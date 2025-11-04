@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .constants import DATA_FILENAME, LINEAGES_FILENAME
+
 
 @dataclass(frozen=True)
 class ImporterPaths:
@@ -15,7 +17,7 @@ class ImporterPaths:
     silo_done: Path
 
     @classmethod
-    def from_root(cls, root: Path) -> "ImporterPaths":
+    def from_root(cls, root: Path) -> ImporterPaths:
         preprocessing_dir = (root / "preprocessing").resolve()
         input_dir = preprocessing_dir / "input"
         output_dir = preprocessing_dir / "output"
@@ -23,8 +25,8 @@ class ImporterPaths:
             preprocessing_dir=preprocessing_dir,
             input_dir=input_dir,
             output_dir=output_dir,
-            lineage_definition_file=input_dir / "lineage_definitions.yaml",
-            silo_input_data_path=input_dir / "data.ndjson.zst",
+            lineage_definition_file=input_dir / LINEAGES_FILENAME,
+            silo_input_data_path=input_dir / DATA_FILENAME,
             run_silo=input_dir / "run_silo",
             silo_done=input_dir / "silo_done",
         )

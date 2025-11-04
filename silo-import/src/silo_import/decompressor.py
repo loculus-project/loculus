@@ -7,7 +7,6 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Set
 
 import zstandard
 
@@ -19,7 +18,7 @@ class NdjsonAnalysis:
     """Result of analyzing an NDJSON file."""
 
     record_count: int
-    pipeline_versions: Set[str]
+    pipeline_versions: set[str]
 
 
 def analyze_ndjson(path: Path) -> NdjsonAnalysis:
@@ -36,7 +35,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
         RuntimeError: If decompression or JSON parsing fails
     """
     record_count = 0
-    pipeline_versions: Set[str] = set()
+    pipeline_versions: set[str] = set()
     decompressor = zstandard.ZstdDecompressor()
 
     try:

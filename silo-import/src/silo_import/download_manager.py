@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional, Set
 
 import requests
 
@@ -40,13 +40,13 @@ class DownloadResult:
     directory: Path
     data_path: Path
     etag: str
-    pipeline_versions: Set[str]
+    pipeline_versions: set[str]
 
 
 def _download_file(
     url: str,
     output_path: Path,
-    etag: Optional[str] = None,
+    etag: str | None = None,
     timeout: int = 300,
 ) -> HttpResponse:
     """
@@ -89,13 +89,13 @@ def _download_file(
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[[str, Path, Optional[str], int], HttpResponse]
+DownloadFunc = Callable[[str, Path, str | None, int], HttpResponse]
 
 
 class DownloadManager:
     """Manages downloading and validating data releases."""
 
-    def __init__(self, download_func: Optional[DownloadFunc] = None) -> None:
+    def __init__(self, download_func: DownloadFunc | None = None) -> None:
         self.download_func = download_func or _download_file
 
     def download_release(

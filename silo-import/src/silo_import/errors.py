@@ -1,10 +1,10 @@
-from typing import Optional
+
 
 
 class SkipRun(Exception):
     """Raised when the importer should skip invoking SILO without error."""
 
-    def __init__(self, message: str, new_etag: Optional[str] = None) -> None:
+    def __init__(self, message: str, new_etag: str | None = None) -> None:
         super().__init__(message)
         self.new_etag = new_etag
 
