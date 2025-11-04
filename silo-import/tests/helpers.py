@@ -88,7 +88,7 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
     return mock_download, responses_copy
 
 
-def ack_on_success(paths, timeout: float = 5.0) -> threading.Thread:
+def mock_silo_prepro_success(paths, timeout: float = 5.0) -> threading.Thread:
     """Helper that simulates SILO acknowledging and completing a run."""
 
     def _worker() -> None:

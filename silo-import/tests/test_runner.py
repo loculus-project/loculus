@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 from helpers import (
     MockHttpResponse,
-    ack_on_success,
     compress_ndjson,
     make_mock_download_func,
+    mock_silo_prepro_success,
     read_ndjson_file,
 )
 from silo_import import lineage
@@ -48,7 +48,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
-    ack_thread = ack_on_success(paths)
+    ack_thread = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
     assert not ack_thread.is_alive()
@@ -129,7 +129,7 @@ def test_runner_skips_on_hash_match_updates_etag(
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
-    ack_thread = ack_on_success(paths)
+    ack_thread = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread.join(timeout=1)
     assert runner.current_etag == 'W/"111"'
@@ -161,12 +161,14 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
     mock_download, responses_list = make_mock_download_func(responses)
 
     runner = ImporterRunner(config, paths)
+    runner.current_etag = "old_etag"
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
     assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert not responses_list
+    assert runner.current_etag == "old_etag"
 
 
 def test_runner_cleans_up_on_decompress_failure(
@@ -198,5 +200,6 @@ def test_runner_cleans_up_on_decompress_failure(
 
     assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    # TODO: why only on decompress failure? shouldn't we keep the old etag?
     assert runner.current_etag == "0"
     assert not responses_list

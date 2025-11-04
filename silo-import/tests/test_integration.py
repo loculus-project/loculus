@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from helpers import (
     MockHttpResponse,
-    ack_on_success,
     compress_ndjson,
     make_mock_download_func,
+    mock_silo_prepro_success,
     read_ndjson_file,
 )
 from silo_import import lineage
@@ -69,7 +69,7 @@ def test_full_import_cycle_with_real_zstd_data(
     runner.download_manager = DownloadManager(download_func=mock_download)
 
     # Simulate SILO acknowledging the run
-    ack_thread = ack_on_success(paths)
+    ack_thread = mock_silo_prepro_success(paths)
 
     # Run the import
     runner.run_once()
@@ -132,13 +132,16 @@ def test_multiple_runs_with_state_persistence(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
     assert runner.current_etag == 'W/"etag1"'
     first_hard_refresh = runner.last_hard_refresh
     assert first_hard_refresh > 0
+    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(input_dirs) == 1
+    first_dir = input_dirs[0]
 
     # Run 2: No changes (304 Not Modified)
     responses_r2 = [MockHttpResponse(status=304, headers={})]
@@ -152,8 +155,9 @@ def test_multiple_runs_with_state_persistence(
     assert runner.last_hard_refresh == first_hard_refresh, "Hard refresh time unchanged on 304"
 
     # No new directories should be created
-    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert len(input_dirs) == 1, "Should still have only one directory after 304"
+    new_input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(new_input_dirs) == 1, "Should still have only one directory after 304"
+    assert new_input_dirs[0] == first_dir, "Should keep previous input directory after 304"
 
     # Run 3: New data with different ETag
     records_v2 = [{"metadata": {"pipelineVersion": "1"}, "data": "v2"}]
@@ -167,7 +171,7 @@ def test_multiple_runs_with_state_persistence(
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    ack_thread_r3 = ack_on_success(paths)
+    ack_thread_r3 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r3.join(timeout=2)
 
@@ -213,7 +217,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
@@ -233,7 +237,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
     runner.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    ack_thread_r2 = ack_on_success(paths)
+    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r2.join(timeout=2)
 
@@ -278,6 +282,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
     # Verify cleanup happened
     assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after timeout"
+    # TODO: check what happens if SILO has no input file?
     assert not paths.run_silo.exists(), "Run file should be cleared"
     assert not paths.silo_done.exists(), "Done file should be cleared"
 
@@ -364,7 +369,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
@@ -388,7 +393,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
     # Since there's no previous directory (cleared on startup), it will proceed with SILO run
-    ack_thread_r2 = ack_on_success(paths)
+    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner2.run_once()
     ack_thread_r2.join(timeout=2)
 
