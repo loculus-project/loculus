@@ -6,14 +6,13 @@ from pathlib import Path
 import requests
 
 from .config import ImporterConfig
-from .file_io import write_text
 from .paths import ImporterPaths
 
 logger = logging.getLogger(__name__)
 
 
 def update_lineage_definitions(
-    pipeline_versions: set[str],
+    pipeline_versions: set[int],
     config: ImporterConfig,
     paths: ImporterPaths,
 ) -> None:

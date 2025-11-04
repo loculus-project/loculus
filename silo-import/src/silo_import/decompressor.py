@@ -18,7 +18,7 @@ class NdjsonAnalysis:
     """Result of analyzing an NDJSON file."""
 
     record_count: int
-    pipeline_versions: set[str]
+    pipeline_versions: set[int]
 
 
 def analyze_ndjson(path: Path) -> NdjsonAnalysis:

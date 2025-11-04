@@ -45,7 +45,7 @@ class DownloadResult:
     directory: Path
     data_path: Path
     etag: str
-    pipeline_versions: set[str]
+    pipeline_versions: set[int]
 
 
 def _download_file(
