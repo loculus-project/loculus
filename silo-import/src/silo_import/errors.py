@@ -1,6 +1,3 @@
-
-
-
 class SkipRun(Exception):
     """Raised when the importer should skip invoking SILO without error."""
 

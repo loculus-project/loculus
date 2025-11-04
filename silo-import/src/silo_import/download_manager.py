@@ -162,7 +162,9 @@ class DownloadManager:
                     exc,
                 )
                 safe_remove(download_dir)
-                raise DecompressionFailed(f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE) from exc
+                raise DecompressionFailed(
+                    f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE
+                ) from exc
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
@@ -214,9 +216,7 @@ def _handle_previous_directory(
 ) -> None:
     """Check previous download and clean up if needed."""
     previous_dirs = [
-        p
-        for p in paths.input_dir.iterdir()
-        if p.is_dir() and p.name.isdigit() and p != new_dir
+        p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit() and p != new_dir
     ]
     if not previous_dirs:
         return

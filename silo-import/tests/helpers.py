@@ -48,7 +48,9 @@ def make_curl_runner(responses: list[MockHttpResponse]) -> Callable[[list[str]],
         if header_path is None or data_path is None:
             raise AssertionError("curl command missing header or output path")
 
-        header_lines = [f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"]
+        header_lines = [
+            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"
+        ]
         for key, value in (response.headers or {}).items():
             header_lines.append(f"{key}: {value}")
         header_lines.append("")
@@ -65,7 +67,9 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
 
     responses_copy = list(responses)
 
-    def mock_download(url: str, output_path: Path, etag: str | None = None, timeout: int = 300) -> HttpResponse:
+    def mock_download(
+        url: str, output_path: Path, etag: str | None = None, timeout: int = 300
+    ) -> HttpResponse:
         if not responses_copy:
             raise AssertionError("No fake HTTP responses remaining")
         response = responses_copy.pop(0)

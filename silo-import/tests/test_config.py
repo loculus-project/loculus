@@ -10,7 +10,7 @@ from silo_import.config import ImporterConfig
 
 def test_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     backend_url = "http://example.com/base"
-    lineage_json = "{\"1.0.0\": \"http://example.com/lineage.yaml\"}"
+    lineage_json = '{"1.0.0": "http://example.com/lineage.yaml"}'
     monkeypatch.setenv("BACKEND_BASE_URL", backend_url)
     monkeypatch.setenv("LINEAGE_DEFINITIONS", lineage_json)
     monkeypatch.setenv("HARD_REFRESH_INTERVAL", "10")
