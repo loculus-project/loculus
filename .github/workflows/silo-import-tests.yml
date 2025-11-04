@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 defaults:
   run:
-    working-directory: ./kubernetes/silo-import
+    working-directory: ./silo-import
 jobs:
   tests:
     runs-on: ubuntu-latest

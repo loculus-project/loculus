@@ -25,7 +25,7 @@ env:
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 defaults:
   run:
-    working-directory: ./kubernetes/silo-import
+    working-directory: ./silo-import
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-silo-import-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
