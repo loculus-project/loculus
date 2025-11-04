@@ -67,7 +67,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         useMultiSegmentEndpoint,
         defaultFastaHeaderTemplate,
         selectedFields,
-        metadata,
+        metadata: schema.metadata,
     });
 
     return (
