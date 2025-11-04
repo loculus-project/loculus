@@ -27,7 +27,9 @@ class ImporterConfig:
         lineage_definitions: dict[int, str] | None = None
         if lineage_definitions_raw:
             try:
-                lineage_definitions = json.loads(lineage_definitions_raw)
+                data = json.loads(lineage_definitions_raw)
+                lineage_definitions = {int(k): v for k, v in data.items()}
+
             except json.JSONDecodeError as exc:
                 msg = "LINEAGE_DEFINITIONS must be valid JSON"
                 raise RuntimeError(msg) from exc
