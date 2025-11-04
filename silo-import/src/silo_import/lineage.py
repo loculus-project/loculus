@@ -30,9 +30,9 @@ def update_lineage_definitions(
         msg = "Multiple pipeline versions found in released data"
         raise RuntimeError(msg)
 
-    lineage_map: dict[str, str] = config.lineage_definitions
+    lineage_map: dict[int, str] = config.lineage_definitions
     pipeline_version = next(iter(pipeline_versions))
-    lineage_url: str | None = lineage_map.get(pipeline_version)
+    lineage_url: str | None = lineage_map.get(int(pipeline_version))
     if not lineage_url:
         msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
         raise RuntimeError(

@@ -11,10 +11,8 @@ dependencies = [
 silo-import = "silo_import.main:cli"
 
 [project.optional-dependencies]
-test = [
-    "pytest>=7.4",
-]
-dev = ["ruff", "pytest>=7.4"]
+test = ["pytest", "mypy",
+    "ruff",]
 
 [build-system]
 requires = ["hatchling"]

@@ -5,25 +5,24 @@ import time
 from pathlib import Path
 
 import pytest
-from silo_import import lineage
-from silo_import.config import ImporterConfig
-from silo_import.download_manager import DownloadManager
-from silo_import.paths import ImporterPaths
-from silo_import.runner import ImporterRunner
-
-from .helpers import (
+from helpers import (
     MockHttpResponse,
     ack_on_success,
     compress_ndjson,
     make_mock_download_func,
     read_ndjson_file,
 )
+from silo_import import lineage
+from silo_import.config import ImporterConfig
+from silo_import.download_manager import DownloadManager
+from silo_import.paths import ImporterPaths
+from silo_import.runner import ImporterRunner
 
 
 def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1,
         poll_interval=1,
         silo_run_timeout=5,
@@ -32,7 +31,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "payload": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "payload": 1}]
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(
@@ -102,7 +101,7 @@ def test_runner_skips_on_hash_match_updates_etag(
 ) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1,
         poll_interval=1,
         silo_run_timeout=5,
@@ -111,7 +110,7 @@ def test_runner_skips_on_hash_match_updates_etag(
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     responses = [

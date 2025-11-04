@@ -24,7 +24,7 @@ class ImporterConfig:
             raise RuntimeError(msg)
 
         lineage_definitions_raw = env.get("LINEAGE_DEFINITIONS")
-        lineage_definitions: dict[str, str] | None = None
+        lineage_definitions: dict[int, str] | None = None
         if lineage_definitions_raw:
             try:
                 lineage_definitions = json.loads(lineage_definitions_raw)

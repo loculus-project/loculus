@@ -6,19 +6,18 @@ import time
 from pathlib import Path
 
 import pytest
-from silo_import import lineage
-from silo_import.config import ImporterConfig
-from silo_import.download_manager import DownloadManager
-from silo_import.paths import ImporterPaths
-from silo_import.runner import ImporterRunner
-
-from .helpers import (
+from helpers import (
     MockHttpResponse,
     ack_on_success,
     compress_ndjson,
     make_mock_download_func,
     read_ndjson_file,
 )
+from silo_import import lineage
+from silo_import.config import ImporterConfig
+from silo_import.download_manager import DownloadManager
+from silo_import.paths import ImporterPaths
+from silo_import.runner import ImporterRunner
 
 
 def test_full_import_cycle_with_real_zstd_data(
@@ -27,7 +26,7 @@ def test_full_import_cycle_with_real_zstd_data(
     """Test complete import cycle with real zstd-compressed data."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -39,15 +38,15 @@ def test_full_import_cycle_with_real_zstd_data(
     # Create realistic multi-record dataset
     records = [
         {
-            "metadata": {"pipelineVersion": "1.0.0", "accession": "seq1"},
+            "metadata": {"pipelineVersion": "1", "accession": "seq1"},
             "unalignedNucleotideSequences": {"main": "ATCG"},
         },
         {
-            "metadata": {"pipelineVersion": "1.0.0", "accession": "seq2"},
+            "metadata": {"pipelineVersion": "1", "accession": "seq2"},
             "unalignedNucleotideSequences": {"main": "GCTA"},
         },
         {
-            "metadata": {"pipelineVersion": "1.0.0", "accession": "seq3"},
+            "metadata": {"pipelineVersion": "1", "accession": "seq3"},
             "unalignedNucleotideSequences": {"main": "TTAA"},
         },
     ]
@@ -106,7 +105,7 @@ def test_multiple_runs_with_state_persistence(
     """Test multiple sequential runs maintain state correctly."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,  # Long interval to prevent hard refresh
         poll_interval=1,
         silo_run_timeout=5,
@@ -120,7 +119,7 @@ def test_multiple_runs_with_state_persistence(
     )
 
     # Run 1: Initial import
-    records_v1 = [{"metadata": {"pipelineVersion": "1.0.0"}, "data": "v1"}]
+    records_v1 = [{"metadata": {"pipelineVersion": "1"}, "data": "v1"}]
     body_v1 = compress_ndjson(records_v1)
 
     responses_r1 = [
@@ -187,7 +186,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     """Test hard refresh forces re-download even with valid ETag."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=2,  # Short interval for testing
         poll_interval=1,
         silo_run_timeout=5,
@@ -200,7 +199,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
         lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
     )
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     # Run 1: Initial import
@@ -247,7 +246,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     """Test that errors during import properly clean up artifacts."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=2,  # Short timeout to trigger failure
@@ -256,7 +255,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     responses = [
@@ -292,7 +291,7 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     """Test that lineage download failure properly cleans up downloaded data."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -301,7 +300,7 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     responses = [
@@ -340,7 +339,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     """Test that download directories are cleaned on startup and hash matching still works."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -349,7 +348,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     # First download: successful completion

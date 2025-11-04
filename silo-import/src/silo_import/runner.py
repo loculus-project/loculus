@@ -30,7 +30,7 @@ class ImporterRunner:
         self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
-        self.last_hard_refresh = 0
+        self.last_hard_refresh: float = 0
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
