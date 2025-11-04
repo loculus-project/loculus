@@ -30,5 +30,5 @@ Environment variables mirror the historical shell scripts:
 
 ## Container image
 
-The accompanying `Dockerfile` builds a minimal image that installs this package and its
+The accompanying `Dockerfile` builds a minimal image including this package and its
 Python dependencies. A GitHub Actions workflow publishes it to `ghcr.io/loculus-project/silo-import`.
