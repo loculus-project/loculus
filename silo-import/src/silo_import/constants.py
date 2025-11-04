@@ -7,3 +7,8 @@ SPECIAL_ETAG_NONE = "0"
 
 # File names for downloaded data
 DATA_FILENAME = "data.ndjson.zst"
+LINEAGES_FILENAME = "lineage_definitions.yaml"
+
+# Sentinel file names
+RUN_SILO_SENTINEL = "run_silo"
+SILO_DONE_SENTINEL = "silo_done"

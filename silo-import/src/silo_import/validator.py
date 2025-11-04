@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,7 @@ class RecordCountValidationError(Exception):
     """Record count does not match expected value."""
 
 
-def validate_record_count(actual: int, expected: Optional[int]) -> None:
+def validate_record_count(actual: int, expected: int | None) -> None:
     """
     Validate that the actual record count matches expected.
 
@@ -25,10 +24,11 @@ def validate_record_count(actual: int, expected: Optional[int]) -> None:
     """
     if expected is not None and actual != expected:
         logger.warning("Expected %s records but decoded %s", expected, actual)
-        raise RecordCountValidationError(f"Expected {expected} records but got {actual}")
+        msg = f"Expected {expected} records but got {actual}"
+        raise RecordCountValidationError(msg)
 
 
-def parse_int_header(value: Optional[str]) -> Optional[int]:
+def parse_int_header(value: str | None) -> int | None:
     """
     Parse an integer from an HTTP header value.
 

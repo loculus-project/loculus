@@ -20,5 +20,5 @@ def main() -> None:
     run_forever(config, paths)
 
 
-def cli() -> None:
+if __name__ == "__main__":
     main()

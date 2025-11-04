@@ -26,11 +26,11 @@ def safe_remove(path: Path) -> None:
             path.unlink()
     except FileNotFoundError:
         return
-    except OSError as exc:  # pragma: no cover
+    except OSError as exc:
         logger.warning("Failed to remove %s: %s", path, exc)
 
 
-def prune_timestamped_directories(directory: Path, keep: int = 1) -> None:
+def prune_timestamped_directories(directory: Path) -> None:
     """
     Remove old timestamped directories, keeping only the most recent ones.
 
@@ -42,8 +42,7 @@ def prune_timestamped_directories(directory: Path, keep: int = 1) -> None:
         Only directories with numeric names are considered timestamped.
         Non-critical cleanup failures are logged as warnings.
     """
-    if keep < 0:
-        raise ValueError("keep must be >= 0")
+    keep = 1
     if not directory.exists():
         return
 
@@ -55,5 +54,5 @@ def prune_timestamped_directories(directory: Path, keep: int = 1) -> None:
     for candidate in candidates[keep:]:
         try:
             shutil.rmtree(candidate)
-        except OSError as exc:  # pragma: no cover - non-critical cleanup
+        except OSError as exc:
             logger.warning("Failed to prune %s: %s", candidate, exc)

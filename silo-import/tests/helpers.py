@@ -1,13 +1,15 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import json
 import threading
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional
 
 import zstandard
+from silo_import.file_io import write_text
+from silo_import.download_manager import HttpResponse
 
 
 def compress_ndjson(records: Iterable[dict]) -> bytes:
@@ -16,7 +18,7 @@ def compress_ndjson(records: Iterable[dict]) -> bytes:
     return compressor.compress(payload.encode("utf-8"))
 
 
-def read_ndjson_file(path: Path) -> List[dict]:
+def read_ndjson_file(path: Path) -> list[dict]:
     decompressor = zstandard.ZstdDecompressor()
     with path.open("rb") as handle:
         data = decompressor.decompress(handle.read())
@@ -30,10 +32,11 @@ class MockHttpResponse:
     body: bytes = b""
 
 
-def make_curl_runner(responses: List[MockHttpResponse]) -> Callable[[List[str]], None]:
-    def _runner(cmd: List[str]) -> None:
+def make_curl_runner(responses: list[MockHttpResponse]) -> Callable[[list[str]], None]:
+    def _runner(cmd: list[str]) -> None:
         if not responses:
-            raise AssertionError("No fake curl responses remaining")
+            msg = "No fake curl responses remaining"
+            raise AssertionError(msg)
         response = responses.pop(0)
 
         header_path: Path | None = None
@@ -45,9 +48,12 @@ def make_curl_runner(responses: List[MockHttpResponse]) -> Callable[[List[str]],
                 data_path = Path(cmd[idx + 1])
 
         if header_path is None or data_path is None:
-            raise AssertionError("curl command missing header or output path")
+            msg = "curl command missing header or output path"
+            raise AssertionError(msg)
 
-        header_lines = [f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"]
+        header_lines = [
+            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # noqa: PLR2004
+        ]
         for key, value in (response.headers or {}).items():
             header_lines.append(f"{key}: {value}")
         header_lines.append("")
@@ -58,15 +64,17 @@ def make_curl_runner(responses: List[MockHttpResponse]) -> Callable[[List[str]],
     return _runner
 
 
-def make_mock_download_func(responses: List[MockHttpResponse]):
+def make_mock_download_func(responses: list[MockHttpResponse]):
     """Create a mock download function for testing."""
-    from silo_import.download_manager import HttpResponse
 
     responses_copy = list(responses)
 
-    def mock_download(url: str, output_path: Path, etag: Optional[str] = None, timeout: int = 300) -> HttpResponse:
+    def mock_download(
+        url: str, output_path: Path, etag: str | None = None, timeout: int = 300  # noqa: ARG001
+    ) -> HttpResponse:
         if not responses_copy:
-            raise AssertionError("No fake HTTP responses remaining")
+            msg = "No fake HTTP responses remaining"
+            raise AssertionError(msg)
         response = responses_copy.pop(0)
 
         # Write body file
@@ -80,9 +88,8 @@ def make_mock_download_func(responses: List[MockHttpResponse]):
     return mock_download, responses_copy
 
 
-def ack_on_success(paths, timeout: float = 5.0) -> threading.Thread:
+def mock_silo_prepro_success(paths, timeout: float = 5.0) -> threading.Thread:
     """Helper that simulates SILO acknowledging and completing a run."""
-    from silo_import.file_io import write_text
 
     def _worker() -> None:
         deadline = time.time() + timeout
@@ -95,7 +102,8 @@ def ack_on_success(paths, timeout: float = 5.0) -> threading.Thread:
                     write_text(paths.silo_done, f"run_id={run_id}\nstatus=success\n")
                     return
             time.sleep(0.01)
-        raise AssertionError("Timed out waiting for run file")
+        msg = "Timed out waiting for run file"
+        raise AssertionError(msg)
 
     thread = threading.Thread(target=_worker, daemon=True)
     thread.start()

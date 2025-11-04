@@ -7,7 +7,12 @@ import time
 from .config import ImporterConfig
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
-from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
+from .errors import (
+    DecompressionFailedError,
+    HashUnchangedError,
+    NotModifiedError,
+    RecordCountMismatchError,
+)
 from .filesystem import prune_timestamped_directories, safe_remove
 from .instruct_silo import SiloInstructor
 from .lineage import update_lineage_definitions
@@ -25,7 +30,7 @@ class ImporterRunner:
         self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
-        self.last_hard_refresh = 0
+        self.last_hard_refresh: float = 0
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -47,19 +52,17 @@ class ImporterRunner:
 
         try:
             download = self.download_manager.download_release(self.config, self.paths, last_etag)
-        except (NotModified, HashUnchanged) as skip:
+        except (NotModifiedError, HashUnchangedError) as skip:
             logger.info("Skipping run: %s", skip)
             if skip.new_etag is not None:
                 self.current_etag = skip.new_etag
             if hard_refresh:
                 self.last_hard_refresh = time.time()
             return
-        except (DecompressionFailed, RecordCountMismatch) as skip:
+        except (DecompressionFailedError, RecordCountMismatchError) as skip:
             logger.warning("Skipping run: %s", skip)
             if skip.new_etag is not None:
                 self.current_etag = skip.new_etag
-            if hard_refresh and isinstance(skip, DecompressionFailed):
-                self.last_hard_refresh = time.time()
             return
 
         try:

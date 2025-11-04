@@ -4,19 +4,23 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional, Set
 
 import requests
 
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
-    SPECIAL_ETAG_NONE,
 )
 from .decompressor import analyze_ndjson
-from .errors import DecompressionFailed, HashUnchanged, NotModified, RecordCountMismatch
+from .errors import (
+    DecompressionFailedError,
+    HashUnchangedError,
+    NotModifiedError,
+    RecordCountMismatchError,
+)
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
@@ -40,13 +44,13 @@ class DownloadResult:
     directory: Path
     data_path: Path
     etag: str
-    pipeline_versions: Set[str]
+    pipeline_versions: set[int]
 
 
 def _download_file(
     url: str,
     output_path: Path,
-    etag: Optional[str] = None,
+    etag: str | None = None,
     timeout: int = 300,
 ) -> HttpResponse:
     """
@@ -85,17 +89,18 @@ def _download_file(
         return HttpResponse(status_code=response.status_code, headers=normalized_headers)
 
     except requests.RequestException as exc:
-        raise RuntimeError(f"Failed to download from {url}: {exc}") from exc
+        msg = f"Failed to download from {url}: {exc}"
+        raise RuntimeError(msg) from exc
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[[str, Path, Optional[str], int], HttpResponse]
+DownloadFunc = Callable[[str, Path, str | None, int], HttpResponse]
 
 
 class DownloadManager:
     """Manages downloading and validating data releases."""
 
-    def __init__(self, download_func: Optional[DownloadFunc] = None) -> None:
+    def __init__(self, download_func: DownloadFunc | None = None) -> None:
         self.download_func = download_func or _download_file
 
     def download_release(
@@ -137,16 +142,17 @@ class DownloadManager:
             )
 
             # Check for 304 Not Modified
-            if response.status_code == 304:
+            if response.status_code == 304:  # noqa: PLR2004
                 logger.info("Backend returned 304 Not Modified; skipping import")
                 safe_remove(download_dir)
-                raise NotModified("Backend state unchanged")
+                raise NotModifiedError
 
             # Extract and validate ETag
             etag_value = response.headers.get("etag")
             if not etag_value:
                 safe_remove(download_dir)
-                raise RuntimeError("Response did not contain an ETag header")
+                msg = f"Response headers: {response.headers} did not contain an ETag header"
+                raise RuntimeError(msg)
 
             # Parse expected record count from header
             expected_count = parse_int_header(response.headers.get("x-total-records"))
@@ -162,16 +168,17 @@ class DownloadManager:
                     exc,
                 )
                 safe_remove(download_dir)
-                raise DecompressionFailed(f"decompression failed ({exc})", new_etag=SPECIAL_ETAG_NONE) from exc
+                message = f"Decompression failed ({exc})"
+                raise DecompressionFailedError(message) from exc
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
             # Validate record count
             try:
                 validate_record_count(analysis.record_count, expected_count)
-            except RecordCountValidationError:
+            except RecordCountValidationError as err:
                 safe_remove(download_dir)
-                raise RecordCountMismatch("record count mismatch")
+                raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
             _handle_previous_directory(paths, download_dir, data_path, etag_value)
@@ -186,7 +193,12 @@ class DownloadManager:
                 pipeline_versions=analysis.pipeline_versions,
             )
 
-        except (NotModified, HashUnchanged, DecompressionFailed, RecordCountMismatch):
+        except (
+            NotModifiedError,
+            HashUnchangedError,
+            DecompressionFailedError,
+            RecordCountMismatchError,
+        ):
             # Re-raise these as they're expected skip conditions
             raise
         except Exception:
@@ -214,9 +226,7 @@ def _handle_previous_directory(
 ) -> None:
     """Check previous download and clean up if needed."""
     previous_dirs = [
-        p
-        for p in paths.input_dir.iterdir()
-        if p.is_dir() and p.name.isdigit() and p != new_dir
+        p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit() and p != new_dir
     ]
     if not previous_dirs:
         return
@@ -229,7 +239,6 @@ def _handle_previous_directory(
     # Clean up previous directory with no data
     if not previous_data_path.exists():
         logger.info("Previous input directory %s did not contain data", previous_dir)
-        safe_remove(previous_dir)
         return
 
     # Compare hashes to detect duplicates
@@ -238,8 +247,4 @@ def _handle_previous_directory(
     if old_hash == new_hash:
         logger.info("New data matches previous hash; skipping preprocessing")
         safe_remove(new_dir)
-        raise HashUnchanged("hash unchanged", new_etag=new_etag)
-
-    # Remove previous directory since we have new data
-    logger.info("Removing previous input directory %s (hash mismatch)", previous_dir)
-    safe_remove(previous_dir)
+        raise HashUnchangedError(new_etag=new_etag)

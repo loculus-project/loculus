@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 defaults:
   run:
-    working-directory: ./kubernetes/silo-import
+    working-directory: ./silo-import
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -24,3 +24,34 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest
+  typeCheck:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install type checking dependencies
+        run: |
+          uv pip install --system '.[test]'
+      - name: Run mypy (checks type hints)
+        run: mypy . --config-file .mypy.ini --non-interactive --install-types
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install test dependencies
+        run: |
+          uv pip install --system '.[test]'
+      - name: Run ruff check
+        run: ruff check .

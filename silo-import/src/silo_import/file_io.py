@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict
 
 
 def read_text(path: Path, default: str = "0") -> str:
@@ -36,7 +35,7 @@ def write_text(path: Path, value: str) -> None:
     path.write_text(value, encoding="utf-8")
 
 
-def parse_key_value_file(path: Path) -> Dict[str, str]:
+def parse_key_value_file(path: Path) -> dict[str, str]:
     """
     Parse a file containing key=value pairs.
 
@@ -46,7 +45,7 @@ def parse_key_value_file(path: Path) -> Dict[str, str]:
     Returns:
         Dictionary of key-value pairs
     """
-    pairs: Dict[str, str] = {}
+    pairs: dict[str, str] = {}
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             if "=" not in line:

@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from __future__ import annotations
 
 import threading
@@ -5,7 +6,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from silo_import.file_io import write_text
 from silo_import.instruct_silo import SiloInstructor
 

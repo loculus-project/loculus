@@ -42,9 +42,11 @@ class SiloInstructor:
                 if status == "success":
                     logger.info("SILO preprocessing run %s completed successfully", run_id)
                     return
-                raise RuntimeError(f"SILO preprocessing failed: {message or 'unknown error'}")
+                msg = f"SILO preprocessing failed: {message or 'unknown error'}"
+                raise RuntimeError(msg)
             time.sleep(1)
-        raise TimeoutError(f"Timed out waiting for SILO run {run_id}")
+        msg = f"Timed out waiting for SILO run {run_id}"
+        raise TimeoutError(msg)
 
     def clear_pending(self) -> None:
         if self._run_file.exists():

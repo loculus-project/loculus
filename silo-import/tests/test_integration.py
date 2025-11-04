@@ -1,26 +1,32 @@
 """Integration tests for the full import cycle."""
-
+# ruff: noqa: S101
 from __future__ import annotations
 
 import time
 from pathlib import Path
 
 import pytest
-
+from helpers import (
+    MockHttpResponse,
+    compress_ndjson,
+    make_mock_download_func,
+    mock_silo_prepro_success,
+    read_ndjson_file,
+)
 from silo_import import lineage
 from silo_import.config import ImporterConfig
 from silo_import.download_manager import DownloadManager
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
-from .helpers import MockHttpResponse, ack_on_success, compress_ndjson, make_mock_download_func, read_ndjson_file
 
-
-def test_full_import_cycle_with_real_zstd_data(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_full_import_cycle_with_real_zstd_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test complete import cycle with real zstd-compressed data."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -31,9 +37,18 @@ def test_full_import_cycle_with_real_zstd_data(tmp_path: Path, monkeypatch: pyte
 
     # Create realistic multi-record dataset
     records = [
-        {"metadata": {"pipelineVersion": "1.0.0", "accession": "seq1"}, "unalignedNucleotideSequences": {"main": "ATCG"}},
-        {"metadata": {"pipelineVersion": "1.0.0", "accession": "seq2"}, "unalignedNucleotideSequences": {"main": "GCTA"}},
-        {"metadata": {"pipelineVersion": "1.0.0", "accession": "seq3"}, "unalignedNucleotideSequences": {"main": "TTAA"}},
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq1"},
+            "unalignedNucleotideSequences": {"main": "ATCG"},
+        },
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq2"},
+            "unalignedNucleotideSequences": {"main": "GCTA"},
+        },
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq3"},
+            "unalignedNucleotideSequences": {"main": "TTAA"},
+        },
     ]
     body = compress_ndjson(records)
 
@@ -46,13 +61,15 @@ def test_full_import_cycle_with_real_zstd_data(tmp_path: Path, monkeypatch: pyte
     ]
     mock_download, responses_list = make_mock_download_func(responses)
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: test-data\n"))
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: test-data\n")  # noqa: ARG005
+    )
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
     # Simulate SILO acknowledging the run
-    ack_thread = ack_on_success(paths)
+    ack_thread = mock_silo_prepro_success(paths)
 
     # Run the import
     runner.run_once()
@@ -82,11 +99,13 @@ def test_full_import_cycle_with_real_zstd_data(tmp_path: Path, monkeypatch: pyte
     assert not responses_list, "All mock responses should be consumed"
 
 
-def test_multiple_runs_with_state_persistence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_multiple_runs_with_state_persistence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test multiple sequential runs maintain state correctly."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,  # Long interval to prevent hard refresh
         poll_interval=1,
         silo_run_timeout=5,
@@ -95,27 +114,34 @@ def test_multiple_runs_with_state_persistence(tmp_path: Path, monkeypatch: pytes
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: v1\n"))
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: v1\n")  # noqa: ARG005
+    )
 
     # Run 1: Initial import
-    records_v1 = [{"metadata": {"pipelineVersion": "1.0.0"}, "data": "v1"}]
+    records_v1 = [{"metadata": {"pipelineVersion": "1"}, "data": "v1"}]
     body_v1 = compress_ndjson(records_v1)
 
     responses_r1 = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"etag1"', "x-total-records": "1"}, body=body_v1)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"etag1"', "x-total-records": "1"}, body=body_v1
+        )
     ]
     mock_download_r1, _ = make_mock_download_func(responses_r1)
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
     assert runner.current_etag == 'W/"etag1"'
     first_hard_refresh = runner.last_hard_refresh
     assert first_hard_refresh > 0
+    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(input_dirs) == 1
+    first_dir = input_dirs[0]
 
     # Run 2: No changes (304 Not Modified)
     responses_r2 = [MockHttpResponse(status=304, headers={})]
@@ -129,20 +155,23 @@ def test_multiple_runs_with_state_persistence(tmp_path: Path, monkeypatch: pytes
     assert runner.last_hard_refresh == first_hard_refresh, "Hard refresh time unchanged on 304"
 
     # No new directories should be created
-    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    assert len(input_dirs) == 1, "Should still have only one directory after 304"
+    new_input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(new_input_dirs) == 1, "Should still have only one directory after 304"
+    assert new_input_dirs[0] == first_dir, "Should keep previous input directory after 304"
 
     # Run 3: New data with different ETag
-    records_v2 = [{"metadata": {"pipelineVersion": "1.0.0"}, "data": "v2"}]
+    records_v2 = [{"metadata": {"pipelineVersion": "1"}, "data": "v2"}]
     body_v2 = compress_ndjson(records_v2)
 
     responses_r3 = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"etag2"', "x-total-records": "1"}, body=body_v2)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"etag2"', "x-total-records": "1"}, body=body_v2
+        )
     ]
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    ack_thread_r3 = ack_on_success(paths)
+    ack_thread_r3 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r3.join(timeout=2)
 
@@ -161,7 +190,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     """Test hard refresh forces re-download even with valid ETag."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=2,  # Short interval for testing
         poll_interval=1,
         silo_run_timeout=5,
@@ -170,21 +199,25 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n"))
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
+    )
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     # Run 1: Initial import
     responses_r1 = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
+        )
     ]
     mock_download_r1, _ = make_mock_download_func(responses_r1)
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
@@ -197,12 +230,14 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     # Run 2: Should force hard refresh (no ETag sent)
     # Server would normally return 304 with ETag, but hard refresh sends ETag="0"
     responses_r2 = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
+        )
     ]
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
     runner.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    ack_thread_r2 = ack_on_success(paths)
+    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r2.join(timeout=2)
 
@@ -215,7 +250,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     """Test that errors during import properly clean up artifacts."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=2,  # Short timeout to trigger failure
@@ -224,15 +259,19 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     responses = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body
+        )
     ]
     mock_download, _ = make_mock_download_func(responses)
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n"))
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
+    )
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
@@ -243,6 +282,7 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
 
     # Verify cleanup happened
     assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after timeout"
+    # TODO: check what happens if SILO has no input file?
     assert not paths.run_silo.exists(), "Run file should be cleared"
     assert not paths.silo_done.exists(), "Done file should be cleared"
 
@@ -256,7 +296,7 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     """Test that lineage download failure properly cleans up downloaded data."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -265,17 +305,20 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     responses = [
-        MockHttpResponse(status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body)
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body
+        )
     ]
     mock_download, _ = make_mock_download_func(responses)
 
     # Make lineage download fail
-    def failing_lineage_download(url: str, path: Path) -> None:
-        raise RuntimeError("Simulated lineage download failure")
+    def failing_lineage_download(url: str, path: Path) -> None:  # noqa: ARG001
+        msg = "Simulated lineage download failure"
+        raise RuntimeError(msg)
 
     monkeypatch.setattr(lineage, "_download_lineage_file", failing_lineage_download)
 
@@ -286,18 +329,22 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
         runner.run_once()
 
     # Verify cleanup: no SILO input file should exist
-    assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after lineage failure"
+    assert not paths.silo_input_data_path.exists(), (
+        "SILO input should be cleaned up after lineage failure"
+    )
 
     # Verify timestamped directory was cleaned up
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 0, "Timestamped directory should be removed after lineage failure"
 
 
-def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_interrupted_run_cleanup_and_hash_skip(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that download directories are cleaned on startup and hash matching still works."""
     config = ImporterConfig(
         backend_base_url="http://backend",
-        lineage_definitions={"1.0.0": "http://lineage"},
+        lineage_definitions={1: "http://lineage"},
         hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
@@ -306,7 +353,7 @@ def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pyte
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1.0.0"}, "value": 1}]
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
 
     # First download: successful completion
@@ -315,12 +362,14 @@ def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pyte
     ]
     mock_download_r1, _ = make_mock_download_func(responses_r1)
 
-    monkeypatch.setattr(lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n"))
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
+    )
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = ack_on_success(paths)
+    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
     ack_thread_r1.join(timeout=2)
 
@@ -344,7 +393,7 @@ def test_interrupted_run_cleanup_and_hash_skip(tmp_path: Path, monkeypatch: pyte
     runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
     # Since there's no previous directory (cleared on startup), it will proceed with SILO run
-    ack_thread_r2 = ack_on_success(paths)
+    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner2.run_once()
     ack_thread_r2.join(timeout=2)
 
