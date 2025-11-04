@@ -63,7 +63,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: ./kubernetes/silo-import
+          context: ./silo-import
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=silo-import-${{ github.ref }}
