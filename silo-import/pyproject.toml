@@ -8,7 +8,7 @@ dependencies = [
 ]
 
 [project.scripts]
-silo-import = "silo_import.main:cli"
+silo-import = "silo_import.__main__:main"
 
 [project.optional-dependencies]
 test = ["pytest", "mypy",
