@@ -52,7 +52,7 @@ def make_curl_runner(responses: list[MockHttpResponse]) -> Callable[[list[str]],
             raise AssertionError(msg)
 
         header_lines = [
-            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"
+            f"HTTP/1.1 {response.status} {'OK' if response.status == 200 else 'Not Modified'}"  # noqa: PLR2004
         ]
         for key, value in (response.headers or {}).items():
             header_lines.append(f"{key}: {value}")

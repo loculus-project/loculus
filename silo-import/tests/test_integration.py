@@ -156,7 +156,7 @@ def test_multiple_runs_with_state_persistence(
     assert len(input_dirs) == 1, "Should still have only one directory after 304"
 
     # Run 3: New data with different ETag
-    records_v2 = [{"metadata": {"pipelineVersion": "1.0.0"}, "data": "v2"}]
+    records_v2 = [{"metadata": {"pipelineVersion": "1"}, "data": "v2"}]
     body_v2 = compress_ndjson(records_v2)
 
     responses_r3 = [
