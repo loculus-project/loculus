@@ -22,17 +22,15 @@ def update_lineage_definitions(
         return
 
     if not pipeline_versions:
-        logger.info("No pipeline version found; writing empty lineage definitions")
-        write_text(paths.lineage_definition_file, "{}\n")
-        return
+        msg = "No pipeline version found"
+        raise RuntimeError(msg)
 
     if len(pipeline_versions) > 1:
         msg = "Multiple pipeline versions found in released data"
         raise RuntimeError(msg)
 
-    lineage_map: dict[int, str] = config.lineage_definitions
     pipeline_version = next(iter(pipeline_versions))
-    lineage_url: str | None = lineage_map.get(int(pipeline_version))
+    lineage_url: str | None = config.lineage_definitions.get(int(pipeline_version))
     if not lineage_url:
         msg = f"No lineage definition URL configured for pipeline version {pipeline_version}"
         raise RuntimeError(
