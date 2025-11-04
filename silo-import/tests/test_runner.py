@@ -177,7 +177,7 @@ def test_runner_cleans_up_on_decompress_failure(
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
-        hard_refresh_interval=1,
+        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -200,6 +200,5 @@ def test_runner_cleans_up_on_decompress_failure(
 
     assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
-    # TODO: why only on decompress failure? shouldn't we keep the old etag?
-    assert runner.current_etag == "0"
+    assert runner.current_etag == 'W/"old"'
     assert not responses_list

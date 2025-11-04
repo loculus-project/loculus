@@ -13,7 +13,6 @@ import requests
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
-    SPECIAL_ETAG_NONE,
 )
 from .decompressor import analyze_ndjson
 from .errors import (
@@ -170,9 +169,7 @@ class DownloadManager:
                 )
                 safe_remove(download_dir)
                 message = f"Decompression failed ({exc})"
-                raise DecompressionFailedError(
-                    message, new_etag=SPECIAL_ETAG_NONE
-                ) from exc
+                raise DecompressionFailedError(message) from exc
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
