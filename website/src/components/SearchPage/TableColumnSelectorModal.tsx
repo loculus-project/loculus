@@ -34,7 +34,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     displayState: getDisplayState(field, selectedSuborganism, schema.suborganismIdentifierField),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
-        [schema.metadata, schema.primaryKey, columnVisibilities],
+        [schema.metadata, schema.suborganismIdentifierField, columnVisibilities, selectedSuborganism],
     );
 
     return (
