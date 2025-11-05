@@ -57,9 +57,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     }, [nucleotideSequences, genes]);
 
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(
-        getDefaultSelectedFields(schema.metadata),
-    ); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadFieldVisibilities = useMemo(() => {
         return new Map(
