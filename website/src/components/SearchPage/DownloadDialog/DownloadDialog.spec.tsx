@@ -482,6 +482,11 @@ describe('DownloadDialog', () => {
                 includeInDownloadsByDefault: true,
                 onlyForSuborganism: 'suborganism2',
             },
+            {
+                name: ACCESSION_VERSION_FIELD,
+                type: 'string',
+                includeInDownloadsByDefault: true,
+            },
         ];
 
         test('should include "onlyForSuborganism" selected fields in download if no suborganism is selected', async () => {

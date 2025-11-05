@@ -58,7 +58,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
     const [selectedFields, setSelectedFields] = useState<Set<string>>(
-        getDefaultSelectedFields(schema.metadata, selectedSuborganism),
+        getDefaultSelectedFields(schema.metadata),
     ); // This is here so that the state is persisted across closing and reopening the dialog
 
     const downloadFieldVisibilities = useMemo(() => {
@@ -103,7 +103,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
                         schema={schema}
-                        selectedFields={selectedFields}
+                        downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
                         selectedSuborganism={selectedSuborganism}

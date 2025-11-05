@@ -2,6 +2,7 @@ import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
 import { type Metadata, type Schema } from '../../../../types/config.ts';
+import type { MetadataVisibility } from '../../../../utils/search.ts';
 import {
     type FieldItem,
     type FieldItemDisplayState,
@@ -13,7 +14,7 @@ type FieldSelectorProps = {
     isOpen: boolean;
     onClose: () => void;
     schema: Schema;
-    selectedFields: Set<string>;
+    downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     selectedSuborganism: string | null;
 };
@@ -22,7 +23,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     isOpen,
     onClose,
     schema,
-    selectedFields,
+    downloadFieldVisibilities,
     onSelectedFieldsChange,
     selectedSuborganism,
 }) => {
@@ -45,7 +46,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         displayName: field.displayName,
         header: field.header,
         displayState: getDisplayState(field, selectedSuborganism, schema),
-        isChecked: selectedFields.has(field.name),
+        isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
     return (
