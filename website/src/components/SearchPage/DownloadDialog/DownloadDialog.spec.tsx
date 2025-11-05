@@ -464,6 +464,57 @@ describe('DownloadDialog', () => {
             const { path } = parseDownloadHref();
             expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
         });
+
+        const metadataWithOnlyForSuborganism: Metadata[] = [
+            {
+                name: 'field1',
+                displayName: 'Field 1',
+                type: 'string',
+                header: 'Group 1',
+                includeInDownloadsByDefault: true,
+                onlyForSuborganism: 'suborganism1',
+            },
+            {
+                name: 'field2',
+                displayName: 'Field 2',
+                type: 'string',
+                header: 'Group 1',
+                includeInDownloadsByDefault: true,
+                onlyForSuborganism: 'suborganism2',
+            },
+        ];
+
+        test('should include "onlyForSuborganism" selected fields in download if no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForSuborganism,
+            });
+
+            await checkAgreement();
+
+            expect(screen.getByText('Choose fields (3)')).toBeVisible();
+
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/fields=accessionVersion%2Cfield1%2Cfield2$/);
+        });
+
+        test('should exclude selected fields from download if they are not for selected suborganism', async () => {
+            await renderDialog({
+                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism2',
+                suborganismIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForSuborganism,
+            });
+
+            await checkAgreement();
+
+            expect(screen.getByText('Choose fields (2)')).toBeVisible();
+
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/fields=accessionVersion%2Cfield2$/);
+        });
     });
 });
 
