@@ -34,7 +34,7 @@ spec:
               path: "/actuator/health/liveness"
               port: 8079
             periodSeconds: 5
-            failureThreshold: 36 # 3 minutes to start
+            failureThreshold: 180 # 15 minutes to start
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
