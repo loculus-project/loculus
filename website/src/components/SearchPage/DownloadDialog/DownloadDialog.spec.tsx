@@ -16,12 +16,6 @@ import {
 } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
-vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
-    getDefaultSelectedFields: () => ['field1', 'field2'],
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    FieldSelectorModal: vi.fn(() => null),
-}));
-
 const defaultAccession: ReferenceAccession = {
     name: 'main',
     insdcAccessionFull: undefined,
@@ -68,6 +62,7 @@ const mockMetadata: Metadata[] = [
         displayName: 'Field 2',
         type: 'string',
         header: 'Group 1',
+        includeInDownloadsByDefault: true,
     },
 ];
 
@@ -247,7 +242,14 @@ describe('DownloadDialog', () => {
                 order: 2,
                 includeInDownloadsByDefault: true,
             },
-            { name: 'field2', displayName: 'Field 2', type: 'string', header: 'Group 1', order: 1 },
+            {
+                name: 'field2',
+                displayName: 'Field 2',
+                type: 'string',
+                header: 'Group 1',
+                order: 1,
+                includeInDownloadsByDefault: true,
+            },
         ];
 
         await renderDialog({ metadata: orderedMetadata });
@@ -390,8 +392,8 @@ describe('DownloadDialog', () => {
             });
 
             expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
-            expect(screen.findByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
-            expect(screen.findByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
 
         test('should download all raw segments when no suborganism is selected', async () => {
