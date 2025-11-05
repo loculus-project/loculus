@@ -48,6 +48,8 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         isChecked: selectedFields.has(field.name),
     }));
 
+    console.log(fieldItems);
+
     return (
         <CommonFieldSelectorModal
             title='Select fields to download'
@@ -82,12 +84,9 @@ function getDisplayState(
  * Gets the default list of field names that should be selected
  * based on the includeInDownloadsByDefault flag
  */
-export function getDefaultSelectedFields(metadata: Metadata[], selectedSuborganism: string | null): Set<string> {
+export function getDefaultSelectedFields(metadata: Metadata[]): Set<string> {
     const defaultFields = new Set(
-        metadata
-            .filter((field) => field.includeInDownloadsByDefault)
-            .filter((field) => isActiveForSelectedSuborganism(selectedSuborganism, field))
-            .map((field) => field.name),
+        metadata.filter((field) => field.includeInDownloadsByDefault).map((field) => field.name),
     );
     defaultFields.add(ACCESSION_VERSION_FIELD);
     return defaultFields;
