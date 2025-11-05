@@ -7,7 +7,7 @@ import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
-import type { Metadata, Schema } from '../../../types/config.ts';
+import type { Schema } from '../../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import {
     type GeneInfo,
