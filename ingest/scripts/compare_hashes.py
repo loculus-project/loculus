@@ -20,11 +20,18 @@ logging.basicConfig(
 
 
 @dataclass
+class RevocationConfig:
+    approach: str = "manual_run"  # "manual_run" | "auto_revoke"
+    prevent_revoking_all: bool = False
+
+
+@dataclass
 class Config:
     organism: str
     segmented: str
     nucleotide_sequences: list[str]
     slack_hook: str = ""
+    revocations: RevocationConfig | None = None
 
 
 InsdcAccession = str  # one per segment
@@ -303,6 +310,9 @@ def main(
         relevant_config = {
             key: full_config[key] for key in Config.__annotations__ if key in full_config
         }
+        # Handle nested RevocationConfig
+        if "revocations" in relevant_config and relevant_config["revocations"] is not None:
+            relevant_config["revocations"] = RevocationConfig(**relevant_config["revocations"])
         config = Config(**relevant_config)
 
     insdc_keys = [f"insdcAccessionBase_{segment}" for segment in config.nucleotide_sequences]
@@ -424,7 +434,39 @@ def main(
             " If this is not the case, this indicates a potential ingest error."
         )
         logger.warning(warning)
-        notify(config, warning)
+
+        # Check revocation config
+        revocation_config = config.revocations if config.revocations else RevocationConfig()
+
+        # Check if we should prevent revoking all sequences
+        if (
+            revocation_config.prevent_revoking_all
+            and len(potentially_suppressed) == len(already_ingested_accessions)
+        ):
+            safety_warning = (
+                f"SAFETY CHECK: Prevented revoking ALL {len(potentially_suppressed)} sequences. "
+                "This might indicate an ingest error. Please investigate manually."
+            )
+            logger.error(safety_warning)
+            notify(config, safety_warning)
+        elif revocation_config.approach == "auto_revoke":
+            # Auto-revoke mode: perform revocation instead of just notifying
+            logger.info(
+                f"Auto-revoke mode enabled. Would revoke {len(potentially_suppressed)} accessions: "
+                f"{', '.join(potentially_suppressed)}"
+            )
+            print(
+                f"TODO: Implement auto-revocation for {len(potentially_suppressed)} accessions: "
+                f"{', '.join(potentially_suppressed)}"
+            )
+            # TODO: Implement actual revocation logic here
+            # This should call the revoke API for each accession in potentially_suppressed
+            # Example:
+            # for accession in potentially_suppressed:
+            #     revoke(accession, "Sequence suppressed in INSDC database", config)
+        else:
+            # Manual mode (default): send notification
+            notify(config, warning)
 
 
 if __name__ == "__main__":
