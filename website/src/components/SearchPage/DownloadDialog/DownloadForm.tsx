@@ -77,8 +77,9 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     <FieldSelectorButton
                         onClick={() => setIsFieldSelectorOpen(true)}
                         selectedFieldsCount={
-                            [...downloadFieldVisibilities.values().filter((it) => it.isVisible(selectedSuborganism))]
-                                .length
+                            Array.from(downloadFieldVisibilities.values()).filter((it) =>
+                                it.isVisible(selectedSuborganism),
+                            ).length
                         }
                         disabled={downloadFormState.dataType !== 'metadata'}
                     />
