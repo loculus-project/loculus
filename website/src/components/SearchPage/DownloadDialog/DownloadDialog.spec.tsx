@@ -390,6 +390,8 @@ describe('DownloadDialog', () => {
             });
 
             expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+            expect(screen.findByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
+            expect(screen.findByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
 
         test('should download all raw segments when no suborganism is selected', async () => {
