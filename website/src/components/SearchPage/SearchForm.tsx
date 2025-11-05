@@ -17,13 +17,7 @@ import { NormalTextField } from './fields/NormalTextField';
 import { searchFormHelpDocsUrl } from './searchFormHelpDocsUrl.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
-import type {
-    FieldValues,
-    GroupedMetadataFilter,
-    MetadataFilter,
-    Schema,
-    SetSomeFieldValues,
-} from '../../types/config.ts';
+import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldValues } from '../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
@@ -50,7 +44,7 @@ interface SearchFormProps {
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
     showMutationSearch: boolean;
-    schema: Schema;
+    suborganismIdentifierField: string | undefined;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
 }
@@ -65,7 +59,7 @@ export const SearchForm = ({
     referenceGenomeLightweightSchema,
     lapisSearchParameters,
     showMutationSearch,
-    schema,
+    suborganismIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
 }: SearchFormProps) => {
@@ -102,12 +96,12 @@ export const SearchForm = ({
 
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
-        .filter((filter) => filter.name !== schema.suborganismIdentifierField)
+        .filter((filter) => filter.name !== suborganismIdentifierField)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
-            displayState: getDisplayState(filter, selectedSuborganism, schema),
+            displayState: getDisplayState(filter, selectedSuborganism, suborganismIdentifierField),
             isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
@@ -174,11 +168,11 @@ export const SearchForm = ({
                         lapisSearchParameters={lapisSearchParameters}
                     />
                     <div className='flex flex-col'>
-                        {schema.suborganismIdentifierField !== undefined && (
+                        {suborganismIdentifierField !== undefined && (
                             <SuborganismSelector
                                 filterSchema={filterSchema}
                                 referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
-                                suborganismIdentifierField={schema.suborganismIdentifierField}
+                                suborganismIdentifierField={suborganismIdentifierField}
                                 selectedSuborganism={selectedSuborganism}
                                 setSelectedSuborganism={setSelectedSuborganism}
                             />

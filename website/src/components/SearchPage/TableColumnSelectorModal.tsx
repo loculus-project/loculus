@@ -31,7 +31,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
                     name: field.name,
                     displayName: field.displayName ?? field.name,
                     header: field.header,
-                    displayState: getDisplayState(field, selectedSuborganism, schema),
+                    displayState: getDisplayState(field, selectedSuborganism, schema.suborganismIdentifierField),
                     isChecked: columnVisibilities.get(field.name)?.isChecked ?? false,
                 })),
         [schema.metadata, schema.primaryKey, columnVisibilities],
@@ -51,7 +51,7 @@ export const TableColumnSelectorModal: FC<TableColumnSelectorModalProps> = ({
 export function getDisplayState(
     field: Metadata,
     selectedSuborganism: string | null,
-    schema: Schema,
+    suborganismIdentifierField: string | undefined,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: 'alwaysChecked' };
@@ -60,7 +60,7 @@ export function getDisplayState(
     if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
         return {
             type: 'greyedOut',
-            tooltip: `This is only visible when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
+            tooltip: `This is only visible when the ${suborganismIdentifierField ?? 'suborganismIdentifierField'} ${field.onlyForSuborganism} is selected.`,
         };
     }
 
