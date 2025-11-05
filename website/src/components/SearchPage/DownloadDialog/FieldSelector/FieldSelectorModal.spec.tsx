@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
 import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
+import { MetadataVisibility } from '../../../../utils/search.ts';
 
 // Mock BaseDialog component
 vi.mock('../../../common/BaseDialog.tsx', () => ({
@@ -212,7 +213,14 @@ describe('FieldSelectorModal', () => {
                     tableColumns: [],
                     metadata,
                 }}
-                selectedFields={result.current[0]}
+                downloadFieldVisibilities={
+                    new Map(
+                        metadata.map((field) => [
+                            field.name,
+                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForSuborganism),
+                        ]),
+                    )
+                }
                 onSelectedFieldsChange={result.current[1]}
                 selectedSuborganism={selectedSuborganism}
             />
