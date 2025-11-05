@@ -9,6 +9,8 @@ import click
 import orjsonl
 import requests
 import yaml
+from loculus_client import revoke
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -32,6 +34,11 @@ class Config:
     nucleotide_sequences: list[str]
     slack_hook: str = ""
     revocations: RevocationConfig | None = None
+    backend_url: str
+    keycloak_token_url: str
+    keycloak_client_id: str
+    username: str
+    password: str
 
 
 InsdcAccession = str  # one per segment
@@ -273,6 +280,29 @@ def get_approved_submitted_accessions(
     return approved
 
 
+def revoke_all(
+    insdc_accessions: list[InsdcAccession],
+    already_ingested_accessions: dict[InsdcAccession, LatestLoculusVersion],
+    config: Config,
+):
+    """
+    Get the loculus accession for the given INSDC accessions and revoke them.
+    """
+    comment = "Record has been suppressed on Genbank"
+    if config.segmented:
+        already_revoked = []
+        for insdc_accession in insdc_accessions:
+            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
+            if loculus_accession in already_revoked:
+                continue
+            already_revoked.append(loculus_accession)
+            revoke(loculus_accession, comment, config)
+    else:
+        for insdc_accession in insdc_accessions:
+            loculus_accession = already_ingested_accessions[insdc_accession].loculus_accession
+            revoke(loculus_accession, comment, config)
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -459,11 +489,7 @@ def main(
                 f"TODO: Implement auto-revocation for {len(potentially_suppressed)} accessions: "
                 f"{', '.join(potentially_suppressed)}"
             )
-            # TODO: Implement actual revocation logic here
-            # This should call the revoke API for each accession in potentially_suppressed
-            # Example:
-            # for accession in potentially_suppressed:
-            #     revoke(accession, "Sequence suppressed in INSDC database", config)
+            revoke_all(list(potentially_suppressed))
         else:
             # Manual mode (default): send notification
             notify(config, warning)
