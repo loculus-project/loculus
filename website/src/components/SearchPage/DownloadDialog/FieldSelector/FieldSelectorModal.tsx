@@ -48,8 +48,6 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         isChecked: selectedFields.has(field.name),
     }));
 
-    console.log(fieldItems);
-
     return (
         <CommonFieldSelectorModal
             title='Select fields to download'
