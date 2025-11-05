@@ -66,7 +66,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                 new MetadataVisibility(selectedFields.has(field.name), field.onlyForSuborganism),
             ]),
         );
-    }, []);
+    }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
