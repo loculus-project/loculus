@@ -1133,6 +1133,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         rangeSearch: true
         initiallyVisible: true
+        perSegment: true
         displayName: Length
         orderOnDetailsPage: 2700
       - name: hostNameScientific
