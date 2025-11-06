@@ -97,7 +97,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             await this.page.getByLabel(new RegExp('Add a segment', 'i')).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
-                buffer: Buffer.from(`${key}\n${value}`),
+                buffer: Buffer.from(`>${key}\n${value}`),
             });
         }
     }
