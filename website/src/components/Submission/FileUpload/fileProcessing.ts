@@ -36,7 +36,7 @@ export const METADATA_FILE_KIND: FileKind = {
                 return err(
                     new Error(
                         'LZMA compression (.xz files) is not supported with Excel files yet. ' +
-                            'Please use a different compression format for Excel files.',
+                        'Please use a different compression format for Excel files.',
                     ),
                 );
             }
@@ -87,12 +87,16 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
                 ),
             );
         }
-        const headerLineCount = lines.filter((l) => l.startsWith('>')).length;
-        if (headerLineCount > 1) {
+
+        const headerLines = lines.filter((l) => l.startsWith('>'));
+        if (headerLines.length > 1) {
             return err(
-                new Error(`Found ${headerLineCount} headers in uploaded file, only a single header is allowed.`),
+                new Error(`Found ${headerLines.length} headers in uploaded file, only a single header is allowed.`),
             );
         }
+        const header = headerLines.length === 1
+            ? headerLines[0].substring(1).trim()
+            : null;
         const segmentData = lines
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())
@@ -108,6 +112,7 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
             text: () => Promise.resolve(segmentData),
             handle: () => file,
             warnings: () => [],
+            header: () => Promise.resolve(header),
         });
     },
 };
@@ -117,6 +122,8 @@ export interface ProcessedFile {
     inner(): File;
 
     text(): Promise<string>;
+
+    header(): Promise<string | null>;
 
     /* The handle to the file on disk. */
     handle(): File;
@@ -128,7 +135,7 @@ export interface ProcessedFile {
 export const dummy = 0;
 
 export class RawFile implements ProcessedFile {
-    constructor(private innerFile: File) {}
+    constructor(private innerFile: File) { }
 
     inner(): File {
         return this.innerFile;
@@ -140,6 +147,10 @@ export class RawFile implements ProcessedFile {
 
     async text(): Promise<string> {
         return this.innerFile.text();
+    }
+
+    header(): Promise<string | null> {
+        return Promise.resolve(null);
     }
 
     warnings(): string[] {
@@ -264,6 +275,10 @@ export class ExcelFile implements ProcessedFile {
 
     handle(): File {
         return this.originalFile;
+    }
+
+    header(): Promise<string | null> {
+        return Promise.resolve(null)
     }
 
     warnings(): string[] {
