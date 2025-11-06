@@ -14,7 +14,6 @@ function makeReferenceGenomeLightweightSchema(nucleotideSegmentNames: string[]):
     };
 }
 
-
 /* eslint-disable @typescript-eslint/naming-convention -- this test has keys that expectedly contain spaces */
 describe('SequencesForm', () => {
     test('Empty editable sequences produces no output', () => {
@@ -129,7 +128,7 @@ describe('SequencesForm', () => {
         const fastaText = await fasta!.text();
         expect.soft(fastaText).toBe('>subId_label\nATCG');
 
-        expect(editableSequences.getSequenceRecord()).deep.equals({ 'label': 'ATCG' });
+        expect(editableSequences.getSequenceRecord()).deep.equals({ label: 'ATCG' });
     });
 
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
@@ -160,7 +159,7 @@ describe('SequencesForm', () => {
                 value: null,
                 initialValue: null,
                 key: expect.any(String),
-            }
+            },
         ]);
     });
 });

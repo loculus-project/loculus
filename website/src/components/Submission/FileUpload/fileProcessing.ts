@@ -36,7 +36,7 @@ export const METADATA_FILE_KIND: FileKind = {
                 return err(
                     new Error(
                         'LZMA compression (.xz files) is not supported with Excel files yet. ' +
-                        'Please use a different compression format for Excel files.',
+                            'Please use a different compression format for Excel files.',
                     ),
                 );
             }
@@ -94,9 +94,7 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
                 new Error(`Found ${headerLines.length} headers in uploaded file, only a single header is allowed.`),
             );
         }
-        const header = headerLines.length === 1
-            ? headerLines[0].substring(1).trim()
-            : null;
+        const header = headerLines.length === 1 ? headerLines[0].substring(1).trim() : null;
         const segmentData = lines
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())
@@ -135,7 +133,7 @@ export interface ProcessedFile {
 export const dummy = 0;
 
 export class RawFile implements ProcessedFile {
-    constructor(private innerFile: File) { }
+    constructor(private innerFile: File) {}
 
     inner(): File {
         return this.innerFile;
@@ -278,7 +276,7 @@ export class ExcelFile implements ProcessedFile {
     }
 
     header(): Promise<string | null> {
-        return Promise.resolve(null)
+        return Promise.resolve(null);
     }
 
     warnings(): string[] {

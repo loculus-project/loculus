@@ -29,14 +29,12 @@ function generateAndDownloadFastaFile(
     URL.revokeObjectURL(url);
 }
 
-
 type EditableSequenceFile = {
     key: string;
     label: string;
     value: string | null;
     initialValue: string | null;
 };
-
 
 export class EditableSequences {
     private static nextKey = 0;
@@ -100,7 +98,6 @@ export class EditableSequences {
         return Math.max(
             ...Object.values(referenceGenomeLightweightSchema).map(
                 (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
-
             ),
         );
     }
@@ -119,13 +116,13 @@ export class EditableSequences {
             throw new Error(`Maximum limit reached — you can add up to ${this.maxNumberOfRows} sequence file(s) only.`);
         }
 
-        label ??= (value == null ? 'Add a segment' : key);
+        label ??= value == null ? 'Add a segment' : key;
 
         const newSequenceFiles = [...this.editableSequenceFiles];
         newSequenceFiles[existingFileIndex > -1 ? existingFileIndex : this.editableSequenceFiles.length] = {
             ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key, initialValue: null }),
             value: value,
-            label: label
+            label: label,
         };
 
         return new EditableSequences(
@@ -144,11 +141,11 @@ export class EditableSequences {
         const fastaContent = !this.isMultiSegmented()
             ? `>${submissionId}\n${filledRows[0].value}`
             : filledRows
-                .map(
-                    (sequence) =>
-                        `>${submissionId}_${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`,
-                )
-                .join('\n');
+                  .map(
+                      (sequence) =>
+                          `>${submissionId}_${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`,
+                  )
+                  .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
@@ -187,11 +184,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                                 const text = file ? await file.text() : null;
                                 const header = file ? await file.header() : null;
                                 setEditableSequences((editableSequences) =>
-                                    editableSequences.update(
-                                        field.key,
-                                        text,
-                                        header,
-                                    ),
+                                    editableSequences.update(field.key, text, header),
                                 );
                             }}
                             name={`${field.label}_segment_file`}
@@ -207,14 +200,14 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             onDownload={
                                 field.initialValue !== null && dataToEdit
                                     ? () => {
-                                        const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
-                                        generateAndDownloadFastaFile(
-                                            accessionVersion,
-                                            field.value ?? '',
-                                            field.label,
-                                            !multiSegment,
-                                        );
-                                    }
+                                          const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
+                                          generateAndDownloadFastaFile(
+                                              accessionVersion,
+                                              field.value ?? '',
+                                              field.label,
+                                              !multiSegment,
+                                          );
+                                      }
                                     : undefined
                             }
                             downloadDisabled={isLoading}
