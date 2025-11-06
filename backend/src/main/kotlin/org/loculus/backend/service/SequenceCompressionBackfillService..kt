@@ -1,14 +1,26 @@
 package org.loculus.backend.service.maintenance
 
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.submission.CompressionDictService
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
+import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
@@ -45,13 +57,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
         while (true) {
             // Read a page using keyset pagination
             val page = transaction {
-                val q = SequenceEntriesTable
-                    .slice(
-                        SequenceEntriesTable.accessionColumn,
-                        SequenceEntriesTable.versionColumn,
-                        SequenceEntriesTable.organismColumn,
-                        SequenceEntriesTable.originalDataColumn,
-                    )
+                SequenceEntriesTable
                     .selectAll()
                     .apply {
                         if (lastAcc != null && lastVer != null) {
@@ -67,9 +73,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     .orderBy(SequenceEntriesTable.accessionColumn to SortOrder.ASC)
                     .orderBy(SequenceEntriesTable.versionColumn to SortOrder.ASC)
                     .limit(batchSize)
-
-                q.fetchSize = batchSize
-                q.toList()
+                    .toList()
             }
 
             if (page.isEmpty()) break
@@ -86,9 +90,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     val migrated = OriginalData(
                         metadata = originalData.metadata,
                         files = originalData.files,
-                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues {
-                                (key, value),
-                            ->
+                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues { (key, value) ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
@@ -104,7 +106,8 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
 
                     SequenceEntriesTable.update(
                         where = {
-                            SequenceEntriesTable.accessionVersionIs(accession, version)
+                            (SequenceEntriesTable.accessionColumn eq accession) and
+                                (SequenceEntriesTable.versionColumn eq version)
                         },
                     ) {
                         it[SequenceEntriesTable.originalDataColumn] = migrated
@@ -139,7 +142,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
         while (true) {
             // Read a page with keyset pagination over (accession, version, pipeline_version)
             val page = transaction {
-                val base = SequenceEntriesPreprocessedDataTable
+                SequenceEntriesPreprocessedDataTable
                     .join(
                         SequenceEntriesTable,
                         joinType = JoinType.INNER,
@@ -153,13 +156,6 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                                         SequenceEntriesTable.versionColumn
                                     )
                         },
-                    )
-                    .slice(
-                        SequenceEntriesPreprocessedDataTable.accessionColumn,
-                        SequenceEntriesPreprocessedDataTable.versionColumn,
-                        SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
-                        SequenceEntriesTable.organismColumn,
-                        SequenceEntriesPreprocessedDataTable.processedDataColumn,
                     )
                     .selectAll()
                     .apply {
@@ -186,9 +182,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     .orderBy(SequenceEntriesPreprocessedDataTable.versionColumn to SortOrder.ASC)
                     .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn to SortOrder.ASC)
                     .limit(batchSize)
-
-                base.fetchSize = batchSize
-                base.toList()
+                    .toList()
             }
 
             if (page.isEmpty()) break
@@ -206,9 +200,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     val migrated = ProcessedData(
                         metadata = processedData.metadata,
                         files = processedData.files,
-                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues {
-                                (key, value),
-                            ->
+                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues { (key, value) ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
@@ -220,9 +212,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                                 )
                             }
                         },
-                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues {
-                                (key, value),
-                            ->
+                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues { (key, value) ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
