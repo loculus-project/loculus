@@ -29,11 +29,11 @@ test('revising sequence data works: segment can be deleted; segment can be edite
 
     await page.getByTestId('discard_L_segment_file').click();
     await page.getByTestId('discard_S_segment_file').click();
-    // await page.getByTestId('Add a segment_segment_file').setInputFiles({
-    //     name: 'update_S.txt',
-    //     mimeType: 'text/plain',
-    //     buffer: Buffer.from('>S\nAAAAA'),
-    // });
+    await page.getByTestId('Add a segment_segment_file').setInputFiles({
+        name: 'update_S.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('>S\nAAAAA'),
+    });
 
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
