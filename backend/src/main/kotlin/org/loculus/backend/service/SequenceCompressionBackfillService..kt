@@ -54,24 +54,26 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
         var lastAcc: String? = null
         var lastVer: Long? = null
 
+        val se = SequenceEntriesTable
+
         while (true) {
             // Read a page using keyset pagination
             val page = transaction {
-                SequenceEntriesTable
+                se
                     .selectAll()
                     .apply {
                         if (lastAcc != null && lastVer != null) {
                             andWhere {
-                                (SequenceEntriesTable.accessionColumn greater lastAcc!!) or
+                                (se.accessionColumn greater lastAcc!!) or
                                     (
-                                        (SequenceEntriesTable.accessionColumn eq lastAcc!!) and
-                                            (SequenceEntriesTable.versionColumn greater lastVer!!)
+                                        (se.accessionColumn eq lastAcc!!) and
+                                            (se.versionColumn greater lastVer!!)
                                         )
                             }
                         }
                     }
-                    .orderBy(SequenceEntriesTable.accessionColumn to SortOrder.ASC)
-                    .orderBy(SequenceEntriesTable.versionColumn to SortOrder.ASC)
+                    .orderBy(se.accessionColumn to SortOrder.ASC)
+                    .orderBy(se.versionColumn to SortOrder.ASC)
                     .limit(batchSize)
                     .toList()
             }
@@ -82,10 +84,10 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
             transaction {
                 var i = 0
                 page.forEach { row ->
-                    val accession = row[SequenceEntriesTable.accessionColumn]
-                    val version = row[SequenceEntriesTable.versionColumn]
-                    val organism = row[SequenceEntriesTable.organismColumn]
-                    val originalData = row[SequenceEntriesTable.originalDataColumn] ?: return@forEach
+                    val accession = row[se.accessionColumn]
+                    val version = row[se.versionColumn]
+                    val organism = row[se.organismColumn]
+                    val originalData = row[se.originalDataColumn] ?: return@forEach
 
                     val migrated = OriginalData(
                         metadata = originalData.metadata,
@@ -104,13 +106,13 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                         },
                     )
 
-                    SequenceEntriesTable.update(
+                    se.update(
                         where = {
-                            (SequenceEntriesTable.accessionColumn eq accession) and
-                                (SequenceEntriesTable.versionColumn eq version)
+                            (se.accessionColumn eq accession) and
+                                (se.versionColumn eq version)
                         },
                     ) {
-                        it[SequenceEntriesTable.originalDataColumn] = migrated
+                        it[se.originalDataColumn] = migrated
                     }
 
                     processed++
@@ -120,8 +122,8 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                 }
 
                 val last = page.last()
-                lastAcc = last[SequenceEntriesTable.accessionColumn]
-                lastVer = last[SequenceEntriesTable.versionColumn]
+                lastAcc = last[se.accessionColumn]
+                lastVer = last[se.versionColumn]
             }
         }
 
@@ -139,21 +141,24 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
         var lastVer: Long? = null
         var lastPipeVer: Long? = null
 
+        val se = SequenceEntriesTable
+        val sepd = SequenceEntriesPreprocessedDataTable
+
         while (true) {
             // Read a page with keyset pagination over (accession, version, pipeline_version)
             val page = transaction {
-                SequenceEntriesPreprocessedDataTable
+                sepd
                     .join(
-                        SequenceEntriesTable,
+                        se,
                         joinType = JoinType.INNER,
                         additionalConstraint = {
                             (
-                                SequenceEntriesPreprocessedDataTable.accessionColumn eq
-                                    SequenceEntriesTable.accessionColumn
+                                sepd.accessionColumn eq
+                                    se.accessionColumn
                                 ) and
                                 (
-                                    SequenceEntriesPreprocessedDataTable.versionColumn eq
-                                        SequenceEntriesTable.versionColumn
+                                    sepd.versionColumn eq
+                                        se.versionColumn
                                     )
                         },
                     )
@@ -161,15 +166,15 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     .apply {
                         if (lastAcc != null && lastVer != null && lastPipeVer != null) {
                             andWhere {
-                                (SequenceEntriesPreprocessedDataTable.accessionColumn greater lastAcc!!) or
+                                (sepd.accessionColumn greater lastAcc!!) or
                                     (
-                                        (SequenceEntriesPreprocessedDataTable.accessionColumn eq lastAcc!!) and
+                                        (sepd.accessionColumn eq lastAcc!!) and
                                             (
-                                                (SequenceEntriesPreprocessedDataTable.versionColumn greater lastVer!!) or
+                                                (sepd.versionColumn greater lastVer!!) or
                                                     (
-                                                        (SequenceEntriesPreprocessedDataTable.versionColumn eq lastVer!!) and
+                                                        (sepd.versionColumn eq lastVer!!) and
                                                             (
-                                                                SequenceEntriesPreprocessedDataTable.pipelineVersionColumn greater
+                                                                sepd.pipelineVersionColumn greater
                                                                     lastPipeVer!!
                                                                 )
                                                         )
@@ -178,9 +183,9 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                             }
                         }
                     }
-                    .orderBy(SequenceEntriesPreprocessedDataTable.accessionColumn to SortOrder.ASC)
-                    .orderBy(SequenceEntriesPreprocessedDataTable.versionColumn to SortOrder.ASC)
-                    .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn to SortOrder.ASC)
+                    .orderBy(sepd.accessionColumn to SortOrder.ASC)
+                    .orderBy(sepd.versionColumn to SortOrder.ASC)
+                    .orderBy(sepd.pipelineVersionColumn to SortOrder.ASC)
                     .limit(batchSize)
                     .toList()
             }
@@ -191,11 +196,11 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
             transaction {
                 var i = 0
                 page.forEach { row ->
-                    val accession = row[SequenceEntriesPreprocessedDataTable.accessionColumn]
-                    val version = row[SequenceEntriesPreprocessedDataTable.versionColumn]
-                    val pipelineVersion = row[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn]
-                    val organism = row[SequenceEntriesTable.organismColumn]
-                    val processedData = row[SequenceEntriesPreprocessedDataTable.processedDataColumn] ?: return@forEach
+                    val accession = row[sepd.accessionColumn]
+                    val version = row[sepd.versionColumn]
+                    val pipelineVersion = row[sepd.pipelineVersionColumn]
+                    val organism = row[se.organismColumn]
+                    val processedData = row[sepd.processedDataColumn] ?: return@forEach
 
                     val migrated = ProcessedData(
                         metadata = processedData.metadata,
@@ -240,14 +245,14 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                         aminoAcidInsertions = processedData.aminoAcidInsertions,
                     )
 
-                    SequenceEntriesPreprocessedDataTable.update(
+                    sepd.update(
                         where = {
-                            (SequenceEntriesPreprocessedDataTable.accessionColumn eq accession) and
-                                (SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
-                                (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+                            (sepd.accessionColumn eq accession) and
+                                (sepd.versionColumn eq version) and
+                                (sepd.pipelineVersionColumn eq pipelineVersion)
                         },
                     ) {
-                        it[SequenceEntriesPreprocessedDataTable.processedDataColumn] = migrated
+                        it[sepd.processedDataColumn] = migrated
                     }
 
                     processed++
@@ -257,9 +262,9 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                 }
 
                 val last = page.last()
-                lastAcc = last[SequenceEntriesPreprocessedDataTable.accessionColumn]
-                lastVer = last[SequenceEntriesPreprocessedDataTable.versionColumn]
-                lastPipeVer = last[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn]
+                lastAcc = last[sepd.accessionColumn]
+                lastVer = last[sepd.versionColumn]
+                lastPipeVer = last[sepd.pipelineVersionColumn]
             }
         }
 
