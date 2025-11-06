@@ -29,7 +29,7 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     await page.getByTestId('S_segment_file').setInputFiles({
         name: 'update_S.txt',
         mimeType: 'text/plain',
-        buffer: Buffer.from('AAAAA'),
+        buffer: Buffer.from('>S\nAAAAA'),
     });
 
     await page.getByRole('button', { name: 'Submit' }).click();

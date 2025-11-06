@@ -93,11 +93,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     }
 
     async fillSequenceData(sequenceData: Record<string, string>) {
-        for (const value of Object.values(sequenceData)) {
+        for (const [key, value] of Object.entries(sequenceData)) {
             await this.page.getByLabel(new RegExp('Add a segment', 'i')).setInputFiles({
                 name: 'example.txt',
                 mimeType: 'text/plain',
-                buffer: Buffer.from(value),
+                buffer: Buffer.from(`${key}\n${value}`),
             });
         }
     }
