@@ -6,19 +6,10 @@ import mu.KotlinLogging
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.OriginalData
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.service.jacksonSerializableJsonb
 import org.loculus.backend.service.submission.CompressionDictService
-import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger { }
@@ -33,197 +24,182 @@ class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_Dict(
 
         val db = Database.connect(context.configuration.dataSource)
 
-        var i = 0
-
         transaction(db) {
-            V1_18_1_SequenceEntriesTable
-                .select(
-                    V1_18_1_SequenceEntriesTable.accessionColumn,
-                    V1_18_1_SequenceEntriesTable.versionColumn,
-                    V1_18_1_SequenceEntriesTable.organismColumn,
-                    V1_18_1_SequenceEntriesTable.originalDataColumn,
-                )
-                .fetchSize(1000)
-                .forEach { row ->
-                    val accession = row[V1_18_1_SequenceEntriesTable.accessionColumn]
-                    val version = row[V1_18_1_SequenceEntriesTable.versionColumn]
-                    val organism = row[V1_18_1_SequenceEntriesTable.organismColumn]
-                    val originalData = row[V1_18_1_SequenceEntriesTable.originalDataColumn] ?: return@forEach
-
-                    val migratedOriginalData = OriginalData(
-                        metadata = originalData.metadata,
-                        files = originalData.files,
-                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues {
-                            val value = it.value
-                            when {
-                                value == null -> null
-                                value.compressionDictId !== null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = compressionDictService
-                                        .getDictForUnalignedSequence(Organism(organism))
-                                        ?.id,
-                                )
-                            }
-                        },
-                    )
-
-                    V1_18_1_SequenceEntriesTable.update(
-                        where = {
-                            V1_18_1_SequenceEntriesTable.accessionVersionIs(
-                                accession = accession,
-                                version = version,
-                            )
-                        },
-                    ) {
-                        it[V1_18_1_SequenceEntriesTable.originalDataColumn] = migratedOriginalData
-                    }
-
-                    if (++i % 1000 == 0) {
-                        log.info { "Migrated $i sequence entries (originalData)" }
-                    }
+            // Get all distinct organisms
+            val organisms = mutableSetOf<String>()
+            exec("SELECT DISTINCT organism FROM sequence_entries WHERE original_data IS NOT NULL") { rs ->
+                while (rs.next()) {
+                    organisms.add(rs.getString(1))
                 }
-            log.info { "Migrated $i sequence entries (originalData) - done" }
+            }
 
-            var j = 0
+            log.info { "Found ${organisms.size} distinct organisms to migrate" }
 
-            V1_18_1_SequenceEntriesPreprocessedDataTable
-                .join(
-                    V1_18_1_SequenceEntriesTable,
-                    joinType = JoinType.INNER,
-                    additionalConstraint = {
-                        (
-                            V1_18_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq
-                                V1_18_1_SequenceEntriesTable.accessionColumn
-                            ) and
+            // Migrate originalData - one query per organism
+            organisms.forEach { organism ->
+                val dictId = compressionDictService
+                    .getDictForUnalignedSequence(Organism(organism))
+                    ?.id
+
+                if (dictId != null) {
+                    val updateSql = """
+                        UPDATE sequence_entries
+                        SET original_data = jsonb_set(
+                            original_data,
+                            '{unalignedNucleotideSequences}',
                             (
-                                V1_18_1_SequenceEntriesPreprocessedDataTable.versionColumn eq
-                                    V1_18_1_SequenceEntriesTable.versionColumn
+                                SELECT jsonb_object_agg(
+                                    key,
+                                    CASE 
+                                        WHEN value IS NULL THEN NULL::jsonb
+                                        WHEN value->>'compressionDictId' IS NOT NULL THEN value
+                                        ELSE jsonb_set(value, '{compressionDictId}', to_jsonb($dictId))
+                                    END
                                 )
-                    },
-                )
-                .select(
-                    V1_18_1_SequenceEntriesPreprocessedDataTable.accessionColumn,
-                    V1_18_1_SequenceEntriesPreprocessedDataTable.versionColumn,
-                    V1_18_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
-                    V1_18_1_SequenceEntriesTable.organismColumn,
-                    V1_18_1_SequenceEntriesPreprocessedDataTable.processedDataColumn,
-                )
-                .fetchSize(1000)
-                .forEach { row ->
-                    val accession = row[V1_18_1_SequenceEntriesPreprocessedDataTable.accessionColumn]
-                    val version = row[V1_18_1_SequenceEntriesPreprocessedDataTable.versionColumn]
-                    val pipelineVersion = row[V1_18_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn]
-                    val organism = row[V1_18_1_SequenceEntriesTable.organismColumn]
-                    val processedData =
-                        row[V1_18_1_SequenceEntriesPreprocessedDataTable.processedDataColumn] ?: return@forEach
+                                FROM jsonb_each(original_data->'unalignedNucleotideSequences')
+                            )
+                        )
+                        WHERE organism = '$organism'
+                        AND original_data IS NOT NULL
+                        AND original_data->'unalignedNucleotideSequences' IS NOT NULL
+                    """.trimIndent()
 
-                    val migratedProcessedData = ProcessedData(
-                        metadata = processedData.metadata,
-                        files = processedData.files,
-                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues {
-                            val value = it.value
-                            when {
-                                value == null -> null
-                                value.compressionDictId !== null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = compressionDictService
-                                        .getDictForSegmentOrGene(Organism(organism), it.key)
-                                        ?.id,
-                                )
-                            }
-                        },
-                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues {
-                            val value = it.value
-                            when {
-                                value == null -> null
-                                value.compressionDictId !== null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = compressionDictService
-                                        .getDictForSegmentOrGene(Organism(organism), it.key)
-                                        ?.id,
-                                )
-                            }
-                        },
-                        alignedAminoAcidSequences = processedData.alignedAminoAcidSequences.mapValues {
-                            val value = it.value
-                            when {
-                                value == null -> null
-                                value.compressionDictId !== null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = compressionDictService
-                                        .getDictForSegmentOrGene(Organism(organism), it.key)
-                                        ?.id,
-                                )
-                            }
-                        },
-                        nucleotideInsertions = processedData.nucleotideInsertions,
-                        aminoAcidInsertions = processedData.aminoAcidInsertions,
-                    )
+                    val rowsUpdated = exec(updateSql) ?: 0
+                    log.info { "Migrated $rowsUpdated sequence entries (originalData) for organism: $organism" }
+                } else {
+                    log.warn { "No compression dict found for organism: $organism (unaligned)" }
+                }
+            }
 
-                    V1_18_1_SequenceEntriesPreprocessedDataTable.update(
-                        where = {
-                            (V1_18_1_SequenceEntriesPreprocessedDataTable.accessionColumn eq accession) and
-                                (V1_18_1_SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
-                                (
-                                    V1_18_1_SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq
-                                        pipelineVersion
-                                    )
-                        },
-                    ) {
-                        it[V1_18_1_SequenceEntriesPreprocessedDataTable.processedDataColumn] =
-                            migratedProcessedData
-                    }
+            // Get all distinct organisms from preprocessed data
+            val preprocessedOrganisms = mutableSetOf<String>()
+            exec("""
+                SELECT DISTINCT se.organism 
+                FROM sequence_entries_preprocessed_data sepd
+                INNER JOIN sequence_entries se 
+                    ON sepd.accession = se.accession 
+                    AND sepd.version = se.version
+                WHERE sepd.processed_data IS NOT NULL
+            """.trimIndent()) { rs ->
+                while (rs.next()) {
+                    preprocessedOrganisms.add(rs.getString(1))
+                }
+            }
 
-                    if (++j % 1000 == 0) {
-                        log.info { "Migrated $j sequence entries (processedData)" }
+            log.info { "Found ${preprocessedOrganisms.size} distinct organisms in preprocessed data" }
+
+            // Get all distinct segment/gene names across all sequence types
+            val segmentsGenes = mutableSetOf<String>()
+            exec("""
+                SELECT DISTINCT keys.key
+                FROM sequence_entries_preprocessed_data,
+                LATERAL (
+                    SELECT jsonb_object_keys(processed_data->'unalignedNucleotideSequences') AS key
+                    WHERE processed_data->'unalignedNucleotideSequences' IS NOT NULL
+                    UNION
+                    SELECT jsonb_object_keys(processed_data->'alignedNucleotideSequences') AS key
+                    WHERE processed_data->'alignedNucleotideSequences' IS NOT NULL
+                    UNION
+                    SELECT jsonb_object_keys(processed_data->'alignedAminoAcidSequences') AS key
+                    WHERE processed_data->'alignedAminoAcidSequences' IS NOT NULL
+                ) AS keys
+                WHERE processed_data IS NOT NULL
+            """.trimIndent()) { rs ->
+                while (rs.next()) {
+                    segmentsGenes.add(rs.getString(1))
+                }
+            }
+
+            log.info { "Found ${segmentsGenes.size} distinct segments/genes" }
+
+            // Migrate processedData - one query per organism and segment/gene
+            var totalRowsUpdated = 0
+            preprocessedOrganisms.forEach { organism ->
+                segmentsGenes.forEach { segmentOrGene ->
+                    val dictId = compressionDictService
+                        .getDictForSegmentOrGene(Organism(organism), segmentOrGene)
+                        ?.id
+
+                    if (dictId != null) {
+                        // Update all three sequence type fields for this organism+segment/gene
+                        val updateSql = """
+                            WITH sequence_entry_ids AS (
+                                SELECT se.accession, se.version
+                                FROM sequence_entries se
+                                WHERE se.organism = '$organism'
+                            )
+                            UPDATE sequence_entries_preprocessed_data sepd
+                            SET processed_data = (
+                                SELECT jsonb_set(
+                                    jsonb_set(
+                                        jsonb_set(
+                                            sepd.processed_data,
+                                            '{unalignedNucleotideSequences,$segmentOrGene}',
+                                            CASE
+                                                WHEN sepd.processed_data->'unalignedNucleotideSequences'->'$segmentOrGene' IS NULL 
+                                                    THEN NULL::jsonb
+                                                WHEN sepd.processed_data->'unalignedNucleotideSequences'->'$segmentOrGene'->>'compressionDictId' IS NOT NULL 
+                                                    THEN sepd.processed_data->'unalignedNucleotideSequences'->'$segmentOrGene'
+                                                ELSE jsonb_set(
+                                                    sepd.processed_data->'unalignedNucleotideSequences'->'$segmentOrGene',
+                                                    '{compressionDictId}',
+                                                    to_jsonb($dictId)
+                                                )
+                                            END
+                                        ),
+                                        '{alignedNucleotideSequences,$segmentOrGene}',
+                                        CASE
+                                            WHEN sepd.processed_data->'alignedNucleotideSequences'->'$segmentOrGene' IS NULL 
+                                                THEN NULL::jsonb
+                                            WHEN sepd.processed_data->'alignedNucleotideSequences'->'$segmentOrGene'->>'compressionDictId' IS NOT NULL 
+                                                THEN sepd.processed_data->'alignedNucleotideSequences'->'$segmentOrGene'
+                                            ELSE jsonb_set(
+                                                sepd.processed_data->'alignedNucleotideSequences'->'$segmentOrGene',
+                                                '{compressionDictId}',
+                                                to_jsonb($dictId)
+                                            )
+                                        END
+                                    ),
+                                    '{alignedAminoAcidSequences,$segmentOrGene}',
+                                    CASE
+                                        WHEN sepd.processed_data->'alignedAminoAcidSequences'->'$segmentOrGene' IS NULL 
+                                            THEN NULL::jsonb
+                                        WHEN sepd.processed_data->'alignedAminoAcidSequences'->'$segmentOrGene'->>'compressionDictId' IS NOT NULL 
+                                            THEN sepd.processed_data->'alignedAminoAcidSequences'->'$segmentOrGene'
+                                        ELSE jsonb_set(
+                                            sepd.processed_data->'alignedAminoAcidSequences'->'$segmentOrGene',
+                                            '{compressionDictId}',
+                                            to_jsonb($dictId)
+                                        )
+                                    END
+                                )
+                            )
+                            FROM sequence_entry_ids sei
+                            WHERE sepd.accession = sei.accession
+                            AND sepd.version = sei.version
+                            AND sepd.processed_data IS NOT NULL
+                            AND (
+                                sepd.processed_data->'unalignedNucleotideSequences' ? '$segmentOrGene'
+                                OR sepd.processed_data->'alignedNucleotideSequences' ? '$segmentOrGene'
+                                OR sepd.processed_data->'alignedAminoAcidSequences' ? '$segmentOrGene'
+                            )
+                        """.trimIndent()
+
+                        val rowsUpdated = exec(updateSql) ?: 0
+                        totalRowsUpdated += rowsUpdated
+                        if (rowsUpdated > 0) {
+                            log.info { 
+                                "Migrated $rowsUpdated sequence entries (processedData) " +
+                                "for organism: $organism, segment/gene: $segmentOrGene" 
+                            }
+                        }
                     }
                 }
+            }
 
-            log.info { "Migrated $j sequence entries (processedData) - done" }
+            log.info { "Migrated $totalRowsUpdated total sequence entries (processedData) - done" }
         }
 
         log.info { "Finished migration" }
     }
-}
-
-private data class CompressedSequence(val compressedSequence: String, val compressionDictId: Int?)
-
-/**
- * Only contains the columns needed for this migration.
- * We need this so that this migration script is decoupled from the actual `SequenceEntriesTable` object,
- * in case that object changes in the future.
- * We expect that this script doesn't need to change.
- */
-private object V1_18_1_SequenceEntriesTable : Table("sequence_entries") {
-    val originalDataColumn =
-        jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
-
-    val accessionColumn = varchar("accession", 255)
-    val versionColumn = long("version")
-    val organismColumn = varchar("organism", 255)
-
-    override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
-
-    fun accessionVersionIs(accession: Accession, version: Version) =
-        (accessionColumn eq accession) and (versionColumn eq version)
-}
-
-/**
- * Only contains the columns needed for this migration.
- * We need this so that this migration script is decoupled from the actual `SequenceEntriesTable` object,
- * in case that object changes in the future.
- * We expect that this script doesn't need to change.
- */
-private object V1_18_1_SequenceEntriesPreprocessedDataTable : Table("sequence_entries_preprocessed_data") {
-    val accessionColumn = varchar("accession", 255)
-    val versionColumn = long("version")
-    val pipelineVersionColumn = long("pipeline_version")
-    val processedDataColumn =
-        jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
-
-    override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
 }
