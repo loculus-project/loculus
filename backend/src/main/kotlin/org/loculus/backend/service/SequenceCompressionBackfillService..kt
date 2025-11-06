@@ -1,7 +1,6 @@
 package org.loculus.backend.service.maintenance
 
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.Organism
@@ -22,17 +21,12 @@ private val log = KotlinLogging.logger {}
  */
 @Service
 @Transactional
-class SequenceCompressionBackfillService(
-    private val compressionDictService: CompressionDictService,
-) {
+class SequenceCompressionBackfillService(private val compressionDictService: CompressionDictService) {
     // Simple caches to avoid hammering CompressionDictService
     private val dictByOrganism = ConcurrentHashMap<String, Int?>()
     private val dictByOrganismAndKey = ConcurrentHashMap<Pair<String, String>, Int?>()
 
-    fun run(
-        batchSize: Int = 2_000,
-        logEvery: Int = 1_000
-    ) {
+    fun run(batchSize: Int = 2_000, logEvery: Int = 1_000) {
         log.info { "Backfill: START" }
         val totalOriginal = backfillOriginalData(batchSize, logEvery)
         val totalProcessed = backfillProcessedData(batchSize, logEvery)
@@ -56,15 +50,17 @@ class SequenceCompressionBackfillService(
                         SequenceEntriesTable.accessionColumn,
                         SequenceEntriesTable.versionColumn,
                         SequenceEntriesTable.organismColumn,
-                        SequenceEntriesTable.originalDataColumn
+                        SequenceEntriesTable.originalDataColumn,
                     )
                     .selectAll()
                     .apply {
                         if (lastAcc != null && lastVer != null) {
                             andWhere {
                                 (SequenceEntriesTable.accessionColumn greater lastAcc!!) or
-                                    ((SequenceEntriesTable.accessionColumn eq lastAcc!!) and
-                                     (SequenceEntriesTable.versionColumn greater lastVer!!))
+                                    (
+                                        (SequenceEntriesTable.accessionColumn eq lastAcc!!) and
+                                            (SequenceEntriesTable.versionColumn greater lastVer!!)
+                                        )
                             }
                         }
                     }
@@ -90,7 +86,9 @@ class SequenceCompressionBackfillService(
                     val migrated = OriginalData(
                         metadata = originalData.metadata,
                         files = originalData.files,
-                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues { (key, value) ->
+                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues {
+                                (key, value),
+                            ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
@@ -98,7 +96,7 @@ class SequenceCompressionBackfillService(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = dictByOrganism.computeIfAbsent(organism) {
                                         compressionDictService.getDictForUnalignedSequence(Organism(organism))?.id
-                                    }
+                                    },
                                 )
                             }
                         },
@@ -107,7 +105,7 @@ class SequenceCompressionBackfillService(
                     SequenceEntriesTable.update(
                         where = {
                             SequenceEntriesTable.accessionVersionIs(accession, version)
-                        }
+                        },
                     ) {
                         it[SequenceEntriesTable.originalDataColumn] = migrated
                     }
@@ -146,32 +144,41 @@ class SequenceCompressionBackfillService(
                         SequenceEntriesTable,
                         joinType = JoinType.INNER,
                         additionalConstraint = {
-                            (SequenceEntriesPreprocessedDataTable.accessionColumn eq SequenceEntriesTable.accessionColumn) and
-                            (SequenceEntriesPreprocessedDataTable.versionColumn eq SequenceEntriesTable.versionColumn)
-                        }
+                            (
+                                SequenceEntriesPreprocessedDataTable.accessionColumn eq
+                                    SequenceEntriesTable.accessionColumn
+                                ) and
+                                (
+                                    SequenceEntriesPreprocessedDataTable.versionColumn eq
+                                        SequenceEntriesTable.versionColumn
+                                    )
+                        },
                     )
                     .slice(
                         SequenceEntriesPreprocessedDataTable.accessionColumn,
                         SequenceEntriesPreprocessedDataTable.versionColumn,
                         SequenceEntriesPreprocessedDataTable.pipelineVersionColumn,
                         SequenceEntriesTable.organismColumn,
-                        SequenceEntriesPreprocessedDataTable.processedDataColumn
+                        SequenceEntriesPreprocessedDataTable.processedDataColumn,
                     )
                     .selectAll()
                     .apply {
                         if (lastAcc != null && lastVer != null && lastPipeVer != null) {
                             andWhere {
                                 (SequenceEntriesPreprocessedDataTable.accessionColumn greater lastAcc!!) or
-                                (
-                                    (SequenceEntriesPreprocessedDataTable.accessionColumn eq lastAcc!!) and
                                     (
-                                        (SequenceEntriesPreprocessedDataTable.versionColumn greater lastVer!!) or
-                                        (
-                                            (SequenceEntriesPreprocessedDataTable.versionColumn eq lastVer!!) and
-                                            (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn greater lastPipeVer!!)
+                                        (SequenceEntriesPreprocessedDataTable.accessionColumn eq lastAcc!!) and
+                                            (
+                                                (SequenceEntriesPreprocessedDataTable.versionColumn greater lastVer!!) or
+                                                    (
+                                                        (SequenceEntriesPreprocessedDataTable.versionColumn eq lastVer!!) and
+                                                            (
+                                                                SequenceEntriesPreprocessedDataTable.pipelineVersionColumn greater
+                                                                    lastPipeVer!!
+                                                                )
+                                                        )
+                                                )
                                         )
-                                    )
-                                )
                             }
                         }
                     }
@@ -199,7 +206,9 @@ class SequenceCompressionBackfillService(
                     val migrated = ProcessedData(
                         metadata = processedData.metadata,
                         files = processedData.files,
-                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues { (key, value) ->
+                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues {
+                                (key, value),
+                            ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
@@ -207,11 +216,13 @@ class SequenceCompressionBackfillService(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
                                         compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    }
+                                    },
                                 )
                             }
                         },
-                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues { (key, value) ->
+                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues {
+                                (key, value),
+                            ->
                             when {
                                 value == null -> null
                                 value.compressionDictId != null -> value
@@ -219,7 +230,7 @@ class SequenceCompressionBackfillService(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
                                         compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    }
+                                    },
                                 )
                             }
                         },
@@ -231,7 +242,7 @@ class SequenceCompressionBackfillService(
                                     compressedSequence = value.compressedSequence,
                                     compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
                                         compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    }
+                                    },
                                 )
                             }
                         },
@@ -242,9 +253,9 @@ class SequenceCompressionBackfillService(
                     SequenceEntriesPreprocessedDataTable.update(
                         where = {
                             (SequenceEntriesPreprocessedDataTable.accessionColumn eq accession) and
-                            (SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
-                            (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
-                        }
+                                (SequenceEntriesPreprocessedDataTable.versionColumn eq version) and
+                                (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+                        },
                     ) {
                         it[SequenceEntriesPreprocessedDataTable.processedDataColumn] = migrated
                     }
