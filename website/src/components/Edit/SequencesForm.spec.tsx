@@ -14,9 +14,7 @@ function makeReferenceGenomeLightweightSchema(nucleotideSegmentNames: string[]):
     };
 }
 
-function makeSubOrganismReferenceSchema(
-    suborganisms: string[]
-): ReferenceGenomesLightweightSchema {
+function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenomesLightweightSchema {
     const result: ReferenceGenomesLightweightSchema = {};
 
     for (const suborganism of suborganisms) {
@@ -42,7 +40,9 @@ describe('SequencesForm', () => {
     });
 
     test('GIVEN organism with 2 suborganisms with 1 segment each THEN allows at max 1 inputs', async () => {
-        let editableSequences = EditableSequences.fromSequenceNames(makeSubOrganismReferenceSchema(['suborg1', 'suborg2']));
+        let editableSequences = EditableSequences.fromSequenceNames(
+            makeSubOrganismReferenceSchema(['suborg1', 'suborg2']),
+        );
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
             { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
@@ -57,9 +57,7 @@ describe('SequencesForm', () => {
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
-            expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
-            ]);
+            expect(rows).toEqual([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey }]);
         }
         expect(() => editableSequences.update('another key', 'GG', 'another key')).toThrowError(
             'Maximum limit reached — you can add up to 1 sequence file(s) only.',
@@ -79,9 +77,7 @@ describe('SequencesForm', () => {
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
-            expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: newFirstKey },
-            ]);
+            expect(rows).toEqual([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key: newFirstKey }]);
         }
     });
 
