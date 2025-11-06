@@ -14,6 +14,22 @@ function makeReferenceGenomeLightweightSchema(nucleotideSegmentNames: string[]):
     };
 }
 
+function makeSubOrganismReferenceSchema(
+    suborganisms: string[]
+): ReferenceGenomesLightweightSchema {
+    const result: ReferenceGenomesLightweightSchema = {};
+
+    for (const suborganism of suborganisms) {
+        result[suborganism] = {
+            nucleotideSegmentNames: ['main'],
+            geneNames: [],
+            insdcAccessionFull: [],
+        };
+    }
+
+    return result;
+}
+
 /* eslint-disable @typescript-eslint/naming-convention -- this test has keys that expectedly contain spaces */
 describe('SequencesForm', () => {
     test('Empty editable sequences produces no output', () => {
@@ -23,6 +39,50 @@ describe('SequencesForm', () => {
 
         expect(emptyEditableSequences.getSequenceFasta('subId')).toBeUndefined();
         expect(emptyEditableSequences.getSequenceRecord()).deep.equals({});
+    });
+
+    test('GIVEN organism with 2 suborganisms with 1 segment each THEN allows at max 1 inputs', async () => {
+        let editableSequences = EditableSequences.fromSequenceNames(makeSubOrganismReferenceSchema(['suborg1', 'suborg2']));
+        const initialRows = editableSequences.rows;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+        ]);
+        const firstKey = initialRows[0].key;
+        {
+            editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1');
+            const fasta = editableSequences.getSequenceFasta('subId');
+            expect(fasta).not.toBeUndefined();
+            const fastaText = await fasta!.text();
+            expect.soft(fastaText).toBe('>subId\nATCG');
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
+
+            const rows = editableSequences.rows;
+            expect(rows).toEqual([
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
+            ]);
+        }
+        expect(() => editableSequences.update('another key', 'GG', 'another key')).toThrowError(
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+        );
+        editableSequences = editableSequences.update(firstKey, null, null);
+        expect(editableSequences.rows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+        ]);
+        const rowsAfterDeletion = editableSequences.rows;
+        const newFirstKey = rowsAfterDeletion[0].key;
+        {
+            editableSequences = editableSequences.update(newFirstKey, 'ATCG', 'Segment 1');
+            const fasta = editableSequences.getSequenceFasta('subId');
+            expect(fasta).not.toBeUndefined();
+            const fastaText = await fasta!.text();
+            expect.soft(fastaText).toBe('>subId\nATCG');
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
+
+            const rows = editableSequences.rows;
+            expect(rows).toEqual([
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: newFirstKey },
+            ]);
+        }
     });
 
     test('GIVEN organism with 2 segments THEN allows at max 2 inputs', async () => {
