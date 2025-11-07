@@ -1,14 +1,14 @@
 # SILO Importer
 
 Python controller that retrieves released datasets from the Loculus backend, prepares them
-for SILO preprocessing, and coordinates with the existing SILO container via sentinel files.
+for SILO preprocessing, and directly executes the SILO binary for preprocessing.
 
-The `kubernetes/loculus/silo_import_wrapper.sh` script runs SILO preprocessing, it expects the SILO importer container to produce sentinel files and data in a SILO specific format. Data should be in the `preprocessing/input/data.ndjson.zst` file, optionally lineage definitions should also be in the same folder under `preprocessing/input/lineage_definitions.yaml`. The import wrapper script will only run SILO preprocessing when the `preprocessing/input/run_silo` sentinel file contains a `run_id`, it will output the state of the run (success or error) into an additional sentinel file `preprocessing/input/silo_done`. 
-
-The SILO importer downloads data from the Loculus backend and moves the new data into the `preprocessing/input/data.ndjson.zst` file only if the following conditions hold:
+The SILO importer downloads data from the Loculus backend and triggers SILO preprocessing only if the following conditions hold:
 1. The data is in a valid format (e.g. ndjson format where each line is a valid json, has number of expected records, and the pipeline version exists and is a valid integer if a lineage definition is required).
 2. The lineage definitions file can be produced if it is required.
-3. The data has changed since the last download or it has been over more than `HARD_REFRESH_INTERVAL` since the last hard refresh. We determine if the data has changed from the header (e.g. 304 not modified) and by comparing a hash of the data. 
+3. The data has changed since the last download or it has been over more than `HARD_REFRESH_INTERVAL` since the last hard refresh. We determine if the data has changed from the header (e.g. 304 not modified) and by comparing a hash of the data.
+
+Data is prepared in the `preprocessing/input/data.ndjson.zst` file, and optionally lineage definitions are placed in `preprocessing/input/lineage_definitions.yaml`. The SILO binary is then executed directly via subprocess to preprocess the data into the `preprocessing/output` directory. 
 
 ## Local development
 
@@ -30,5 +30,12 @@ Environment variables mirror the historical shell scripts:
 
 ## Container image
 
-The accompanying `Dockerfile` builds a minimal image including this package and its
-Python dependencies. A GitHub Actions workflow publishes it to `ghcr.io/loculus-project/silo-import`.
+The accompanying `Dockerfile` builds an image that includes:
+- This Python package and its dependencies
+- The SILO binary compiled from the LAPIS-SILO submodule
+
+The image uses a multi-stage build process:
+1. First stage: Compiles SILO from the `LAPIS-SILO` submodule using the pre-built dependency image
+2. Second stage: Installs the Python package and copies the SILO binary
+
+A GitHub Actions workflow publishes the final image to `ghcr.io/loculus-project/silo-import`.

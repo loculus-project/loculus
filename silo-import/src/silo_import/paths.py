@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .constants import DATA_FILENAME, LINEAGES_FILENAME, RUN_SILO_SENTINEL, SILO_DONE_SENTINEL
+from .constants import DATA_FILENAME, LINEAGES_FILENAME
 
 
 @dataclass(frozen=True)
@@ -13,8 +13,6 @@ class ImporterPaths:
     output_dir: Path
     lineage_definition_file: Path
     silo_input_data_path: Path
-    run_silo: Path
-    silo_done: Path
 
     @classmethod
     def from_root(cls, root: Path) -> ImporterPaths:
@@ -27,8 +25,6 @@ class ImporterPaths:
             output_dir=output_dir,
             lineage_definition_file=input_dir / LINEAGES_FILENAME,
             silo_input_data_path=input_dir / DATA_FILENAME,
-            run_silo=input_dir / RUN_SILO_SENTINEL,
-            silo_done=input_dir / SILO_DONE_SENTINEL,
         )
 
     def ensure_directories(self) -> None:

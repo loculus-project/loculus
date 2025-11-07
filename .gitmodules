@@ -1,0 +1,3 @@
+[submodule "silo-import/LAPIS-SILO"]
+	path = silo-import/LAPIS-SILO
+	url = https://github.com/GenSpectrum/LAPIS-SILO
