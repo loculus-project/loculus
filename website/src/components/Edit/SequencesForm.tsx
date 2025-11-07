@@ -5,25 +5,16 @@ import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
-function generateAndDownloadFastaFile(
-    accessionVersion: string,
-    sequenceData: string,
-    segmentKey?: string,
-    isSingleSegment: boolean = false,
-) {
-    const fileName =
-        isSingleSegment || !segmentKey ? `${accessionVersion}.fasta` : `${accessionVersion}_${segmentKey}.fasta`;
-
-    const header = isSingleSegment || !segmentKey ? accessionVersion : `${accessionVersion}_${segmentKey}`;
-
-    const fileContent = `>${header}\n${sequenceData}`;
+function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string) {
+    const trimmedHeader = fastaHeader.replaceAll(/[^a-zA-Z0-9]/g, '');
+    const fileContent = `>${trimmedHeader}\n${sequenceData}`;
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = `${trimmedHeader}.fasta`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -137,14 +128,11 @@ export class EditableSequences {
         if (filledRows.length === 0) {
             return undefined;
         }
-
+        // TODO: for existing sequences the correct header is actually submissionId_label as label is the segmentName
         const fastaContent = !this.isMultiSegmented()
             ? `>${submissionId}\n${filledRows[0].value}`
             : filledRows
-                  .map(
-                      (sequence) =>
-                          `>${submissionId}_${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`,
-                  )
+                  .map((sequence) => `>${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`)
                   .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
@@ -200,13 +188,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             onDownload={
                                 field.initialValue !== null && dataToEdit
                                     ? () => {
-                                          const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
-                                          generateAndDownloadFastaFile(
-                                              accessionVersion,
-                                              field.value ?? '',
-                                              field.label,
-                                              !multiSegment,
-                                          );
+                                          generateAndDownloadFastaFile(field.label, field.value ?? '');
                                       }
                                     : undefined
                             }
