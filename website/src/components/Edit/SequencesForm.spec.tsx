@@ -108,7 +108,7 @@ describe('SequencesForm', () => {
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
+            expect.soft(fastaText).toBe('>Segment1\nATCG');
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
@@ -124,7 +124,7 @@ describe('SequencesForm', () => {
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId_Segment1\nATCG\n>subId_Segment2\nTT');
+            expect.soft(fastaText).toBe('>Segment1\nATCG\n>Segment2\nTT');
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG', 'Segment 2': 'TT' });
 
             const rows = editableSequences.rows;
@@ -192,7 +192,7 @@ describe('SequencesForm', () => {
         const fasta = editableSequences.getSequenceFasta();
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
-        expect.soft(fastaText).toBe('>subId_label\nATCG');
+        expect.soft(fastaText).toBe('>label\nATCG');
 
         expect(editableSequences.getSequenceRecord()).deep.equals({ label: 'ATCG' });
     });
