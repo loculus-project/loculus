@@ -114,7 +114,11 @@ class SubmissionConvenienceClient(
         }
 
         val submit = client.submit(
-            DefaultFiles.metadataFile,
+            if (isMultiSegmented) {
+                DefaultFiles.multiSegmentedMetadataFile
+            } else {
+                DefaultFiles.metadataFile
+            },
             if (doesNotAllowConsensusSequenceFile) {
                 null
             } else if (isMultiSegmented) {
