@@ -390,7 +390,6 @@ class SubmissionDatabaseService(
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-                it[compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
