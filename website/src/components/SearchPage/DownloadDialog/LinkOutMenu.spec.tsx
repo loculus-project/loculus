@@ -156,7 +156,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
-            expect.objectContaining({ fields: ['fieldA', 'fieldB'] }),
+            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA', 'fieldB'] } }),
         );
     });
 
@@ -180,7 +180,7 @@ describe('LinkOutMenu with enabled data use terms', () => {
 
         expect(generateDownloadUrlSpy).toHaveBeenCalledWith(
             mockSequenceFilter,
-            expect.objectContaining({ fields: ['fieldA'] }),
+            expect.objectContaining({ dataType: { type: 'metadata', fields: ['fieldA'] } }),
         );
     });
 });

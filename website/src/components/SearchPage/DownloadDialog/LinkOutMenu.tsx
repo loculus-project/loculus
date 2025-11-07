@@ -72,14 +72,19 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 
             const downloadOption: DownloadOption = {
                 includeRestricted: includeRestricted,
-                dataType: {
-                    type: dataType as DataType,
-                    segment: segment,
-                    richFastaHeaders: { include: richHeaders === true },
-                },
+                dataType:
+                    dataType === 'metadata'
+                        ? {
+                              type: 'metadata',
+                              fields: columns ?? [],
+                          }
+                        : {
+                              type: dataType as 'unalignedNucleotideSequences' | 'alignedNucleotideSequences',
+                              segment: segment,
+                              richFastaHeaders: { include: richHeaders === true },
+                          },
                 compression: undefined,
                 dataFormat: dataFormat,
-                fields: columns,
             };
 
             const { url } = downloadUrlGenerator.generateDownloadUrl(sequenceFilter, downloadOption);

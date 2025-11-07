@@ -514,7 +514,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}
