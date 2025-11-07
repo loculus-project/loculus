@@ -260,8 +260,7 @@ def handle_helm():  # noqa: C901
 
     if args.use_localhost_ip:
         parameters += ["--set", f"localHost={get_local_ip()}"]
-
-    if get_codespace_name():
+    elif get_codespace_name():
         parameters += get_codespace_params(get_codespace_name())
 
     output = run_command(parameters)

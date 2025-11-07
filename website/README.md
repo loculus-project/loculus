@@ -69,3 +69,13 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 -   Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
 -   For VS code, use the ESlint extension which must be configured with `"eslint.workingDirectories": ["./website"],` in the settings.json
 -   Tips & Tricks for using icons from MUI https://mui.com/material-ui/guides/minimizing-bundle-size/
+
+### Preventing Flaky Playwright Tests
+
+When using interactive components (buttons, Headless UI components like Combobox, etc.), ensure they are disabled until React hydration completes to prevent race conditions in Playwright tests:
+
+-   **For buttons**: Use `Button` from `src/components/common/Button.tsx` instead of native `<button>`
+-   **For Headless UI Combobox**: Import from `src/components/common/headlessui/Combobox.tsx` instead of `@headlessui/react`
+-   **For other interactive elements**: Consider wrapping with `DisabledUntilHydrated` or using the `useClientFlag` hook
+
+These wrappers automatically disable components until client-side hydration is complete, preventing Playwright from interacting with them before they're ready.

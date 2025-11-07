@@ -25,7 +25,7 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -211,19 +211,18 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated alsoDisabledIf={isPending}>
-                        <button
-                            name='submit'
-                            type='submit'
-                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                            onClick={(e) => void handleSubmit(e)}
-                        >
-                            <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
-                                <span className='loading loading-spinner loading-sm' />
-                            </div>
-                            <span className='flex-1 text-center mx-8'>Submit sequences</span>
-                        </button>
-                    </DisabledUntilHydrated>
+                    <Button
+                        name='submit'
+                        type='submit'
+                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        onClick={(e) => void handleSubmit(e)}
+                        alsoDisabledIf={isPending}
+                    >
+                        <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
+                            <span className='loading loading-spinner loading-sm' />
+                        </div>
+                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                    </Button>
                 </div>
             </div>
         </div>

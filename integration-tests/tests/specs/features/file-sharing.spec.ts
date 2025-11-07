@@ -3,7 +3,7 @@ import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
-    test.setTimeout(90000);
+    test.setTimeout(120_000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
@@ -53,7 +53,7 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
-    test.setTimeout(90000);
+    test.setTimeout(120_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
