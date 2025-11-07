@@ -19,12 +19,21 @@ import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
 import org.loculus.backend.service.submission.SequenceEntriesTable
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
+
+@Component
+class SequenceCompressionBackfillStarter(private val backfill: SequenceCompressionBackfillService) {
+    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
+    fun startAfterReady() {
+        backfill.run()
+    }
+}
 
 /**
  * Backfills compressionDictId into JSONB blobs in sequence_entries.original_data
@@ -32,8 +41,7 @@ private val log = KotlinLogging.logger {}
  *
  */
 @Service
-@Transactional
-class SequenceCompressionBackfillService(private val compressionDictService: CompressionDictService) {
+class SequenceCompressionBackfillService(private val cds: CompressionDictService) {
     // Simple caches to avoid hammering CompressionDictService
     private val dictByOrganism = ConcurrentHashMap<String, Int?>()
     private val dictByOrganismAndKey = ConcurrentHashMap<Pair<String, String>, Int?>()
@@ -44,6 +52,21 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
         val totalProcessed = backfillProcessedData(batchSize, logEvery)
         log.info { "Backfill: DONE (originalData=$totalOriginal, processedData=$totalProcessed)" }
     }
+
+    // Sequences without a compression DictId are compressed on a segment level (even original data)
+    private fun addCompressionDict(originalData: Map<String, CompressedSequence?>, organism: String) =
+        originalData.mapValues { (key, value) ->
+            when {
+                value == null -> null
+                value.compressionDictId != null -> value
+                else -> CompressedSequence(
+                    compressedSequence = value.compressedSequence,
+                    compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
+                        cds.getDictForSegmentOrGene(Organism(organism), key)?.id
+                    },
+                )
+            }
+        }
 
     // -------------------------
     // original_data paginator
@@ -92,30 +115,23 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     val migrated = OriginalData(
                         metadata = originalData.metadata,
                         files = originalData.files,
-                        unalignedNucleotideSequences = originalData.unalignedNucleotideSequences.mapValues { (key, value) ->
-                            when {
-                                value == null -> null
-                                value.compressionDictId != null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = dictByOrganism.computeIfAbsent(organism) {
-                                        compressionDictService.getDictForUnalignedSequence(Organism(organism))?.id
-                                    },
-                                )
-                            }
-                        },
+                        unalignedNucleotideSequences = addCompressionDict(
+                            originalData.unalignedNucleotideSequences,
+                            organism,
+                        ),
                     )
+                    if (migrated != originalData) {
+                        se.update(
+                            where = {
+                                (se.accessionColumn eq accession) and
+                                    (se.versionColumn eq version)
+                            },
+                        ) {
+                            it[se.originalDataColumn] = migrated
+                        }
 
-                    se.update(
-                        where = {
-                            (se.accessionColumn eq accession) and
-                                (se.versionColumn eq version)
-                        },
-                    ) {
-                        it[se.originalDataColumn] = migrated
+                        processed++
                     }
-
-                    processed++
                     if (++i % logEvery == 0) {
                         log.info { "Migrated $processed sequence entries (originalData)" }
                     }
@@ -205,57 +221,34 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     val migrated = ProcessedData(
                         metadata = processedData.metadata,
                         files = processedData.files,
-                        unalignedNucleotideSequences = processedData.unalignedNucleotideSequences.mapValues { (key, value) ->
-                            when {
-                                value == null -> null
-                                value.compressionDictId != null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
-                                        compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    },
-                                )
-                            }
-                        },
-                        alignedNucleotideSequences = processedData.alignedNucleotideSequences.mapValues { (key, value) ->
-                            when {
-                                value == null -> null
-                                value.compressionDictId != null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
-                                        compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    },
-                                )
-                            }
-                        },
-                        alignedAminoAcidSequences = processedData.alignedAminoAcidSequences.mapValues { (key, value) ->
-                            when {
-                                value == null -> null
-                                value.compressionDictId != null -> value
-                                else -> CompressedSequence(
-                                    compressedSequence = value.compressedSequence,
-                                    compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
-                                        compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id
-                                    },
-                                )
-                            }
-                        },
+                        unalignedNucleotideSequences = addCompressionDict(
+                            processedData.unalignedNucleotideSequences,
+                            organism,
+                        ),
+                        alignedNucleotideSequences = addCompressionDict(
+                            processedData.alignedNucleotideSequences,
+                            organism,
+                        ),
+                        alignedAminoAcidSequences = addCompressionDict(
+                            processedData.alignedAminoAcidSequences,
+                            organism,
+                        ),
                         nucleotideInsertions = processedData.nucleotideInsertions,
                         aminoAcidInsertions = processedData.aminoAcidInsertions,
                     )
+                    if (migrated != processedData) {
+                        sepd.update(
+                            where = {
+                                (sepd.accessionColumn eq accession) and
+                                    (sepd.versionColumn eq version) and
+                                    (sepd.pipelineVersionColumn eq pipelineVersion)
+                            },
+                        ) {
+                            it[sepd.processedDataColumn] = migrated
+                        }
 
-                    sepd.update(
-                        where = {
-                            (sepd.accessionColumn eq accession) and
-                                (sepd.versionColumn eq version) and
-                                (sepd.pipelineVersionColumn eq pipelineVersion)
-                        },
-                    ) {
-                        it[sepd.processedDataColumn] = migrated
+                        processed++
                     }
-
-                    processed++
                     if (++i % logEvery == 0) {
                         log.info { "Migrated $processed sequence entries (processedData)" }
                     }
