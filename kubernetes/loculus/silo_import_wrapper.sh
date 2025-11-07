@@ -32,8 +32,13 @@ while true; do
         bash /silo_import_job.sh --last-etag=0 --backend-base-url="$BACKEND_BASE_URL"
         exit_code=$?
         if [ "$exit_code" -ne 0 ]; then
-            echo "Error: Hard refresh failed with exit code $exit_code"
-            exit $exit_code
+            # Check if this is a connection error (curl exit code 7) or similar network issue
+            if [ "$exit_code" -eq 7 ] || [ "$exit_code" -eq 6 ] || [ "$exit_code" -eq 28 ]; then
+                echo "Warning: Hard refresh failed due to network connectivity issue (exit code $exit_code). Backend may be temporarily unavailable. Will retry on next iteration."
+            else
+                echo "Error: Hard refresh failed with exit code $exit_code (non-network error)"
+                exit $exit_code
+            fi
         else
             echo "Hard refresh completed successfully"
             echo "$current_time" >"$last_hard_refresh_time_path"
@@ -43,8 +48,13 @@ while true; do
         bash /silo_import_job.sh --last-etag="$last_etag" --backend-base-url="$BACKEND_BASE_URL"
         exit_code=$?
         if [ "$exit_code" -ne 0 ]; then
-            echo "Error: Soft refresh failed with exit code $exit_code"
-            exit $exit_code
+            # Check if this is a connection error (curl exit code 7) or similar network issue
+            if [ "$exit_code" -eq 7 ] || [ "$exit_code" -eq 6 ] || [ "$exit_code" -eq 28 ]; then
+                echo "Warning: Soft refresh failed due to network connectivity issue (exit code $exit_code). Backend may be temporarily unavailable. Will retry on next iteration."
+            else
+                echo "Error: Soft refresh failed with exit code $exit_code (non-network error)"
+                exit $exit_code
+            fi
         else
             echo "Soft refresh completed successfully"
         fi
