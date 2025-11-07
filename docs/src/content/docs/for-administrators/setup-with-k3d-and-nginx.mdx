@@ -75,6 +75,30 @@ echo "Traefik is running."
 
 ```
 
+<Aside>
+If you're using a VPC to route traffic from your loculus instance, due to network routing requirements, or because you have to use nginx on a different machine, make sure to use your private IP instead of `127.0.0.1` (localhost), e.g.,
+
+```bash
+#!/bin/bash
+...
+cluster_name="loculusCluster"
+
+private_ip="172.1.1.1"
+website_port_mapping="${private_ip}:9000:30081@agent:0"
+# repeat for all other port mappings
+...
+```
+
+To pull down the cluster and pods, you can run:
+
+```
+k3d cluster delete loculusCluster
+```
+
+Re-run `./create-cluster.sh` to recreate.
+
+</Aside>
+
 ## Step 2: Install secret generator
 
 The Loculus Helm chart uses the [Mittwald secrets generator](https://github.com/mittwald/kubernetes-secret-generator). You can install it with:
@@ -263,6 +287,12 @@ server {
     }
 }
 ```
+
+<Aside>
+
+As mentioned above, if you're using a VPC and having to set up nginx on a different machine, replace `127.0.0.1` in the configuration file with your private IP in all instances. Make sure the relevant ports (`9000`, `9079`, `9080`, and `9083`) are open in your VPC firewall/security groups so nginx can reach your loculus instance.
+
+</Aside>
 
 Reload nginx with
 
