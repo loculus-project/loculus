@@ -10,6 +10,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
+import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
 import useQueryAsState, { type QueryState } from './useQueryAsState';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
@@ -25,9 +26,10 @@ import {
     type SetSomeFieldValues,
 } from '../../types/config.ts';
 import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
     COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
@@ -43,7 +45,7 @@ import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     myGroups: Group[];
     organism: string;
     clientConfig: ClientConfig;
@@ -70,7 +72,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 export const InnerSearchFullUI = ({
     accessToken,
-    referenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema,
     myGroups,
     organism,
     clientConfig,
@@ -122,6 +124,14 @@ export const InnerSearchFullUI = ({
         setState,
         'boolean',
         (value) => !value,
+    );
+    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
+        schema.suborganismIdentifierField ?? '',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => value === null,
     );
 
     const searchVisibilities = useMemo(() => {
@@ -303,8 +313,14 @@ export const InnerSearchFullUI = ({
     const clearSelectedSeqs = () => setSelectedSeqs(new Set());
 
     const tableFilter = useMemo(
-        () => new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames),
-        [fieldValues, hiddenFieldValues, referenceGenomesSequenceNames, filterSchema],
+        () =>
+            new FieldFilterSet(
+                filterSchema,
+                fieldValues,
+                hiddenFieldValues,
+                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+            ),
+        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
     );
 
     /**
@@ -358,6 +374,10 @@ export const InnerSearchFullUI = ({
         }
     }, [aggregatedHook.data?.data, oldCount]);
 
+    const showMutationSearch =
+        schema.submissionDataTypes.consensusSequences &&
+        !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <FieldSelectorModal
@@ -380,7 +400,7 @@ export const InnerSearchFullUI = ({
                 accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomeSequenceNames={referenceGenomesSequenceNames}
+                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -391,7 +411,7 @@ export const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
-                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
@@ -399,11 +419,14 @@ export const InnerSearchFullUI = ({
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
-                    showMutationSearch={schema.submissionDataTypes.consensusSequences}
+                    showMutationSearch={showMutationSearch}
+                    suborganismIdentifierField={schema.suborganismIdentifierField}
+                    selectedSuborganism={selectedSuborganism}
+                    setSelectedSuborganism={setSelectedSuborganism}
                 />
             </div>
             <div
-                className={`md:w-[calc(100%-18.1rem)]`}
+                className='flex-1 min-w-0'
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />
@@ -443,7 +466,7 @@ export const InnerSearchFullUI = ({
                         ${
                             !(firstClientSideLoadOfCountCompleted && firstClientSideLoadOfDataCompleted)
                                 ? 'cursor-wait pointer-events-none'
-                                : detailsHook.isLoading || aggregatedHook.isLoading
+                                : detailsHook.isPending || aggregatedHook.isPending
                                   ? 'opacity-50 pointer-events-none'
                                   : ''
                         }
@@ -457,8 +480,8 @@ export const InnerSearchFullUI = ({
                     <div className='text-sm text-gray-800 mb-6 justify-between flex flex-col sm:flex-row items-baseline gap-4'>
                         <div className='mt-auto'>
                             {buildSequenceCountText(totalSequences, oldCount, initialCount)}
-                            {detailsHook.isLoading ||
-                            aggregatedHook.isLoading ||
+                            {detailsHook.isPending ||
+                            aggregatedHook.isPending ||
                             !firstClientSideLoadOfCountCompleted ||
                             !firstClientSideLoadOfDataCompleted ? (
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
@@ -491,11 +514,13 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
+                                selectedSuborganism={selectedSuborganism}
+                                suborganismIdentifierField={schema.suborganismIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu

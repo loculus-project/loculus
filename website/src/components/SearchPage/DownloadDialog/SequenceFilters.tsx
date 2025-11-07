@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
@@ -7,6 +7,7 @@ import { MetadataFilterSchema } from '../../../utils/search.ts';
  TODO(#3451) we should use `unknown` or proper types instead of `any` */
 
 export type LapisSearchParameters = Record<string, any>;
+
 export interface SequenceFilter {
     /**
      * Whether this filter is actually filtering anything or not.
@@ -43,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    private readonly suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -51,18 +52,18 @@ export class FieldFilterSet implements SequenceFilter {
      * @param fieldValues The {@link FieldValues} that are used to filter sequence entries.
      * @param hiddenFieldValues key-value combinations of fields that should be hidden when converting
      *     displaying the field values (because these are default values).
-     * @param referenceGenomeSequenceNames Necessary to construct mutation API params.
+     * @param suborganismSegmentAndGeneInfo Necessary to construct mutation API params.
      */
     constructor(
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        referenceGenomeSequenceNames: ReferenceGenomesSequenceNames,
+        suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;
         this.hiddenFieldValues = hiddenFieldValues;
-        this.referenceGenomeSequenceNames = referenceGenomeSequenceNames;
+        this.suborganismSegmentAndGeneInfo = suborganismSegmentAndGeneInfo;
     }
 
     /**
@@ -74,7 +75,7 @@ export class FieldFilterSet implements SequenceFilter {
             new MetadataFilterSchema([]),
             {},
             {},
-            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
         );
     }
 
@@ -106,10 +107,15 @@ export class FieldFilterSet implements SequenceFilter {
         }
 
         delete sequenceFilters.mutation;
-        const mutationSearchParams = intoMutationSearchParams(
-            this.fieldValues.mutation,
-            this.referenceGenomeSequenceNames,
-        );
+        const mutationSearchParams =
+            this.suborganismSegmentAndGeneInfo !== null
+                ? intoMutationSearchParams(this.fieldValues.mutation, this.suborganismSegmentAndGeneInfo)
+                : {
+                      aminoAcidInsertions: [],
+                      aminoAcidMutations: [],
+                      nucleotideInsertions: [],
+                      nucleotideMutations: [],
+                  };
 
         return {
             ...sequenceFilters,

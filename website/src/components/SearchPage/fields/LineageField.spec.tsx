@@ -69,7 +69,7 @@ describe('LineageField', () => {
                     { lineage: 'A.2', count: 8 },
                 ],
             },
-            isLoading: false,
+            isPending: false,
             error: null,
             mutate: vi.fn(),
         });

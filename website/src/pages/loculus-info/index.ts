@@ -3,6 +3,15 @@ import type { APIRoute } from 'astro';
 import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import { getAuthBaseUrl } from '../../utils/getAuthUrl';
 
+const corsHeaders = {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'Access-Control-Allow-Origin': '*',
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    'Access-Control-Allow-Headers': 'Content-Type',
+} as const;
+
 export const GET: APIRoute = async ({ request }) => {
     const runtime = getRuntimeConfig();
     const website = getWebsiteConfig();
@@ -20,7 +29,14 @@ export const GET: APIRoute = async ({ request }) => {
     };
     return new Response(JSON.stringify(response), {
         headers: {
+            ...corsHeaders,
             'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
         },
     });
 };
+
+export const OPTIONS: APIRoute = () =>
+    new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+    });

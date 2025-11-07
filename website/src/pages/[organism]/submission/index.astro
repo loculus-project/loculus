@@ -22,11 +22,11 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<BaseLayout title='Submission portal'>
-    <h1 class='title'>Submission portal</h1>
+<BaseLayout title='Submission portal' fullWidth>
+    <h1 class='title py-2'>Submission portal</h1>
     {
         groupsResult.match(
-            () => <NeedAGroup />,
+            () => <NeedAGroup continueSubmissionOrganism={_organism?.key} />,
             () => <NeedToLogin message='You need to be logged in to access the submission portal.' />,
         )
     }

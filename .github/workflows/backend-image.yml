@@ -84,7 +84,7 @@ jobs:
           distribution: "adopt"
       - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
       - name: Build Backend
         if: env.CACHE_HIT == 'false'
         working-directory: ./backend

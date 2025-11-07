@@ -1,5 +1,5 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { type FC, useState, useRef } from 'react';
+import { type MutableRefObject, type FC, useState, useRef } from 'react';
 
 import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGenerator';
 import { type SequenceFilter } from './SequenceFilters';
@@ -75,7 +75,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                 dataType: {
                     type: dataType as DataType,
                     segment: segment,
-                    includeRichFastaHeaders: richHeaders ? true : undefined,
+                    richFastaHeaders: { include: richHeaders === true },
                 },
                 compression: undefined,
                 dataFormat: dataFormat,
@@ -163,7 +163,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
 function LinkOutMenuDataUseTermModal(props: {
     modalVisible: boolean;
     setModalVisible: (value: ((prevState: boolean) => boolean) | boolean) => void;
-    currentLinkOut: React.MutableRefObject<LinkOut | null>;
+    currentLinkOut: MutableRefObject<LinkOut | null>;
     onClick: () => void;
     onClick1: () => void;
 }) {

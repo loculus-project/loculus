@@ -25,5 +25,5 @@ jobs:
       - name: Run Helm lint on values files
         run: |
           helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml
-          helm lint kubernetes/loculus -f kubernetes/loculus/values_e2e_and_dev.yaml
-          helm lint kubernetes/loculus -f kubernetes/loculus/values_preview_server.yaml
+          helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_e2e_and_dev.yaml
+          helm lint kubernetes/loculus -f kubernetes/loculus/values.yaml -f kubernetes/loculus/values_preview_server.yaml

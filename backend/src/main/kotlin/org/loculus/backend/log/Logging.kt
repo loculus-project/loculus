@@ -12,6 +12,8 @@ import org.springframework.web.servlet.HandlerMapping
 
 private val log = KotlinLogging.logger {}
 
+const val ORGANISM_MDC_KEY = "organism"
+
 @Component
 class OrganismMdcInterceptor : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
@@ -26,7 +28,7 @@ class OrganismMdcInterceptor : HandlerInterceptor {
         }
 
         if (organism != null) {
-            MDC.put("organism", organism)
+            MDC.put(ORGANISM_MDC_KEY, organism)
         }
 
         return true
@@ -40,10 +42,14 @@ class ResponseLogger : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
+        val startTime = System.currentTimeMillis()
         try {
             filterChain.doFilter(request, response)
 
-            log.info { "${request.method} ${request.requestURL} - Responding with status ${response.status}" }
+            log.info {
+                val duration = System.currentTimeMillis() - startTime
+                "${request.method} ${request.requestURL} - Responding with status ${response.status} - took ${duration}ms"
+            }
         } finally {
             MDC.clear()
         }

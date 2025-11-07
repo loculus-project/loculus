@@ -61,14 +61,14 @@ jobs:
         with:
           exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --template > /tmp/helm_template.yaml
       - name: Upload default helm template
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: helm-template
           path: /tmp/helm_template.yaml
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ./website/.nvmrc
       - name: Cache .npm
@@ -141,7 +141,7 @@ jobs:
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: ${{ failure() }}
         with:
           name: playwright-report
@@ -149,7 +149,7 @@ jobs:
           retention-days: 30
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: website/test-results/
@@ -168,7 +168,7 @@ jobs:
         run: ./.github/scripts/collect_kubernetes_logs.sh
       - name: Upload Kubernetes logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: kubernetes-logs
           path: kubernetes_logs/

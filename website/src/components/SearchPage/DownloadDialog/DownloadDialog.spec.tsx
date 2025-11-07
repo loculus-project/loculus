@@ -9,7 +9,11 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import type { ReferenceGenomesSequenceNames, ReferenceAccession } from '../../../types/referencesGenomes.ts';
+import {
+    type ReferenceGenomesLightweightSchema,
+    type ReferenceAccession,
+    SINGLE_REFERENCE,
+} from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
@@ -23,10 +27,25 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [defaultAccession],
+const defaultReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
+    [SINGLE_REFERENCE]: {
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+};
+
+const multiPathogenReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
+    suborganism1: {
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
+    suborganism2: {
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
 };
 
 const defaultLapisUrl = 'https://lapis';
@@ -58,12 +77,18 @@ async function renderDialog({
     dataUseTermsEnabled = true,
     richFastaHeaderFields,
     metadata = mockMetadata,
+    selectedSuborganism = null,
+    suborganismIdentifierField,
+    referenceGenomeLightweightSchema = defaultReferenceGenomeLightweightSchema,
 }: {
     downloadParams?: SequenceFilter;
     allowSubmissionOfConsensusSequences?: boolean;
     dataUseTermsEnabled?: boolean;
     richFastaHeaderFields?: string[];
     metadata?: Metadata[];
+    selectedSuborganism?: string | null;
+    suborganismIdentifierField?: string;
+    referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
 } = {}) {
     render(
         <DownloadDialog
@@ -71,11 +96,13 @@ async function renderDialog({
                 new DownloadUrlGenerator(defaultOrganism, defaultLapisUrl, dataUseTermsEnabled, richFastaHeaderFields)
             }
             sequenceFilter={downloadParams}
-            referenceGenomesSequenceNames={defaultReferenceGenome}
+            referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
             metadata={metadata}
             richFastaHeaderFields={richFastaHeaderFields}
+            selectedSuborganism={selectedSuborganism}
+            suborganismIdentifierField={suborganismIdentifierField}
         />,
     );
 
@@ -123,6 +150,8 @@ describe('DownloadDialog', () => {
     });
 
     const rawNucleotideSequencesLabel = /Raw nucleotide sequences/;
+    const alignedNucleotideSequencesLabel = /Aligned nucleotide sequences/;
+    const alignedAminoAcidSequencesLabel = /Aligned amino acid sequences/;
     const gzipCompressionLabel = /Gzip/;
     const displayNameFastaHeaderStyleLabel = /Display name/;
 
@@ -136,13 +165,13 @@ describe('DownloadDialog', () => {
                     field1: 'value1',
                 },
                 {},
-                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
 
-        let [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        let { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -150,8 +179,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -159,8 +188,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accession=accession1&accession=accession2&versionStatus=LATEST_VERSION&isRevocation=false&field1=value1/,
         );
@@ -170,8 +199,8 @@ describe('DownloadDialog', () => {
         await renderDialog({ downloadParams: new SequenceEntrySelection(new Set(['SEQID1', 'SEQID2'])) });
         await checkAgreement();
 
-        let [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        let { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_metadata_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=tsv&fields=accessionVersion%2Cfield1%2Cfield2&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -179,8 +208,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
         await userEvent.click(screen.getByLabelText(gzipCompressionLabel));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&dataFormat=fasta&compression=gzip&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -188,8 +217,8 @@ describe('DownloadDialog', () => {
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
 
-        [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences`);
+        ({ path, query } = parseDownloadHref());
+        expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
         expect(query).toMatch(
             /downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataFormat=fasta&compression=zstd&accessionVersion=SEQID1&accessionVersion=SEQID2/,
         );
@@ -211,7 +240,7 @@ describe('DownloadDialog', () => {
         await renderDialog({ metadata: orderedMetadata });
         await checkAgreement();
 
-        const [, query] = getDownloadHref()?.split('?') ?? [];
+        const { query } = parseDownloadHref();
         expect(query).toMatch(/fields=accessionVersion%2Cfield2%2Cfield1/);
     });
 
@@ -219,8 +248,8 @@ describe('DownloadDialog', () => {
         await renderDialog({ allowSubmissionOfConsensusSequences: false });
         await checkAgreement();
 
-        const [path] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        const { path } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
 
         expect(screen.queryByLabelText(rawNucleotideSequencesLabel)).not.toBeInTheDocument();
         expect(screen.getByLabelText(gzipCompressionLabel)).toBeInTheDocument();
@@ -274,13 +303,13 @@ describe('DownloadDialog', () => {
                     field2: 'value2',
                 },
                 {},
-                { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
             ),
         });
         await checkAgreement();
 
-        const [path, query] = getDownloadHref()?.split('?') ?? [];
-        expect(path).toBe(`${defaultLapisUrl}/sample/details`);
+        const { path, query } = parseDownloadHref();
+        expectRouteInPathMatches(path, `/sample/details`);
         expect(query).toMatch(/field2=/);
         expect(query).not.toMatch(/field1=/);
     });
@@ -323,7 +352,7 @@ describe('DownloadDialog', () => {
                         field1: 'value1',
                     },
                     {},
-                    { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                    { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                 ),
             });
 
@@ -332,10 +361,91 @@ describe('DownloadDialog', () => {
             await userEvent.click(screen.getByLabelText(displayNameFastaHeaderStyleLabel));
 
             const [path, query] = getDownloadHref()?.split('?') ?? [];
-            expect(path).toBe('https://lapis/sample/unalignedNucleotideSequences');
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
             expect(query).toMatch(
                 /^downloadAsFile=true&downloadFileBasename=ebola_nuc_\d{4}-\d{2}-\d{2}T\d{4}&dataUseTerms=OPEN&fastaHeaderTemplate=%7Bfield1%7D%7C%7Bfield2%7D&accession=accession1&accession=accession2&field1=value1/,
             );
+        });
+    });
+
+    describe('multi pathogen case', () => {
+        test('should disable the aligned sequence downloads when no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+            });
+
+            expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+        });
+
+        test('should download all raw segments when no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path, query } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences`);
+            expect(query).contains('fastaHeaderTemplate=%7BaccessionVersion%7D');
+        });
+
+        test('should enable the aligned sequence downloads when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            expect(screen.getByLabelText(alignedNucleotideSequencesLabel)).toBeEnabled();
+            expect(screen.getByLabelText(alignedAminoAcidSequencesLabel)).toBeEnabled();
+        });
+
+        test('should download only the selected raw suborganism sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(rawNucleotideSequencesLabel));
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/unalignedNucleotideSequences/suborganism1`);
+        });
+
+        test('should download only the selected aligned suborganism sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(alignedNucleotideSequencesLabel));
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/alignedNucleotideSequences/suborganism1`);
+        });
+
+        test('should download only the selected aligned suborganism amino acid sequences when suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomeLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism1',
+                suborganismIdentifierField: 'genotype',
+            });
+
+            await checkAgreement();
+            await userEvent.click(screen.getByLabelText(alignedAminoAcidSequencesLabel));
+            await userEvent.selectOptions(screen.getByRole('combobox', { name: 'alignedAminoAcidSequences' }), 'gene2');
+
+            const { path } = parseDownloadHref();
+            expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
         });
     });
 });
@@ -348,4 +458,13 @@ async function checkAgreement() {
 function getDownloadHref() {
     const downloadButton = screen.getByRole('link', { name: 'Download' });
     return downloadButton.getAttribute('href');
+}
+
+function parseDownloadHref() {
+    const [path, query] = getDownloadHref()?.split('?') ?? [undefined, undefined];
+    return { path, query };
+}
+
+function expectRouteInPathMatches(path: string | undefined, route: string) {
+    expect(path).toBe(`${defaultLapisUrl}${route}`);
 }

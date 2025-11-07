@@ -43,6 +43,7 @@ class Config:
     keep_tmp_dir: bool = False
     batch_size: int = 5
     pipeline_version: int = 1
+    backend_request_timeout_seconds: int = 30
 
     backend_host: str = ""  # base API URL and organism - populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"

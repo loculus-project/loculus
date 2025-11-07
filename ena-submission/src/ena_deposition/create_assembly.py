@@ -342,10 +342,10 @@ def update_assembly_error(
 def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[str, Any]) -> bool:
     """
     Check if assembly can be revised
-    1. Check if last version exists in submission_table -> internal error
-    2. Check if biosampleAccession and bioprojectAccession are the same as in previous
-       version -> cannot be revised
-    3. Check if metadata fields in manifest have changed since previous version ->
+    1. Last version exists in submission_table, otherwise throw RuntimeError
+    2. If biosampleAccession and bioprojectAccession provided by submitter (e.g. raw reads linked)
+       those must be same as in previous version, otherwise cannot be revised
+    3. metadata fields in manifest haven't changed since previous version, otherwise
        requires manual revision
     """
     if not is_revision(db_config, entry):
@@ -360,8 +360,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
         error_msg = f"Last version {version_to_revise} not found in submission_table"
         raise RuntimeError(error_msg)
 
+    last_version_entry = last_version_data[0]
+
     previous_sample_accession, previous_study_accession = get_project_and_sample_results(
-        db_config, last_version_data[0]
+        db_config, last_version_entry
     )
     logger.debug(
         f"Previous sample accession: {previous_sample_accession}, "
@@ -388,17 +390,31 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
             update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
             return False
 
-    differing_fields = []
-    for value in config.manifest_fields_mapping.values():
-        for field in value.get("loculus_fields", []):
-            last_entry = last_version_data[0]["metadata"].get(field)
-            new_entry = entry["metadata"].get(field)
+    differing_fields = {}
+    for mapping in config.manifest_fields_mapping.values():
+        loculus_field_names = mapping.get("loculus_fields", [])
+        for loculus_field_name in loculus_field_names:
+            last_entry = last_version_entry["metadata"].get(loculus_field_name)
+            new_entry = entry["metadata"].get(loculus_field_name)
+            if loculus_field_name == "authors":
+                try:
+                    last_entry = get_authors(last_entry) if last_entry else last_entry
+                    new_entry = get_authors(new_entry) if new_entry else new_entry
+                except Exception as e:
+                    logger.error(
+                        f"Error formatting authors field for comparison: {e}. "
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    differing_fields[loculus_field_name] = (
+                        f"Last: {last_entry}, New: {new_entry}, Error reformatting: {e}"
+                    )
+                    continue
             if last_entry != new_entry:
-                differing_fields.append(field)
+                differing_fields[loculus_field_name] = f"Last: {last_entry}, New: {new_entry}, "
     if differing_fields:
         error = (
-            "Assembly cannot be revised because metadata fields "
-            f"{', '.join(differing_fields)} in manifest differs from last version"
+            "Assembly cannot be revised because metadata fields in manifest would change from "
+            f"last version: {differing_fields}"
         )
         logger.error(error)
         update_assembly_error(db_config, error, seq_key=entry, update_type="revision")

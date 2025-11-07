@@ -6,7 +6,7 @@ import SubmissionPageWrapper from '../../../../components/Submission/SubmissionP
 import {
     dataUseTermsAreEnabled,
     getGroupedInputFields,
-    getReferenceGenomesSequenceNames,
+    getReferenceGenomeLightweightSchema,
     getRuntimeConfig,
     getSchema,
 } from '../../../../config';
@@ -26,7 +26,7 @@ if (!cleanedOrganism) {
         body: 'Organism not found',
     };
 }
-const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(cleanedOrganism.key);
 const schema = getSchema(cleanedOrganism.key);
 const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', true);
 
@@ -46,7 +46,7 @@ Astro.response.headers.append('Expires', '0');
             ({ currentGroup: group }) => (
                 <SubmissionForm
                     accessToken={getAccessToken(Astro.locals.session)!}
-                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                     metadataTemplateFields={groupedInputFields}
                     organism={organism}
                     clientConfig={clientConfig}

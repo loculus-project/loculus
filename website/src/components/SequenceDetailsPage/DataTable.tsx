@@ -6,13 +6,18 @@ import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { type ReferenceAccession } from '../../types/referencesGenomes';
+import {
+    type ReferenceAccession,
+    type ReferenceGenomesLightweightSchema,
+    type Suborganism,
+} from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    reference: ReferenceAccession[];
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    suborganism: Suborganism;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -31,7 +36,13 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
     ));
 };
 
-const DataTableComponent: React.FC<Props> = ({ dataTableData, dataUseTermsHistory, reference }) => {
+const DataTableComponent: React.FC<Props> = ({
+    dataTableData,
+    dataUseTermsHistory,
+    referenceGenomeLightweightSchema,
+    suborganism,
+}) => {
+    const reference = referenceGenomeLightweightSchema[suborganism].insdcAccessionFull;
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (

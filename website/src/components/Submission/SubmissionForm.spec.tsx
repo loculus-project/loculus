@@ -8,7 +8,11 @@ import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import type { ReferenceAccession, ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import {
+    type ReferenceAccession,
+    type ReferenceGenomesLightweightSchema,
+    SINGLE_REFERENCE,
+} from '../../types/referencesGenomes.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -44,10 +48,12 @@ const defaultAccession: ReferenceAccession = {
     insdcAccessionFull: undefined,
 };
 
-const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
-    nucleotideSequences: ['main'],
-    genes: ['gene1', 'gene2'],
-    insdcAccessionFull: [defaultAccession],
+const defaultReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
+    [SINGLE_REFERENCE]: {
+        nucleotideSegmentNames: ['main'],
+        geneNames: ['gene1', 'gene2'],
+        insdcAccessionFull: [defaultAccession],
+    },
 };
 
 function renderSubmissionForm({
@@ -63,7 +69,7 @@ function renderSubmissionForm({
         <SubmissionForm
             inputMode={inputMode}
             accessToken={testAccessToken}
-            referenceGenomeSequenceNames={defaultReferenceGenomesSequenceNames}
+            referenceGenomeLightweightSchema={defaultReferenceGenomeLightweightSchema}
             organism={testOrganism}
             clientConfig={testConfig.public}
             group={group}

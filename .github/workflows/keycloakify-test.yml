@@ -25,14 +25,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v5
       - name: Setup Node.js environment
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version-file: keycloak/keycloakify/.nvmrc
       - run: |
           corepack enable &&
           corepack install # use the in-repo yarn version
       - name: Setup Yarn in Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version-file: keycloak/keycloakify/.nvmrc
           cache-dependency-path: keycloak/keycloakify/yarn.lock

@@ -43,6 +43,7 @@ type ReviewCardProps = {
     organism: string;
     accessToken: string;
     filesEnabled: boolean;
+    segmentAndGeneDisplayNameMap: Map<string, string | null>;
 };
 
 export const ReviewCard: FC<ReviewCardProps> = ({
@@ -55,6 +56,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     organism,
     accessToken,
     filesEnabled,
+    segmentAndGeneDisplayNameMap,
 }) => {
     const [isSequencesDialogOpen, setSequencesDialogOpen] = useState(false);
     const [isFilesDialogOpen, setFilesDialogOpen] = useState(false);
@@ -119,6 +121,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                 isOpen={isSequencesDialogOpen}
                 onClose={() => setSequencesDialogOpen(false)}
                 dataToView={data}
+                segmentAndGeneDisplayNameMap={segmentAndGeneDisplayNameMap}
             />
             <FilesDialog isOpen={isFilesDialogOpen} onClose={() => setFilesDialogOpen(false)} dataToView={data} />
         </div>

@@ -4,7 +4,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
-import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
+import OrganismSubmenu from '../components/Navigation/OrganismSubmenu.astro';
+import { cleanOrganism } from '../components/Navigation/cleanOrganism';
 import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import { navigationItems } from '../routes/navigationItems';
@@ -25,10 +26,19 @@ const bannerMessage = remoteBannerMessage ?? configBannerMessage;
 interface Props {
     title: string;
     implicitOrganism?: string;
-    noHorizontalPadding?: boolean;
+    fullWidth?: boolean;
+    withoutMargin?: boolean;
+    activeTopNavigationItem?: string;
 }
 
-const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
+const { title, implicitOrganism, fullWidth, withoutMargin = false, activeTopNavigationItem } = Astro.props;
+
+const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
+const implicitOrganismObject = implicitOrganism ? knownOrganisms.find((o) => o.key === implicitOrganism) : undefined;
+const currentOrganismObject = implicitOrganismObject || organism;
+const currentOrganism = currentOrganismObject?.key;
+
+const currentPath = Astro.url.pathname;
 
 const backendIsInDebugMode = await createBackendClient().isInDebugMode();
 
@@ -59,57 +69,70 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
             serverTime={Date.now()}
             client:load
         />
-        <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
+        <div class='flex flex-col min-h-screen'>
             <ToastContainer client:load />
-            <header class='bg-white h-fit z-30'>
-                <nav class='flex justify-between items-center p-4'>
-                    <div class='flex justify-start'>
-                        <div class='flex flex-col'>
-                            <div class='flex flex-row pb-3'>
-                                <a href='/'
-                                    ><img
-                                        class='h-8 mr-4'
-                                        src={logo.url}
-                                        alt='icon'
-                                        style={{
-                                            aspectRatio: `${logo.width}/${logo.height}`,
-                                        }}
-                                    /></a
-                                >
-                                <a href='/' class='fancytitle mr-4'>{websiteName}</a>
-                            </div>
-                            <OrganismSelector implicitOrganism={implicitOrganism} />
-                        </div>
+            <header class={`bg-white h-fit z-30 ${!currentOrganism ? 'border-b-[1.5px] border-gray-200' : ''}`}>
+                <nav class='flex justify-between items-end px-4 pt-3 pb-0 mx-4'>
+                    <div class='flex items-end gap-3 mb-2'>
+                        <a href='/' class='flex items-center pb-2'>
+                            <img
+                                class='h-10 w-auto'
+                                src={logo.url}
+                                alt='icon'
+                                style={{
+                                    aspectRatio: `${logo.width}/${logo.height}`,
+                                }}
+                            />
+                        </a>
+                        <a href='/' class='fancytitle leading-tight tracking-tight pb-2'>{websiteName}</a>
                     </div>
-                    <Navigation implicitOrganism={implicitOrganism} gitHubMainUrl={gitHubMainUrl} />
+                    <Navigation
+                        implicitOrganism={implicitOrganism}
+                        gitHubMainUrl={gitHubMainUrl}
+                        activeTopNavigationItem={activeTopNavigationItem}
+                    />
                 </nav>
-                <hr class='border-t border-gray-1000' />
+
+                <OrganismSubmenu
+                    currentOrganism={currentOrganism}
+                    currentOrganismObject={currentOrganismObject}
+                    currentPath={currentPath}
+                />
 
                 <slot name='banner' />
             </header>
 
-            <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
+            <div
+                class:list={[
+                    'flex-grow',
+                    'mt-3',
+                    'mb-5',
+                    fullWidth ? (withoutMargin ? 'px-4' : 'mx-8') : 'max-w-7xl mx-auto w-full px-8',
+                ]}
+            >
                 <slot />
             </div>
 
             <hr class='border-t border-gray-1000' />
-            <footer class='hidden sm:flex sm:z-6 sm:z-6 flex justify-between items-center h-20'>
-                <div class='flex gap-5'>
-                    {
-                        navigationItems.bottom.map(({ text, path }) => (
-                            <a href={path} class='text-gray-600'>
-                                {text}
-                            </a>
-                        ))
-                    }
-                </div>
+            <footer class='hidden sm:flex sm:z-6 justify-between items-center h-20 px-8'>
+                <div class:list={['w-full flex justify-between items-center mx-auto']}>
+                    <div class='flex gap-5'>
+                        {
+                            navigationItems.bottom.map(({ text, path }) => (
+                                <a href={path} class='text-gray-600'>
+                                    {text}
+                                </a>
+                            ))
+                        }
+                    </div>
 
-                <a
-                    href={gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'}
-                    class='h-full py-6'
-                >
-                    <img src='/github-mark.svg' class='h-full object-scale-down' alt='github-icon' />
-                </a>
+                    <a
+                        href={gitHubMainUrl !== undefined ? gitHubMainUrl : 'https://github.com/loculus-project'}
+                        class='flex items-center'
+                    >
+                        <img src='/github-mark.svg' class='w-8 h-8' alt='github-icon' />
+                    </a>
+                </div>
             </footer>
         </div>
     </body>

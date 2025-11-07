@@ -1,4 +1,5 @@
 environment: server
+imagePullPolicy: Always
 localHost: localhost
 robotsNoindexHeader: false
 seqSets:
@@ -1772,7 +1773,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
-    enabled: false
+    enabled: true
     schema:
       <<: *schema
       organismName: "Enterovirus"
@@ -1843,6 +1844,7 @@ defaultOrganisms:
           - segment
         defaultOrderBy: sampleCollectionDate
         defaultOrder: descending
+        suborganismIdentifierField: genotype
     preprocessing:
       - <<: *preprocessing
         configFile:
@@ -1988,7 +1990,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.5.14"
+    tag: "v0.5.19@sha256:6a6e434e8670541dc8478a5e6bd9e7c70ecd5cf3232b81834253398b0e260ece"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
@@ -2074,6 +2076,7 @@ enaDeposition:
   enaDbName: Loculus
   enaUniqueSuffix: Loculus
   enaIsBroker: False
+  enaSuppressedListTestUrl: "https://loculus-project.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 subdomainSeparator: "-"
 replicas:
   website: 1

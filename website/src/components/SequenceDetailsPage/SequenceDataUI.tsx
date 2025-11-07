@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
-import { SequencesContainer } from './SequencesContainer';
+import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
@@ -19,6 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
+    suborganism: Suborganism;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -26,12 +27,13 @@ interface Props {
     myGroups: Group[];
     accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: ReferenceGenomesLightweightSchema;
 }
 
 export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
+    suborganism,
     accessionVersion,
     dataUseTermsHistory,
     schema,
@@ -51,10 +53,6 @@ export const SequenceDataUI: FC<Props> = ({
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
 
-    const genes = referenceGenomeSequenceNames.genes;
-    const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
-    const reference = referenceGenomeSequenceNames.insdcAccessionFull;
-
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
     const dataTableData = getDataTableData(tableData);
@@ -64,15 +62,20 @@ export const SequenceDataUI: FC<Props> = ({
     return (
         <>
             {isRestricted && <RestrictedUseWarning />}
-            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
+            <DataTable
+                dataTableData={dataTableData}
+                suborganism={suborganism}
+                dataUseTermsHistory={dataUseTermsHistory}
+                referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
+            />
             {schema.submissionDataTypes.consensusSequences && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
+                        suborganism={suborganism}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
-                        genes={genes}
-                        nucleotideSegmentNames={nucleotideSegmentNames}
+                        referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
                         loadSequencesAutomatically={loadSequencesAutomatically}
                     />
                 </div>

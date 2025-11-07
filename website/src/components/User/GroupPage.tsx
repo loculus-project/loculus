@@ -1,17 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { type FC, type FormEvent, useState, type ReactNode } from 'react';
+import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
@@ -25,6 +26,7 @@ type GroupPageProps = {
     userGroups: Group[];
     organisms: Organism[];
     databaseName: string;
+    continueSubmissionIntent?: ContinueSubmissionIntent;
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -35,6 +37,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     userGroups,
     organisms,
     databaseName,
+    continueSubmissionIntent,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -63,10 +66,42 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
     });
 
+    const continueSubmissionCta = useMemo(() => {
+        if (continueSubmissionIntent === undefined) {
+            return undefined;
+        }
+
+        const organismDetails = organisms.find((organism) => organism.key === continueSubmissionIntent.organism);
+        if (organismDetails === undefined) {
+            return undefined;
+        }
+
+        return {
+            href: routes.submissionPage(organismDetails.key, groupId),
+            organismDisplayName: organismDetails.displayName,
+        };
+    }, [continueSubmissionIntent, organisms, groupId]);
+
     return (
         <div className='flex flex-col h-full p-4'>
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
+            )}
+
+            {continueSubmissionCta !== undefined && (
+                <div className='bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 text-blue-900'>
+                    <h2 className='font-semibold text-blue-900 text-lg'>Continue your submission</h2>
+                    <p className='mt-2 text-sm'>
+                        You are now part of the {groupName} group. Continue your submission journey for{' '}
+                        {continueSubmissionCta.organismDisplayName}.
+                    </p>
+                    <a
+                        href={continueSubmissionCta.href}
+                        className='inline-block mt-3 px-4 py-2 loculusColor text-white rounded'
+                    >
+                        Open submission portal
+                    </a>
+                </div>
             )}
 
             {userHasEditPrivileges ? (
@@ -114,27 +149,25 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             >
                                 Edit group
                             </a>
-                            <DisabledUntilHydrated>
-                                <button
-                                    className='object-right p-2 loculusColor text-white rounded px-4'
-                                    onClick={() => {
-                                        const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
-                                        const lastMemberWarning =
-                                            'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
-                                        const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
+                            <Button
+                                className='object-right p-2 loculusColor text-white rounded px-4'
+                                onClick={() => {
+                                    const isLastMember = (groupDetails.data?.users.length ?? 0) <= 1;
+                                    const lastMemberWarning =
+                                        'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
+                                    const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
 
-                                        displayConfirmationDialog({
-                                            dialogText,
-                                            onConfirmation: async () => {
-                                                await removeFromGroup(username);
-                                                window.location.href = routes.userOverviewPage();
-                                            },
-                                        });
-                                    }}
-                                >
-                                    Leave group
-                                </button>
-                            </DisabledUntilHydrated>
+                                    displayConfirmationDialog({
+                                        dialogText,
+                                        onConfirmation: async () => {
+                                            await removeFromGroup(username);
+                                            window.location.href = routes.userOverviewPage();
+                                        },
+                                    });
+                                }}
+                            >
+                                Leave group
+                            </Button>
                         </>
                     )}
                 </div>
@@ -193,11 +226,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='p-2 border border-gray-300 rounded mr-2'
                                 required
                             />
-                            <DisabledUntilHydrated>
-                                <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
-                                    Add user
-                                </button>
-                            </DisabledUntilHydrated>
+                            <Button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                                Add user
+                            </Button>
                         </div>
                     </form>
                     <div className='flex-1 overflow-y-auto'>
@@ -206,23 +237,21 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (
-                                        <DisabledUntilHydrated>
-                                            <button
-                                                onClick={() => {
-                                                    displayConfirmationDialog({
-                                                        dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
-                                                        onConfirmation: async () => {
-                                                            await removeFromGroup(user.name);
-                                                        },
-                                                    });
-                                                }}
-                                                className='px-2 py-1 loculusColor text-white rounded'
-                                                title='Remove user from group'
-                                                aria-label={`Remove User ${user.name}`}
-                                            >
-                                                Remove user
-                                            </button>
-                                        </DisabledUntilHydrated>
+                                        <Button
+                                            onClick={() => {
+                                                displayConfirmationDialog({
+                                                    dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
+                                                    onConfirmation: async () => {
+                                                        await removeFromGroup(user.name);
+                                                    },
+                                                });
+                                            }}
+                                            className='px-2 py-1 loculusColor text-white rounded'
+                                            title='Remove user from group'
+                                            aria-label={`Remove User ${user.name}`}
+                                        >
+                                            Remove user
+                                        </Button>
                                     )}
                                 </li>
                             ))}

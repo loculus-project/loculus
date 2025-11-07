@@ -204,7 +204,87 @@
           "description": "Use this on string fields that contain lineages, if you want to enable searches that can include sublineages. The value needs to be a lineage system that is defined under the `lineageSystemDefinitions` key."
         }
       },
-      "required": ["name"]
+      "required": ["name"],
+      "allOf": [
+        {
+          "not": {
+            "description": "autocomplete and enableSubstringSearch cannot both be set",
+            "required": ["autocomplete", "enableSubstringSearch"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "generateIndex": { "const": true } },
+            "required": ["generateIndex"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When generateIndex is true, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "autocomplete": { "const": true } },
+            "required": ["autocomplete"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors", "int", "float", "number", "boolean"] }
+            },
+            "errorMessage": "When autocomplete is true, type must be 'string', 'authors', 'int', 'float', 'number', or 'boolean'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "enableSubstringSearch": { "const": true } },
+            "required": ["enableSubstringSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When enableSubstringSearch is true, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "lineageSystem": { "type": "string" } },
+            "required": ["lineageSystem"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["string", "authors"] }
+            },
+            "errorMessage": "When lineageSystem is set, type must be 'string' or 'authors'"
+          }
+        },
+        {
+          "if": {
+            "properties": { "rangeSearch": { "const": true } },
+            "required": ["rangeSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeSearch is true, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
+        },
+        {
+          "if": {
+            "properties": { "rangeOverlapSearch": { "type": "object" } },
+            "required": ["rangeOverlapSearch"]
+          },
+          "then": {
+            "properties": {
+              "type": { "enum": ["int", "float", "number", "date"] }
+            },
+            "errorMessage": "When rangeOverlapSearch is set, type must be numeric or date ('int', 'float', 'number', or 'date')"
+          }
+        }
+      ]
     },
     "organism": {
       "type": "object",
@@ -422,6 +502,11 @@
                   "type": "string",
                   "enum": ["ascending", "descending"],
                   "description": "Default order direction."
+                },
+                "suborganismIdentifierField": {
+                  "groups": ["schema"],
+                  "type": "string",
+                  "description": "Must be set to use the sub-organism feature. This metadata field is used to determine which suborganism a sequence entry belongs to. N.B. the suborganism feature is incomplete and not ready for production use."
                 }
               }
             }
@@ -525,6 +610,12 @@
                     "docsIncludePrefix": false,
                     "type": "array",
                     "description": "Array of strings. The dataset names that are accepted as matches when using nextclade sort, if not specified use nextclade_dataset_name."
+                  },
+                  "backend_request_timeout_seconds": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "integer",
+                    "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
                 }
               }
@@ -593,6 +684,18 @@
                       "docsIncludePrefix": false,
                       "type": "string",
                       "description": "Required if method is minimizer"
+                    },
+                    "backend_request_timeout_seconds": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Timeout in seconds for requests to the backend server for data to process"
+                    },
+                    "time_between_approve_requests_seconds": {
+                      "groups": ["ingestPipelineConfigFile"],
+                      "docsIncludePrefix": false,
+                      "type": "integer",
+                      "description": "Time in seconds to wait between approve requests"
                     }
                   },
                   "required": ["method"]
@@ -781,6 +884,13 @@
       "enum": ["local", "server"],
       "default": "server",
       "description": "Deployment environment. local for development, server for production"
+    },
+    "imagePullPolicy": {
+      "groups": ["general"],
+      "type": "string",
+      "enum": ["Always", "IfNotPresent", "Never"],
+      "default": "Always",
+      "description": "Global image pull policy applied to all deployments. Can be overridden per-image in the images section for some images. Always: always pull the image. IfNotPresent: pull if not present locally. Never: never pull, use local image only."
     },
     "localHost": {
       "groups": ["general"],
@@ -1363,9 +1473,13 @@
           "description": "Name of Loculus instance in ENA",
           "default": "Loculus"
         },
-        "enaGithubTestUrl": {
+        "enaApprovedListTestUrl": {
           "type": "string",
-          "description": "URL to the test ENA github repository"
+          "description": "URL to the test ENA approved sequence list (typically hosted on a Github repo)"
+        },
+        "enaSuppressedListTestUrl": {
+          "type": "string",
+          "description": "URL to the ENA suppressed sequence list (typically hosted on a Github repo)"
         }
       }
     },

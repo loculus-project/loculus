@@ -19,13 +19,13 @@ import {
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import DisabledUntilHydrated from '../DisabledUntilHydrated';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export type UploadAction = 'submit' | 'revise';
@@ -37,7 +37,7 @@ type DataUploadFormProps = {
     action: UploadAction;
     inputMode: InputMode;
     group: Group;
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
@@ -56,14 +56,14 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
-    referenceGenomeSequenceNames,
+    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
-    const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileMapping, setFileMapping] = useState<FilesBySubmissionId | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsOption>(openDataUseTermsOption);
@@ -157,7 +157,7 @@ const InnerDataUploadForm = ({
                             setFileFactory={setFileFactory}
                             organism={organism}
                             action={action}
-                            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                            referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                             metadataTemplateFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
                         />
@@ -168,7 +168,7 @@ const InnerDataUploadForm = ({
                         setFileFactory={setFileFactory}
                         organism={organism}
                         action={action}
-                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                         metadataTemplateFields={metadataTemplateFields}
                         submissionDataTypes={submissionDataTypes}
                     />
@@ -211,19 +211,18 @@ const InnerDataUploadForm = ({
                     </>
                 )}
                 <div className='flex justify-end gap-x-6'>
-                    <DisabledUntilHydrated alsoDisabledIf={isLoading}>
-                        <button
-                            name='submit'
-                            type='submit'
-                            className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
-                            onClick={(e) => void handleSubmit(e)}
-                        >
-                            <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
-                                <span className='loading loading-spinner loading-sm' />
-                            </div>
-                            <span className='flex-1 text-center mx-8'>Submit sequences</span>
-                        </button>
-                    </DisabledUntilHydrated>
+                    <Button
+                        name='submit'
+                        type='submit'
+                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
+                        onClick={(e) => void handleSubmit(e)}
+                        alsoDisabledIf={isPending}
+                    >
+                        <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
+                            <span className='loading loading-spinner loading-sm' />
+                        </div>
+                        <span className='flex-1 text-center mx-8'>Submit sequences</span>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -461,7 +460,7 @@ function useSubmitFiles(
     return {
         submit: submit.mutate,
         revise: revise.mutate,
-        isLoading: submit.isLoading || revise.isLoading,
+        isPending: submit.isPending || revise.isPending,
     };
 }
 

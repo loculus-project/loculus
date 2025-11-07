@@ -269,13 +269,13 @@ def create_flatfile(  # noqa: PLR0914
                 "molecule_type": seqIO_moleculetype.get(molecule_type, "DNA"),
                 "organism": organism,
                 "topology": topology,
-                "references": [reference],
-            },  # type: ignore
+                "references": [reference],  # type: ignore[dict-item]
+            },
             description=description,
         )
 
         source_feature = SeqFeature(
-            FeatureLocation(start=0, end=len(sequence.seq)),
+            FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
                 "molecule_type": str(molecule_type),

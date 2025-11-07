@@ -17,15 +17,16 @@ import {
     DATA_USE_TERMS_FIELD,
 } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema, Suborganism } from '../../types/referencesGenomes';
 
 interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
+    suborganism: Suborganism;
 }
 
-const { tableData, dataUseTermsHistory, referenceGenomeSequenceNames } = Astro.props;
+const { tableData, dataUseTermsHistory, referenceGenomeLightweightSchema, suborganism } = Astro.props;
 
 const relevantFieldsForRevocationVersions = [
     ACCESSION_VERSION_FIELD,
@@ -44,8 +45,11 @@ const relevantFieldsForRevocationVersions = [
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
 const dataTableData = getDataTableData(relevantData);
-
-const reference = referenceGenomeSequenceNames.insdcAccessionFull;
 ---
 
-<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} reference={reference} />
+<DataTable
+    dataTableData={dataTableData}
+    dataUseTermsHistory={dataUseTermsHistory}
+    suborganism={suborganism}
+    referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+/>

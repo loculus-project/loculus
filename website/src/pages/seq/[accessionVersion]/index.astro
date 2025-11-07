@@ -6,7 +6,7 @@ import { SequenceDataUI } from '../../../components/SequenceDetailsPage/Sequence
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getSchema, getRuntimeConfig, getReferenceGenomesSequenceNames } from '../../../config';
+import { getSchema, getRuntimeConfig, getReferenceGenomeLightweightSchema } from '../../../config';
 import { getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
@@ -73,13 +73,15 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                                 <RevocationEntryDataTable
                                     tableData={result.tableData}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
-                                    referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
+                                    referenceGenomeLightweightSchema={getReferenceGenomeLightweightSchema(organism)}
+                                    suborganism={result.suborganism}
                                 />
                             ) : (
                                 <SequenceDataUI
                                     tableData={result.tableData}
                                     organism={organism}
-                                    referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
+                                    suborganism={result.suborganism}
+                                    referenceGenomeSequenceNames={getReferenceGenomeLightweightSchema(organism)}
                                     accessionVersion={accessionVersion}
                                     dataUseTermsHistory={result.dataUseTermsHistory}
                                     schema={getSchema(organism)}

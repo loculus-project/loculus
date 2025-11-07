@@ -3,12 +3,13 @@ import { EditPage } from '../../../../../components/Edit/EditPage';
 import { cleanOrganism } from '../../../../../components/Navigation/cleanOrganism';
 import {
     getGroupedInputFields,
-    getReferenceGenomesSequenceNames,
+    getReferenceGenomeLightweightSchema,
     getRuntimeConfig,
     getSchema,
 } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { createBackendClient } from '../../../../../services/backendClientFactory';
+import { getFirstLightweightSchema } from '../../../../../types/referencesGenomes';
 import { getAccessToken } from '../../../../../utils/getAccessToken';
 
 const version = Astro.params.version!;
@@ -29,12 +30,12 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(organism);
-const segmentNames = getReferenceGenomesSequenceNames(organism).nucleotideSequences;
+const segmentNames = getFirstLightweightSchema(getReferenceGenomeLightweightSchema(organism)).nucleotideSegmentNames;
 
 const dataToEdit = await createBackendClient().getDataToEdit(organism, accessToken, accession, version);
 ---
 
-<BaseLayout title={`Edit ${accession}.${version}`}>
+<BaseLayout title={`Edit ${accession}.${version}`} fullWidth>
     {
         dataToEdit.match(
             (dataToEdit) => (

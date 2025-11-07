@@ -2,7 +2,9 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
@@ -15,6 +17,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
@@ -85,6 +88,21 @@ class UploadDatabaseService(
         }
     }
 
+    private val keyDetail =
+        Regex("""Key \((?<cols>[^)]+)\)=\((?<vals>[^)]+)\) already exists""")
+
+    private fun ExposedSQLException.extractDuplicateColumns(): Map<String, String>? {
+        val text = this.cause?.message ?: this.message ?: return null
+        val match = keyDetail.find(text) ?: return null
+
+        val cols = match.groups["cols"]?.value?.split(",")?.map { it.trim() } ?: return null
+        val vals = match.groups["vals"]?.value?.split(",")?.map { it.trim() } ?: return null
+
+        return cols.zip(vals)
+            .filter { (col, _) -> col in listOf("accession", "submission_id") }
+            .toMap()
+    }
+
     fun batchInsertRevisedMetadataInAuxTable(
         uploadId: String,
         authenticatedUser: AuthenticatedUser,
@@ -93,17 +111,28 @@ class UploadDatabaseService(
         uploadedAt: LocalDateTime,
         files: SubmissionIdFilesMap?,
     ) {
-        uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
-            MetadataUploadAuxTable.batchInsert(batch) {
-                this[accessionColumn] = it.accession
-                this[submitterColumn] = authenticatedUser.username
-                this[uploadedAtColumn] = uploadedAt
-                this[submissionIdColumn] = it.submissionId
-                this[metadataColumn] = it.metadata
-                this[filesColumn] = files?.get(it.submissionId)
-                this[organismColumn] = submittedOrganism.name
-                this[uploadIdColumn] = uploadId
+        try {
+            uploadedRevisedMetadataBatch.chunked(METADATA_BATCH_SIZE).forEach { batch ->
+                MetadataUploadAuxTable.batchInsert(batch) {
+                    this[accessionColumn] = it.accession
+                    this[submitterColumn] = authenticatedUser.username
+                    this[uploadedAtColumn] = uploadedAt
+                    this[submissionIdColumn] = it.submissionId
+                    this[metadataColumn] = it.metadata
+                    this[filesColumn] = files?.get(it.submissionId)
+                    this[organismColumn] = submittedOrganism.name
+                    this[uploadIdColumn] = uploadId
+                }
             }
+        } catch (e: ExposedSQLException) {
+            log.error { "Error inserting revised metadata in aux table: ${e.message}" }
+            val duplicates = e.extractDuplicateColumns() ?: throw UnprocessableEntityException(
+                "Error inserting revised metadata in aux table - please contact an administrator.",
+            )
+            val details = duplicates.entries.joinToString(" ") { (col, value) ->
+                "Duplicate $col found in metadata file: $value"
+            }
+            throw UnprocessableEntityException(details)
         }
     }
 
@@ -112,20 +141,23 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        uploadedSequencesBatch.chunkedForDatabase({ batch ->
-            SequenceUploadAuxTable.batchInsert(batch) {
-                val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
-                this[sequenceSubmissionIdColumn] = submissionId
-                this[segmentNameColumn] = segmentName
-                this[sequenceUploadIdColumn] = uploadId
-                this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
-                    it.sequence,
-                    segmentName,
-                    submittedOrganism,
-                )
-            }
-            emptyList<Unit>()
-        }, SEQUENCE_INSERT_COLUMNS)
+        uploadedSequencesBatch.chunkedForDatabase(
+            { batch ->
+                SequenceUploadAuxTable.batchInsert(batch) {
+                    val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
+                    this[sequenceSubmissionIdColumn] = submissionId
+                    this[segmentNameColumn] = segmentName
+                    this[sequenceUploadIdColumn] = uploadId
+                    this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                        it.sequence,
+                        segmentName,
+                        submittedOrganism,
+                    )
+                }
+                emptyList<Unit>()
+            },
+            SEQUENCE_INSERT_COLUMNS,
+        )
     }
 
     fun getMetadataUploadSubmissionIds(uploadId: String): List<SubmissionId> = MetadataUploadAuxTable
@@ -145,6 +177,16 @@ class UploadDatabaseService(
         .map {
             it[sequenceSubmissionIdColumn]
         }
+
+    fun deleteAuxTableEntriesOlderThan(thresholdDateTime: LocalDateTime): Int {
+        val numberDeleted = MetadataUploadAuxTable.deleteWhere {
+            uploadedAtColumn.less(thresholdDateTime)
+        }
+        log.info {
+            "Deleted $numberDeleted entries from ${MetadataUploadAuxTable.tableName} older than $thresholdDateTime"
+        }
+        return numberDeleted
+    }
 
     fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
         log.debug {

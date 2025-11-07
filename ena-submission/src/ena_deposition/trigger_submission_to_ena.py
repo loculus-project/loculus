@@ -57,7 +57,7 @@ def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input
         # In a loop get approved sequences uploaded to Github and upload to submission_table
         try:
             response = requests.get(
-                config.github_url,
+                config.approved_list_url,
                 timeout=60,
             )
             response.raise_for_status()

@@ -16,7 +16,8 @@ import {
     type NamedSequence,
     type ReferenceAccession,
     type ReferenceGenome,
-    type ReferenceGenomesSequenceNames,
+    type ReferenceGenomes,
+    type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
@@ -103,6 +104,7 @@ export function getMetadataDisplayNames(organism: string): Map<string, string> {
 export type Organism = {
     key: string;
     displayName: string;
+    image?: string;
 };
 
 export function getConfiguredOrganisms() {
@@ -226,8 +228,15 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
+/**
+ * TODO(#3984) this should be removed. Use `getReferenceGenomes` instead.
+ */
 export function getReferenceGenome(organism: string): ReferenceGenome {
     return Object.values(getConfig(organism).referenceGenomes)[0];
+}
+
+export function getReferenceGenomes(organism: string): ReferenceGenomes {
+    return getConfig(organism).referenceGenomes;
 }
 
 const getAccession = (n: NamedSequence): ReferenceAccession => {
@@ -237,13 +246,18 @@ const getAccession = (n: NamedSequence): ReferenceAccession => {
     };
 };
 
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenome(organism);
-    return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
-        insdcAccessionFull: referenceGenomes.nucleotideSequences.map((n) => getAccession(n)),
-    };
+export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
+    const referenceGenomes = getReferenceGenomes(organism);
+    return Object.fromEntries(
+        Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
+            suborganism,
+            {
+                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
+                geneNames: referenceGenome.genes.map((n) => n.name),
+                insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
+            },
+        ]),
+    );
 };
 
 export function seqSetsAreEnabled() {

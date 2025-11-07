@@ -18,16 +18,20 @@ describe('ActiveFilters', () => {
                     sequenceFilter={
                         new FieldFilterSet(
                             new MetadataFilterSchema([]),
-                            { field1: 'value1', mutations: 'A123T,G234C' },
+                            { field1: 'value1', mutations: 'A123T,G234C,gene:A345T' },
                             {},
-                            { nucleotideSequences: ['main'], genes: [], insdcAccessionFull: [] },
+                            {
+                                nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
+                                geneInfos: [{ lapisName: 'gene', label: 'gene' }],
+                                isMultiSegmented: false,
+                            },
                         )
                     }
                 />,
             );
             expect(screen.queryByText('field1:')).toBeInTheDocument();
             expect(screen.getByText('value1')).toBeInTheDocument();
-            expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
+            expect(screen.queryByText(/A123T,G234C,gene:A345T/)).toBeInTheDocument();
         });
 
         it('renders null values as (blank) in italics', () => {
@@ -38,7 +42,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: null },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                         )
                     }
                 />,
@@ -61,7 +65,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([]),
                             { field1: 'value1' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                         )
                     }
                     removeFilter={mockRemoveFilter}
@@ -84,7 +88,7 @@ describe('ActiveFilters', () => {
                             new MetadataFilterSchema([{ name: 'releaseTimestamp', type: 'timestamp' }]),
                             { releaseTimestamp: '1742288104' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                         )
                     }
                 />,
@@ -104,7 +108,7 @@ describe('ActiveFilters', () => {
                             ]),
                             { authorAffiliations: 'foo' },
                             {},
-                            { nucleotideSequences: [], genes: [], insdcAccessionFull: [] },
+                            { nucleotideSegmentInfos: [], geneInfos: [], isMultiSegmented: false },
                         )
                     }
                 />,

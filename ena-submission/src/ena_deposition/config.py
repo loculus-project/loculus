@@ -30,8 +30,10 @@ class Config:
     ena_submission_password: str
     ena_submission_username: str
     ena_reports_service_url: str
-    github_url: str
-    github_test_url: str
+    approved_list_url: str
+    approved_list_test_url: str
+    suppressed_list_url: str
+    suppressed_list_test_url: str
     slack_hook: str
     slack_token: str
     slack_channel_id: str
@@ -42,11 +44,23 @@ class Config:
     # - (optional) units: units added to sample attribute
     # - (optional) default: default value if field not in input data
     metadata_mapping: dict[str, dict[str, str | list[str]]]
+    """
+    manifest_fields_mapping:
+      authors:
+        loculus_fields: [authors]
+        function: reformat_authors
+      program:
+        loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
+        default: "Unknown"
+      ... etc ...
+    """
     manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
     ingest_pipeline_submission_group: str
     ena_deposition_host: str
     ena_deposition_port: int
     ena_http_timeout_seconds: int = 60
+    ena_public_search_timeout_seconds: int = 120
+    ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
@@ -76,18 +90,23 @@ def secure_ena_connection(config: Config):
         config.test = True
         logger.info("Submitting to ENA dev environment")
         config.ena_submission_url = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
-        if not config.github_test_url:
-            config.github_url = "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
-        else:
-            config.github_url = config.github_test_url
+        config.approved_list_url = (
+            config.approved_list_test_url
+            or "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+        )
+        config.suppressed_list_url = (
+            config.suppressed_list_test_url
+            or "https://pathoplexus.github.io/ena-submission/test/ppx-accessions-suppression-list.txt"
+        )
         config.ena_reports_service_url = "https://wwwdev.ebi.ac.uk/ena/submit/report"
 
     if submit_to_ena_prod:
         config.test = False
         logger.warning("WARNING: Submitting to ENA production")
         config.ena_submission_url = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
-        config.github_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
+        config.approved_list_url = "https://pathoplexus.github.io/ena-submission/approved/approved_ena_submission_list.json"
         config.ena_reports_service_url = "https://www.ebi.ac.uk/ena/submit/report"
+        config.suppressed_list_url = "https://pathoplexus.github.io/ena-submission/suppressed/ppx-accessions-suppression-list.txt"
 
 
 def get_config(config_file: str) -> Config:

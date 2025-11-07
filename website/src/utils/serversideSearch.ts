@@ -1,11 +1,12 @@
 import { validateSingleValue } from './extractFieldValue';
+import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
 import {
+    getColumnVisibilitiesFromQuery,
+    MetadataFilterSchema,
     ORDER_DIRECTION_KEY,
     ORDER_KEY,
     PAGE_KEY,
-    getColumnVisibilitiesFromQuery,
     type SearchResponse,
-    MetadataFilterSchema,
 } from './search';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
@@ -13,18 +14,25 @@ import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
-import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes';
+import type { ReferenceGenomesLightweightSchema } from '../types/referencesGenomes.ts';
 
 export const performLapisSearchQueries = async (
     state: QueryState,
     schema: Schema,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
+    const suborganism = extractSuborganism(schema, state);
+
+    const suborganismSegmentAndGeneInfo = getSuborganismSegmentAndGeneInfo(
+        referenceGenomeLightweightSchema,
+        suborganism,
+    );
+
     const filterSchema = new MetadataFilterSchema(schema.metadata);
     const fieldValues = filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
-    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, referenceGenomesSequenceNames);
+    const fieldFilter = new FieldFilterSet(filterSchema, fieldValues, hiddenFieldValues, suborganismSegmentAndGeneInfo);
     const lapisSearchParameters = fieldFilter.toApiParams();
 
     // Extract single-value parameters using validation
@@ -69,3 +77,15 @@ export const performLapisSearchQueries = async (
         totalCount: aggregatedResult.unwrapOr({ data: [{ count: 0 }] }).data[0].count,
     };
 };
+
+function extractSuborganism(schema: Schema, state: QueryState): string | null {
+    if (schema.suborganismIdentifierField === undefined) {
+        return null;
+    }
+
+    const suborganism = state[schema.suborganismIdentifierField];
+    if (typeof suborganism !== 'string') {
+        return null;
+    }
+    return suborganism;
+}

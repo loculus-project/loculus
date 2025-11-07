@@ -156,6 +156,31 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revised data with duplicate accessions THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
+            it.accession
+        }
+
+        client.reviseSequenceEntries(
+            SubmitFiles.revisedMetadataFileWith(
+                content =
+                """
+                 accession	submissionId	firstColumn
+                    ${accessions.first()}	someHeader_main	someValue
+                    ${accessions.first()}	someHeader2_main	someOtherValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(),
+        ).andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Duplicate accession found in metadata file: ${accessions.first()}",
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM).map {
             it.accession
@@ -496,7 +521,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no id",
+                "contains no value for 'id'",
             ),
             Arguments.of(
                 "metadata file with no header",
@@ -523,7 +548,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "Metadata file contains at least one duplicate submissionId",
+                "Duplicate submission_id found in metadata file: sameHeader",
             ),
             Arguments.of(
                 "duplicate headers in sequence file",
@@ -605,7 +630,7 @@ class ReviseEndpointTest(
                 SubmitFiles.sequenceFileWith(),
                 status().isUnprocessableEntity,
                 "Unprocessable Entity",
-                "A row in metadata file contains no accession",
+                "contains no value for 'accession'",
             ),
         )
     }
