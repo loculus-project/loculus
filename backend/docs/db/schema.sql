@@ -168,6 +168,61 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 
 --
+-- Name: metadata_upload_aux_table; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.metadata_upload_aux_table (
+    accession text,
+    version bigint,
+    upload_id text NOT NULL,
+    organism text NOT NULL,
+    submission_id text NOT NULL,
+    submitter text NOT NULL,
+    group_id integer,
+    uploaded_at timestamp without time zone NOT NULL,
+    metadata jsonb NOT NULL,
+    files jsonb
+);
+
+
+ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
+
+--
+-- Name: sequence_upload_aux_table; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sequence_upload_aux_table (
+    upload_id text NOT NULL,
+    submission_id text NOT NULL,
+    segment_name text NOT NULL,
+    compressed_sequence_data text NOT NULL
+);
+
+
+ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
+
+--
+-- Name: aux_tables_as_sequence_entries; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.aux_tables_as_sequence_entries AS
+ SELECT m.upload_id,
+    m.accession,
+    m.version,
+    m.organism,
+    m.submission_id,
+    m.submitter,
+    m.group_id,
+    m.uploaded_at AS submitted_at,
+    jsonb_build_object('metadata', m.metadata, 'files', m.files, 'unalignedNucleotideSequences', COALESCE(jsonb_object_agg(s.segment_name, (s.compressed_sequence_data)::jsonb) FILTER (WHERE (s.segment_name IS NOT NULL)), '{}'::jsonb)) AS original_data
+   FROM (public.metadata_upload_aux_table m
+     LEFT JOIN public.sequence_upload_aux_table s ON (((m.upload_id = s.upload_id) AND (m.submission_id = s.submission_id))))
+  GROUP BY m.upload_id, m.accession, m.version, m.organism, m.submission_id, m.submitter, m.group_id, m.uploaded_at, m.metadata, m.files;
+
+
+ALTER VIEW public.aux_tables_as_sequence_entries OWNER TO postgres;
+
+--
 -- Name: current_processing_pipeline; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -336,26 +391,6 @@ ALTER SEQUENCE public.groups_table_group_id_seq OWNED BY public.groups_table.gro
 
 
 --
--- Name: metadata_upload_aux_table; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.metadata_upload_aux_table (
-    accession text,
-    version bigint,
-    upload_id text NOT NULL,
-    organism text NOT NULL,
-    submission_id text NOT NULL,
-    submitter text NOT NULL,
-    group_id integer,
-    uploaded_at timestamp without time zone NOT NULL,
-    metadata jsonb NOT NULL,
-    files jsonb
-);
-
-
-ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
-
---
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -502,20 +537,6 @@ CREATE VIEW public.sequence_entries_view AS
 
 
 ALTER VIEW public.sequence_entries_view OWNER TO postgres;
-
---
--- Name: sequence_upload_aux_table; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.sequence_upload_aux_table (
-    upload_id text NOT NULL,
-    submission_id text NOT NULL,
-    segment_name text NOT NULL,
-    compressed_sequence_data text NOT NULL
-);
-
-
-ALTER TABLE public.sequence_upload_aux_table OWNER TO postgres;
 
 --
 -- Name: table_update_tracker; Type: TABLE; Schema: public; Owner: postgres

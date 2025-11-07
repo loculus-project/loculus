@@ -153,7 +153,7 @@ class SubmitModel(
         }
 
         log.debug { "Persisting submission with uploadId $uploadId" }
-        uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
+        uploadDatabaseService.insertFromAuxTablesIntoMainTable(uploadId, submissionParams)
     } finally {
         uploadDatabaseService.deleteUploadData(uploadId)
     }
