@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class SiloRunner:
         logger.info("Starting SILO preprocessing: %s", " ".join(cmd))
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 cmd,
                 check=True,
                 capture_output=True,

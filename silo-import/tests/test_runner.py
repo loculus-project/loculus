@@ -1,14 +1,13 @@
 # ruff: noqa: S101
 from __future__ import annotations
 
-import subprocess
+import subprocess  # noqa: S404
 import time
 from pathlib import Path
 
 import pytest
 from helpers import (
     MockHttpResponse,
-    MockSubprocessResult,
     compress_ndjson,
     make_mock_download_func,
     make_mock_subprocess_run,

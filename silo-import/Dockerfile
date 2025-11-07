@@ -1,14 +1,39 @@
-# Stage 1: Build SILO from submodule
-ARG DEPENDENCY_IMAGE=ghcr.io/genspectrum/lapis-silo-dependencies:latest
+# Stage 1: Build dependencies for SILO
+FROM ubuntu:24.04 AS dependency-builder
 
-FROM $DEPENDENCY_IMAGE AS silo-builder
+ARG TARGETPLATFORM
+
+RUN apt update && apt dist-upgrade -y \
+    && apt install -y \
+    build-essential cmake python3 pipx software-properties-common wget gnupg lsb-release jq curl \
+    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
+    && add-apt-repository 'deb http://apt.llvm.org/jammy/  llvm-toolchain-jammy-20 main' \
+    && apt install -y clang-tidy-20
+
+# Setup pipx and conan
+RUN python3 -m pipx ensurepath
+SHELL ["/bin/bash", "-login", "-c"]
+RUN python3 -m pipx install conan==2.16.1
+
+WORKDIR /src
+COPY LAPIS-SILO/conanfile.py LAPIS-SILO/conanprofile.docker LAPIS-SILO/conanprofile.docker_arm ./
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        mv conanprofile.docker_arm conanprofile; \
+    else \
+        mv conanprofile.docker conanprofile; \
+    fi
+
+RUN conan install . --build=missing --profile ./conanprofile --profile:build ./conanprofile --output-folder=build/Release/generators
+
+# Stage 2: Build SILO from submodule
+FROM dependency-builder AS silo-builder
 
 WORKDIR /src
 COPY LAPIS-SILO ./
 
 RUN python3 ./build_with_conan.py --release --parallel 4
 
-# Stage 2: Create final image with Python package and SILO binary
+# Stage 3: Create final image with Python package and SILO binary
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
