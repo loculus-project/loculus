@@ -44,7 +44,6 @@ class CompressionService(
 
     private fun decompressNucleotideSequence(
         compressedSequence: CompressedSequence,
-        segmentName: String,
         organism: Organism,
     ): GeneticSequence = decompress(
         compressedSequence,
@@ -76,7 +75,7 @@ class CompressionService(
                 .unalignedNucleotideSequences.mapValues {
                     when (val compressedSequence = it.value) {
                         null -> null
-                        else -> decompressNucleotideSequence(compressedSequence, it.key, organism)
+                        else -> decompressNucleotideSequence(compressedSequence, organism)
                     }
                 },
             originalData.files,
@@ -101,13 +100,13 @@ class CompressionService(
                 .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                     when (sequenceData) {
                         null -> null
-                        else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
+                        else -> decompressNucleotideSequence(sequenceData, organism)
                     }
                 },
             processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> decompressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> decompressNucleotideSequence(sequenceData, organism)
                 }
             },
             processedData.nucleotideInsertions,
@@ -127,13 +126,13 @@ class CompressionService(
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
                 when (sequenceData) {
                     null -> null
-                    else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                    else -> compressNucleotideSequence(sequenceData, organism)
                 }
             },
         processedData.alignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
             when (sequenceData) {
                 null -> null
-                else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                else -> compressNucleotideSequence(sequenceData, organism)
             }
         },
         processedData.nucleotideInsertions,
@@ -192,14 +191,10 @@ class CompressionService(
         return String(decompressedBuffer, 0, decompressionReturnCode.toInt(), StandardCharsets.UTF_8)
     }
 
-    private fun getDictionaryForNucleotideSequenceSegment(segmentName: String, organism: Organism): ByteArray? =
-        backendConfig
-            .getInstanceConfig(organism)
-            .referenceGenome
-            .getNucleotideSegmentReference(
-                segmentName,
-            )
-            ?.toByteArray()
+    private fun getDictionaryForNucleotideSequences(organism: Organism): ByteArray? = backendConfig
+        .getInstanceConfig(organism)
+        .referenceGenome.allSegmentsConcatenated()
+        ?.toByteArray()
 
     private fun getDictionaryForAminoAcidSequence(geneName: String, organism: Organism): ByteArray? = backendConfig
         .getInstanceConfig(organism)
