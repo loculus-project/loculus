@@ -6,6 +6,7 @@ import type { MetadataVisibility } from '../../../../utils/search.ts';
 import {
     type FieldItem,
     type FieldItemDisplayState,
+    fieldItemDisplayStateType,
     FieldSelectorModal as CommonFieldSelectorModal,
 } from '../../../common/FieldSelectorModal.tsx';
 import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborganism.tsx';
@@ -66,12 +67,12 @@ function getDisplayState(
     schema: Schema,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
-        return { type: 'alwaysChecked' };
+        return { type: fieldItemDisplayStateType.alwaysChecked };
     }
 
     if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
         return {
-            type: 'disabled',
+            type: fieldItemDisplayStateType.disabled,
             tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
         };
     }

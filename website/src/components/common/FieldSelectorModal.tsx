@@ -12,7 +12,24 @@ export type FieldItem = {
     isChecked: boolean;
 };
 
-export type FieldItemDisplayState = { type: 'alwaysChecked' } | { type: 'greyedOut' | 'disabled'; tooltip: string };
+export const fieldItemDisplayStateType = {
+    /** "disable" the checkbox and force-check it */
+    alwaysChecked: 'alwaysChecked',
+    /** grey out the label but allow checking/unchecking the checkbox */
+    greyedOut: 'greyedOut',
+    /** disable the checkbox (force-uncheck it) */
+    disabled: 'disabled',
+} as const;
+
+export type FieldItemDisplayState =
+    | {
+          type: typeof fieldItemDisplayStateType.alwaysChecked;
+      }
+    | {
+          type: typeof fieldItemDisplayStateType.greyedOut | typeof fieldItemDisplayStateType.disabled;
+          /** On hover of the label: explain why the field is greyed out/disabled */
+          tooltip: string;
+      };
 
 type FieldSelectorModalProps = {
     isOpen: boolean;
@@ -186,11 +203,11 @@ const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, hand
 };
 
 function isCheckboxChecked(field: FieldItem) {
-    if (field.displayState?.type === 'disabled') {
+    if (field.displayState?.type === fieldItemDisplayStateType.disabled) {
         return false;
     }
 
-    if (field.displayState?.type === 'alwaysChecked') {
+    if (field.displayState?.type === fieldItemDisplayStateType.alwaysChecked) {
         return true;
     }
 
@@ -198,17 +215,23 @@ function isCheckboxChecked(field: FieldItem) {
 }
 
 function shouldDisableCheckbox(displayState: FieldItemDisplayState | undefined) {
-    return displayState?.type === 'alwaysChecked' || displayState?.type === 'disabled';
+    return (
+        displayState?.type === fieldItemDisplayStateType.alwaysChecked ||
+        displayState?.type === fieldItemDisplayStateType.disabled
+    );
 }
 
 function shouldGreyOutLabel(displayState: FieldItemDisplayState | undefined) {
-    return displayState?.type === 'greyedOut' || shouldDisableCheckbox(displayState);
+    return displayState?.type === fieldItemDisplayStateType.greyedOut || shouldDisableCheckbox(displayState);
 }
 
 function isAlwaysChecked(displayState: FieldItemDisplayState | undefined) {
-    return displayState?.type === 'alwaysChecked';
+    return displayState?.type === fieldItemDisplayStateType.alwaysChecked;
 }
 
 function getTooltip(displayState: FieldItemDisplayState | undefined) {
-    return displayState?.type === 'greyedOut' || displayState?.type === 'disabled' ? displayState.tooltip : undefined;
+    return displayState?.type === fieldItemDisplayStateType.greyedOut ||
+        displayState?.type === fieldItemDisplayStateType.disabled
+        ? displayState.tooltip
+        : undefined;
 }

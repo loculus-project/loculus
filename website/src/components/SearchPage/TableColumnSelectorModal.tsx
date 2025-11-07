@@ -4,7 +4,12 @@ import { isActiveForSelectedSuborganism } from './isActiveForSelectedSuborganism
 import { ACCESSION_VERSION_FIELD } from '../../settings.ts';
 import type { Metadata, Schema } from '../../types/config.ts';
 import { type MetadataVisibility } from '../../utils/search.ts';
-import { type FieldItem, type FieldItemDisplayState, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
+import {
+    type FieldItem,
+    type FieldItemDisplayState,
+    fieldItemDisplayStateType,
+    FieldSelectorModal,
+} from '../common/FieldSelectorModal.tsx';
 
 export type TableColumnSelectorModalProps = {
     isOpen: boolean;
@@ -54,12 +59,12 @@ export function getDisplayState(
     suborganismIdentifierField: string | undefined,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
-        return { type: 'alwaysChecked' };
+        return { type: fieldItemDisplayStateType.alwaysChecked };
     }
 
     if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
         return {
-            type: 'greyedOut',
+            type: fieldItemDisplayStateType.greyedOut,
             tooltip: `This is only visible when the ${suborganismIdentifierField ?? 'suborganismIdentifierField'} ${field.onlyForSuborganism} is selected.`,
         };
     }
