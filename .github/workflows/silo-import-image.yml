@@ -40,6 +40,8 @@ jobs:
       checks: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: recursive
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - name: Set up Docker Buildx
