@@ -95,7 +95,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             [metadataKey]: editableEntry,
         },
         unalignedNucleotideSequences: {
-            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
+            originalFastaHeader: 'originalUnalignedNucleotideSequencesValue',
         },
         files: null,
     },

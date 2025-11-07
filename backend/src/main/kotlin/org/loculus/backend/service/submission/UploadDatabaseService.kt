@@ -213,44 +213,28 @@ class UploadDatabaseService(
                 compression_migration_checked_at
             )
             SELECT
-                metadata_upload_aux_table.accession,
-                metadata_upload_aux_table.version,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at,
+                m.accession,
+                m.version,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_id,
+                m.uploaded_at,
                 jsonb_build_object(
-                    'metadata', metadata_upload_aux_table.metadata,
-                    'files', metadata_upload_aux_table.files,
-                    'unalignedNucleotideSequences', 
-                    COALESCE(
-                        jsonb_object_agg(
-                            sequence_upload_aux_table.fasta_id,
-                            sequence_upload_aux_table.compressed_sequence_data::jsonb
-                        ) FILTER (WHERE sequence_upload_aux_table.fasta_id IS NOT NULL),
-                        '{}'::jsonb
-                    )
+                    'metadata', m.metadata,
+                    'files',    m.files,
+                    'unalignedNucleotideSequences',
+                    COALESCE(x.seq_map, '{}'::jsonb)
                 ),
                 NOW()
-            FROM
-                metadata_upload_aux_table
-            LEFT JOIN
-                sequence_upload_aux_table
-                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
-                AND EXISTS (
-                 SELECT 1
-                 FROM jsonb_array_elements_text(metadata_upload_aux_table.fasta_ids) v(value)
-                 WHERE v.value = sequence_upload_aux_table.fasta_id
-               )
-            WHERE metadata_upload_aux_table.upload_id = ?
-            GROUP BY
-                metadata_upload_aux_table.upload_id,
-                metadata_upload_aux_table.organism,
-                metadata_upload_aux_table.submission_id,
-                metadata_upload_aux_table.submitter,
-                metadata_upload_aux_table.group_id,
-                metadata_upload_aux_table.uploaded_at
+            FROM metadata_upload_aux_table AS m
+            LEFT JOIN LATERAL (
+                SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
+                FROM sequence_upload_aux_table AS s
+                WHERE s.upload_id = m.upload_id
+                AND jsonb_exists(COALESCE(m.fasta_ids, '[]'::jsonb), s.fasta_id)
+            ) AS x ON TRUE
+            WHERE m.upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()
         val insertionResult = exec(

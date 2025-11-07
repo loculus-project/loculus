@@ -85,8 +85,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
-                        const fastaId = editableSequences.getFastaIds(submissionId);
-                        const metadataFile = editableMetadata.getMetadataTsv(fastaId);
+                        const fastaId = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
+                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaId);
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }

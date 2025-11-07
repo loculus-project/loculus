@@ -201,7 +201,7 @@ class SubmitEndpointTest(
             SubmitFiles.metadataFileWith(
                 content = """
                         submissionId	firstColumn	fastaId
-                        header1	someValue	header1_seg1, header1_seg2
+                        header1	someValue	header1_seg1 header1_seg2
                         header2	someValue	fasta_header2_seg1
                 """.trimIndent(),
             ),

@@ -74,10 +74,7 @@ export class EditableSequences {
             ([key, value]) => ({
                 // TODO: older entries will still have the segmentName and not the fastaHeader as a key
                 label: key, // TODO: In future prepro will map the fastaHeader to the segment (will be added to the label)
-                fastaHeader:
-                    maxNumberRows > 1
-                        ? key
-                        : initialData.submissionId,
+                fastaHeader: key,
                 value: value,
                 initialValue: value,
                 key: EditableSequences.getNextKey(),
@@ -137,6 +134,11 @@ export class EditableSequences {
             newSequenceFiles.filter((file) => file.value !== null),
             this.maxNumberOfRows,
         );
+    }
+
+    getFastaIds(): string {
+        const filledRows = this.rows.filter((row) => row.value !== null);
+        return filledRows.map((sequence) => sequence.label.replace(/\s+/g, '')).join(', ');
     }
 
     getSequenceFasta(): File | undefined {

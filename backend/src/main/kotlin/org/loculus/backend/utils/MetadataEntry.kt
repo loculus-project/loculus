@@ -92,7 +92,7 @@ fun metadataEntryStreamAsSequence(
                         )
                     }
 
-                    fastaIds = fastaId.split(',')
+                    fastaIds = fastaId.split(Regex("[ ,]+"))
                         .map { it.trim() }
                         .filter { it.isNotEmpty() }
                 }
@@ -174,7 +174,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
                         )
                     }
 
-                    fastaIds = fastaId.split(',')
+                    fastaIds = fastaId.split(Regex("[ ,]+"))
                         .map { it.trim() }
                         .filter { it.isNotEmpty() }
                 }
