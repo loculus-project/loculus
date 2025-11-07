@@ -380,7 +380,8 @@ CREATE TABLE public.metadata_upload_aux_table (
     group_id integer,
     uploaded_at timestamp without time zone NOT NULL,
     metadata jsonb NOT NULL,
-    files jsonb
+    files jsonb,
+    fasta_ids jsonb DEFAULT '[]'::jsonb
 );
 
 
@@ -540,9 +541,8 @@ ALTER VIEW public.sequence_entries_view OWNER TO postgres;
 
 CREATE TABLE public.sequence_upload_aux_table (
     upload_id text NOT NULL,
-    submission_id text NOT NULL,
-    segment_name text NOT NULL,
-    compressed_sequence_data text NOT NULL
+    compressed_sequence_data text NOT NULL,
+    fasta_id text NOT NULL
 );
 
 
@@ -755,7 +755,7 @@ ALTER TABLE ONLY public.sequence_entries_preprocessed_data
 --
 
 ALTER TABLE ONLY public.sequence_upload_aux_table
-    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, submission_id, segment_name);
+    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, fasta_id);
 
 
 --
