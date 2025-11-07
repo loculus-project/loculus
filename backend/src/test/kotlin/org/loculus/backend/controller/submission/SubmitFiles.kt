@@ -100,6 +100,12 @@ object SubmitFiles {
         val submissionIds = List(10) { "custom$it" }
 
         const val NUMBER_OF_SEQUENCES = 10
+
+        private fun getFileContent(file: String): String = String(
+            this::class.java.classLoader.getResourceAsStream(file)?.readBytes() ?: error(
+                "$file resource for tests not found",
+            ),
+        )
     }
 
     fun metadataFileWith(
