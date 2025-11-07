@@ -162,7 +162,7 @@ class SubmissionDatabaseService(
             select
                 max(sep.finished_processing_at) as last_finished_processing_at
             from sequence_entries_preprocessed_data sep
-            inner join sequence_entries se
+                join sequence_entries se
                 on se.accession = sep.accession
                 and se.version = sep.version
             where se.organism = ?
