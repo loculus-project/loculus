@@ -6,7 +6,7 @@ import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponen
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
 function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string) {
-    const trimmedHeader = fastaHeader.replaceAll(/[^a-zA-Z0-9]/g, '');
+    const trimmedHeader = fastaHeader.replaceAll(/[^a-zA-Z0-9_]/g, '');
     const fileContent = `>${trimmedHeader}\n${sequenceData}`;
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
@@ -132,7 +132,7 @@ export class EditableSequences {
         const fastaContent = !this.isMultiSegmented()
             ? `>${submissionId}\n${filledRows[0].value}`
             : filledRows
-                  .map((sequence) => `>${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`)
+                  .map((sequence) => `>${sequence.label.replaceAll(/[^a-zA-Z0-9_]/g, '')}\n${sequence.value}`)
                   .join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
