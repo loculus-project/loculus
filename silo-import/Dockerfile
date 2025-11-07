@@ -30,6 +30,10 @@ FROM dependency-builder AS silo-builder
 
 WORKDIR /src
 COPY LAPIS-SILO ./
+COPY fix-acero-library-name.patch ./
+
+# Apply fix for Arrow Acero library name (backport from later SILO versions)
+RUN patch -p1 < fix-acero-library-name.patch
 
 RUN python3 ./build_with_conan.py --release --parallel 4
 
