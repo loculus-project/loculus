@@ -8,9 +8,8 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.OriginalData
-import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.PROCESSED
@@ -234,16 +233,9 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
 
         val releasedData = convenienceClient.getReleasedData(organism = ORGANISM_WITHOUT_CONSENSUS_SEQUENCES)
         assertThat(releasedData.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
-        val releasedDatum = releasedData.first()
-        assertThat(releasedDatum.unalignedNucleotideSequences, `is`(anEmptyMap()))
-        assertThat(releasedDatum.alignedNucleotideSequences, `is`(anEmptyMap()))
-        assertThat(releasedDatum.alignedAminoAcidSequences, `is`(anEmptyMap()))
-        assertThat(releasedDatum.nucleotideInsertions, `is`(anEmptyMap()))
-        assertThat(releasedDatum.aminoAcidInsertions, `is`(anEmptyMap()))
     }
 
-    private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData<GeneticSequence>>) = processedData
-        .map { it.metadata }
+    private fun getAccessionVersionsOfProcessedData(releasedData: List<ReleasedData>) = releasedData
         .map { it["accessionVersion"]!!.asText() }
 
     private fun getAccessionVersions(sequenceEntryVersions: List<AccessionVersionInterface>) =

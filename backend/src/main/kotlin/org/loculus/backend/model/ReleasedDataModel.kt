@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
@@ -11,6 +12,7 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
+import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ReleasedData
@@ -199,14 +201,18 @@ open class ReleasedDataModel(
                 },
             )
 
-        return ReleasedData(
-            metadata = metadata,
-            unalignedNucleotideSequences = rawProcessedData.processedData.unalignedNucleotideSequences,
-            alignedNucleotideSequences = rawProcessedData.processedData.alignedNucleotideSequences,
-            nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
-            aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
-            alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
-        )
+        return metadata +
+            rawProcessedData.processedData.unalignedNucleotideSequences.map {
+                "unaligned_${it.key}" to TextNode(it.value)
+            } +
+            createAlignedSequenceNodes(
+                rawProcessedData.processedData.alignedNucleotideSequences,
+                rawProcessedData.processedData.nucleotideInsertions,
+            ) +
+            createAlignedSequenceNodes(
+                rawProcessedData.processedData.alignedAminoAcidSequences,
+                rawProcessedData.processedData.aminoAcidInsertions,
+            )
     }
 
     private fun buildFileUrls(
@@ -256,4 +262,20 @@ open class ReleasedDataModel(
 
         return VersionStatus.REVISED
     }
+
+    private fun createAlignedSequenceNodes(
+        sequencesMap: Map<String, String?>,
+        insertionsMap: Map<String, List<Insertion>>,
+    ): Map<String, JsonNode> = sequencesMap.map {
+        it.key to if (it.value != null) {
+            objectMapper.valueToTree<JsonNode>(
+                mapOf(
+                    "sequence" to it.value,
+                    "insertions" to insertionsMap[it.key],
+                ),
+            )
+        } else {
+            NullNode.instance
+        }
+    }.toMap()
 }
