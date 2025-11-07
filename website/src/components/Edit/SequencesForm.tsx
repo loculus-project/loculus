@@ -74,10 +74,7 @@ export class EditableSequences {
             ([key, value]) => ({
                 // TODO: for now key corresponds to the segment name in future it will be the fastaHeader
                 label: key, // TODO: In future prepro will map the fastaHeader to the segment (will be added to the label)
-                fastaHeader:
-                    maxNumberRows > 1
-                        ? `${initialData.submissionId}_${key.replace(/\s+/g, '')}`
-                        : initialData.submissionId, // TODO: in future will come from the key
+                fastaHeader: key,
                 value: value,
                 initialValue: value,
                 key: EditableSequences.getNextKey(),

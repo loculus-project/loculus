@@ -7,3 +7,6 @@ ALTER TABLE sequence_upload_aux_table
   ADD COLUMN fasta_id text NOT NULL,
   DROP COLUMN segment_name,
   ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, fasta_id);
+
+CREATE INDEX ON metadata_upload_aux_table
+  USING GIN (fasta_ids jsonb_path_ops);

@@ -48,9 +48,9 @@ test('revising sequence data works: segment can be deleted; segment can be edite
     expect(tabs).not.toContain('L (aligned)');
     expect(tabs).not.toContain('L (unaligned)');
 
-    // expect(tabs).toContain('S (unaligned)');
-    // await reviewPage.switchSequenceTab('S (unaligned)');
-    // expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
+    expect(tabs).toContain('S (unaligned)');
+    await reviewPage.switchSequenceTab('S (unaligned)');
+    expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
 
     await reviewPage.closeSequencesDialog();
 });
