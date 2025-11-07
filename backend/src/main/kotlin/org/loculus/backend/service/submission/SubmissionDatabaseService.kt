@@ -14,7 +14,6 @@ import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -128,8 +127,6 @@ class SubmissionDatabaseService(
     init {
         Database.connect(pool)
     }
-
-    private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
         numberOfSequenceEntries: Int,
@@ -1278,7 +1275,15 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+
+    private var lastPreprocessedDataUpdate: String? = null
+
+    /** Check if there have been newly preprocessed data since the last update check.
+     * Returns empty map if no changes to the prepro table since last check.
+     * If there are changes, runs useNewerProcessingPipelineIfPossible for each organism
+     * and returns a map of organism name to newly set pipeline version (or null if no new version was set).
+     */
+    fun runPipelineUpgradeIfPreproTableChanged(): Map<String, Long?> {
         val latestUpdate = transaction {
             UpdateTrackerTable
                 .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
@@ -1289,7 +1294,8 @@ class SubmissionDatabaseService(
 
         if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
             log.info {
-                "No updates in $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME; skipping pipeline version check"
+                "No changes in ${SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME} table since " +
+                    "last check at $lastPreprocessedDataUpdate. Skipping pipeline upgrade check."
             }
             return emptyMap()
         }

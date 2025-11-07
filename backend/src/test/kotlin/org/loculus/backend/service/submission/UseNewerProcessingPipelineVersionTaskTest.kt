@@ -120,8 +120,8 @@ class UseNewerProcessingPipelineVersionTaskTest(
         convenienceClient.extractUnprocessedData(pipelineVersion = 1)
         convenienceClient.submitProcessedData(processedData, pipelineVersion = 1)
 
-        val firstCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
-        val secondCall = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        val firstCall = submissionDatabaseService.runPipelineUpgradeIfPreproTableChanged()
+        val secondCall = submissionDatabaseService.runPipelineUpgradeIfPreproTableChanged()
 
         assertThat(firstCall.keys, `is`(setOf(DEFAULT_ORGANISM)))
         assertThat(secondCall.isEmpty(), `is`(true))
