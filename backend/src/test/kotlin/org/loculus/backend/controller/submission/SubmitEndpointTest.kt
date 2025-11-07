@@ -233,6 +233,43 @@ class SubmitEndpointTest(
     }
 
     @Test
+    fun `GIVEN valid input multi segment data without fastaID THEN data is accepted and originalData shows fastaID`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        submissionControllerClient.submit(
+            SubmitFiles.metadataFileWith(
+                content = """
+                        submissionId	firstColumn
+                        header1	someValue
+                        header2	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                        >header1
+                        AC
+                        >header2
+                        TA
+                """.trimIndent(),
+            ),
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(2))
+            .andExpect(jsonPath("\$[0].submissionId").value("header1"))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
+            .andExpect(jsonPath("\$[0].version").value(1))
+
+        val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)[0]
+            .data
+            .unalignedNucleotideSequences
+
+        assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
+    }
+
+    @Test
     fun `GIVEN submission without data use terms THEN returns an error`() {
         submissionControllerClient.submitWithoutDataUseTerms(
             DefaultFiles.metadataFile,
