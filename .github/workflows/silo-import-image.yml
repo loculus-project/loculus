@@ -33,7 +33,7 @@ jobs:
   silo-import-image:
     name: Build silo-import Docker Image
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
