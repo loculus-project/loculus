@@ -80,7 +80,7 @@ spec:
             - name: LINEAGE_DEFINITIONS
               value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
             {{- end }}
-            - name: SILO_RUN_TIMEOUT_SECONDS
+            - name: IMPORT_TIMEOUT_SECONDS
               value: {{ $.Values.siloImportLimitSeconds | quote }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
