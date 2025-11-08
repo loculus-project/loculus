@@ -55,7 +55,6 @@ COPY --from=silo-builder /src/build/Release/silo /usr/local/bin/silo
 COPY pyproject.toml README.md /app/
 COPY src /app/src
 
-RUN pip3 install --no-cache-dir --upgrade pip --break-system-packages \
-    && pip3 install --no-cache-dir . --break-system-packages
+RUN pip3 install --no-cache-dir . --break-system-packages
 
 ENTRYPOINT ["silo-import"]
