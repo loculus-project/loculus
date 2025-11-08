@@ -53,6 +53,9 @@ COPY --from=silo-builder /src/build/Release/silo /usr/local/bin/silo
 COPY --from=silo-builder /root/.conan2/p /root/.conan2/p
 ENV LD_LIBRARY_PATH=/root/.conan2/p/b
 
+# Set SILO configuration paths (will be mounted by Kubernetes)
+ENV SILO_PREPROCESSING_CONFIG="/app/preprocessing_config.yaml"
+
 # Copy and install Python package
 COPY pyproject.toml README.md /app/
 COPY src /app/src
