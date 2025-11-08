@@ -48,8 +48,10 @@ RUN apt update && apt dist-upgrade -y \
     && apt install -y python3 python3-pip python3-venv curl jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy SILO binary from builder
+# Copy SILO binary and conan-built libraries from builder
 COPY --from=silo-builder /src/build/Release/silo /usr/local/bin/silo
+COPY --from=silo-builder /root/.conan2/p /root/.conan2/p
+ENV LD_LIBRARY_PATH=/root/.conan2/p/b
 
 # Copy and install Python package
 COPY pyproject.toml README.md /app/
