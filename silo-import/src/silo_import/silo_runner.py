@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class SiloRunner:
-    """Direct SILO binary executor replacing the sentinel-based approach."""
+    """Execute SILO using subprocess."""
 
     def __init__(self, silo_binary: str = "silo") -> None:
         self._silo_binary = silo_binary
