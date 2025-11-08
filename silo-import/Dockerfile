@@ -38,14 +38,14 @@ RUN patch -p1 < fix-acero-library-name.patch
 RUN python3 ./build_with_conan.py --release --parallel 4
 
 # Stage 3: Create final image with Python package and SILO binary
-FROM python:3.11-slim
+FROM ubuntu:24.04
 
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apt-get update \
-    && apt-get install -y curl jq \
+# Install Python 3.11 and runtime dependencies
+RUN apt update && apt dist-upgrade -y \
+    && apt install -y python3 python3-pip python3-venv curl jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy SILO binary from builder
@@ -55,7 +55,7 @@ COPY --from=silo-builder /src/build/Release/silo /usr/local/bin/silo
 COPY pyproject.toml README.md /app/
 COPY src /app/src
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir .
+RUN pip3 install --no-cache-dir --upgrade pip --break-system-packages \
+    && pip3 install --no-cache-dir . --break-system-packages
 
 ENTRYPOINT ["silo-import"]
