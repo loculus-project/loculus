@@ -201,14 +201,9 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                         <FileUploadComponent
                             setFile={async (file) => {
                                 const text = file ? await file.text() : null;
-                                const label = file ? await file.header() : null; //TODO: will be the fastaHeader in future
-                                const fastaHeader = label
-                                    ? dataToEdit
-                                        ? `${dataToEdit.submissionId}_${label.replace(/\s+/g, '')}`
-                                        : label.replace(/\s+/g, '')
-                                    : null;
+                                const fastaHeader = file ? await file.header() : null;
                                 setEditableSequences((editableSequences) =>
-                                    editableSequences.update(field.key, text, label, fastaHeader),
+                                    editableSequences.update(field.key, text, fastaHeader, fastaHeader),
                                 );
                             }}
                             name={`${field.label}_segment_file`}
