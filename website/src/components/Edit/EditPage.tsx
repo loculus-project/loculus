@@ -70,7 +70,7 @@ const InnerEditPage: FC<EditPageProps> = ({
             submitRevision({
                 metadataFile,
                 sequenceFile: submissionDataTypes.consensusSequences
-                    ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
+                    ? editableSequences.getSequenceFasta()
                     : undefined,
             });
         } else {
