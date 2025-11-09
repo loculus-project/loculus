@@ -45,7 +45,7 @@ describe('SequencesForm', () => {
         );
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
         const firstKey = initialRows[0].key;
         {
@@ -53,18 +53,20 @@ describe('SequencesForm', () => {
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId\nATCG');
+            expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
-            expect(rows).toEqual([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey }]);
+            expect(rows).toEqual([
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: 'subId_Segment1' },
+            ]);
         }
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'subId_anotherkey')).toThrowError(
             'Maximum limit reached — you can add up to 1 sequence file(s) only.',
         );
         editableSequences = editableSequences.update(firstKey, null, null, null);
         expect(editableSequences.rows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, fastaHeader: null, initialValue: null, key: expect.any(String) },
         ]);
         const rowsAfterDeletion = editableSequences.rows;
         const newFirstKey = rowsAfterDeletion[0].key;
@@ -73,11 +75,19 @@ describe('SequencesForm', () => {
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId\nATCG');
+            expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
             expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
 
             const rows = editableSequences.rows;
-            expect(rows).toEqual([{ label: 'Segment 1', value: 'ATCG', initialValue: null, key: newFirstKey }]);
+            expect(rows).toEqual([
+                {
+                    label: 'Segment 1',
+                    value: 'ATCG',
+                    initialValue: null,
+                    key: newFirstKey,
+                    fastaHeader: 'subId_Segment1',
+                },
+            ]);
         }
     });
 
@@ -88,7 +98,7 @@ describe('SequencesForm', () => {
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
         const firstKey = initialRows[0].key;
 
@@ -103,8 +113,8 @@ describe('SequencesForm', () => {
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
-                { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, fastaHeader: 'subId_Segment1', key: firstKey },
+                { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
             ]);
             secondKey = rows[1].key;
         }
@@ -119,8 +129,8 @@ describe('SequencesForm', () => {
 
             const rows = editableSequences.rows;
             expect(rows).deep.equals([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey },
-                { label: 'Segment 2', value: 'TT', initialValue: null, key: secondKey },
+                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: 'subId_Segment1' },
+                { label: 'Segment 2', value: 'TT', initialValue: null, key: secondKey, fastaHeader: 'subId_Segment2' },
             ]);
         }
 
@@ -134,7 +144,7 @@ describe('SequencesForm', () => {
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
         const key = initialRows[0].key;
 
@@ -147,7 +157,7 @@ describe('SequencesForm', () => {
         expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: 'ATCG' });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, key }]);
+        expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, fastaHeader: 'subId', key }]);
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 1 sequence file(s) only.',
@@ -163,13 +173,13 @@ describe('SequencesForm', () => {
 
         editableSequences = editableSequences.update(key, 'ATCG', key, key);
         expect(editableSequences.rows).toEqual([
-            { label: key, value: 'ATCG', initialValue: null, key },
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: key, value: 'ATCG', initialValue: null, key, fastaHeader: key },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
 
         editableSequences = editableSequences.update(key, null, null, null);
         expect(editableSequences.rows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
     });
 

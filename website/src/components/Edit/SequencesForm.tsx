@@ -156,9 +156,7 @@ export class EditableSequences {
             return undefined;
         }
 
-        const fastaContent = filledRows
-            .map((sequence) => `>${sequence.fastaHeader}\n${filledRows[0].value}`)
-            .join('\n');
+        const fastaContent = filledRows.map((sequence) => `>${sequence.fastaHeader}\n${sequence.value}`).join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
