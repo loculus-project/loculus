@@ -794,6 +794,13 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: metadata_upload_aux_table_fasta_ids_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX metadata_upload_aux_table_fasta_ids_idx ON public.metadata_upload_aux_table USING gin (fasta_ids jsonb_path_ops);
+
+
+--
 -- Name: sequence_entries_organism_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
