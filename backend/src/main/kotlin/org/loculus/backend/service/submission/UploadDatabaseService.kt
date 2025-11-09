@@ -201,25 +201,6 @@ class UploadDatabaseService(
         }
 
         val mapAndCopySql = """
-            WITH seqs AS (
-            SELECT
-                s.upload_id,
-                COALESCE(
-                jsonb_object_agg(
-                    s.fasta_id,
-                    s.compressed_sequence_data::jsonb
-                ) FILTER (WHERE s.fasta_id IS NOT NULL),
-                '{}'::jsonb
-                ) AS unaligned
-            FROM sequence_upload_aux_table s
-            JOIN metadata_upload_aux_table m
-                ON s.upload_id = m.upload_id
-            AND jsonb_exists(
-                    COALESCE(m.fasta_ids, '[]'::jsonb),
-                    s.fasta_id
-                )
-            GROUP BY s.upload_id
-            )
             INSERT INTO sequence_entries (
                 accession,
                 version,
@@ -241,10 +222,16 @@ class UploadDatabaseService(
                 jsonb_build_object(
                     'metadata', m.metadata,
                     'files',    m.files,
-                    'unalignedNucleotideSequences', COALESCE(seqs.unaligned, '{}'::jsonb)
+                    'unalignedNucleotideSequences',
+                    COALESCE(x.seq_map, '{}'::jsonb)
                 )
-            FROM metadata_upload_aux_table m
-            LEFT JOIN seqs ON seqs.upload_id = m.upload_id
+            FROM metadata_upload_aux_table AS m
+            LEFT JOIN LATERAL (
+                SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
+                FROM sequence_upload_aux_table AS s
+                WHERE s.upload_id = m.upload_id
+                AND jsonb_exists(COALESCE(m.fasta_ids, '[]'::jsonb), s.fasta_id)
+            ) AS x ON TRUE
             WHERE m.upload_id = ?
             RETURNING accession, version, submission_id;
         """.trimIndent()
