@@ -201,7 +201,7 @@ describe('SequencesForm', () => {
                 initialValue: 'originalUnalignedNucleotideSequencesValue',
                 key: expect.any(String),
             },
-            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String), fastaHeader: null },
         ]);
 
         editableSequences = editableSequences.update(editableSequences.rows[0].key, null, null, null);

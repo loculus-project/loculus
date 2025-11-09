@@ -172,7 +172,7 @@ export class EditableSequences {
         );
 
         return filledRows.reduce<Record<string, string>>((prev, row) => {
-            prev[row.fastaHeader] = row.value;
+            prev[row.label] = row.value; //TODO: this will have to be changed to fastaHeader in future
             return prev;
         }, {});
     }
