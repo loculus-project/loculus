@@ -235,7 +235,10 @@ class UploadDatabaseService(
                 metadata_upload_aux_table
             LEFT JOIN sequence_upload_aux_table
                 ON sequence_upload_aux_table.upload_id = metadata_upload_aux_table.upload_id
-                AND (coalesce(metadata_upload_aux_table.fasta_ids, '[]'::jsonb) ? sequence_upload_aux_table.fasta_id)
+                AND jsonb_exists(
+                        coalesce(metadata_upload_aux_table.fasta_ids, '[]'::jsonb),
+                        sequence_upload_aux_table.fasta_id
+                    );
             WHERE metadata_upload_aux_table.upload_id = ?
             GROUP BY
                 metadata_upload_aux_table.upload_id,
