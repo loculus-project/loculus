@@ -149,6 +149,13 @@ export class EditableSequences {
         );
     }
 
+    getFastaIds(submissionId: string): string {
+        const filledRows = this.rows.filter((row) => row.value !== null);
+        return this.isMultiSegmented()
+            ? filledRows.map((sequence) => sequence.label.replace(/\s+/g, '')).join(', ')
+            : submissionId;
+    }
+
     getSequenceFasta(): File | undefined {
         const filledRows = this.rows.filter((row) => row.value !== null);
 
