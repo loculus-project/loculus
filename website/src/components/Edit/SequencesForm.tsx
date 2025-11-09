@@ -6,7 +6,7 @@ import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponen
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
 function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string) {
-    const trimmedHeader = fastaHeader.replaceAll(/[^a-zA-Z0-9_-]/g, '');
+    const trimmedHeader = fastaHeader.replace(/\s+/g, '');
     const fileContent = `>${trimmedHeader}\n${sequenceData}`;
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
@@ -125,7 +125,7 @@ export class EditableSequences {
     getFastaIds(submissionId: string): string {
         const filledRows = this.rows.filter((row) => row.value !== null);
         return this.isMultiSegmented()
-            ? filledRows.map((sequence) => sequence.label.replaceAll(/[^a-zA-Z0-9_-]/g, '')).join(', ')
+            ? filledRows.map((sequence) => sequence.label.replace(/\s+/g, '')).join(', ')
             : submissionId;
     }
 
@@ -138,9 +138,7 @@ export class EditableSequences {
         // TODO: for existing sequences the correct header is actually submissionId_label as label is the segmentName
         const fastaContent = !this.isMultiSegmented()
             ? `>${submissionId}\n${filledRows[0].value}`
-            : filledRows
-                  .map((sequence) => `>${sequence.label.replaceAll(/[^a-zA-Z0-9_-]/g, '')}\n${sequence.value}`)
-                  .join('\n');
+            : filledRows.map((sequence) => `>${sequence.label.replace(/\s+/g, '')}\n${sequence.value}`).join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
