@@ -85,6 +85,9 @@ npx playwright test tests/specs/cli/auth.spec.ts --reporter=list
 
 # Run with Firefox instead
 BROWSER=firefox npx playwright test --workers=4 --reporter=list
+
+# Enable verbose CLI test logging for debugging
+DEBUG_CLI_TESTS=1 npx playwright test tests/specs/cli/auth.spec.ts --reporter=list
 ```
 
 ## Running Against Remote Environments

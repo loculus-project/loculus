@@ -363,8 +363,14 @@ export class CliPage {
 
     /**
      * Log CLI result for debugging (always includes stderr if present)
+     * Only logs when DEBUG_CLI_TESTS environment variable is set
      */
     logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
+        // Only log if DEBUG_CLI_TESTS is set
+        if (!process.env.DEBUG_CLI_TESTS) {
+            return;
+        }
+
         const parts = [`${operation}:`];
 
         if (result.exitCode !== 0) {
