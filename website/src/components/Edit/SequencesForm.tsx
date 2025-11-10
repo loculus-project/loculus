@@ -5,25 +5,29 @@ import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
-function generateAndDownloadFastaFile(
-    accessionVersion: string,
-    sequenceData: string,
-    segmentKey?: string,
-    isSingleSegment: boolean = false,
-) {
-    const fileName =
-        isSingleSegment || !segmentKey ? `${accessionVersion}.fasta` : `${accessionVersion}_${segmentKey}.fasta`;
+function generateAndDownloadFastaFile(fastaHeader: string | null, sequenceData: string | null) {
+    let fileContent = '';
+    let trimmedHeader = '';
 
-    const header = isSingleSegment || !segmentKey ? accessionVersion : `${accessionVersion}_${segmentKey}`;
+    if (fastaHeader === null && sequenceData === null) {
+        fileContent = '';
+    } else {
+        if (fastaHeader === null) {
+            throw new Error(
+                'Internal Error: sequenceData exists but fastaHeader is empty - contact your administrator',
+            );
+        }
 
-    const fileContent = `>${header}\n${sequenceData}`;
+        trimmedHeader = fastaHeader.replace(/\s+/g, '');
+        fileContent = `>${trimmedHeader}\n${sequenceData ?? ''}`;
+    }
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = `${trimmedHeader || 'sequence'}.fasta`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -32,6 +36,7 @@ function generateAndDownloadFastaFile(
 type EditableSequenceFile = {
     key: string;
     label: string;
+    fastaHeader: string | null;
     value: string | null;
     initialValue: string | null;
 };
@@ -50,6 +55,7 @@ export class EditableSequences {
         if (rows.length < this.maxNumberOfRows) {
             rows.push({
                 label: `Add a segment`,
+                fastaHeader: null,
                 value: null,
                 initialValue: null,
                 key: EditableSequences.getNextKey(),
@@ -75,15 +81,21 @@ export class EditableSequences {
         initialData: SequenceEntryToEdit,
         referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     ): EditableSequences {
+        const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => ({
-                label: key,
+                // TODO: for now key corresponds to the segment name in future it will be the fastaHeader
+                label: key, // TODO: In future prepro will map the fastaHeader to the segment (will be added to the label)
+                fastaHeader:
+                    maxNumberRows > 1
+                        ? `${initialData.submissionId}_${key.replace(/\s+/g, '')}`
+                        : initialData.submissionId, // TODO: in future will come from the key
                 value: value,
                 initialValue: value,
-                key: EditableSequences.getNextKey(), //TODO: check if this is buggy
+                key: EditableSequences.getNextKey(),
             }),
         );
-        return new EditableSequences(existingDataRows, this.getMaxNumberOfRows(referenceGenomeLightweightSchema));
+        return new EditableSequences(existingDataRows, maxNumberRows);
     }
 
     /**
@@ -109,7 +121,7 @@ export class EditableSequences {
     /**
      * Create a new {@link EditableSequences} object with the given row value updated.
      */
-    update(key: string, value: string | null, label: string | null): EditableSequences {
+    update(key: string, value: string | null, label: string | null, fastaHeader: string | null): EditableSequences {
         const existingFileIndex = this.editableSequenceFiles.findIndex((file) => file.key === key);
 
         if (existingFileIndex === -1 && this.editableSequenceFiles.length === this.maxNumberOfRows) {
@@ -117,12 +129,18 @@ export class EditableSequences {
         }
 
         label ??= value == null ? 'Add a segment' : key;
+        fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
+        const existingFastaHeaders = this.editableSequenceFiles.map((sequence) => sequence.fastaHeader);
+        if (existingFastaHeaders.includes(fastaHeader)) {
+            throw new Error(`A sequence with the fastaHeader ${fastaHeader} already exists.`);
+        }
 
         const newSequenceFiles = [...this.editableSequenceFiles];
         newSequenceFiles[existingFileIndex > -1 ? existingFileIndex : this.editableSequenceFiles.length] = {
             ...(existingFileIndex > -1 ? newSequenceFiles[existingFileIndex] : { key, initialValue: null }),
             value: value,
             label: label,
+            fastaHeader: fastaHeader,
         };
 
         return new EditableSequences(
@@ -131,29 +149,30 @@ export class EditableSequences {
         );
     }
 
-    getSequenceFasta(submissionId: string): File | undefined {
+    getSequenceFasta(): File | undefined {
         const filledRows = this.rows.filter((row) => row.value !== null);
 
         if (filledRows.length === 0) {
             return undefined;
         }
 
-        const fastaContent = !this.isMultiSegmented()
-            ? `>${submissionId}\n${filledRows[0].value}`
-            : filledRows
-                  .map(
-                      (sequence) =>
-                          `>${submissionId}_${sequence.label.replaceAll(/[^a-zA-Z0-9]/g, '')}\n${sequence.value}`,
-                  )
-                  .join('\n');
+        const fastaContent = filledRows.map((sequence) => `>${sequence.fastaHeader}\n${sequence.value}`).join('\n');
 
         return new File([fastaContent], 'sequences.fasta', { type: 'text/plain' });
     }
 
     getSequenceRecord(): Record<string, string> {
-        return this.rows
-            .filter((row) => row.value !== null)
-            .reduce((prev, row) => ({ ...prev, [row.label]: row.value }), {});
+        const filledRows = this.rows.filter(
+            (
+                row,
+            ): row is Omit<EditableSequenceFile, 'fastaHeader' | 'value'> & { fastaHeader: string; value: string } =>
+                row.value !== null && row.fastaHeader !== null,
+        );
+
+        return filledRows.reduce<Record<string, string>>((prev, row) => {
+            prev[row.label] = row.value; //TODO: this will have to be changed to fastaHeader in future
+            return prev;
+        }, {});
     }
 }
 
@@ -182,9 +201,9 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                         <FileUploadComponent
                             setFile={async (file) => {
                                 const text = file ? await file.text() : null;
-                                const header = file ? await file.header() : null;
+                                const fastaHeader = file ? await file.header() : null;
                                 setEditableSequences((editableSequences) =>
-                                    editableSequences.update(field.key, text, header),
+                                    editableSequences.update(field.key, text, fastaHeader, fastaHeader),
                                 );
                             }}
                             name={`${field.label}_segment_file`}
@@ -200,13 +219,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             onDownload={
                                 field.initialValue !== null && dataToEdit
                                     ? () => {
-                                          const accessionVersion = `${dataToEdit.accession}.${dataToEdit.version}`;
-                                          generateAndDownloadFastaFile(
-                                              accessionVersion,
-                                              field.value ?? '',
-                                              field.label,
-                                              !multiSegment,
-                                          );
+                                          generateAndDownloadFastaFile(field.fastaHeader, field.value);
                                       }
                                     : undefined
                             }
