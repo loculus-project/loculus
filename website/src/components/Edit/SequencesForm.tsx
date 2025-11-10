@@ -72,9 +72,12 @@ export class EditableSequences {
         const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => ({
-                // TODO: older entries will still have the segmentName and not the fastaHeader as a key
+                // TODO: for now key corresponds to the segment name in future it will be the fastaHeader
                 label: key, // TODO: In future prepro will map the fastaHeader to the segment (will be added to the label)
-                fastaHeader: key,
+                fastaHeader:
+                    maxNumberRows > 1
+                        ? `${initialData.submissionId}_${key.replace(/\s+/g, '')}`
+                        : initialData.submissionId, // TODO: in future will come from the key
                 value: value,
                 initialValue: value,
                 key: EditableSequences.getNextKey(),
