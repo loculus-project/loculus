@@ -11,18 +11,26 @@ test.describe('Sequence view in review card', () => {
         test.setTimeout(120000);
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
+        const submissionId = 'TEST_SEQ_VIEW';
 
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({
-            submissionId: 'TEST_SEQ_VIEW',
+            submissionId: submissionId,
             collectionCountry: 'Brazil',
             collectionDate: '2023-01-15',
             authorAffiliations: 'Test Lab, University of Testing',
         });
+        const fastaHeaderL = `${submissionId}_L`;
+        const fastaHeaderM = `${submissionId}_M`;
+        const fastaHeaderS = `${submissionId}_S`;
+
         await submissionPage.fillSequenceData({
-            L: 'CCACATTGACACAGANAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTTAAGAAACCTTGACTGGACTCAGGTGATTGCTAGTCAGTATGTGACCAATCCC',
-            M: 'GTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTATGCAGTTTTCTGCTTGCAGCTGTGCGGTCTAGGGAAAACTAACGGACTACACA',
-            S: 'GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTC',
+            [fastaHeaderL]:
+                'CCACATTGACACAGANAGCTCCAGTAGTGGTTCTCTGTCCTTATTAAACCATGGACTTCTTAAGAAACCTTGACTGGACTCAGGTGATTGCTAGTCAGTATGTGACCAATCCC',
+            [fastaHeaderM]:
+                'GTGGATTGAGCATCTTAATTGCAGCATACTTGTCAACATCATGCATATATCATTGATGTATGCAGTTTTCTGCTTGCAGCTGTGCGGTCTAGGGAAAACTAACGGACTACACA',
+            [fastaHeaderS]:
+                'GTGTTCTCTTGAGTGTTGGCAAAATGGAAAACAAAATCGAGGTGAACAACAAAGATGAGATGAACAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTC',
         });
         await submissionPage.acceptTerms();
         await submissionPage.submitSequence();
