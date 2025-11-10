@@ -3,8 +3,6 @@ package org.loculus.backend.service.maintenance
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.or
@@ -14,7 +12,6 @@ import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.service.jacksonSerializableJsonb
 import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
@@ -22,8 +19,6 @@ import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
-import java.util.concurrent.ConcurrentHashMap
-import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
 
@@ -41,10 +36,7 @@ class SequenceCompressionBackfillStarter(private val backfill: SequenceCompressi
  *
  */
 @Service
-class SequenceCompressionBackfillService(private val cds: CompressionDictService) {
-    // Simple caches to avoid hammering CompressionDictService
-    private val dictByOrganism = ConcurrentHashMap<String, Int?>()
-    private val dictByOrganismAndKey = ConcurrentHashMap<Pair<String, String>, Int?>()
+class SequenceCompressionBackfillService(private val compressionDictService: CompressionDictService) {
 
     fun run(batchSize: Int = 2_000, logEvery: Int = 1_000) {
         log.info { "Backfill: START" }
@@ -61,9 +53,7 @@ class SequenceCompressionBackfillService(private val cds: CompressionDictService
                 value.compressionDictId != null -> value
                 else -> CompressedSequence(
                     compressedSequence = value.compressedSequence,
-                    compressionDictId = dictByOrganismAndKey.computeIfAbsent(organism to key) {
-                        cds.getDictForSegmentOrGene(Organism(organism), key)?.id
-                    },
+                    compressionDictId = compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id,
                 )
             }
         }
