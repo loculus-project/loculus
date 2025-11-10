@@ -60,7 +60,9 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
-        const fastaId = editableSequences.getFastaIds(dataToEdit.submissionId);
+        const fastaId = submissionDataTypes.consensusSequences
+            ? editableSequences.getFastaIds(dataToEdit.submissionId)
+            : undefined;
         const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession, fastaId);
         if (metadataFile === undefined) {
             toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
