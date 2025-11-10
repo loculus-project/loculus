@@ -12,6 +12,7 @@ test.describe('Sequence view in review card', () => {
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const submissionId = 'TEST_SEQ_VIEW';
+        const submissionId = 'TEST_SEQ_VIEW';
 
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({
