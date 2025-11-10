@@ -89,7 +89,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
-                        const sequenceFile = editableSequences.getSequenceFasta(submissionId);
+                        const sequenceFile = editableSequences.getSequenceFasta();
                         if (!sequenceFile && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please enter sequence data.' };
                         }
