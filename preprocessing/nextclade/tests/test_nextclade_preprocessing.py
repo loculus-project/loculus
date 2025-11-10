@@ -560,7 +560,7 @@ multi_segment_case_definitions_any_requirement = [
 
 segment_validation_tests_single_segment = [
     Case(
-        name="accept any key for single segment",
+        name="accept any fastaHeader for single segment",
         input_metadata={},
         input_sequence={"randomKey": sequence_with_mutation("single")},
         accession_id="1",
@@ -618,11 +618,11 @@ segment_validation_tests_single_segment = [
 
 segment_validation_tests_multi_segments = [
     Case(
-        name="accept any prefix for multi-segment",
+        name="accept any fastaHeader for multi-segment",
         input_metadata={},
         input_sequence={
-            "prefix_ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            "other_prefix_ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            "randomFastaHeader1": sequence_with_mutation("ebola-sudan"),
+            "otherFastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -657,11 +657,11 @@ segment_validation_tests_multi_segments = [
         ),
     ),
     Case(
-        name="don't allow multiple segments with the same name",
+        name="don't allow duplicated of the same segment",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": invalid_sequence(),
-            "duplicate_ebola-sudan": invalid_sequence(),
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "duplicate_ebola-sudan": sequence_with_mutation("ebola-sudan"),
         },
         accession_id="1",
         expected_metadata={
@@ -696,47 +696,6 @@ segment_validation_tests_multi_segments = [
             alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
-            aminoAcidInsertions={},
-        ),
-    ),
-    Case(
-        name="don't allow unknown segments",
-        input_metadata={},
-        input_sequence={
-            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            "unknown_segment": invalid_sequence(),
-        },
-        accession_id="2",
-        expected_metadata={
-            "totalInsertedNucs_ebola-sudan": 0,
-            "totalSnps_ebola-sudan": 1,
-            "totalDeletedNucs_ebola-sudan": 0,
-            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
-            "totalInsertedNucs_ebola-zaire": None,
-            "totalSnps_ebola-zaire": None,
-            "totalDeletedNucs_ebola-zaire": None,
-            "length_ebola-zaire": 0,
-        },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                [ProcessingAnnotationAlignment],
-                [ProcessingAnnotationAlignment],
-                "Found sequences in the input data with segments that are not in the config: "
-                "unknown_segment. Each metadata entry can have multiple corresponding fasta sequence "
-                "entries with format <submissionId>_<segmentName> valid segments are: "
-                "ebola-sudan, ebola-zaire.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            )
-        ],
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
-            alignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-            },
             aminoAcidInsertions={},
         ),
     ),
