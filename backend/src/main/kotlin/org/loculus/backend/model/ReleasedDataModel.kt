@@ -79,9 +79,13 @@ open class ReleasedDataModel(
             submissionDatabaseService.getLatestFinishedProcessingAtForReleasedData(organism, pipelineVersion)
         val lastExternalMetadataUpdatedAt =
             submissionDatabaseService.getLatestExternalMetadataUpdatedAtForReleasedData(organism)
+        val lastDataUseTermsUpdatedAt =
+            submissionDatabaseService.getLatestDataUseTermsUpdatedAtForReleasedData(organism)
         val lastFinishedProcessingAtFormatted = lastFinishedProcessingAt ?: ""
         val lastExternalMetadataUpdatedAtFormatted = lastExternalMetadataUpdatedAt ?: ""
-        val etagValue = "$pipelineVersion:$lastFinishedProcessingAtFormatted:$lastExternalMetadataUpdatedAtFormatted"
+        val lastDataUseTermsUpdatedAtFormatted = lastDataUseTermsUpdatedAt ?: ""
+        val etagValue =
+            "$pipelineVersion:$lastFinishedProcessingAtFormatted:$lastExternalMetadataUpdatedAtFormatted:$lastDataUseTermsUpdatedAtFormatted"
         return "\"$etagValue\""
     }
 

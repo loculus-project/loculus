@@ -222,6 +222,36 @@ class SubmissionDatabaseService(
         }
     }
 
+    fun getLatestDataUseTermsUpdatedAtForReleasedData(organism: Organism): String? {
+        val sql =
+            """
+            select
+                max(dut.change_date) as last_data_use_terms_updated_at
+            from data_use_terms_table dut
+            inner join sequence_entries se
+                on se.accession = dut.accession
+            where se.organism = ?
+                and se.released_at is not null
+            """
+                .trimIndent()
+
+        return transaction {
+            exec(
+                sql,
+                listOf(
+                    Pair(VarCharColumnType(), organism.name),
+                ),
+                explicitStatementType = StatementType.SELECT,
+            ) { resultSet ->
+                if (!resultSet.next()) {
+                    null
+                } else {
+                    resultSet.getTimestamp("last_data_use_terms_updated_at")?.toInstant()?.toString()
+                }
+            }
+        }
+    }
+
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
