@@ -30,16 +30,17 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
     }
 
     const submissionPage = new SingleSequenceSubmissionPage(page);
+    const submissionId = 'foobar-readonly';
     const reviewPage = await submissionPage.completeSubmission(
         {
-            submissionId: 'foobar-readonly',
+            submissionId: submissionId,
             collectionCountry: 'France',
             collectionDate: '2021-05-12',
             authorAffiliations: 'Patho Institute, Paris',
             groupId: groupId.toString(),
         },
         {
-            main:
+            [submissionId]:
                 'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
                 'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
                 'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
