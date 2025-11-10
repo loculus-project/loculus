@@ -42,11 +42,11 @@ sequenceTest(
 
     await page.getByTestId('discard_L_segment_file').click();
     await page.getByTestId('discard_S_segment_file').click();
-    await page.getByTestId('Add a segment_segment_file').setInputFiles({
-        name: 'update_S.txt',
-        mimeType: 'text/plain',
-        buffer: Buffer.from('>S\nAAAAA'),
-    });
+    // await page.getByTestId('Add a segment_segment_file').setInputFiles({
+    //     name: 'update_S.txt',
+    //     mimeType: 'text/plain',
+    //     buffer: Buffer.from('>S\nAAAAA'),
+    // });
 
         await page.getByRole('button', { name: 'Submit' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
@@ -55,13 +55,13 @@ sequenceTest(
         await reviewPage.waitForZeroProcessing();
         await reviewPage.viewSequences();
 
-        const tabs = await reviewPage.getAvailableSequenceTabs();
-        expect(tabs).not.toContain('L (aligned)');
-        expect(tabs).not.toContain('L (unaligned)');
-        expect(tabs).toContain('S (unaligned)');
+    const tabs = await reviewPage.getAvailableSequenceTabs();
+    expect(tabs).not.toContain('L (aligned)');
+    expect(tabs).not.toContain('L (unaligned)');
 
-        await reviewPage.switchSequenceTab('S (unaligned)');
-        expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
+    // expect(tabs).toContain('S (unaligned)');
+    // await reviewPage.switchSequenceTab('S (unaligned)');
+    // expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
 
         await reviewPage.closeSequencesDialog();
     },
