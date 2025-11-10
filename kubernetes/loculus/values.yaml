@@ -1856,7 +1856,7 @@ defaultOrganisms:
     ingest:
       <<: *ingest
       configFile:
-        taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
+        taxon_id: 12059
         segment_identification:
           method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
