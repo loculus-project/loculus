@@ -29,7 +29,7 @@ private val log = KotlinLogging.logger {}
 
 @Component
 class SequenceCompressionBackfillStarter(private val backfill: SequenceCompressionBackfillService) {
-    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.HOURS)
+    @Scheduled(fixedDelay = 1, timeUnit = java.util.concurrent.TimeUnit.DAYS)
     fun startAfterReady() {
         backfill.run()
     }
