@@ -32,7 +32,10 @@ const logger = getClientLogger('EditPage');
  * Extracts the detail field from a backend error response
  */
 function getErrorDetail(error: unknown): string {
-    if (isErrorFromAlias(backendApi, 'revise', error) || isErrorFromAlias(backendApi, 'submitReviewedSequence', error)) {
+    if (
+        isErrorFromAlias(backendApi, 'revise', error) ||
+        isErrorFromAlias(backendApi, 'submitReviewedSequence', error)
+    ) {
         return error.response.data.detail;
     }
     return JSON.stringify(error);
