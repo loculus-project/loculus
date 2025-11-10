@@ -468,18 +468,15 @@ function handleError(onError: (message: string) => void, action: UploadAction) {
     return (error: unknown | AxiosError) => {
         void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
         if (isErrorFromAlias(backendApi, action, error)) {
-            const actionVerb = action === 'submit' ? 'submit' : 'revise';
-            const actionPastTense = action === 'submit' ? 'submitted' : 'revised';
-
             switch (error.response.status) {
                 case 400:
-                    onError(`Failed to ${actionVerb} sequence entries: ${error.response.data.detail}`);
+                    onError('Failed to submit sequence entries: ' + error.response.data.detail);
                     return;
                 case 422:
-                    onError(`The ${actionPastTense} file content was invalid: ${error.response.data.detail}`);
+                    onError('The submitted file content was invalid: ' + error.response.data.detail);
                     return;
                 default:
-                    onError(`${error.response.data.title}: ${error.response.data.detail}`);
+                    onError(error.response.data.title + ': ' + error.response.data.detail);
                     return;
             }
         }
