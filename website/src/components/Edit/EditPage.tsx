@@ -64,7 +64,9 @@ const InnerEditPage: FC<EditPageProps> = ({
             toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
             return;
         }
-        const sequenceFile = submissionDataTypes.consensusSequences ? editableSequences.getSequenceFasta() : undefined;
+        const sequenceFile = submissionDataTypes.consensusSequences
+            ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
+            : undefined;
         if (submissionDataTypes.consensusSequences && sequenceFile == undefined) {
             toast.error('Please enter a sequence.', { position: 'top-center', autoClose: false });
             return;
