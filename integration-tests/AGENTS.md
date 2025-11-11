@@ -87,6 +87,17 @@ npx playwright test tests/specs/cli/auth.spec.ts --reporter=list
 BROWSER=firefox npx playwright test --workers=4 --reporter=list
 ```
 
+#### Controlling Test Execution
+
+Test execution can be controlled using the `BROWSER` and `TEST_SUITE` environment variables.
+
+-   `BROWSER`: Specifies the browser for *browser-based* tests (`chromium`, `firefox`). If not set, browser-based tests run on all configured browsers. Note that CLI tests always run on Chromium, regardless of this setting.
+-   `TEST_SUITE`: Filters tests by suite:
+    -   `all` (default): Runs both browser and CLI tests.
+    -   `browser`: Runs only browser-based tests.
+    -   `cli`: Runs only CLI tests (always on Chromium).
+
+
 ## Running Against Remote Environments
 
 ```sh
