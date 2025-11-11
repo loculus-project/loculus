@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
+import { promisify, stripVTControlCharacters } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -74,8 +74,8 @@ export class CliPage {
 
             const duration = Date.now() - startTime;
             const result: CliResult = {
-                stdout: stdout.trim(),
-                stderr: stderr.trim(),
+                stdout: stripVTControlCharacters(stdout.trim()),
+                stderr: stripVTControlCharacters(stderr.trim()),
                 exitCode: 0,
                 command,
                 timestamp,
@@ -96,8 +96,10 @@ export class CliPage {
 
             const duration = Date.now() - startTime;
             const result: CliResult = {
-                stdout: execError.stdout?.trim() || '',
-                stderr: execError.stderr?.trim() || execError.message || '',
+                stdout: stripVTControlCharacters(execError.stdout?.trim() || ''),
+                stderr: stripVTControlCharacters(
+                    execError.stderr?.trim() || execError.message || '',
+                ),
                 exitCode: execError.code || 1,
                 command,
                 timestamp,

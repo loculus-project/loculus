@@ -84,13 +84,13 @@ const config = {
     ],
 };
 
-if (browser) {
-    const testSuite = process.env.TEST_SUITE || 'all';
+const testSuite = process.env.TEST_SUITE || 'all';
 
-    if (testSuite === 'cli') {
-        // Run only CLI tests
-        config.projects = config.projects.filter((p) => p.name === 'cli-tests');
-    } else if (testSuite === 'browser') {
+if (testSuite === 'cli') {
+    // Run only CLI tests
+    config.projects = config.projects.filter((p) => p.name === 'cli-tests');
+} else if (browser) {
+    if (testSuite === 'browser') {
         // Run only browser tests (exclude CLI)
         config.projects = config.projects.filter(
             (p) => p.name.startsWith(browser) || p.name === 'readonly setup',
