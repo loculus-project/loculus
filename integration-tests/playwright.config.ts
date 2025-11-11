@@ -66,11 +66,13 @@ const config = {
             name: 'chromium-without-dep',
             use: { ...devices['Desktop Chrome'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+            testIgnore: /.*\/cli\/.*\.spec\.ts$/,
         },
         {
             name: 'firefox-without-dep',
             use: { ...devices['Desktop Firefox'] },
             testMatch: /^(?!.*\.dependent\.spec\.ts$).*\.spec\.ts$/,
+            testIgnore: /.*\/cli\/.*\.spec\.ts$/,
         },
 
         // CLI tests - still need browser for user setup
