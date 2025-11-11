@@ -119,7 +119,15 @@ jobs:
         run: kubectl get pods --all-namespaces
       - name: Describe pods
         if: ${{ !cancelled() }}
-        run: kubectl describe pods -l app=loculus
+        run: |
+          mkdir -p pod_descriptions
+          kubectl describe pods -l app=loculus > pod_descriptions/describe_pods.txt
+      - name: Upload pod descriptions
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: pod-descriptions-${{ matrix.browser }}  # or just pod-descriptions for e2e-k3d.yml
+          path: pod_descriptions/
       - name: Show events
         if: ${{ !cancelled() }}
         run: kubectl get events
