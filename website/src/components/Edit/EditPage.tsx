@@ -59,20 +59,26 @@ const InnerEditPage: FC<EditPageProps> = ({
     );
 
     const submitEditedDataForAccessionVersion = () => {
-        const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
-        if (metadataFile === undefined) {
-            toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
-            return;
-        }
-        const sequenceFile = submissionDataTypes.consensusSequences
-            ? editableSequences.getSequenceFasta(dataToEdit.submissionId)
-            : undefined;
-        if (submissionDataTypes.consensusSequences && sequenceFile == undefined) {
-            toast.error('Please enter a sequence.', { position: 'top-center', autoClose: false });
-            return;
-        }
-
         if (isCreatingRevision) {
+            const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
+            if (metadataFile === undefined) {
+                toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
+                return;
+            }
+            if (!submissionDataTypes.consensusSequences) {
+                submitRevision({
+                    metadataFile,
+                });
+                return;
+            }
+            const sequenceFile = editableSequences.getSequenceFasta(dataToEdit.submissionId);
+            if (!sequenceFile) {
+                toast.error('Please enter a sequence.', {
+                    position: 'top-center',
+                    autoClose: false,
+                });
+                return;
+            }
             submitRevision({
                 metadataFile,
                 sequenceFile,
