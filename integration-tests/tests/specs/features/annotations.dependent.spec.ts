@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
 import { test } from '../../fixtures/group.fixture';
+import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
 test.describe('Sequence Preview Annotations', () => {
     test('should have an embl file in the Files section', async ({ page }) => {
@@ -26,15 +27,12 @@ test.describe('Sequence Preview Annotations', () => {
         await expect(
             page.getByTestId('sequence-preview-modal').getByText('Annotations'),
         ).toBeVisible();
-        await expect(page.getByRole('link', { name: `${accessionVersion}.embl` })).toBeVisible();
 
-        const fileUrl = await page
-            .getByRole('link', { name: `${accessionVersion}.embl` })
-            .getAttribute('href');
+        const emblLink = page.getByRole('link', { name: `${accessionVersion}.embl` });
+        await expect(emblLink).toBeVisible();
 
-        const resp = await fetch(fileUrl);
         const expected_content = EMBL_CONTENT.replace(/LOC_\w{6,10}/g, accession);
-        expect(await resp.text()).toBe(expected_content);
+        await getFromLinkTargetAndAssertContent(emblLink, expected_content);
     });
 });
 

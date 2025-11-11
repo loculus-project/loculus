@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
 test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
     test.setTimeout(120_000);
@@ -110,14 +111,8 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
 async function checkFileContent(page: Page, fileName: string, fileContent: string) {
     await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    // check response instead of page content, because the file might also trigger a download in some cases.
-    const href = await page.getByRole('link', { name: fileName }).getAttribute('href');
-    if (!href) {
-        throw new Error(`Missing link for file ${fileName}`);
-    }
-    const fileUrl = href.startsWith('http') ? href : new URL(href, page.url()).toString();
-    const response = await page.request.get(fileUrl);
-    expect(response.status()).toBe(200);
-    const content = await response.text();
-    expect(content).toBe(fileContent);
+    await getFromLinkTargetAndAssertContent(
+        page.getByRole('link', { name: fileName }),
+        fileContent,
+    );
 }
