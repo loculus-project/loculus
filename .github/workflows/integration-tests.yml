@@ -102,7 +102,12 @@ jobs:
           BROWSER: ${{ matrix.browser }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 --reporter=list 2>&1 | tee output.txt
+          # CLI tests are browser-agnostic, only run them with chromium to avoid redundancy
+          PLAYWRIGHT_FLAGS="--workers=4 --reporter=list"
+          if [ "$BROWSER" != "chromium" ]; then
+            PLAYWRIGHT_FLAGS="$PLAYWRIGHT_FLAGS --grep-invert '/cli/'"
+          fi
+          cd integration-tests && npx playwright test $PLAYWRIGHT_FLAGS 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
