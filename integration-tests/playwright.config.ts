@@ -85,9 +85,22 @@ const config = {
 };
 
 if (browser) {
-    config.projects = config.projects.filter(
-        (p) => p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
-    );
+    const testSuite = process.env.TEST_SUITE || 'all';
+
+    if (testSuite === 'cli') {
+        // Run only CLI tests
+        config.projects = config.projects.filter((p) => p.name === 'cli-tests');
+    } else if (testSuite === 'browser') {
+        // Run only browser tests (exclude CLI)
+        config.projects = config.projects.filter(
+            (p) => p.name.startsWith(browser) || p.name === 'readonly setup',
+        );
+    } else {
+        // Default 'all': run both browser and CLI tests
+        config.projects = config.projects.filter(
+            (p) => p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
+        );
+    }
 }
 
 export default defineConfig(config);
