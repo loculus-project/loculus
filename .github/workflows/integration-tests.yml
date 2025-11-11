@@ -104,7 +104,7 @@ jobs:
           TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 --reporter=list 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
