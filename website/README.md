@@ -80,3 +80,7 @@ When using interactive components (buttons, Headless UI components like Combobox
 -   **For other interactive elements**: Consider wrapping with `DisabledUntilHydrated` or using the `useClientFlag` hook
 
 These wrappers automatically disable components until client-side hydration is complete, preventing Playwright from interacting with them before they're ready.
+
+### Codemods
+
+Inspiration for writing codemods can be found in [codemods/AGENTS.md](./codemods/AGENTS.md).
