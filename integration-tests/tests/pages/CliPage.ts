@@ -437,29 +437,6 @@ export class CliPage {
     }
 
     /**
-     * Log CLI result for debugging (always includes stderr if present)
-     */
-    logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
-        const parts = [`${operation}:`];
-
-        if (result.exitCode !== 0) {
-            parts.push(`❌ Exit code: ${result.exitCode}`);
-        } else {
-            parts.push(`✅ Success`);
-        }
-
-        if (logStdout && result.stdout) {
-            parts.push(`STDOUT: ${result.stdout}`);
-        }
-
-        if (result.stderr) {
-            parts.push(`STDERR: ${result.stderr}`);
-        }
-
-        console.log(parts.join('\n'));
-    }
-
-    /**
      * Get status of sequences
      */
     async getStatus(options: {

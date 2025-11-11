@@ -39,7 +39,6 @@ cliTest.describe('CLI Release Command', () => {
                         break;
                     }
                 } else {
-                    cliPage.logCliResult(`Error checking status (attempt ${i + 1})`, statusResult);
                     cliPage.assertSuccess(statusResult, 'Status check for processed sequences');
                 }
 
