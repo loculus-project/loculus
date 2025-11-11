@@ -126,7 +126,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
         with:
-          name: pod-descriptions-${{ matrix.browser }}  # or just pod-descriptions for e2e-k3d.yml
+          name: pod-descriptions-${{ matrix.browser }}
           path: pod_descriptions/
       - name: Show events
         if: ${{ !cancelled() }}
