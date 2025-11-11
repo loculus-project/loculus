@@ -404,3 +404,140 @@ def test_interrupted_run_cleanup_and_hash_skip(
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1, "Should have one directory after successful run"
     assert input_dirs[0] != first_dir, "Should be a new directory"
+
+
+def test_old_output_directories_are_pruned(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that old timestamped output directories are deleted, keeping only the most recent."""
+    config = ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions={1: "http://lineage"},
+        hard_refresh_interval=1000,
+        poll_interval=1,
+        silo_run_timeout=5,
+        root_dir=tmp_path,
+    )
+    paths = ImporterPaths.from_root(tmp_path)
+    paths.ensure_directories()
+
+    # Create several old timestamped output directories to simulate previous SILO runs
+    old_output_dir_1 = paths.output_dir / "1000000000"
+    old_output_dir_2 = paths.output_dir / "1100000000"
+    old_output_dir_3 = paths.output_dir / "1200000000"
+    old_output_dir_1.mkdir()
+    old_output_dir_2.mkdir()
+    old_output_dir_3.mkdir()
+
+    # Create some dummy files in these directories to ensure they get deleted
+    (old_output_dir_1 / "data.txt").write_text("old data 1")
+    (old_output_dir_2 / "data.txt").write_text("old data 2")
+    (old_output_dir_3 / "data.txt").write_text("old data 3")
+
+    # Verify all old directories exist before the test
+    assert old_output_dir_1.exists()
+    assert old_output_dir_2.exists()
+    assert old_output_dir_3.exists()
+
+    # Prepare a successful import run
+    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
+    body = compress_ndjson(records)
+    responses = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"new"', "x-total-records": "1"}, body=body
+        )
+    ]
+    mock_download, _ = make_mock_download_func(responses)
+
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
+    )
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download)
+
+    ack_thread = mock_silo_prepro_success(paths)
+    runner.run_once()
+    ack_thread.join(timeout=2)
+
+    # Verify that old output directories have been pruned
+    output_dirs = [p for p in paths.output_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+
+    # Should only keep the most recent one
+    assert len(output_dirs) == 1, "Should only keep the most recent output directory"
+
+    # The kept directory should be the newest (highest timestamp)
+    kept_dir = output_dirs[0]
+    assert kept_dir == old_output_dir_3, "Should keep the most recent output directory"
+
+    # Verify old directories were deleted
+    assert not old_output_dir_1.exists(), "Oldest output directory should be deleted"
+    assert not old_output_dir_2.exists(), "Second oldest output directory should be deleted"
+    assert old_output_dir_3.exists(), "Most recent output directory should be kept"
+
+
+def test_input_directories_pruned_on_multiple_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that old input directories are pruned after successful imports."""
+    config = ImporterConfig(
+        backend_base_url="http://backend",
+        lineage_definitions={1: "http://lineage"},
+        hard_refresh_interval=1,  # Force hard refresh each time
+        poll_interval=1,
+        silo_run_timeout=5,
+        root_dir=tmp_path,
+    )
+    paths = ImporterPaths.from_root(tmp_path)
+    paths.ensure_directories()
+
+    monkeypatch.setattr(
+        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
+    )
+
+    # Run 1: First import
+    records_v1 = [{"metadata": {"pipelineVersion": "1"}, "data": "v1"}]
+    body_v1 = compress_ndjson(records_v1)
+    responses_r1 = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"v1"', "x-total-records": "1"}, body=body_v1
+        )
+    ]
+    mock_download_r1, _ = make_mock_download_func(responses_r1)
+
+    runner = ImporterRunner(config, paths)
+    runner.download_manager = DownloadManager(download_func=mock_download_r1)
+
+    ack_thread_r1 = mock_silo_prepro_success(paths)
+    runner.run_once()
+    ack_thread_r1.join(timeout=2)
+
+    # Should have one input directory
+    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(input_dirs) == 1, "Should have one input directory after first run"
+    first_input_dir = input_dirs[0]
+
+    # Wait to ensure hard refresh interval passes
+    time.sleep(1.1)
+
+    # Run 2: Second import with different data
+    records_v2 = [{"metadata": {"pipelineVersion": "1"}, "data": "v2"}]
+    body_v2 = compress_ndjson(records_v2)
+    responses_r2 = [
+        MockHttpResponse(
+            status=200, headers={"ETag": 'W/"v2"', "x-total-records": "1"}, body=body_v2
+        )
+    ]
+    mock_download_r2, _ = make_mock_download_func(responses_r2)
+    runner.download_manager = DownloadManager(download_func=mock_download_r2)
+
+    ack_thread_r2 = mock_silo_prepro_success(paths)
+    runner.run_once()
+    ack_thread_r2.join(timeout=2)
+
+    # Old input directory should be pruned, only latest should remain
+    input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    assert len(input_dirs) == 1, "Should only have one input directory after second run"
+    second_input_dir = input_dirs[0]
+
+    # Should be a different directory
+    assert second_input_dir != first_input_dir, "Should have a new input directory"
+    assert not first_input_dir.exists(), "Old input directory should be deleted"
