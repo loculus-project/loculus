@@ -98,7 +98,8 @@ if (browser) {
     } else {
         // Default 'all': run both browser and CLI tests
         config.projects = config.projects.filter(
-            (p) => p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
+            (p) =>
+                p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
         );
     }
 }
