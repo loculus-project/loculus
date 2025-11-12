@@ -72,66 +72,28 @@ PLAYWRIGHT_TEST_BASE_URL='https://[branch_name].loculus.org' npx playwright test
 
 ### Run tests
 
-
-
 Run the tests:
 
-
-
 ```sh
-
 npx playwright test
-
 ```
-
-
 
 ### Controlling Test Execution
 
-
-
 You can control which tests are run using the `BROWSER` and `TEST_SUITE` environment variables.
 
-
-
 - `BROWSER`: Specifies the browser to run the *browser-based* tests on. Can be `chromium` or `firefox`. If not set, browser-based tests will run on all configured browsers. Note that CLI tests always run on Chromium, regardless of this setting.
-
-
-
 - `TEST_SUITE`: Controls which suite of tests to run.
-
-
-
     - `all` (default): Runs both browser and CLI tests.
-
-
-
     - `browser`: Runs only the browser-based tests.
-
-
-
     - `cli`: Runs only the command-line interface (CLI) tests (always on Chromium).
-
-
 
 Example:
 
-
-
 ```sh
-
 # Run only CLI tests on Chromium
-
 BROWSER=chromium TEST_SUITE=cli npx playwright test
 
-
-
 # Run only browser tests on Firefox
-
 BROWSER=firefox TEST_SUITE=browser npx playwright test
-
 ```
-
-
-
-
