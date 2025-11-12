@@ -304,9 +304,9 @@ export const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, {});
-    const detailsHook = hooks.useDetails({}, {});
+    const hooks = lapisClientHooks(lapisUrl);
+    const aggregatedHook = hooks.useAggregated();
+    const detailsHook = hooks.useDetails();
 
     const [selectedSeqs, setSelectedSeqs] = useState<Set<string>>(new Set());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -514,7 +514,7 @@ export const InnerSearchFullUI = ({
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
                                 sequenceFilter={downloadFilter}
-                                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
+                                referenceGenomesLightweightSchema={referenceGenomeLightweightSchema}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 metadata={schema.metadata}
