@@ -1,8 +1,9 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
+import { promisify, stripVTControlCharacters } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { test } from '@playwright/test';
 
 const execAsync = promisify(exec);
 
@@ -10,6 +11,9 @@ export interface CliResult {
     stdout: string;
     stderr: string;
     exitCode: number;
+    command?: string;
+    timestamp?: string;
+    duration?: number;
 }
 
 export class CliPage {
@@ -58,6 +62,8 @@ export class CliPage {
         };
 
         const command = `loculus ${args.join(' ')}`;
+        const timestamp = new Date().toISOString();
+        const startTime = Date.now();
 
         try {
             const { stdout, stderr } = await execAsync(command, {
@@ -66,11 +72,20 @@ export class CliPage {
                 timeout,
             });
 
-            return {
-                stdout: stdout.trim(),
-                stderr: stderr.trim(),
+            const duration = Date.now() - startTime;
+            const result: CliResult = {
+                stdout: stripVTControlCharacters(stdout.trim()),
+                stderr: stripVTControlCharacters(stderr.trim()),
                 exitCode: 0,
+                command,
+                timestamp,
+                duration,
             };
+
+            // Attach outputs to Playwright test info for better debugging
+            this.attachToTest(result);
+
+            return result;
         } catch (error: unknown) {
             const execError = error as {
                 stdout?: string;
@@ -78,11 +93,73 @@ export class CliPage {
                 message?: string;
                 code?: number;
             };
-            return {
-                stdout: execError.stdout?.trim() || '',
-                stderr: execError.stderr?.trim() || execError.message || '',
+
+            const duration = Date.now() - startTime;
+            const result: CliResult = {
+                stdout: stripVTControlCharacters(execError.stdout?.trim() || ''),
+                stderr: stripVTControlCharacters(
+                    execError.stderr?.trim() || execError.message || '',
+                ),
                 exitCode: execError.code || 1,
+                command,
+                timestamp,
+                duration,
             };
+
+            // Attach outputs to Playwright test info for better debugging
+            this.attachToTest(result);
+
+            return result;
+        }
+    }
+
+    /**
+     * Attach CLI result to Playwright test info for better debugging
+     */
+    private attachToTest(result: CliResult): void {
+        try {
+            const testInfo = test.info();
+            if (!testInfo) {
+                return;
+            }
+
+            // Create a detailed log of the CLI execution
+            const logContent = [
+                `Command: ${result.command}`,
+                `Timestamp: ${result.timestamp}`,
+                `Duration: ${result.duration}ms`,
+                `Exit Code: ${result.exitCode}`,
+                '',
+                '=== STDOUT ===',
+                result.stdout || '(empty)',
+                '',
+                '=== STDERR ===',
+                result.stderr || '(empty)',
+            ].join('\n');
+
+            // Attach as text file
+            testInfo
+                .attach(`cli-${result.timestamp}`, {
+                    body: logContent,
+                    contentType: 'text/plain',
+                })
+                .catch(() => {
+                    console.warn('Failed to attach CLI log to test info');
+                });
+
+            // For failed commands, also attach with a more prominent name
+            if (result.exitCode !== 0) {
+                testInfo
+                    .attach(`cli-FAILED-${result.command?.split(' ')[0] || 'unknown'}`, {
+                        body: logContent,
+                        contentType: 'text/plain',
+                    })
+                    .catch(() => {
+                        console.warn('Failed to attach CLI log to test info');
+                    });
+            }
+        } catch {
+            // Silently ignore if test.info() is not available (e.g., outside test context)
         }
     }
 
@@ -359,29 +436,6 @@ export class CliPage {
         const result = await this.execute(args, options);
         this.assertSuccess(result, operation);
         return result;
-    }
-
-    /**
-     * Log CLI result for debugging (always includes stderr if present)
-     */
-    logCliResult(operation: string, result: CliResult, logStdout: boolean = false): void {
-        const parts = [`${operation}:`];
-
-        if (result.exitCode !== 0) {
-            parts.push(`❌ Exit code: ${result.exitCode}`);
-        } else {
-            parts.push(`✅ Success`);
-        }
-
-        if (logStdout && result.stdout) {
-            parts.push(`STDOUT: ${result.stdout}`);
-        }
-
-        if (result.stderr) {
-            parts.push(`STDERR: ${result.stderr}`);
-        }
-
-        console.log(parts.join('\n'));
     }
 
     /**

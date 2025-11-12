@@ -64,6 +64,5 @@ cliTest.describe('CLI Get/Search', () => {
         });
         expect(invalidOrganismResult.exitCode).not.toBe(0);
         expect(invalidOrganismResult.stderr).toMatch(/LAPIS not available|failed|not found/);
-        cliPage.logCliResult('Invalid organism (expected failure)', invalidOrganismResult);
     });
 });

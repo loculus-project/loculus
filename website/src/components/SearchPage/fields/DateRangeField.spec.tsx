@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { DateRangeField } from './DateRangeField';
 import { type GroupedMetadataFilter, type FieldValues, type SetSomeFieldValues } from '../../../types/config';
+import { Button } from '../../common/Button';
 
 describe('DateRangeField', () => {
     function createRangeOverlapSearch(bound: 'lower' | 'upper') {
@@ -175,13 +176,13 @@ describe('DateRangeField', () => {
             return (
                 <div>
                     <DateRangeField field={field} fieldValues={values} setSomeFieldValues={setValues} />
-                    <button
+                    <Button
                         onClick={() =>
                             setValues(['collectionDateRangeLowerFrom', null], ['collectionDateRangeUpperTo', null])
                         }
                     >
                         Update Dates
-                    </button>
+                    </Button>
                 </div>
             );
         }

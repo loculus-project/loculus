@@ -29,6 +29,7 @@ jobs:
         browser:
           - chromium
           - firefox
+          - cli
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -99,10 +100,11 @@ jobs:
         run: sleep 10
       - name: Run Integration test
         env:
-          BROWSER: ${{ matrix.browser }}
+          BROWSER: ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
+          TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
         run: |
           set -o pipefail
-          cd integration-tests && npx playwright test --workers=4 2>&1 | tee output.txt
+          cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
           EXIT_CODE=$?
           echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY

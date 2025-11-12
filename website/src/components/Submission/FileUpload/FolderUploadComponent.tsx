@@ -6,6 +6,7 @@ import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import type { FilesBySubmissionId, Group } from '../../../types/backend';
 import type { ClientConfig } from '../../../types/runtimeConfig';
+import { Button } from '../../common/Button';
 import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
@@ -368,13 +369,13 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
                 </div>
             </div>
 
-            <button
+            <Button
                 onClick={() => setFileUploadState(undefined)}
                 data-testid={`discard_${fileField}`}
                 className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
             >
                 Discard files
-            </button>
+            </Button>
         </div>
     );
 };

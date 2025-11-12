@@ -5,6 +5,7 @@ import { type DownloadUrlGenerator, type DownloadOption } from './DownloadUrlGen
 import { type SequenceFilter } from './SequenceFilters';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes';
 import { processTemplate, matchPlaceholders } from '../../../utils/templateProcessor';
+import { Button } from '../../common/Button';
 import BasicModal from '../../common/Modal';
 import DashiconsExternal from '~icons/dashicons/external';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -135,7 +136,7 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                         {linkOuts.map((linkOut) => (
                             <MenuItem key={linkOut.name}>
                                 {({ focus }) => (
-                                    <button
+                                    <Button
                                         onClick={() => handleLinkClick(linkOut)}
                                         className={`
                                             ${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
@@ -144,14 +145,13 @@ export const LinkOutMenu: FC<LinkOutMenuProps> = ({
                                     >
                                         {linkOut.name}
                                         <DashiconsExternal className='h-4 w-4 ml-2' />
-                                    </button>
+                                    </Button>
                                 )}
                             </MenuItem>
                         ))}
                     </div>
                 </MenuItems>
             </Menu>
-
             {dataUseTermsEnabled && (
                 <LinkOutMenuDataUseTermModal
                     modalVisible={isDataUseTermsModalVisible}
@@ -184,18 +184,18 @@ function LinkOutMenuDataUseTermModal(props: {
                     with the Restricted-Use terms.)
                 </p>
                 <div className='flex justify-end space-x-4'>
-                    <button
+                    <Button
                         className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors'
                         onClick={props.onClick}
                     >
                         Open sequences only
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         className='px-4 py-2 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 transition-colors'
                         onClick={props.onClick1}
                     >
                         Include Restricted-Use
-                    </button>
+                    </Button>
                 </div>
             </div>
         </BasicModal>

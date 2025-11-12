@@ -7,6 +7,7 @@ import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceDa
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
 import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import { Button } from '../common/Button';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
     [
@@ -72,7 +73,7 @@ const MockSaveWrapper = ({
                     consensusSequences: enableConsensusSequences,
                 }}
             />
-            <button onClick={handler}>generate</button>
+            <Button onClick={handler}>generate</Button>
         </>
     );
 };
