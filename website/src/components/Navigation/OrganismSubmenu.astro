@@ -25,20 +25,12 @@ const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
                     {currentOrganismObject?.displayName || currentOrganism}
                 </span>
                 <span class='text-gray-300 mr-2'>|</span>
-                {sequenceRelatedItems.map(({ text, path, icon }) => {
+                {[...sequenceRelatedItems, ...extraItems].map(({ text, path, icon }) => {
                     const Icon = icon;
                     const isActive = currentPath.startsWith(path);
                     return (
                         <SubmenuLink href={path} isActive={isActive}>
                             {Icon && <Icon className='w-4 h-4' />}
-                            {text}
-                        </SubmenuLink>
-                    );
-                })}
-                {extraItems.map(({ text, path }) => {
-                    const isActive = currentPath.startsWith(path);
-                    return (
-                        <SubmenuLink href={path} isActive={isActive}>
                             {text}
                         </SubmenuLink>
                     );

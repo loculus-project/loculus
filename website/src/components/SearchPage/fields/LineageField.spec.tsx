@@ -19,10 +19,8 @@ const mockUseLineageDefinition = vi.fn();
 // @ts-expect-error because mockReturnValue is not defined in the type definition
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
-    zodiosHooks: {
-        useLineageDefinition: mockUseLineageDefinition,
-        useAggregated: mockUseAggregated,
-    },
+    useAggregated: mockUseAggregated,
+    useLineageDefinition: mockUseLineageDefinition,
 });
 
 describe('LineageField', () => {
