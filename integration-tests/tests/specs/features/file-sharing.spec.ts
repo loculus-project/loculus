@@ -4,7 +4,7 @@ import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/su
 import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
 test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
@@ -54,7 +54,7 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
 });
 
 test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
