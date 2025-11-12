@@ -121,7 +121,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           mkdir -p pod_descriptions
-          kubectl describe pods -l app=loculus > pod_descriptions/describe_pods.txt
+          kubectl describe pods -l app=loculus | tee pod_descriptions/describe_pods.txt
       - name: Upload pod descriptions
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
