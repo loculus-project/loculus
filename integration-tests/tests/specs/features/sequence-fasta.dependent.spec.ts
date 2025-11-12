@@ -24,7 +24,9 @@ test.describe('Sequence FASTA endpoint', () => {
         await searchPage.ebolaSudan();
         const accessionVersion = await searchPage.waitForLoculusId();
 
-        const response = await page.request.get(`${baseURL}/seq/${accessionVersion}.fa?download=true`);
+        const response = await page.request.get(
+            `${baseURL}/seq/${accessionVersion}.fa?download=true`,
+        );
 
         expect(response.ok()).toBe(true);
         expect(response.headers()['access-control-allow-origin']).toBe('*');
