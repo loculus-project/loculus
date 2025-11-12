@@ -84,11 +84,13 @@ function renderSearchFullUI({
     clientConfig = testConfig.public,
     referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     hiddenFieldValues = {},
+    suborganismIdentifierField,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
     referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     hiddenFieldValues?: FieldValues;
+    suborganismIdentifierField?: string | undefined;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
         ...filter,
@@ -108,6 +110,7 @@ function renderSearchFullUI({
             submissionDataTypes: {
                 consensusSequences: true,
             },
+            suborganismIdentifierField,
         } as Schema,
         initialData: [],
         initialCount: 0,
@@ -348,5 +351,44 @@ describe('SearchFullUI', () => {
             expect(window.history.state.path).toContain('column_field1=false');
             expect(window.history.state.path).not.toContain('column_field4=false');
         });
+    });
+
+    it('should reset suborganism specific search fields when changing the selected suborganism', async () => {
+        renderSearchFullUI({
+            suborganismIdentifierField: 'suborganism',
+            searchFormFilters: [
+                {
+                    name: 'field1',
+                    type: 'string',
+                    displayName: 'Field 1',
+                    onlyForSuborganism: 'suborganism1',
+                },
+                {
+                    name: 'suborganism',
+                    type: 'string',
+                    displayName: 'suborganism',
+                },
+            ],
+            referenceGenomeLightweightSchema: {
+                suborganism1: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [defaultAccession],
+                },
+                suborganism2: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [defaultAccession],
+                },
+            },
+        });
+
+        const suborganismSelector = await screen.findByLabelText('suborganism');
+        expect(suborganismSelector).toBeVisible();
+        await userEvent.selectOptions(suborganismSelector, 'suborganism1');
+
+        const mutationsField = await screen.findByLabelText('Mutations');
+        expect(mutationsField).toBeVisible();
+        await userEvent.type(mutationsField, '123{enter}');
     });
 });

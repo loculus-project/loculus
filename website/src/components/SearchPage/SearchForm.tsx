@@ -22,7 +22,7 @@ import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
-import { type MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
+import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -188,7 +188,7 @@ export const SearchForm = ({
                             <MutationField
                                 suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues(['mutation', value])}
+                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
                             />
                         )}
                         {visibleFields.map((filter) => (

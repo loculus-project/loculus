@@ -21,6 +21,8 @@ export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
 export const NULL_QUERY_VALUE = '_null_';
 
+export const MUTATION_KEY = 'mutation';
+
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
@@ -198,7 +200,7 @@ export class MetadataFilterSchema {
         this.filters = consolidateGroupedFields(expandedFilters);
     }
 
-    private ungroupedMetadataFilters(): MetadataFilter[] {
+    public ungroupedMetadataFilters(): MetadataFilter[] {
         return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
     }
 
@@ -267,8 +269,8 @@ export class MetadataFilterSchema {
             const val = validateSingleValue(queryState.accession, 'accession');
             values.accession = val === '' ? undefined : val;
         }
-        if ('mutation' in queryState) {
-            const val = validateSingleValue(queryState.mutation, 'mutation');
+        if (MUTATION_KEY in queryState) {
+            const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
             values.mutation = val === '' ? undefined : val;
         }
         return values;

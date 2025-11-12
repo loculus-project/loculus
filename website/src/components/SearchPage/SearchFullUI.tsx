@@ -37,6 +37,7 @@ import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
+    MUTATION_KEY,
     NULL_QUERY_VALUE,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
@@ -112,7 +113,7 @@ export const InnerSearchFullUI = ({
         'boolean',
         (value) => !value,
     );
-    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
+    const [selectedSuborganism, setSelectedSuborganismInState] = useUrlParamState<string | null>(
         schema.suborganismIdentifierField ?? '',
         state,
         null,
@@ -364,6 +365,21 @@ export const InnerSearchFullUI = ({
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
         !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
+
+    const setSelectedSuborganism = useCallback(
+        (newValue: string | null) => {
+            setSelectedSuborganismInState(newValue);
+
+            setSomeFieldValues(
+                [MUTATION_KEY, null],
+                ...filterSchema
+                    .ungroupedMetadataFilters()
+                    .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
+                    .map((metadataFilter): FieldValueUpdate => [metadataFilter.name, null]),
+            );
+        },
+        [setSelectedSuborganismInState],
+    );
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
