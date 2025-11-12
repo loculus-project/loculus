@@ -203,7 +203,7 @@ export const SearchForm = ({
                                 lapisSearchParameters={lapisSearchParameters}
                             />
                         ))}
-                    </div>{' '}
+                    </div>
                 </div>
             </div>
         </QueryClientProvider>
