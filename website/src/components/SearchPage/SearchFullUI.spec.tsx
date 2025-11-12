@@ -40,10 +40,6 @@ const mockUseDetails = vi.fn();
 (lapisClientHooks as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
     useAggregated: mockUseAggregated,
     useDetails: mockUseDetails,
-    zodiosHooks: {
-        useAggregated: mockUseAggregated,
-        useDetails: mockUseDetails,
-    },
 });
 
 const defaultSearchFormFilters: MetadataFilter[] = [
