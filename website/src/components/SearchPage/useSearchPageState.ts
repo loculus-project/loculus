@@ -27,31 +27,6 @@ export function useSearchPageState({
 }: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => !value,
-    );
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
-        state,
-        false,
-        setState,
-        'boolean',
-        (value) => !value,
-    );
-    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
-        schema.suborganismIdentifierField ?? '',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => value === null,
-    );
-
     const page = parseInt(state.page ?? '1', 10);
 
     const setPage = useCallback(
@@ -126,6 +101,31 @@ export function useSearchPageState({
             setPage(1);
         },
         [setState, setPage, hiddenFieldValues],
+    );
+
+    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
+        'selectedSeq',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => !value,
+    );
+    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
+        'halfScreen',
+        state,
+        false,
+        setState,
+        'boolean',
+        (value) => !value,
+    );
+    const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
+        schema.suborganismIdentifierField ?? '',
+        state,
+        null,
+        setState,
+        'nullable-string',
+        (value) => value === null,
     );
 
     const removeFilter = useCallback(
