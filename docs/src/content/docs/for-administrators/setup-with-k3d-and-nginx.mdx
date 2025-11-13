@@ -30,11 +30,13 @@ set -euo pipefail
 
 cluster_name="loculusCluster"
 
-website_port_mapping="127.0.0.1:9000:30081@agent:0"
-backend_port_mapping="127.0.0.1:9079:30082@agent:0"
-lapis_port_mapping="127.0.0.1:9080:80@loadbalancer"
-database_port_mapping="127.0.0.1:9432:30432@agent:0"
-keycloak_port_mapping="127.0.0.1:9083:30083@agent:0"
+ip_address="127.0.0.1" # localhost
+
+website_port_mapping="${ip_address}:9000:30081@agent:0"
+backend_port_mapping="${ip_address}:9079:30082@agent:0"
+lapis_port_mapping="${ip_address}:9080:80@loadbalancer"
+database_port_mapping="${ip_address}:9432:30432@agent:0"
+keycloak_port_mapping="${ip_address}:9083:30083@agent:0"
 
 if k3d cluster list | grep -q "$cluster_name"; then
     echo "Cluster $cluster_name already exists, skipping creation"
@@ -74,6 +76,30 @@ done
 echo "Traefik is running."
 
 ```
+
+:::note
+If you're using a Virtual Private Cloud (VPC) to route traffic from your loculus instance, either due to network routing requirements, or because you have to use nginx on a different machine, make sure to use your private IP instead of `127.0.0.1` (localhost).
+
+```bash
+#!/bin/bash
+...
+cluster_name="loculusCluster"
+
+ip_address="172.1.1.1" # Replace 127.0.0.1 with the Private IP
+
+website_port_mapping="${ip_address}:9000:30081@agent:0"
+...
+```
+
+To pull down the cluster and pods, you can run:
+
+```
+k3d cluster delete loculusCluster
+```
+
+Re-run `./create-cluster.sh` to recreate.
+
+:::
 
 ## Step 2: Install secret generator
 
@@ -263,6 +289,12 @@ server {
     }
 }
 ```
+
+:::note
+
+As mentioned above, if you're using a VPC and have to set up nginx on a different machine, replace `127.0.0.1` in the configuration file with your private IP in all instances. Make sure the relevant ports (`9000`, `9079`, `9080`, and `9083`) are open in your VPC firewall/security groups so nginx can reach your loculus instance.
+
+:::
 
 Reload nginx with
 
