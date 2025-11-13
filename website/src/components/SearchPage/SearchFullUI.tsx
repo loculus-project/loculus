@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -13,9 +13,9 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
-import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
+import { useSearchPageState } from './useSearchPageState.ts';
+import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
-import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -38,7 +38,6 @@ import {
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
     MUTATION_KEY,
-    NULL_QUERY_VALUE,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
@@ -95,32 +94,20 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
-
-    const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
+    const {
         state,
-        null,
         setState,
-        'nullable-string',
-        (value) => !value,
-    );
-    const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
-        state,
-        false,
-        setState,
-        'boolean',
-        (value) => !value,
-    );
-    const [selectedSuborganism, setSelectedSuborganismInState] = useUrlParamState<string | null>(
-        schema.suborganismIdentifierField ?? '',
-        state,
-        null,
-        setState,
-        'nullable-string',
-        (value) => value === null,
-    );
+        previewedSeqId,
+        setPreviewedSeqId,
+        previewHalfScreen,
+        setPreviewHalfScreen,
+        selectedSuborganism,
+        setSelectedSuborganism,
+        page,
+        setPage,
+        setSomeFieldValues,
+        removeFilter,
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -140,26 +127,6 @@ export const InnerSearchFullUI = ({
     }
 
     const orderDirection = state.order ?? schema.defaultOrder;
-
-    const page = parseInt(state.page ?? '1', 10);
-
-    const setPage = useCallback(
-        (newPage: number) => {
-            setState((prev: QueryState) => {
-                if (newPage === 1) {
-                    const withoutPageSet = { ...prev };
-                    delete withoutPageSet.page;
-                    return withoutPageSet;
-                } else {
-                    return {
-                        ...prev,
-                        page: newPage.toString(),
-                    };
-                }
-            });
-        },
-        [setState],
-    );
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
@@ -185,57 +152,6 @@ export const InnerSearchFullUI = ({
     const fieldValues = useMemo(() => {
         return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
     }, [state, hiddenFieldValues, filterSchema]);
-
-    /**
-     * Update field values (query parameters).
-     * If value is '' or null, the query parameter is unset.
-     * For multi-select fields, we handle fieldValuesToSet as an array where:
-     * - If value is an array, it sets multiple values for that field
-     * - If value is '' or null, it clears the field
-     */
-    const setSomeFieldValues: SetSomeFieldValues = useCallback(
-        (...fieldValuesToSet: FieldValueUpdate[]) => {
-            setState((prev: QueryState) => {
-                const newState = { ...prev };
-                fieldValuesToSet.forEach(([key, value]) => {
-                    if (value === '' || value === null) {
-                        if (Object.keys(hiddenFieldValues).includes(key)) {
-                            // keep explicitly empty fields because they override the hiddenFieldValues here
-                            newState[key] = '';
-                        } else {
-                            // we can delete keys that are not in the hiddenFieldValues
-                            delete newState[key];
-                        }
-                    } else if (Array.isArray(value)) {
-                        // Handle array values for multi-select
-                        if (value.length === 0) {
-                            delete newState[key];
-                        } else {
-                            newState[key] = value.map((v) => v ?? NULL_QUERY_VALUE);
-                        }
-                    } else {
-                        newState[key] = value;
-                    }
-                });
-                return newState;
-            });
-            setPage(1);
-        },
-        [setState, setPage, hiddenFieldValues],
-    );
-
-    const removeFilter = (metadataFilterName: string) => {
-        if (Object.keys(hiddenFieldValues).includes(metadataFilterName)) {
-            const hiddenValue = hiddenFieldValues[metadataFilterName];
-            // If it's an array with nulls, filter them out (shouldn't happen but TypeScript doesn't know)
-            const valueToSet = Array.isArray(hiddenValue)
-                ? hiddenValue.filter((v): v is string => v !== null)
-                : hiddenValue;
-            setSomeFieldValues([metadataFilterName, valueToSet]);
-        } else {
-            setSomeFieldValues([metadataFilterName, null]);
-        }
-    };
 
     const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: QueryState) => {
@@ -366,20 +282,7 @@ export const InnerSearchFullUI = ({
         schema.submissionDataTypes.consensusSequences &&
         !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
 
-    const setSelectedSuborganism = useCallback(
-        (newValue: string | null) => {
-            setSelectedSuborganismInState(newValue);
-
-            setSomeFieldValues(
-                [MUTATION_KEY, null],
-                ...filterSchema
-                    .ungroupedMetadataFilters()
-                    .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
-                    .map((metadataFilter): FieldValueUpdate => [metadataFilter.name, null]),
-            );
-        },
-        [setSelectedSuborganismInState],
-    );
+    useResetDependentFiltersWhenSuborganismChanges(selectedSuborganism, setSomeFieldValues, filterSchema);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -567,6 +470,26 @@ export const InnerSearchFullUI = ({
         </div>
     );
 };
+
+function useResetDependentFiltersWhenSuborganismChanges(
+    selectedSuborganism: string | null,
+    setSomeFieldValues: SetSomeFieldValues,
+    filterSchema: MetadataFilterSchema,
+) {
+    useEffect(() => {
+        setSomeFieldValues(
+            [MUTATION_KEY, null],
+            ...filterSchema
+                .ungroupedMetadataFilters()
+                .filter(
+                    (metadataFilter) =>
+                        metadataFilter.onlyForSuborganism !== undefined &&
+                        metadataFilter.onlyForSuborganism !== selectedSuborganism,
+                )
+                .map((metadataFilter): FieldValueUpdate => [metadataFilter.name, null]),
+        );
+    }, [selectedSuborganism, setSomeFieldValues, filterSchema]);
+}
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
     const queryClient = new QueryClient();
