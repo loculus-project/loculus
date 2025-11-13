@@ -10,6 +10,7 @@ type ActiveFiltersProps = {
     removeFilter?: (key: string) => void;
 };
 
+export const ACTIVE_FILTER_BADGE_TEST_ID = 'active-filter-badge';
 const BADGE_CLASSES =
     'border-primary-600 rounded-sm border border-l-primary-600 bg-gray-100 border-l-8 pl-3 py-1 text-sm flex flex-row';
 
@@ -95,7 +96,7 @@ type BadgeProps = {
 };
 
 const Badge: FC<BadgeProps> = ({ label, showX, onRemove, ariaLabel, children }) => (
-    <div className={BADGE_CLASSES}>
+    <div className={BADGE_CLASSES} data-testid={ACTIVE_FILTER_BADGE_TEST_ID}>
         <span className='text-primary-900 font-light pr-1'>{label}:</span>
         {children}
         {showX ? (
