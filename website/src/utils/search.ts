@@ -2,7 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
     FieldValues,
     GroupedMetadataFilter,

@@ -13,7 +13,7 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
-import useQueryAsState, { type QueryState } from './useQueryAsState';
+import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
@@ -95,7 +95,7 @@ export const InnerSearchFullUI = ({
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    const [state, setState] = useQueryAsState(initialQueryDict);
+    const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
         'selectedSeq',

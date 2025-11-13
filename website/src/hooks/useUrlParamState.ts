@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useCallback, useMemo } from 'react';
 
-import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 
 type ParamType = 'string' | 'boolean' | 'nullable-string';
 
