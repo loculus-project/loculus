@@ -355,8 +355,6 @@ describe('SearchFullUI', () => {
     });
 
     it('should reset suborganism specific search fields when changing the selected suborganism', async () => {
-        // window.location = 'https://dummy.url';
-
         renderSearchFullUI({
             suborganismIdentifierField: 'suborganism',
             searchFormFilters: [
