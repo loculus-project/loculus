@@ -418,6 +418,21 @@ describe('SearchFullUI', () => {
 
         await userEvent.click(await screen.findByRole('button', { name: 'Clear suborganism' }));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
+
+        await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
+        expect(await mutationsField()).toBeVisible();
+        await userEvent.type(await mutationsField(), '345{enter}');
+        await assertActiveFilterBadgesAre([
+            { fieldLabel: 'suborganism', value: 'suborganism1' },
+            { fieldLabel: 'mutation', value: '345' },
+        ]);
+
+        const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
+        const suborganismBadge = badges.find((badge) => {
+            return within(badge).queryByText(`suborganism:`) !== null;
+        });
+        await userEvent.click(await within(suborganismBadge!).findByRole('button', { name: 'remove filter' }));
+        expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
     });
 
     async function assertActiveFilterBadgesAre(expected: { fieldLabel: string; value: string }[]) {
