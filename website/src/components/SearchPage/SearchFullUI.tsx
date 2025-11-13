@@ -20,13 +20,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import type { LinkOut } from '../../types/config.ts';
-import {
-    type FieldValues,
-    type FieldValueUpdate,
-    type Schema,
-    type SequenceFlaggingConfig,
-    type SetSomeFieldValues,
-} from '../../types/config.ts';
+import { type FieldValues, type Schema, type SequenceFlaggingConfig } from '../../types/config.ts';
 import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -36,7 +30,6 @@ import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
-    MUTATION_KEY,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -110,7 +103,7 @@ export const InnerSearchFullUI = ({
         setOrderDirection,
         setASearchVisibility,
         setAColumnVisibility,
-    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues });
+    } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues, filterSchema });
 
     const searchVisibilities = useMemo(() => {
         return getFieldVisibilitiesFromQuery(schema, state);
@@ -222,8 +215,6 @@ export const InnerSearchFullUI = ({
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
         !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
-
-    useResetDependentFiltersWhenSuborganismChanges(selectedSuborganism, setSomeFieldValues, filterSchema);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -411,26 +402,6 @@ export const InnerSearchFullUI = ({
         </div>
     );
 };
-
-function useResetDependentFiltersWhenSuborganismChanges(
-    selectedSuborganism: string | null,
-    setSomeFieldValues: SetSomeFieldValues,
-    filterSchema: MetadataFilterSchema,
-) {
-    useEffect(() => {
-        setSomeFieldValues(
-            [MUTATION_KEY, null],
-            ...filterSchema
-                .ungroupedMetadataFilters()
-                .filter(
-                    (metadataFilter) =>
-                        metadataFilter.onlyForSuborganism !== undefined &&
-                        metadataFilter.onlyForSuborganism !== selectedSuborganism,
-                )
-                .map((metadataFilter): FieldValueUpdate => [metadataFilter.name, null]),
-        );
-    }, [selectedSuborganism, setSomeFieldValues, filterSchema]);
-}
 
 export const SearchFullUI = (props: InnerSearchFullUIProps) => {
     const queryClient = new QueryClient();

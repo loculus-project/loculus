@@ -4,15 +4,27 @@ import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyn
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
 import type { OrderDirection } from '../../types/lapis.ts';
-import { COLUMN_VISIBILITY_PREFIX, NULL_QUERY_VALUE, VISIBILITY_PREFIX } from '../../utils/search.ts';
+import {
+    COLUMN_VISIBILITY_PREFIX,
+    MetadataFilterSchema,
+    MUTATION_KEY,
+    NULL_QUERY_VALUE,
+    VISIBILITY_PREFIX,
+} from '../../utils/search.ts';
 
 type UseSearchPageStateParams = {
     initialQueryDict: QueryState;
     schema: Schema;
     hiddenFieldValues: FieldValues;
+    filterSchema: MetadataFilterSchema;
 };
 
-export function useSearchPageState({ initialQueryDict, schema, hiddenFieldValues }: UseSearchPageStateParams) {
+export function useSearchPageState({
+    initialQueryDict,
+    schema,
+    hiddenFieldValues,
+    filterSchema,
+}: UseSearchPageStateParams) {
     const [state, setState] = useStateSyncedWithUrlQueryParams(initialQueryDict);
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -91,6 +103,24 @@ export function useSearchPageState({ initialQueryDict, schema, hiddenFieldValues
                         newState[key] = value;
                     }
                 });
+
+                if (
+                    schema.suborganismIdentifierField !== undefined &&
+                    fieldValuesToSet.some(([key]) => key === schema.suborganismIdentifierField)
+                ) {
+                    delete newState[MUTATION_KEY];
+                    filterSchema
+                        .ungroupedMetadataFilters()
+                        .filter(
+                            (metadataFilter) =>
+                                metadataFilter.onlyForSuborganism !== undefined &&
+                                metadataFilter.onlyForSuborganism !== selectedSuborganism,
+                        )
+                        .forEach((metadataFilter) => {
+                            delete newState[metadataFilter.name];
+                        });
+                }
+
                 return newState;
             });
             setPage(1);
