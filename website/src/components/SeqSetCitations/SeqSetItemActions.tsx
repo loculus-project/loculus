@@ -12,9 +12,9 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
 import MdiPencil from '~icons/mdi/pencil';
-import MdiDelete from '~icons/mdi/delete';
 
 const logger = getClientLogger('SeqSetItemActions');
 
@@ -55,12 +55,18 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pb-8 gap-2'>
-                    <Button className='outlineButton flex items-center gap-2' onClick={() => setExportModalVisible(true)}>
+                    <Button
+                        className='outlineButton flex items-center gap-2'
+                        onClick={() => setExportModalVisible(true)}
+                    >
                         <MdiDownload className='w-4 h-4' />
-                        Export
+                        Export / Cite
                     </Button>
                     {isAdminView ? (
-                        <Button className='outlineButton flex items-center gap-2' onClick={() => setEditModalVisible(true)}>
+                        <Button
+                            className='outlineButton flex items-center gap-2'
+                            onClick={() => setEditModalVisible(true)}
+                        >
                             <MdiPencil className='w-4 h-4' />
                             Edit
                         </Button>
