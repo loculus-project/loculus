@@ -389,6 +389,7 @@ describe('SearchFullUI', () => {
         const mutationsField = () => screen.findByLabelText('Mutations');
         const field1 = () => screen.findByLabelText('Field 1');
 
+        // select suborganism1 and set mutations and field1
         expect(await suborganismSelector()).toBeVisible();
         await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
 
@@ -404,9 +405,11 @@ describe('SearchFullUI', () => {
             { fieldLabel: 'mutation', value: '123' },
         ]);
 
+        // change to suborganism2 and expect field1 and mutations to be cleared
         await userEvent.selectOptions(await suborganismSelector(), 'suborganism2');
         await assertActiveFilterBadgesAre([{ fieldLabel: 'suborganism', value: 'suborganism2' }]);
 
+        // set mutations again for suborganism2
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '234{enter}');
         await assertActiveFilterBadgesAre([
@@ -414,9 +417,11 @@ describe('SearchFullUI', () => {
             { fieldLabel: 'mutation', value: '234' },
         ]);
 
+        // clear suborganism in suborganism selector and expect mutations to be cleared
         await userEvent.click(await screen.findByRole('button', { name: 'Clear suborganism' }));
         expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
 
+        // set suborganism1 again and set mutations again
         await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
         expect(await mutationsField()).toBeVisible();
         await userEvent.type(await mutationsField(), '345{enter}');
@@ -425,6 +430,7 @@ describe('SearchFullUI', () => {
             { fieldLabel: 'mutation', value: '345' },
         ]);
 
+        // remove suborganism via its filter badge and expect mutations to be cleared
         const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
         const suborganismBadge = badges.find((badge) => {
             return within(badge).queryByText(`suborganism:`) !== null;
