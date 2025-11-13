@@ -86,11 +86,7 @@ export function useSearchPageState({
                     delete newState[MUTATION_KEY];
                     filterSchema
                         .ungroupedMetadataFilters()
-                        .filter(
-                            (metadataFilter) =>
-                                metadataFilter.onlyForSuborganism !== undefined &&
-                                metadataFilter.onlyForSuborganism !== selectedSuborganism,
-                        )
+                        .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
                         .forEach((metadataFilter) => {
                             delete newState[metadataFilter.name];
                         });
@@ -107,7 +103,7 @@ export function useSearchPageState({
         'selectedSeq',
         state,
         null,
-        setState,
+        setSomeFieldValues,
         'nullable-string',
         (value) => !value,
     );
@@ -115,7 +111,7 @@ export function useSearchPageState({
         'halfScreen',
         state,
         false,
-        setState,
+        setSomeFieldValues,
         'boolean',
         (value) => !value,
     );
@@ -123,7 +119,7 @@ export function useSearchPageState({
         schema.suborganismIdentifierField ?? '',
         state,
         null,
-        setState,
+        setSomeFieldValues,
         'nullable-string',
         (value) => value === null,
     );
