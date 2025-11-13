@@ -27,18 +27,16 @@ import {
     type SequenceFlaggingConfig,
     type SetSomeFieldValues,
 } from '../../types/config.ts';
-import { type OrderBy, type OrderDirection } from '../../types/lapis.ts';
+import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
 import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
 import {
-    COLUMN_VISIBILITY_PREFIX,
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
     MetadataFilterSchema,
     MUTATION_KEY,
-    VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
@@ -96,7 +94,6 @@ export const InnerSearchFullUI = ({
 
     const {
         state,
-        setState,
         previewedSeqId,
         setPreviewedSeqId,
         previewHalfScreen,
@@ -107,6 +104,12 @@ export const InnerSearchFullUI = ({
         setPage,
         setSomeFieldValues,
         removeFilter,
+        orderByField: orderByFieldCandidate,
+        orderDirection,
+        setOrderByField,
+        setOrderDirection,
+        setASearchVisibility,
+        setAColumnVisibility,
     } = useSearchPageState({ initialQueryDict, schema, hiddenFieldValues });
 
     const searchVisibilities = useMemo(() => {
@@ -121,28 +124,7 @@ export const InnerSearchFullUI = ({
             .map((field) => field.name);
     }, [schema.metadata, columnVisibilities]);
 
-    let orderByField = state.orderBy ?? schema.defaultOrderBy;
-    if (!columnsToShow.includes(orderByField)) {
-        orderByField = schema.primaryKey;
-    }
-
-    const orderDirection = state.order ?? schema.defaultOrder;
-
-    const setOrderByField = (field: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            orderBy: field,
-            page: '1',
-        }));
-    };
-
-    const setOrderDirection = (direction: OrderDirection) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            order: direction,
-            page: '1',
-        }));
-    };
+    const orderByField = columnsToShow.includes(orderByFieldCandidate) ? orderByFieldCandidate : schema.primaryKey;
 
     /**
      * The `fieldValues` are the values of the search fields.
@@ -152,47 +134,6 @@ export const InnerSearchFullUI = ({
     const fieldValues = useMemo(() => {
         return filterSchema.getFieldValuesFromQuery(state, hiddenFieldValues);
     }, [state, hiddenFieldValues, filterSchema]);
-
-    const setASearchVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: QueryState) => {
-            const newState = { ...prev };
-            const key = `${VISIBILITY_PREFIX}${fieldName}`;
-            const metadataField = schema.metadata.find((field) => {
-                let name = field.name;
-                if (field.rangeOverlapSearch) {
-                    name = field.rangeOverlapSearch.rangeName;
-                }
-                return name === fieldName;
-            });
-            const defaultVisible = metadataField?.initiallyVisible === true;
-            if (visible === defaultVisible) {
-                delete newState[key];
-            } else {
-                newState[key] = visible ? 'true' : 'false';
-            }
-            if (!visible) {
-                delete newState[fieldName];
-            }
-            return newState;
-        });
-        if (!visible) {
-            setPage(1);
-        }
-    };
-
-    const setAColumnVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: QueryState) => {
-            const newState = { ...prev };
-            const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
-            const defaultVisible = schema.tableColumns.includes(fieldName);
-            if (visible === defaultVisible) {
-                delete newState[key];
-            } else {
-                newState[key] = visible ? 'true' : 'false';
-            }
-            return newState;
-        });
-    };
 
     useEffect(() => {
         if (showEditDataUseTermsControls && dataUseTermsEnabled) {

@@ -3,7 +3,8 @@ import { useCallback, useMemo } from 'react';
 import useStateSyncedWithUrlQueryParams, { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import useUrlParamState from '../../hooks/useUrlParamState.ts';
 import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '../../types/config.ts';
-import { NULL_QUERY_VALUE } from '../../utils/search.ts';
+import type { OrderDirection } from '../../types/lapis.ts';
+import { COLUMN_VISIBILITY_PREFIX, NULL_QUERY_VALUE, VISIBILITY_PREFIX } from '../../utils/search.ts';
 
 type UseSearchPageStateParams = {
     initialQueryDict: QueryState;
@@ -113,10 +114,81 @@ export function useSearchPageState({ initialQueryDict, schema, hiddenFieldValues
         [setSomeFieldValues, hiddenFieldValues],
     );
 
+    const orderByField = state.orderBy ?? schema.defaultOrderBy;
+    const orderDirection = state.order ?? schema.defaultOrder;
+
+    const setOrderByField = useCallback(
+        (field: string) => {
+            setState((prev: QueryState) => ({
+                ...prev,
+                orderBy: field,
+                page: '1',
+            }));
+        },
+        [setState],
+    );
+
+    const setOrderDirection = useCallback(
+        (direction: OrderDirection) => {
+            setState((prev: QueryState) => ({
+                ...prev,
+                order: direction,
+                page: '1',
+            }));
+        },
+        [setState],
+    );
+
+    const setASearchVisibility = useCallback(
+        (fieldName: string, visible: boolean) => {
+            setState((prev: QueryState) => {
+                const newState = { ...prev };
+                const key = `${VISIBILITY_PREFIX}${fieldName}`;
+                const metadataField = schema.metadata.find((field) => {
+                    let name = field.name;
+                    if (field.rangeOverlapSearch) {
+                        name = field.rangeOverlapSearch.rangeName;
+                    }
+                    return name === fieldName;
+                });
+                const defaultVisible = metadataField?.initiallyVisible === true;
+                if (visible === defaultVisible) {
+                    delete newState[key];
+                } else {
+                    newState[key] = visible ? 'true' : 'false';
+                }
+                if (!visible) {
+                    delete newState[fieldName];
+                }
+                return newState;
+            });
+            if (!visible) {
+                setPage(1);
+            }
+        },
+        [setState, schema, setPage],
+    );
+
+    const setAColumnVisibility = useCallback(
+        (fieldName: string, visible: boolean) => {
+            setState((prev: QueryState) => {
+                const newState = { ...prev };
+                const key = `${COLUMN_VISIBILITY_PREFIX}${fieldName}`;
+                const defaultVisible = schema.tableColumns.includes(fieldName);
+                if (visible === defaultVisible) {
+                    delete newState[key];
+                } else {
+                    newState[key] = visible ? 'true' : 'false';
+                }
+                return newState;
+            });
+        },
+        [setState, schema],
+    );
+
     return useMemo(
         () => ({
             state,
-            setState,
             previewedSeqId,
             setPreviewedSeqId,
             previewHalfScreen,
@@ -127,10 +199,15 @@ export function useSearchPageState({ initialQueryDict, schema, hiddenFieldValues
             setPage,
             setSomeFieldValues,
             removeFilter,
+            orderByField,
+            orderDirection,
+            setOrderByField,
+            setOrderDirection,
+            setASearchVisibility,
+            setAColumnVisibility,
         }),
         [
             state,
-            setState,
             previewedSeqId,
             setPreviewedSeqId,
             previewHalfScreen,
@@ -141,6 +218,12 @@ export function useSearchPageState({ initialQueryDict, schema, hiddenFieldValues
             setPage,
             setSomeFieldValues,
             removeFilter,
+            orderByField,
+            orderDirection,
+            setOrderByField,
+            setOrderDirection,
+            setASearchVisibility,
+            setAColumnVisibility,
         ],
     );
 }
