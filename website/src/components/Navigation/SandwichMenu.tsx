@@ -50,7 +50,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
                             </a>
                         </div>
                         <div className='py-3 pr-2'>
-                            <AccessionSearchBox fullWidth onSubmitSuccess={closeMenu} />
+                            <AccessionSearchBox defaultOpen fullWidth onSubmitSuccess={closeMenu} />
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 border-y-2 border-gray-300'>
                             <div className='py-3'>

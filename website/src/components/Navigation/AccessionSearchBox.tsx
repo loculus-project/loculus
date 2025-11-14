@@ -18,10 +18,10 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (open) {
+        if (open && !defaultOpen) {
             inputRef.current?.focus();
         }
-    }, [open]);
+    }, [open, defaultOpen]);
 
     // Only allow alphanumeric, dot, dash, underscore - this is for security to prevent injection into URLs, rather than for UX
     function isValidAccession(input: string): boolean {
