@@ -145,7 +145,7 @@ From the ingest directly, create local test configs for the organism you are int
 cp ../website/tests/config/ingest-config.ebola-sudan.yaml config/config.yaml
 ```
 
-You might need to edit the following lines in the `config/config.yaml` to match your local setup:
+If you would like to run ingest so that it uploads to a Loculus preview, you will need to edit the following lines in the `config/config.yaml` to match your local setup:
 
 ```yaml
 username: insdc_ingest_user

@@ -5,6 +5,8 @@ This website uses [Astro](https://astro.build/) for static site generation and
 
 ## Getting started
 
+In order to run the website locally you will need to install [nodejs](https://nodejs.org).
+
 ### Local Development
 
 -   Set up your `.env` file, e.g. by copying `.env.example` with `cp .env.example .env`

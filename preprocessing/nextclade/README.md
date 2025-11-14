@@ -24,6 +24,12 @@ This preprocessing pipeline has been developed by the Loculus team. It requests 
    mamba env create -n loculus-nextclade -f environment.yml
    ```
 
+   or 
+
+   ```sh
+   micromamba create -f environment.yml
+   ```
+
 ### Running
 
 1. Start backend (see [backend README](../backend/README.md)), run ingest script to submit sequences from INSDC. (Alternatively you can run `./deploy.py --enablePreprocessing` to start the backend and preprocessing pods in one command.)
