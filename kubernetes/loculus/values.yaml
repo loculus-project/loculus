@@ -1740,12 +1740,11 @@ defaultOrganisms:
           log_level: DEBUG
           nucleotideSequences:
             - name: L
-              nextclade_dataset_name: nextstrain/cchfv/linked/L
+              nextclade_dataset_name: community/pathoplexus/cchfv/L
             - name: M
-              nextclade_dataset_name: nextstrain/cchfv/linked/M
+              nextclade_dataset_name: community/pathoplexus/cchfv/M
             - name: S
-              nextclade_dataset_name: nextstrain/cchfv/linked/S
-          nextclade_dataset_name: community/pathoplexus/cchfv
+              nextclade_dataset_name: community/pathoplexus/cchfv/S
     ingest:
       <<: *ingest
       configFile:
