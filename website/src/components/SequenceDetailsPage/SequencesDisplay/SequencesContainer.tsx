@@ -250,6 +250,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
     return (
         <div className='mb-4'>
             <select
+                data-testid='gene-dropdown'
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {
