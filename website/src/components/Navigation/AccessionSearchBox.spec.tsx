@@ -45,6 +45,13 @@ describe('AccessionSearchBox', () => {
         expect(input).toHaveClass('opacity-100');
     });
 
+    it('does not auto focus the input when defaultOpen is true', () => {
+        render(<AccessionSearchBox defaultOpen={true} />);
+
+        const input = screen.getByPlaceholderText('Search by accession');
+        expect(input).not.toHaveFocus();
+    });
+
     it('opens the input field when the search button is clicked', async () => {
         render(<AccessionSearchBox />);
 

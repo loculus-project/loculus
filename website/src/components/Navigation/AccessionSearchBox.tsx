@@ -16,12 +16,18 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [open, setOpen] = useState(!!defaultOpen);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const hasUserOpenedRef = useRef(false);
 
     useEffect(() => {
-        if (open) {
+        if (open && (!defaultOpen || hasUserOpenedRef.current)) {
             inputRef.current?.focus();
         }
-    }, [open]);
+    }, [open, defaultOpen]);
+
+    const openSearch = () => {
+        hasUserOpenedRef.current = true;
+        setOpen(true);
+    };
 
     // Only allow alphanumeric, dot, dash, underscore - this is for security to prevent injection into URLs, rather than for UX
     function isValidAccession(input: string): boolean {
@@ -32,7 +38,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
         e.preventDefault();
         const v = value.trim();
         if (!v) {
-            setOpen(true);
+            openSearch();
             setError(null);
             return;
         }
@@ -56,7 +62,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
             <div className='relative flex items-center'>
                 <Button
                     type='submit'
-                    onClick={() => setOpen(true)}
+                    onClick={openSearch}
                     className='flex items-center justify-center text-primary-600 hover:text-primary-700 transition-colors'
                     aria-label={open ? 'Search' : 'Open accession search'}
                     data-testid='nav-accession-search-button'
