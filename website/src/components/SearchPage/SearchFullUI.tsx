@@ -495,6 +495,7 @@ export const InnerSearchFullUI = ({
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
                                     sequenceFilter={downloadFilter}
+                                    organism={organism}
                                 />
                             )}
                             <Button
