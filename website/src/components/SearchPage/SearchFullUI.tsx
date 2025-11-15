@@ -39,7 +39,7 @@ import {
     NULL_QUERY_VALUE,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
-import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { SequenceActionsMenu } from '../DataUseTerms/SequenceActionsMenu.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
@@ -490,7 +490,7 @@ export const InnerSearchFullUI = ({
                         </div>
                         <div className='flex'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                <EditDataUseTermsModal
+                                <SequenceActionsMenu
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
