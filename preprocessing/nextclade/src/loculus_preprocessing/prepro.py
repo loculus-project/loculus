@@ -274,6 +274,8 @@ def classify_with_nextclade_sort(
     (default is nextclade_dataset_name)
     """
     nextclade_dataset_server = config.nextclade_dataset_server
+    duplicate_segments = False
+    missing_segments = False
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
@@ -297,7 +299,7 @@ def classify_with_nextclade_sort(
         for seq_name in no_hits["seqName"].unique():
             if seq_name not in hits["seqName"].unique():
                 msg = (
-                    f"Sequence {seq_name} does not appear to match any reference for organism: "
+                    f"Sequence with fasta header {seq_name} does not appear to match any reference for organism: "
                     f"{config.organism} per `nextclade sort`. "
                     f"Double check you are submitting to the correct organism."
                 )
@@ -321,53 +323,70 @@ def classify_with_nextclade_sort(
         best_hits = hits.groupby("seqName", as_index=False).first()
         logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
 
+        sort_results_map: dict[str, list[str]] = {}
+
         for _, row in best_hits.iterrows():
             not_found = True
             for segment in config.nucleotideSequences:
                 default = [segment.nextclade_dataset_name] if segment.nextclade_dataset_name else []
                 accepted_dataset_names = segment.accepted_sort_matches or default
                 if row["dataset"] in accepted_dataset_names:
-                    #TODO: improve error message to include fasta header
-                    if segment.name in unaligned_nucleotide_sequences:
-                        msg = (
-                            f"Sequence {row['seqName']} has multiple segments matching the "
-                            f"accepted datasets for segment {segment.name}."
-                        )
-                        errors.append(
-                            ProcessingAnnotation.from_single(
-                                ProcessingAnnotationAlignment,
-                                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                message=msg,
-                            )
-                        )
-                    unaligned_nucleotide_sequences[segment.name] = input_unaligned_sequences[
-                        row["seqName"]
-                    ]
                     not_found = False
+                    sort_results_map.setdefault(segment.name, []).append(row["seqName"])
                     break
-            if not_found:
-                msg = (
-                    f"Sequence {row['seqName']} best matches {row['dataset']}, "
-                    "which is currently not an accepted option for organism: "
-                    f"{config.organism}. It is therefore not possible to release. "
-                    "Contact the administrator if you think this message is an error."
+            if not not_found:
+                continue
+            missing_segments = True
+            msg = (
+                f"Sequence {row['seqName']} best matches {row['dataset']}, "
+                "which is currently not an accepted option for organism: "
+                f"{config.organism}. It is therefore not possible to release. "
+                "Contact the administrator if you think this message is an error."
+            )
+            if config.alignment_requirement == AlignmentRequirement.ALL:
+                errors.append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        message=msg,
+                    )
                 )
-                if config.alignment_requirement == AlignmentRequirement.ALL:
-                    errors.append(
-                        ProcessingAnnotation.from_single(
-                            ProcessingAnnotationAlignment,
-                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            else:
+                warnings.append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                             message=msg,
-                        )
-                    )
-                else:
-                    warnings.append(
-                        ProcessingAnnotation.from_single(
-                            ProcessingAnnotationAlignment,
-                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                message=msg,
+                )
+            )
+        print(sort_results_map)
+        for segment, headers in sort_results_map.items():
+            if len(headers) > 1:
+                msg = (
+                    f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
+                    f" {segment} - only one entry is allowed."
+                )
+                duplicate_segments = True
+                errors.append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        message=msg,
                     )
                 )
+                continue
+            unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
+                headers[0]
+            ]
+                    
+    if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments and not missing_segments:
+        errors.append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message="No sequence data could be classified - check you are submitting to the correct organism.",
+                )
+            )
 
     return (unaligned_nucleotide_sequences, errors, warnings)
 
@@ -474,7 +493,7 @@ def assign_segment(
                 ProcessingAnnotation.from_single(
                     ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data found - check segments are annotated correctly",
+                    message="No sequence data found - ",
                 )
             )
     return (unaligned_nucleotide_sequences, errors, warnings)
@@ -957,7 +976,7 @@ def process_single(  # noqa: C901
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
-    if not aligned_segments and config.multi_segment:
+    if not aligned_segments and config.multi_segment and len(unprocessed.unalignedNucleotideSequences) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,

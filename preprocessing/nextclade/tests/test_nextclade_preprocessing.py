@@ -395,7 +395,7 @@ multi_segment_case_definitions_all_requirement = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 53,
+            "length_ebola-sudan": 0,
             "totalInsertedNucs_ebola-zaire": None,
             "totalSnps_ebola-zaire": None,
             "totalDeletedNucs_ebola-zaire": None,
@@ -405,15 +405,19 @@ multi_segment_case_definitions_all_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "No sequence data could be classified - check you are submitting to the correct organism.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            )
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": invalid_sequence(),
-            },
+            unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
@@ -432,7 +436,7 @@ multi_segment_case_definitions_all_requirement = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 53,
+            "length_ebola-sudan": 0,
             "totalInsertedNucs_ebola-zaire": 0,
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
@@ -442,7 +446,7 @@ multi_segment_case_definitions_all_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],
@@ -474,7 +478,7 @@ multi_segment_case_definitions_any_requirement = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 53,
+            "length_ebola-sudan": 0,
             "totalInsertedNucs_ebola-zaire": None,
             "totalSnps_ebola-zaire": None,
             "totalDeletedNucs_ebola-zaire": None,
@@ -484,22 +488,20 @@ multi_segment_case_definitions_any_requirement = [
             ProcessingAnnotationHelper(
                 [ProcessingAnnotationAlignment],
                 [ProcessingAnnotationAlignment],
-                "No segment aligned.",
+                "No sequence data could be classified - check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
         expected_warnings=[
             ProcessingAnnotationHelper(
-                ["ebola-sudan"],
-                ["ebola-sudan"],
-                "Nucleotide sequence for ebola-sudan failed to align",
+                ["alignment"],
+                ["alignment"],
+                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
         expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": invalid_sequence(),
-            },
+            unalignedNucleotideSequences={},
             alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
@@ -518,7 +520,7 @@ multi_segment_case_definitions_any_requirement = [
             "totalInsertedNucs_ebola-sudan": None,
             "totalSnps_ebola-sudan": None,
             "totalDeletedNucs_ebola-sudan": None,
-            "length_ebola-sudan": 53,
+            "length_ebola-sudan": 0,
             "totalInsertedNucs_ebola-zaire": 0,
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
@@ -529,7 +531,7 @@ multi_segment_case_definitions_any_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
@@ -670,7 +672,7 @@ segment_validation_tests_multi_segments = [
             ProcessingAnnotationHelper(
                 [ProcessingAnnotationAlignment],
                 [ProcessingAnnotationAlignment],
-                "Sequence ebola-sudan has multiple segments matching the accepted datasets for segment ebola-sudan.",
+                "Multiple sequences (with fasta headers: duplicate_ebola-sudan, ebola-sudan) align to  ebola-sudan - only one entry is allowed.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],
