@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit
 private val log = KotlinLogging.logger {}
 
 @Component
-class SequenceCompressionBackfillStarter(private val backfill: SequenceCompressionBackfillService) {
+class SequenceCompressionMigration(private val migrationService: SequenceCompressionMigrationService) {
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.DAYS)
     fun startAfterReady() {
-        backfill.run()
+        migrationService.migrateBatched()
     }
 }
 
@@ -33,12 +33,12 @@ class SequenceCompressionBackfillStarter(private val backfill: SequenceCompressi
  *
  */
 @Service
-class SequenceCompressionBackfillService(
+class SequenceCompressionMigrationService(
     private val compressionDictService: CompressionDictService,
     private val dateProvider: DateProvider,
 ) {
 
-    fun run(batchSize: Int = 2_000, logEvery: Int = 1_000) {
+    fun migrateBatched(batchSize: Int = 2_000, logEvery: Int = 1_000) {
         log.info { "Backfill: START" }
         val totalOriginal = backfillOriginalData(batchSize, logEvery)
         val totalProcessed = backfillProcessedData(batchSize, logEvery)

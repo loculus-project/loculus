@@ -24,7 +24,7 @@ import org.loculus.backend.controller.submission.SOME_LONG_GENE
 import org.loculus.backend.controller.submission.SOME_SHORT_GENE
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
-import org.loculus.backend.service.maintenance.SequenceCompressionBackfillService
+import org.loculus.backend.service.submission.SequenceCompressionMigrationService
 import org.loculus.backend.testutil.TestEnvironment
 import org.loculus.backend.testutil.TestResource
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,7 +56,7 @@ private val log = KotlinLogging.logger { }
 @Suppress("ktlint:standard:class-naming")
 class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
-    @Autowired val sequenceCompressionBackfillService: SequenceCompressionBackfillService,
+    @Autowired val sequenceCompressionMigrationService: SequenceCompressionMigrationService,
 ) {
     companion object {
         private val env = TestEnvironment()
@@ -90,7 +90,7 @@ class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
 
     @BeforeEach
     fun setUp() {
-        sequenceCompressionBackfillService.run()
+        sequenceCompressionMigrationService.migrateBatched(batchSize = 2, logEvery = 1)
     }
 
     @Test
