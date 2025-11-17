@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
@@ -47,14 +46,14 @@ class SequenceCompressionBackfillService(
     }
 
     // Sequences without a compression DictId are compressed on a segment level (even original data)
-    private fun addCompressionDict(originalData: Map<String, CompressedSequence?>, organism: String) =
-        originalData.mapValues { (key, value) ->
+    private fun migrateSequences(unmigratedSequences: Map<String, CompressedSequence?>, organism: Organism) =
+        unmigratedSequences.mapValues { (key, value) ->
             when {
                 value == null -> null
                 value.compressionDictId != null -> value
                 else -> CompressedSequence(
                     compressedSequence = value.compressedSequence,
-                    compressionDictId = compressionDictService.getDictForSegmentOrGene(Organism(organism), key)?.id,
+                    compressionDictId = compressionDictService.getDictForSegmentOrGene(organism, key)?.id,
                 )
             }
         }
@@ -107,7 +106,7 @@ class SequenceCompressionBackfillService(
             page.forEach { row ->
                 val accession = row[se.accessionColumn]
                 val version = row[se.versionColumn]
-                val organism = row[se.organismColumn]
+                val organism = Organism(row[se.organismColumn])
 
                 val originalData = row[se.originalDataColumn] ?: run {
                     markChecked(accession, version)
@@ -117,7 +116,7 @@ class SequenceCompressionBackfillService(
                 val migrated = OriginalData(
                     metadata = originalData.metadata,
                     files = originalData.files,
-                    unalignedNucleotideSequences = addCompressionDict(
+                    unalignedNucleotideSequences = migrateSequences(
                         originalData.unalignedNucleotideSequences,
                         organism,
                     ),
@@ -232,7 +231,7 @@ class SequenceCompressionBackfillService(
                 val accession = row[sepd.accessionColumn]
                 val version = row[sepd.versionColumn]
                 val pipelineVersion = row[sepd.pipelineVersionColumn]
-                val organism = row[se.organismColumn]
+                val organism = Organism(row[se.organismColumn])
                 val processedData = row[sepd.processedDataColumn] ?: run {
                     markProcessedChecked(accession, version, pipelineVersion)
                     return@forEach
@@ -241,15 +240,15 @@ class SequenceCompressionBackfillService(
                 val migrated = ProcessedData(
                     metadata = processedData.metadata,
                     files = processedData.files,
-                    unalignedNucleotideSequences = addCompressionDict(
+                    unalignedNucleotideSequences = migrateSequences(
                         processedData.unalignedNucleotideSequences,
                         organism,
                     ),
-                    alignedNucleotideSequences = addCompressionDict(
+                    alignedNucleotideSequences = migrateSequences(
                         processedData.alignedNucleotideSequences,
                         organism,
                     ),
-                    alignedAminoAcidSequences = addCompressionDict(
+                    alignedAminoAcidSequences = migrateSequences(
                         processedData.alignedAminoAcidSequences,
                         organism,
                     ),
