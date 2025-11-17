@@ -403,15 +403,9 @@ multi_segment_case_definitions_all_requirement = [
         },
         expected_errors=[
             ProcessingAnnotationHelper(
-                [ProcessingAnnotationAlignment],
-                [ProcessingAnnotationAlignment],
-                "No segment aligned.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
-            ProcessingAnnotationHelper(
-                ["ebola-sudan"],
-                ["ebola-sudan"],
-                "Nucleotide sequence for ebola-sudan failed to align",
+                ["alignment"],
+                ["alignment"],
+                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],
@@ -676,15 +670,7 @@ segment_validation_tests_multi_segments = [
             ProcessingAnnotationHelper(
                 [ProcessingAnnotationAlignment],
                 [ProcessingAnnotationAlignment],
-                "Found multiple sequences with the same segment name: ebola-sudan. "
-                "Each metadata entry can have multiple corresponding fasta sequence "
-                "entries with format <submissionId>_<segmentName>.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
-            ProcessingAnnotationHelper(
-                [ProcessingAnnotationAlignment],
-                [ProcessingAnnotationAlignment],
-                "No segment aligned.",
+                "Sequence ebola-sudan has multiple segments matching the accepted datasets for segment ebola-sudan.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],

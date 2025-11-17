@@ -327,6 +327,19 @@ def classify_with_nextclade_sort(
                 default = [segment.nextclade_dataset_name] if segment.nextclade_dataset_name else []
                 accepted_dataset_names = segment.accepted_sort_matches or default
                 if row["dataset"] in accepted_dataset_names:
+                    #TODO: improve error message to include fasta header
+                    if segment.name in unaligned_nucleotide_sequences:
+                        msg = (
+                            f"Sequence {row['seqName']} has multiple segments matching the "
+                            f"accepted datasets for segment {segment.name}."
+                        )
+                        errors.append(
+                            ProcessingAnnotation.from_single(
+                                ProcessingAnnotationAlignment,
+                                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                                message=msg,
+                            )
+                        )
                     unaligned_nucleotide_sequences[segment.name] = input_unaligned_sequences[
                         row["seqName"]
                     ]
