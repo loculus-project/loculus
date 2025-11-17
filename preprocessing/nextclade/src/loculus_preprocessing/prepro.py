@@ -500,7 +500,7 @@ def add_input_metadata(
                 )
             )
             return None
-        sub_path = input_path[len(nextclade_prefix):]
+        sub_path = input_path[len(nextclade_prefix) :]
         if segment not in unprocessed.nextcladeMetadata:
             return None
         if not unprocessed.nextcladeMetadata[segment]:
@@ -512,10 +512,7 @@ def add_input_metadata(
             annotation = ProcessingAnnotation.from_single(
                 segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
-            if (
-                config.multi_segment
-                and config.alignment_requirement == AlignmentRequirement.ANY
-            ):
+            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
                 warnings.append(annotation)
                 return None
             errors.append(annotation)
@@ -532,17 +529,13 @@ def add_input_metadata(
             try:
                 result = format_frameshift(result)
             except Exception:
-                logger.error(
-                    "Was unable to format frameshift - this is likely an internal error"
-                )
+                logger.error("Was unable to format frameshift - this is likely an internal error")
                 result = None
         if input_path == "nextclade.qc.stopCodons.stopCodons":
             try:
                 result = format_stop_codon(result)
             except Exception:
-                logger.error(
-                    "Was unable to format stop codon - this is likely an internal error"
-                )
+                logger.error("Was unable to format stop codon - this is likely an internal error")
                 result = None
         return result
     if input_path not in unprocessed.inputMetadata:
