@@ -1419,7 +1419,7 @@ defaultOrganisms:
         configFile:
           nucleotideSequences:
             - name: "main"
-              nextclade_dataset_name: nextstrain/ebola/sudan
+              nextclade_dataset_name: nextstrain/wnv/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
     ingest:
       <<: *ingest
