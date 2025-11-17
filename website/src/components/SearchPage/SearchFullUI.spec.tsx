@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +13,7 @@ import {
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -84,11 +85,13 @@ function renderSearchFullUI({
     clientConfig = testConfig.public,
     referenceGenomeLightweightSchema = defaultReferenceGenomesLightweightSchema,
     hiddenFieldValues = {},
+    suborganismIdentifierField,
 }: {
     searchFormFilters?: MetadataFilter[];
     clientConfig?: ClientConfig;
     referenceGenomeLightweightSchema?: ReferenceGenomesLightweightSchema;
     hiddenFieldValues?: FieldValues;
+    suborganismIdentifierField?: string | undefined;
 } = {}) {
     const metadataSchema: MetadataFilter[] = searchFormFilters.map((filter) => ({
         ...filter,
@@ -108,6 +111,7 @@ function renderSearchFullUI({
             submissionDataTypes: {
                 consensusSequences: true,
             },
+            suborganismIdentifierField,
         } as Schema,
         initialData: [],
         initialCount: 0,
@@ -349,4 +353,104 @@ describe('SearchFullUI', () => {
             expect(window.history.state.path).not.toContain('column_field4=false');
         });
     });
+
+    it('should reset suborganism specific search fields when changing the selected suborganism', async () => {
+        renderSearchFullUI({
+            suborganismIdentifierField: 'suborganism',
+            searchFormFilters: [
+                {
+                    name: 'field1',
+                    type: 'string',
+                    displayName: 'Field 1',
+                    onlyForSuborganism: 'suborganism1',
+                    initiallyVisible: true,
+                },
+                {
+                    name: 'suborganism',
+                    type: 'string',
+                    displayName: 'suborganism',
+                },
+            ],
+            referenceGenomeLightweightSchema: {
+                suborganism1: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [defaultAccession],
+                },
+                suborganism2: {
+                    nucleotideSegmentNames: ['main'],
+                    geneNames: ['gene1'],
+                    insdcAccessionFull: [defaultAccession],
+                },
+            },
+        });
+
+        const suborganismSelector = () => screen.findByLabelText('suborganism');
+        const mutationsField = () => screen.findByLabelText('Mutations');
+        const field1 = () => screen.findByLabelText('Field 1');
+
+        // select suborganism1 and set mutations and field1
+        expect(await suborganismSelector()).toBeVisible();
+        await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
+
+        expect(await mutationsField()).toBeVisible();
+        await userEvent.type(await mutationsField(), '123{enter}');
+
+        expect(await field1()).toBeVisible();
+        await userEvent.type(await field1(), 'test{enter}');
+
+        await assertActiveFilterBadgesAre([
+            { fieldLabel: 'suborganism', value: 'suborganism1' },
+            { fieldLabel: 'Field 1', value: 'test' },
+            { fieldLabel: 'mutation', value: '123' },
+        ]);
+
+        // change to suborganism2 and expect field1 and mutations to be cleared
+        await userEvent.selectOptions(await suborganismSelector(), 'suborganism2');
+        await assertActiveFilterBadgesAre([{ fieldLabel: 'suborganism', value: 'suborganism2' }]);
+
+        // set mutations again for suborganism2
+        expect(await mutationsField()).toBeVisible();
+        await userEvent.type(await mutationsField(), '234{enter}');
+        await assertActiveFilterBadgesAre([
+            { fieldLabel: 'suborganism', value: 'suborganism2' },
+            { fieldLabel: 'mutation', value: '234' },
+        ]);
+
+        // clear suborganism in suborganism selector and expect mutations to be cleared
+        await userEvent.click(await screen.findByRole('button', { name: 'Clear suborganism' }));
+        expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
+
+        // set suborganism1 again and set mutations again
+        await userEvent.selectOptions(await suborganismSelector(), 'suborganism1');
+        expect(await mutationsField()).toBeVisible();
+        await userEvent.type(await mutationsField(), '345{enter}');
+        await assertActiveFilterBadgesAre([
+            { fieldLabel: 'suborganism', value: 'suborganism1' },
+            { fieldLabel: 'mutation', value: '345' },
+        ]);
+
+        // remove suborganism via its filter badge and expect mutations to be cleared
+        const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
+        const suborganismBadge = badges.find((badge) => {
+            return within(badge).queryByText(`suborganism:`) !== null;
+        });
+        await userEvent.click(await within(suborganismBadge!).findByRole('button', { name: 'remove filter' }));
+        expect(screen.queryByTestId(ACTIVE_FILTER_BADGE_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    async function assertActiveFilterBadgesAre(expected: { fieldLabel: string; value: string }[]) {
+        const badges = await screen.findAllByTestId(ACTIVE_FILTER_BADGE_TEST_ID);
+        expect(badges, 'number of badges').toHaveLength(expected.length);
+        for (const { fieldLabel, value } of expected) {
+            assertHasActiveFilterBadge(badges, fieldLabel, value);
+        }
+    }
+
+    function assertHasActiveFilterBadge(badges: HTMLElement[], fieldLabel: string, value: string) {
+        const matchingBadge = badges.find((badge) => {
+            return within(badge).queryByText(`${fieldLabel}:`) !== null && within(badge).queryByText(value) !== null;
+        });
+        expect(matchingBadge, `failed to find badge with label ${fieldLabel} and value ${value}`).toBeDefined();
+    }
 });

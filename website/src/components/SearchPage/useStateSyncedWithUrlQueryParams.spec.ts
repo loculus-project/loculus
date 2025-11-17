@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import useQueryAsState from './useQueryAsState.ts';
+import useStateSyncedWithUrlQueryParams from './useStateSyncedWithUrlQueryParams.ts';
 
-describe('useQueryAsState', () => {
+describe('useStateSyncedWithUrlQueryParams', () => {
     let replaceStateMock: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
@@ -27,13 +27,13 @@ describe('useQueryAsState', () => {
     });
 
     test('initializes state from URL parameters', () => {
-        const { result } = renderHook(() => useQueryAsState({}));
+        const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
         expect(result.current[0]).toEqual({ key: 'value' });
     });
 
     test('updates URL when state changes', () => {
-        const { result } = renderHook(() => useQueryAsState({}));
+        const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
         act(() => {
             result.current[1]({ newKey: 'newValue' }); // setValueDict
@@ -47,7 +47,7 @@ describe('useQueryAsState', () => {
     });
 
     test('star is appended', () => {
-        const { result } = renderHook(() => useQueryAsState({}));
+        const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
         act(() => {
             result.current[1]({ newKey: '*' }); // setValueDict
@@ -62,7 +62,7 @@ describe('useQueryAsState', () => {
 
     test('disables URL storage when exceeding max length', () => {
         const longValue = 'a'.repeat(2000); // Generate long string
-        const { result } = renderHook(() => useQueryAsState({}));
+        const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
         act(() => {
             result.current[1]({ longKey: longValue });
@@ -83,7 +83,7 @@ describe('useQueryAsState', () => {
                 writable: true,
             });
 
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             expect(result.current[0]).toEqual({ country: ['USA', 'Canada', 'Mexico'] });
         });
@@ -99,13 +99,13 @@ describe('useQueryAsState', () => {
                 writable: true,
             });
 
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             expect(result.current[0]).toEqual({ country: 'USA' });
         });
 
         test('updates URL with multiple parameters when state contains array', () => {
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             act(() => {
                 result.current[1]({ country: ['USA', 'Canada', 'Mexico'] });
@@ -129,7 +129,7 @@ describe('useQueryAsState', () => {
                 writable: true,
             });
 
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             expect(result.current[0]).toEqual({
                 country: ['USA', 'Canada'],
@@ -149,7 +149,7 @@ describe('useQueryAsState', () => {
                 writable: true,
             });
 
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             expect(result.current[0]).toEqual({
                 status: ['pending', 'approved', 'rejected'],
@@ -157,7 +157,7 @@ describe('useQueryAsState', () => {
         });
 
         test('correctly serializes empty arrays', () => {
-            const { result } = renderHook(() => useQueryAsState({}));
+            const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
             act(() => {
                 result.current[1]({ country: [] });
@@ -174,7 +174,7 @@ describe('useQueryAsState', () => {
 
     test('re-enables URL storage when length drops below max', () => {
         const longValue = 'a'.repeat(2000);
-        const { result } = renderHook(() => useQueryAsState({}));
+        const { result } = renderHook(() => useStateSyncedWithUrlQueryParams({}));
 
         act(() => {
             result.current[1]({ longKey: longValue });

@@ -54,7 +54,9 @@ function buildUrlFromParams(params: URLSearchParams) {
     return url;
 }
 
-export default function useQueryAsState(defaultDict: QueryState): [QueryState, Dispatch<SetStateAction<QueryState>>] {
+export default function useStateSyncedWithUrlQueryParams(
+    defaultDict: QueryState,
+): [QueryState, Dispatch<SetStateAction<QueryState>>] {
     const [valueDict, setValueDict] = useState(defaultDict);
     const [useUrlStorage, setUseUrlStorage] = useState(true);
 

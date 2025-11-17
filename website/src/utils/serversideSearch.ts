@@ -10,7 +10,7 @@ import {
 } from './search';
 import { FieldFilterSet } from '../components/SearchPage/DownloadDialog/SequenceFilters';
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import { LapisClient } from '../services/lapisClient';
 import { pageSize } from '../settings';
 import type { FieldValues, Schema } from '../types/config';
