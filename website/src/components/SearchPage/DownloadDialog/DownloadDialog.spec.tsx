@@ -6,8 +6,8 @@ import { DownloadDialog } from './DownloadDialog.tsx';
 import { DownloadUrlGenerator } from './DownloadUrlGenerator.ts';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './SequenceFilters.tsx';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
-import { IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import type { Metadata } from '../../../types/config.ts';
+import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
+import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
 import {
     type ReferenceGenomesLightweightSchema,
@@ -15,12 +15,6 @@ import {
     SINGLE_REFERENCE,
 } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
-
-vi.mock('./FieldSelector/FieldSelectorModal.tsx', () => ({
-    getDefaultSelectedFields: () => ['field1', 'field2'],
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    FieldSelectorModal: vi.fn(() => null),
-}));
 
 const defaultAccession: ReferenceAccession = {
     name: 'main',
@@ -68,6 +62,7 @@ const mockMetadata: Metadata[] = [
         displayName: 'Field 2',
         type: 'string',
         header: 'Group 1',
+        includeInDownloadsByDefault: true,
     },
 ];
 
@@ -90,6 +85,19 @@ async function renderDialog({
     suborganismIdentifierField?: string;
     referenceGenomesLightweightSchema?: ReferenceGenomesLightweightSchema;
 } = {}) {
+    const schema: Schema = {
+        defaultOrder: 'ascending',
+        defaultOrderBy: '',
+        inputFields: [],
+        organismName: 'dummy',
+        primaryKey: ACCESSION_VERSION_FIELD,
+        submissionDataTypes: {
+            consensusSequences: true,
+        },
+        tableColumns: [],
+        metadata,
+    };
+
     render(
         <DownloadDialog
             downloadUrlGenerator={
@@ -99,7 +107,7 @@ async function renderDialog({
             referenceGenomesLightweightSchema={referenceGenomesLightweightSchema}
             allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
             dataUseTermsEnabled={dataUseTermsEnabled}
-            metadata={metadata}
+            schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
             selectedSuborganism={selectedSuborganism}
             suborganismIdentifierField={suborganismIdentifierField}
@@ -234,7 +242,14 @@ describe('DownloadDialog', () => {
                 order: 2,
                 includeInDownloadsByDefault: true,
             },
-            { name: 'field2', displayName: 'Field 2', type: 'string', header: 'Group 1', order: 1 },
+            {
+                name: 'field2',
+                displayName: 'Field 2',
+                type: 'string',
+                header: 'Group 1',
+                order: 1,
+                includeInDownloadsByDefault: true,
+            },
         ];
 
         await renderDialog({ metadata: orderedMetadata });
@@ -377,6 +392,8 @@ describe('DownloadDialog', () => {
             });
 
             expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+            expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
+            expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
 
         test('should download all raw segments when no suborganism is selected', async () => {
@@ -446,6 +463,62 @@ describe('DownloadDialog', () => {
 
             const { path } = parseDownloadHref();
             expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
+        });
+
+        const metadataWithOnlyForSuborganism: Metadata[] = [
+            {
+                name: 'field1',
+                displayName: 'Field 1',
+                type: 'string',
+                header: 'Group 1',
+                includeInDownloadsByDefault: true,
+                onlyForSuborganism: 'suborganism1',
+            },
+            {
+                name: 'field2',
+                displayName: 'Field 2',
+                type: 'string',
+                header: 'Group 1',
+                includeInDownloadsByDefault: true,
+                onlyForSuborganism: 'suborganism2',
+            },
+            {
+                name: ACCESSION_VERSION_FIELD,
+                type: 'string',
+                includeInDownloadsByDefault: true,
+            },
+        ];
+
+        test('should include "onlyForSuborganism" selected fields in download if no suborganism is selected', async () => {
+            await renderDialog({
+                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: null,
+                suborganismIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForSuborganism,
+            });
+
+            await checkAgreement();
+
+            expect(screen.getByText('Choose fields (3)')).toBeVisible();
+
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/fields=accessionVersion%2Cfield1%2Cfield2$/);
+        });
+
+        test('should exclude selected fields from download if they are not for selected suborganism', async () => {
+            await renderDialog({
+                referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
+                selectedSuborganism: 'suborganism2',
+                suborganismIdentifierField: 'genotype',
+                metadata: metadataWithOnlyForSuborganism,
+            });
+
+            await checkAgreement();
+
+            expect(screen.getByText('Choose fields (2)')).toBeVisible();
+
+            const { query } = parseDownloadHref();
+            expect(query).toMatch(/fields=accessionVersion%2Cfield2$/);
         });
     });
 });

@@ -11,7 +11,7 @@ import {
     type ReferenceAccession,
     SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
-import { MetadataFilterSchema } from '../../utils/search.ts';
+import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
@@ -64,9 +64,9 @@ const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweigh
     },
 };
 
-const searchVisibilities = new Map<string, boolean>([
-    ['field1', true],
-    ['field3', true],
+const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
+    ['field1', new MetadataVisibility(true, undefined)],
+    ['field3', new MetadataVisibility(true, undefined)],
 ]);
 
 const setSomeFieldValues = vi.fn();
@@ -80,6 +80,7 @@ const renderSearchForm = ({
     lapisSearchParameters = {},
     suborganismIdentifierField = undefined,
     selectedSuborganism = null,
+    searchVisibilities = defaultSearchVisibilities,
 }: {
     filterSchema?: MetadataFilterSchema;
     fieldValues?: Record<string, string>;
@@ -87,6 +88,7 @@ const renderSearchForm = ({
     lapisSearchParameters?: Record<string, string>;
     suborganismIdentifierField?: string;
     selectedSuborganism?: string | null;
+    searchVisibilities?: Map<string, MetadataVisibility>;
 } = {}) => {
     const props = {
         organism: testOrganism,
@@ -168,5 +170,55 @@ describe('SearchForm', () => {
 
         expect(await screen.findByLabelText('Version status')).toBeInTheDocument();
         expect(await screen.findByLabelText('Is Revocation')).toBeInTheDocument();
+    });
+
+    describe('suborganism specific search fields', () => {
+        const filterSchema = new MetadataFilterSchema([
+            {
+                name: 'field1',
+                type: 'string',
+                displayName: 'Field 1',
+                initiallyVisible: true,
+                onlyForSuborganism: 'suborganism1',
+            },
+            {
+                name: 'field2',
+                type: 'string',
+                displayName: 'Field 2',
+                initiallyVisible: true,
+                onlyForSuborganism: 'suborganism2',
+            },
+        ]);
+        const searchVisibilities = new Map<string, MetadataVisibility>([
+            ['field1', new MetadataVisibility(true, 'suborganism1')],
+            ['field2', new MetadataVisibility(true, 'suborganism2')],
+        ]);
+
+        const field1 = () => screen.queryByLabelText('Field 1');
+        const field2 = () => screen.queryByLabelText('Field 2');
+
+        it('should not display fields that are not for the currently selected suborganism', () => {
+            renderSearchForm({
+                filterSchema,
+                searchVisibilities,
+                suborganismIdentifierField: 'My genotype',
+                selectedSuborganism: 'suborganism1',
+            });
+
+            expect(field1()).toBeVisible();
+            expect(field2()).not.toBeInTheDocument();
+        });
+
+        it('should display suborganism specific fields when no suborganism is selected', () => {
+            renderSearchForm({
+                filterSchema,
+                searchVisibilities,
+                suborganismIdentifierField: 'My genotype',
+                selectedSuborganism: null,
+            });
+
+            expect(field1()).toBeVisible();
+            expect(field2()).toBeVisible();
+        });
     });
 });

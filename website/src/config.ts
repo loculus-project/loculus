@@ -32,7 +32,7 @@ function getConfigDir(): string {
     return configDir;
 }
 
-function validateWebsiteConfig(config: WebsiteConfig): Error[] {
+export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
     const errors: Error[] = [];
     Array.from(Object.entries(config.organisms).values()).forEach(([organism, schema]) => {
         if (schema.schema.metadataTemplate !== undefined) {
@@ -46,6 +46,30 @@ function validateWebsiteConfig(config: WebsiteConfig): Error[] {
                     );
                 }
             });
+        }
+
+        const knownSuborganisms = Object.keys(schema.referenceGenomes);
+
+        schema.schema.metadata.forEach((metadatum) => {
+            const onlyForSuborganism = metadatum.onlyForSuborganism;
+            if (onlyForSuborganism !== undefined && !knownSuborganisms.includes(onlyForSuborganism)) {
+                errors.push(
+                    new Error(
+                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForSuborganism}' in 'onlyForSuborganism'.`,
+                    ),
+                );
+            }
+        });
+
+        const suborganismIdentifierField = schema.schema.suborganismIdentifierField;
+        if (suborganismIdentifierField !== undefined) {
+            if (!schema.schema.metadata.some((metadatum) => metadatum.name === suborganismIdentifierField)) {
+                errors.push(
+                    new Error(
+                        `suborganismIdentifierField '${suborganismIdentifierField}' of organism '${organism}' is not defined in the metadata.`,
+                    ),
+                );
+            }
         }
     });
     return errors;

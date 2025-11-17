@@ -1,23 +1,41 @@
-import { type FC } from 'react';
+import { type FC, useId } from 'react';
 
 import { BaseDialog } from './BaseDialog.tsx';
 import { Button } from './Button';
+import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 
 export type FieldItem = {
     name: string;
     displayName?: string;
     header?: string;
-    disabled?: boolean;
-    alwaysSelected?: boolean;
-    selected?: boolean;
+    displayState?: FieldItemDisplayState;
+    isChecked: boolean;
 };
+
+export const fieldItemDisplayStateType = {
+    /** "disable" the checkbox and force-check it */
+    alwaysChecked: 'alwaysChecked',
+    /** grey out the label but allow checking/unchecking the checkbox */
+    greyedOut: 'greyedOut',
+    /** disable the checkbox (force-uncheck it) */
+    disabled: 'disabled',
+} as const;
+
+export type FieldItemDisplayState =
+    | {
+          type: typeof fieldItemDisplayStateType.alwaysChecked;
+      }
+    | {
+          type: typeof fieldItemDisplayStateType.greyedOut | typeof fieldItemDisplayStateType.disabled;
+          /** On hover of the label: explain why the field is greyed out/disabled */
+          tooltip: string;
+      };
 
 type FieldSelectorModalProps = {
     isOpen: boolean;
     onClose: () => void;
     title: string;
     fields: FieldItem[];
-    selectedFields: Set<string>;
     setFieldSelected: (fieldName: string, selected: boolean) => void;
 };
 
@@ -26,12 +44,10 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
     onClose,
     title,
     fields,
-    selectedFields,
     setFieldSelected,
 }) => {
-    const handleToggleField = (fieldName: string) => {
-        const isCurrentlySelected = selectedFields.has(fieldName);
-        setFieldSelected(fieldName, !isCurrentlySelected);
+    const handleToggleField = (fieldName: string, newIsSelected: boolean) => {
+        setFieldSelected(fieldName, newIsSelected);
 
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -40,7 +56,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectAll = () => {
         fields.forEach((field) => {
-            if (!field.alwaysSelected && !field.disabled) {
+            if (!shouldDisableCheckbox(field.displayState)) {
                 setFieldSelected(field.name, true);
             }
         });
@@ -52,7 +68,7 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
 
     const handleSelectNone = () => {
         fields.forEach((field) => {
-            if (!field.alwaysSelected && !field.disabled) {
+            if (!shouldDisableCheckbox(field.displayState)) {
                 setFieldSelected(field.name, false);
             }
         });
@@ -123,31 +139,11 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
                                     return aDisplay.localeCompare(bDisplay);
                                 })
                                 .map((field) => (
-                                    <div key={field.name} className='flex items-center'>
-                                        <input
-                                            type='checkbox'
-                                            id={`field-${field.name}`}
-                                            className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
-                                                field.disabled || field.alwaysSelected
-                                                    ? 'opacity-60 cursor-not-allowed'
-                                                    : ''
-                                            }`}
-                                            checked={selectedFields.has(field.name) || Boolean(field.alwaysSelected)}
-                                            onChange={() => handleToggleField(field.name)}
-                                            disabled={Boolean(field.disabled) || Boolean(field.alwaysSelected)}
-                                        />
-                                        <label
-                                            htmlFor={`field-${field.name}`}
-                                            className={`ml-2 text-sm ${
-                                                field.disabled || field.alwaysSelected
-                                                    ? 'text-gray-500'
-                                                    : 'text-gray-700'
-                                            }`}
-                                        >
-                                            {field.displayName ?? field.name}
-                                            {field.alwaysSelected ? ' (always included)' : ''}
-                                        </label>
-                                    </div>
+                                    <FieldSelectorModalField
+                                        key={field.name}
+                                        field={field}
+                                        handleToggleField={handleToggleField}
+                                    />
                                 ))}
                         </div>
                     </div>
@@ -167,3 +163,75 @@ export const FieldSelectorModal: FC<FieldSelectorModalProps> = ({
         </BaseDialog>
     );
 };
+
+type FieldSelectorModalFieldProps = {
+    field: FieldItem;
+    handleToggleField: (fieldName: string, newIsSelected: boolean) => void;
+};
+
+const FieldSelectorModalField: FC<FieldSelectorModalFieldProps> = ({ field, handleToggleField }) => {
+    const tooltipId = useId();
+
+    const disableCheckbox = shouldDisableCheckbox(field.displayState);
+    const greyOutLabel = shouldGreyOutLabel(field.displayState);
+    const alwaysChecked = isAlwaysChecked(field.displayState);
+    const tooltip = getTooltip(field.displayState);
+
+    return (
+        <div className='flex items-center'>
+            <input
+                type='checkbox'
+                id={`field-${field.name}`}
+                className={`h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600 ${
+                    disableCheckbox ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
+                checked={isCheckboxChecked(field)}
+                onChange={() => handleToggleField(field.name, !field.isChecked)}
+                disabled={disableCheckbox}
+            />
+            <label
+                htmlFor={`field-${field.name}`}
+                className={`ml-2 text-sm ${greyOutLabel ? 'text-gray-400' : 'text-gray-700'}`}
+                data-tooltip-id={tooltipId}
+            >
+                {field.displayName ?? field.name}
+                {alwaysChecked ? ' (always included)' : ''}
+                {tooltip !== undefined && <CustomTooltip id={tooltipId} content={tooltip} />}
+            </label>
+        </div>
+    );
+};
+
+function isCheckboxChecked(field: FieldItem) {
+    if (field.displayState?.type === fieldItemDisplayStateType.disabled) {
+        return false;
+    }
+
+    if (field.displayState?.type === fieldItemDisplayStateType.alwaysChecked) {
+        return true;
+    }
+
+    return field.isChecked;
+}
+
+function shouldDisableCheckbox(displayState: FieldItemDisplayState | undefined) {
+    return (
+        displayState?.type === fieldItemDisplayStateType.alwaysChecked ||
+        displayState?.type === fieldItemDisplayStateType.disabled
+    );
+}
+
+function shouldGreyOutLabel(displayState: FieldItemDisplayState | undefined) {
+    return displayState?.type === fieldItemDisplayStateType.greyedOut || shouldDisableCheckbox(displayState);
+}
+
+function isAlwaysChecked(displayState: FieldItemDisplayState | undefined) {
+    return displayState?.type === fieldItemDisplayStateType.alwaysChecked;
+}
+
+function getTooltip(displayState: FieldItemDisplayState | undefined) {
+    return displayState?.type === fieldItemDisplayStateType.greyedOut ||
+        displayState?.type === fieldItemDisplayStateType.disabled
+        ? displayState.tooltip
+        : undefined;
+}

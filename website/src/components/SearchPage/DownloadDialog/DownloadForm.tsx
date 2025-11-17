@@ -7,8 +7,9 @@ import { FieldSelectorModal } from './FieldSelector/FieldSelectorModal.tsx';
 import { DropdownOptionBlock, type OptionBlockOption, RadioOptionBlock } from './OptionBlock.tsx';
 import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
-import type { Metadata, Schema } from '../../../types/config.ts';
+import type { Schema } from '../../../types/config.ts';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
+import type { MetadataVisibility } from '../../../utils/search.ts';
 import {
     type GeneInfo,
     getMultiPathogenNucleotideSequenceNames,
@@ -36,8 +37,8 @@ type DownloadFormProps = {
     setDownloadFormState: Dispatch<SetStateAction<DownloadFormState>>;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
-    metadata: Metadata[];
-    selectedFields: Set<string>;
+    schema: Schema;
+    downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedSuborganism: string | null;
@@ -50,8 +51,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({
     setDownloadFormState,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
-    metadata,
-    selectedFields,
+    schema,
+    downloadFieldVisibilities,
     onSelectedFieldsChange,
     richFastaHeaderFields,
     selectedSuborganism,
@@ -75,7 +76,11 @@ export const DownloadForm: FC<DownloadFormProps> = ({
                     <span>Metadata</span>
                     <FieldSelectorButton
                         onClick={() => setIsFieldSelectorOpen(true)}
-                        selectedFieldsCount={selectedFields.size}
+                        selectedFieldsCount={
+                            Array.from(downloadFieldVisibilities.values()).filter((it) =>
+                                it.isVisible(selectedSuborganism),
+                            ).length
+                        }
                         disabled={downloadFormState.dataType !== 'metadata'}
                     />
                 </div>
@@ -251,9 +256,10 @@ export const DownloadForm: FC<DownloadFormProps> = ({
             <FieldSelectorModal
                 isOpen={isFieldSelectorOpen}
                 onClose={() => setIsFieldSelectorOpen(false)}
-                metadata={metadata}
-                selectedFields={selectedFields}
+                schema={schema}
+                downloadFieldVisibilities={downloadFieldVisibilities}
                 onSelectedFieldsChange={onSelectedFieldsChange}
+                selectedSuborganism={selectedSuborganism}
             />
         </div>
     );

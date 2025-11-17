@@ -1,23 +1,32 @@
 import { type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { ACCESSION_VERSION_FIELD } from '../../../../settings.ts';
-import { type Metadata } from '../../../../types/config.ts';
-import { type FieldItem, FieldSelectorModal as CommonFieldSelectorModal } from '../../../common/FieldSelectorModal.tsx';
+import { type Metadata, type Schema } from '../../../../types/config.ts';
+import type { MetadataVisibility } from '../../../../utils/search.ts';
+import {
+    type FieldItem,
+    type FieldItemDisplayState,
+    fieldItemDisplayStateType,
+    FieldSelectorModal as CommonFieldSelectorModal,
+} from '../../../common/FieldSelectorModal.tsx';
+import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborganism.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
     onClose: () => void;
-    metadata: Metadata[];
-    selectedFields: Set<string>;
+    schema: Schema;
+    downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
+    selectedSuborganism: string | null;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     isOpen,
     onClose,
-    metadata,
-    selectedFields,
+    schema,
+    downloadFieldVisibilities,
     onSelectedFieldsChange,
+    selectedSuborganism,
 }) => {
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
         onSelectedFieldsChange((prevSelectedFields) => {
@@ -33,12 +42,12 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         });
     };
 
-    const fieldItems: FieldItem[] = metadata.map((field) => ({
+    const fieldItems: FieldItem[] = schema.metadata.map((field) => ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        alwaysSelected: field.name === ACCESSION_VERSION_FIELD,
-        disabled: field.name === ACCESSION_VERSION_FIELD,
+        displayState: getDisplayState(field, selectedSuborganism, schema),
+        isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
     return (
@@ -47,11 +56,29 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             fields={fieldItems}
-            selectedFields={selectedFields}
             setFieldSelected={handleFieldSelection}
         />
     );
 };
+
+function getDisplayState(
+    field: Metadata,
+    selectedSuborganism: string | null,
+    schema: Schema,
+): FieldItemDisplayState | undefined {
+    if (field.name === ACCESSION_VERSION_FIELD) {
+        return { type: fieldItemDisplayStateType.alwaysChecked };
+    }
+
+    if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
+        return {
+            type: fieldItemDisplayStateType.disabled,
+            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
+        };
+    }
+
+    return undefined;
+}
 
 /**
  * Gets the default list of field names that should be selected

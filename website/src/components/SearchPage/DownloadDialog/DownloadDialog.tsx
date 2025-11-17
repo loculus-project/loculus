@@ -11,6 +11,7 @@ import { routes } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import { MetadataVisibility } from '../../../utils/search.ts';
 import type { GeneInfo, SegmentInfo } from '../../../utils/sequenceTypeHelpers.ts';
 import { ActiveFilters } from '../../common/ActiveFilters.tsx';
 import { BaseDialog } from '../../common/BaseDialog.tsx';
@@ -21,7 +22,7 @@ type DownloadDialogProps = {
     referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema;
     allowSubmissionOfConsensusSequences: boolean;
     dataUseTermsEnabled: boolean;
-    metadata: Metadata[];
+    schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
     selectedSuborganism: string | null;
     suborganismIdentifierField: string | undefined;
@@ -33,7 +34,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesLightweightSchema,
     allowSubmissionOfConsensusSequences,
     dataUseTermsEnabled,
-    metadata,
+    schema,
     richFastaHeaderFields,
     selectedSuborganism,
     suborganismIdentifierField,
@@ -56,7 +57,16 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     }, [nucleotideSequences, genes]);
 
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(dataUseTermsEnabled ? false : true);
-    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(metadata)); // This is here so that the state is persisted across closing and reopening the dialog
+    const [selectedFields, setSelectedFields] = useState<Set<string>>(getDefaultSelectedFields(schema.metadata)); // This is here so that the state is persisted across closing and reopening the dialog
+
+    const downloadFieldVisibilities = useMemo(() => {
+        return new Map(
+            schema.metadata.map((field) => [
+                field.name,
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForSuborganism),
+            ]),
+        );
+    }, [selectedFields, schema]);
 
     const downloadOption = getDownloadOption({
         downloadFormState,
@@ -64,8 +74,13 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         genes,
         useMultiSegmentEndpoint,
         defaultFastaHeaderTemplate,
-        selectedFields,
-        metadata,
+        getVisibleFields: () => [
+            ...downloadFieldVisibilities
+                .entries()
+                .filter(([_, visibility]) => visibility.isVisible(selectedSuborganism))
+                .map(([name]) => name),
+        ],
+        metadata: schema.metadata,
     });
 
     return (
@@ -85,8 +100,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         setDownloadFormState={setDownloadFormState}
                         allowSubmissionOfConsensusSequences={allowSubmissionOfConsensusSequences}
                         dataUseTermsEnabled={dataUseTermsEnabled}
-                        metadata={metadata}
-                        selectedFields={selectedFields}
+                        schema={schema}
+                        downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
                         selectedSuborganism={selectedSuborganism}
@@ -146,7 +161,7 @@ function getDownloadOption({
     downloadFormState,
     useMultiSegmentEndpoint,
     defaultFastaHeaderTemplate,
-    selectedFields,
+    getVisibleFields,
     metadata,
 }: {
     downloadFormState: DownloadFormState;
@@ -154,7 +169,7 @@ function getDownloadOption({
     genes: GeneInfo[];
     useMultiSegmentEndpoint: boolean;
     defaultFastaHeaderTemplate: string | undefined;
-    selectedFields: Set<string>;
+    getVisibleFields: () => string[];
     metadata: Metadata[];
 }): DownloadOption {
     const assembleDownloadDataType = (): DownloadDataType => {
@@ -162,7 +177,7 @@ function getDownloadOption({
             case 'metadata':
                 return {
                     type: downloadFormState.dataType,
-                    fields: orderFieldsForDownload(selectedFields, metadata),
+                    fields: orderFieldsForDownload(getVisibleFields(), metadata),
                 };
             case 'unalignedNucleotideSequences':
                 return {
@@ -197,8 +212,8 @@ function getDownloadOption({
 }
 
 // Sort fields by their order in the search table and ensure accessionVersion is the first field
-function orderFieldsForDownload(fields: Set<string>, metadata: Metadata[]): string[] {
-    const fieldsWithoutAccessionVersion = [...fields].filter((field) => field !== ACCESSION_VERSION_FIELD);
+function orderFieldsForDownload(fields: string[], metadata: Metadata[]): string[] {
+    const fieldsWithoutAccessionVersion = fields.filter((field) => field !== ACCESSION_VERSION_FIELD);
     const orderMap = new Map<string, number>();
     for (const m of metadata) {
         orderMap.set(m.name, m.order ?? Number.MAX_SAFE_INTEGER);
