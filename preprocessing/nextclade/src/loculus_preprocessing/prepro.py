@@ -501,50 +501,43 @@ def add_input_metadata(
             )
             return None
         sub_path = input_path[len(nextclade_prefix) :]
-        if segment in unprocessed.nextcladeMetadata:
-            if not unprocessed.nextcladeMetadata[segment]:
-                message = (
-                    "Nucleotide sequence failed to align"
-                    if segment == "main"
-                    else f"Nucleotide sequence for {segment} failed to align"
-                )
-                annotation = ProcessingAnnotation.from_single(
-                    segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
-                )
-                if (
-                    config.multi_segment
-                    and config.alignment_requirement == AlignmentRequirement.ANY
-                ):
-                    warnings.append(annotation)
-                    return None
-                errors.append(annotation)
-                return None
-            result: str | None = str(
-                dpath.get(
-                    unprocessed.nextcladeMetadata[segment],
-                    sub_path,
-                    separator=".",
-                    default=None,
-                )
+        if segment not in unprocessed.nextcladeMetadata:
+            return None
+        if not unprocessed.nextcladeMetadata[segment]:
+            message = (
+                "Nucleotide sequence failed to align"
+                if segment == "main"
+                else f"Nucleotide sequence for {segment} failed to align"
             )
-            if input_path == "nextclade.frameShifts":
-                try:
-                    result = format_frameshift(result)
-                except Exception:
-                    logger.error(
-                        "Was unable to format frameshift - this is likely an internal error"
-                    )
-                    result = None
-            if input_path == "nextclade.qc.stopCodons.stopCodons":
-                try:
-                    result = format_stop_codon(result)
-                except Exception:
-                    logger.error(
-                        "Was unable to format stop codon - this is likely an internal error"
-                    )
-                    result = None
-            return result
-        return None
+            annotation = ProcessingAnnotation.from_single(
+                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+                warnings.append(annotation)
+                return None
+            errors.append(annotation)
+            return None
+        result: str | None = str(
+            dpath.get(
+                unprocessed.nextcladeMetadata[segment],
+                sub_path,
+                separator=".",
+                default=None,
+            )
+        )
+        if input_path == "nextclade.frameShifts":
+            try:
+                result = format_frameshift(result)
+            except Exception:
+                logger.error("Was unable to format frameshift - this is likely an internal error")
+                result = None
+        if input_path == "nextclade.qc.stopCodons.stopCodons":
+            try:
+                result = format_stop_codon(result)
+            except Exception:
+                logger.error("Was unable to format stop codon - this is likely an internal error")
+                result = None
+        return result
     if input_path not in unprocessed.inputMetadata:
         return None
     return unprocessed.inputMetadata[input_path]
