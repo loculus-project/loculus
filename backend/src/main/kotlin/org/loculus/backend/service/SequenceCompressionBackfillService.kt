@@ -75,6 +75,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                 se
                     .selectAll()
                     .apply {
+                        andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
                         if (lastAcc != null && lastVer != null) {
                             andWhere {
                                 (se.accessionColumn greater lastAcc!!) or
@@ -118,9 +119,19 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                             },
                         ) {
                             it[se.originalDataColumn] = migrated
+                            it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
                         }
 
                         processed++
+                    } else {
+                        se.update(
+                            where = {
+                                (se.accessionColumn eq accession) and
+                                        (se.versionColumn eq version)
+                            },
+                        ) {
+                            it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                        }
                     }
                     if (++i % logEvery == 0) {
                         log.info { "Migrated $processed sequence entries (originalData)" }
@@ -170,6 +181,7 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                     )
                     .selectAll()
                     .apply {
+                        andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
                         if (lastAcc != null && lastVer != null && lastPipeVer != null) {
                             andWhere {
                                 (sepd.accessionColumn greater lastAcc!!) or
@@ -235,9 +247,20 @@ class SequenceCompressionBackfillService(private val compressionDictService: Com
                             },
                         ) {
                             it[sepd.processedDataColumn] = migrated
+                            it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
                         }
 
                         processed++
+                    } else {
+                        sepd.update(
+                            where = {
+                                (sepd.accessionColumn eq accession) and
+                                        (sepd.versionColumn eq version) and
+                                        (sepd.pipelineVersionColumn eq pipelineVersion)
+                            },
+                        ) {
+                            it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                        }
                     }
                     if (++i % logEvery == 0) {
                         log.info { "Migrated $processed sequence entries (processedData)" }
