@@ -323,7 +323,7 @@ def classify_with_nextclade_sort(
         best_hits = hits.groupby("seqName", as_index=False).first()
         logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
 
-        sort_results_map: dict[str, list[str]] = {}
+        sort_results_map: dict[SegmentName, list[str]] = {}
 
         for _, row in best_hits.iterrows():
             not_found = True
@@ -360,11 +360,11 @@ def classify_with_nextclade_sort(
                 )
             )
         print(sort_results_map)
-        for segment, headers in sort_results_map.items():
+        for segment_name, headers in sort_results_map.items():
             if len(headers) > 1:
                 msg = (
                     f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
-                    f" {segment} - only one entry is allowed."
+                    f" {segment_name} - only one entry is allowed."
                 )
                 duplicate_segments = True
                 errors.append(
@@ -375,9 +375,7 @@ def classify_with_nextclade_sort(
                     )
                 )
                 continue
-            unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
-                headers[0]
-            ]
+            unaligned_nucleotide_sequences[segment_name] = input_unaligned_sequences[headers[0]]
                     
     if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments and not missing_segments:
         errors.append(
