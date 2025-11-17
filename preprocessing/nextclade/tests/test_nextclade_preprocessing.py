@@ -446,16 +446,15 @@ multi_segment_case_definitions_all_requirement = [
         },
         expected_errors=[
             ProcessingAnnotationHelper(
-                ["ebola-sudan"],
-                ["ebola-sudan"],
-                "Nucleotide sequence for ebola-sudan failed to align",
+                ["alignment"],
+                ["alignment"],
+                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
-                "ebola-sudan": invalid_sequence(),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             alignedNucleotideSequences={
@@ -534,15 +533,14 @@ multi_segment_case_definitions_any_requirement = [
         expected_errors=[],
         expected_warnings=[
             ProcessingAnnotationHelper(
-                ["ebola-sudan"],
-                ["ebola-sudan"],
-                "Nucleotide sequence for ebola-sudan failed to align",
+                ["alignment"],
+                ["alignment"],
+                "Sequence ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={
-                "ebola-sudan": invalid_sequence(),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
             alignedNucleotideSequences={

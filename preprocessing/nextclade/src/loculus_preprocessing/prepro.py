@@ -264,6 +264,7 @@ def classify_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
     config: Config,
     dataset_dir: str,
 ):
@@ -300,14 +301,22 @@ def classify_with_nextclade_sort(
                     f"{config.organism} per `nextclade sort`. "
                     f"Double check you are submitting to the correct organism."
                 )
-                # TODO: only error when config.alignment_requirement == "ALL", otherwise warn
-                errors.append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
+                if config.alignment_requirement == AlignmentRequirement.ALL:
+                    errors.append(
+                        ProcessingAnnotation.from_single(
+                            ProcessingAnnotationAlignment,
+                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            message=msg,
+                        )
                     )
-                )
+                else:
+                    warnings.append(
+                        ProcessingAnnotation.from_single(
+                            ProcessingAnnotationAlignment,
+                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            message=msg,
+                        )
+                    )
 
         best_hits = hits.groupby("seqName", as_index=False).first()
         logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
@@ -330,21 +339,31 @@ def classify_with_nextclade_sort(
                     f"{config.organism}. It is therefore not possible to release. "
                     "Contact the administrator if you think this message is an error."
                 )
-                errors.append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
+                if config.alignment_requirement == AlignmentRequirement.ALL:
+                    errors.append(
+                        ProcessingAnnotation.from_single(
+                            ProcessingAnnotationAlignment,
+                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            message=msg,
+                        )
+                    )
+                else:
+                    warnings.append(
+                        ProcessingAnnotation.from_single(
+                            ProcessingAnnotationAlignment,
+                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                                message=msg,
                     )
                 )
 
-    return (unaligned_nucleotide_sequences, errors)
+    return (unaligned_nucleotide_sequences, errors, warnings)
 
 
 def assign_segment(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
     errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
     config: Config,
     dataset_dir: str | None = None,
 ):
@@ -360,6 +379,7 @@ def assign_segment(
             unaligned_nucleotide_sequences,
             dataset_dir=dataset_dir,
             errors=errors,
+            warnings=warnings,
             config=config,
         )
     valid_segments = set()
@@ -368,6 +388,7 @@ def assign_segment(
         return (
             unaligned_nucleotide_sequences,
             errors,
+            warnings,
         )
     if not config.multi_segment:
         if len(input_unaligned_sequences) > 1:
@@ -390,6 +411,7 @@ def assign_segment(
         return (
             unaligned_nucleotide_sequences,
             errors,
+            warnings,
         )
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
@@ -434,7 +456,15 @@ def assign_segment(
                 ),
             )
         )
-    return (unaligned_nucleotide_sequences, errors)
+    if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments:
+        errors.append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message="No sequence data found - check segments are annotated correctly",
+                )
+            )
+    return (unaligned_nucleotide_sequences, errors, warnings)
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
@@ -478,10 +508,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         (
             unaligned_nucleotide_sequences[id],
             alerts.errors[id],
+            alerts.warnings[id],
         ) = assign_segment(
             input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
             unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
             errors=alerts.errors[id],
+            warnings=alerts.warnings[id],
             config=config,
             dataset_dir=dataset_dir,
         )
@@ -843,24 +875,17 @@ def process_single(  # noqa: C901
             warnings += unprocessed.warnings
         if unprocessed.errors:
             errors += unprocessed.errors
-        elif not any(unprocessed.unalignedNucleotideSequences.values()):
-            errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data found - check segments are annotated correctly",
-                )
-            )
 
         submitter = unprocessed.inputMetadata["submitter"]
         group_id = int(str(unprocessed.inputMetadata["group_id"]))
     else:
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
-        unprocessed.unalignedNucleotideSequences, errors = assign_segment(
+        unprocessed.unalignedNucleotideSequences, errors, warnings = assign_segment(
             input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
             unaligned_nucleotide_sequences={},
             errors=errors,
+            warnings=warnings,
             config=config,
         )
 
