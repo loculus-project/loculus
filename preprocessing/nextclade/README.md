@@ -17,7 +17,7 @@ This preprocessing pipeline has been developed by the Loculus team. It requests 
 
 ### Installation
 
-1. Install `conda`/`mamba`/`micromamba`: see e.g. [micromamba installation docs](https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install)
+1. Install `conda`/`mamba`/`micromamba`: see e.g. [micromamba installation docs](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)
 1. Install environment:
 
    ```sh
