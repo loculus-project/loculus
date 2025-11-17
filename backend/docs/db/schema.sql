@@ -240,7 +240,8 @@ CREATE TABLE public.sequence_entries (
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
     original_data jsonb,
-    version_comment text
+    version_comment text,
+    compression_migration_checked_at timestamp without time zone
 );
 
 
@@ -259,7 +260,8 @@ CREATE TABLE public.sequence_entries_preprocessed_data (
     warnings jsonb,
     processing_status text NOT NULL,
     started_processing_at timestamp without time zone NOT NULL,
-    finished_processing_at timestamp without time zone
+    finished_processing_at timestamp without time zone,
+    compression_migration_checked_at timestamp without time zone
 );
 
 
