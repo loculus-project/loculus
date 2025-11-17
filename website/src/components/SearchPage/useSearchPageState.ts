@@ -77,20 +77,17 @@ export function useSearchPageState({
                     } else {
                         newState[key] = value;
                     }
-                });
 
-                if (
-                    schema.suborganismIdentifierField !== undefined &&
-                    fieldValuesToSet.some(([key]) => key === schema.suborganismIdentifierField)
-                ) {
-                    delete newState[MUTATION_KEY];
-                    filterSchema
-                        .ungroupedMetadataFilters()
-                        .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
-                        .forEach((metadataFilter) => {
-                            delete newState[metadataFilter.name];
-                        });
-                }
+                    if (schema.suborganismIdentifierField !== undefined && key === schema.suborganismIdentifierField) {
+                        delete newState[MUTATION_KEY];
+                        filterSchema
+                            .ungroupedMetadataFilters()
+                            .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
+                            .forEach((metadataFilter) => {
+                                delete newState[metadataFilter.name];
+                            });
+                    }
+                });
 
                 return newState;
             });
