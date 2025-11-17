@@ -202,7 +202,7 @@ class UploadDatabaseService(
                 group_id,
                 submitted_at,
                 original_data,
-                compression_migration_checked_at,
+                compression_migration_checked_at
             )
             SELECT
                 metadata_upload_aux_table.accession,

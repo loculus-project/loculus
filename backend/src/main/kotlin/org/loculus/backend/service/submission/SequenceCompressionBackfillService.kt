@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
@@ -60,13 +61,15 @@ class SequenceCompressionMigrationService(
 
     fun markChecked(accession: String, version: Long) {
         val se = SequenceEntriesTable
-        se.update(
-            where = {
-                (se.accessionColumn eq accession) and
-                    (se.versionColumn eq version)
-            },
-        ) {
-            it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+        transaction {
+            se.update(
+                where = {
+                    (se.accessionColumn eq accession) and
+                        (se.versionColumn eq version)
+                },
+            ) {
+                it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+            }
         }
     }
 
@@ -83,23 +86,25 @@ class SequenceCompressionMigrationService(
 
         while (true) {
             // Read a page using keyset pagination
-            val page = se
-                .selectAll()
-                .apply {
-                    andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
-                    if (lastAcc != null && lastVer != null) {
-                        andWhere {
-                            (se.accessionColumn greater lastAcc!!) or
-                                (
-                                    (se.accessionColumn eq lastAcc!!) and
-                                        (se.versionColumn greater lastVer!!)
-                                    )
+            val page = transaction {
+                se
+                    .selectAll()
+                    .apply {
+                        andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
+                        if (lastAcc != null && lastVer != null) {
+                            andWhere {
+                                (se.accessionColumn greater lastAcc!!) or
+                                    (
+                                        (se.accessionColumn eq lastAcc!!) and
+                                            (se.versionColumn greater lastVer!!)
+                                        )
+                            }
                         }
                     }
-                }
-                .orderBy(se.accessionColumn to SortOrder.ASC, se.versionColumn to SortOrder.DESC)
-                .limit(batchSize)
-                .toList()
+                    .orderBy(se.accessionColumn to SortOrder.ASC, se.versionColumn to SortOrder.DESC)
+                    .limit(batchSize)
+                    .toList()
+            }
 
             if (page.isEmpty()) break
 
@@ -126,14 +131,16 @@ class SequenceCompressionMigrationService(
                     return@forEach
                 }
 
-                se.update(
-                    where = {
-                        (se.accessionColumn eq accession) and
-                            (se.versionColumn eq version)
-                    },
-                ) {
-                    it[se.originalDataColumn] = migrated
-                    it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                transaction {
+                    se.update(
+                        where = {
+                            (se.accessionColumn eq accession) and
+                                (se.versionColumn eq version)
+                        },
+                    ) {
+                        it[se.originalDataColumn] = migrated
+                        it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                    }
                 }
 
                 processed++
@@ -153,14 +160,16 @@ class SequenceCompressionMigrationService(
 
     private fun markProcessedChecked(accession: String, version: Long, pipelineVersion: Long) {
         val sepd = SequenceEntriesPreprocessedDataTable
-        sepd.update(
-            where = {
-                (sepd.accessionColumn eq accession) and
-                    (sepd.versionColumn eq version) and
-                    (sepd.pipelineVersionColumn eq pipelineVersion)
-            },
-        ) {
-            it[sepd.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+        transaction {
+            sepd.update(
+                where = {
+                    (sepd.accessionColumn eq accession) and
+                        (sepd.versionColumn eq version) and
+                        (sepd.pipelineVersionColumn eq pipelineVersion)
+                },
+            ) {
+                it[sepd.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+            }
         }
     }
 
@@ -179,50 +188,52 @@ class SequenceCompressionMigrationService(
 
         while (true) {
             // Read a page with keyset pagination over (accession, version, pipeline_version)
-            val page = sepd
-                .join(
-                    se,
-                    joinType = JoinType.INNER,
-                    additionalConstraint = {
-                        (
-                            sepd.accessionColumn eq
-                                se.accessionColumn
-                            ) and
+            val page = transaction {
+                sepd
+                    .join(
+                        se,
+                        joinType = JoinType.INNER,
+                        additionalConstraint = {
                             (
-                                sepd.versionColumn eq
-                                    se.versionColumn
-                                )
-                    },
-                )
-                .selectAll()
-                .apply {
-                    andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
-                    if (lastAcc != null && lastVer != null && lastPipeVer != null) {
-                        andWhere {
-                            (sepd.accessionColumn greater lastAcc!!) or
+                                sepd.accessionColumn eq
+                                    se.accessionColumn
+                                ) and
                                 (
-                                    (sepd.accessionColumn eq lastAcc!!) and
-                                        (
-                                            (sepd.versionColumn greater lastVer!!) or
-                                                (
-                                                    (sepd.versionColumn eq lastVer!!) and
-                                                        (
-                                                            sepd.pipelineVersionColumn greater
-                                                                lastPipeVer!!
-                                                            )
-                                                    )
-                                            )
+                                    sepd.versionColumn eq
+                                        se.versionColumn
                                     )
+                        },
+                    )
+                    .selectAll()
+                    .apply {
+                        andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
+                        if (lastAcc != null && lastVer != null && lastPipeVer != null) {
+                            andWhere {
+                                (sepd.accessionColumn greater lastAcc!!) or
+                                    (
+                                        (sepd.accessionColumn eq lastAcc!!) and
+                                            (
+                                                (sepd.versionColumn greater lastVer!!) or
+                                                    (
+                                                        (sepd.versionColumn eq lastVer!!) and
+                                                            (
+                                                                sepd.pipelineVersionColumn greater
+                                                                    lastPipeVer!!
+                                                                )
+                                                        )
+                                                )
+                                        )
+                            }
                         }
                     }
-                }
-                .orderBy(
-                    sepd.accessionColumn to SortOrder.ASC,
-                    sepd.versionColumn to SortOrder.ASC,
-                    sepd.pipelineVersionColumn to SortOrder.ASC,
-                )
-                .limit(batchSize)
-                .toList()
+                    .orderBy(
+                        sepd.accessionColumn to SortOrder.ASC,
+                        sepd.versionColumn to SortOrder.ASC,
+                        sepd.pipelineVersionColumn to SortOrder.ASC,
+                    )
+                    .limit(batchSize)
+                    .toList()
+            }
 
             if (page.isEmpty()) break
 
@@ -261,15 +272,17 @@ class SequenceCompressionMigrationService(
                     return@forEach
                 }
 
-                sepd.update(
-                    where = {
-                        (sepd.accessionColumn eq accession) and
-                            (sepd.versionColumn eq version) and
-                            (sepd.pipelineVersionColumn eq pipelineVersion)
-                    },
-                ) {
-                    it[sepd.processedDataColumn] = migrated
-                    it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                transaction {
+                    sepd.update(
+                        where = {
+                            (sepd.accessionColumn eq accession) and
+                                (sepd.versionColumn eq version) and
+                                (sepd.pipelineVersionColumn eq pipelineVersion)
+                        },
+                    ) {
+                        it[sepd.processedDataColumn] = migrated
+                        it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                    }
                 }
 
                 processed++
