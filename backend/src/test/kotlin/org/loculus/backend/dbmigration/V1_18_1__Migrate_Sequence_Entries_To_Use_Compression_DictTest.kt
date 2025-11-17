@@ -56,7 +56,7 @@ private val log = KotlinLogging.logger { }
 @Suppress("ktlint:standard:class-naming")
 class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
-    @Autowired val sequenceCompressionBackfillService: SequenceCompressionBackfillService
+    @Autowired val sequenceCompressionBackfillService: SequenceCompressionBackfillService,
 ) {
     companion object {
         private val env = TestEnvironment()
