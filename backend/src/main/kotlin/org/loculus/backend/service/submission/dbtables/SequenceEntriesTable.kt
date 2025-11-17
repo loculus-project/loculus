@@ -30,7 +30,6 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val submittedAtTimestampColumn = datetime("submitted_at")
     val releasedAtTimestampColumn = datetime("released_at").nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
-    val compressionMigrationCheckedAtColumn = datetime("compression_migration_checked_at").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 
