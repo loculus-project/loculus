@@ -400,6 +400,39 @@ def assign_segment_with_nextclade_sort(
     )
 
 
+def assign_single_segment(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    config: Config,
+) -> SegmentAssignment:
+    errors = []
+    warnings = []
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    fastaHeader = ""
+    if len(input_unaligned_sequences) > 1:
+        errors.append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=(
+                    f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
+                    f" input data, but organism: {config.organism} is single-segmented. "
+                    "Please check that your metadata and sequences are annotated correctly."
+                    "Each metadata entry should have a single corresponding fasta sequence "
+                    "entry with the same submissionId."
+                ),
+            )
+        )
+    else:
+        fastaHeader, value = next(iter(input_unaligned_sequences.items()))
+        unaligned_nucleotide_sequences["main"] = value
+    return SegmentAssignment(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        segmentNameToFastaHeaders={"main": fastaHeader},
+        errors=errors,
+        warnings=warnings,
+    )
+
+
 def assign_segment_with_header(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
@@ -417,29 +450,7 @@ def assign_segment_with_header(
             warnings=warnings,
         )
     if not config.multi_segment:
-        if len(input_unaligned_sequences) > 1:
-            errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=(
-                        f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
-                        f" input data, but organism: {config.organism} is single-segmented. "
-                        "Please check that your metadata and sequences are annotated correctly."
-                        "Each metadata entry should have a single corresponding fasta sequence "
-                        "entry with the same submissionId."
-                    ),
-                )
-            )
-        else:
-            _, value = next(iter(input_unaligned_sequences.items()))
-            unaligned_nucleotide_sequences["main"] = value
-        return SegmentAssignment(
-            unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-            segmentNameToFastaHeaders={},
-            errors=errors,
-            warnings=warnings,
-        )
+        return assign_single_segment(input_unaligned_sequences, config)
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
         unaligned_segment = [
@@ -534,11 +545,17 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         input_metadata[id]["group_id"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
-        segment_assignment = assign_segment_with_nextclade_sort(
-            input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
-            config=config,
-            dataset_dir=dataset_dir,
-        )
+        if not config.multi_segment:
+            segment_assignment = assign_single_segment(
+                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+                config=config,
+            )
+        else:
+            segment_assignment = assign_segment_with_nextclade_sort(
+                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+                config=config,
+                dataset_dir=dataset_dir,
+            )
         unaligned_nucleotide_sequences[id] = segment_assignment.unalignedNucleotideSequences
         alerts.errors[id] = segment_assignment.errors
         alerts.warnings[id] = segment_assignment.warnings
@@ -906,11 +923,9 @@ def process_single(  # noqa: C901
     else:
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
-        segment_assignment = (
-            assign_segment_with_header(
-                input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
-                config=config,
-            )
+        segment_assignment = assign_segment_with_header(
+            input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
+            config=config,
         )
         unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
         errors += segment_assignment.errors
