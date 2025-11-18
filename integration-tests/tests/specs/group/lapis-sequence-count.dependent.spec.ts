@@ -23,6 +23,8 @@ test.describe('Group page sequence counts', () => {
 
         await expect(sequencesSection).toBeVisible();
 
+        await page.waitForLoadState('networkidle');
+
         const rows = sequencesSection.locator('tbody tr');
         const rowCount = await rows.count();
         expect(rowCount).toBeGreaterThan(0);
