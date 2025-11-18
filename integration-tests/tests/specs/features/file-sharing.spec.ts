@@ -1,174 +1,118 @@
-import { Page, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/tempdir.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
-import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
+import { checkAllFileContents } from '../../utils/link-helpers';
+import { ReviewPage } from '../../pages/review.page';
 
-test('submit a single sequence with two files', async ({ pageWithGroup, page, tempDir }) => {
+const ORGANISM_NAME = 'Test organism (with files)';
+const RAW_READS = 'raw_reads';
+const METADATA_HEADERS = ['submissionId', 'country', 'date'];
+const COUNTRY_1 = 'Norway';
+const COUNTRY_2 = 'Uganda';
+const ID_1 = 'sub1';
+const ID_2 = 'sub2';
+const FILES_SINGLE = { 'testfile.txt': 'This is a test file.' };
+const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content of file 2.' };
+
+async function submitAndGetReviewPage(
+    submissionPage: SingleSequenceSubmissionPage | BulkSubmissionPage,
+): Promise<ReviewPage> {
+    await submissionPage.acceptTerms();
+    const reviewPage = await submissionPage.submitSequence();
+    await reviewPage.waitForZeroProcessing();
+    return reviewPage;
+}
+
+test('submit single seq w/ 2 files thru single seq submission form', async ({
+    pageWithGroup,
+    page,
+    tempDir,
+}) => {
     test.setTimeout(180_000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
-    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.fillSubmissionFormDummyOrganism({
-        submissionId: 'TEST-ID-123',
-        country: 'Uganda',
+        submissionId: ID_1,
+        country: COUNTRY_1,
         date: '2023-10-15',
     });
 
-    await submissionPage.uploadExternalFiles(
-        'raw_reads',
-        {
-            'hello.txt': 'Hello',
-            'world.txt': 'World',
-        },
-        tempDir,
-    );
+    await submissionPage.uploadExternalFiles(RAW_READS, FILES_DOUBLE, tempDir);
 
-    await submissionPage.acceptTerms();
-    const reviewPage = await submissionPage.submitSequence();
-    await reviewPage.waitForZeroProcessing();
+    const reviewPage = await submitAndGetReviewPage(submissionPage);
 
-    // check that files can be seen after processing
-    const filesDialog = await reviewPage.viewFiles();
-    await expect(filesDialog.getByText('hello.txt')).toBeVisible();
-    await checkFileContent(page, 'hello.txt', 'Hello');
-    await expect(filesDialog.getByText('world.txt')).toBeVisible();
-    await checkFileContent(page, 'world.txt', 'World');
-    await reviewPage.closeFilesDialog();
+    await reviewPage.checkFilesInReviewDialog(FILES_DOUBLE);
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-    await reviewPage.releaseValidSequences();
-
-    await page.getByRole('link', { name: 'released sequences' }).click();
-    while (!(await page.getByRole('link', { name: /LOC_/ }).isVisible())) {
-        await page.reload();
-        await page.waitForTimeout(2000);
-    }
-
-    await page.getByLabel('SearchResult').click();
-    await checkFileContent(page, 'hello.txt', 'Hello');
-    await checkFileContent(page, 'world.txt', 'World');
+    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
+    await checkAllFileContents(page, FILES_DOUBLE);
 });
 
-test('submit two sequences with one file each', async ({ pageWithGroup, page, tempDir }) => {
+test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
+    pageWithGroup,
+    page,
+    tempDir,
+}) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
-    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
 
-    await submissionPage.uploadMetadataFile(
-        ['submissionId', 'country', 'date'],
-        [
-            ['sub1', 'Sweden', '2022-12-02'],
-            ['sub2', 'Uganda', '2022-12-13'],
-        ],
-    );
+    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
+        [ID_1, COUNTRY_1, '2022-12-02'],
+        [ID_2, COUNTRY_2, '2022-12-13'],
+    ]);
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
     await submissionPage.uploadExternalFiles(
-        'raw_reads',
-        {
-            sub1: {
-                'foo.txt': 'Foo',
-                'baz.txt': 'Baz',
-            },
-            sub2: {
-                'bar.txt': 'Bar',
-            },
-        },
+        RAW_READS,
+        { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
         tempDir,
     );
 
-    await submissionPage.acceptTerms();
-    const reviewPage = await submissionPage.submitSequence();
-    await reviewPage.waitForZeroProcessing();
+    const reviewPage = await submitAndGetReviewPage(submissionPage);
 
-    await reviewPage.releaseValidSequences();
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-    await page.getByRole('link', { name: 'released sequences' }).click();
-    while (!(await page.getByRole('cell', { name: 'Sweden' }).isVisible())) {
-        await page.reload();
-        await page.waitForTimeout(2000);
-    }
+    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
+    await checkAllFileContents(page, FILES_SINGLE);
 
-    await page.getByRole('cell', { name: 'Sweden' }).click();
-    await checkFileContent(page, 'foo.txt', 'Foo');
-    await checkFileContent(page, 'baz.txt', 'Baz');
+    await searchPage.closeDetailsModal();
 
-    await page.getByTestId('close-preview-button').click();
-
-    await page.getByRole('cell', { name: 'Uganda' }).click();
-    await checkFileContent(page, 'bar.txt', 'Bar');
+    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_2);
+    await checkAllFileContents(page, FILES_DOUBLE);
 });
 
-test('discard and re-upload files', async ({ pageWithGroup, page, tempDir }) => {
+test('bulk submit 1 seq: discarding and readding a file', async ({
+    pageWithGroup,
+    page,
+    tempDir,
+}) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
-    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
+    await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
 
-    await submissionPage.uploadMetadataFile(
-        ['submissionId', 'country', 'date'],
-        [['sub1', 'Norway', '2023-01-01']],
-    );
+    await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
-    // First upload: 1 submission with 1 file
-    await submissionPage.uploadExternalFiles(
-        'raw_reads',
-        {
-            sub1: {
-                'old.txt': 'This should be discarded',
-            },
-        },
-        tempDir,
-    );
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tempDir);
 
-    // Discard the files
     await page.getByTestId('discard_raw_reads').click();
 
-    // Second upload: 1 submission with 2 files
-    await submissionPage.uploadExternalFiles(
-        'raw_reads',
-        {
-            sub1: {
-                'new1.txt': 'New file 1',
-                'new2.txt': 'New file 2',
-            },
-        },
-        tempDir,
-    );
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tempDir);
 
-    await submissionPage.acceptTerms();
-    const reviewPage = await submissionPage.submitSequence();
-    await reviewPage.waitForZeroProcessing();
+    const reviewPage = await submitAndGetReviewPage(submissionPage);
 
-    // Check that only the new files exist, not the old one
-    const filesDialog = await reviewPage.viewFiles();
-    await expect(filesDialog.getByText('new1.txt')).toBeVisible();
-    await expect(filesDialog.getByText('new2.txt')).toBeVisible();
-    await expect(filesDialog.getByText('old.txt')).not.toBeVisible();
-    await reviewPage.closeFilesDialog();
+    await reviewPage.checkFilesInReviewDialog(FILES_DOUBLE, Object.keys(FILES_SINGLE));
 
-    await reviewPage.releaseValidSequences();
+    const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
+    await searchPage.waitForSequences('cell', COUNTRY_1);
 
-    await page.getByRole('link', { name: 'released sequences' }).click();
-    while (!(await page.getByRole('cell', { name: 'Norway' }).isVisible())) {
-        await page.reload();
-        await page.waitForTimeout(2000);
-    }
-
-    await page.getByRole('cell', { name: 'Norway' }).click();
-    await checkFileContent(page, 'new1.txt', 'New file 1');
-    await checkFileContent(page, 'new2.txt', 'New file 2');
-    // Verify old file is not present
-    await expect(page.getByRole('link', { name: 'old.txt' })).not.toBeVisible();
+    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
+    await checkAllFileContents(page, FILES_DOUBLE);
+    await expect(page.getByRole('link', { name: Object.keys(FILES_SINGLE)[0] })).not.toBeVisible();
 });
-
-async function checkFileContent(page: Page, fileName: string, fileContent: string) {
-    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
-    await getFromLinkTargetAndAssertContent(
-        page.getByRole('link', { name: fileName }),
-        fileContent,
-    );
-}

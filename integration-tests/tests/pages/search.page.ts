@@ -142,4 +142,24 @@ export class SearchPage {
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
     }
+
+    async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
+        while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
+            await this.page.reload();
+            await this.page.waitForTimeout(2000);
+        }
+    }
+
+    async openModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
+        await this.page.getByRole(role, { name: name }).click();
+    }
+
+    async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
+        await this.waitForSequences(role, name);
+        await this.openModalByRoleAndName(role, name);
+    }
+
+    async closeDetailsModal() {
+        await this.page.getByTestId('close-preview-button').click();
+    }
 }

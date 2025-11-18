@@ -1,4 +1,4 @@
-import { Locator, expect } from '@playwright/test';
+import { Locator, expect, Page } from '@playwright/test';
 
 /**
  * Fetches content from a link's href attribute and asserts it matches expected content
@@ -17,4 +17,18 @@ export async function getFromLinkTargetAndAssertContent(
     expect(response.status()).toBe(200);
     const content = await response.text();
     expect(content).toBe(expectedContent);
+}
+
+export async function checkFileContent(page: Page, fileName: string, fileContent: string) {
+    await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible();
+    await getFromLinkTargetAndAssertContent(
+        page.getByRole('link', { name: fileName }),
+        fileContent,
+    );
+}
+
+export async function checkAllFileContents(page: Page, fileData: Record<string, string>) {
+    for (const [fileName, fileContent] of Object.entries(fileData)) {
+        await checkFileContent(page, fileName, fileContent);
+    }
 }
