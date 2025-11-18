@@ -54,7 +54,8 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
                     instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
                 for (referenceSequence in segmentsAndGenes) {
                     val reference = referenceSequence.sequence
-                    val dictId = getDictIdOrInsertNewEntry(reference)
+                    val description = "${organism.name} - ${referenceSequence.name}"
+                    val dictId = getDictIdOrInsertNewEntry(reference, description)
 
                     val dict = reference.toByteArray()
 
@@ -67,7 +68,7 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
                     .map { it.sequence }
                     .sortedBy { it }
                     .joinToString("")
-                val dictId = getDictIdOrInsertNewEntry(references)
+                val dictId = getDictIdOrInsertNewEntry(references, "${organism.name} - unaligned")
                 val unalignedDict = references.toByteArray()
                 val dictEntry = DictEntry(dictId, unalignedDict)
 
@@ -117,7 +118,7 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
         }
     }
 
-    private fun getDictIdOrInsertNewEntry(dict: String): Int {
+    private fun getDictIdOrInsertNewEntry(dict: String, description: String): Int {
         val hash = computeHash(dict)
 
         val existingId = CompressionDictionaryEntity.find { CompressionDictionariesTable.hashColumn eq hash }
@@ -133,9 +134,14 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
             .new {
                 this.hash = hash
                 this.dictContents = dict.toByteArray()
+                this.description = description
                 this.createdAt = dateProvider.getCurrentDateTime()
             }
-            .also { log.debug { "Inserted new dict entry: id ${it.id.value} for dict ${dict.substring(0..10)}..." } }
+            .also {
+                log.debug {
+                    "Inserted new dict entry: id ${it.id.value}, $description, for dict ${dict.substring(0..10)}..."
+                }
+            }
             .id
             .value
     }
