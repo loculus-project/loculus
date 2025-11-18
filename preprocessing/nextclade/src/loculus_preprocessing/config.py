@@ -108,8 +108,7 @@ def assign_nextclade_sequence_and_dataset(
     return nextclade_sequence_and_dataset_list
 
 
-def set_alignment_requirement(
-    config: Config) -> AlignmentRequirement:
+def set_alignment_requirement(config: Config) -> AlignmentRequirement:
     need_nextclade_dataset: bool = False
     for sequence in config.nucleotideSequences:
         if sequence.nextclade_dataset_name:

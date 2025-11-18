@@ -414,7 +414,7 @@ multi_segment_case_definitions_all_requirement = [
                 [ProcessingAnnotationAlignment],
                 "No sequence data could be classified - check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            )
+            ),
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
@@ -835,6 +835,7 @@ def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
+
 
 @pytest.mark.parametrize(
     "test_case_def",

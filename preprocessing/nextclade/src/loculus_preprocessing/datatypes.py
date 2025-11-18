@@ -81,6 +81,14 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
+class SegmentAssignment:
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    segmentNameToFastaHeaders: dict[SegmentName, str]  # noqa: N815
+    errors: list[ProcessingAnnotation]
+    warnings: list[ProcessingAnnotation]
+
+
+@dataclass
 class ProcessingSpec:
     inputs: FunctionInputs
     function: FunctionName
