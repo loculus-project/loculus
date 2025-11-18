@@ -79,8 +79,8 @@ class SequenceCompressionMigrationService(
     private fun backfillOriginalData(batchSize: Int, logEvery: Int): Long {
         var processed = 0L
 
-        var lastAcc: String? = null
-        var lastVer: Long? = null
+        var lastAcc = ""
+        var lastVer = 0L
 
         val se = SequenceEntriesTable
 
@@ -91,14 +91,12 @@ class SequenceCompressionMigrationService(
                     .selectAll()
                     .apply {
                         andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
-                        if (lastAcc != null && lastVer != null) {
-                            andWhere {
-                                (se.accessionColumn greater lastAcc!!) or
-                                    (
-                                        (se.accessionColumn eq lastAcc!!) and
-                                            (se.versionColumn greater lastVer!!)
-                                        )
-                            }
+                        andWhere {
+                            (se.accessionColumn greater lastAcc) or
+                                (
+                                    (se.accessionColumn eq lastAcc) and
+                                        (se.versionColumn greater lastVer)
+                                    )
                         }
                     }
                     .orderBy(se.accessionColumn to SortOrder.ASC, se.versionColumn to SortOrder.DESC)
