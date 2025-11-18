@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
+import { clearTempDir } from '../utils/tempdir';
 
 class SubmissionPage {
     protected page: Page;
@@ -49,6 +50,23 @@ class SubmissionPage {
 
         await this.page.waitForURL('**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
+    }
+
+    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+        await this.acceptTerms();
+        const reviewPage = await this.submitSequence();
+        await reviewPage.waitForZeroProcessing();
+        return reviewPage;
+    }
+
+    protected async _uploadFilesFromTempDir(testId: string, tempDir: string, fileCount: number) {
+        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
+        void this.page.getByTestId(testId).setInputFiles(tempDir);
+        return Promise.all(
+            Array.from({ length: fileCount }, (_, i) =>
+                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
+            ),
+        );
     }
 }
 
@@ -111,28 +129,18 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         fileContents: Record<string, string>,
         tempDir: string,
     ) {
-        // Clean entire tempdir to ensure fresh state
-        const entries = await fs.promises.readdir(tempDir);
-        await Promise.all(
-            entries.map((entry) =>
-                fs.promises.rm(path.join(tempDir, entry), { recursive: true, force: true }),
-            ),
-        );
+        await this._prepareTempDirWithFiles(fileContents, tempDir);
+        const fileCount = Object.keys(fileContents).length;
+        await this._uploadFilesFromTempDir(fileId, tempDir, fileCount);
+    }
+
+    private async _prepareTempDirWithFiles(fileContents: Record<string, string>, tempDir: string) {
+        await clearTempDir(tempDir);
 
         // Write files directly to tempdir
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
                 fs.promises.writeFile(path.join(tempDir, fileName), fileContent),
-            ),
-        );
-
-        const fileCount = Object.keys(fileContents).length;
-
-        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-        void this.page.getByTestId(fileId).setInputFiles(tempDir);
-        return Promise.all(
-            Array.from({ length: fileCount }, (_, i) =>
-                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
             ),
         );
     }
@@ -217,13 +225,19 @@ export class BulkSubmissionPage extends SubmissionPage {
         fileContents: Record<string, Record<string, string>>,
         tempDir: string,
     ) {
-        // Clean entire tempdir to ensure fresh state
-        const entries = await fs.promises.readdir(tempDir);
-        await Promise.all(
-            entries.map((entry) =>
-                fs.promises.rm(path.join(tempDir, entry), { recursive: true, force: true }),
-            ),
+        await this._prepareTempDirWithFiles(fileContents, tempDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
         );
+        await this._uploadFilesFromTempDir(fileId, tempDir, fileCount);
+    }
+
+    private async _prepareTempDirWithFiles(
+        fileContents: Record<string, Record<string, string>>,
+        tempDir: string,
+    ) {
+        await clearTempDir(tempDir);
 
         // Create submission directories and write files
         const submissionIds = Object.keys(fileContents);
@@ -238,21 +252,6 @@ export class BulkSubmissionPage extends SubmissionPage {
                     fs.promises.writeFile(path.join(tempDir, submissionId, fileName), fileContent),
                 );
             }),
-        );
-
-        // Count total number of files across all submissions
-        const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + Object.keys(files).length,
-            0,
-        );
-
-        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-        // Sometimes Firefox would actually set the files and hang indefinitely
-        void this.page.getByTestId(fileId).setInputFiles(tempDir);
-        return Promise.all(
-            Array.from({ length: fileCount }, (_, i) =>
-                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
-            ),
         );
     }
 }
