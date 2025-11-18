@@ -404,8 +404,8 @@ def assign_single_segment(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
 ) -> SegmentAssignment:
-    errors = []
-    warnings = []
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
     fastaHeader = ""
     if len(input_unaligned_sequences) > 1:
@@ -437,10 +437,10 @@ def assign_segment_with_header(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
 ) -> SegmentAssignment:
-    errors = []
-    warnings = []
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    valid_segments = set()
+    segmentNameToFastaHeaders: dict[SegmentName, str] = {}
     duplicate_segments = set()
     if not config.nucleotideSequences:
         return SegmentAssignment(
@@ -475,11 +475,11 @@ def assign_segment_with_header(
                 )
             )
         elif len(unaligned_segment) == 1:
-            valid_segments.add(unaligned_segment[0])
+            segmentNameToFastaHeaders[segment] = unaligned_segment[0]
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-    remaining_segments = set(input_unaligned_sequences.keys()) - valid_segments - duplicate_segments
+    remaining_segments = set(input_unaligned_sequences.keys()) - set(segmentNameToFastaHeaders.values()) - duplicate_segments
     if len(remaining_segments) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -504,7 +504,7 @@ def assign_segment_with_header(
         )
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        segmentNameToFastaHeaders={},
+        segmentNameToFastaHeaders=segmentNameToFastaHeaders,
         errors=errors,
         warnings=warnings,
     )
