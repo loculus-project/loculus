@@ -34,6 +34,7 @@ from loculus_preprocessing.processing_functions import (
 # Config file used for testing
 SINGLE_SEGMENT_CONFIG = "tests/single_segment_config.yaml"
 MULTI_SEGMENT_CONFIG = "tests/multi_segment_config.yaml"
+MULTI_SEGMENT_CONFIG_UNALIGNED = "tests/multi_segment_config_unaligned.yaml"
 EMBL_METADATA = "tests/embl_required_metadata.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
@@ -687,6 +688,97 @@ segment_validation_tests_multi_segments = [
     ),
 ]
 
+multi_segment_case_definitions_none_requirement = [
+    Case(
+        name="accept any prefix for multi-segment",
+        input_metadata={},
+        input_sequence={
+            "prefix_ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "other_prefix_ebola-zaire": sequence_with_mutation("ebola-zaire"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
+            "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="don't allow multiple segments with the same name",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": invalid_sequence(),
+            "duplicate_ebola-sudan": invalid_sequence(),
+        },
+        accession_id="1",
+        expected_metadata={
+            "length_ebola-sudan": 0,
+            "length_ebola-zaire": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "Found multiple sequences with the same segment name: ebola-sudan. "
+                "Each metadata entry can have multiple corresponding fasta sequence "
+                "entries with format <submissionId>_<segmentName>.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            )
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+        ),
+    ),
+    Case(
+        name="don't allow unknown segments",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            "unknown_segment": invalid_sequence(),
+        },
+        accession_id="2",
+        expected_metadata={
+            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
+            "length_ebola-zaire": 0,
+        },
+        expected_errors=[
+            ProcessingAnnotationHelper(
+                [ProcessingAnnotationAlignment],
+                [ProcessingAnnotationAlignment],
+                "Found sequences in the input data with segments that are not in the config: "
+                "unknown_segment. Each metadata entry can have multiple corresponding fasta sequence "
+                "entries with format <submissionId>_<segmentName> valid segments are: "
+                "ebola-sudan, ebola-zaire.",
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            )
+        ],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+        ),
+    ),
+]
+
 
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
@@ -740,6 +832,20 @@ def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions_none_requirement,
+    ids=lambda tc: f"multi segment not aligned {tc.name}",
+)
+def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG_UNALIGNED, ignore_args=True)
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
