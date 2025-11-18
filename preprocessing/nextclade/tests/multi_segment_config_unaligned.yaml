@@ -1,0 +1,23 @@
+batch_size: 100
+alignment_requirement: NONE
+log_level: DEBUG
+minimizer_url: TEST
+nucleotideSequences:
+- name: ebola-sudan
+- name: ebola-zaire
+organism: multi-ebola-test
+processing_spec:
+  length_ebola-sudan:
+    args:
+      segment: ebola-sudan
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-sudan
+  length_ebola-zaire:
+    args:
+      segment: ebola-zaire
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-zaire

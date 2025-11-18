@@ -124,7 +124,9 @@ def fetch_unprocessed_sequences(
         **({"If-None-Match": etag} if etag else {}),
     }
     logger.debug(f"[{request_id}] Requesting data with ETag: {etag}")
-    response = requests.post(url, data=params, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        url, data=params, headers=headers, timeout=config.backend_request_timeout_seconds
+    )
     logger.info(
         f"[{request_id}] Unprocessed data from backend: status code {response.status_code}, "
         f"request id: {response.headers.get('x-request-id')}"
@@ -181,7 +183,9 @@ def submit_processed_sequences(
             f"Data sent: {ndjson_string[:1000]}...\n"
         )
         raise RuntimeError(msg)
-    logger.info(f"[{request_id}] Processed data submitted successfully, request id: {response.headers.get('x-request-id')}")
+    logger.info(
+        f"[{request_id}] Processed data submitted successfully, request id: {response.headers.get('x-request-id')}"
+    )
 
 
 def request_upload(group_id: int, number_of_files: int, config: Config) -> Sequence[FileUploadInfo]:
@@ -196,12 +200,16 @@ def request_upload(group_id: int, number_of_files: int, config: Config) -> Seque
         "Authorization": "Bearer " + get_jwt(config),
         "x-request-id": request_id,
     }
-    logger.info(f"[{request_id}] Requesting upload for {number_of_files} files, group_id: {group_id}")
+    logger.info(
+        f"[{request_id}] Requesting upload for {number_of_files} files, group_id: {group_id}"
+    )
     response = requests.post(url, headers=headers, params=params, timeout=10)
     if not response.ok:
         msg = f"[{request_id}] Upload request failed: {response.status_code}, request id: {response.headers.get('x-request-id')}, {response.text}"
         raise RuntimeError(msg)
-    logger.info(f"[{request_id}] Upload request successful, request id: {response.headers.get('x-request-id')}")
+    logger.info(
+        f"[{request_id}] Upload request successful, request id: {response.headers.get('x-request-id')}"
+    )
     return [FileUploadInfo(**item) for item in response.json()]
 
 

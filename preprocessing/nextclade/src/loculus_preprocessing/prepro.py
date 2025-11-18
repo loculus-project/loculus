@@ -45,6 +45,7 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingResult,
     ProcessingSpec,
+    SegmentAssignment,
     SegmentName,
     SubmissionData,
     UnprocessedAfterNextclade,
@@ -260,22 +261,22 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
 
 # TODO: running this for each sequence is inefficient, should be run once per batch
-def classify_with_nextclade_sort(
+def assign_segment_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
     config: Config,
     dataset_dir: str,
-):
+) -> SegmentAssignment:
     """
     Run nextclade sort
     - assert highest score is in sequence_and_dataset.accepted_sort_matches
     (default is nextclade_dataset_name)
     """
+    errors = []
+    warnings = []
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
     nextclade_dataset_server = config.nextclade_dataset_server
-    duplicate_segments = False
-    missing_segments = False
+    has_duplicate_segments = False
+    has_missing_segments = False
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
@@ -336,7 +337,7 @@ def classify_with_nextclade_sort(
                     break
             if not not_found:
                 continue
-            missing_segments = True
+            has_missing_segments = True
             msg = (
                 f"Sequence {row['seqName']} best matches {row['dataset']}, "
                 "which is currently not an accepted option for organism: "
@@ -356,17 +357,17 @@ def classify_with_nextclade_sort(
                     ProcessingAnnotation.from_single(
                         ProcessingAnnotationAlignment,
                         AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            message=msg,
+                        message=msg,
+                    )
                 )
-            )
-        print(sort_results_map)
+        segmentNameToFastaHeaders: dict[SegmentName, str] = {}
         for segment_name, headers in sort_results_map.items():
             if len(headers) > 1:
                 msg = (
                     f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
                     f" {segment_name} - only one entry is allowed."
                 )
-                duplicate_segments = True
+                has_duplicate_segments = True
                 errors.append(
                     ProcessingAnnotation.from_single(
                         ProcessingAnnotationAlignment,
@@ -375,74 +376,81 @@ def classify_with_nextclade_sort(
                     )
                 )
                 continue
+            segmentNameToFastaHeaders[segment_name] = headers[0]
             unaligned_nucleotide_sequences[segment_name] = input_unaligned_sequences[headers[0]]
-                    
-    if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments and not missing_segments:
+
+    if (
+        len(unaligned_nucleotide_sequences) == 0
+        and not has_duplicate_segments
+        and not has_missing_segments
+    ):
         errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data could be classified - check you are submitting to the correct organism.",
-                )
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message="No sequence data could be classified - check you are submitting to the correct organism.",
             )
-
-    return (unaligned_nucleotide_sequences, errors, warnings)
-
-
-def assign_segment(
-    input_unaligned_sequences: dict[str, NucleotideSequence | None],
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
-    config: Config,
-    dataset_dir: str | None = None,
-):
-    if config.multi_segment and config.alignment_requirement != AlignmentRequirement.NONE:
-        if not dataset_dir:
-            error_msg = (
-                "Dataset directory must be provided when classify_with_nextclade_sort is True"
-            )
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        return classify_with_nextclade_sort(
-            input_unaligned_sequences,
-            unaligned_nucleotide_sequences,
-            dataset_dir=dataset_dir,
-            errors=errors,
-            warnings=warnings,
-            config=config,
         )
-    valid_segments = set()
+
+    return SegmentAssignment(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        segmentNameToFastaHeaders=segmentNameToFastaHeaders,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def assign_single_segment(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    config: Config,
+) -> SegmentAssignment:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    fastaHeader = ""
+    if len(input_unaligned_sequences) > 1:
+        errors.append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=(
+                    f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
+                    f" input data, but organism: {config.organism} is single-segmented. "
+                    "Please check that your metadata and sequences are annotated correctly."
+                    "Each metadata entry should have a single corresponding fasta sequence "
+                    "entry with the same submissionId."
+                ),
+            )
+        )
+    else:
+        fastaHeader, value = next(iter(input_unaligned_sequences.items()))
+        unaligned_nucleotide_sequences["main"] = value
+    return SegmentAssignment(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        segmentNameToFastaHeaders={"main": fastaHeader},
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def assign_segment_with_header(
+    input_unaligned_sequences: dict[str, NucleotideSequence | None],
+    config: Config,
+) -> SegmentAssignment:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    segmentNameToFastaHeaders: dict[SegmentName, str] = {}
     duplicate_segments = set()
     if not config.nucleotideSequences:
-        return (
-            unaligned_nucleotide_sequences,
-            errors,
-            warnings,
+        return SegmentAssignment(
+            unalignedNucleotideSequences={},
+            segmentNameToFastaHeaders={},
+            errors=errors,
+            warnings=warnings,
         )
     if not config.multi_segment:
-        if len(input_unaligned_sequences) > 1:
-            errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=(
-                        f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
-                        f" input data, but organism: {config.organism} is single-segmented. "
-                        "Please check that your metadata and sequences are annotated correctly."
-                        "Each metadata entry should have a single corresponding fasta sequence "
-                        "entry with the same submissionId."
-                    ),
-                )
-            )
-        else:
-            _, value = next(iter(input_unaligned_sequences.items()))
-            unaligned_nucleotide_sequences["main"] = value
-        return (
-            unaligned_nucleotide_sequences,
-            errors,
-            warnings,
-        )
+        return assign_single_segment(input_unaligned_sequences, config)
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
         unaligned_segment = [
@@ -467,11 +475,11 @@ def assign_segment(
                 )
             )
         elif len(unaligned_segment) == 1:
-            valid_segments.add(unaligned_segment[0])
+            segmentNameToFastaHeaders[segment] = unaligned_segment[0]
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-    remaining_segments = set(input_unaligned_sequences.keys()) - valid_segments - duplicate_segments
+    remaining_segments = set(input_unaligned_sequences.keys()) - set(segmentNameToFastaHeaders.values()) - duplicate_segments
     if len(remaining_segments) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -488,13 +496,18 @@ def assign_segment(
         )
     if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments:
         errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data found - ",
-                )
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message="No sequence data found - ",
             )
-    return (unaligned_nucleotide_sequences, errors, warnings)
+        )
+    return SegmentAssignment(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        segmentNameToFastaHeaders=segmentNameToFastaHeaders,
+        errors=errors,
+        warnings=warnings,
+    )
 
 
 def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
@@ -531,22 +544,21 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
         input_metadata[id]["group_id"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
-        unaligned_nucleotide_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
-        alerts.warnings[id] = []
-        alerts.errors[id] = []
-        (
-            unaligned_nucleotide_sequences[id],
-            alerts.errors[id],
-            alerts.warnings[id],
-        ) = assign_segment(
-            input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
-            unaligned_nucleotide_sequences=unaligned_nucleotide_sequences[id],
-            errors=alerts.errors[id],
-            warnings=alerts.warnings[id],
-            config=config,
-            dataset_dir=dataset_dir,
-        )
+        if not config.multi_segment:
+            segment_assignment = assign_single_segment(
+                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+                config=config,
+            )
+        else:
+            segment_assignment = assign_segment_with_nextclade_sort(
+                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+                config=config,
+                dataset_dir=dataset_dir,
+            )
+        unaligned_nucleotide_sequences[id] = segment_assignment.unalignedNucleotideSequences
+        alerts.errors[id] = segment_assignment.errors
+        alerts.warnings[id] = segment_assignment.warnings
 
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
@@ -904,13 +916,13 @@ def process_single(  # noqa: C901
     else:
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
-        unprocessed.unalignedNucleotideSequences, errors, warnings = assign_segment(
+        segment_assignment = assign_segment_with_header(
             input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
-            unaligned_nucleotide_sequences={},
-            errors=errors,
-            warnings=warnings,
             config=config,
         )
+        unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
+        errors += segment_assignment.errors
+        warnings += segment_assignment.warnings
 
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
@@ -967,7 +979,11 @@ def process_single(  # noqa: C901
         if unprocessed.alignedNucleotideSequences.get(segment, None):
             aligned_segments.add(segment)
 
-    if not aligned_segments and config.multi_segment and len(unprocessed.unalignedNucleotideSequences) > 0:
+    if (
+        not aligned_segments
+        and config.multi_segment
+        and len(unprocessed.unalignedNucleotideSequences) > 0
+    ):
         errors.append(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,
