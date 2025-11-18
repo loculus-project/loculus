@@ -92,7 +92,7 @@ In the NDJSON, each row contains a sequence entry version and a list of errors a
         nucleotideInsertions,
         alignedAminoAcidSequences,
         aminoAcidInsertions,
-        sequenceNameToFastaHeaderMap,
+        sequenceNameToFastaHeaderMap, //TODO: use in backend
         files
     }
 }
