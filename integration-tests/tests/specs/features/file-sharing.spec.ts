@@ -23,9 +23,6 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page, te
         tempDir,
     );
 
-    await expect(page.getByText('✓').first()).toBeVisible();
-    await expect(page.getByText('✓').nth(1)).toBeVisible();
-
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
     await reviewPage.waitForZeroProcessing();
@@ -72,6 +69,7 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page, te
         {
             sub1: {
                 'foo.txt': 'Foo',
+                'baz.txt': 'Baz',
             },
             sub2: {
                 'bar.txt': 'Bar',
@@ -79,9 +77,6 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page, te
         },
         tempDir,
     );
-
-    await expect(page.getByText('✓').first()).toBeVisible();
-    await expect(page.getByText('✓').nth(1)).toBeVisible();
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();

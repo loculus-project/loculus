@@ -110,14 +110,22 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         fileId: string,
         fileContents: Record<string, string>,
         tempDir: string,
-    ): Promise<void> {
+    ) {
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
                 fs.promises.writeFile(path.join(tempDir, fileName), fileContent),
             ),
         );
 
-        return this.page.getByTestId(fileId).setInputFiles(tempDir);
+        const fileCount = Object.keys(fileContents).length;
+
+        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
+        void this.page.getByTestId(fileId).setInputFiles(tempDir);
+        return Promise.all(
+            Array.from({ length: fileCount }, (_, i) =>
+                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
+            ),
+        );
     }
 
     async completeSubmission(
@@ -199,7 +207,7 @@ export class BulkSubmissionPage extends SubmissionPage {
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
         tempDir: string,
-    ): Promise<void> {
+    ) {
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
             submissionIds.map((submissionId) =>
@@ -214,6 +222,19 @@ export class BulkSubmissionPage extends SubmissionPage {
             }),
         );
 
-        return this.page.getByTestId(fileId).setInputFiles(tempDir);
+        // Count total number of files across all submissions
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
+        );
+
+        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
+        // Sometimes Firefox would actually set the files and hang indefinitely
+        void this.page.getByTestId(fileId).setInputFiles(tempDir);
+        return Promise.all(
+            Array.from({ length: fileCount }, (_, i) =>
+                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
+            ),
+        );
     }
 }
