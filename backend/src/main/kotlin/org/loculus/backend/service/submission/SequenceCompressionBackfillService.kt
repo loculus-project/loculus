@@ -179,9 +179,9 @@ class SequenceCompressionMigrationService(
     private fun backfillProcessedData(batchSize: Int, logEvery: Int): Long {
         var processed = 0L
 
-        var lastAcc: String? = null
-        var lastVer: Long? = null
-        var lastPipeVer: Long? = null
+        var lastAcc = ""
+        var lastVer = 0L
+        var lastPipeVer = 0L
 
         val se = SequenceEntriesTable
         val sepd = SequenceEntriesPreprocessedDataTable
@@ -207,23 +207,21 @@ class SequenceCompressionMigrationService(
                     .selectAll()
                     .apply {
                         andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
-                        if (lastAcc != null && lastVer != null && lastPipeVer != null) {
-                            andWhere {
-                                (sepd.accessionColumn greater lastAcc!!) or
-                                    (
-                                        (sepd.accessionColumn eq lastAcc!!) and
-                                            (
-                                                (sepd.versionColumn greater lastVer!!) or
-                                                    (
-                                                        (sepd.versionColumn eq lastVer!!) and
-                                                            (
-                                                                sepd.pipelineVersionColumn greater
-                                                                    lastPipeVer!!
-                                                                )
-                                                        )
-                                                )
-                                        )
-                            }
+                        andWhere {
+                            (sepd.accessionColumn greater lastAcc) or
+                                (
+                                    (sepd.accessionColumn eq lastAcc) and
+                                        (
+                                            (sepd.versionColumn greater lastVer) or
+                                                (
+                                                    (sepd.versionColumn eq lastVer) and
+                                                        (
+                                                            sepd.pipelineVersionColumn greater
+                                                                lastPipeVer
+                                                            )
+                                                    )
+                                            )
+                                    )
                         }
                     }
                     .orderBy(
@@ -289,12 +287,11 @@ class SequenceCompressionMigrationService(
                 if (processed % logEvery == 0L) {
                     log.info { "Migrated $processed sequence entries (processedData)" }
                 }
-
-                val last = page.last()
-                lastAcc = last[sepd.accessionColumn]
-                lastVer = last[sepd.versionColumn]
-                lastPipeVer = last[sepd.pipelineVersionColumn]
             }
+            val last = page.last()
+            lastAcc = last[sepd.accessionColumn]
+            lastVer = last[sepd.versionColumn]
+            lastPipeVer = last[sepd.pipelineVersionColumn]
         }
 
         log.info { "Migrated $processed sequence entries (processedData) - done" }
