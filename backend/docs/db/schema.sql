@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.14 (Debian 15.14-1.pgdg13+1)
--- Dumped by pg_dump version 16.10 (Debian 16.10-1.pgdg13+1)
+-- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
+-- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -175,7 +175,8 @@ CREATE TABLE public.compression_dictionaries (
     id integer NOT NULL,
     hash character(64) NOT NULL,
     dict_contents bytea NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    description text
 );
 
 
