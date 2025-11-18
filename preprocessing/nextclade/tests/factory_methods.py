@@ -140,6 +140,7 @@ class ProcessedEntryFactory:
                 nucleotideInsertions=processed_alignment.nucleotideInsertions,
                 alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
+                sequenceNameToFastaHeaderMap=processed_alignment.sequenceNameToFastaHeaderMap,
             ),
             errors=errors,
             warnings=warnings,
