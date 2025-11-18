@@ -45,7 +45,7 @@ class NextcladeSequenceAndDataset:
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] | None = None
+    accepted_sort_matches: list[str] = dataclasses.field(default_factory=list)
     gene_prefix: str | None = None
 
 
@@ -76,7 +76,7 @@ class Config:
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
 
     require_nextclade_sort_match: bool = False
-    minimizer_url: str | None = None
+    minimizer_index: str | None = None
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
@@ -87,6 +87,19 @@ class Config:
     embl: EmblInfoMetadataPropertyNames = dataclasses.field(
         default_factory=EmblInfoMetadataPropertyNames
     )
+
+
+def get_accepted_sort_matches(
+    segment: NextcladeSequenceAndDataset,
+) -> list[str]:
+    accepted_dataset_names = set()
+
+    if segment.accepted_sort_matches:
+        accepted_dataset_names.update(segment.accepted_sort_matches)
+    if segment.nextclade_dataset_name:
+        accepted_dataset_names.add(segment.nextclade_dataset_name)
+    accepted_dataset_names.add(segment.name)
+    return list(accepted_dataset_names)
 
 
 def assign_nextclade_sequence_and_dataset(
@@ -104,6 +117,7 @@ def assign_nextclade_sequence_and_dataset(
         for seq_key, seq_value in value.items():
             if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
                 setattr(seq_and_dataset, seq_key, seq_value)
+        seq_and_dataset.accepted_sort_matches = get_accepted_sort_matches(seq_and_dataset)
         nextclade_sequence_and_dataset_list.append(seq_and_dataset)
     return nextclade_sequence_and_dataset_list
 

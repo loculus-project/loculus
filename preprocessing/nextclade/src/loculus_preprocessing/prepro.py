@@ -145,9 +145,9 @@ def run_sort(
 ) -> pd.DataFrame:
     """
     Run nextclade
-    - use config.minimizer_url or default minimizer from nextclade server
+    - use config.minimizer_index or default minimizer from nextclade server
     """
-    if config.minimizer_url:
+    if config.minimizer_index:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
     test = nextclade_dataset_server == "TEST"
@@ -156,8 +156,8 @@ def run_sort(
         "nextclade3",
         "sort",
         input_file,
-        "-m" if config.minimizer_url else "",
-        f"{minimizer_file}" if config.minimizer_url else "",
+        "-m" if config.minimizer_index else "",
+        f"{minimizer_file}" if config.minimizer_index else "",
         "--output-results-tsv",
         f"{result_file}",
         "--max-score-gap",
@@ -211,7 +211,11 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
         sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
     )
 
-    accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
+    accepted_dataset_names = (
+        sequence_and_dataset.accepted_sort_matches
+        or [nextclade_dataset_name]  # type: ignore
+        or [sequence_and_dataset.name]  # type: ignore
+    )
 
     result_file = result_file_dir + "/sort_output.tsv"
     df = run_sort(
@@ -329,9 +333,8 @@ def assign_segment_with_nextclade_sort(
         for _, row in best_hits.iterrows():
             not_found = True
             for segment in config.nucleotideSequences:
-                default = [segment.nextclade_dataset_name] if segment.nextclade_dataset_name else []
-                accepted_dataset_names = segment.accepted_sort_matches or default
-                if row["dataset"] in accepted_dataset_names:
+                # TODO: need to check somewhere that accepted_sort_matches does not overlap across segments
+                if row["dataset"] in segment.accepted_sort_matches:
                     not_found = False
                     sort_results_map.setdefault(segment.name, []).append(row["seqName"])
                     break
@@ -479,7 +482,11 @@ def assign_segment_with_header(
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-    remaining_segments = set(input_unaligned_sequences.keys()) - set(segmentNameToFastaHeaders.values()) - duplicate_segments
+    remaining_segments = (
+        set(input_unaligned_sequences.keys())
+        - set(segmentNameToFastaHeaders.values())
+        - duplicate_segments
+    )
     if len(remaining_segments) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -1148,8 +1155,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_url and config.require_nextclade_sort_match:
-            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
+        if config.minimizer_index:
+            download_minimizer(config.minimizer_index, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
