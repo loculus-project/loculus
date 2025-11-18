@@ -281,7 +281,7 @@ class SequenceCompressionMigrationService(
                         },
                     ) {
                         it[sepd.processedDataColumn] = migrated
-                        it[se.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
+                        it[sepd.compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
                     }
                 }
 
