@@ -92,11 +92,77 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page, te
 
     await page.getByRole('cell', { name: 'Sweden' }).click();
     await checkFileContent(page, 'foo.txt', 'Foo');
+    await checkFileContent(page, 'baz.txt', 'Baz');
 
     await page.getByTestId('close-preview-button').click();
 
     await page.getByRole('cell', { name: 'Uganda' }).click();
     await checkFileContent(page, 'bar.txt', 'Bar');
+});
+
+test('discard and re-upload files', async ({ pageWithGroup, page, tempDir }) => {
+    test.setTimeout(180_000);
+    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+
+    await submissionPage.navigateToSubmissionPage('Test organism (with files)');
+
+    await submissionPage.uploadMetadataFile(
+        ['submissionId', 'country', 'date'],
+        [['sub1', 'Norway', '2023-01-01']],
+    );
+
+    await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
+
+    // First upload: 1 submission with 1 file
+    await submissionPage.uploadExternalFiles(
+        'raw_reads',
+        {
+            sub1: {
+                'old.txt': 'This should be discarded',
+            },
+        },
+        tempDir,
+    );
+
+    // Discard the files
+    await page.getByTestId('discard_raw_reads').click();
+
+    // Second upload: 1 submission with 2 files
+    await submissionPage.uploadExternalFiles(
+        'raw_reads',
+        {
+            sub1: {
+                'new1.txt': 'New file 1',
+                'new2.txt': 'New file 2',
+            },
+        },
+        tempDir,
+    );
+
+    await submissionPage.acceptTerms();
+    const reviewPage = await submissionPage.submitSequence();
+    await reviewPage.waitForZeroProcessing();
+
+    // Check that only the new files exist, not the old one
+    const filesDialog = await reviewPage.viewFiles();
+    await expect(filesDialog.getByText('new1.txt')).toBeVisible();
+    await expect(filesDialog.getByText('new2.txt')).toBeVisible();
+    await expect(filesDialog.getByText('old.txt')).not.toBeVisible();
+    await reviewPage.closeFilesDialog();
+
+    await reviewPage.releaseValidSequences();
+
+    await page.getByRole('link', { name: 'released sequences' }).click();
+    while (!(await page.getByRole('cell', { name: 'Norway' }).isVisible())) {
+        await page.reload();
+        await page.waitForTimeout(2000);
+    }
+
+    await page.getByRole('cell', { name: 'Norway' }).click();
+    await checkFileContent(page, 'new1.txt', 'New file 1');
+    await checkFileContent(page, 'new2.txt', 'New file 2');
+    // Verify old file is not present
+    await expect(page.getByRole('link', { name: 'old.txt' })).not.toBeVisible();
 });
 
 async function checkFileContent(page: Page, fileName: string, fileContent: string) {

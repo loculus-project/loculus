@@ -111,6 +111,13 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         fileContents: Record<string, string>,
         tempDir: string,
     ) {
+        // Clean entire tempdir to ensure fresh state
+        const entries = await fs.promises.readdir(tempDir);
+        await Promise.all(
+            entries.map((entry) => fs.promises.rm(path.join(tempDir, entry), { recursive: true, force: true })),
+        );
+
+        // Write files directly to tempdir
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
                 fs.promises.writeFile(path.join(tempDir, fileName), fileContent),
@@ -208,11 +215,16 @@ export class BulkSubmissionPage extends SubmissionPage {
         fileContents: Record<string, Record<string, string>>,
         tempDir: string,
     ) {
+        // Clean entire tempdir to ensure fresh state
+        const entries = await fs.promises.readdir(tempDir);
+        await Promise.all(
+            entries.map((entry) => fs.promises.rm(path.join(tempDir, entry), { recursive: true, force: true })),
+        );
+
+        // Create submission directories and write files
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
-            submissionIds.map((submissionId) =>
-                fs.promises.mkdir(path.join(tempDir, submissionId)),
-            ),
+            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tempDir, submissionId))),
         );
         await Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
