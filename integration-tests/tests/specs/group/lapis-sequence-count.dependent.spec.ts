@@ -1,8 +1,8 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { readonlyGroup } from '../../fixtures/group.fixture';
 import { readonlyUser } from '../../fixtures/user.fixture';
 import { AuthPage } from '../../pages/auth.page';
 import { GroupPage } from '../../pages/group.page';
+import { readonlyGroup } from '../../utils/testGroup';
 
 test.describe('Group page sequence counts', () => {
     test('shows sequence counts and search links for each organism', async ({ page }) => {
@@ -10,11 +10,9 @@ test.describe('Group page sequence counts', () => {
         await authPage.login(readonlyUser.username, readonlyUser.password);
 
         const groupPage = new GroupPage(page);
-        const groupId = await groupPage.getOrCreateGroup(readonlyGroup);
+        const groupId = await groupPage.getGroupId(readonlyGroup.name);
 
         await page.goto(`/group/${groupId}`);
-
-        await page.waitForLoadState('networkidle');
 
         const sequencesSection = page
             .locator('div.bg-gray-100')
@@ -22,6 +20,8 @@ test.describe('Group page sequence counts', () => {
                 has: page.getByRole('heading', { name: /Sequences available in/ }),
             })
             .first();
+
+        await expect(sequencesSection).toBeVisible();
 
         const rows = sequencesSection.locator('tbody tr');
         const rowCount = await rows.count();

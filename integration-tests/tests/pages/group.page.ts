@@ -21,7 +21,8 @@ export class GroupPage {
         await this.page.getByRole('link', { name: 'Create a new submitting group' }).click();
     }
 
-    async createGroup(groupData: GroupData): Promise<number> {
+    // Happily creates duplicate groups with the same name
+    async createGroupWithoutCheckingPreexistence(groupData: GroupData): Promise<number> {
         await this.navigateToCreateGroupPage();
 
         await this.page.getByLabel('Group name*').click();
@@ -80,29 +81,66 @@ export class GroupPage {
         return parseInt(groupId);
     }
 
-    async getOrCreateGroup(groupData: GroupData): Promise<number> {
-        await this.page.goto('/');
-        await this.page.getByRole('link', { name: 'My account' }).click();
-        const groupLink = this.page
-            .locator('li')
-            .filter({ hasText: groupData.name })
-            .getByRole('link')
-            .first();
+    /** Get the group ID for a given group name
+    - Requires that the user is logged in
+    - Returns null if the user is not a member of the group
+    - Throws an error if the user is a member of multiple groups with the same name */
+    async getGroupId(groupName: string): Promise<number | null> {
+        await this.page.goto('/user');
 
-        let groupId: number | null | undefined;
+        const signInPage = this.page.getByText('Sign in to your account');
+        const noGroupText = this.page.getByText(
+            'You are not currently a member of a submitting group.',
+        );
+        const groupLinkLocators = this.page.getByRole('listitem').locator('a[href*="/group/"]');
 
-        if (await groupLink.isVisible()) {
-            const href = await groupLink.getAttribute('href');
-            const groupIdStr = href?.split('/').pop();
-            groupId = groupIdStr ? parseInt(groupIdStr) : null;
-        } else {
-            groupId = await this.createGroup(groupData);
+        const anyOutcome = signInPage.or(noGroupText).or(groupLinkLocators.first());
+
+        await expect(anyOutcome).toBeVisible();
+
+        if (await signInPage.isVisible()) {
+            throw new Error('User is not signed in');
         }
 
-        if (!groupId) {
-            throw new Error(`Could not determine group ID for group: ${groupData.name}`);
+        if (await noGroupText.isVisible()) {
+            return null;
         }
-        return groupId;
+
+        const groupLinkLocatorsFiltered = groupLinkLocators.filter({ hasText: groupName });
+
+        const count = await groupLinkLocatorsFiltered.count();
+
+        if (count === 0) {
+            return null;
+        }
+
+        if (count > 1) {
+            throw new Error(`User is a member of multiple groups with name: ${groupName}`);
+        }
+
+        const href = await groupLinkLocators.first().getAttribute('href');
+        const groupIdStr = href.split('/').pop();
+        return parseInt(groupIdStr);
+    }
+
+    async getOrCreateGroup(groupData: GroupData, errorIfPresent = false): Promise<number> {
+        const groupId = await this.getGroupId(groupData.name);
+
+        if (groupId !== null) {
+            if (errorIfPresent) {
+                throw new Error(
+                    `Group with name ${groupData.name} already exists with ID ${groupId}`,
+                );
+            }
+            return groupId;
+        }
+
+        return this.createGroupWithoutCheckingPreexistence(groupData);
+    }
+
+    // Creates the group, erroring if a group with the same name already exists
+    async createGroup(groupData: GroupData): Promise<number> {
+        return this.getOrCreateGroup(groupData, true);
     }
 
     async goToGroupEditPage() {

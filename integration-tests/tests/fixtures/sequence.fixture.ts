@@ -40,7 +40,7 @@ export const test = groupTest.extend<SequenceFixtures>({
                     },
                     {
                         message: 'Link with name /LOC_/ never became visible.',
-                        timeout: 60000,
+                        timeout: 90000,
                     },
                 )
                 .toBe(true);

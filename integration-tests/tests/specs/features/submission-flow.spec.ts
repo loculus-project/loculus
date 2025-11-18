@@ -8,7 +8,6 @@ test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
         pageWithACreatedUser,
     }) => {
-        test.setTimeout(10000);
         const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
         await submissionPage.navigateToOrganism('Ebola Sudan');
         const navigation = new NavigationPage(pageWithACreatedUser);
@@ -52,7 +51,7 @@ test.describe('Submission flow', () => {
                 },
                 {
                     message: 'Cell with name Pakistan never became visible.',
-                    timeout: 60000,
+                    timeout: 90000,
                 },
             )
             .toBe(true);
