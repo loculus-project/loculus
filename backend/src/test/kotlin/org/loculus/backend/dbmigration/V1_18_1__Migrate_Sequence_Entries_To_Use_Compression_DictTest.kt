@@ -7,6 +7,7 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
@@ -23,6 +24,7 @@ import org.loculus.backend.controller.submission.SOME_LONG_GENE
 import org.loculus.backend.controller.submission.SOME_SHORT_GENE
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.submission.SequenceCompressionMigrationService
 import org.loculus.backend.testutil.TestEnvironment
 import org.loculus.backend.testutil.TestResource
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,6 +56,7 @@ private val log = KotlinLogging.logger { }
 @Suppress("ktlint:standard:class-naming")
 class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val sequenceCompressionMigrationService: SequenceCompressionMigrationService,
 ) {
     companion object {
         private val env = TestEnvironment()
@@ -83,6 +86,11 @@ class V1_18_1__Migrate_Sequence_Entries_To_Use_Compression_DictTest(
             registry.add(SPRING_DATASOURCE_USERNAME) { env.postgres.username }
             registry.add(SPRING_DATASOURCE_PASSWORD) { env.postgres.password }
         }
+    }
+
+    @BeforeEach
+    fun setUp() {
+        sequenceCompressionMigrationService.migrateBatched(batchSize = 2, logEvery = 1)
     }
 
     @Test
