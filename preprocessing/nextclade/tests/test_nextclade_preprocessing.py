@@ -115,7 +115,7 @@ single_segment_case_definitions = [
     Case(
         name="with mutation",
         input_metadata={},
-        input_sequence={"main": sequence_with_mutation("single")},
+        input_sequence={"fastaHeader": sequence_with_mutation("single")},
         accession_id="1",
         expected_metadata={
             "completeness": 1.0,
@@ -135,12 +135,13 @@ single_segment_case_definitions = [
                 "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"main": "fastaHeader"},
         ),
     ),
     Case(
         name="with insertion",
         input_metadata={},
-        input_sequence={"main": sequence_with_insertion("single")},
+        input_sequence={"fastaHeader": sequence_with_insertion("single")},
         accession_id="1",
         expected_metadata={
             "completeness": 1.0,
@@ -160,12 +161,13 @@ single_segment_case_definitions = [
                 "VP35EbolaSudan": ebola_sudan_aa(consensus_sequence("single"), "VP35"),
             },
             aminoAcidInsertions={"NPEbolaSudan": ["738:D"]},
+            sequenceNameToFastaHeaderMap={"main": "fastaHeader"},
         ),
     ),
     Case(
         name="with deletion",
         input_metadata={},
-        input_sequence={"main": sequence_with_deletion("single")},
+        input_sequence={"fastaHeader": sequence_with_deletion("single")},
         accession_id="1",
         expected_metadata={
             "completeness": 1.0,
@@ -189,12 +191,13 @@ single_segment_case_definitions = [
                 ),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"main": "fastaHeader"},
         ),
     ),
     Case(
         name="with failed alignment",
         input_metadata={},
-        input_sequence={"main": invalid_sequence()},
+        input_sequence={"fastaHeader": invalid_sequence()},
         accession_id="1",
         expected_metadata={
             "completeness": None,
@@ -218,6 +221,7 @@ single_segment_case_definitions = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"main": "fastaHeader"},
         ),
     ),
 ]
@@ -227,8 +231,8 @@ multi_segment_case_definitions = [
         name="with mutation",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            "fastaHeader1": sequence_with_mutation("ebola-sudan"),
+            "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -260,14 +264,15 @@ multi_segment_case_definitions = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
         ),
     ),
     Case(
         name="with insertion",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": sequence_with_insertion("ebola-sudan"),
-            "ebola-zaire": sequence_with_insertion("ebola-zaire"),
+            "fastaHeader1": sequence_with_insertion("ebola-sudan"),
+            "fastaHeader2": sequence_with_insertion("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -299,14 +304,15 @@ multi_segment_case_definitions = [
                 "LEbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={"NPEbolaSudan": ["738:D"], "VP24EbolaZaire": ["251:D"]},
+            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
         ),
     ),
     Case(
         name="with deletion",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": sequence_with_deletion("ebola-sudan"),
-            "ebola-zaire": sequence_with_deletion("ebola-zaire"),
+            "fastaHeader1": sequence_with_deletion("ebola-sudan"),
+            "fastaHeader2": sequence_with_deletion("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -348,13 +354,14 @@ multi_segment_case_definitions = [
                 ),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
         ),
     ),
     Case(
         name="with one succeeded and one not uploaded",
         input_metadata={},
         input_sequence={
-            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -382,6 +389,7 @@ multi_segment_case_definitions = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
         ),
     ),
 ]
@@ -390,7 +398,7 @@ multi_segment_case_definitions_all_requirement = [
     Case(
         name="with one failed alignment, one not uploaded",
         input_metadata={},
-        input_sequence={"ebola-sudan": invalid_sequence()},
+        input_sequence={"fastaHeader1": invalid_sequence()},
         accession_id="1",
         expected_metadata={
             "totalInsertedNucs_ebola-sudan": None,
@@ -406,7 +414,7 @@ multi_segment_case_definitions_all_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header fastaHeader1 does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
             ProcessingAnnotationHelper(
@@ -423,14 +431,15 @@ multi_segment_case_definitions_all_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={},
         ),
     ),
     Case(
         name="with one failed alignment, one succeeded",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": invalid_sequence(),
-            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            "fastaHeader1": invalid_sequence(),
+            "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -447,7 +456,7 @@ multi_segment_case_definitions_all_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header fastaHeader1 does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             ),
         ],
@@ -465,6 +474,7 @@ multi_segment_case_definitions_all_requirement = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
         ),
     ),
 ]
@@ -473,7 +483,7 @@ multi_segment_case_definitions_any_requirement = [
     Case(
         name="with one failed alignment, one not uploaded",
         input_metadata={},
-        input_sequence={"ebola-sudan": invalid_sequence()},
+        input_sequence={"fastaHeader1": invalid_sequence()},
         accession_id="1",
         expected_metadata={
             "totalInsertedNucs_ebola-sudan": None,
@@ -497,7 +507,7 @@ multi_segment_case_definitions_any_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header fastaHeader1 does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
@@ -507,14 +517,15 @@ multi_segment_case_definitions_any_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={}
         ),
     ),
     Case(
         name="with one failed alignment, one succeeded",
         input_metadata={},
         input_sequence={
-            "ebola-sudan": invalid_sequence(),
-            "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            "fastaHeader1": invalid_sequence(),
+            "fastaHeader2": sequence_with_mutation("ebola-zaire"),
         },
         accession_id="1",
         expected_metadata={
@@ -532,7 +543,7 @@ multi_segment_case_definitions_any_requirement = [
             ProcessingAnnotationHelper(
                 ["alignment"],
                 ["alignment"],
-                "Sequence with fasta header ebola-sudan does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
+                "Sequence with fasta header fastaHeader1 does not appear to match any reference for organism: multi-ebola-test per `nextclade sort`. Double check you are submitting to the correct organism.",
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
             )
         ],
@@ -549,42 +560,18 @@ multi_segment_case_definitions_any_requirement = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
         ),
     ),
 ]
 
 segment_validation_tests_single_segment = [
     Case(
-        name="accept any fastaHeader for single segment",
-        input_metadata={},
-        input_sequence={"randomKey": sequence_with_mutation("single")},
-        accession_id="1",
-        expected_metadata={
-            "completeness": 1.0,
-            "totalInsertedNucs": 0,
-            "totalSnps": 1,
-            "totalDeletedNucs": 0,
-            "length": len(consensus_sequence("single")),
-        },
-        expected_errors=[],
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            alignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-            },
-            aminoAcidInsertions={},
-        ),
-    ),
-    Case(
         name="do not accept multiple segments for single segment",
         input_metadata={},
         input_sequence={
-            "main": sequence_with_mutation("single"),
-            "randomKey": sequence_with_mutation("single"),
+            "fastaHeader1": sequence_with_mutation("single"),
+            "fastaHeader2": sequence_with_mutation("single"),
         },
         accession_id="2",
         expected_metadata={"length": 0},
@@ -592,7 +579,7 @@ segment_validation_tests_single_segment = [
             ProcessingAnnotationHelper(
                 [ProcessingAnnotationAlignment],
                 [ProcessingAnnotationAlignment],
-                "Multiple sequences: ['main', 'randomKey'] found in the"
+                "Multiple sequences: ['fastaHeader1', 'fastaHeader2'] found in the"
                 " input data, but organism: ebola-sudan-test is single-segmented. "
                 "Please check that your metadata and sequences are annotated correctly."
                 "Each metadata entry should have a single corresponding fasta sequence "
@@ -607,50 +594,12 @@ segment_validation_tests_single_segment = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={},
         ),
     ),
 ]
 
 segment_validation_tests_multi_segments = [
-    Case(
-        name="accept any fastaHeader for multi-segment",
-        input_metadata={},
-        input_sequence={
-            "randomFastaHeader1": sequence_with_mutation("ebola-sudan"),
-            "otherFastaHeader2": sequence_with_mutation("ebola-zaire"),
-        },
-        accession_id="1",
-        expected_metadata={
-            "totalInsertedNucs_ebola-sudan": 0,
-            "totalSnps_ebola-sudan": 1,
-            "totalDeletedNucs_ebola-sudan": 0,
-            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
-            "totalInsertedNucs_ebola-zaire": 0,
-            "totalSnps_ebola-zaire": 1,
-            "totalDeletedNucs_ebola-zaire": 0,
-            "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
-        },
-        expected_errors=[],
-        expected_warnings=[],
-        expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            alignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
-            },
-            aminoAcidInsertions={},
-        ),
-    ),
     Case(
         name="don't allow duplicated of the same segment",
         input_metadata={},
@@ -865,6 +814,10 @@ def test_preprocessing_without_metadata() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "ebola-sudan",
+                "ebola-zaire": "ebola-zaire",
+            }
         ),
     )
 
@@ -949,6 +902,7 @@ def test_create_flatfile():
                 "authors": "Smith, Doe A;",
             },
             unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+            sequenceNameToFastaHeaderMap={"main": "ebola-sudan"},
         ),
     )
 

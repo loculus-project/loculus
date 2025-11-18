@@ -412,7 +412,7 @@ def assign_single_segment(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    fastaHeader = ""
+    sequenceNameToFastaHeaderMap: dict[SegmentName, str] = {}
     if len(input_unaligned_sequences) > 1:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -429,10 +429,11 @@ def assign_single_segment(
         )
     else:
         fastaHeader, value = next(iter(input_unaligned_sequences.items()))
+        sequenceNameToFastaHeaderMap["main"] = fastaHeader
         unaligned_nucleotide_sequences["main"] = value
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaHeaderMap={"main": fastaHeader},
+        sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
         errors=errors,
         warnings=warnings,
     )

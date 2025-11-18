@@ -54,6 +54,9 @@ class ProcessedAlignment:
     nucleotideInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
     alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
     aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
+    sequenceNameToFastaHeaderMap: dict[str, str] = field(  # noqa: N815
+        default_factory=dict
+    )
 
 
 @dataclass
@@ -63,6 +66,7 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
+        sequence_header_map: dict[SegmentName, str] | None = {},
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -74,6 +78,7 @@ class UnprocessedEntryFactory:
                 group_id=2,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
+                sequenceNameToFastaHeaderMap=sequence_header_map
             ),
         )
 
@@ -242,4 +247,8 @@ def verify_processed_entry(
     assert actual.aminoAcidInsertions == expected.aminoAcidInsertions, (
         f"{test_name}: amino acid insertions '{actual.aminoAcidInsertions}' do not "
         f"match expectation '{expected.aminoAcidInsertions}'."
+    )
+    assert actual.sequenceNameToFastaHeaderMap == expected.sequenceNameToFastaHeaderMap, (
+        f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaHeaderMap}' do not "
+        f"match expectation '{expected.sequenceNameToFastaHeaderMap}'."
     )
