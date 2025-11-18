@@ -1738,6 +1738,7 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
+          minimizer_index: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nucleotideSequences:
             - name: L
               nextclade_dataset_name: community/pathoplexus/cchfv/L
