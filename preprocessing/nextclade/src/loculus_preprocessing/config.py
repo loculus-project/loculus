@@ -76,7 +76,7 @@ class Config:
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
 
     require_nextclade_sort_match: bool = False
-    minimizer_url: str | None = None
+    minimizer_index: str | None = None
 
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"

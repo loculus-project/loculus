@@ -8,7 +8,7 @@ scientific_name: "Test Ebola Sudan Virus"
 molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
-minimizer_url: TEST
+minimizer_index: TEST
 nucleotideSequences:
 - name: main
   nextclade_dataset_name: ebola-sudan-test-dataset

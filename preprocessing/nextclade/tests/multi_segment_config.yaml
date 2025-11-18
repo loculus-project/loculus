@@ -6,7 +6,7 @@ genes:
 - VP24EbolaZaire
 - LEbolaZaire
 log_level: DEBUG
-minimizer_url: TEST
+minimizer_index: TEST
 nextclade_dataset_server: TEST
 nucleotideSequences:
 - name: ebola-sudan

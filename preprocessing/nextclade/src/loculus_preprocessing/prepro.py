@@ -145,9 +145,9 @@ def run_sort(
 ) -> pd.DataFrame:
     """
     Run nextclade
-    - use config.minimizer_url or default minimizer from nextclade server
+    - use config.minimizer_index or default minimizer from nextclade server
     """
-    if config.minimizer_url:
+    if config.minimizer_index:
         minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
     test = nextclade_dataset_server == "TEST"
@@ -156,8 +156,8 @@ def run_sort(
         "nextclade3",
         "sort",
         input_file,
-        "-m" if config.minimizer_url else "",
-        f"{minimizer_file}" if config.minimizer_url else "",
+        "-m" if config.minimizer_index else "",
+        f"{minimizer_file}" if config.minimizer_index else "",
         "--output-results-tsv",
         f"{result_file}",
         "--max-score-gap",
@@ -1155,8 +1155,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_url and config.require_nextclade_sort_match:
-            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
+        if config.minimizer_index and config.require_nextclade_sort_match:
+            download_minimizer(config.minimizer_index, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

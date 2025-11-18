@@ -1,7 +1,7 @@
 batch_size: 100
 alignment_requirement: NONE
 log_level: DEBUG
-minimizer_url: TEST
+minimizer_index: TEST
 nucleotideSequences:
 - name: ebola-sudan
 - name: ebola-zaire
