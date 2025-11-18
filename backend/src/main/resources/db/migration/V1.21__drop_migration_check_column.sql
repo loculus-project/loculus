@@ -1,5 +1,5 @@
 alter table sequence_entries_preprocessed_data
-drop column compression_migration_checked_at timestamp;
+drop column compression_migration_checked_at;
 
 alter table sequence_entries
-drop column compression_migration_checked_at timestamp;
+drop column compression_migration_checked_at;
