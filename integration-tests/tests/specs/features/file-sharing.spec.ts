@@ -1,9 +1,9 @@
 import { Page, expect } from '@playwright/test';
-import { test } from '../../fixtures/group.fixture';
+import { test } from '../../fixtures/tempdir.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
-test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
+test('submit a single sequence with two files', async ({ pageWithGroup, page, tempDir }) => {
     test.setTimeout(180_000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
 
@@ -13,20 +13,18 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
         country: 'Uganda',
         date: '2023-10-15',
     });
-    let cleanup: () => Promise<void>;
-    try {
-        cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
+
+    await submissionPage.uploadExternalFiles(
+        'raw_reads',
+        {
             'hello.txt': 'Hello',
             'world.txt': 'World',
-        });
+        },
+        tempDir,
+    );
 
-        await expect(page.getByText('✓').first()).toBeVisible();
-        await expect(page.getByText('✓').nth(1)).toBeVisible();
-    } finally {
-        if (cleanup) {
-            await cleanup();
-        }
-    }
+    await expect(page.getByText('✓').first()).toBeVisible();
+    await expect(page.getByText('✓').nth(1)).toBeVisible();
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();
@@ -53,7 +51,7 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     await checkFileContent(page, 'world.txt', 'World');
 });
 
-test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
+test('submit two sequences with one file each', async ({ pageWithGroup, page, tempDir }) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -69,24 +67,21 @@ test('submit two sequences with one file each', async ({ pageWithGroup, page }) 
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
-    let cleanup: () => Promise<void>;
-    try {
-        cleanup = await submissionPage.uploadExternalFiles('raw_reads', {
+    await submissionPage.uploadExternalFiles(
+        'raw_reads',
+        {
             sub1: {
                 'foo.txt': 'Foo',
             },
             sub2: {
                 'bar.txt': 'Bar',
             },
-        });
+        },
+        tempDir,
+    );
 
-        await expect(page.getByText('✓').first()).toBeVisible();
-        await expect(page.getByText('✓').nth(1)).toBeVisible();
-    } finally {
-        if (cleanup) {
-            await cleanup();
-        }
-    }
+    await expect(page.getByText('✓').first()).toBeVisible();
+    await expect(page.getByText('✓').nth(1)).toBeVisible();
 
     await submissionPage.acceptTerms();
     const reviewPage = await submissionPage.submitSequence();

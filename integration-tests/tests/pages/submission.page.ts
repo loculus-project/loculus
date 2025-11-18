@@ -2,7 +2,6 @@ import { Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
 
@@ -110,17 +109,15 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, string>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
+        tempDir: string,
+    ): Promise<void> {
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
+                fs.promises.writeFile(path.join(tempDir, fileName), fileContent),
             ),
         );
 
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
+        return this.page.getByTestId(fileId).setInputFiles(tempDir);
     }
 
     async completeSubmission(
@@ -196,27 +193,27 @@ export class BulkSubmissionPage extends SubmissionPage {
      * for the given file ID.
      * @param fileId For which file ID to upload the files.
      * @param fileContents A struct: submissionID -> filename -> filecontent.
-     * @returns Returns a function to be called to delete the tmp dir again.
+     * @param tempDir The temporary directory to use for storing files.
      */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
+        tempDir: string,
+    ): Promise<void> {
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
-            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
+            submissionIds.map((submissionId) =>
+                fs.promises.mkdir(path.join(tempDir, submissionId)),
+            ),
         );
         await Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
                 return Object.entries(files).map(([fileName, fileContent]) =>
-                    fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
+                    fs.promises.writeFile(path.join(tempDir, submissionId, fileName), fileContent),
                 );
             }),
         );
 
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
+        return this.page.getByTestId(fileId).setInputFiles(tempDir);
     }
 }
