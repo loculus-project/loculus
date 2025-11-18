@@ -1155,7 +1155,7 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_index and config.require_nextclade_sort_match:
+        if config.minimizer_index:
             download_minimizer(config.minimizer_index, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
