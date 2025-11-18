@@ -261,7 +261,7 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
 
 # TODO: running this for each sequence is inefficient, should be run once per batch
-def classify_with_nextclade_sort(
+def assign_segment_with_nextclade_sort(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
     dataset_dir: str,
@@ -400,23 +400,10 @@ def classify_with_nextclade_sort(
     )
 
 
-def assign_segment(
+def assign_segment_with_header(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
-    dataset_dir: str | None = None,
 ) -> SegmentAssignment:
-    if config.multi_segment and config.alignment_requirement != AlignmentRequirement.NONE:
-        if not dataset_dir:
-            error_msg = (
-                "Dataset directory must be provided when classify_with_nextclade_sort is True"
-            )
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        return classify_with_nextclade_sort(
-            input_unaligned_sequences,
-            dataset_dir=dataset_dir,
-            config=config,
-        )
     errors = []
     warnings = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
@@ -424,7 +411,7 @@ def assign_segment(
     duplicate_segments = set()
     if not config.nucleotideSequences:
         return SegmentAssignment(
-            unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+            unalignedNucleotideSequences={},
             segmentNameToFastaHeaders={},
             errors=errors,
             warnings=warnings,
@@ -547,7 +534,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         input_metadata[id]["group_id"] = entry.data.group_id
         aligned_aminoacid_sequences[id] = {}
         aligned_nucleotide_sequences[id] = {}
-        segment_assignment = assign_segment(
+        segment_assignment = assign_segment_with_nextclade_sort(
             input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
             config=config,
             dataset_dir=dataset_dir,
@@ -920,7 +907,7 @@ def process_single(  # noqa: C901
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
         segment_assignment = (
-            assign_segment(
+            assign_segment_with_header(
                 input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
                 config=config,
             )
