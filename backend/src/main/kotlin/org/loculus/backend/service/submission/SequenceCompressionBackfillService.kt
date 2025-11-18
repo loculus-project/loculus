@@ -22,7 +22,7 @@ private val log = KotlinLogging.logger {}
 
 @Component
 class SequenceCompressionMigration(private val migrationService: SequenceCompressionMigrationService) {
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.DAYS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
     fun startAfterReady() {
         migrationService.migrateBatched()
     }
