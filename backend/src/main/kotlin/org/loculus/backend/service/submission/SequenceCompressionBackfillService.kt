@@ -206,7 +206,7 @@ class SequenceCompressionMigrationService(
                     )
                     .selectAll()
                     .apply {
-                        andWhere { se.compressionMigrationCheckedAtColumn.isNull() }
+                        andWhere { sepd.compressionMigrationCheckedAtColumn.isNull() }
                         andWhere {
                             (sepd.accessionColumn greater lastAcc) or
                                 (
