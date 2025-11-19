@@ -1278,6 +1278,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.frameShifts}
       - name: totalStopCodons
         perSegment: true
+        displayName: Total stop codons
         type: int
         header: "Alignment and QC metrics"
         noInput: true
@@ -1285,6 +1286,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
       - name: stopCodons
         perSegment: true
+        displayName: Stop codons
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
