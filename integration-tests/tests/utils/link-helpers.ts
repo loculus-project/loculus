@@ -7,6 +7,7 @@ export async function getFromLinkTargetAndAssertContent(
     linkLocator: Locator,
     expectedContent: string,
 ) {
+    await expect(linkLocator).toBeVisible();
     const page = linkLocator.page();
     const href = await linkLocator.getAttribute('href');
     if (!href) {
