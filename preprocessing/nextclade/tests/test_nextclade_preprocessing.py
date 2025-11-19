@@ -264,7 +264,10 @@ multi_segment_case_definitions = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "fastaHeader1",
+                "ebola-zaire": "fastaHeader2",
+            },
         ),
     ),
     Case(
@@ -304,7 +307,10 @@ multi_segment_case_definitions = [
                 "LEbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={"NPEbolaSudan": ["738:D"], "VP24EbolaZaire": ["251:D"]},
-            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "fastaHeader1",
+                "ebola-zaire": "fastaHeader2",
+            },
         ),
     ),
     Case(
@@ -354,7 +360,10 @@ multi_segment_case_definitions = [
                 ),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={"ebola-sudan": "fastaHeader1", "ebola-zaire": "fastaHeader2"},
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "fastaHeader1",
+                "ebola-zaire": "fastaHeader2",
+            },
         ),
     ),
     Case(
@@ -517,7 +526,7 @@ multi_segment_case_definitions_any_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={}
+            sequenceNameToFastaHeaderMap={},
         ),
     ),
     Case(
@@ -661,6 +670,10 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "prefix_ebola-sudan",
+                "ebola-zaire": "other_prefix_ebola-zaire",
+            },
         ),
     ),
     Case(
@@ -692,6 +705,7 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={},
         ),
     ),
     Case(
@@ -724,6 +738,7 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-sudan": "ebola-sudan"},
         ),
     ),
 ]
@@ -814,10 +829,6 @@ def test_preprocessing_without_metadata() -> None:
                 "ebola-sudan": sequence_with_mutation("ebola-sudan"),
                 "ebola-zaire": sequence_with_mutation("ebola-zaire"),
             },
-            sequenceNameToFastaHeaderMap={
-                "ebola-sudan": "ebola-sudan",
-                "ebola-zaire": "ebola-zaire",
-            }
         ),
     )
 
@@ -902,7 +913,6 @@ def test_create_flatfile():
                 "authors": "Smith, Doe A;",
             },
             unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-            sequenceNameToFastaHeaderMap={"main": "ebola-sudan"},
         ),
     )
 

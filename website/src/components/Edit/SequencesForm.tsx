@@ -61,6 +61,18 @@ export class EditableSequences {
         return this.maxNumberOfRows > 1;
     }
 
+    static invertRecordMulti(obj: Record<string, string | null>): Record<string, string[]> {
+        const inverted: Record<string, string[]> = {};
+
+        for (const key in obj) {
+            const value = obj[key];
+            if (value === null) continue;
+            (inverted[value] ??= []).push(key);
+        }
+
+        return inverted;
+    }
+
     /**
      * @param initialData The sequence entry to edit, from which the initial sequence data is taken.
      * @param referenceGenomeLightweightSchema
@@ -70,16 +82,27 @@ export class EditableSequences {
         referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     ): EditableSequences {
         const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
-        const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
-            ([key, value]) => ({
-                // TODO: for now key corresponds to the segment name in future it will be the fastaHeader
-                label: key, // TODO: In future prepro will map the fastaHeader to the segment (will be added to the label)
-                fastaHeader: key,
-                value: value,
-                initialValue: value,
-                key: EditableSequences.getNextKey(),
-            }),
+        const fastaHeaderMap = EditableSequences.invertRecordMulti(
+            initialData.processedData.sequenceNameToFastaHeaderMap,
         );
+        const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
+            ([key, value]) => {
+                const mapped = (fastaHeaderMap[key] ?? []).join(', ') || '';
+                const label = !mapped
+                    ? `${key} (could not be classified)`
+                    : mapped === key
+                      ? key
+                      : `${key} (mapped to ${mapped})`;
+                return {
+                    label,
+                    fastaHeader: maxNumberRows > 1 ? key : initialData.submissionId,
+                    value: value,
+                    initialValue: value,
+                    key: EditableSequences.getNextKey(),
+                };
+            },
+        );
+
         return new EditableSequences(existingDataRows, maxNumberRows);
     }
 
@@ -138,7 +161,7 @@ export class EditableSequences {
 
     getFastaIds(): string {
         const filledRows = this.rows.filter((row) => row.value !== null);
-        return filledRows.map((sequence) => sequence.label?.replace(/\s+/g, '')).join(', ');
+        return filledRows.map((sequence) => sequence.fastaHeader).join(',');
     }
 
     getSequenceFasta(): File | undefined {
@@ -165,7 +188,7 @@ export class EditableSequences {
         );
 
         return filledRows.reduce<Record<string, string>>((prev, row) => {
-            prev[row.label] = row.value; //TODO: this will have to be changed to fastaHeader in future
+            prev[row.fastaHeader] = row.value;
             return prev;
         }, {});
     }

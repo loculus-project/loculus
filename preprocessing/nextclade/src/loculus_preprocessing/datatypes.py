@@ -68,7 +68,6 @@ class UnprocessedData:
     submittedAt: str  # timestamp  # noqa: N815
     metadata: InputMetadata
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str]  # noqa: N815
 
 
 @dataclass
