@@ -41,6 +41,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .useFirstSegment }}
+    useFirstSegment: {{ .useFirstSegment }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
