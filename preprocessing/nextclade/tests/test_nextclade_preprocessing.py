@@ -670,6 +670,10 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={
+                "ebola-sudan": "prefix_ebola-sudan",
+                "ebola-zaire": "other_prefix_ebola-zaire",
+            },
         ),
     ),
     Case(
@@ -701,6 +705,7 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={},
         ),
     ),
     Case(
@@ -733,6 +738,7 @@ multi_segment_case_definitions_none_requirement = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
             aminoAcidInsertions={},
+            sequenceNameToFastaHeaderMap={"ebola-sudan": "ebola-sudan"},
         ),
     ),
 ]

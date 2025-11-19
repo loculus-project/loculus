@@ -439,7 +439,7 @@ def assign_single_segment(
     )
 
 
-def assign_segment_with_header(
+def assign_segment_using_header(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
 ) -> SegmentAssignment:
@@ -940,7 +940,7 @@ def process_single(  # noqa: C901
     else:
         submitter = unprocessed.submitter
         group_id = unprocessed.group_id
-        segment_assignment = assign_segment_with_header(
+        segment_assignment = assign_segment_using_header(
             input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
             config=config,
         )
