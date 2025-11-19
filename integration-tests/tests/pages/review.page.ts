@@ -26,7 +26,7 @@ export class ReviewPage {
 
     public readonly approveAllButton = () =>
         this.page.getByRole('button', { name: 'Release', exact: false });
-    public readonly deleteFirstButton = () =>
+    public readonly deleteOpenMenuButton = () =>
         this.page.getByRole('button', { name: 'Discard sequences', exact: false });
     public readonly deleteAllButton = () => this.page.getByText('Discard all', { exact: false });
     public readonly confirmReleaseButton = () =>
@@ -99,8 +99,8 @@ export class ReviewPage {
     }
 
     async deleteAll() {
-        await expect(this.deleteFirstButton()).toBeVisible();
-        await this.deleteFirstButton().click();
+        await expect(this.deleteOpenMenuButton()).toBeVisible();
+        await this.deleteOpenMenuButton().click();
         await this.deleteAllButton().click();
         await expect(this.confirmDeleteButton()).toBeVisible();
         await this.confirmDeleteButton().click();
