@@ -247,6 +247,7 @@ multi_segment_case_definitions = [
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+            "first_totalSnps": 1,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -290,6 +291,7 @@ multi_segment_case_definitions = [
             "totalSnps_ebola-zaire": 0,
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(sequence_with_insertion("ebola-zaire")),
+            "first_totalSnps": 0,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -339,6 +341,7 @@ multi_segment_case_definitions = [
             "totalSnps_ebola-zaire": 0,
             "totalDeletedNucs_ebola-zaire": 3,
             "length_ebola-zaire": len(sequence_with_deletion("ebola-zaire")),
+            "first_totalSnps": 0,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -391,6 +394,7 @@ multi_segment_case_definitions = [
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+            "first_totalSnps": 1,
         },
         expected_errors=[],
         expected_warnings=[],
@@ -410,6 +414,41 @@ multi_segment_case_definitions = [
             sequenceNameToFastaId={"ebola-zaire": "fastaHeader2"},
         ),
     ),
+    Case(
+        name="with one succeeded and other one not uploaded still fills 'useFirstSegment' field",
+        input_metadata={},
+        input_sequence={
+            "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+        },
+        accession_id="1",
+        expected_metadata={
+            "totalInsertedNucs_ebola-sudan": 0,
+            "totalSnps_ebola-sudan": 1,
+            "totalDeletedNucs_ebola-sudan": 0,
+            "length_ebola-sudan": len(consensus_sequence("ebola-sudan")),
+            "totalInsertedNucs_ebola-zaire": None,
+            "totalSnps_ebola-zaire": None,
+            "totalDeletedNucs_ebola-zaire": None,
+            "length_ebola-zaire": 0,
+            "first_totalSnps": 1,
+        },
+        expected_errors=[],
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            },
+            alignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+            },
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={
+                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+            },
+            aminoAcidInsertions={},
+        ),
+    ),
 ]
 
 multi_segment_case_definitions_all_requirement = [
@@ -427,6 +466,7 @@ multi_segment_case_definitions_all_requirement = [
             "totalSnps_ebola-zaire": None,
             "totalDeletedNucs_ebola-zaire": None,
             "length_ebola-zaire": 0,
+            "first_totalSnps": None,
         },
         expected_errors=[
             ProcessingAnnotationHelper(
@@ -469,6 +509,7 @@ multi_segment_case_definitions_all_requirement = [
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+            "first_totalSnps": 1,
         },
         expected_errors=[
             ProcessingAnnotationHelper(
@@ -555,6 +596,7 @@ multi_segment_case_definitions_any_requirement = [
             "totalSnps_ebola-zaire": 1,
             "totalDeletedNucs_ebola-zaire": 0,
             "length_ebola-zaire": len(consensus_sequence("ebola-zaire")),
+            "first_totalSnps": 1,
         },
         expected_errors=[],
         expected_warnings=[
