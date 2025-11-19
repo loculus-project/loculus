@@ -20,6 +20,7 @@ class EmptyProcessedDataProvider(private val backendConfig: BackendConfig) {
             alignedAminoAcidSequences = referenceGenome.genes.map { it.name }.associateWith { null },
             nucleotideInsertions = referenceGenome.nucleotideSequences.map { it.name }.associateWith { emptyList() },
             aminoAcidInsertions = referenceGenome.genes.map { it.name }.associateWith { emptyList() },
+            sequenceNameToFastaHeaderMap = referenceGenome.nucleotideSequences.map { it.name }.associateWith {""},
             files = null,
         )
     }
