@@ -95,11 +95,11 @@ export class EditableSequences {
     ): EditableSequences {
         const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
         const fastaHeaderMap = EditableSequences.invertRecordMulti(
-            initialData.processedData.sequenceNameToFastaHeaderMap || {},
+            initialData.processedData.sequenceNameToFastaHeaderMap,
         );
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => {
-                const mapped = fastaHeaderMap[key]?.join(', ') || '';
+                const mapped = fastaHeaderMap[key].join(', ') || '';
                 const label = !mapped
                     ? `${key} (could not be classified)`
                     : mapped === key
