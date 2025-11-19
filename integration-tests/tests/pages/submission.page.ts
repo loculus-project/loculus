@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
-import { clearTempDir } from '../utils/tempdir';
+import { clearTmpDir } from '../utils/tmpdir';
 
 class SubmissionPage {
     protected page: Page;
@@ -59,9 +59,9 @@ class SubmissionPage {
         return reviewPage;
     }
 
-    protected async _uploadFilesFromTempDir(testId: string, tempDir: string, fileCount: number) {
+    protected async _uploadFilesFromTmpDir(testId: string, tmpDir: string, fileCount: number) {
         // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
-        void this.page.getByTestId(testId).setInputFiles(tempDir);
+        void this.page.getByTestId(testId).setInputFiles(tmpDir);
         return Promise.all(
             Array.from({ length: fileCount }, (_, i) =>
                 this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
@@ -127,20 +127,19 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, string>,
-        tempDir: string,
+        tmpDir: string,
     ) {
-        await this._prepareTempDirWithFiles(fileContents, tempDir);
+        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
         const fileCount = Object.keys(fileContents).length;
-        await this._uploadFilesFromTempDir(fileId, tempDir, fileCount);
+        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
     }
 
-    private async _prepareTempDirWithFiles(fileContents: Record<string, string>, tempDir: string) {
-        await clearTempDir(tempDir);
+    private async _prepareTmpDirWithFiles(fileContents: Record<string, string>, tmpDir: string) {
+        await clearTmpDir(tmpDir);
 
-        // Write files directly to tempdir
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
-                fs.promises.writeFile(path.join(tempDir, fileName), fileContent),
+                fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
             ),
         );
     }
@@ -218,38 +217,36 @@ export class BulkSubmissionPage extends SubmissionPage {
      * for the given file ID.
      * @param fileId For which file ID to upload the files.
      * @param fileContents A struct: submissionID -> filename -> filecontent.
-     * @param tempDir The temporary directory to use for storing files.
+     * @param tmpDir The temporary directory to use for storing files.
      */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-        tempDir: string,
+        tmpDir: string,
     ) {
-        await this._prepareTempDirWithFiles(fileContents, tempDir);
+        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
         const fileCount = Object.values(fileContents).reduce(
             (total, files) => total + Object.keys(files).length,
             0,
         );
-        await this._uploadFilesFromTempDir(fileId, tempDir, fileCount);
+        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
     }
 
-    private async _prepareTempDirWithFiles(
+    private async _prepareTmpDirWithFiles(
         fileContents: Record<string, Record<string, string>>,
-        tempDir: string,
+        tmpDir: string,
     ) {
-        await clearTempDir(tempDir);
+        await clearTmpDir(tmpDir);
 
         // Create submission directories and write files
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
-            submissionIds.map((submissionId) =>
-                fs.promises.mkdir(path.join(tempDir, submissionId)),
-            ),
+            submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
         );
         await Promise.all(
             Object.entries(fileContents).flatMap(([submissionId, files]) => {
                 return Object.entries(files).map(([fileName, fileContent]) =>
-                    fs.promises.writeFile(path.join(tempDir, submissionId, fileName), fileContent),
+                    fs.promises.writeFile(path.join(tmpDir, submissionId, fileName), fileContent),
                 );
             }),
         );

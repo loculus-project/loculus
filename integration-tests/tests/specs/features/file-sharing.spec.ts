@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from '../../fixtures/tempdir.fixture';
+import { test } from '../../fixtures/tmpdir.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { checkAllFileContents } from '../../utils/link-helpers';
 
@@ -16,7 +16,7 @@ const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content 
 test('submit single seq w/ 2 files thru single seq submission form', async ({
     pageWithGroup,
     page,
-    tempDir,
+    tmpDir,
 }) => {
     test.setTimeout(180_000);
     const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
@@ -28,7 +28,7 @@ test('submit single seq w/ 2 files thru single seq submission form', async ({
         date: '2023-10-15',
     });
 
-    await submissionPage.uploadExternalFiles(RAW_READS, FILES_DOUBLE, tempDir);
+    await submissionPage.uploadExternalFiles(RAW_READS, FILES_DOUBLE, tmpDir);
 
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
 
@@ -42,7 +42,7 @@ test('submit single seq w/ 2 files thru single seq submission form', async ({
 test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
     pageWithGroup,
     page,
-    tempDir,
+    tmpDir,
 }) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
@@ -59,7 +59,7 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
     await submissionPage.uploadExternalFiles(
         RAW_READS,
         { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
-        tempDir,
+        tmpDir,
     );
 
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
@@ -78,7 +78,7 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
 test('bulk submit 1 seq: discarding and readding a file', async ({
     pageWithGroup,
     page,
-    tempDir,
+    tmpDir,
 }) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
@@ -89,11 +89,11 @@ test('bulk submit 1 seq: discarding and readding a file', async ({
 
     await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tempDir);
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
 
     await page.getByTestId('discard_raw_reads').click();
 
-    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tempDir);
+    await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
 
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone();
 

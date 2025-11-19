@@ -3,16 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-type TempDirFixtures = {
+type TmpDirFixtures = {
     /**
      * A temporary directory that is automatically created before the test
      * and cleaned up after the test completes.
      */
-    tempDir: string;
+    tmpDir: string;
 };
 
-export const test = groupTest.extend<TempDirFixtures>({
-    tempDir: async ({}, use) => {
+export const test = groupTest.extend<TmpDirFixtures>({
+    tmpDir: async ({}, use) => {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-upload-'));
         try {
             await use(tmpDir);
