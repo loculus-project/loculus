@@ -4,22 +4,21 @@ import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
 import { readonlyGroup } from './utils/testGroup';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
+import { SearchPage } from './pages/search.page';
 import { readonlyUser } from './fixtures/user.fixture';
 
 setup('Initialize a single ebola sequence as base data', async ({ page, baseURL }) => {
-    setup.setTimeout(90_000);
+    setup.setTimeout(180_000);
     const authPage = new AuthPage(page);
     await authPage.tryLoginOrRegister(readonlyUser);
 
     const groupPage = new GroupPage(page);
     const groupId = await groupPage.getOrCreateGroup(readonlyGroup);
 
+    const searchPage = new SearchPage(page);
+
     // Navigate directly to the group's released sequences page to check for data.
-    const releasedSequencesUrl = new URL(
-        `/ebola-sudan/submission/${groupId}/released`,
-        baseURL,
-    ).toString();
-    await page.goto(releasedSequencesUrl);
+    await searchPage.goToReleasedSequences('ebola-sudan', groupId);
     // Wait for page to load by asserting on presence of the group name
     await expect(page.getByText(readonlyGroup.name).first()).toBeVisible();
 

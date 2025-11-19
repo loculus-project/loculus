@@ -72,8 +72,7 @@ groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(BULK_REVISION_TEST_TIMEOUT);
 
-        const pageToUse = page;
-        const submissionPage = new SingleSequenceSubmissionPage(pageToUse);
+        const submissionPage = new SingleSequenceSubmissionPage(page);
         const timestamp = Date.now();
 
         for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
@@ -83,12 +82,12 @@ groupTest.describe('Bulk sequence revision', () => {
             );
         }
 
-        const reviewPage = new ReviewPage(pageToUse);
+        const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
         await reviewPage.waitForZeroProcessing();
         await reviewPage.releaseValidSequences();
 
-        const searchPage = new SearchPage(pageToUse);
+        const searchPage = new SearchPage(page);
         await searchPage.searchByGroupId(TEST_ORGANISM, groupId);
         const accessions = await searchPage.waitForSequencesInSearch(
             SEQUENCES_TO_REVISE,
@@ -105,14 +104,14 @@ groupTest.describe('Bulk sequence revision', () => {
         }));
         const fastaContent = createFastaContent(revisedSequences);
 
-        const revisionPage = new RevisionPage(pageToUse);
+        const revisionPage = new RevisionPage(page);
         await revisionPage.goto(TEST_ORGANISM, groupId);
         await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
         await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
         await revisionPage.acceptTerms();
         await revisionPage.clickSubmit();
 
-        await expect(pageToUse).toHaveURL(/\/review/);
+        await expect(page).toHaveURL(/\/review/);
         await reviewPage.waitForZeroProcessing();
 
         const overview = await reviewPage.getReviewPageOverview();

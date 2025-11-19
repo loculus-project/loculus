@@ -187,6 +187,10 @@ export class SearchPage {
         await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
     }
 
+    async goToReleasedSequences(organism: string, groupId: number | string) {
+        await this.page.goto(`/${organism}/submission/${groupId}/released`);
+    }
+
     async getAccessions(): Promise<string[]> {
         const rows = this.getSequenceRows();
         const count = await rows.count();
