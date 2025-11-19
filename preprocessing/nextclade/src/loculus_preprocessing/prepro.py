@@ -347,6 +347,7 @@ def assign_segment_with_nextclade_sort(
                 "which is currently not an accepted option for organism: "
                 f"{config.organism}. It is therefore not possible to release. "
                 "Contact the administrator if you think this message is an error."
+                f" Accepted datasets are: {', '.join(accepted_dataset_names)}."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
                 errors.append(
