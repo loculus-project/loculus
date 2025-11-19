@@ -69,3 +69,10 @@ processing_spec:
     function: identity
     inputs:
       input: length_ebola-zaire
+  first_totalSnps:
+    args:
+      useFirstSegment: true
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
