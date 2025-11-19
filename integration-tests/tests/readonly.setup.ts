@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { test as setup } from './fixtures/console-warnings.fixture';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
-import { readonlyGroup } from './utils/testGroup';
+import { readonlyGroup } from './fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { readonlyUser } from './fixtures/user.fixture';
 
@@ -25,52 +25,75 @@ setup('Initialize a single ebola sequence as base data', async ({ page, baseURL 
 
     const sequenceCount = await page.getByRole('link', { name: /LOC_/ }).count();
 
-    if (sequenceCount > 0) {
+    if (sequenceCount >= 3) {
         return; // Data exists, so we're done.
     }
 
     const submissionPage = new SingleSequenceSubmissionPage(page);
-    const reviewPage = await submissionPage.completeSubmission(
+    const mainSequence =
+        'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
+        'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
+        'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
+        'TGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCT' +
+        'GACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTG' +
+        'ATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCT' +
+        'GGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAG' +
+        'GAGACAACAGAAGCTAATGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTG' +
+        'GGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATA' +
+        'TCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATC' +
+        'AAGTTCCTACTAATACATCAGGGGATGCACATGGTCGCAGGCCATGATGCGAATGACACAGTAATATCTA' +
+        'ATTCTGTTGCCCAAGCAAGGTTCTCTGGTCTTCTGATTGTAAAGACTGTTCTGGACCACATCCTACAAAA' +
+        'AACAGATCTTGGAGTACGACTTCATCCACTGGCCAGGACAGCAAAAGTCAAGAATGAGGTCAGTTCATTC' +
+        'AAGGCAGCTCTTGGCTCACTTGCCAAGCATGGAGAATATGCTCCATTTGCACGTCTCCTCAATCTTTCTG';
+
+    const sequences = [
         {
-            submissionId: 'foobar-readonly',
+            submissionId: 'foobar-readonly-1',
             collectionCountry: 'France',
             collectionDate: '2021-05-12',
             authorAffiliations: 'Patho Institute, Paris',
-            groupId: groupId.toString(),
         },
         {
-            main:
-                'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' +
-                'ATGGATAAACGGGTGAGAGGTTCATGGGCCCTGGGAGGACAATCTGAAGTTGATCTTGACTACCACAAAA' +
-                'TATTAACAGCCGGGCTTTCGGTCCAACAAGGGATTGTGCGACAAAGAGTCATCCCGGTATATGTTGTGAG' +
-                'TGATCTTGAGGGTATTTGTCAACATATCATTCAGGCCTTTGAAGCAGGCGTAGATTTCCAAGATAATGCT' +
-                'GACAGCTTCCTTTTACTTTTATGTTTACATCATGCTTACCAAGGAGATCATAGGCTCTTCCTCAAAAGTG' +
-                'ATGCAGTTCAATACTTAGAGGGCCATGGTTTCAGGTTTGAGGTCCGAGAAAAGGAGAATGTGCACCGTCT' +
-                'GGATGAATTGTTGCCCAATGTCACCGGTGGAAAAAATCTTAGGAGAACATTGGCTGCAATGCCTGAAGAG' +
-                'GAGACAACAGAAGCTAATGCTGGTCAGTTTTTATCCTTTGCCAGTTTGTTTCTACCCAAACTTGTCGTTG' +
-                'GGGAGAAAGCGTGTCTGGAAAAAGTACAAAGGCAGATTCAGGTCCATGCAGAACAAGGGCTCATTCAATA' +
-                'TCCAACTTCCTGGCAATCAGTTGGACACATGATGGTGATCTTCCGTTTGATGAGAACAAACTTTTTAATC' +
-                'AAGTTCCTACTAATACATCAGGGGATGCACATGGTCGCAGGCCATGATGCGAATGACACAGTAATATCTA' +
-                'ATTCTGTTGCCCAAGCAAGGTTCTCTGGTCTTCTGATTGTAAAGACTGTTCTGGACCACATCCTACAAAA' +
-                'AACAGATCTTGGAGTACGACTTCATCCACTGGCCAGGACAGCAAAAGTCAAGAATGAGGTCAGTTCATTC' +
-                'AAGGCAGCTCTTGGCTCACTTGCCAAGCATGGAGAATATGCTCCATTTGCACGTCTCCTCAATCTTTCTG',
+            submissionId: 'foobar-readonly-2',
+            collectionCountry: 'Brazil',
+            collectionDate: '2021-06-15',
+            authorAffiliations: 'Research Center, Rio',
         },
-    );
+        {
+            submissionId: 'foobar-readonly-3',
+            collectionCountry: 'Switzerland',
+            collectionDate: '2021-07-20',
+            authorAffiliations: 'University Hospital, Zurich',
+        },
+    ];
 
-    await reviewPage.waitForZeroProcessing();
-    await reviewPage.releaseValidSequences();
+    for (const seq of sequences) {
+        const reviewPage = await submissionPage.completeSubmission(
+            {
+                ...seq,
+                groupId: groupId.toString(),
+            },
+            {
+                main: mainSequence,
+            },
+        );
+
+        await reviewPage.waitForZeroProcessing();
+        await reviewPage.releaseValidSequences();
+    }
+
     await page.getByRole('link', { name: 'released sequences' }).click();
     // Reloading is required as the page does not automatically update with new data
     await expect
         .poll(
             async () => {
                 await page.reload();
-                return page.getByRole('link', { name: /LOC_/ }).first().isVisible();
+                return page.getByRole('link', { name: /LOC_/ }).count();
             },
             {
-                message: 'Link with name /LOC_/ never became visible.',
-                timeout: 90000,
+                message: 'Expected 3 sequences to become visible.',
+                timeout: 60000,
             },
         )
-        .toBe(true);
+        .toBeGreaterThanOrEqual(3);
 });
