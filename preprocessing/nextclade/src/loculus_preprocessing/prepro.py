@@ -211,7 +211,11 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
         sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
     )
 
-    accepted_dataset_names = sequence_and_dataset.accepted_sort_matches or [nextclade_dataset_name]  # type: ignore
+    accepted_dataset_names = (
+        sequence_and_dataset.accepted_sort_matches
+        or [nextclade_dataset_name]
+        or [sequence_and_dataset.name]
+    )  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
     df = run_sort(
@@ -479,7 +483,11 @@ def assign_segment_with_header(
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-    remaining_segments = set(input_unaligned_sequences.keys()) - set(segmentNameToFastaHeaders.values()) - duplicate_segments
+    remaining_segments = (
+        set(input_unaligned_sequences.keys())
+        - set(segmentNameToFastaHeaders.values())
+        - duplicate_segments
+    )
     if len(remaining_segments) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
