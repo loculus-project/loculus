@@ -66,7 +66,6 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
-        sequence_header_map: dict[SegmentName, str] | None = {},
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -78,7 +77,6 @@ class UnprocessedEntryFactory:
                 group_id=2,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
-                sequenceNameToFastaHeaderMap=sequence_header_map
             ),
         )
 

@@ -485,7 +485,11 @@ def assign_segment_with_header(
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
-    remaining_segments = set(input_unaligned_sequences.keys()) - set(sequenceNameToFastaHeaderMap.values()) - duplicate_segments
+    remaining_segments = (
+        set(input_unaligned_sequences.keys())
+        - set(sequenceNameToFastaHeaderMap.values())
+        - duplicate_segments
+    )
     if len(remaining_segments) > 0:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -886,6 +890,7 @@ def processed_entry_no_alignment(
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    sequenceNameToFastaHeaderMap: dict[SegmentName, str],
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
@@ -905,7 +910,7 @@ def processed_entry_no_alignment(
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
-                sequenceNameToFastaHeaderMap=unprocessed.sequenceNameToFastaHeaderMap,
+                sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
             ),
             errors=errors,
             warnings=warnings,
@@ -990,7 +995,14 @@ def process_single(  # noqa: C901
     logger.debug(f"Processed {id}: {output_metadata}")
 
     if isinstance(unprocessed, UnprocessedData):
-        return processed_entry_no_alignment(id, unprocessed, output_metadata, errors, warnings)
+        return processed_entry_no_alignment(
+            id,
+            unprocessed,
+            output_metadata,
+            errors,
+            warnings,
+            segment_assignment.sequenceNameToFastaHeaderMap,
+        )
 
     aligned_segments = set()
     for sequence_and_dataset in config.nucleotideSequences:
@@ -1060,7 +1072,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 nucleotideInsertions=defaultdict(dict[str, Any]),
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
-                sequenceNameToFastaHeaderMap=defaultdict(dict[str, str]),
+                sequenceNameToFastaHeaderMap=defaultdict(str),
             ),
             errors=[
                 ProcessingAnnotation.from_single(
