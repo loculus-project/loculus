@@ -50,9 +50,9 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
         transaction {
             backendConfig.organisms.forEach { (organismString, instanceConfig) ->
                 val organism = Organism(organismString)
-                val segmentsAndGenes =
-                    instanceConfig.referenceGenome.nucleotideSequences + instanceConfig.referenceGenome.genes
-                for (referenceSequence in segmentsAndGenes) {
+                val nucleotideSequences = instanceConfig.referenceGenome.nucleotideSequences
+                val genes = instanceConfig.referenceGenome.genes
+                for (referenceSequence in nucleotideSequences + genes) {
                     val reference = referenceSequence.sequence
                     val description = "${organism.name} - ${referenceSequence.name}"
                     val dictId = getDictIdOrInsertNewEntry(reference, description)
@@ -64,16 +64,22 @@ class CompressionDictService(private val backendConfig: BackendConfig, private v
                     cacheById[dictId] = dict
                 }
 
-                val references = instanceConfig.referenceGenome.nucleotideSequences
-                    .map { it.sequence }
-                    .sortedBy { it }
-                    .joinToString("")
-                val dictId = getDictIdOrInsertNewEntry(references, "${organism.name} - unaligned")
-                val unalignedDict = references.toByteArray()
-                val dictEntry = DictEntry(dictId, unalignedDict)
+                // No need to concatenate nothing, it'll never be used
+                if (nucleotideSequences.isNotEmpty()) {
+                    val concatenatedNucleotideSequences = nucleotideSequences
+                        .map { it.sequence }
+                        .sortedBy { it }
+                        .joinToString("")
+                    val dictId = getDictIdOrInsertNewEntry(
+                        concatenatedNucleotideSequences,
+                        "${organism.name} - concatenated nucleotide sequences",
+                    )
+                    val unalignedDict = concatenatedNucleotideSequences.toByteArray()
+                    val dictEntry = DictEntry(dictId, unalignedDict)
 
-                unalignedDictCache[organism] = dictEntry
-                cacheById[dictId] = unalignedDict
+                    unalignedDictCache[organism] = dictEntry
+                    cacheById[dictId] = unalignedDict
+                }
             }
         }
 
