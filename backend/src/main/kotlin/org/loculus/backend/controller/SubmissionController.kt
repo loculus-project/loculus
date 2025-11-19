@@ -515,17 +515,22 @@ open class SubmissionController(
             }
 
             outputStream.use { stream ->
-                transaction { // The Exposed transaction
+                transaction {
+                    // The Exposed transaction
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
                 }
             }
 
             val duration = System.currentTimeMillis() - startTime
             log.info { "[$endpoint] Streaming response completed in ${duration}ms" }
-
         } catch (e: Exception) {
             val duration = System.currentTimeMillis() - startTime
-            log.error(e) { "[$endpoint] An unexpected error occurred while streaming after ${duration}ms. Aborting and re-throwing to signal failure." }
+            log.error(
+                e,
+            ) {
+                "[$endpoint] An unexpected error occurred while streaming after ${duration}ms." +
+                    " Aborting and re-throwing to signal failure."
+            }
             throw e
         } finally {
             MDC.remove(REQUEST_ID_MDC_KEY)
