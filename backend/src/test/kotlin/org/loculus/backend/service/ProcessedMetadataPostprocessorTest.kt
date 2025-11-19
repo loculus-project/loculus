@@ -43,6 +43,7 @@ class ProcessedMetadataPostprocessorTest(
             nucleotideInsertions = emptyMap(),
             alignedAminoAcidSequences = emptyMap(),
             aminoAcidInsertions = emptyMap(),
+            sequenceNameToFastaHeaderMap = emptyMap(),
             files = null,
         )
 
