@@ -167,6 +167,7 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     ): Promise<ReviewPage> {
         if (groupId) {
             await this.page.goto(`/ebola-sudan/submission/${groupId}/submit`);
+            await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
         } else {
             await this.navigateToSubmissionPage();
         }
