@@ -6,12 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 const SEQUENCE = 'ATTGATCTCATCATTT';
 
-test('Lineage field lineage counts', async ({ page, pageWithGroup }) => {
+test('Lineage field lineage counts', async ({ page, groupId }) => {
     test.setTimeout(95_000);
+    void groupId;
     const uuid = uuidv4();
 
     await page.goto('/');
-    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage('Test organism (without alignment)');
     await submissionPage.uploadMetadataFile(
         ['id', 'date', 'host', 'lineage'],

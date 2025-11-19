@@ -5,8 +5,11 @@ import { ReviewPage } from '../../pages/review.page';
 import { NavigationPage } from '../../pages/navigation.page';
 
 test('revising sequence data works: segment can be deleted; segment can be edited', async ({
-    pageWithReleasedSequence: page,
+    page,
+    releasedSequence,
 }) => {
+    // Ensure released sequence is created by depending on releasedSequence
+    void releasedSequence;
     test.setTimeout(60000);
     const searchPage = new SearchPage(page);
 

@@ -6,18 +6,20 @@ import { NavigationPage } from '../../pages/navigation.page';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
-        pageWithACreatedUser,
+        page,
+        authenticatedUser,
     }) => {
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithACreatedUser);
+        void authenticatedUser;
+        const submissionPage = new SingleSequenceSubmissionPage(page);
         await submissionPage.navigateToOrganism('Ebola Sudan');
-        const navigation = new NavigationPage(pageWithACreatedUser);
+        const navigation = new NavigationPage(page);
         await navigation.clickSubmitSequences();
-        await pageWithACreatedUser.getByRole('link', { name: 'create a submitting group' }).click();
+        await page.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
-    test('basic file upload submission flow works', async ({ pageWithGroup }) => {
+    test('basic file upload submission flow works', async ({ page, groupId }) => {
         test.setTimeout(120_000);
-        const page = pageWithGroup;
+        void groupId;
 
         const testFilesDir = join(__dirname, '../../test-data');
         const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
@@ -61,10 +63,10 @@ test.describe('Submission flow', () => {
         await page.waitForSelector('text="NC_005302.1"'); // reference
     });
 
-    test('basic form submission flow works', async ({ pageWithGroup }) => {
+    test('basic form submission flow works', async ({ page, groupId }) => {
         test.setTimeout(120_000);
-        const page = pageWithGroup;
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+        void groupId;
+        const submissionPage = new SingleSequenceSubmissionPage(page);
 
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({

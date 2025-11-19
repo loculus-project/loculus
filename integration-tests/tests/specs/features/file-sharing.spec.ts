@@ -12,11 +12,13 @@ const FILES_SINGLE = { 'testfile.txt': 'This is a test file.' };
 const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content of file 2.' };
 
 test('submit single seq w/ 2 files thru single seq submission form', async ({
-    pageWithGroup,
+    page,
+    groupId,
     tmpDir,
 }) => {
     test.setTimeout(180_000);
-    const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.fillSubmissionFormDummyOrganism({
         submissionId: ID_1,
@@ -31,9 +33,10 @@ test('submit single seq w/ 2 files thru single seq submission form', async ({
     await searchPage.checkAllFileContents(FILES_DOUBLE);
 });
 
-test('bulk submit 2 seqs with 1 & 2 files respectively', async ({ pageWithGroup, tmpDir }) => {
+test('bulk submit 2 seqs with 1 & 2 files respectively', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(180_000);
-    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [
         [ID_1, COUNTRY_1, '2022-12-02'],
@@ -50,9 +53,10 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({ pageWithGroup,
     await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 });
 
-test('bulk submit 1 seq: discarding and readding a file', async ({ pageWithGroup, tmpDir }) => {
+test('bulk submit 1 seq: discarding and readding a file', async ({ page, groupId, tmpDir }) => {
     test.setTimeout(180_000);
-    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);

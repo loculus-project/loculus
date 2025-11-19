@@ -5,13 +5,14 @@ import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
 import { v4 as uuidv4 } from 'uuid';
 
-test('Override hidden fields', async ({ page, pageWithGroup }) => {
+test('Override hidden fields', async ({ page, groupId }) => {
     // This test is really slow - it can take at least 150s. Speed depends on how much else is running, hence let's use buffer.
     test.setTimeout(200_000);
+    void groupId;
     const uuid = uuidv4();
 
     await page.goto('/');
-    const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.completeSubmission(
         {
             submissionId: 'foo1',
