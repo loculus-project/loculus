@@ -13,6 +13,9 @@ export const test = authTest.extend<GroupFixtures>({
     },
 
     groupId: async ({ page, authenticatedUser, groupName }, use) => {
+        // Ensure user is authenticated by depending on authenticatedUser
+        void authenticatedUser;
+
         const groupPage = new GroupPage(page);
         const testGroup = buildTestGroup(groupName);
 

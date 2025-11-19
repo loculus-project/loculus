@@ -10,6 +10,9 @@ type SequenceFixtures = {
 export const test = groupTest.extend<SequenceFixtures>({
     releasedSequence: [
         async ({ page, groupId }, use) => {
+            // Ensure group is created by depending on groupId
+            void groupId;
+
             const submissionPage = new SingleSequenceSubmissionPage(page);
             const submissionId = `test_${uuidv4().slice(0, 8)}`;
 
