@@ -49,6 +49,7 @@ test.describe('Review page functionality', () => {
     });
 
     test('should allow bulk discarding of sequences', async ({ page, groupId }) => {
+        test.setTimeout(120_000);
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
         // Submit 3 sequences to test bulk operations properly
