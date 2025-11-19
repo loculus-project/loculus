@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest';
+import { toast } from 'react-toastify';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { EditableSequences } from './SequencesForm';
 import { defaultReviewData } from '../../../vitest.setup';
@@ -30,6 +31,13 @@ function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenome
 
 /* eslint-disable @typescript-eslint/naming-convention -- this test has keys that expectedly contain spaces */
 describe('SequencesForm', () => {
+    beforeEach(() => {
+        vi.spyOn(toast, 'error');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
     test('Empty editable sequences produces no output', () => {
         const emptyEditableSequences = EditableSequences.fromSequenceNames(
             makeReferenceGenomeLightweightSchema(['foo', 'bar']),
@@ -137,6 +145,33 @@ describe('SequencesForm', () => {
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 2 sequence file(s) only.',
         );
+    });
+
+    test('GIVEN a multi-segmented organism THEN do not allow duplicate fasta headers', () => {
+        let editableSequences = EditableSequences.fromSequenceNames(
+            makeReferenceGenomeLightweightSchema(['foo', 'bar']),
+        );
+
+        const initialRows = editableSequences.rows;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
+        const firstKey = initialRows[0].key;
+
+        editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', 'subId_Segment');
+        const rowsAfterFirstUpdate = editableSequences.rows;
+        const secondKey = rowsAfterFirstUpdate[1].key;
+
+        editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', 'subId_Segment');
+
+        const errorMessage = 'A sequence with the fastaHeader subId_Segment already exists.';
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
+
+        // Expect that the second sequence was not added
+        expect(editableSequences.rows).toEqual([
+            { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: 'subId_Segment' },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
     });
 
     test('GIVEN a single-segmented organism THEN only allows 1 input and fasta header does not contain the segment name', async () => {
