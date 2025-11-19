@@ -7,7 +7,7 @@ import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { SearchPage } from './pages/search.page';
 import { readonlyUser } from './fixtures/user.fixture';
 
-setup('Initialize a single ebola sequence as base data', async ({ page, baseURL }) => {
+setup('Initialize a single ebola sequence as base data', async ({ page }) => {
     setup.setTimeout(180_000);
     const authPage = new AuthPage(page);
     await authPage.tryLoginOrRegister(readonlyUser);
