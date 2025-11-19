@@ -234,7 +234,7 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
         validateNoUnknownSegment(
             processedData.sequenceNameToFastaHeaderMap,
-            "sequenceNameToFastaHeaderMap"
+            "sequenceNameToFastaHeaderMap",
         )
 
         validateNoUnknownSegment(

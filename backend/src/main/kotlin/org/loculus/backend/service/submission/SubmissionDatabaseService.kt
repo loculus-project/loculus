@@ -460,7 +460,7 @@ class SubmissionDatabaseService(
         aminoAcidInsertions = processedData.aminoAcidInsertions.mapValues { (_, it) ->
             it.map { insertion -> insertion.copy(sequence = insertion.sequence.uppercase(Locale.US)) }
         },
-        sequenceNameToFastaHeaderMap = processedData.sequenceNameToFastaHeaderMap
+        sequenceNameToFastaHeaderMap = processedData.sequenceNameToFastaHeaderMap,
     )
 
     private fun validateExternalMetadata(
