@@ -70,12 +70,26 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str:
+    """Returns the segment to use based on spec args"""
+    print("get_segment", spec)
+    if spec.args and spec.args.get("useFirstSegment", False) and unprocessed.nextcladeMetadata:
+        for segment in unprocessed.nextcladeMetadata.keys():
+            if unprocessed.nextcladeMetadata[segment]:
+                return segment
+
+    if spec.args and "segment" in spec.args:
+        return str(spec.args["segment"])
+
+    return "main"
+
+
 def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
 ) -> InputData:
-    segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
+    segment = get_segment(spec, unprocessed)
     if (
         not unprocessed.nextcladeMetadata
         or segment not in unprocessed.nextcladeMetadata
@@ -198,6 +212,15 @@ def processed_entry_no_alignment(
         submitter=unprocessed.submitter,
     )
 
+def get_sequence_length(
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    segment: SegmentName | None,
+) -> int:
+    if segment is None:
+        return 0
+    sequence = unaligned_nucleotide_sequences.get(segment, None)
+    return len(sequence) if sequence else 0
+
 
 def get_output_metadata(
     accession_version: AccessionVersion,
@@ -209,10 +232,11 @@ def get_output_metadata(
     output_metadata: ProcessedMetadata = {}
 
     for segment in config.nucleotideSequences:
-        sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
         key = "length" if not config.multi_segment else "length_" + segment
         if key in config.processing_spec:
-            output_metadata[key] = len(sequence) if sequence else 0
+            output_metadata[key] = output_metadata[output_field] = get_sequence_length(
+                unprocessed.unalignedNucleotideSequences, segment
+            )
 
     length_fields = [
         "length" if not config.multi_segment else "length_" + segment
