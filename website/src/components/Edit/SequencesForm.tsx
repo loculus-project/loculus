@@ -172,7 +172,7 @@ export class EditableSequences {
     getFastaIds(submissionId: string): string {
         const filledRows = this.rows.filter((row) => row.value !== null);
         return this.isMultiSegmented()
-            ? filledRows.map((sequence) => sequence.label.replace(/\s+/g, '')).join(', ')
+            ? filledRows.map((sequence) => sequence.fastaHeader).join(',')
             : submissionId;
     }
 
