@@ -146,7 +146,7 @@ fields:
 {{- end -}}
 {{- range $toAdd }}
   {{- $key := .name }}
-  {{- $metadataMap = merge $metadataMap (dict $key .) -}}
+  {{- $metadataMap = set $metadataMap $key . -}}
 {{- end -}}
 {{- $patchedMetadata := list -}}
 {{- range $key, $value := $metadataMap }}
