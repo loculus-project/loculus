@@ -88,7 +88,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 });
                 return;
             }
-            const sequenceFile = editableSequences.getSequenceFasta(dataToEdit.submissionId);
+            const sequenceFile = editableSequences.getSequenceFasta();
             if (!sequenceFile) {
                 toast.error('Please enter a sequence.', {
                     position: 'top-center',

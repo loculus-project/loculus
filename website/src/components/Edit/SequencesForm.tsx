@@ -1,33 +1,21 @@
 import { type Dispatch, type FC, type SetStateAction } from 'react';
+import { toast } from 'react-toastify';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
 
-function generateAndDownloadFastaFile(fastaHeader: string | null, sequenceData: string | null) {
-    let fileContent = '';
-    let trimmedHeader = '';
-
-    if (fastaHeader === null && sequenceData === null) {
-        fileContent = '';
-    } else {
-        if (fastaHeader === null) {
-            throw new Error(
-                'Internal Error: sequenceData exists but fastaHeader is empty - contact your administrator',
-            );
-        }
-
-        trimmedHeader = fastaHeader.replace(/\s+/g, '');
-        fileContent = `>${trimmedHeader}\n${sequenceData ?? ''}`;
-    }
+function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string) {
+    const trimmedHeader = fastaHeader.replace(/\s+/g, '');
+    const fileContent = `>${trimmedHeader}\n${sequenceData}`;
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${trimmedHeader || 'sequence'}.fasta`;
+    a.download = `${trimmedHeader}.fasta`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -35,7 +23,7 @@ function generateAndDownloadFastaFile(fastaHeader: string | null, sequenceData: 
 
 type EditableSequenceFile = {
     key: string;
-    label: string;
+    label: string | null;
     fastaHeader: string | null;
     value: string | null;
     initialValue: string | null;
@@ -48,9 +36,9 @@ export class EditableSequences {
     private readonly maxNumberOfRows: number;
 
     public get rows(): Required<EditableSequenceFile>[] {
-        const rows = this.editableSequenceFiles.map((row, _) => ({
+        const rows = this.editableSequenceFiles.map((row, i) => ({
             ...row,
-            label: row.label,
+            label: row.label ?? `Segment ${i + 1}`,
         }));
         if (rows.length < this.maxNumberOfRows) {
             rows.push({
@@ -128,11 +116,13 @@ export class EditableSequences {
             throw new Error(`Maximum limit reached — you can add up to ${this.maxNumberOfRows} sequence file(s) only.`);
         }
 
-        label ??= value == null ? 'Add a segment' : key;
         fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
-        const existingFastaHeaders = this.editableSequenceFiles.map((sequence) => sequence.fastaHeader);
-        if (existingFastaHeaders.includes(fastaHeader)) {
-            throw new Error(`A sequence with the fastaHeader ${fastaHeader} already exists.`);
+        if (this.editableSequenceFiles.some((seq) => seq.fastaHeader === fastaHeader)) {
+            toast.error(`A sequence with the fastaHeader ${fastaHeader} already exists.`);
+            return new EditableSequences(
+                this.editableSequenceFiles.filter((file) => file.value !== null),
+                this.maxNumberOfRows,
+            );
         }
 
         const newSequenceFiles = [...this.editableSequenceFiles];
@@ -165,8 +155,11 @@ export class EditableSequences {
         const filledRows = this.rows.filter(
             (
                 row,
-            ): row is Omit<EditableSequenceFile, 'fastaHeader' | 'value'> & { fastaHeader: string; value: string } =>
-                row.value !== null && row.fastaHeader !== null,
+            ): row is Omit<EditableSequenceFile, 'fastaHeader' | 'value' | 'label'> & {
+                fastaHeader: string;
+                value: string;
+                label: string;
+            } => row.value !== null && row.fastaHeader !== null && row.label !== null,
         );
 
         return filledRows.reduce<Record<string, string>>((prev, row) => {
@@ -217,9 +210,10 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             }
                             showUndo={field.initialValue !== null}
                             onDownload={
-                                field.initialValue !== null && dataToEdit
+                                field.initialValue !== null && field.value !== null && dataToEdit
                                     ? () => {
-                                          generateAndDownloadFastaFile(field.fastaHeader, field.value);
+                                          if (field.value === null) return;
+                                          generateAndDownloadFastaFile(field.fastaHeader ?? 'sequence', field.value);
                                       }
                                     : undefined
                             }
