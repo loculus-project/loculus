@@ -1,7 +1,5 @@
-import { expect } from '@playwright/test';
 import { test } from '../../fixtures/tmpdir.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
-import { checkAllFileContents } from '../../utils/link-helpers';
 
 const ORGANISM_NAME = 'Test organism (with files)';
 const RAW_READS = 'raw_reads';
@@ -15,7 +13,6 @@ const FILES_DOUBLE = { 'file1.txt': 'Content of file 1.', 'file2.txt': 'Content 
 
 test('submit single seq w/ 2 files thru single seq submission form', async ({
     pageWithGroup,
-    page,
     tmpDir,
 }) => {
     test.setTimeout(180_000);
@@ -36,14 +33,10 @@ test('submit single seq w/ 2 files thru single seq submission form', async ({
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
 
     await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
-    await checkAllFileContents(page, FILES_DOUBLE);
+    await searchPage.checkAllFileContents(FILES_DOUBLE);
 });
 
-test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
-    pageWithGroup,
-    page,
-    tmpDir,
-}) => {
+test('bulk submit 2 seqs with 1 & 2 files respectively', async ({ pageWithGroup, tmpDir }) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -53,8 +46,6 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
         [ID_1, COUNTRY_1, '2022-12-02'],
         [ID_2, COUNTRY_2, '2022-12-13'],
     ]);
-
-    await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
 
     await submissionPage.uploadExternalFiles(
         RAW_READS,
@@ -66,20 +57,11 @@ test('bulk submit 2 seqs with 1 & 2 files respectively', async ({
 
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
-    await checkAllFileContents(page, FILES_SINGLE);
-
-    await searchPage.closeDetailsModal();
-
-    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_2);
-    await checkAllFileContents(page, FILES_DOUBLE);
+    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_SINGLE);
+    await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
 });
 
-test('bulk submit 1 seq: discarding and readding a file', async ({
-    pageWithGroup,
-    page,
-    tmpDir,
-}) => {
+test('bulk submit 1 seq: discarding and readding a file', async ({ pageWithGroup, tmpDir }) => {
     test.setTimeout(180_000);
     const submissionPage = new BulkSubmissionPage(pageWithGroup);
 
@@ -87,11 +69,9 @@ test('bulk submit 1 seq: discarding and readding a file', async ({
 
     await submissionPage.uploadMetadataFile(METADATA_HEADERS, [[ID_1, COUNTRY_1, '2023-01-01']]);
 
-    await page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
-
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_SINGLE }, tmpDir);
 
-    await page.getByTestId('discard_raw_reads').click();
+    await submissionPage.discardRawReadsFiles();
 
     await submissionPage.uploadExternalFiles(RAW_READS, { [ID_1]: FILES_DOUBLE }, tmpDir);
 
@@ -100,9 +80,6 @@ test('bulk submit 1 seq: discarding and readding a file', async ({
     await reviewPage.checkFilesInReviewDialog(FILES_DOUBLE, Object.keys(FILES_SINGLE));
 
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
-    await searchPage.waitForSequences('cell', COUNTRY_1);
 
-    await searchPage.waitForAndOpenModalByRoleAndName('cell', COUNTRY_1);
-    await checkAllFileContents(page, FILES_DOUBLE);
-    await expect(page.getByRole('link', { name: Object.keys(FILES_SINGLE)[0] })).not.toBeVisible();
+    await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_DOUBLE);
 });

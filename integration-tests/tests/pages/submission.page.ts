@@ -30,6 +30,10 @@ class SubmissionPage {
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
+    async discardRawReadsFiles() {
+        await this.page.getByTestId('discard_raw_reads').click();
+    }
+
     async acceptTerms() {
         await this.page.getByText('I confirm that the data').click();
         await this.page.getByText('I confirm I have not and will').click();
@@ -60,6 +64,7 @@ class SubmissionPage {
     }
 
     protected async _uploadFilesFromTmpDir(testId: string, tmpDir: string, fileCount: number) {
+        await this.page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
         // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
         void this.page.getByTestId(testId).setInputFiles(tmpDir);
         return Promise.all(

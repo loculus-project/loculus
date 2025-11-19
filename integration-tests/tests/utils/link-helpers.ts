@@ -26,9 +26,3 @@ export async function checkFileContent(page: Page, fileName: string, fileContent
         fileContent,
     );
 }
-
-export async function checkAllFileContents(page: Page, fileData: Record<string, string>) {
-    for (const [fileName, fileContent] of Object.entries(fileData)) {
-        await checkFileContent(page, fileName, fileContent);
-    }
-}

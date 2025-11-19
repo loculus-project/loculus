@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { checkFileContent } from '../utils/link-helpers';
 
 export class SearchPage {
     constructor(private page: Page) {}
@@ -157,6 +158,22 @@ export class SearchPage {
     async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
         await this.waitForSequences(role, name);
         await this.openModalByRoleAndName(role, name);
+    }
+
+    async checkAllFileContents(fileData: Record<string, string>) {
+        for (const [fileName, fileContent] of Object.entries(fileData)) {
+            await checkFileContent(this.page, fileName, fileContent);
+        }
+    }
+
+    async checkFileContentInModal(
+        role: 'link' | 'cell',
+        name: string | RegExp,
+        fileData: Record<string, string>,
+    ) {
+        await this.waitForAndOpenModalByRoleAndName(role, name);
+        await this.checkAllFileContents(fileData);
+        await this.closeDetailsModal();
     }
 
     async closeDetailsModal() {
