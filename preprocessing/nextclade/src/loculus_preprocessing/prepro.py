@@ -213,9 +213,9 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     accepted_dataset_names = (
         sequence_and_dataset.accepted_sort_matches
-        or [nextclade_dataset_name]
-        or [sequence_and_dataset.name]
-    )  # type: ignore
+        or [nextclade_dataset_name]  # type: ignore
+        or [sequence_and_dataset.name]  # type: ignore
+    )
 
     result_file = result_file_dir + "/sort_output.tsv"
     df = run_sort(
