@@ -47,7 +47,7 @@ test.describe('Review page functionality', () => {
         await reviewPage.waitForTotalSequenceCountCorrect(0);
     });
 
-    test('should allow bulk deletion of sequences', async ({ page, groupId }) => {
+    test('should allow bulk discarding of sequences', async ({ page, groupId }) => {
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
         // Submit 3 sequences to test bulk operations properly
@@ -59,10 +59,10 @@ test.describe('Review page functionality', () => {
         await reviewPage.goto(groupId);
         await reviewPage.waitForZeroProcessing();
 
-        const beforeDeletion = await reviewPage.getReviewPageOverview();
-        expect(beforeDeletion.total).toBeGreaterThanOrEqual(3);
+        const beforeDiscarding = await reviewPage.getReviewPageOverview();
+        expect(beforeDiscarding.total).toBeGreaterThanOrEqual(3);
 
-        await reviewPage.deleteAll();
+        await reviewPage.discardAll();
 
         // After deletion, total should return to 0
         await reviewPage.waitForTotalSequenceCountCorrect(0);

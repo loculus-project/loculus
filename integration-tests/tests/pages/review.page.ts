@@ -26,12 +26,12 @@ export class ReviewPage {
 
     public readonly approveAllButton = () =>
         this.page.getByRole('button', { name: 'Release', exact: false });
-    public readonly deleteOpenMenuButton = () =>
+    public readonly discardOpenMenuButton = () =>
         this.page.getByRole('button', { name: 'Discard sequences', exact: false });
-    public readonly deleteAllButton = () => this.page.getByText('Discard all', { exact: false });
+    public readonly discardAllButton = () => this.page.getByText('Discard all', { exact: false });
     public readonly confirmReleaseButton = () =>
         this.page.getByRole('button', { name: 'Release', exact: true });
-    public readonly confirmDeleteButton = () =>
+    public readonly confirmDiscardButton = () =>
         this.page.getByRole('button', { name: 'Discard', exact: true });
 
     constructor(page: Page) {
@@ -98,12 +98,12 @@ export class ReviewPage {
         await this.confirmReleaseButton().click();
     }
 
-    async deleteAll() {
-        await expect(this.deleteOpenMenuButton()).toBeVisible();
-        await this.deleteOpenMenuButton().click();
-        await this.deleteAllButton().click();
-        await expect(this.confirmDeleteButton()).toBeVisible();
-        await this.confirmDeleteButton().click();
+    async discardAll() {
+        await expect(this.discardOpenMenuButton()).toBeVisible();
+        await this.discardOpenMenuButton().click();
+        await this.discardAllButton().click();
+        await expect(this.confirmDiscardButton()).toBeVisible();
+        await this.confirmDiscardButton().click();
     }
 
     async waitForZeroProcessing() {
