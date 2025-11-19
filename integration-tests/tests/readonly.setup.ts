@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { test as setup } from './fixtures/console-warnings.fixture';
 import { AuthPage } from './pages/auth.page';
 import { GroupPage } from './pages/group.page';
-import { readonlyGroup } from './fixtures/group.fixture';
+import { readonlyGroup } from './utils/testGroup';
 import { SingleSequenceSubmissionPage } from './pages/submission.page';
 import { readonlyUser } from './fixtures/user.fixture';
 

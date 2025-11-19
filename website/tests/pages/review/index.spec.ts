@@ -1,6 +1,5 @@
 import { routes } from '../../../src/routes/routes.ts';
 import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture';
-import { submitViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 // This test must not be run in parallel with other tests that submit, approve or delete sequences.

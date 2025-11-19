@@ -6,16 +6,16 @@ import { createTestMetadata, createTestSequenceData } from '../../test-helpers/t
 
 test.describe('Review page functionality', () => {
     test('should show total sequences and increase when new submission occurs', async ({
-        pageWithGroup,
+        page,
         groupId,
     }) => {
-        const reviewPage = new ReviewPage(pageWithGroup);
+        const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
 
         const initialOverview = await reviewPage.getReviewPageOverview();
         const initialTotal = initialOverview.total;
 
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+        const submissionPage = new SingleSequenceSubmissionPage(page);
         await submissionPage.completeSubmission(createTestMetadata(), createTestSequenceData());
 
         await reviewPage.goto(groupId);
@@ -25,15 +25,15 @@ test.describe('Review page functionality', () => {
         expect(newOverview.total).toBe(initialTotal + 1);
     });
 
-    test('should allow bulk approval of sequences', async ({ pageWithGroup, groupId }) => {
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    test('should allow bulk approval of sequences', async ({ page, groupId }) => {
+        const submissionPage = new SingleSequenceSubmissionPage(page);
 
         // Submit 3 sequences to test bulk operations properly
         for (let i = 0; i < 3; i++) {
             await submissionPage.completeSubmission(createTestMetadata(), createTestSequenceData());
         }
 
-        const reviewPage = new ReviewPage(pageWithGroup);
+        const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
         await reviewPage.waitForZeroProcessing();
 
@@ -47,15 +47,15 @@ test.describe('Review page functionality', () => {
         await reviewPage.waitForTotalSequenceCountCorrect(0);
     });
 
-    test('should allow bulk deletion of sequences', async ({ pageWithGroup, groupId }) => {
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    test('should allow bulk deletion of sequences', async ({ page, groupId }) => {
+        const submissionPage = new SingleSequenceSubmissionPage(page);
 
         // Submit 3 sequences to test bulk operations properly
         for (let i = 0; i < 3; i++) {
             await submissionPage.completeSubmission(createTestMetadata(), createTestSequenceData());
         }
 
-        const reviewPage = new ReviewPage(pageWithGroup);
+        const reviewPage = new ReviewPage(page);
         await reviewPage.goto(groupId);
         await reviewPage.waitForZeroProcessing();
 

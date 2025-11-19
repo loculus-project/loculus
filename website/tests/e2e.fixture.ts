@@ -7,7 +7,6 @@ import { Issuer } from 'openid-client';
 import winston from 'winston';
 
 import type { InstanceLogger } from '../src/logger.ts';
-import { EditPage } from './pages/edit/edit.page';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
@@ -26,7 +25,6 @@ type E2EFixture = {
     sequencePage: SequencePage;
     submitPage: SubmitPage;
     reviewPage: ReviewPage;
-    editPage: EditPage;
     loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
 };
 
@@ -217,9 +215,6 @@ export const test = base.extend<E2EFixture>({
     },
     reviewPage: async ({ page }, action) => {
         await setupPageWithConsoleListener(page, ReviewPage, action);
-    },
-    editPage: async ({ page }, action) => {
-        await setupPageWithConsoleListener(page, EditPage, action);
     },
     loginAsTestUser: async ({ page }, action) => {
         await action(async () => authorize(page));

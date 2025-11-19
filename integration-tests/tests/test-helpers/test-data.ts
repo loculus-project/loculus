@@ -62,8 +62,7 @@ export function createTestSequenceData(sequence: string = EBOLA_SUDAN_SHORT_SEQU
  */
 export function createRevisionMetadataTsv(accessions: string[], baseSubmissionId?: string): string {
     const baseId = baseSubmissionId || `revision-${Date.now()}`;
-    const header =
-        'accession\tsubmissionId\tcollectionCountry\tcollectionDate\tauthorAffiliations';
+    const header = 'accession\tsubmissionId\tcollectionCountry\tcollectionDate\tauthorAffiliations';
     const rows = accessions.map((accession, index) => {
         return `${accession}\t${baseId}-${index}\tFrance\t2021-02-15\tRevision Institute`;
     });
