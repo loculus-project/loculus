@@ -1277,14 +1277,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: totalStopCodons
-        # TODO(#4088) make it "per segment"?
+        perSegment: true
         type: int
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
       - name: stopCodons
-        # TODO(#4088) make it "per segment"?
+        perSegment: true
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
