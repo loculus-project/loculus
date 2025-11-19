@@ -198,6 +198,50 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             )
     }
 
+    @Test
+    fun `WHEN CrossRef submission fails THEN DOI creation fails and DOI is not saved in database`() {
+        // Setup: Mock CrossRef service to throw an exception
+        every { crossRefService.isActive } returns true
+        every { crossRefService.postCrossRefXML(any()) } throws RuntimeException("CrossRef service unavailable")
+
+        // Create a seqSet
+        val seqSetResult = client.createSeqSet()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
+            .andReturn()
+
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
+
+        // Attempt to create DOI - should fail with 503 Service Unavailable
+        client.createSeqSetDOI(seqSetId)
+            .andExpect(status().isServiceUnavailable)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Failed to register DOI with CrossRef"),
+                ),
+            )
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("CrossRef service unavailable"),
+                ),
+            )
+
+        // Verify that the DOI was NOT saved in the database (transaction was rolled back)
+        client.getSeqSet(seqSetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$[0].seqSetDOI").doesNotExist())
+
+        // Cleanup
+        client.deleteSeqSet(seqSetId)
+            .andExpect(status().isOk)
+    }
+
     companion object {
         data class Scenario(
             val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,

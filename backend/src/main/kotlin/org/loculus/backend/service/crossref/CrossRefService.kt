@@ -208,7 +208,7 @@ class CrossRefService(final val properties: CrossRefServiceProperties) {
             val text = doc.select("h2").text()
 
             if (text == "SUCCESS") {
-                log.debug { "DOI creation successful for XML: " + XML }
+                log.info { "DOI creation successful for XML: " + XML }
             } else {
                 throw RuntimeException("DOI creation request failed. \"FAILURE\" present in the response")
             }

@@ -29,6 +29,7 @@ import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.controller.ServiceUnavailableException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
@@ -358,7 +359,19 @@ class SeqSetCitationsDatabaseService(
                     null,
                 ),
             )
-            crossRefService.postCrossRefXML(crossRefXml)
+            try {
+                crossRefService.postCrossRefXML(crossRefXml)
+                log.info { "Successfully submitted DOI $seqSetDOI to CrossRef for seqSet $seqSetId, version $version" }
+            } catch (e: Exception) {
+                log.error(e) {
+                    "Failed to submit DOI $seqSetDOI to CrossRef for seqSet $seqSetId, version $version. " +
+                        "Transaction will be rolled back and DOI will not be saved."
+                }
+                throw ServiceUnavailableException(
+                    "Failed to register DOI with CrossRef: ${e.message}. " +
+                        "The DOI has not been created. Please try again later or contact support if the problem persists.",
+                )
+            }
         }
 
         return ResponseSeqSet(

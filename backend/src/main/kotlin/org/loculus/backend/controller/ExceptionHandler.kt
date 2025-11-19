@@ -111,6 +111,17 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
             )
     }
 
+    @ExceptionHandler(ServiceUnavailableException::class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    fun handleServiceUnavailableException(e: ServiceUnavailableException): ResponseEntity<ProblemDetail> {
+        log.warn { "Caught service unavailable exception: ${e.message}" }
+
+        return responseEntity(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            e.message,
+        )
+    }
+
     private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> =
         responseEntity(httpStatus, httpStatus.reasonPhrase, detail)
 
@@ -160,3 +171,4 @@ class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
 class ConflictException(message: String) : RuntimeException(message)
+class ServiceUnavailableException(message: String) : RuntimeException(message)
