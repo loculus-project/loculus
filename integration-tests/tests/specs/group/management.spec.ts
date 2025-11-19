@@ -7,8 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 // Tests covering group user management and editing
 
 test.describe('Group management', () => {
-    test('can add and remove a user', async ({ pageWithGroup, browser }) => {
-        const groupPage = new GroupPage(pageWithGroup);
+    test('can add and remove a user', async ({ page, groupId, browser }) => {
+        void groupId;
+        const groupPage = new GroupPage(page);
 
         const context = await browser.newContext();
         const newPage = await context.newPage();
@@ -31,8 +32,9 @@ test.describe('Group management', () => {
         await groupPage.verifyUserIsNotPresent(newAccount.username);
     });
 
-    test('can edit group information', async ({ pageWithGroup }) => {
-        const groupPage = new GroupPage(pageWithGroup);
+    test('can edit group information', async ({ page, groupId }) => {
+        void groupId;
+        const groupPage = new GroupPage(page);
 
         const newName = `group_${uuidv4().slice(0, 8)}`;
         const newInstitution = 'New Institution';
@@ -52,9 +54,9 @@ test.describe('Group management', () => {
         await groupPage.editPostalCode(newPostalCode);
         await groupPage.finishEditingGroup();
 
-        await expect(pageWithGroup.getByRole('heading', { name: newName })).toBeVisible();
+        await expect(page.getByRole('heading', { name: newName })).toBeVisible();
         // Select the group details table, ignoring the sequence counts table
-        const table = pageWithGroup.locator('table').filter({ hasText: 'Group ID' });
+        const table = page.locator('table').filter({ hasText: 'Group ID' });
         await expect(table).toContainText(newInstitution);
         await expect(table).toContainText(newEmail);
         await expect(table).toContainText(newLine1);

@@ -5,11 +5,12 @@ import { ReviewPage } from '../../pages/review.page';
 
 test.describe('Sequence view in review card', () => {
     test('can view and navigate between sequence tabs in the review card dialog', async ({
-        pageWithGroup,
+        page,
+        groupId,
     }) => {
         test.setTimeout(120000);
-        const page = pageWithGroup;
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+        void groupId;
+        const submissionPage = new SingleSequenceSubmissionPage(page);
 
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({

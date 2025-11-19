@@ -1,9 +1,10 @@
 import { test } from '../../fixtures/group.fixture';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
-test('submit a single sequence', async ({ pageWithGroup, page }) => {
+test('submit a single sequence', async ({ page, groupId }) => {
     test.setTimeout(90_000);
-    const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new SingleSequenceSubmissionPage(page);
 
     await submissionPage.navigateToSubmissionPage();
     await submissionPage.fillSubmissionForm({
@@ -20,9 +21,10 @@ test('submit a single sequence', async ({ pageWithGroup, page }) => {
     await page.waitForURL('**/review');
 });
 
-test('submit a single sequence, all in one method', async ({ pageWithGroup, page }) => {
+test('submit a single sequence, all in one method', async ({ page, groupId }) => {
     test.setTimeout(90_000);
-    const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new SingleSequenceSubmissionPage(page);
     await submissionPage.completeSubmission(
         {
             submissionId: 'TEST-ID-123',

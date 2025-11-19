@@ -32,8 +32,11 @@ The integration tests are organized as follows:
 
 There are some fixtures to help with the development of tests:
 
-- `pageWithACreatedUser` creates a user account and logs into it
-- `pageWithGroup` inherits from `pageWithACreatedUser` and in addition creates a group for the user
+- `authenticatedUser` creates a user account and logs into it (returns `TestAccount`)
+- `groupId` inherits from `authenticatedUser` and creates a group for the user (returns the group ID)
+- `releasedSequence` inherits from `groupId` and creates and releases a test sequence (returns the submission ID)
+
+All fixtures follow the pattern of returning data rather than page objects. Tests should use the regular `page` fixture along with these data fixtures. To ensure a fixture runs, include it as a dependency and use `void <fixtureName>;` at the start of the test.
 
 ## Running the tests
 

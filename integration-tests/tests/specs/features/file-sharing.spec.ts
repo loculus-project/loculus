@@ -3,9 +3,10 @@ import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
-test('submit a single sequence with two files', async ({ pageWithGroup, page }) => {
+test('submit a single sequence with two files', async ({ page, groupId }) => {
     test.setTimeout(180_000);
-    const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new SingleSequenceSubmissionPage(page);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
     await submissionPage.fillSubmissionFormDummyOrganism({
@@ -53,9 +54,10 @@ test('submit a single sequence with two files', async ({ pageWithGroup, page }) 
     await checkFileContent(page, 'world.txt', 'World');
 });
 
-test('submit two sequences with one file each', async ({ pageWithGroup, page }) => {
+test('submit two sequences with one file each', async ({ page, groupId }) => {
     test.setTimeout(180_000);
-    const submissionPage = new BulkSubmissionPage(pageWithGroup);
+    void groupId;
+    const submissionPage = new BulkSubmissionPage(page);
 
     await submissionPage.navigateToSubmissionPage('Test organism (with files)');
 

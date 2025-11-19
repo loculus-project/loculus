@@ -37,11 +37,11 @@ async function collectAccessibleAccessions(searchPage: SearchPage): Promise<stri
 
 test.describe('SeqSet management', () => {
     test('authenticated users can create, edit, export, and delete seqsets', async ({
-        pageWithGroup,
+        page,
+        groupId,
     }) => {
         test.setTimeout(120_000);
-
-        const page = pageWithGroup;
+        void groupId;
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 

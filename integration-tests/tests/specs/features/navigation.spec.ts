@@ -15,8 +15,9 @@ const organismNavigationItems = [
 ];
 
 test.describe('Top navigation', () => {
-    test('should navigate to the expected pages', async ({ pageWithACreatedUser }) => {
-        const navigation = new NavigationPage(pageWithACreatedUser);
+    test('should navigate to the expected pages', async ({ page, authenticatedUser }) => {
+        void authenticatedUser;
+        const navigation = new NavigationPage(page);
 
         await navigation.page.goto('/');
 
