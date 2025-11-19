@@ -69,59 +69,53 @@ sequenceTest(
 );
 
 groupTest.describe('Bulk sequence revision', () => {
-    groupTest(
-        'can revise multiple sequences via file upload',
-        async ({ page, groupId }) => {
-            groupTest.setTimeout(BULK_REVISION_TEST_TIMEOUT);
+    groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
+        groupTest.setTimeout(BULK_REVISION_TEST_TIMEOUT);
 
-            const pageToUse = page;
-            const submissionPage = new SingleSequenceSubmissionPage(pageToUse);
-            const timestamp = Date.now();
+        const pageToUse = page;
+        const submissionPage = new SingleSequenceSubmissionPage(pageToUse);
+        const timestamp = Date.now();
 
-            for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
-                await submissionPage.completeSubmission(
-                    createTestMetadata({ submissionId: `bulk-revise-${timestamp}-${i}` }),
-                    createTestSequenceData(),
-                );
-            }
-
-            const reviewPage = new ReviewPage(pageToUse);
-            await reviewPage.goto(groupId);
-            await reviewPage.waitForZeroProcessing();
-            await reviewPage.releaseValidSequences();
-
-            const searchPage = new SearchPage(pageToUse);
-            await searchPage.searchByGroupId(TEST_ORGANISM, groupId);
-            const accessions = await searchPage.waitForSequencesInSearch(
-                SEQUENCES_TO_REVISE,
-                SEARCH_INDEXING_TIMEOUT,
+        for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
+            await submissionPage.completeSubmission(
+                createTestMetadata({ submissionId: `bulk-revise-${timestamp}-${i}` }),
+                createTestSequenceData(),
             );
+        }
 
-            const accessionsToRevise = accessions.slice(0, SEQUENCES_TO_REVISE);
-            const baseSubmissionId = `bulk-revise-updated-${Date.now()}`;
-            const revisionMetadata = createRevisionMetadataTsv(
-                accessionsToRevise,
-                baseSubmissionId,
-            );
+        const reviewPage = new ReviewPage(pageToUse);
+        await reviewPage.goto(groupId);
+        await reviewPage.waitForZeroProcessing();
+        await reviewPage.releaseValidSequences();
 
-            const revisedSequences = accessionsToRevise.map((accession, i) => ({
-                id: `${baseSubmissionId}-${i}`,
-                sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
-            }));
-            const fastaContent = createFastaContent(revisedSequences);
+        const searchPage = new SearchPage(pageToUse);
+        await searchPage.searchByGroupId(TEST_ORGANISM, groupId);
+        const accessions = await searchPage.waitForSequencesInSearch(
+            SEQUENCES_TO_REVISE,
+            SEARCH_INDEXING_TIMEOUT,
+        );
 
-            const revisionPage = new RevisionPage(pageToUse);
-            await revisionPage.goto(TEST_ORGANISM, groupId);
-            await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
-            await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
-            await revisionPage.acceptTerms();
-            await revisionPage.clickSubmit();
+        const accessionsToRevise = accessions.slice(0, SEQUENCES_TO_REVISE);
+        const baseSubmissionId = `bulk-revise-updated-${Date.now()}`;
+        const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
-            await expect(pageToUse).toHaveURL(/\/review/);
-            await reviewPage.waitForZeroProcessing();
+        const revisedSequences = accessionsToRevise.map((accession, i) => ({
+            id: `${baseSubmissionId}-${i}`,
+            sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
+        }));
+        const fastaContent = createFastaContent(revisedSequences);
 
-            const overview = await reviewPage.getReviewPageOverview();
-            expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
-        },
-    );
+        const revisionPage = new RevisionPage(pageToUse);
+        await revisionPage.goto(TEST_ORGANISM, groupId);
+        await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
+        await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
+        await revisionPage.acceptTerms();
+        await revisionPage.clickSubmit();
+
+        await expect(pageToUse).toHaveURL(/\/review/);
+        await reviewPage.waitForZeroProcessing();
+
+        const overview = await reviewPage.getReviewPageOverview();
+        expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
+    });
 });
