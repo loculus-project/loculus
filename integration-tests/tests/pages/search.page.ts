@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { checkFileContent } from '../utils/link-helpers';
+import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 
 export class SearchPage {
     constructor(private page: Page) {}
@@ -162,7 +162,10 @@ export class SearchPage {
 
     async checkAllFileContents(fileData: Record<string, string>) {
         for (const [fileName, fileContent] of Object.entries(fileData)) {
-            await checkFileContent(this.page, fileName, fileContent);
+            await getFromLinkTargetAndAssertContent(
+                this.page.getByRole('link', { name: fileName }),
+                fileContent,
+            );
         }
     }
 

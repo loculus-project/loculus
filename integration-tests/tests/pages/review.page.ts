@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { NavigationPage } from './navigation.page';
-import { checkFileContent } from '../utils/link-helpers';
+import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { SearchPage } from './search.page';
 
 export class ReviewPage {
@@ -58,7 +58,10 @@ export class ReviewPage {
         for (const [fileName, fileContent] of Object.entries(presentFiles)) {
             await expect(filesDialog.getByText(fileName)).toBeVisible();
             if (fileContent) {
-                await checkFileContent(this.page, fileName, fileContent);
+                await getFromLinkTargetAndAssertContent(
+                    this.page.getByRole('link', { name: fileName }),
+                    fileContent,
+                );
             }
         }
         for (const fileName of absentFiles) {
