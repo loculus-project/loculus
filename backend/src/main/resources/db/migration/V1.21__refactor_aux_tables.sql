@@ -1,3 +1,14 @@
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM sequence_upload_aux_table
+    ) THEN
+        RAISE EXCEPTION
+            'Cannot alter sequence_upload_aux_table: table is not empty. Wait for submissions to finish processing before running this migration.';
+    END IF;
+END $$;
+
 ALTER TABLE metadata_upload_aux_table
   ADD COLUMN fasta_ids jsonb DEFAULT '[]'::jsonb;
 
