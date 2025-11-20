@@ -7,11 +7,15 @@ genes:
 - VP24EbolaZaire
 - LEbolaZaire
 log_level: DEBUG
-nextclade_dataset_name: ebola-dataset
-nextclade_dataset_server: fake_url
+minimizer_index: TEST
+nextclade_dataset_server: TEST
 nucleotideSequences:
-- ebola-sudan
-- ebola-zaire
+- name: ebola-sudan
+  nextclade_dataset_name: ebola-dataset/ebola-sudan
+  accepted_sort_matches: ebola-sudan
+- name: ebola-zaire
+  nextclade_dataset_name: ebola-dataset/ebola-zaire
+  accepted_sort_matches: ebola-zaire
 organism: multi-ebola-test
 processing_spec:
   totalSnps:
