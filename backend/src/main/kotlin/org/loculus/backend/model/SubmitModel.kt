@@ -31,13 +31,15 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+const val METADATA_ID_HEADER = "id"
+const val METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+const val FASTA_ID_HEADER = "fastaId"
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
+typealias FastaId = String
 typealias SegmentName = String
 
 const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
@@ -128,8 +130,13 @@ class SubmitModel(
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
-            val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
-            validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
+            val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
+            val metadataFastaIdsSet = metadataFastaIds.toSet()
+            if (metadataFastaIdsSet.size < metadataFastaIds.size) {
+                throw UnprocessableEntityException("Metadata file contains duplicate fastaIds.")
+            }
+            val sequenceFastaIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
+            validateSubmissionIdSetsForConsensusSequences(metadataFastaIdsSet, sequenceFastaIds)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -177,38 +184,39 @@ class SubmitModel(
             metadataFileTypes,
             metadataTempFileToDelete,
         )
+        val addFastaId = requiresConsensusSequenceFile(submissionParams.organism)
         try {
-            uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
+            uploadMetadata(uploadId, submissionParams, metadataStream, batchSize, addFastaId = addFastaId)
         } finally {
             metadataTempFileToDelete.delete()
         }
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
+            if (addFastaId) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
             }
-        } else {
-            if (!requiresConsensusSequenceFile(submissionParams.organism)) {
-                throw BadRequestException(
-                    "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
-                )
-            }
+            return
+        }
+        if (!addFastaId) {
+            throw BadRequestException(
+                "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
+            )
+        }
 
-            val sequenceTempFileToDelete = MaybeFile()
-            try {
-                val sequenceStream = getStreamFromFile(
-                    sequenceFile,
-                    uploadId,
-                    sequenceFileTypes,
-                    sequenceTempFileToDelete,
-                )
-                uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
-            } finally {
-                sequenceTempFileToDelete.delete()
-            }
+        val sequenceTempFileToDelete = MaybeFile()
+        try {
+            val sequenceStream = getStreamFromFile(
+                sequenceFile,
+                uploadId,
+                sequenceFileTypes,
+                sequenceTempFileToDelete,
+            )
+            uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
+        } finally {
+            sequenceTempFileToDelete.delete()
         }
     }
 
@@ -254,6 +262,7 @@ class SubmitModel(
         submissionParams: SubmissionParams,
         metadataStream: InputStream,
         batchSize: Int,
+        addFastaId: Boolean,
     ) {
         log.debug {
             "intermediate storing uploaded metadata of type ${submissionParams.uploadType.name} " +
@@ -263,7 +272,7 @@ class SubmitModel(
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream)
+                    metadataEntryStreamAsSequence(metadataStream, addFastaId)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
@@ -279,7 +288,7 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream)
+                    revisionEntryStreamAsSequence(metadataStream, addFastaId)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
@@ -354,14 +363,15 @@ class SubmitModel(
 
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
+                "Metadata file contains ${metadataKeysNotInSequences.size} FASTA ids that are not present " +
                     "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
-                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} FASTA ids that are not present " +
+                    "in the metadata file: " +
+                    sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
             } else {
                 ""
             }
