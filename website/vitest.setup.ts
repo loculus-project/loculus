@@ -95,7 +95,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
             [metadataKey]: editableEntry,
         },
         unalignedNucleotideSequences: {
-            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
+            originalFastaHeader: 'originalUnalignedNucleotideSequencesValue',
         },
         files: null,
     },
@@ -118,6 +118,9 @@ export const defaultReviewData: SequenceEntryToEdit = {
         },
         aminoAcidInsertions: {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
+        },
+        sequenceNameToFastaHeaderMap: {
+            unalignedProcessedSequenceName: 'originalFastaHeader',
         },
         files: null,
     },

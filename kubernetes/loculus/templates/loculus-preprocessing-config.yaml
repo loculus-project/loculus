@@ -1,7 +1,11 @@
 {{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
-{{- $rawNucleotideSequences := $organismConfig.schema.nucleotideSequences }}
-{{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
+{{- $referenceGenomes:= include "loculus.mergeReferenceGenomes" $organismConfig.referenceGenomes | fromYaml }}
+{{- $genesList := (eq $referenceGenomes.genes nil | ternary (list) $referenceGenomes.genes) }}
+{{- $genesDict := dict "genes" (list) -}}
+{{- range $g := $genesList }}
+  {{- $_ := set $genesDict "genes" (append ($genesDict.genes) $g.name) -}}
+{{- end }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- if $processingConfig.configFile }}
@@ -17,7 +21,7 @@ data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
     {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
-    {{- (dict "nucleotideSequences" $nucleotideSequencesList) | toYaml | nindent 4 }}
+    {{- $genesDict | toYaml | nindent 4 }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
