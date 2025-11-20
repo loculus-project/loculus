@@ -7,6 +7,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.and
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.utils.Accession
@@ -16,7 +17,18 @@ import org.springframework.stereotype.Component
 private val logger = KotlinLogging.logger { }
 
 @Component
-class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) {
+class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider, val backendConfig: BackendConfig) {
+
+    fun constructDataUseTermsAndValidate(dataUseTermsType: DataUseTermsType?, restrictedUntil: String?): DataUseTerms =
+        when (backendConfig.dataUseTerms.enabled) {
+            false -> DataUseTerms.Open
+            true -> when (dataUseTermsType) {
+                DataUseTermsType.OPEN -> DataUseTerms.Open
+                DataUseTermsType.RESTRICTED -> DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil)
+                    .also { checkThatRestrictedUntilDateValid(it) }
+                null -> throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
+            }
+        }
 
     fun checkThatTransitionIsAllowed(accessions: List<Accession>, newDataUseTerms: DataUseTerms) {
         val dataUseTerms = DataUseTermsTable

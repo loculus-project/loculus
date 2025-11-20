@@ -112,15 +112,10 @@ open class SubmissionController(
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
-        val dataUseTerms = when (backendConfig.dataUseTerms.enabled) {
-            false -> DataUseTerms.Open
-            true -> when (dataUseTermsType) {
-                DataUseTermsType.OPEN -> DataUseTerms.Open
-                DataUseTermsType.RESTRICTED -> DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil)
-                    .also { dataUseTermsPreconditionValidator.checkThatRestrictedUntilDateValid(it) }
-                null -> throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
-            }
-        }
+        val dataUseTerms = dataUseTermsPreconditionValidator.constructDataUseTermsAndValidate(
+            dataUseTermsType,
+            restrictedUntil,
+        )
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
 
         val params = SubmissionParams.OriginalSubmissionParams(
