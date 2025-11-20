@@ -42,8 +42,8 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     return submissionIdHeaders.first()
 }
 
-fun findAndValidateFastaIdHeader(headerNames: List<String>, submissionIdHeader: String): String {
-    if (!headerNames.contains(FASTA_ID_HEADER)) {
+fun determineFastaIdColumnName(metadataHeaderNames: List<String>, submissionIdHeader: String): String {
+    if (!metadataHeaderNames.contains(FASTA_ID_HEADER)) {
         return submissionIdHeader
     }
     return FASTA_ID_HEADER
@@ -62,7 +62,7 @@ fun metadataEntryStreamAsSequence(
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
-    val fastaIdHeader = findAndValidateFastaIdHeader(headerNames, submissionIdHeader)
+    val fastaIdColumn = determineFastaIdColumnName(headerNames, submissionIdHeader)
 
     return sequence {
         try {
@@ -85,10 +85,10 @@ fun metadataEntryStreamAsSequence(
                 var fastaIds: List<FastaId>? = null
 
                 if (addFastaIds) {
-                    val fastaId = record[fastaIdHeader]
+                    val fastaId = record[fastaIdColumn]
                     if (fastaId.isNullOrEmpty()) {
                         throw UnprocessableEntityException(
-                            "A row in metadata file contains no $fastaIdHeader: $record",
+                            "In metadata file: record #$recordNumber: column `$fastaIdColumn` is empty. This is invalid. Full record: $record",
                         )
                     }
 
@@ -102,7 +102,7 @@ fun metadataEntryStreamAsSequence(
 
                 if (entry.metadata.isEmpty()) {
                     throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file contains no metadata columns: $entry",
+                        "In metadata file: record #$recordNumber contains no metadata. This is invalid. Full record: $entry",
                     )
                 }
 
@@ -136,7 +136,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
-    val fastaIdHeader = findAndValidateFastaIdHeader(headerNames, submissionIdHeader)
+    val fastaIdHeader = determineFastaIdColumnName(headerNames, submissionIdHeader)
 
     if (!headerNames.contains(ACCESSION_HEADER)) {
         throw UnprocessableEntityException(

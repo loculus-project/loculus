@@ -52,7 +52,9 @@ class FastaReader(inputStream: InputStream) :
             null
         } else {
             if (sequence.isEmpty()) {
-                throw UnprocessableEntityException("No sequence data given for sample $fastaId.")
+                throw UnprocessableEntityException(
+                    "FASTA sequence with id `$fastaId` is empty (does not contain at least a single nucleotide).",
+                )
             }
             FastaEntry(fastaId, sequence.toString())
         }
