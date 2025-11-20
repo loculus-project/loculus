@@ -138,7 +138,7 @@ export class EditableSequences {
 
     getFastaIds(): string {
         const filledRows = this.rows.filter((row) => row.value !== null);
-        return filledRows.map((sequence) => sequence.label.replace(/\s+/g, '')).join(', ');
+        return filledRows.map((sequence) => sequence.label?.replace(/\s+/g, '')).join(', ');
     }
 
     getSequenceFasta(): File | undefined {
