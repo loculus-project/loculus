@@ -130,7 +130,7 @@ class SubmitModel(
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
-            val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId) ?: emptyList()
+            val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
             val metadataFastaIdsSet = metadataFastaIds.toSet()
             if (metadataFastaIdsSet.size < metadataFastaIds.size) {
                 throw UnprocessableEntityException("Metadata file contains duplicate fastaIds.")
