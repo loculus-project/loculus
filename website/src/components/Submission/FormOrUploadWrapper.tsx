@@ -85,7 +85,8 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
-                        const metadataFile = editableMetadata.getMetadataTsv();
+                        const fastaId = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
+                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaId);
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
@@ -137,7 +138,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
                 isMultiSegmented={isMultiSegmented}

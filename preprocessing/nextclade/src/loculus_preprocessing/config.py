@@ -32,8 +32,21 @@ class AlignmentRequirement(StrEnum):
     # Determines whether ALL or ANY segments that a user provides must align.
     # ANY: warn if some segments fail and some segments align
     # ALL: error if any segment fails even if some segments align
+    # NONE: do not align any segments, just process them as-is
+    # - set if no nextclade dataset is provided
     ANY = "ANY"
     ALL = "ALL"
+    NONE = "NONE"
+
+
+@dataclass
+class NextcladeSequenceAndDataset:
+    name: str = "main"
+    nextclade_dataset_name: str | None = None
+    nextclade_dataset_tag: str | None = None
+    nextclade_dataset_server: str | None = None
+    accepted_sort_matches: list[str] = dataclasses.field(default_factory=list)
+    gene_prefix: str | None = None
 
 
 @dataclass
@@ -53,21 +66,18 @@ class Config:
 
     organism: str = "mpox"
     genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])  # noqa: N815
+    nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
+        default_factory=list
+    )
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     multi_segment: bool = False
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
-    nextclade_dataset_name: str | None = None
-    nextclade_dataset_name_map: dict[str, str] | None = None
-    nextclade_dataset_tag: str | None = None
-    nextclade_dataset_tag_map: dict[str, str] | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
-    nextclade_dataset_server_map: dict[str, str] | None = None
 
     require_nextclade_sort_match: bool = False
-    minimizer_url: str | None = None
-    accepted_dataset_matches: list[str] = dataclasses.field(default_factory=list)
+    minimizer_index: str | None = None
+
     create_embl_file: bool = False
     scientific_name: str = "Orthonairovirus haemorrhagiae"
     molecule_type: MoleculeType = MoleculeType.GENOMIC_RNA
@@ -79,6 +89,49 @@ class Config:
     )
 
 
+def get_accepted_sort_matches(
+    segment: NextcladeSequenceAndDataset,
+) -> list[str]:
+    accepted_dataset_names = set()
+
+    if segment.accepted_sort_matches:
+        accepted_dataset_names.update(segment.accepted_sort_matches)
+    if segment.nextclade_dataset_name:
+        accepted_dataset_names.add(segment.nextclade_dataset_name)
+    accepted_dataset_names.add(segment.name)
+    return list(accepted_dataset_names)
+
+
+def assign_nextclade_sequence_and_dataset(
+    nuc_seq_values: list[dict[str, Any]],
+) -> list[NextcladeSequenceAndDataset]:
+    if not isinstance(nuc_seq_values, list):
+        error_msg = f"nucleotideSequences should be a list of dicts, got: {type(nuc_seq_values)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    nextclade_sequence_and_dataset_list: list[NextcladeSequenceAndDataset] = []
+    for value in nuc_seq_values:
+        if value is None or not isinstance(value, dict):
+            continue
+        seq_and_dataset = NextcladeSequenceAndDataset()
+        for seq_key, seq_value in value.items():
+            if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
+                setattr(seq_and_dataset, seq_key, seq_value)
+        seq_and_dataset.accepted_sort_matches = get_accepted_sort_matches(seq_and_dataset)
+        nextclade_sequence_and_dataset_list.append(seq_and_dataset)
+    return nextclade_sequence_and_dataset_list
+
+
+def set_alignment_requirement(config: Config) -> AlignmentRequirement:
+    need_nextclade_dataset: bool = False
+    for sequence in config.nucleotideSequences:
+        if sequence.nextclade_dataset_name:
+            need_nextclade_dataset = True
+    if not need_nextclade_dataset:
+        return AlignmentRequirement.NONE
+    return config.alignment_requirement
+
+
 def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
     config = Config() if config is None else copy.deepcopy(config)
     with open(config_file, encoding="utf-8") as file:
@@ -86,6 +139,9 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
+            if key == "nucleotideSequences":
+                setattr(config, key, assign_nextclade_sequence_and_dataset(value))
+                continue
             attr = getattr(config, key)
             if isinstance(attr, StrEnum):
                 try:
@@ -169,6 +225,8 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
 
     if not config.backend_host:  # Set here so we can use organism
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
+
+    config.alignment_requirement = set_alignment_requirement(config)
 
     if len(config.nucleotideSequences) > 1:
         config.multi_segment = True
