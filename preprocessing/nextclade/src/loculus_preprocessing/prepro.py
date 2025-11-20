@@ -667,11 +667,11 @@ def process_single(  # noqa: C901
         if key in config.processing_spec:
             output_metadata[key] = len(sequence) if sequence else 0
 
+    length_fields = [
+        "length" if segment == "main" else "length_" + segment
+        for segment in config.nucleotideSequences
+    ]
     for output_field, spec_dict in config.processing_spec.items():
-        length_fields = [
-            "length" if segment == "main" else "length_" + segment
-            for segment in config.nucleotideSequences
-        ]
         if output_field in length_fields:
             continue
         spec = ProcessingSpec(
