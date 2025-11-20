@@ -231,7 +231,7 @@ class UploadDatabaseService(
                 SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
                 FROM sequence_upload_aux_table AS s
                 WHERE s.upload_id = m.upload_id
-                AND jsonb_exists(COALESCE(m.fasta_ids, '[]'::jsonb), s.fasta_id)
+                AND s.fasta_id = ANY (COALESCE(m.fasta_ids, ARRAY[]::text[]))
             ) AS x ON TRUE
             WHERE m.upload_id = ?
             RETURNING accession, version, submission_id;
