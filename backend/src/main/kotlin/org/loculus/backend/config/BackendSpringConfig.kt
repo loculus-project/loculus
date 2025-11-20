@@ -55,7 +55,6 @@ const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
-@EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
@@ -210,3 +209,13 @@ fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendCo
     }
     return config
 }
+
+/**
+ * Enables scheduled tasks only when not running tests.
+ * This prevents scheduled tasks from running during test execution and trying to access
+ * database connections after the test context has shut down.
+ */
+@Configuration
+@EnableScheduling
+@Profile("!test & !with-database")
+class SchedulingConfig
