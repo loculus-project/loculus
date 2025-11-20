@@ -142,7 +142,6 @@ class UploadDatabaseService(
         submittedOrganism: Organism,
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
-        // TOD0: compression changes must be made first!
         uploadedSequencesBatch.chunkedForDatabase(
             { batch ->
                 SequenceUploadAuxTable.batchInsert(batch) {
