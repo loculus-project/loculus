@@ -117,7 +117,7 @@ open class SubmissionController(
             true -> when (dataUseTermsType) {
                 DataUseTermsType.OPEN -> DataUseTerms.Open
                 DataUseTermsType.RESTRICTED -> DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil)
-                    .also { dataUseTermsPreconditionValidator.checkThatRestrictedUntilDateValid( it) }
+                    .also { dataUseTermsPreconditionValidator.checkThatRestrictedUntilDateValid(it) }
                 null -> throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
             }
         }
