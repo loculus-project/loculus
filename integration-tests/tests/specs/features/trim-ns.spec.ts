@@ -22,9 +22,8 @@ test.describe('Sequence N trimming functionality', () => {
         const lSegmentWithNs =
             'NNNNNNNNNNTTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATANNNNNN';
 
-        const fastaHeaderL = 'TRIM_NS_TEST_L';
         await submissionPage.fillSequenceData({
-            [fastaHeaderL]: lSegmentWithNs,
+            fastaHeaderL: lSegmentWithNs,
         });
 
         await submissionPage.acceptTerms();
