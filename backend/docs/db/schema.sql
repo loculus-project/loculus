@@ -381,7 +381,7 @@ CREATE TABLE public.metadata_upload_aux_table (
     uploaded_at timestamp without time zone NOT NULL,
     metadata jsonb NOT NULL,
     files jsonb,
-    fasta_ids jsonb DEFAULT '[]'::jsonb
+    fasta_ids text[]
 );
 
 
@@ -794,13 +794,6 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
-
-
---
--- Name: metadata_upload_aux_table_fasta_ids_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX metadata_upload_aux_table_fasta_ids_idx ON public.metadata_upload_aux_table USING gin (fasta_ids jsonb_path_ops);
 
 
 --
