@@ -45,6 +45,8 @@ import org.loculus.backend.model.RELEASED_DATA_RELATED_TABLES
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
+import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
@@ -84,6 +86,8 @@ open class SubmissionController(
     private val requestIdContext: RequestIdContext,
     private val backendConfig: BackendConfig,
     private val objectMapper: ObjectMapper,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -107,12 +111,14 @@ open class SubmissionController(
         ) @RequestParam restrictedUntil: String?,
         @Parameter(description = FILE_MAPPING_DESCRIPTION) @RequestPart(required = false) fileMapping: String?,
     ): List<SubmissionIdMapping> {
-        var innerDataUseTermsType = DataUseTermsType.OPEN
-        if (backendConfig.dataUseTerms.enabled) {
-            if (dataUseTermsType == null) {
-                throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
-            } else {
-                innerDataUseTermsType = dataUseTermsType
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        val dataUseTerms = when (backendConfig.dataUseTerms.enabled) {
+            false -> DataUseTerms.Open
+            true -> when (dataUseTermsType) {
+                DataUseTermsType.OPEN -> DataUseTerms.Open
+                DataUseTermsType.RESTRICTED -> DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil)
+                    .also { dataUseTermsPreconditionValidator.checkThatRestrictedUntilDateValid( it) }
+                null -> throw BadRequestException("the 'dataUseTermsType' needs to be provided.")
             }
         }
         val fileMappingParsed = parseFileMapping(fileMapping, organism)
@@ -124,7 +130,7 @@ open class SubmissionController(
             sequenceFile,
             fileMappingParsed,
             groupId,
-            DataUseTerms.fromParameters(innerDataUseTermsType, restrictedUntil),
+            dataUseTerms,
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }

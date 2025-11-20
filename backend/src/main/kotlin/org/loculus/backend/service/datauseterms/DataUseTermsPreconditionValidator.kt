@@ -1,6 +1,7 @@
 package org.loculus.backend.service.datauseterms
 
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.and
@@ -31,48 +32,54 @@ class DataUseTermsPreconditionValidator(private val dateProvider: DateProvider) 
                 "$accessions and new data use terms $newDataUseTerms. Found $dataUseTerms."
         }
 
-        if (newDataUseTerms is DataUseTerms.Open) {
-            if (dataUseTerms.any {
-                    DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]) == DataUseTermsType.OPEN
-                }
-            ) {
-                throw UnprocessableEntityException(
-                    "The data use terms have already been set to 'Open'-" +
-                        " this will take effect in the next several minutes.",
-                )
-            }
-        }
-
-        if (newDataUseTerms is DataUseTerms.Restricted) {
-            dataUseTerms.forEach {
-                val dataUseTermsType = DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn])
-                if (dataUseTermsType == DataUseTermsType.OPEN) {
-                    throw UnprocessableEntityException("Cannot change data use terms from OPEN to RESTRICTED.")
-                }
-
-                val oldRestrictedUntilDate = it[DataUseTermsTable.restrictedUntilColumn]
-                    ?: throw RuntimeException("Data use terms are RESTRICTED but restrictedUntil is null. Aborting.")
-                if (oldRestrictedUntilDate < newDataUseTerms.restrictedUntil) {
+        when (newDataUseTerms) {
+            is DataUseTerms.Open -> {
+                if (dataUseTerms.any {
+                        DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]) ==
+                            DataUseTermsType.OPEN
+                    }
+                ) {
                     throw UnprocessableEntityException(
-                        "Cannot extend restricted data use period. Please choose a date before " +
-                            "$oldRestrictedUntilDate.",
+                        "The data use terms have already been set to 'Open'-" +
+                            " this will take effect in the next several minutes.",
                     )
+                }
+            }
+            is DataUseTerms.Restricted -> {
+                checkThatRestrictedUntilDateValid(newDataUseTerms)
+                dataUseTerms.forEach {
+                    val dataUseTermsType = DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn])
+                    if (dataUseTermsType == DataUseTermsType.OPEN) {
+                        throw UnprocessableEntityException("Cannot change data use terms from OPEN to RESTRICTED.")
+                    }
+
+                    val oldRestrictedUntilDate = it[DataUseTermsTable.restrictedUntilColumn]
+                        ?: throw RuntimeException(
+                            "Data use terms are RESTRICTED but restrictedUntil is null. Aborting.",
+                        )
+                    if (oldRestrictedUntilDate < newDataUseTerms.restrictedUntil) {
+                        throw UnprocessableEntityException(
+                            "Cannot extend restricted data use period. Please choose a date before " +
+                                "$oldRestrictedUntilDate.",
+                        )
+                    }
                 }
             }
         }
     }
 
-    fun checkThatRestrictedUntilIsAllowed(dataUseTerms: DataUseTerms) {
-        if (dataUseTerms is DataUseTerms.Restricted) {
-            val now = dateProvider.getCurrentDate()
-            val oneYearFromNow = now.plus(1, DateTimeUnit.YEAR)
-
-            if (dataUseTerms.restrictedUntil < now) {
+    fun checkThatRestrictedUntilDateValid(useTerms: DataUseTerms) {
+        if (useTerms !is DataUseTerms.Restricted) {
+            return
+        }
+        val now = dateProvider.getCurrentDate()
+        when {
+            useTerms.restrictedUntil < now -> {
                 throw BadRequestException(
                     "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
                 )
             }
-            if (dataUseTerms.restrictedUntil > oneYearFromNow) {
+            useTerms.restrictedUntil > now.plus(1, DateTimeUnit.YEAR) -> {
                 throw BadRequestException(
                     "The date 'restrictedUntil' must not exceed 1 year from today.",
                 )
