@@ -62,7 +62,7 @@ describe('SequencesForm', () => {
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
             expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId_Segment1': 'ATCG' });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
@@ -84,7 +84,7 @@ describe('SequencesForm', () => {
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
             expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId_Segment1': 'ATCG' });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
@@ -117,7 +117,7 @@ describe('SequencesForm', () => {
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
             expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG' });
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId_Segment1': 'ATCG' });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
@@ -133,7 +133,7 @@ describe('SequencesForm', () => {
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
             expect.soft(fastaText).toBe('>subId_Segment1\nATCG\n>subId_Segment2\nTT');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ 'Segment 1': 'ATCG', 'Segment 2': 'TT' });
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId_Segment1': 'ATCG', 'subId_Segment2': 'TT' });
 
             const rows = editableSequences.rows;
             expect(rows).deep.equals([
@@ -189,7 +189,7 @@ describe('SequencesForm', () => {
         const fastaText = await fasta!.text();
         expect.soft(fastaText).toBe('>subId\nATCG');
 
-        expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: 'ATCG' });
+        expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId': 'ATCG' });
 
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, fastaHeader: 'subId', key }]);
@@ -229,7 +229,7 @@ describe('SequencesForm', () => {
         const fastaText = await fasta!.text();
         expect.soft(fastaText).toBe('>subId_label\nATCG');
 
-        expect(editableSequences.getSequenceRecord()).deep.equals({ label: 'ATCG' });
+        expect(editableSequences.getSequenceRecord()).deep.equals({ subId_label: 'ATCG' });
     });
 
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
