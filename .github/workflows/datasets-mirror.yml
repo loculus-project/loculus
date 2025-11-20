@@ -44,6 +44,7 @@ jobs:
           - 3050294 # Chickenpox virus
           - 3052460 # Orthoebolavirus sudanense
           - 3052462 # Orthoebolavirus zairense
+          - 3052505 # Orthomarburgvirus marburgense
           - 3052518 # CCHFV
       fail-fast: false
     steps:
