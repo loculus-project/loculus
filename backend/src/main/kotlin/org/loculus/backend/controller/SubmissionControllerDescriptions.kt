@@ -1,5 +1,6 @@
 package org.loculus.backend.controller
 
+import org.loculus.backend.model.FASTA_ID_HEADER
 import org.loculus.backend.model.METADATA_ID_HEADER
 
 const val SUBMIT_RESPONSE_DESCRIPTION = """
@@ -22,14 +23,14 @@ The field '$METADATA_ID_HEADER' is required and must be unique within the provid
 It is used to associate metadata to the sequences in the sequences fasta file.
 """
 
-// TODO: update description
 const val SEQUENCE_FILE_DESCRIPTION = """
 A fasta file containing the unaligned nucleotide sequences of the submitted sequences.
 The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
 If the underlying organism has a single segment,
 the headers of the fasta file must match the '$METADATA_ID_HEADER' field in the metadata file.
 If the underlying organism has multiple segments,
-the headers of the fasta file must be of the form '>[$METADATA_ID_HEADER]_[segmentName]'.
+the headers of the fasta file must be added in a space-separated list to the '$FASTA_ID_HEADER'
+field in the metadata file.
 """
 
 const val FILE_MAPPING_DESCRIPTION = """
