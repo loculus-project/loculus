@@ -43,6 +43,7 @@ from .datatypes import (
 )
 from .embl import create_flatfile
 from .nextclade import (
+    assign_segment_using_header,
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
@@ -202,6 +203,7 @@ def processed_entry_no_alignment(
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    sequenceNameToFastaHeaderMap: dict[SegmentName, str],
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
@@ -221,6 +223,7 @@ def processed_entry_no_alignment(
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
+                sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
             ),
             errors=errors,
             warnings=warnings,
@@ -329,7 +332,7 @@ def get_output_metadata(
             )
             continue
 
-        if output_field.startswith("length_") and output_field[7:] in config.nucleotideSequences:
+        if output_field.startswith("length_") and output_field[7:] in [seq.name for seq in config.nucleotideSequences]:
             segment = output_field[7:]
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, segment
@@ -387,15 +390,6 @@ def alignment_errors_warnings(
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    if not any(unprocessed.unalignedNucleotideSequences.values()):
-        errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="No sequence data found - check segments are annotated correctly",
-            )
-        )
-        return (errors, warnings)
     if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
         message = (
             "An unknown internal error occurred while aligning sequences, "
@@ -408,7 +402,8 @@ def alignment_errors_warnings(
         )
         return (errors, warnings)
     aligned_segments = set()
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         if segment not in unprocessed.unalignedNucleotideSequences:
             continue
         if unprocessed.nextcladeMetadata and (
@@ -432,6 +427,7 @@ def alignment_errors_warnings(
 
     if (
         not aligned_segments
+        and unprocessed.unalignedNucleotideSequences
         and config.multi_segment
         and config.alignment_requirement == AlignmentRequirement.ANY
     ):
@@ -449,7 +445,8 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
     if not config.create_embl_file or not nextclade_metadata:
         return None
     annotations: dict[str, Any] = {}
-    for segment in config.nucleotideSequences:
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
         if segment in nextclade_metadata:
             annotations[segment] = None
             if nextclade_metadata[segment]:
@@ -484,6 +481,7 @@ def process_single(
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+            sequenceNameToFastaHeaderMap=unprocessed.sequenceNameToFastaHeaderMap,
         ),
         errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -503,6 +501,11 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    segment_assignment = assign_segment_using_header(
+        input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
+        config=config,
+    )
+    unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
     iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
     output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
@@ -513,8 +516,9 @@ def process_single_unaligned(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors)),
+        errors=list(set(iupac_errors + metadata_errors + segment_assignment.errors)),
         warnings=list(set(metadata_warnings)),
+        sequenceNameToFastaHeaderMap=segment_assignment.sequenceNameToFastaHeaderMap,
     )
 
 
@@ -530,6 +534,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 nucleotideInsertions=defaultdict(dict[str, Any]),
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
+                sequenceNameToFastaHeaderMap=defaultdict(str),
             ),
             errors=[
                 ProcessingAnnotation.from_single(
@@ -552,7 +557,7 @@ def process_all(
 ) -> Sequence[SubmissionData]:
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
-    if config.nextclade_dataset_name:
+    if config.alignment_requirement != AlignmentRequirement.NONE:
         nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
         for id, result in nextclade_results.items():
             try:
@@ -610,10 +615,10 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
 
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        if config.nextclade_dataset_name:
+        if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_url and config.require_nextclade_sort_match:
-            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
+        if config.minimizer_index:
+            download_minimizer(config.minimizer_index, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()
