@@ -167,13 +167,14 @@ class UploadDatabaseService(
         .where { uploadIdColumn eq uploadId }
         .map { it[submissionIdColumn] }
 
-    fun getFastaIdsForMetadata(uploadId: String) = MetadataUploadAuxTable
+    fun getFastaIdsForMetadata(uploadId: String): List<String>? = MetadataUploadAuxTable
         .select(
             uploadIdColumn,
             fastaIdsColumn,
         )
         .where { uploadIdColumn eq uploadId }
-        .map { it[fastaIdsColumn] ?: emptyList() }
+        .firstOrNull()
+        ?.get(fastaIdsColumn)
 
     fun getSequenceUploadSubmissionIds(uploadId: String): List<SubmissionId> = SequenceUploadAuxTable
         .select(
