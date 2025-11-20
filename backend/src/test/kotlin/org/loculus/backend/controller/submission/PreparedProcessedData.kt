@@ -62,6 +62,7 @@ val defaultProcessedData = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    sequenceNameToFastaHeaderMap = mapOf(MAIN_SEGMENT to "header"),
     files = null,
 )
 
@@ -101,6 +102,7 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
             Insertion(123, "RN"),
         ),
     ),
+    sequenceNameToFastaHeaderMap = mapOf("notOnlySegment" to "header1", "secondSegment" to "header2"),
     files = null,
 )
 
@@ -117,6 +119,7 @@ val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
     nucleotideInsertions = emptyMap(),
     alignedAminoAcidSequences = emptyMap(),
     aminoAcidInsertions = emptyMap(),
+    sequenceNameToFastaHeaderMap = emptyMap(),
     files = null,
 )
 
