@@ -2,6 +2,7 @@ package org.loculus.backend.utils
 
 import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVRecord
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_ID_HEADER
@@ -49,10 +50,22 @@ fun determineFastaIdColumnName(metadataHeaderNames: List<String>, submissionIdHe
     return FASTA_ID_HEADER
 }
 
-fun metadataEntryStreamAsSequence(
-    metadataInputStream: InputStream,
-    addFastaIds: Boolean = true,
-): Sequence<MetadataEntry> {
+fun parseFastaIds(record: CSVRecord, fastaIdColumn: String, recordNumber: Int): List<String> {
+    val raw = record[fastaIdColumn]
+
+    if (raw.isNullOrEmpty()) {
+        throw UnprocessableEntityException(
+            "In metadata file: record #$recordNumber: column `$fastaIdColumn` is empty. " +
+                "This is invalid. Full record: $record",
+        )
+    }
+
+    return raw.split(Regex("[ ,]+"))
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+}
+
+fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
     val csvParser = try {
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(InputStreamReader(metadataInputStream))
@@ -82,20 +95,7 @@ fun metadataEntryStreamAsSequence(
                     )
                 }
 
-                var fastaIds: List<FastaId>? = null
-
-                if (addFastaIds) {
-                    val fastaId = record[fastaIdColumn]
-                    if (fastaId.isNullOrEmpty()) {
-                        throw UnprocessableEntityException(
-                            "In metadata file: record #$recordNumber: column `$fastaIdColumn` is empty. This is invalid. Full record: $record",
-                        )
-                    }
-
-                    fastaIds = fastaId.split(Regex("[ ,]+"))
-                        .map { it.trim() }
-                        .filter { it.isNotEmpty() }
-                }
+                val fastaIds = parseFastaIds(record, fastaIdColumn, recordNumber)
 
                 val metadata = record.toMap().filterKeys { it != submissionIdHeader }
                 val entry = MetadataEntry(submissionId, metadata, fastaIds)
@@ -126,7 +126,7 @@ data class RevisionEntry(
     val fastaIds: List<FastaId>? = null,
 )
 
-fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds: Boolean): Sequence<RevisionEntry> {
+fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
     val csvParser = try {
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(InputStreamReader(metadataInputStream))
@@ -164,20 +164,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream, addFastaIds:
                     )
                 }
 
-                var fastaIds: List<FastaId>? = null
-
-                if (addFastaIds) {
-                    val fastaId = record[fastaIdHeader]
-                    if (fastaId.isNullOrEmpty()) {
-                        throw UnprocessableEntityException(
-                            "A row in metadata file contains no $fastaIdHeader: $record",
-                        )
-                    }
-
-                    fastaIds = fastaId.split(Regex("[ ,]+"))
-                        .map { it.trim() }
-                        .filter { it.isNotEmpty() }
-                }
+                val fastaIds = parseFastaIds(record, fastaIdHeader, recordNumber)
 
                 val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != ACCESSION_HEADER }
                 val entry = RevisionEntry(submissionId, accession, metadata, fastaIds)
