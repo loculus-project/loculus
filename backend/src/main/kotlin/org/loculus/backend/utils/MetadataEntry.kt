@@ -97,7 +97,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 val fastaIds = parseFastaIds(record, fastaIdColumn, recordNumber)
 
-                val metadata = record.toMap().filterKeys { it != submissionIdHeader }
+                val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != fastaIdColumn }
                 val entry = MetadataEntry(submissionId, metadata, fastaIds)
 
                 if (entry.metadata.isEmpty()) {
@@ -166,7 +166,10 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 val fastaIds = parseFastaIds(record, fastaIdHeader, recordNumber)
 
-                val metadata = record.toMap().filterKeys { it != submissionIdHeader && it != ACCESSION_HEADER }
+                val metadata = record.toMap().filterKeys {
+                    it != submissionIdHeader && it != ACCESSION_HEADER &&
+                        it != fastaIdHeader
+                }
                 val entry = RevisionEntry(submissionId, accession, metadata, fastaIds)
 
                 if (entry.metadata.isEmpty()) {
