@@ -380,7 +380,8 @@ CREATE TABLE public.metadata_upload_aux_table (
     group_id integer,
     uploaded_at timestamp without time zone NOT NULL,
     metadata jsonb NOT NULL,
-    files jsonb
+    files jsonb,
+    fasta_ids jsonb DEFAULT '[]'::jsonb
 );
 
 
@@ -540,9 +541,8 @@ ALTER VIEW public.sequence_entries_view OWNER TO postgres;
 
 CREATE TABLE public.sequence_upload_aux_table (
     upload_id text NOT NULL,
-    submission_id text NOT NULL,
-    segment_name text NOT NULL,
-    compressed_sequence_data text NOT NULL
+    compressed_sequence_data text NOT NULL,
+    fasta_id text NOT NULL
 );
 
 
@@ -755,7 +755,7 @@ ALTER TABLE ONLY public.sequence_entries_preprocessed_data
 --
 
 ALTER TABLE ONLY public.sequence_upload_aux_table
-    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, submission_id, segment_name);
+    ADD CONSTRAINT sequence_upload_aux_table_pkey PRIMARY KEY (upload_id, fasta_id);
 
 
 --
@@ -794,6 +794,13 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: metadata_upload_aux_table_fasta_ids_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX metadata_upload_aux_table_fasta_ids_idx ON public.metadata_upload_aux_table USING gin (fasta_ids jsonb_path_ops);
 
 
 --
