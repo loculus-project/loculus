@@ -158,6 +158,17 @@ class SubmitEndpointTest(
     }
 
     @Test
+    fun `GIVEN submission without data use terms THEN returns an error`() {
+        submissionControllerClient.submitWithoutDataUseTerms(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFileMultiSegmented,
+            organism = OTHER_ORGANISM,
+            groupId = groupId,
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `GIVEN valid input data THEN data is accepted and shows fastaID`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
@@ -267,17 +278,6 @@ class SubmitEndpointTest(
             .unalignedNucleotideSequences
 
         assertThat(unalignedNucleotideSequences, hasEntry("header1", "AC"))
-    }
-
-    @Test
-    fun `GIVEN submission without data use terms THEN returns an error`() {
-        submissionControllerClient.submitWithoutDataUseTerms(
-            DefaultFiles.metadataFile,
-            DefaultFiles.sequencesFileMultiSegmented,
-            organism = OTHER_ORGANISM,
-            groupId = groupId,
-        )
-            .andExpect(status().isBadRequest)
     }
 
     @Test
