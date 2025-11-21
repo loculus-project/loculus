@@ -3,12 +3,9 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any, Tuple
+from typing import Any
+
 import dpath
-from .nextclade import (
-    download_nextclade_dataset,
-    enrich_with_nextclade,
-)
 
 from .backend import (
     download_minimizer,
@@ -149,7 +146,7 @@ def _call_processing_function(
             output_field,
             input_fields,
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
 
@@ -205,7 +202,7 @@ def add_alignment_errors_warnings(
         )
         errors.append(
             ProcessingAnnotation.from_single(
-                'alignment', AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
         )
         return (errors, warnings)
@@ -213,8 +210,9 @@ def add_alignment_errors_warnings(
     for segment in config.nucleotideSequences:
         if segment not in unprocessed.unalignedNucleotideSequences:
             continue
-        if unprocessed.nextcladeMetadata and (segment not in unprocessed.nextcladeMetadata or (
-            unprocessed.nextcladeMetadata[segment] is None)
+        if unprocessed.nextcladeMetadata and (
+            segment not in unprocessed.nextcladeMetadata
+            or (unprocessed.nextcladeMetadata[segment] is None)
         ):
             message = (
                 "Nucleotide sequence failed to align"
@@ -252,7 +250,7 @@ def get_output_metadata(
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
     config: Config,
-) -> Tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     output_metadata: ProcessedMetadata = {}
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
@@ -279,9 +277,7 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_data[arg_name] = add_input_metadata(
-                    spec, unprocessed, input_path
-                )
+                input_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)
                 input_fields.append(input_path)
                 submitter = unprocessed.inputMetadata["submitter"]
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
@@ -319,7 +315,7 @@ def get_output_metadata(
     return output_metadata, errors, warnings
 
 
-def process_single(  # noqa: C901
+def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
@@ -341,7 +337,9 @@ def process_single(  # noqa: C901
     submitter = unprocessed.inputMetadata["submitter"]
     group_id = int(str(unprocessed.inputMetadata["group_id"]))
 
-    output_metadata, errors, warnings = get_output_metadata(accession_version, unprocessed, errors, warnings, config)
+    output_metadata, errors, warnings = get_output_metadata(
+        accession_version, unprocessed, errors, warnings, config
+    )
     logger.debug(f"Processed {accession_version}: {output_metadata}")
 
     annotations: dict[str, Any] | None = None
