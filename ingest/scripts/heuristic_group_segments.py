@@ -211,7 +211,7 @@ def main(
                 if segment in group
             ]
         )
-        segments_list_str = ", ".join([
+        segments_list_str = " ".join([
                 f"{joint_key}_{segment}"
                 for segment in config.nucleotide_sequences
                 if segment in group
