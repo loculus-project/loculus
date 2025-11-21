@@ -25,7 +25,7 @@ data:
     {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
     {{- $genesDict | toYaml | nindent 4 }}
     processing_spec:
-      {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
+      {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
       versionComment:
         function: identity
