@@ -232,14 +232,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
             "alignedNucleotideSequences",
         )
 
-        validateNoUnknownSegment(
-            processedData.sequenceNameToFastaHeaderMap,
-            "sequenceNameToFastaHeaderMap",
-        )
-
-        validateNoUnknownSegment(
+        validateNoUnknownSegmentAndMapKeysMatch(
             processedData.unalignedNucleotideSequences,
+            processedData.sequenceNameToFastaHeaderMap,
             "unalignedNucleotideSequences",
+            "sequenceNameToFastaHeaderMap",
         )
 
         validateNoUnknownSegment(
@@ -276,12 +273,37 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         }
     }
 
-    private fun validateNoUnknownSegment(dataToValidate: Map<String, *>, sequenceGrouping: String) {
+    private fun validateNoUnknownSegment(dataToValidate: Map<String, *>, sequenceGroupingName: String) {
         val unknownSegments = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
         if (unknownSegments.isNotEmpty()) {
             val unknownSegmentsString = unknownSegments.sorted().joinToString(", ")
             throw ProcessingValidationException(
-                "Unknown segments in '$sequenceGrouping': $unknownSegmentsString.",
+                "Unknown segments in '$sequenceGroupingName': $unknownSegmentsString.",
+            )
+        }
+    }
+
+    private fun validateNoUnknownSegmentAndMapKeysMatch(
+        map1: Map<String, *>,
+        map2: Map<String, *>,
+        map1Name: String,
+        map2Name: String,
+    ) {
+        validateNoUnknownSegment(map1, map1Name)
+        validateNoUnknownSegment(map2, map2Name)
+
+        val keysMissingFromMap2 = map1.keys.subtract(map2.keys)
+        if (keysMissingFromMap2.isNotEmpty()) {
+            val missingString = keysMissingFromMap2.sorted().joinToString(", ")
+            throw ProcessingValidationException(
+                "'$map2Name': is missing the keys '$missingString'.",
+            )
+        }
+        val keysMissingFromMap1 = map2.keys.subtract(map1.keys)
+        if (keysMissingFromMap1.isNotEmpty()) {
+            val missingString = keysMissingFromMap1.sorted().joinToString(", ")
+            throw ProcessingValidationException(
+                "'$map1Name': is missing the keys '$missingString'.",
             )
         }
     }
