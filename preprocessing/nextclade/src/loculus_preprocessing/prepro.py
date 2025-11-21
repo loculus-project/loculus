@@ -156,94 +156,6 @@ def _call_processing_function(
     return processing_result
 
 
-def processed_entry_no_alignment(
-    accession_version: AccessionVersion,
-    unprocessed: UnprocessedData,
-    output_metadata: ProcessedMetadata,
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
-) -> SubmissionData:
-    """Process a single sequence without alignment"""
-
-    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
-    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
-    amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
-
-    return SubmissionData(
-        processed_entry=ProcessedEntry(
-            accession=accession_from_str(accession_version),
-            version=version_from_str(accession_version),
-            data=ProcessedData(
-                metadata=output_metadata,
-                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
-                alignedNucleotideSequences=aligned_nucleotide_sequences,
-                nucleotideInsertions=nucleotide_insertions,
-                alignedAminoAcidSequences=aligned_aminoacid_sequences,
-                aminoAcidInsertions=amino_acid_insertions,
-            ),
-            errors=errors,
-            warnings=warnings,
-        ),
-        submitter=unprocessed.submitter,
-    )
-
-
-def add_alignment_errors_warnings(
-    unprocessed: UnprocessedAfterNextclade,
-    config: Config,
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
-) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
-    if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
-        message = (
-            "An unknown internal error occurred while aligning sequences, "
-            "please contact the administrator."
-        )
-        errors.append(
-            ProcessingAnnotation.from_single(
-                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
-            )
-        )
-        return (errors, warnings)
-    aligned_segments = set()
-    for segment in config.nucleotideSequences:
-        if segment not in unprocessed.unalignedNucleotideSequences:
-            continue
-        if unprocessed.nextcladeMetadata and (
-            segment not in unprocessed.nextcladeMetadata
-            or (unprocessed.nextcladeMetadata[segment] is None)
-        ):
-            message = (
-                "Nucleotide sequence failed to align"
-                if not config.multi_segment
-                else f"Nucleotide sequence for {segment} failed to align"
-            )
-            annotation = ProcessingAnnotation.from_single(
-                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
-            )
-            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
-                warnings.append(annotation)
-            else:
-                errors.append(annotation)
-            continue
-        aligned_segments.add(segment)
-
-    if (
-        not aligned_segments
-        and config.multi_segment
-        and len(unprocessed.unalignedNucleotideSequences) > 0
-    ):
-        errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="No segment aligned.",
-            )
-        )
-    return (errors, warnings)
-
-
 def get_output_metadata(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
@@ -315,6 +227,61 @@ def get_output_metadata(
     return output_metadata, errors, warnings
 
 
+def add_alignment_errors_warnings(
+    unprocessed: UnprocessedAfterNextclade,
+    config: Config,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
+        message = (
+            "An unknown internal error occurred while aligning sequences, "
+            "please contact the administrator."
+        )
+        errors.append(
+            ProcessingAnnotation.from_single(
+                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+        )
+        return (errors, warnings)
+    aligned_segments = set()
+    for segment in config.nucleotideSequences:
+        if segment not in unprocessed.unalignedNucleotideSequences:
+            continue
+        if unprocessed.nextcladeMetadata and (
+            segment not in unprocessed.nextcladeMetadata
+            or (unprocessed.nextcladeMetadata[segment] is None)
+        ):
+            message = (
+                "Nucleotide sequence failed to align"
+                if not config.multi_segment
+                else f"Nucleotide sequence for {segment} failed to align"
+            )
+            annotation = ProcessingAnnotation.from_single(
+                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+                warnings.append(annotation)
+            else:
+                errors.append(annotation)
+            continue
+        aligned_segments.add(segment)
+
+    if (
+        not aligned_segments
+        and config.multi_segment
+        and len(unprocessed.unalignedNucleotideSequences) > 0
+    ):
+        errors.append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message="No segment aligned.",
+            )
+        )
+    return (errors, warnings)
+
+
 def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
@@ -374,6 +341,39 @@ def process_single(
         annotations=annotations,
         group_id=group_id,
         submitter=str(submitter),
+    )
+
+
+def processed_entry_no_alignment(
+    accession_version: AccessionVersion,
+    unprocessed: UnprocessedData,
+    output_metadata: ProcessedMetadata,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> SubmissionData:
+    """Process a single sequence without alignment"""
+
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
+    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
+    amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
+
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(accession_version),
+            version=version_from_str(accession_version),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+                alignedNucleotideSequences=aligned_nucleotide_sequences,
+                nucleotideInsertions=nucleotide_insertions,
+                alignedAminoAcidSequences=aligned_aminoacid_sequences,
+                aminoAcidInsertions=amino_acid_insertions,
+            ),
+            errors=errors,
+            warnings=warnings,
+        ),
+        submitter=unprocessed.submitter,
     )
 
 
