@@ -234,7 +234,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
             nucleotideInsertions: z.record(z.array(z.string())),
             alignedAminoAcidSequences: z.record(z.string().nullable()),
             aminoAcidInsertions: z.record(z.array(z.string())),
-            sequenceNameToFastaHeaderMap: z.record(z.string().nullable()),
+            sequenceNameToFastaId: z.record(z.string().nullable()),
             files: filesByCategory.nullable(),
         }),
     }),
