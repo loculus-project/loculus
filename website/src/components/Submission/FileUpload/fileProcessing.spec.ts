@@ -78,7 +78,6 @@ describe('fileProcessing', () => {
         const processedFile = result._unsafeUnwrap();
         const processedText = await processedFile.text();
         expect(processedText).toBe('ACTGACTGACTG');
-        const processedHeader = await processedFile.header();
-        expect(processedHeader).toBe('fooid');
+        expect(processedFile.fastaHeader()).toBe('fooid');
     });
 });
