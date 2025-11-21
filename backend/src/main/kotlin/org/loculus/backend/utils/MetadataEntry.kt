@@ -6,6 +6,7 @@ import org.apache.commons.csv.CSVRecord
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_ID_HEADER
+import org.loculus.backend.model.FASTA_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
