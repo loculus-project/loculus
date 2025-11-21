@@ -168,7 +168,6 @@ class SubmitEndpointTest(
             .andExpect(status().isBadRequest)
     }
 
-
     @Test
     fun `GIVEN submission with file mapping THEN returns an error`() {
         submissionControllerClient.submit(
