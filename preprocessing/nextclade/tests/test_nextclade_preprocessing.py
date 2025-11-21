@@ -24,7 +24,10 @@ from loculus_preprocessing.datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
+from loculus_preprocessing.embl import (
+    create_flatfile,
+    reformat_authors_from_loculus_to_embl_style,
+)
 from loculus_preprocessing.prepro import ProcessingAnnotationAlignment, process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
@@ -132,7 +135,9 @@ single_segment_case_definitions = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+                "VP35EbolaSudan": ebola_sudan_aa(
+                    sequence_with_mutation("single"), "VP35"
+                ),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaHeaderMap={"main": "fastaHeader"},
@@ -180,7 +185,9 @@ single_segment_case_definitions = [
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={"main": sequence_with_deletion("single")},
-            alignedNucleotideSequences={"main": sequence_with_deletion("single", aligned=True)},
+            alignedNucleotideSequences={
+                "main": sequence_with_deletion("single", aligned=True)
+            },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(
@@ -259,9 +266,15 @@ multi_segment_case_definitions = [
             nucleotideInsertions={},
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "VP35EbolaSudan": ebola_sudan_aa(
+                    sequence_with_mutation("single"), "VP35"
+                ),
+                "VP24EbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "VP24"
+                ),
+                "LEbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "L"
+                ),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaHeaderMap={
@@ -299,14 +312,22 @@ multi_segment_case_definitions = [
                 "ebola-sudan": consensus_sequence("ebola-sudan"),
                 "ebola-zaire": consensus_sequence("ebola-zaire"),
             },
-            nucleotideInsertions={"ebola-sudan": ["2671:GAC"], "ebola-zaire": ["11097:GAC"]},
+            nucleotideInsertions={
+                "ebola-sudan": ["2671:GAC"],
+                "ebola-zaire": ["11097:GAC"],
+            },
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(consensus_sequence("single"), "NP"),
                 "VP35EbolaSudan": ebola_sudan_aa(consensus_sequence("single"), "VP35"),
-                "VP24EbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "VP24"),
+                "VP24EbolaZaire": ebola_zaire_aa(
+                    consensus_sequence("ebola-zaire"), "VP24"
+                ),
                 "LEbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "L"),
             },
-            aminoAcidInsertions={"NPEbolaSudan": ["738:D"], "VP24EbolaZaire": ["251:D"]},
+            aminoAcidInsertions={
+                "NPEbolaSudan": ["738:D"],
+                "VP24EbolaZaire": ["251:D"],
+            },
             sequenceNameToFastaHeaderMap={
                 "ebola-sudan": "fastaHeader1",
                 "ebola-zaire": "fastaHeader2",
@@ -394,8 +415,12 @@ multi_segment_case_definitions = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "VP24EbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "VP24"
+                ),
+                "LEbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "L"
+                ),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
@@ -479,8 +504,12 @@ multi_segment_case_definitions_all_requirement = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "VP24EbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "VP24"
+                ),
+                "LEbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "L"
+                ),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
@@ -565,8 +594,12 @@ multi_segment_case_definitions_any_requirement = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "VP24EbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "VP24"
+                ),
+                "LEbolaZaire": ebola_zaire_aa(
+                    sequence_with_mutation("ebola-zaire"), "L"
+                ),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaHeaderMap={"ebola-zaire": "fastaHeader2"},
@@ -733,7 +766,9 @@ multi_segment_case_definitions_none_requirement = [
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={"ebola-sudan": sequence_with_mutation("ebola-sudan")},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan")
+            },
             alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
@@ -758,7 +793,9 @@ def process_single_entry(
 )
 def test_preprocessing_single_segment(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config.processing_spec.keys())
+    )
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
     verify_processed_entry(
@@ -775,7 +812,9 @@ def test_preprocessing_single_segment(test_case_def: Case):
 )
 def test_preprocessing_multi_segment_all_requirement(test_case_def: Case):
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config.processing_spec.keys())
+    )
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
     verify_processed_entry(
@@ -793,7 +832,9 @@ def test_preprocessing_multi_segment_all_requirement(test_case_def: Case):
 def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
     config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
     config.alignment_requirement = AlignmentRequirement.ANY
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config.processing_spec.keys())
+    )
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
     verify_processed_entry(
@@ -808,12 +849,21 @@ def test_preprocessing_multi_segment_any_requirement(test_case_def: Case):
 )
 def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     config = get_config(MULTI_SEGMENT_CONFIG_UNALIGNED, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    factory_custom = ProcessedEntryFactory(
+        all_metadata_fields=list(config.processing_spec.keys())
+    )
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
+
+
+def test_config_accepted_sort_matches() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    accepted_fields = config.nucleotideSequences[0].accepted_sort_matches
+    expected_fields = {"ebola-dataset/ebola-sudan", "ebola-sudan", "accepted-name"}
+    assert set(accepted_fields) == expected_fields
 
 
 def test_preprocessing_without_metadata() -> None:
@@ -872,7 +922,9 @@ def test_format_stop_codon():
     assert format_stop_codon(input_single) == expected_single
 
     # Test case 3: Multiple stop codons
-    input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
+    input_multiple = (
+        '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
+    )
     expected_multiple = "GPC:124,NP:457"
     assert format_stop_codon(input_multiple) == expected_multiple
 
@@ -888,8 +940,12 @@ def test_reformat_authors_from_loculus_to_embl_style():
     desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
     assert result == desired_result
 
-    extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
-    result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
+    extended_latin_authors = (
+        "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
+    )
+    result_extended = reformat_authors_from_loculus_to_embl_style(
+        extended_latin_authors
+    )
     desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
     assert result_extended == desired_result_extended
 
