@@ -414,7 +414,7 @@ class SubmitModel(
                     val fileOwningGroupId = it.value
                     if (fileOwningGroupId != submittingGroupId) {
                         throw BadRequestException(
-                            "File $fileId is not owned by the submitting group $submittingGroupId }.",
+                            "File $fileId does not belong to group $submittingGroupId.",
                         )
                     }
                 }
