@@ -1063,6 +1063,7 @@ class SubmissionDatabaseService(
             fileMappingPreconditionValidator
                 .validateFilenamesAreUnique(fileMapping)
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
+                .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
         }
 
