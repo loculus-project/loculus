@@ -312,7 +312,7 @@ def add_alignment_errors_warnings(
     if (
         not aligned_segments
         and config.multi_segment
-        and len(unprocessed.unalignedNucleotideSequences) > 0
+        and config.alignment_requirement == AlignmentRequirement.ANY
     ):
         errors.append(
             ProcessingAnnotation.from_single(

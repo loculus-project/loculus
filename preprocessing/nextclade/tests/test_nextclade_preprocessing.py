@@ -404,12 +404,6 @@ multi_segment_case_definitions_all_requirement = [
         },
         expected_errors=[
             ProcessingAnnotationHelper(
-                [ProcessingAnnotationAlignment],
-                [ProcessingAnnotationAlignment],
-                "No segment aligned.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
-            ProcessingAnnotationHelper(
                 ["ebola-sudan"],
                 ["ebola-sudan"],
                 "Nucleotide sequence for ebola-sudan failed to align",
