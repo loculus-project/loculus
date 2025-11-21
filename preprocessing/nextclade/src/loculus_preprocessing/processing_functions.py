@@ -8,9 +8,9 @@ import json
 import logging
 import math
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
-import unicodedata
 
 import dateutil.parser as dateutil
 import pytz
