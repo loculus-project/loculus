@@ -521,6 +521,39 @@ def process_single(
     )
 
 
+def processed_entry_no_alignment(
+    accession_version: AccessionVersion,
+    unprocessed: UnprocessedData,
+    output_metadata: ProcessedMetadata,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> SubmissionData:
+    """Process a single sequence without alignment"""
+
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
+    aligned_aminoacid_sequences: dict[GeneName, AminoAcidSequence | None] = {}
+    nucleotide_insertions: dict[SegmentName, list[NucleotideInsertion]] = {}
+    amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
+
+    return SubmissionData(
+        processed_entry=ProcessedEntry(
+            accession=accession_from_str(accession_version),
+            version=version_from_str(accession_version),
+            data=ProcessedData(
+                metadata=output_metadata,
+                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+                alignedNucleotideSequences=aligned_nucleotide_sequences,
+                nucleotideInsertions=nucleotide_insertions,
+                alignedAminoAcidSequences=aligned_aminoacid_sequences,
+                aminoAcidInsertions=amino_acid_insertions,
+            ),
+            errors=errors,
+            warnings=warnings,
+        ),
+        submitter=unprocessed.submitter,
+    )
+
+
 def process_single_unaligned(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
