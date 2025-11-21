@@ -363,14 +363,16 @@ class SubmitModel(
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
                 "Metadata file contains ${metadataKeysNotInSequences.size} FASTA ids that are not present " +
-                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) {
+                        "'$it'"
+                    }
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
                 "Sequence file contains ${sequenceKeysNotInMetadata.size} FASTA ids that are not present " +
                     "in the metadata file: " +
-                    sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+                    sequenceKeysNotInMetadata.toList().joinToString(limit = 10) { "'$it'" }
             } else {
                 ""
             }
@@ -383,7 +385,7 @@ class SubmitModel(
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
                 "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
-                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10) { "'$it'" },
             )
         }
     }
