@@ -3,9 +3,12 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any
-
+from typing import Any, Tuple
 import dpath
+from .nextclade import (
+    download_nextclade_dataset,
+    enrich_with_nextclade,
+)
 
 from .backend import (
     download_minimizer,
@@ -32,6 +35,7 @@ from .datatypes import (
     ProcessedMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     ProcessingAnnotationAlignment,
     ProcessingResult,
     ProcessingSpec,
@@ -190,7 +194,7 @@ def add_input_metadata(
     return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
-def _call_processing_function(  # noqa: PLR0913, PLR0917
+def _call_processing_function(
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
@@ -212,7 +216,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
             output_field,
             input_fields,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
 
