@@ -22,4 +22,11 @@ export const runtimeConfig = z.object({
     backendKeycloakClientSecret: z.string().min(5),
     insecureCookies: z.boolean(),
 });
+
+/**
+ * Contains the "environment" configuration for the runtime (URLs, etc.).
+ *
+ * Think: You could deploy the same "organism config" to different environments (test, prod, etc.).
+ * That's why this is separate.
+ */
 export type RuntimeConfig = z.infer<typeof runtimeConfig>;
