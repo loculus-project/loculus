@@ -53,7 +53,11 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .embl import create_flatfile
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .processing_functions import (
+    ProcessingFunctions,
+    format_frameshift,
+    format_stop_codon,
+)
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -602,7 +606,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
 
             if config.require_nextclade_sort_match:
                 alerts = check_nextclade_sort_matches(
-                    result_dir_seg, input_file, alerts, config, sequence_and_dataset, dataset_dir
+                    result_dir_seg,
+                    input_file,
+                    alerts,
+                    config,
+                    sequence_and_dataset,
+                    dataset_dir,
                 )
 
             command = [
@@ -656,7 +665,10 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
                     )
 
             nextclade_metadata = parse_nextclade_json(
-                result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
+                result_dir_seg,
+                nextclade_metadata,
+                segment,
+                unaligned_nucleotide_sequences,
             )  # this includes the "annotation" field
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions,
@@ -754,6 +766,58 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+def add_nextclade_metadata(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+    nextclade_path: str,
+    config: Config,
+) -> str | None:
+    segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
+    if not unprocessed.nextcladeMetadata or segment not in unprocessed.nextcladeMetadata:
+        return None
+    result: str | None = str(
+        dpath.get(
+            unprocessed.nextcladeMetadata[segment],
+            nextclade_path,
+            separator=".",
+            default=None,
+        )
+    )
+    if nextclade_path == "frameShifts":
+        try:
+            result = format_frameshift(result)
+        except Exception:
+            # TODO: somehow this error needs to be returned
+            logger.error("Was unable to format frameshift - this is likely an internal error")
+            result = None
+    if nextclade_path == "qc.stopCodons.stopCodons":
+        try:
+            result = format_stop_codon(result)
+        except Exception:
+            logger.error("Was unable to format stop codon - this is likely an internal error")
+            result = None
+    return result
+
+
+def add_assigned_segment(
+    unprocessed: UnprocessedAfterNextclade,
+    errors: list[ProcessingAnnotation],
+) -> str | None:
+    valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
+    if not valid_segments:
+        return None
+    if len(valid_segments) > 1:
+        message = "Found multiple aligned segments when only one was expected."
+        errors.append(
+            ProcessingAnnotation.from_single(
+                "ASSIGNED_SEGMENT", AnnotationSourceType.METADATA, message=message
+            )
+        )
+        return None
+
+
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -763,60 +827,13 @@ def add_input_metadata(
     config: Config,
 ) -> str | None:
     """Returns value of input_path in unprocessed metadata"""
+    if input_path == "ASSIGNED_SEGMENT":
+        return add_assigned_segment(unprocessed, errors)
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
-        segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
-        if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
-            # This field should never be empty
-            message = (
-                "An unknown internal error occurred while aligning sequences, "
-                "please contact the administrator."
-            )
-            errors.append(
-                ProcessingAnnotation.from_single(
-                    segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
-                )
-            )
-            return None
-        sub_path = input_path[len(nextclade_prefix) :]
-        if not unprocessed.nextcladeMetadata or segment not in unprocessed.nextcladeMetadata:
-            return None
-        if not unprocessed.nextcladeMetadata[segment]:
-            message = (
-                "Nucleotide sequence failed to align"
-                if not config.multi_segment
-                else f"Nucleotide sequence for {segment} failed to align"
-            )
-            annotation = ProcessingAnnotation.from_single(
-                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
-            )
-            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
-                warnings.append(annotation)
-                return None
-            errors.append(annotation)
-            return None
-        result: str | None = str(
-            dpath.get(
-                unprocessed.nextcladeMetadata[segment],
-                sub_path,
-                separator=".",
-                default=None,
-            )
-        )
-        if input_path == "nextclade.frameShifts":
-            try:
-                result = format_frameshift(result)
-            except Exception:
-                logger.error("Was unable to format frameshift - this is likely an internal error")
-                result = None
-        if input_path == "nextclade.qc.stopCodons.stopCodons":
-            try:
-                result = format_stop_codon(result)
-            except Exception:
-                logger.error("Was unable to format stop codon - this is likely an internal error")
-                result = None
-        return result
+        nextclade_path = input_path[len(nextclade_prefix) :]
+        return add_nextclade_metadata(spec, unprocessed, errors, warnings, nextclade_path, config)
     if input_path not in unprocessed.inputMetadata:
         return None
     return unprocessed.inputMetadata[input_path]
@@ -911,7 +928,9 @@ def processed_entry_no_alignment(
 
 
 def process_single(  # noqa: C901
-    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade | UnprocessedData, config: Config
+    id: AccessionVersion,
+    unprocessed: UnprocessedAfterNextclade,
+    config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
@@ -920,24 +939,44 @@ def process_single(  # noqa: C901
 
     errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
 
-    if isinstance(unprocessed, UnprocessedAfterNextclade):
-        if unprocessed.warnings:
-            warnings += unprocessed.warnings
-        if unprocessed.errors:
-            errors += unprocessed.errors
+    if unprocessed.warnings:
+        warnings += unprocessed.warnings
+    if unprocessed.errors:
+        errors += unprocessed.errors
+    # if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
+    #     # This field should never be empty
+    #     message = (
+    #         "An unknown internal error occurred while aligning sequences, "
+    #         "please contact the administrator."
+    #     )
+    #     errors.append(
+    #         ProcessingAnnotation.from_single(
+    #             segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+    #         )
+    #     )
+    #     # TODO: skip further processing?
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
+        if (
+            unprocessed.nextcladeMetadata
+            and unprocessed.unalignedNucleotideSequences[segment]
+            and not unprocessed.nextcladeMetadata[segment]
+        ):
+            message = (
+                "Nucleotide sequence failed to align"
+                if not config.multi_segment
+                else f"Nucleotide sequence for {segment} failed to align"
+            )
+            annotation = ProcessingAnnotation.from_single(
+                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+                warnings.append(annotation)
+            else:
+                errors.append(annotation)
 
-        submitter = unprocessed.inputMetadata["submitter"]
-        group_id = int(str(unprocessed.inputMetadata["group_id"]))
-    else:
-        submitter = unprocessed.submitter
-        group_id = unprocessed.group_id
-        segment_assignment = assign_segment_using_header(
-            input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
-            config=config,
-        )
-        unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
-        errors += segment_assignment.errors
-        warnings += segment_assignment.warnings
+    submitter = unprocessed.inputMetadata["submitter"]
+    group_id = int(str(unprocessed.inputMetadata["group_id"]))
 
     for sequence_and_dataset in config.nucleotideSequences:
         segment = sequence_and_dataset.name
@@ -984,16 +1023,6 @@ def process_single(  # noqa: C901
                 )
             )
     logger.debug(f"Processed {id}: {output_metadata}")
-
-    if isinstance(unprocessed, UnprocessedData):
-        return processed_entry_no_alignment(
-            id,
-            unprocessed,
-            output_metadata,
-            errors,
-            warnings,
-            segment_assignment.sequenceNameToFastaId,
-        )
 
     aligned_segments = set()
     for sequence_and_dataset in config.nucleotideSequences:
@@ -1051,6 +1080,83 @@ def process_single(  # noqa: C901
     )
 
 
+def process_single_unaligned(
+    id: AccessionVersion,
+    unprocessed: UnprocessedData,
+    config: Config,
+) -> SubmissionData:
+    """Process a single sequence per config"""
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    output_metadata: ProcessedMetadata = {}
+
+    errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
+
+    submitter = unprocessed.submitter
+    segment_assignment = assign_segment_using_header(
+        input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
+        config=config,
+    )
+    unprocessed.unalignedNucleotideSequences = segment_assignment.unalignedNucleotideSequences
+    errors += segment_assignment.errors
+    warnings += segment_assignment.warnings
+
+    for sequence_and_dataset in config.nucleotideSequences:
+        segment = sequence_and_dataset.name
+        sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
+        key = "length" if not config.multi_segment else "length_" + segment
+        if key in config.processing_spec:
+            output_metadata[key] = len(sequence) if sequence else 0
+
+    length_fields = [
+        "length" if not config.multi_segment else "length_" + segment.name
+        for segment in config.nucleotideSequences
+    ]
+    for output_field, spec_dict in config.processing_spec.items():
+        if output_field in length_fields:
+            continue
+        spec = ProcessingSpec(
+            inputs=spec_dict["inputs"],
+            function=spec_dict["function"],
+            required=spec_dict.get("required", False),
+            args=spec_dict.get("args", {}),
+        )
+        spec.args = {} if spec.args is None else spec.args
+        processing_result = get_metadata(
+            id,
+            spec,
+            output_field,
+            unprocessed,
+            errors,
+            warnings,
+            config,
+        )
+        output_metadata[output_field] = processing_result.datum
+        if (
+            null_per_backend(processing_result.datum)
+            and spec.required
+            and submitter != "insdc_ingest_user"
+        ):
+            errors.append(
+                ProcessingAnnotation.from_fields(
+                    spec.inputs.values(),
+                    [output_field],
+                    AnnotationSourceType.METADATA,
+                    message=f"Metadata field {output_field} is required.",
+                )
+            )
+    logger.debug(f"Processed {id}: {output_metadata}")
+
+    return processed_entry_no_alignment(
+        id,
+        unprocessed,
+        output_metadata,
+        errors,
+        warnings,
+        segment_assignment.sequenceNameToFastaId,
+    )
+
+
 def processed_entry_with_errors(id) -> SubmissionData:
     return SubmissionData(
         processed_entry=ProcessedEntry(
@@ -1098,7 +1204,9 @@ def process_all(
     else:
         for entry in unprocessed:
             try:
-                processed_single = process_single(entry.accessionVersion, entry.data, config)
+                processed_single = process_single_unaligned(
+                    entry.accessionVersion, entry.data, config
+                )
             except Exception as e:
                 logger.error(f"Processing failed for {entry.accessionVersion} with error: {e}")
                 processed_single = processed_entry_with_errors(entry.accessionVersion)

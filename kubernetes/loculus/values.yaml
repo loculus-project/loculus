@@ -1841,7 +1841,8 @@ defaultOrganisms:
           noInput: true
           generateIndex: true
           autocomplete: true
-          ingest: segment
+          preprocessing:
+            inputs: {input: ASSIGNED_SEGMENT}
           initiallyVisible: true
       website:
         <<: *website
@@ -1881,11 +1882,6 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 138948 # Enterovirus A (once we include non-A, broaden to 12059)
-        segment_identification:
-          method: "minimizer"
-          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          minimizer_parser:
-            - segment
     referenceGenomes:
       CV-A16:
         nucleotideSequences:
