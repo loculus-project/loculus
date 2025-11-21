@@ -144,7 +144,7 @@ class SubmitModel(
         submissionParams.files?.let { submittedFiles ->
             val fileSubmissionIds = submittedFiles.keys
             validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+            validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
@@ -379,7 +379,7 @@ class SubmitModel(
         }
     }
 
-    private fun validateFileExistenceAndGroupOwnership(
+    private fun validateFileGroupOwnership(
         submittedFiles: SubmissionIdFilesMap,
         submissionParams: SubmissionParams,
         uploadId: String,
@@ -387,6 +387,8 @@ class SubmitModel(
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
+        val usedFileIds = submittedFiles.getAllFileIds()
+        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             fileGroups.forEach {
                 if (it.value != submissionParams.groupId) {
