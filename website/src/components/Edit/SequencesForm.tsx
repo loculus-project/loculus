@@ -82,9 +82,7 @@ export class EditableSequences {
         referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     ): EditableSequences {
         const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
-        const fastaHeaderMap = EditableSequences.invertRecordMulti(
-            initialData.processedData.sequenceNameToFastaHeaderMap,
-        );
+        const fastaHeaderMap = EditableSequences.invertRecordMulti(initialData.processedData.sequenceNameToFastaId);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => {
                 const mapped = (fastaHeaderMap[key] ?? []).join(', ') || '';

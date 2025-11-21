@@ -91,7 +91,7 @@ class ProcessedSequencesPostprocessorTest(
                 unconfiguredPresentGene to listOf(Insertion(13, "TT")),
                 unconfiguredNullGene to emptyList(),
             ),
-            sequenceNameToFastaHeaderMap = mapOf(
+            sequenceNameToFastaId = mapOf(
                 "configuredPresentSeg" to "header1",
                 "unconfiguredPresentSeg" to "header2",
             ),
