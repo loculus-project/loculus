@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
@@ -258,6 +259,38 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                     "\$.detail",
                     containsString("unknownCategory is not part of the configured submission categories"),
                 ),
+            )
+    }
+
+    @Test
+    fun `WHEN submitting a non-existing file ID THEN an error is returned`() {
+        val randomFileId = UUID.randomUUID()
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        val editedData = EditedSequenceEntryData(
+            accession = accessions.first(),
+            version = 1,
+            data = OriginalData(
+                metadata = emptyMap(),
+                unalignedNucleotideSequences = emptyMap(),
+                files = mapOf(
+                    "myFileCategory" to
+                        listOf(
+                            FileIdAndName(randomFileId, "foo.txt"),
+                        ),
+                ),
+            ),
+        )
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail",
+                    allOf(
+                        containsString("not exist"),
+                        containsString(randomFileId.toString()),
+                    ),
+                )
             )
     }
 
