@@ -300,14 +300,20 @@ multi_segment_case_definitions = [
                 "ebola-sudan": consensus_sequence("ebola-sudan"),
                 "ebola-zaire": consensus_sequence("ebola-zaire"),
             },
-            nucleotideInsertions={"ebola-sudan": ["2671:GAC"], "ebola-zaire": ["11097:GAC"]},
+            nucleotideInsertions={
+                "ebola-sudan": ["2671:GAC"],
+                "ebola-zaire": ["11097:GAC"],
+            },
             alignedAminoAcidSequences={
                 "NPEbolaSudan": ebola_sudan_aa(consensus_sequence("single"), "NP"),
                 "VP35EbolaSudan": ebola_sudan_aa(consensus_sequence("single"), "VP35"),
                 "VP24EbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "VP24"),
                 "LEbolaZaire": ebola_zaire_aa(consensus_sequence("ebola-zaire"), "L"),
             },
-            aminoAcidInsertions={"NPEbolaSudan": ["738:D"], "VP24EbolaZaire": ["251:D"]},
+            aminoAcidInsertions={
+                "NPEbolaSudan": ["738:D"],
+                "VP24EbolaZaire": ["251:D"],
+            },
             sequenceNameToFastaHeaderMap={
                 "ebola-sudan": "fastaHeader1",
                 "ebola-zaire": "fastaHeader2",
@@ -809,6 +815,13 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
+
+
+def test_config_accepted_sort_matches() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    accepted_fields = config.nucleotideSequences[0].accepted_sort_matches
+    expected_fields = {"ebola-dataset/ebola-sudan", "ebola-sudan", "accepted-name"}
+    assert set(accepted_fields) == expected_fields
 
 
 def test_preprocessing_without_metadata() -> None:
