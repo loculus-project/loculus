@@ -1,6 +1,7 @@
 package org.loculus.backend.controller
 
 import org.loculus.backend.model.FASTA_ID_HEADER
+import org.loculus.backend.model.FASTA_ID_SEPARATOR
 import org.loculus.backend.model.METADATA_ID_HEADER
 
 const val SUBMIT_RESPONSE_DESCRIPTION = """
@@ -29,7 +30,7 @@ The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common ex
 If the underlying organism has a single segment,
 the headers of the fasta file must match the '$METADATA_ID_HEADER' field in the metadata file.
 If the underlying organism has multiple segments,
-the headers of the fasta file must be added in a space-separated list to the '$FASTA_ID_HEADER'
+the headers of the fasta file must be added in a '$FASTA_ID_SEPARATOR'-separated list to the '$FASTA_ID_HEADER'
 field in the metadata file.
 """
 
