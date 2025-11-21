@@ -780,7 +780,7 @@ def add_input_metadata(
             )
             return None
         sub_path = input_path[len(nextclade_prefix) :]
-        if not unprocessed.nextcladeMetadata  or segment not in unprocessed.nextcladeMetadata:
+        if not unprocessed.nextcladeMetadata or segment not in unprocessed.nextcladeMetadata:
             return None
         if not unprocessed.nextcladeMetadata[segment]:
             message = (
