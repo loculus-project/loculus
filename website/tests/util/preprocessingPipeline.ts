@@ -162,5 +162,8 @@ const sequenceData = {
     aminoAcidInsertions: {
         S: ['123:NRNR'],
     },
+    sequenceNameToFastaHeaderMap: {
+        main: 'fastaHeader',
+    },
 } as const;
 /* eslint-enable @typescript-eslint/naming-convention */

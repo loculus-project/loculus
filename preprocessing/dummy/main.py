@@ -136,6 +136,7 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
     processed = []
     for sequence in unprocessed:
         metadata = sequence.data.get("metadata", {})
+        submissionId = metadata.get("submissionId", "unknown_submission")
         if not disableConsensusSequences:
             metadata["pangoLineage"] = random.choice(possible_lineages)
 
@@ -157,11 +158,12 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             "unalignedNucleotideSequences": {},
             "alignedAminoAcidSequences": {},
             "nucleotideInsertions": {},
-            "aminoAcidInsertions": {}
+            "aminoAcidInsertions": {},
         }
         
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
+            data["sequenceNameToFastaHeaderMap"] = {"main": submissionId}
 
         updated_sequence = Sequence(
             sequence.accession,
