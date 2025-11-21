@@ -72,7 +72,6 @@ def null_per_backend(x: Any) -> bool:
 
 def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str:
     """Returns the segment to use based on spec args"""
-    print("get_segment", spec)
     if spec.args and spec.args.get("useFirstSegment", False) and unprocessed.nextcladeMetadata:
         for segment in unprocessed.nextcladeMetadata.keys():
             if unprocessed.nextcladeMetadata[segment]:
