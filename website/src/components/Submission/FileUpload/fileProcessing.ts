@@ -10,16 +10,16 @@ import PhDnaLight from '~icons/ph/dna-light';
 
 type Icon = ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
 
-export type FileKind = {
+export type FileKind<F extends ProcessedFile> = {
     type: 'metadata' | 'fasta' | 'singleSegment';
     icon: Icon;
     supportedExtensions: string[];
-    processRawFile: (file: File) => Promise<Result<ProcessedFile, Error>>;
+    processRawFile: (file: File) => Promise<Result<F, Error>>;
 };
 
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
-export const METADATA_FILE_KIND: FileKind = {
+export const METADATA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'metadata',
     icon: MaterialSymbolsLightDataTableOutline,
     supportedExtensions: ['tsv', 'xlsx', 'xls'],
@@ -59,7 +59,7 @@ export const METADATA_FILE_KIND: FileKind = {
     },
 };
 
-export const FASTA_FILE_KIND: FileKind = {
+export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
     type: 'fasta',
     icon: PhDnaLight,
     supportedExtensions: ['fasta'],
@@ -72,7 +72,7 @@ export const FASTA_FILE_KIND: FileKind = {
  * Can be multiple lines, the lines will be concatenated, and whitespace stripped on both ends.
  * Compression not supported.
  */
-export const PLAIN_SEGMENT_KIND: FileKind = {
+export const PLAIN_SEGMENT_KIND: FileKind<ProcessedPlainSegmentFile> = {
     type: 'singleSegment',
     icon: PhDnaLight,
     supportedExtensions: ['sequence'],
@@ -110,7 +110,7 @@ export const PLAIN_SEGMENT_KIND: FileKind = {
             text: () => Promise.resolve(segmentData),
             handle: () => file,
             warnings: () => [],
-            header: () => Promise.resolve(header),
+            fastaHeader: () => header,
         });
     },
 };
@@ -121,13 +121,15 @@ export interface ProcessedFile {
 
     text(): Promise<string>;
 
-    header(): Promise<string | null>;
-
     /* The handle to the file on disk. */
     handle(): File;
 
     /* Warnings that came up during file processing. */
     warnings(): string[];
+}
+
+export interface ProcessedPlainSegmentFile extends ProcessedFile {
+    fastaHeader(): string | null;
 }
 
 export const dummy = 0;
@@ -147,10 +149,6 @@ export class RawFile implements ProcessedFile {
         return this.innerFile.text();
     }
 
-    header(): Promise<string | null> {
-        return Promise.resolve(null);
-    }
-
     warnings(): string[] {
         return [];
     }
@@ -160,6 +158,16 @@ export class VirtualFile extends RawFile {
     constructor(content: string, fileName: string = 'virtual.txt') {
         const blob = new Blob([content]);
         super(new File([blob], fileName));
+    }
+}
+
+export class VirtualPlainSegmentFile extends VirtualFile implements ProcessedPlainSegmentFile {
+    constructor(content: string, fileName: string = 'virtual.txt') {
+        super(content, fileName);
+    }
+
+    fastaHeader(): string | null {
+        return null;
     }
 }
 
@@ -273,10 +281,6 @@ export class ExcelFile implements ProcessedFile {
 
     handle(): File {
         return this.originalFile;
-    }
-
-    header(): Promise<string | null> {
-        return Promise.resolve(null);
     }
 
     warnings(): string[] {
