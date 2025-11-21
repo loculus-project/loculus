@@ -383,7 +383,7 @@ class SubmitModel(
             fileGroups.forEach {
                 if (it.value != submissionParams.groupId) {
                     throw BadRequestException(
-                        "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
+                        "File ${it.key} does not belong to group ${submissionParams.groupId}.",
                     )
                 }
             }
