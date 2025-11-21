@@ -234,9 +234,9 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
 
         validateNoUnknownSegmentAndMapKeysMatch(
             processedData.unalignedNucleotideSequences,
-            processedData.sequenceNameToFastaHeaderMap,
+            processedData.sequenceNameToFastaId,
             "unalignedNucleotideSequences",
-            "sequenceNameToFastaHeaderMap",
+            "sequenceNameToFastaId",
         )
 
         validateNoUnknownSegment(

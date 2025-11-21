@@ -363,7 +363,7 @@ def assign_segment_with_nextclade_sort(
                         message=msg,
                     )
                 )
-        sequenceNameToFastaHeaderMap: dict[SegmentName, str] = {}
+        sequenceNameToFastaId: dict[SegmentName, str] = {}
         for segment_name, headers in sort_results_map.items():
             if len(headers) > 1:
                 msg = (
@@ -379,7 +379,7 @@ def assign_segment_with_nextclade_sort(
                     )
                 )
                 continue
-            sequenceNameToFastaHeaderMap[segment_name] = headers[0]
+            sequenceNameToFastaId[segment_name] = headers[0]
             unaligned_nucleotide_sequences[segment_name] = input_unaligned_sequences[headers[0]]
 
     if (
@@ -397,7 +397,7 @@ def assign_segment_with_nextclade_sort(
 
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
+        sequenceNameToFastaId=sequenceNameToFastaId,
         errors=errors,
         warnings=warnings,
     )
@@ -410,7 +410,7 @@ def assign_single_segment(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str] = {}
+    sequenceNameToFastaId: dict[SegmentName, str] = {}
     if len(input_unaligned_sequences) > 1:
         errors.append(
             ProcessingAnnotation.from_single(
@@ -427,11 +427,11 @@ def assign_single_segment(
         )
     else:
         fastaHeader, value = next(iter(input_unaligned_sequences.items()))
-        sequenceNameToFastaHeaderMap["main"] = fastaHeader
+        sequenceNameToFastaId["main"] = fastaHeader
         unaligned_nucleotide_sequences["main"] = value
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
+        sequenceNameToFastaId=sequenceNameToFastaId,
         errors=errors,
         warnings=warnings,
     )
@@ -444,12 +444,12 @@ def assign_segment_using_header(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str] = {}
+    sequenceNameToFastaId: dict[SegmentName, str] = {}
     duplicate_segments = set()
     if not config.nucleotideSequences:
         return SegmentAssignment(
             unalignedNucleotideSequences={},
-            sequenceNameToFastaHeaderMap={},
+            sequenceNameToFastaId={},
             errors=errors,
             warnings=warnings,
         )
@@ -479,13 +479,13 @@ def assign_segment_using_header(
                 )
             )
         elif len(unaligned_segment) == 1:
-            sequenceNameToFastaHeaderMap[segment] = unaligned_segment[0]
+            sequenceNameToFastaId[segment] = unaligned_segment[0]
             unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
     remaining_segments = (
         set(input_unaligned_sequences.keys())
-        - set(sequenceNameToFastaHeaderMap.values())
+        - set(sequenceNameToFastaId.values())
         - duplicate_segments
     )
     if len(remaining_segments) > 0:
@@ -512,7 +512,7 @@ def assign_segment_using_header(
         )
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
+        sequenceNameToFastaId=sequenceNameToFastaId,
         errors=errors,
         warnings=warnings,
     )
@@ -532,7 +532,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
             alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
             aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
-            sequenceNameToFastaHeaderMap: dict[SegmentName, str]
+            sequenceNameToFastaId: dict[SegmentName, str]
     )` object.
     """
     unaligned_nucleotide_sequences: dict[
@@ -570,7 +570,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
         unaligned_nucleotide_sequences[id] = segment_assignment.unalignedNucleotideSequences
         alerts.errors[id] = segment_assignment.errors
         alerts.warnings[id] = segment_assignment.warnings
-        segment_assignment_map[id] = segment_assignment.sequenceNameToFastaHeaderMap
+        segment_assignment_map[id] = segment_assignment.sequenceNameToFastaId
 
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
@@ -675,7 +675,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
-            sequenceNameToFastaHeaderMap=segment_assignment_map[id],
+            sequenceNameToFastaId=segment_assignment_map[id],
             errors=alerts.errors[id],
             warnings=alerts.warnings[id],
         )
@@ -881,7 +881,7 @@ def processed_entry_no_alignment(
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str],
+    sequenceNameToFastaId: dict[SegmentName, str],
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
@@ -901,7 +901,7 @@ def processed_entry_no_alignment(
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
-                sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
+                sequenceNameToFastaId=sequenceNameToFastaId,
             ),
             errors=errors,
             warnings=warnings,
@@ -992,7 +992,7 @@ def process_single(  # noqa: C901
             output_metadata,
             errors,
             warnings,
-            segment_assignment.sequenceNameToFastaHeaderMap,
+            segment_assignment.sequenceNameToFastaId,
         )
 
     aligned_segments = set()
@@ -1037,7 +1037,7 @@ def process_single(  # noqa: C901
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
-            sequenceNameToFastaHeaderMap=unprocessed.sequenceNameToFastaHeaderMap,
+            sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
         errors=list(set(errors)),
         warnings=list(set(warnings)),
@@ -1063,7 +1063,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 nucleotideInsertions=defaultdict(dict[str, Any]),
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
-                sequenceNameToFastaHeaderMap=defaultdict(str),
+                sequenceNameToFastaId=defaultdict(str),
             ),
             errors=[
                 ProcessingAnnotation.from_single(
