@@ -131,7 +131,7 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `GIVEN revision of multi-segmented entries with status 'APPROVED_FOR_RELEASE' THEN successful`() {
+    fun `WHEN submitting revision for multi-segmented entries with status 'APPROVED_FOR_RELEASE' THEN success`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
 
         client.reviseSequenceEntries(
