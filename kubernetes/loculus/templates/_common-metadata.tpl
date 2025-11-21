@@ -507,11 +507,13 @@ organisms:
   {{- if $instance.enaDeposition }}
   {{ $key }}:
     {{- with $instance.schema }}
-    {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
     enaDeposition: {{- $instance.enaDeposition.configFile | toYaml | nindent 6 }}
     organismName: {{ quote .organismName }}
     externalMetadata:
-      {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+      {{- $args := dict
+        "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata
+        "referenceGenomes" $instance.referenceGenomes
+      }}
       {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
       {{- $metadata.fields | default list | toYaml | nindent 6 }}
     {{- end }}
