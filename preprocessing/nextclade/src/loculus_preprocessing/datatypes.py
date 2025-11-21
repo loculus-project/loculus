@@ -21,6 +21,8 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 
+ProcessingAnnotationAlignment: Final = "alignment"
+
 
 @unique
 class AnnotationSourceType(StrEnum):
