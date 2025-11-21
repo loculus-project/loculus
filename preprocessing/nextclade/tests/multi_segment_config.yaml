@@ -11,10 +11,10 @@ nextclade_dataset_server: TEST
 nucleotideSequences:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
-  accepted_sort_matches: ebola-sudan
+  accepted_sort_matches: [accepted-name]
 - name: ebola-zaire
   nextclade_dataset_name: ebola-dataset/ebola-zaire
-  accepted_sort_matches: ebola-zaire
+  accepted_sort_matches: [accepted-name]
 organism: multi-ebola-test
 processing_spec:
   totalInsertedNucs_ebola-zaire:
