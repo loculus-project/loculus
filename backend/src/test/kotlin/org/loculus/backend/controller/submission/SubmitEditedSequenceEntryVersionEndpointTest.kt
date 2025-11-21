@@ -285,12 +285,13 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
-                jsonPath("\$.detail",
+                jsonPath(
+                    "\$.detail",
                     allOf(
                         containsString("not exist"),
                         containsString(randomFileId.toString()),
                     ),
-                )
+                ),
             )
     }
 
