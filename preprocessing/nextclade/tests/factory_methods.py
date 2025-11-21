@@ -54,7 +54,7 @@ class ProcessedAlignment:
     nucleotideInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
     alignedAminoAcidSequences: dict[str, str | None] = field(default_factory=dict)  # noqa: N815
     aminoAcidInsertions: dict[str, list[str]] = field(default_factory=dict)  # noqa: N815
-    sequenceNameToFastaHeaderMap: dict[str, str] = field(  # noqa: N815
+    sequenceNameToFastaId: dict[str, str] = field(  # noqa: N815
         default_factory=dict
     )
 
@@ -140,7 +140,7 @@ class ProcessedEntryFactory:
                 nucleotideInsertions=processed_alignment.nucleotideInsertions,
                 alignedAminoAcidSequences=processed_alignment.alignedAminoAcidSequences,
                 aminoAcidInsertions=processed_alignment.aminoAcidInsertions,
-                sequenceNameToFastaHeaderMap=processed_alignment.sequenceNameToFastaHeaderMap,
+                sequenceNameToFastaId=processed_alignment.sequenceNameToFastaId,
             ),
             errors=errors,
             warnings=warnings,
@@ -247,7 +247,7 @@ def verify_processed_entry(
         f"{test_name}: amino acid insertions '{actual.aminoAcidInsertions}' do not "
         f"match expectation '{expected.aminoAcidInsertions}'."
     )
-    assert actual.sequenceNameToFastaHeaderMap == expected.sequenceNameToFastaHeaderMap, (
-        f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaHeaderMap}' do not "
-        f"match expectation '{expected.sequenceNameToFastaHeaderMap}'."
+    assert actual.sequenceNameToFastaId == expected.sequenceNameToFastaId, (
+        f"{test_name}: sequence name to fasta header map '{actual.sequenceNameToFastaId}' do not "
+        f"match expectation '{expected.sequenceNameToFastaId}'."
     )

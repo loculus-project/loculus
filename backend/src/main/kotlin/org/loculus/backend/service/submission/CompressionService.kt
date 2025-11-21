@@ -118,7 +118,7 @@ class CompressionService(
                 }
             },
             processedData.aminoAcidInsertions,
-            processedData.sequenceNameToFastaHeaderMap,
+            processedData.sequenceNameToFastaId,
             processedData.files,
         )
 
@@ -145,7 +145,7 @@ class CompressionService(
             }
         },
         processedData.aminoAcidInsertions,
-        processedData.sequenceNameToFastaHeaderMap,
+        processedData.sequenceNameToFastaId,
         processedData.files,
     )
 
