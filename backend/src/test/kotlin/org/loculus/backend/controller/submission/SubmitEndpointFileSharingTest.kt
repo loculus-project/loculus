@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -113,12 +114,17 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The File IDs [$randomId] do not exist."),
+                ).value(
+                    allOf(
+                        containsString("do not exist"),
+                        containsString(randomId.toString()),
+                    ),
+                ),
             )
     }
 
@@ -146,7 +152,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The File ${fileIdAndUrl.fileId} does not belong to group $groupId."),
+                ).value("File ${fileIdAndUrl.fileId} does not belong to group $groupId."),
             )
     }
 
@@ -228,7 +234,7 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("No file uploaded for file ID ${fileIds[0]}."),
+                ).value(allOf(containsString("No file uploaded"), containsString(fileIds[0].toString()))),
             )
     }
 }

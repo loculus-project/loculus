@@ -48,6 +48,15 @@ class FilesDatabaseService(private val dateProvider: DateProvider) {
                 .map { it[FilesTable.idColumn] to it[FilesTable.multipartUploadId]!! }
         }, 1)
 
+    fun getNonExistentFileIds(fileIds: Set<FileId>): Set<FileId> = fileIds.chunkedForDatabase({ chunk ->
+        val existingIds = FilesTable
+            .select(FilesTable.idColumn)
+            .where { FilesTable.idColumn inList chunk }
+            .map { it[FilesTable.idColumn] }
+            .toSet()
+        chunk.filterNot { it in existingIds }
+    }, 1).toSet()
+
     /**
      * Return the subset of file IDs for which the file size hasn't been checked yet or
      * no file has been uploaded yet (and therefore there's no file size).
