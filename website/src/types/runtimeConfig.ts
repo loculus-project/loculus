@@ -24,9 +24,9 @@ export const runtimeConfig = z.object({
 });
 
 /**
- * Contains the "environment" configuration for the runtime (URLs, etc.).
+ * Runtime environment configuration (URLs, etc.).
  *
- * Think: You could deploy the same "organism config" to different environments (test, prod, etc.).
- * That's why this is separate.
+ * Allows the same organism config to be deployed across different environments
+ * like test or production.
  */
 export type RuntimeConfig = z.infer<typeof runtimeConfig>;
