@@ -38,7 +38,7 @@ We deploy to kubernetes via the `../deploy.py` script. It requires you to have p
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r config-processor/requirements.txt
+pip install requests pyyaml
 ```
 
 NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we recommend 8GB.
@@ -52,7 +52,7 @@ NOTE: On MacOS, make sure that you have configured enough RAM in Docker, we reco
 ../deploy.py helm --dev
 ```
 
-Start the [backend](/backend/README.md) and the [website](/website/README.md) locally. Note by default the deploy script will also start a Loculus deployment without preprocessing and ingest, to add preprocessing and ingest add the `--enablePreprocessing` and `--enableIngest` flags. To run either of these deployments locally you will need to use the generated configs.
+Start the [backend](/backend/README.md) and the [website](/website/README.md) locally. Note that by default the deploy script will also start a Loculus deployment without preprocessing and ingest, to add preprocessing and ingest add the `--enablePreprocessing` and `--enableIngest` flags. To run either of these deployments locally you will need to use the generated configs.
 
 ##### The `deploy.py` script
 
