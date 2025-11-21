@@ -163,7 +163,7 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
         
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
-            data["sequenceNameToFastaHeaderMap"] = {"main": submissionId}
+            data["sequenceNameToFastaId"] = {"main": submissionId}
 
         updated_sequence = Sequence(
             sequence.accession,

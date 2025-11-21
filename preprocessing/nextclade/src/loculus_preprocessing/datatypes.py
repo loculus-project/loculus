@@ -85,7 +85,7 @@ FunctionArgs = dict[ArgName, ArgValue]
 @dataclass
 class SegmentAssignment:
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -109,7 +109,7 @@ class UnprocessedAfterNextclade:
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -128,7 +128,7 @@ class ProcessedData:
     nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 

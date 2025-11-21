@@ -93,7 +93,7 @@ const dataToView: SequenceEntryToEdit = {
         },
         nucleotideInsertions: {},
         aminoAcidInsertions: {},
-        sequenceNameToFastaHeaderMap: {
+        sequenceNameToFastaId: {
             [sequence1]: 'header1',
             [sequence2]: 'header2',
         },
