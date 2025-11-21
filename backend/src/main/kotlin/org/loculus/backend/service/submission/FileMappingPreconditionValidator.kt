@@ -60,6 +60,7 @@ class FileMappingPreconditionValidator(
         return validateCategoriesMatchSchema(fileCategoriesFilesMap, allowedCategories, organism, "output")
     }
 
+    // TODO #5503: Write tests for this
     fun validateMultipartUploads(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         val uncompleted = filesDatabaseService.getUncompletedMultipartUploadIds(fileIds)
         if (uncompleted.isNotEmpty()) {
@@ -154,6 +155,7 @@ class SubmissionIdFilesMappingPreconditionValidator(
      * For files that have been uploaded through the multipart upload protocol, this validates that the uploads
      * have been completed.
      */
+    // TODO #5503: Write tests for this
     fun validateMultipartUploads(
         submissionIdFilesMap: SubmissionIdFilesMap?,
     ): SubmissionIdFilesMappingPreconditionValidator {
