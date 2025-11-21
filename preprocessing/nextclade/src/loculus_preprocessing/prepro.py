@@ -233,6 +233,15 @@ def add_alignment_errors_warnings(
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    if not any(unprocessed.unalignedNucleotideSequences.values()):
+        errors.append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message="No sequence data found - check segments are annotated correctly",
+            )
+        )
+        return (errors, warnings)
     if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
         message = (
             "An unknown internal error occurred while aligning sequences, "
