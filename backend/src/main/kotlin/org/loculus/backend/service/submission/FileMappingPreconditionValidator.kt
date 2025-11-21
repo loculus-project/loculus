@@ -70,13 +70,40 @@ class FileMappingPreconditionValidator(
         return this
     }
 
-    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
-        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
-        uncheckedFileIds.forEach { fileId ->
-            val fileSize = s3Service.getFileSize(fileId)
-                ?: throw UnprocessableEntityException("No file uploaded for file ID $fileId.")
-            filesDatabaseService.setFileSize(fileId, fileSize)
+    fun validateFileIdsExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val nonExistentFileIds = filesDatabaseService.getNonExistentFileIds(fileIds)
+        if (nonExistentFileIds.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "The following file IDs do not exist: " + nonExistentFileIds.joinToString(),
+            )
         }
+        return this
+    }
+
+    fun validateFilesUploadedNotJustRequested(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
+        val fileIdsWithoutFile = uncheckedFileIds.mapNotNull { fileId ->
+            val fileSize = s3Service.getFileSize(fileId)
+            if (fileSize == null) {
+                fileId
+            } else {
+                filesDatabaseService.setFileSize(fileId, fileSize)
+                null
+            }
+        }
+        if (fileIdsWithoutFile.isNotEmpty()) {
+            throw UnprocessableEntityException("No file uploaded for file IDs: ${fileIdsWithoutFile.joinToString()}")
+        }
+        return this
+    }
+
+    /**
+     1. Validate that the fileIds exist (have been requested for upload)
+     2. Check that a file has been uploaded for each fileId by checking S3 for its size
+     */
+    fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+        validateFileIdsExist(fileIds)
+        validateFilesUploadedNotJustRequested(fileIds)
         return this
     }
 

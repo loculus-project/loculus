@@ -374,15 +374,6 @@ class SubmitModel(
         submissionParams: SubmissionParams,
         uploadId: String,
     ) {
-        val usedFileIds = submittedFiles.getAllFileIds()
-        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
-
-        log.debug { "Validating that all submitted file IDs exist." }
-        val notExistingIds = usedFileIds.subtract(fileGroups.keys)
-        if (notExistingIds.isNotEmpty()) {
-            throw BadRequestException("The File IDs $notExistingIds do not exist.")
-        }
-
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
