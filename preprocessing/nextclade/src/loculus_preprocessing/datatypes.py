@@ -176,3 +176,24 @@ class MoleculeType(StrEnum):
 class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
+
+
+class AlignmentRequirement(StrEnum):
+    # Determines whether ALL or ANY segments that a user provides must align.
+    # ANY: warn if some segments fail and some segments align
+    # ALL: error if any segment fails even if some segments align
+    # NONE: do not align any segments, just process them as-is
+    # - set if no nextclade dataset is provided
+    ANY = "ANY"
+    ALL = "ALL"
+    NONE = "NONE"
+
+
+@dataclass
+class EmblInfoMetadataPropertyNames:
+    country_property: str = "geoLocCountry"
+    admin_level_properties: list[str] = field(
+        default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
+    )
+    collection_date_property: str = "sampleCollectionDate"
+    authors_property: str = "authors"
