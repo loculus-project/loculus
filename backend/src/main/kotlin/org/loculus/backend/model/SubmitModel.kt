@@ -126,7 +126,8 @@ class SubmitModel(
         )
 
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
-        if (requiresConsensusSequenceFile(submissionParams.organism)) {
+
+        if (sequencesEnabled(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
             val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
             validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
@@ -142,9 +143,11 @@ class SubmitModel(
         }
 
         submissionParams.files?.let { submittedFiles ->
+            // This must be done AFTER revisions have been associated with existing entries (validation depends on that)
+            // And BEFORE accessions are generated for original submissions (we shouldn't generate accessions if failure)
             val fileSubmissionIds = submittedFiles.keys
-            validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+            validateAllFileSubmissionIdsAreInMetadata(metadataSubmissionIds, fileSubmissionIds)
+            validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
@@ -184,31 +187,32 @@ class SubmitModel(
         }
 
         val sequenceFile = submissionParams.sequenceFile
-        if (sequenceFile == null) {
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
-                throw BadRequestException(
-                    "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
-                )
-            }
-        } else {
-            if (!requiresConsensusSequenceFile(submissionParams.organism)) {
+
+        if (!sequencesEnabled(submissionParams.organism)) {
+            if (sequenceFile != null) {
                 throw BadRequestException(
                     "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
                 )
             }
+            return
+        }
+        if (sequenceFile == null) {
+            throw BadRequestException(
+                "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
+            )
+        }
 
-            val sequenceTempFileToDelete = MaybeFile()
-            try {
-                val sequenceStream = getStreamFromFile(
-                    sequenceFile,
-                    uploadId,
-                    sequenceFileTypes,
-                    sequenceTempFileToDelete,
-                )
-                uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
-            } finally {
-                sequenceTempFileToDelete.delete()
-            }
+        val sequenceTempFileToDelete = MaybeFile()
+        try {
+            val sequenceStream = getStreamFromFile(
+                sequenceFile,
+                uploadId,
+                sequenceFileTypes,
+                sequenceTempFileToDelete,
+            )
+            uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
+        } finally {
+            sequenceTempFileToDelete.delete()
         }
     }
 
@@ -369,7 +373,10 @@ class SubmitModel(
         }
     }
 
-    private fun validateSubmissionIdSetsForFiles(metadataKeysSet: Set<SubmissionId>, filesKeysSet: Set<SubmissionId>) {
+    private fun validateAllFileSubmissionIdsAreInMetadata(
+        metadataKeysSet: Set<SubmissionId>,
+        filesKeysSet: Set<SubmissionId>,
+    ) {
         val filesKeysNotInMetadata = filesKeysSet.subtract(metadataKeysSet)
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
@@ -379,7 +386,7 @@ class SubmitModel(
         }
     }
 
-    private fun validateFileExistenceAndGroupOwnership(
+    private fun validateFileGroupOwnership(
         submittedFiles: SubmissionIdFilesMap,
         submissionParams: SubmissionParams,
         uploadId: String,
@@ -396,32 +403,41 @@ class SubmitModel(
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
-        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            fileGroups.forEach {
-                if (it.value != submissionParams.groupId) {
-                    throw BadRequestException(
-                        "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
-                    )
+
+        val fileIdToGroup = filesDatabaseService.getGroupIds(submittedFiles.getAllFileIds())
+
+        when (submissionParams) {
+            is SubmissionParams.OriginalSubmissionParams -> {
+                val submittingGroupId = submissionParams.groupId
+                fileIdToGroup.forEach {
+                    val fileId = it.key
+                    val fileOwningGroupId = it.value
+                    if (fileOwningGroupId != submittingGroupId) {
+                        throw BadRequestException(
+                            "File $fileId is not owned by the submitting group $submittingGroupId }.",
+                        )
+                    }
                 }
             }
-        } else if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-            val submissionIdGroups = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
-            submittedFiles.forEach {
-                val submissionGroup = submissionIdGroups[it.key]
-                val associatedFileIds = it.value.values.flatten().map { it.fileId }
-                associatedFileIds.forEach { fileId ->
-                    val fileGroup = fileGroups[fileId]
-                    if (fileGroup != submissionGroup) {
-                        throw BadRequestException(
-                            "File $fileId does not belong to group $submissionGroup.",
-                        )
+            is SubmissionParams.RevisionSubmissionParams -> {
+                val submissionIdToSubmissionGroup = uploadDatabaseService.getSubmissionIdToGroupMapping(uploadId)
+                submittedFiles.forEach {
+                    val submissionGroup = submissionIdToSubmissionGroup[it.key]
+                    val associatedFileIds = it.value.values.flatten().map { it.fileId }
+                    associatedFileIds.forEach { fileId ->
+                        val fileGroup = fileIdToGroup[fileId]
+                        if (fileGroup != submissionGroup) {
+                            throw BadRequestException(
+                                "File $fileId does not belong to group $submissionGroup.",
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun requiresConsensusSequenceFile(organism: Organism) = backendConfig.getInstanceConfig(organism)
+    private fun sequencesEnabled(organism: Organism): Boolean = backendConfig.getInstanceConfig(organism)
         .schema
         .submissionDataTypes
         .consensusSequences
