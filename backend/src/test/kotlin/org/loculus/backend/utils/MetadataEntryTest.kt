@@ -133,7 +133,7 @@ class RevisionEntryTest {
             foo${'\t'}ACC123${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
-        val entries = revisionEntryStreamAsSequence(inputStream, true).toList()
+        val entries = revisionEntryStreamAsSequence(inputStream).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
         assert(entries[0].accession == "ACC123")
@@ -147,7 +147,7 @@ class RevisionEntryTest {
             foo${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
-        assertThrows<UnprocessableEntityException> { revisionEntryStreamAsSequence(inputStream, true).toList() }
+        assertThrows<UnprocessableEntityException> { revisionEntryStreamAsSequence(inputStream).toList() }
     }
 
     @Test
@@ -159,7 +159,7 @@ class RevisionEntryTest {
                 "123${'\t'}ACC123${'\t'}2025-01-01${'\t'}Switzerland  Homo Sapiens  Potter, H;\n"
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
-            revisionEntryStreamAsSequence(inputStream, true).toList()
+            revisionEntryStreamAsSequence(inputStream).toList()
         }
         assert(exception.message!!.contains("not a valid TSV file"))
         assert(exception.message!!.contains("Common causes include"))
@@ -180,7 +180,7 @@ class RevisionEntryTest {
         val inputStream = ByteArrayInputStream(str.toByteArray())
 
         val exception = assertThrows<UnprocessableEntityException> {
-            revisionEntryStreamAsSequence(inputStream, true).toList()
+            revisionEntryStreamAsSequence(inputStream).toList()
         }
         assert(exception.message!!.contains("not a valid TSV file"))
         assert(exception.message!!.contains("Common causes include"))
@@ -194,7 +194,7 @@ class RevisionEntryTest {
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
-            revisionEntryStreamAsSequence(inputStream, true).toList()
+            revisionEntryStreamAsSequence(inputStream).toList()
         }
         assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("contains no value for"))
@@ -208,7 +208,7 @@ class RevisionEntryTest {
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
-            revisionEntryStreamAsSequence(inputStream, true).toList()
+            revisionEntryStreamAsSequence(inputStream).toList()
         }
         assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("accession"))
