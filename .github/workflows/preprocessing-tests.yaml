@@ -66,5 +66,8 @@ jobs:
           micromamba-version: 'latest'
           cache-environment: true
           post-cleanup: 'all'
-      - name: Run ruff check
+      - name: Run ruff format check
+        run: ruff format --diff .
+      - name: Run ruff check for auto-fixable lints issues
+        if: ${{ always() }}
         run: ruff check --diff .
