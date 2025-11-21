@@ -54,7 +54,7 @@ fun extractFastaIdsFromRecord(record: CSVRecord, submissionId: String, recordNum
                 )
             }
 
-            fastaIdValues.split(Regex(" "))
+            fastaIdValues.split(Regex(FASTA_ID_SEPARATOR))
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
         }
