@@ -3,12 +3,9 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any, Tuple
+from typing import Any
+
 import dpath
-from .nextclade import (
-    download_nextclade_dataset,
-    enrich_with_nextclade,
-)
 
 from .backend import (
     download_minimizer,
@@ -210,7 +207,7 @@ def _call_processing_function(
             output_field,
             input_fields,
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
 
@@ -248,6 +245,61 @@ def processed_entry_no_alignment(
         ),
         submitter=unprocessed.submitter,
     )
+
+
+def add_alignment_errors_warnings(
+    unprocessed: UnprocessedAfterNextclade,
+    config: Config,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    if not unprocessed.nextcladeMetadata and unprocessed.unalignedNucleotideSequences:
+        message = (
+            "An unknown internal error occurred while aligning sequences, "
+            "please contact the administrator."
+        )
+        errors.append(
+            ProcessingAnnotation.from_single(
+                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+        )
+        return (errors, warnings)
+    aligned_segments = set()
+    for segment in config.nucleotideSequences:
+        if segment not in unprocessed.unalignedNucleotideSequences:
+            continue
+        if unprocessed.nextcladeMetadata and (
+            segment not in unprocessed.nextcladeMetadata
+            or (unprocessed.nextcladeMetadata[segment] is None)
+        ):
+            message = (
+                "Nucleotide sequence failed to align"
+                if not config.multi_segment
+                else f"Nucleotide sequence for {segment} failed to align"
+            )
+            annotation = ProcessingAnnotation.from_single(
+                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+            )
+            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+                warnings.append(annotation)
+            else:
+                errors.append(annotation)
+            continue
+        aligned_segments.add(segment)
+
+    if (
+        not aligned_segments
+        and config.multi_segment
+        and len(unprocessed.unalignedNucleotideSequences) > 0
+    ):
+        errors.append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message="No segment aligned.",
+            )
+        )
+    return (errors, warnings)
 
 
 def get_output_metadata(
