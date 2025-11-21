@@ -3,6 +3,8 @@ import z from 'zod';
 import { mutationProportionCount, orderDirection } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+export const FASTA_ID_SEPARATOR = ' ';
+
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = z.enum([
     'string',

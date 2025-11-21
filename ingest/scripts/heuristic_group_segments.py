@@ -30,6 +30,8 @@ import click
 import orjsonl
 import yaml
 
+FASTA_ID_SEPARATOR = " "
+
 
 def sort_authors(authors: str) -> str:
     """Sort authors alphabetically"""
@@ -211,7 +213,7 @@ def main(
                 if segment in group
             ]
         )
-        segments_list_str = " ".join([
+        segments_list_str = FASTA_ID_SEPARATOR.join([
                 f"{joint_key}_{segment}"
                 for segment in config.nucleotide_sequences
                 if segment in group
