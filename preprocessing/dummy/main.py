@@ -159,11 +159,11 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             "alignedAminoAcidSequences": {},
             "nucleotideInsertions": {},
             "aminoAcidInsertions": {},
-            "sequenceNameToFastaHeaderMap": {"main": submissionId},
         }
         
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
+            data["sequenceNameToFastaHeaderMap"] = {"main": submissionId}
 
         updated_sequence = Sequence(
             sequence.accession,
