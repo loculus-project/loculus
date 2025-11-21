@@ -3,9 +3,12 @@ import time
 from collections import defaultdict
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any
-
+from typing import Any, Tuple
 import dpath
+from .nextclade import (
+    download_nextclade_dataset,
+    enrich_with_nextclade,
+)
 
 from .backend import (
     download_minimizer,
@@ -32,6 +35,7 @@ from .datatypes import (
     ProcessedMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     ProcessingAnnotationAlignment,
     ProcessingResult,
     ProcessingSpec,
@@ -137,12 +141,54 @@ def add_input_metadata(
     if input_path.startswith(nextclade_prefix):
         nextclade_path = input_path[len(nextclade_prefix) :]
         return add_nextclade_metadata(spec, unprocessed, nextclade_path)
+    segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
+    if (
+        not unprocessed.nextcladeMetadata
+        or segment not in unprocessed.nextcladeMetadata
+        or unprocessed.nextcladeMetadata[segment] is None
+    ):
+        return None
+    result: str | None = str(
+        dpath.get(
+            unprocessed.nextcladeMetadata[segment],
+            nextclade_path,
+            separator=".",
+            default=None,
+        )
+    )
+    if nextclade_path == "frameShifts":
+        try:
+            result = format_frameshift(result)
+        except Exception:
+            # TODO: somehow this error needs to be returned
+            logger.error("Was unable to format frameshift - this is likely an internal error")
+            result = None
+    if nextclade_path == "qc.stopCodons.stopCodons":
+        try:
+            result = format_stop_codon(result)
+        except Exception:
+            logger.error("Was unable to format stop codon - this is likely an internal error")
+            result = None
+    return result
+
+
+def add_input_metadata(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    input_path: str,
+) -> str | None:
+    """Returns value of input_path in unprocessed metadata"""
+    # If field starts with "nextclade.", take from nextclade metadata
+    nextclade_prefix = "nextclade."
+    if input_path.startswith(nextclade_prefix):
+        nextclade_path = input_path[len(nextclade_prefix) :]
+        return add_nextclade_metadata(spec, unprocessed, nextclade_path)
     if input_path not in unprocessed.inputMetadata:
         return InputData(datum=None)
     return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
-def _call_processing_function(  # noqa: PLR0913, PLR0917
+def _call_processing_function(
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
@@ -164,7 +210,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
             output_field,
             input_fields,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
 
