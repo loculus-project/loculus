@@ -441,7 +441,6 @@ def generate_config(
         "template",
         "name-does-not-matter",
         helm_chart,
-        "--debug",
         "--show-only",
         template,
     ]
