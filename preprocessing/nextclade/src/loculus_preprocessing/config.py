@@ -159,10 +159,7 @@ def assemble_raw_config(config_file: str | None, ignore_args: bool = False) -> R
         or os.environ.get("PREPROCESSING_CONFIG_FILE")
     )
 
-    if config_file_path is None:
-        msg = "No config file specified via argument or PREPROCESSING_CONFIG_FILE"
-        raise ValueError(msg)
-    raw = load_config_from_yaml(config_file_path)
+    raw = load_config_from_yaml(config_file_path) if config_file_path else RawConfig()
 
     for key in raw.__dataclass_fields__:
         env_var = f"PREPROCESSING_{key.upper()}"
