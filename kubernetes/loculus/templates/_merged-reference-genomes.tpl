@@ -56,5 +56,5 @@
 {{- end -}}
 
 segments:
-{{ $segmentNames | uniq | toYaml | indent 2 -}}
+{{- $segmentNames | uniq | toYaml | nindent 2 -}}
 {{- end -}}
