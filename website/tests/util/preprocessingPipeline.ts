@@ -162,7 +162,7 @@ const sequenceData = {
     aminoAcidInsertions: {
         S: ['123:NRNR'],
     },
-    sequenceNameToFastaHeaderMap: {
+    sequenceNameToFastaId: {
         main: 'fastaHeader',
     },
 } as const;
