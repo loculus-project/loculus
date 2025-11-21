@@ -171,7 +171,7 @@ data class ProcessedData<SequenceType>(
         example = """{"segment1": "fastaHeader1", "segment2": "fastaHeader2"}""",
         description = "The key is the segment name, the value is the fastaHeader of the original Data",
     )
-    val sequenceNameToFastaHeaderMap: Map<SegmentName, String> = emptyMap(),
+    val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
     @Schema(
         example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
         description = "The key is the file category name, the value is a list of files, with ID and name.",

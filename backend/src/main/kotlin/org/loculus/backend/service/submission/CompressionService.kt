@@ -102,7 +102,7 @@ class CompressionService(private val compressionDictService: CompressionDictServ
             }
         },
         processedData.aminoAcidInsertions,
-            processedData.sequenceNameToFastaHeaderMap,
+            processedData.sequenceNameToFastaId,
         processedData.files,
     )
 
@@ -129,7 +129,7 @@ class CompressionService(private val compressionDictService: CompressionDictServ
             }
         },
         processedData.aminoAcidInsertions,
-        processedData.sequenceNameToFastaHeaderMap,
+        processedData.sequenceNameToFastaId,
         processedData.files,
     )
 

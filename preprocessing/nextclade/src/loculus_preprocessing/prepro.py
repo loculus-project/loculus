@@ -56,7 +56,6 @@ from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
-
 def accession_from_str(id_str: AccessionVersion) -> str:
     return id_str.split(".")[0]
 
@@ -203,7 +202,7 @@ def processed_entry_no_alignment(
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-    sequenceNameToFastaHeaderMap: dict[SegmentName, str],
+    sequenceNameToFastaId: dict[SegmentName, str],
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
@@ -223,7 +222,7 @@ def processed_entry_no_alignment(
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
-                sequenceNameToFastaHeaderMap=sequenceNameToFastaHeaderMap,
+                sequenceNameToFastaId=sequenceNameToFastaId,
             ),
             errors=errors,
             warnings=warnings,
@@ -481,7 +480,7 @@ def process_single(
             nucleotideInsertions=unprocessed.nucleotideInsertions,
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
-            sequenceNameToFastaHeaderMap=unprocessed.sequenceNameToFastaHeaderMap,
+            sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
         ),
         errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -518,7 +517,7 @@ def process_single_unaligned(
         output_metadata=output_metadata,
         errors=list(set(iupac_errors + metadata_errors + segment_assignment.errors)),
         warnings=list(set(metadata_warnings)),
-        sequenceNameToFastaHeaderMap=segment_assignment.sequenceNameToFastaHeaderMap,
+        sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
 
 
@@ -534,7 +533,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
                 nucleotideInsertions=defaultdict(dict[str, Any]),
                 alignedAminoAcidSequences=defaultdict(dict[str, Any]),
                 aminoAcidInsertions=defaultdict(dict[str, Any]),
-                sequenceNameToFastaHeaderMap=defaultdict(str),
+                sequenceNameToFastaId=defaultdict(str),
             ),
             errors=[
                 ProcessingAnnotation.from_single(

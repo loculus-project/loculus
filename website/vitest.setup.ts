@@ -119,7 +119,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
         aminoAcidInsertions: {
             processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
         },
-        sequenceNameToFastaHeaderMap: {
+        sequenceNameToFastaId: {
             unalignedProcessedSequenceName: 'originalFastaHeader',
         },
         files: null,
