@@ -1,8 +1,8 @@
 package org.loculus.backend.controller
 
 import org.loculus.backend.model.FASTA_ID_HEADER
-import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.FASTA_ID_SEPARATOR
+import org.loculus.backend.model.METADATA_ID_HEADER
 
 const val SUBMIT_RESPONSE_DESCRIPTION = """
 Returns a list of accession, version and submissionId of the submitted sequence entries. 
