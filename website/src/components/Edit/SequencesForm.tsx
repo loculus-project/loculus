@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
-import { PLAIN_SEGMENT_KIND, VirtualFile } from '../Submission/FileUpload/fileProcessing.ts';
+import { PLAIN_SEGMENT_KIND, VirtualPlainSegmentFile } from '../Submission/FileUpload/fileProcessing.ts';
 
 function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string) {
     const trimmedHeader = fastaHeader.replace(/\s+/g, '');
@@ -219,7 +219,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                         <FileUploadComponent
                             setFile={async (file) => {
                                 const text = file ? await file.text() : null;
-                                const fastaHeader = file ? await file.header() : null;
+                                const fastaHeader = file?.fastaHeader() ?? null;
                                 setEditableSequences((editableSequences) =>
                                     editableSequences.update(field.key, text, fastaHeader, fastaHeader),
                                 );
@@ -230,7 +230,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                             small={true}
                             initialValue={
                                 field.initialValue !== null
-                                    ? new VirtualFile(field.initialValue, 'Existing data')
+                                    ? new VirtualPlainSegmentFile(field.initialValue, 'Existing data')
                                     : undefined
                             }
                             showUndo={field.initialValue !== null}
