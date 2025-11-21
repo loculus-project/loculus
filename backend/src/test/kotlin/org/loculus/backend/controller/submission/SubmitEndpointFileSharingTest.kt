@@ -90,7 +90,7 @@ class SubmitEndpointFileSharingTest(
                 jsonPath(
                     "\$.detail",
                 ).value(
-                    "File upload contains 1 submissionIds that are not present in the metadata file: foobar",
+                    "File upload contains 1 submissionIds that are not present in the metadata file: 'foobar'",
                 ),
             )
     }
