@@ -176,7 +176,7 @@ class SubmitModel(
         )
         val addFastaId = requiresConsensusSequenceFile(submissionParams.organism)
         try {
-            uploadMetadata(uploadId, submissionParams, metadataStream, batchSize, addFastaId = addFastaId)
+            uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
         } finally {
             metadataTempFileToDelete.delete()
         }
@@ -252,7 +252,6 @@ class SubmitModel(
         submissionParams: SubmissionParams,
         metadataStream: InputStream,
         batchSize: Int,
-        addFastaId: Boolean,
     ) {
         log.debug {
             "intermediate storing uploaded metadata of type ${submissionParams.uploadType.name} " +
@@ -262,7 +261,7 @@ class SubmitModel(
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream, addFastaId)
+                    metadataEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
@@ -278,7 +277,7 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream, addFastaId)
+                    revisionEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
