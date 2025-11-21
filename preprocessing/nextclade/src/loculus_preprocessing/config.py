@@ -135,7 +135,13 @@ def generate_argparse_from_dataclass(config_cls: type[RawConfig]) -> argparse.Ar
     return parser
 
 
-def load_raw_config(config_file: str | None, ignore_args: bool = False) -> RawConfig:
+def assemble_raw_config(config_file: str | None, ignore_args: bool = False) -> RawConfig:
+    """
+    Config precedence: Direct function args > CLI args > ENV variables > config file > default
+
+    args:
+        config_file: Path to YAML config file - only used by tests
+    """
     # Set just log level this early from env, so we can debug log during config loading
     env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
     if env_log_level:
@@ -212,12 +218,5 @@ def build_runtime_config(raw: RawConfig) -> Config:
 
 
 def get_config(config_file: str | None = None, ignore_args: bool = False) -> Config:
-    """
-    Config precedence: Direct function args > CLI args > ENV variables > config file > default
-
-    args:
-        config_file: Path to YAML config file - only used by tests
-    """
-
-    raw = load_raw_config(config_file, ignore_args)
+    raw = assemble_raw_config(config_file, ignore_args)
     return build_runtime_config(raw)
