@@ -1,7 +1,6 @@
 {{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
-{{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
-{{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
+{{- $rawNucleotideSequences := $organismConfig.schema.nucleotideSequences }}
 {{- $referenceGenomes:= include "loculus.mergeReferenceGenomes" $organismConfig.referenceGenomes | fromYaml }}
 {{- $genesList := (eq $referenceGenomes.genes nil | ternary (list) $referenceGenomes.genes) }}
 {{- $genesDict := dict "genes" (list) -}}
