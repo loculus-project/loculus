@@ -29,10 +29,10 @@ jobs:
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
-          unzip -o ${{ inputs.taxon_id }}.zip; echo ""
-          tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset; echo ""
-          cat md5sum.txt; echo ""
-          ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*; echo ""
+          unzip -o ${{ inputs.taxon_id }}.zip; printf "\n"
+          tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset; printf "\n"
+          cat md5sum.txt; printf "\n"
+          ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*; printf "\n"
           seqkit stats ncbi_dataset/data/genomic.fna
       - name: Create S3cmd config
         run: |
