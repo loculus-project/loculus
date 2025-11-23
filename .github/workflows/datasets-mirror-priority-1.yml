@@ -15,6 +15,7 @@ jobs:
           - 3048448  # West nile virus
           - 3052460  # Orthoebolavirus sudanense
           - 3052462  # Orthoebolavirus zairense
+          - 3052505 # Orthomarburgvirus marburgense
           - 3052518  # CCHFV
       fail-fast: false
     uses: ./.github/workflows/datasets-mirror.yml
