@@ -26,10 +26,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser:
-          - chromium
-          - firefox
-          - cli
+        include:
+          - browser: chromium
+            playwright_browser: chromium
+            test_suite: browser
+          - browser: firefox
+            playwright_browser: firefox
+            test_suite: browser
+          - browser: cli
+            playwright_browser: chromium
+            test_suite: cli
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -79,29 +85,18 @@ jobs:
         run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
         run: uv pip install --system keyrings.alt
-      - name: Get Installed Playwright Version
-        id: playwright-version
-        run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      # Caching is not recommended: https://playwright.dev/docs/ci#caching-browsers
+      # We only install the browser that's actually needed
       - name: Install Playwright Browsers and System Dependencies
-        run: cd integration-tests && npx playwright install --with-deps
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-      - name: Install only System Dependencies
-        run: cd website && npx playwright install-deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: cd integration-tests && npx playwright install --with-deps --only-shell ${{ matrix.playwright_browser }}
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run Integration test
         env:
-          BROWSER: ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
-          TEST_SUITE: ${{ matrix.browser == 'cli' && 'cli' || 'browser' }}
+          BROWSER: ${{ matrix.playwright_browser }}
+          TEST_SUITE: ${{ matrix.test_suite }}
         run: |
           set -o pipefail
           cd integration-tests && npx playwright test --workers=4 --reporter=list,html 2>&1 | tee output.txt
