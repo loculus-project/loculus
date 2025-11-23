@@ -5,26 +5,13 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      build_arm:
-        type: boolean
-        description: "Build for ARM as well"
-        default: false
-        required: false
   workflow_call:
-    inputs:
-      build_arm:
-        type: boolean
-        description: "Build for ARM as well"
-        default: false
-        required: false
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-${{github.event.inputs.build_arm}}
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website
   cancel-in-progress: true
 jobs:
   check-cache:
@@ -38,7 +25,6 @@ jobs:
       cache-hit: ${{ steps.check-image.outputs.cache-hit }}
       dir-hash: ${{ steps.files-hash.outputs.dir-hash }}
       docker-metadata: ${{ steps.dockerMetadata.outputs.json }}
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
@@ -47,17 +33,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website-image.yml') }})
-          DIR_HASH="$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}"
           echo "dir-hash=$DIR_HASH" >> $GITHUB_OUTPUT
-      - name: Set build matrix
-        id: set-matrix
-        run: |
-          if [ "${{ env.BUILD_ARM }}" = "true" ]; then
-            matrix='{"include":[{"platform":"linux/amd64","runner":"ubuntu-latest"},{"platform":"linux/arm64","runner":"ubuntu-24.04-arm"}]}'
-          else
-            matrix='{"include":[{"platform":"linux/amd64","runner":"ubuntu-latest"}]}'
-          fi
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
@@ -68,7 +44,6 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=${{ env.BRANCH_NAME }}
             type=raw,value=commit-${{ env.sha }}
-            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -86,13 +61,18 @@ jobs:
     needs: check-cache
     if: needs.check-cache.outputs.cache-hit == 'false'
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 25
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.check-cache.outputs.matrix) }}
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - name: Prepare
         run: |
@@ -144,6 +124,7 @@ jobs:
   merge-or-retag:
     name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     needs: [check-cache, build]
+    if: always() && needs.check-cache.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
