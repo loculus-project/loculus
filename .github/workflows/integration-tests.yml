@@ -79,10 +79,9 @@ jobs:
         run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
         run: uv pip install --system keyrings.alt
-      # Caching is not recommended: https://playwright.dev/docs/ci#caching-browsers
-      # We only install the browser that's actually needed
+      # Firefox's readonly-setup is also done with Chromium
       - name: Install Playwright Browsers and System Dependencies
-        run: cd integration-tests && npx playwright install --with-deps --only-shell ${{ matrix.browser == 'cli' && 'chromium' || matrix.browser }}
+        run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
