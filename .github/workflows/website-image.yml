@@ -24,26 +24,13 @@ jobs:
     outputs:
       cache-hit: ${{ steps.check-image.outputs.cache-hit }}
       dir-hash: ${{ steps.files-hash.outputs.dir-hash }}
-      docker-metadata: ${{ steps.dockerMetadata.outputs.json }}
     steps:
-      - name: Shorten sha
-        run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v5
       - name: Generate files hash
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website-image.yml') }})
           echo "dir-hash=$DIR_HASH" >> $GITHUB_OUTPUT
-      - name: Setup Docker metadata
-        id: dockerMetadata
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.files-hash.outputs.dir-hash }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ env.BRANCH_NAME }}
-            type=raw,value=commit-${{ env.sha }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -74,14 +61,12 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
     steps:
-      - name: Prepare
+      - uses: actions/checkout@v5
+      - name: Prepare build variables
+        id: prepare
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-      - uses: actions/checkout@v5
-      - name: Get node version build arg
-        id: get-node-version
-        run: |
           NODE_VERSION=$(grep -v "^[[:space:]]*#" website/.nvmrc | tr -d 'v')
           echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
@@ -107,7 +92,7 @@ jobs:
           cache-from: type=gha,scope=website-${{ github.ref }}-${{ env.PLATFORM_PAIR }}
           cache-to: type=gha,mode=max,scope=website-${{ github.ref }}-${{ env.PLATFORM_PAIR }}
           outputs: type=image,name=${{ env.DOCKER_IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-          build-args: NODE_VERSION=${{ steps.get-node-version.outputs.NODE_VERSION }}
+          build-args: NODE_VERSION=${{ steps.prepare.outputs.NODE_VERSION }}
       - name: Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests
@@ -131,6 +116,16 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Setup Docker metadata
+        id: dockerMetadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.check-cache.outputs.dir-hash }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=sha,prefix=commit-,format=short
       - name: Download digests
         if: needs.check-cache.outputs.cache-hit == 'false'
         uses: actions/download-artifact@v4
@@ -150,7 +145,7 @@ jobs:
         if: needs.check-cache.outputs.cache-hit == 'false'
         working-directory: ${{ runner.temp }}/digests
         run: |
-          METADATA='${{ needs.check-cache.outputs.docker-metadata }}'
+          METADATA='${{ steps.dockerMetadata.outputs.json }}'
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$METADATA") \
             $(printf '${{ env.DOCKER_IMAGE_NAME }}@sha256:%s ' *)
       - name: Inspect image
@@ -160,7 +155,7 @@ jobs:
       - name: Retag and push existing image
         if: needs.check-cache.outputs.cache-hit == 'true'
         run: |
-          METADATA='${{ needs.check-cache.outputs.docker-metadata }}'
+          METADATA='${{ steps.dockerMetadata.outputs.json }}'
           TAGS=$(jq -r '.tags[]' <<< "$METADATA")
           for TAG in $TAGS; do
             docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.check-cache.outputs.dir-hash }}
