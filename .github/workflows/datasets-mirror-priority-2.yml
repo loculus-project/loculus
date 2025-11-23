@@ -1,0 +1,43 @@
+name: Mirror NCBI Datasets (Priority 2 - Daily)
+on:
+  workflow_dispatch:  # Allows manual triggering to re-run all priority-2 taxa
+  schedule:
+    - cron: '12 2 * * *' # Runs daily at 02:12 UTC
+jobs:
+  mirror:
+    strategy:
+      matrix:
+        taxon_id:
+          - 11053    # Dengue type 1
+          - 11060    # Dengue type 2
+          - 11069    # Dengue type 3
+          - 11070    # Dengue type 4
+          - 11137    # Coronavirus 229E
+          - 11250    # RSV
+          - 11520    # Influenza B
+          - 11676    # HIV1
+          - 12059    # Enterovirus
+          - 12637    # Dengue (all)
+          - 31631    # Coronavirus OC43
+          - 31704    # Coxsackievirus A16
+          - 39054    # Enterovirus A71
+          - 42769    # Coxsackievirus A10
+          - 42789    # Enterovirus D68
+          - 86107    # Coxsackievirus A6
+          - 118655   # Oropouche
+          - 138948   # Enterovirus A
+          - 138949   # Enterovirus B
+          - 138950   # Enterovirus C
+          - 138951   # Enterovirus D
+          - 162145   # Human metapneumovirus
+          - 197911   # Influenza A
+          - 208893   # RSV A
+          - 208895   # RSV B
+          - 277944   # Coronavirus NL63
+          - 290028   # Coronavirus HKU1
+          - 3050294  # Chickenpox virus
+      fail-fast: false
+    uses: ./.github/workflows/datasets-mirror.yml
+    secrets: inherit
+    with:
+      taxon_id: ${{ matrix.taxon_id }}
