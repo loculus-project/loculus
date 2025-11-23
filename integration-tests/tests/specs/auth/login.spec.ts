@@ -10,9 +10,7 @@ test.describe('Login Flow', () => {
 
     test('should login with valid credentials', async ({ page, testAccount }) => {
         await authPage.createAccount(testAccount);
-        await page.waitForTimeout(1000);
         await authPage.logout();
-        await page.waitForTimeout(1000);
         await authPage.login(testAccount.username, testAccount.password);
     });
 });
