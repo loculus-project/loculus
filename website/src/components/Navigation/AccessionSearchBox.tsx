@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FC, type FormEvent } from 'react';
 
 import { routes } from '../../routes/routes';
+import { Button } from '../common/Button';
 import SearchIcon from '~icons/material-symbols/search';
 
 interface Props {
@@ -17,10 +18,10 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (open) {
+        if (open && !defaultOpen) {
             inputRef.current?.focus();
         }
-    }, [open]);
+    }, [open, defaultOpen]);
 
     // Only allow alphanumeric, dot, dash, underscore - this is for security to prevent injection into URLs, rather than for UX
     function isValidAccession(input: string): boolean {
@@ -53,7 +54,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
             data-testid='nav-accession-search-form'
         >
             <div className='relative flex items-center'>
-                <button
+                <Button
                     type='submit'
                     onClick={() => setOpen(true)}
                     className='flex items-center justify-center text-primary-600 hover:text-primary-700 transition-colors'
@@ -61,7 +62,7 @@ export const AccessionSearchBox: FC<Props> = ({ className, onSubmitSuccess, defa
                     data-testid='nav-accession-search-button'
                 >
                     <SearchIcon className='w-5 h-5' />
-                </button>
+                </Button>
                 <input
                     ref={inputRef}
                     type='text'

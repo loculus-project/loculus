@@ -39,6 +39,13 @@ jobs:
           check-name: Build config-processor Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      - name: Wait for SILO Import Docker Image
+        uses: lewagon/wait-on-check-action@v1.4.1
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build silo-import Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.4.1
         with:

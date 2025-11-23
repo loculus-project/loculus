@@ -2,7 +2,7 @@ import { sentenceCase } from 'change-case';
 
 import { validateSingleValue } from './extractFieldValue';
 import type { TableSequenceData } from '../components/SearchPage/Table';
-import type { QueryState } from '../components/SearchPage/useQueryAsState.ts';
+import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type {
     FieldValues,
     GroupedMetadataFilter,
@@ -21,6 +21,8 @@ export const ORDER_DIRECTION_KEY = 'order';
 export const PAGE_KEY = 'page';
 export const NULL_QUERY_VALUE = '_null_';
 
+export const MUTATION_KEY = 'mutation';
+
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
@@ -29,14 +31,42 @@ export type SearchResponse = {
 type InitialVisibilityAccessor = (field: MetadataFilter) => boolean;
 type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
+export class MetadataVisibility {
+    public readonly isChecked: boolean;
+    private readonly onlyForSuborganism: string | undefined;
+
+    constructor(isChecked: boolean, onlyForSuborganism: string | undefined) {
+        this.isChecked = isChecked;
+        this.onlyForSuborganism = onlyForSuborganism;
+    }
+
+    public isVisible(selectedSuborganism: string | null) {
+        if (!this.isChecked) {
+            return false;
+        }
+
+        if (this.onlyForSuborganism === undefined || selectedSuborganism === null) {
+            return true;
+        }
+
+        return this.onlyForSuborganism === selectedSuborganism;
+    }
+}
+
 const getFieldOrColumnVisibilitiesFromQuery = (
     schema: Schema,
     state: QueryState,
     visibilityPrefix: string,
     initiallyVisibleAccessor: InitialVisibilityAccessor,
     visibilitySelectableAccessor: VisiblitySelectableAccessor,
-): Map<string, boolean> => {
-    const visibilities = new Map<string, boolean>();
+): Map<string, MetadataVisibility> => {
+    const explicitVisibilitiesInUrlByFieldName = new Map(
+        Object.entries(state)
+            .filter(([key]) => key.startsWith(visibilityPrefix))
+            .map(([key, value]) => [key.slice(visibilityPrefix.length), validateSingleValue(value, key) === 'true']),
+    );
+
+    const visibilities = new Map<string, MetadataVisibility>();
     schema.metadata.forEach((field) => {
         if (!visibilitySelectableAccessor(field)) {
             return;
@@ -47,20 +77,19 @@ const getFieldOrColumnVisibilitiesFromQuery = (
         if (field.rangeOverlapSearch) {
             fieldName = field.rangeOverlapSearch.rangeName;
         }
-        visibilities.set(fieldName, initiallyVisibleAccessor(field));
+
+        const visibility = new MetadataVisibility(
+            explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
+            field.onlyForSuborganism,
+        );
+
+        visibilities.set(fieldName, visibility);
     });
 
-    const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(visibilityPrefix));
-
-    for (const key of visibilityKeys) {
-        // Visibility values must always be single strings
-        const stringValue = validateSingleValue(state[key], key);
-        visibilities.set(key.slice(visibilityPrefix.length), stringValue === 'true');
-    }
     return visibilities;
 };
 
-export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
+export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, MetadataVisibility> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => field.initiallyVisible === true;
     const isFieldSelectable: VisiblitySelectableAccessor = (field) =>
         field.notSearchable !== true && field.name !== schema.suborganismIdentifierField;
@@ -73,7 +102,7 @@ export const getFieldVisibilitiesFromQuery = (schema: Schema, state: QueryState)
     );
 };
 
-export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, boolean> => {
+export const getColumnVisibilitiesFromQuery = (schema: Schema, state: QueryState): Map<string, MetadataVisibility> => {
     const initiallyVisibleAccessor: InitialVisibilityAccessor = (field) => schema.tableColumns.includes(field.name);
     const isFieldSelectable: VisiblitySelectableAccessor = (field) => !(field.hideInSearchResultsTable ?? false);
     return getFieldOrColumnVisibilitiesFromQuery(
@@ -160,8 +189,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
 };
 
 /**
- * Derives from the Metadata schema. For some metadata fields, they are expanded into multiple
- * (grouped) filters.
+ * Static information, derived from the Metadata schema (from the config).
+ * For some metadata fields, they are expanded into multiple (grouped) filters.
  */
 export class MetadataFilterSchema {
     public readonly filters: (MetadataFilter | GroupedMetadataFilter)[];
@@ -171,7 +200,7 @@ export class MetadataFilterSchema {
         this.filters = consolidateGroupedFields(expandedFilters);
     }
 
-    private ungroupedMetadataFilters(): MetadataFilter[] {
+    public ungroupedMetadataFilters(): MetadataFilter[] {
         return this.filters.flatMap((filter) => (filter.grouped ? filter.groupedFields : filter));
     }
 
@@ -240,8 +269,8 @@ export class MetadataFilterSchema {
             const val = validateSingleValue(queryState.accession, 'accession');
             values.accession = val === '' ? undefined : val;
         }
-        if ('mutation' in queryState) {
-            const val = validateSingleValue(queryState.mutation, 'mutation');
+        if (MUTATION_KEY in queryState) {
+            const val = validateSingleValue(queryState.mutation, MUTATION_KEY);
             values.mutation = val === '' ? undefined : val;
         }
         return values;

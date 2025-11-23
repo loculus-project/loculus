@@ -1,5 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { NavigationPage } from './navigation.page';
+import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
+import { SearchPage } from './search.page';
 
 export class ReviewPage {
     private page: Page;
@@ -25,7 +27,7 @@ export class ReviewPage {
     async waitForZeroProcessing() {
         await expect(this.page.locator('[data-testid="review-page-control-panel"]')).toContainText(
             '0 awaiting processing',
-            { timeout: 60000 },
+            { timeout: 90000 },
         );
     }
 
@@ -40,6 +42,32 @@ export class ReviewPage {
     async releaseValidSequences() {
         await this.page.getByRole('button', { name: /Release \d+ valid sequence/ }).click();
         await this.page.getByRole('button', { name: 'Release', exact: true }).click();
+    }
+
+    async releaseAndGoToReleasedSequences(): Promise<SearchPage> {
+        await this.releaseValidSequences();
+        await this.page.getByRole('link', { name: 'released sequences' }).click();
+        return new SearchPage(this.page);
+    }
+
+    async checkFilesInReviewDialog(
+        presentFiles: Record<string, string>,
+        absentFiles: string[] = [],
+    ) {
+        const filesDialog = await this.viewFiles();
+        for (const [fileName, fileContent] of Object.entries(presentFiles)) {
+            await expect(filesDialog.getByText(fileName)).toBeVisible();
+            if (fileContent) {
+                await getFromLinkTargetAndAssertContent(
+                    this.page.getByRole('link', { name: fileName }),
+                    fileContent,
+                );
+            }
+        }
+        for (const fileName of absentFiles) {
+            await expect(filesDialog.getByText(fileName)).not.toBeVisible();
+        }
+        await this.closeFilesDialog();
     }
 
     async viewSequences() {

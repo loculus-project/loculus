@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 
 export class SearchPage {
     constructor(private page: Page) {}
@@ -49,8 +50,8 @@ export class SearchPage {
         await this.page.getByTestId('field-selector-close-button').click();
     }
 
-    async fill(fieldLabel: string, value: string) {
-        const field = this.page.getByRole('textbox', { name: fieldLabel });
+    async fill(fieldLabel: string, value: string, exact = false) {
+        const field = this.page.getByRole('textbox', { name: fieldLabel, exact });
         await field.fill(value);
         await field.press('Enter');
         await this.page.waitForTimeout(900); // how can we better ensure that the filter is applied?
@@ -141,5 +142,44 @@ export class SearchPage {
         await expect(
             this.page.getByText(new RegExp(`Search returned ${count} sequence`)),
         ).toBeVisible();
+    }
+
+    async waitForSequences(role: 'link' | 'cell', name: string | RegExp) {
+        while (!(await this.page.getByRole(role, { name: name }).isVisible())) {
+            await this.page.reload();
+            await this.page.waitForTimeout(2000);
+        }
+    }
+
+    async openModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
+        await this.page.getByRole(role, { name: name }).click();
+    }
+
+    async waitForAndOpenModalByRoleAndName(role: 'link' | 'cell', name: string | RegExp) {
+        await this.waitForSequences(role, name);
+        await this.openModalByRoleAndName(role, name);
+    }
+
+    async checkAllFileContents(fileData: Record<string, string>) {
+        for (const [fileName, fileContent] of Object.entries(fileData)) {
+            await getFromLinkTargetAndAssertContent(
+                this.page.getByRole('link', { name: fileName }),
+                fileContent,
+            );
+        }
+    }
+
+    async checkFileContentInModal(
+        role: 'link' | 'cell',
+        name: string | RegExp,
+        fileData: Record<string, string>,
+    ) {
+        await this.waitForAndOpenModalByRoleAndName(role, name);
+        await this.checkAllFileContents(fileData);
+        await this.closeDetailsModal();
+    }
+
+    async closeDetailsModal() {
+        await this.page.getByTestId('close-preview-button').click();
     }
 }

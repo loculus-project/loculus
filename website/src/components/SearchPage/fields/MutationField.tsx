@@ -9,6 +9,7 @@ import {
     parseMutationString,
     serializeMutationQueries,
 } from '../../../utils/mutation.ts';
+import { Button } from '../../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../common/headlessui/Combobox';
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
@@ -79,7 +80,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                         }`}
                                     >
                                         {option.text}
-                                        <button
+                                        <Button
                                             type='button'
                                             onClick={(event) => {
                                                 event.stopPropagation();
@@ -88,7 +89,7 @@ export const MutationField: FC<MutationFieldProps> = ({ suborganismSegmentAndGen
                                             className='ml-1 focus:outline-none'
                                         >
                                             &times;
-                                        </button>
+                                        </Button>
                                     </span>
                                 ))}
                             </div>

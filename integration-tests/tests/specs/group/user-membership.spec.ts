@@ -1,19 +1,24 @@
-import { createTestGroup, test } from '../../fixtures/group.fixture';
+import { test } from '../../fixtures/group.fixture';
 import { GroupPage } from '../../pages/group.page';
 import { MyAccountPage } from '../../pages/my-account.page';
+import { buildTestGroup } from '../../utils/testGroup';
 
 test.describe('User group membership', () => {
     test('shows existing groups, allows creating a new group, and leaving it', async ({
-        pageWithGroup,
+        page,
         groupName,
+        groupId,
     }) => {
-        const myAccountPage = new MyAccountPage(pageWithGroup);
-        const groupPage = new GroupPage(pageWithGroup);
+        // Ensure group is created by depending on groupId
+        void groupId;
+
+        const myAccountPage = new MyAccountPage(page);
+        const groupPage = new GroupPage(page);
 
         await myAccountPage.goto();
         await myAccountPage.expectGroupVisible(groupName);
 
-        const newGroup = createTestGroup();
+        const newGroup = buildTestGroup();
         await groupPage.createGroup(newGroup);
 
         await myAccountPage.goto();

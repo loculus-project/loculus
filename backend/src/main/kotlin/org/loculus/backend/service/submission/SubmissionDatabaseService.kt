@@ -35,6 +35,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
@@ -100,7 +101,6 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
-import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
 
@@ -116,7 +116,6 @@ class SubmissionDatabaseService(
     private val s3Service: S3Service,
     private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
-    pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
@@ -124,11 +123,6 @@ class SubmissionDatabaseService(
     private val dateProvider: DateProvider,
     @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
-
-    init {
-        Database.connect(pool)
-    }
-
     private var lastPreprocessedDataUpdate: String? = null
 
     fun streamUnprocessedSubmissions(
@@ -399,6 +393,7 @@ class SubmissionDatabaseService(
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
+                it[compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {

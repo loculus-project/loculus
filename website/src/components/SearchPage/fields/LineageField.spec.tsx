@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LineageField } from './LineageField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config';
+import { Button } from '../../common/Button';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -19,10 +20,8 @@ const mockUseLineageDefinition = vi.fn();
 // @ts-expect-error because mockReturnValue is not defined in the type definition
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 lapisClientHooks.mockReturnValue({
-    zodiosHooks: {
-        useLineageDefinition: mockUseLineageDefinition,
-        useAggregated: mockUseAggregated,
-    },
+    useAggregated: mockUseAggregated,
+    useLineageDefinition: mockUseLineageDefinition,
 });
 
 describe('LineageField', () => {
@@ -213,7 +212,7 @@ describe('LineageField', () => {
                         lapisUrl={lapisUrl}
                         lapisSearchParameters={lapisSearchParameters}
                     />
-                    <button onClick={() => setValue('')}>reset</button>
+                    <Button onClick={() => setValue('')}>reset</Button>
                 </>
             );
         };

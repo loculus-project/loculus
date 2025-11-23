@@ -1,16 +1,19 @@
 import { test as groupTest } from './group.fixture';
-import { expect, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
 import { SingleSequenceSubmissionPage } from '../pages/submission.page';
 
 type SequenceFixtures = {
-    pageWithReleasedSequence: Page;
+    releasedSequence: string;
 };
 
 export const test = groupTest.extend<SequenceFixtures>({
-    pageWithReleasedSequence: [
-        async ({ pageWithGroup }, use) => {
-            const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+    releasedSequence: [
+        async ({ page, groupId }, use) => {
+            // Ensure group is created by depending on groupId
+            void groupId;
+
+            const submissionPage = new SingleSequenceSubmissionPage(page);
             const submissionId = `test_${uuidv4().slice(0, 8)}`;
 
             await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
@@ -31,21 +34,21 @@ export const test = groupTest.extend<SequenceFixtures>({
             const reviewPage = await submissionPage.submitSequence();
 
             await reviewPage.releaseValidSequences();
-            await pageWithGroup.getByRole('link', { name: 'Released Sequences' }).click();
+            await page.getByRole('link', { name: 'Released Sequences' }).click();
             await expect
                 .poll(
                     async () => {
-                        await pageWithGroup.reload();
-                        return pageWithGroup.getByRole('link', { name: /LOC_/ }).isVisible();
+                        await page.reload();
+                        return page.getByRole('link', { name: /LOC_/ }).isVisible();
                     },
                     {
                         message: 'Link with name /LOC_/ never became visible.',
-                        timeout: 60000,
+                        timeout: 90000,
                     },
                 )
                 .toBe(true);
 
-            await use(pageWithGroup);
+            await use(submissionId);
         },
         {
             timeout: 90000,

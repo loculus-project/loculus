@@ -32,7 +32,6 @@ ATCGATCGATCGATCGATCGATCG`;
             group: groupId,
         });
 
-        cliPage.logCliResult('Submit sequences', submitResult, true);
         cliPage.assertSuccess(submitResult, 'Submit sequences');
         expect(submitResult.stdout).toContain('Submission successful');
     });

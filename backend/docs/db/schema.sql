@@ -4,8 +4,8 @@
 
 \restrict dummy
 
--- Dumped from database version 15.14 (Debian 15.14-1.pgdg13+1)
--- Dumped by pg_dump version 16.10 (Debian 16.10-1.pgdg13+1)
+-- Dumped from database version 15.15 (Debian 15.15-1.pgdg13+1)
+-- Dumped by pg_dump version 16.11 (Debian 16.11-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -168,6 +168,35 @@ ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
 
 
 --
+-- Name: compression_dictionaries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.compression_dictionaries (
+    id integer NOT NULL,
+    hash character(64) NOT NULL,
+    dict_contents bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    description text
+);
+
+
+ALTER TABLE public.compression_dictionaries OWNER TO postgres;
+
+--
+-- Name: compression_dictionaries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.compression_dictionaries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.compression_dictionaries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: current_processing_pipeline; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -211,7 +240,8 @@ CREATE TABLE public.sequence_entries (
     released_at timestamp without time zone,
     is_revocation boolean DEFAULT false NOT NULL,
     original_data jsonb,
-    version_comment text
+    version_comment text,
+    compression_migration_checked_at timestamp without time zone
 );
 
 
@@ -230,7 +260,8 @@ CREATE TABLE public.sequence_entries_preprocessed_data (
     warnings jsonb,
     processing_status text NOT NULL,
     started_processing_at timestamp without time zone NOT NULL,
-    finished_processing_at timestamp without time zone
+    finished_processing_at timestamp without time zone,
+    compression_migration_checked_at timestamp without time zone
 );
 
 
@@ -605,6 +636,22 @@ ALTER TABLE ONLY public.user_groups_table ALTER COLUMN id SET DEFAULT nextval('p
 
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: compression_dictionaries compression_dictionaries_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_hash_key UNIQUE (hash);
+
+
+--
+-- Name: compression_dictionaries compression_dictionaries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.compression_dictionaries
+    ADD CONSTRAINT compression_dictionaries_pkey PRIMARY KEY (id);
 
 
 --

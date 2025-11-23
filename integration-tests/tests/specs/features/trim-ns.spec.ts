@@ -4,11 +4,12 @@ import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 
 test.describe('Sequence N trimming functionality', () => {
     test('correctly trims N characters from the beginning and end of unaligned sequences', async ({
-        pageWithGroup,
+        page,
+        groupId,
     }) => {
         test.setTimeout(120000);
-        const page = pageWithGroup;
-        const submissionPage = new SingleSequenceSubmissionPage(pageWithGroup);
+        void groupId;
+        const submissionPage = new SingleSequenceSubmissionPage(page);
 
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
         await submissionPage.fillSubmissionForm({

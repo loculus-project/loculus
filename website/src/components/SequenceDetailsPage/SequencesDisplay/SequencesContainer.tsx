@@ -17,6 +17,7 @@ import {
     unalignedSequenceSegment,
 } from '../../../utils/sequenceTypeHelpers.ts';
 import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../../common/BoxWithTabs.tsx';
+import { Button } from '../../common/Button';
 import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
@@ -51,9 +52,9 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 
     if (!loadSequences) {
         return (
-            <button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+            <Button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
                 Load sequences
-            </button>
+            </Button>
         );
     }
 
@@ -249,6 +250,7 @@ const GeneDropdown: FC<GeneDropdownProps> = ({ genes, sequenceType, setType }) =
     return (
         <div className='mb-4'>
             <select
+                data-testid='gene-dropdown'
                 className='select select-bordered w-full max-w-xs'
                 value={selectedGene}
                 onChange={(e) => {

@@ -12,6 +12,9 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import MdiDelete from '~icons/mdi/delete';
+import MdiDownload from '~icons/mdi/download';
+import MdiPencil from '~icons/mdi/pencil';
 
 const logger = getClientLogger('SeqSetItemActions');
 
@@ -49,35 +52,39 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
+            <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
             <div className='flex-row items-center justify-between w-full'>
-                <div className='flex justify-start items-center pt-4 pb-8'>
-                    <div className='pr-2'>
-                        <Button className='btn' onClick={() => setExportModalVisible(true)}>
-                            Export
+                <div className='flex justify-start items-center pb-8 gap-2'>
+                    <Button
+                        className='outlineButton flex items-center gap-2'
+                        onClick={() => setExportModalVisible(true)}
+                    >
+                        <MdiDownload className='w-4 h-4' />
+                        Export / Cite
+                    </Button>
+                    {isAdminView ? (
+                        <Button
+                            className='outlineButton flex items-center gap-2'
+                            onClick={() => setEditModalVisible(true)}
+                        >
+                            <MdiPencil className='w-4 h-4' />
+                            Edit
                         </Button>
-                    </div>
-                    <div className='px-2'>
-                        {isAdminView ? (
-                            <Button className='btn' onClick={() => setEditModalVisible(true)}>
-                                Edit
-                            </Button>
-                        ) : null}
-                    </div>
-                    <div className='px-2'>
-                        {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
-                            <Button
-                                className='btn'
-                                onClick={() =>
-                                    displayConfirmationDialog({
-                                        dialogText: `Are you sure you want to delete this seqSet version?`,
-                                        onConfirmation: handleDeleteSeqSet,
-                                    })
-                                }
-                            >
-                                Delete
-                            </Button>
-                        ) : null}
-                    </div>
+                    ) : null}
+                    {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
+                        <Button
+                            className='outlineButton flex items-center gap-2'
+                            onClick={() =>
+                                displayConfirmationDialog({
+                                    dialogText: `Are you sure you want to delete this seqSet version?`,
+                                    onConfirmation: handleDeleteSeqSet,
+                                })
+                            }
+                        >
+                            <MdiDelete className='w-4 h-4' />
+                            Delete
+                        </Button>
+                    ) : null}
                 </div>
             </div>
             <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>

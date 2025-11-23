@@ -26,6 +26,7 @@ import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
+import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.S3_CONFIG
@@ -139,7 +140,7 @@ class SubmitProcessedDataEndpointTest(
         assertThat(processedData.unalignedNucleotideSequences, hasEntry(MAIN_SEGMENT, "NACTG"))
         assertThat(
             processedData.alignedNucleotideSequences,
-            hasEntry(MAIN_SEGMENT, "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"),
+            hasEntry(MAIN_SEGMENT, DUMMY_ORGANISM_MAIN_SEQUENCE),
         )
         assertThat(processedData.alignedAminoAcidSequences, hasEntry(SOME_LONG_GENE, "ACDEFGHIKLMNPQRSTVWYBZX-*"))
         assertThat(processedData.nucleotideInsertions, hasEntry(MAIN_SEGMENT, listOf(Insertion(123, "ACTG"))))

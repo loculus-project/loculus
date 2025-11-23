@@ -1277,12 +1277,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           inputs: {input: nextclade.frameShifts}
       - name: totalStopCodons
+        perSegment: true
+        displayName: Total stop codons
         type: int
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
           inputs: {input: nextclade.qc.stopCodons.totalStopCodons}
       - name: stopCodons
+        perSegment: true
+        displayName: Stop codons
         header: "Alignment and QC metrics"
         noInput: true
         preprocessing:
@@ -1792,6 +1796,7 @@ defaultOrganisms:
         - &evMetadataAdd
           name: clade_cv_a16
           displayName: Clade CV-A16
+          onlyForSuborganism: CV-A16
           header: "Clade"
           noInput: true
           generateIndex: true
@@ -1805,6 +1810,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_cv_a10
           displayName: Clade CV-A10
+          onlyForSuborganism: CV-A10
           preprocessing:
             args:
               segment: CV-A10
@@ -1812,6 +1818,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_a71
           displayName: Clade EV-A71
+          onlyForSuborganism: EV-A71
           preprocessing:
             args:
               segment: EV-A71
@@ -1819,6 +1826,7 @@ defaultOrganisms:
         - <<: *evMetadataAdd
           name: clade_ev_d68
           displayName: Clade EV-D68
+          onlyForSuborganism: EV-D68
           preprocessing:
             args:
               segment: EV-D68
@@ -1987,6 +1995,9 @@ images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
     tag: "v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+    pullPolicy: Always
+  siloImporter:
+    repository: "ghcr.io/loculus-project/silo-import"
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"

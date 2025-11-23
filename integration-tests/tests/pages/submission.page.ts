@@ -2,9 +2,9 @@ import { Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
+import { clearTmpDir } from '../utils/tmpdir';
 
 class SubmissionPage {
     protected page: Page;
@@ -30,21 +30,48 @@ class SubmissionPage {
         await this.page.getByRole('link', { name: 'Submit Upload new sequences.' }).click();
     }
 
+    async discardRawReadsFiles() {
+        await this.page.getByTestId('discard_raw_reads').click();
+    }
+
     async acceptTerms() {
         await this.page.getByText('I confirm that the data').click();
         await this.page.getByText('I confirm I have not and will').click();
     }
 
+    // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
     async submitSequence(): Promise<ReviewPage> {
-        await this.page.getByRole('button', { name: 'Submit sequences' }).click();
-        const confirmButton = this.page.getByRole('button', {
-            name: 'Continue under Open terms',
-        });
-        if (await confirmButton.isVisible()) {
-            await confirmButton.click();
-        }
-        await this.page.waitForURL('**/review');
+        await this.page
+            .getByRole('button', { name: 'Submit sequences' })
+            .click({ timeout: 10_000 });
+
+        // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function
+        // Void because we're waiting for the review page anyway, so no need to wait for this specifically
+        void this.page
+            .getByRole('button', { name: 'Continue under Open terms' })
+            .click({ timeout: 3_000 })
+            .catch(() => {});
+
+        await this.page.waitForURL('**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);
+    }
+
+    async submitAndWaitForProcessingDone(): Promise<ReviewPage> {
+        await this.acceptTerms();
+        const reviewPage = await this.submitSequence();
+        await reviewPage.waitForZeroProcessing();
+        return reviewPage;
+    }
+
+    protected async _uploadFilesFromTmpDir(testId: string, tmpDir: string, fileCount: number) {
+        await this.page.getByRole('heading', { name: 'Extra files' }).scrollIntoViewIfNeeded();
+        // Trigger file upload (don't await) and wait for checkmarks to appear (indicates success)
+        void this.page.getByTestId(testId).setInputFiles(tmpDir);
+        return Promise.all(
+            Array.from({ length: fileCount }, (_, i) =>
+                this.page.getByText('✓').nth(i).waitFor({ state: 'visible' }),
+            ),
+        );
     }
 }
 
@@ -105,17 +132,21 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, string>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
+        tmpDir: string,
+    ) {
+        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
+        const fileCount = Object.keys(fileContents).length;
+        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
+    }
+
+    private async _prepareTmpDirWithFiles(fileContents: Record<string, string>, tmpDir: string) {
+        await clearTmpDir(tmpDir);
+
         await Promise.all(
             Object.entries(fileContents).map(([fileName, fileContent]) =>
                 fs.promises.writeFile(path.join(tmpDir, fileName), fileContent),
             ),
         );
-
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
     }
 
     async completeSubmission(
@@ -191,13 +222,28 @@ export class BulkSubmissionPage extends SubmissionPage {
      * for the given file ID.
      * @param fileId For which file ID to upload the files.
      * @param fileContents A struct: submissionID -> filename -> filecontent.
-     * @returns Returns a function to be called to delete the tmp dir again.
+     * @param tmpDir The temporary directory to use for storing files.
      */
     async uploadExternalFiles(
         fileId: string,
         fileContents: Record<string, Record<string, string>>,
-    ): Promise<() => Promise<void>> {
-        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'upload-'));
+        tmpDir: string,
+    ) {
+        await this._prepareTmpDirWithFiles(fileContents, tmpDir);
+        const fileCount = Object.values(fileContents).reduce(
+            (total, files) => total + Object.keys(files).length,
+            0,
+        );
+        await this._uploadFilesFromTmpDir(fileId, tmpDir, fileCount);
+    }
+
+    private async _prepareTmpDirWithFiles(
+        fileContents: Record<string, Record<string, string>>,
+        tmpDir: string,
+    ) {
+        await clearTmpDir(tmpDir);
+
+        // Create submission directories and write files
         const submissionIds = Object.keys(fileContents);
         await Promise.all(
             submissionIds.map((submissionId) => fs.promises.mkdir(path.join(tmpDir, submissionId))),
@@ -209,9 +255,5 @@ export class BulkSubmissionPage extends SubmissionPage {
                 );
             }),
         );
-
-        await this.page.getByTestId(fileId).setInputFiles(tmpDir);
-
-        return () => fs.promises.rm(tmpDir, { recursive: true, force: true });
     }
 }

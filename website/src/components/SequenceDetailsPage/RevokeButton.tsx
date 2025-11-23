@@ -7,6 +7,7 @@ import { backendClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { Button } from '../common/Button';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
@@ -47,7 +48,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     };
 
     return (
-        <button
+        <Button
             className='btn btn-sm  bg-red-400'
             onClick={() =>
                 displayRevocationDialog({
@@ -57,7 +58,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
             }
         >
             Revoke this sequence
-        </button>
+        </Button>
     );
 };
 
@@ -95,13 +96,11 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
     return (
         <div className='modal-box'>
             <form method='dialog'>
-                <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
+                <Button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2' onClick={onClose}>
                     ✕
-                </button>
+                </Button>
             </form>
-
             <h3 className='font-bold text-lg'>{dialogText}</h3>
-
             <input
                 type='text'
                 value={inputValue}
@@ -109,15 +108,14 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
                 placeholder='Enter reason for revocation'
                 className='mt-4 w-11/12 mx-auto block'
             />
-
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
+                    <Button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
                         Cancel
-                    </button>
+                    </Button>
                 </form>
                 <form method='dialog'>
-                    <button
+                    <Button
                         className='btn loculusColor text-white hover:bg-primary-700'
                         onClick={(e) => {
                             e.preventDefault();
@@ -125,7 +123,7 @@ export const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConf
                         }}
                     >
                         Confirm
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

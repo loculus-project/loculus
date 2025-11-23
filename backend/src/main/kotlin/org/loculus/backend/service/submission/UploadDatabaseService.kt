@@ -148,9 +148,8 @@ class UploadDatabaseService(
                     this[sequenceSubmissionIdColumn] = submissionId
                     this[segmentNameColumn] = segmentName
                     this[sequenceUploadIdColumn] = uploadId
-                    this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
+                    this[compressedSequenceDataColumn] = compressor.compressOriginalSequence(
                         it.sequence,
-                        segmentName,
                         submittedOrganism,
                     )
                 }
@@ -202,7 +201,8 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
-                original_data
+                original_data,
+                compression_migration_checked_at
             )
             SELECT
                 metadata_upload_aux_table.accession,
@@ -223,7 +223,8 @@ class UploadDatabaseService(
                         ) FILTER (WHERE sequence_upload_aux_table.segment_name IS NOT NULL),
                         '{}'::jsonb
                     )
-                )
+                ),
+                NOW()
             FROM
                 metadata_upload_aux_table
             LEFT JOIN

@@ -27,6 +27,15 @@ export default tseslint.config(
             '@typescript-eslint/return-await': 'error',
             'unicorn/no-unnecessary-await': 'error',
             'no-empty-pattern': 'off', // Playwright requires a lot of empty destructuring patterns
+            'no-restricted-globals': [
+                'error',
+                {
+                    name: 'fetch',
+                    message:
+                        'Use page.request.get/post/etc instead of fetch. ' +
+                        'The Playwright request API ensures requests are properly tracked and provides better debugging.',
+                },
+            ],
         },
     },
 );

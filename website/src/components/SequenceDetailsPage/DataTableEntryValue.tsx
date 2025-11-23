@@ -6,6 +6,7 @@ import { LinkWithMenuComponent } from './LinkWithMenuComponent';
 import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 
 interface Props {
     data: TableDataEntry;
@@ -165,9 +166,9 @@ const PlainValueDisplay: React.FC<{ value: TableDataEntry['value'] }> = ({ value
         return (
             <span>
                 {showMore ? value : `${preview}...`}{' '}
-                <button onClick={() => setShowMore(!showMore)} className={`underline${showMore ? ' block' : ''}`}>
+                <Button onClick={() => setShowMore(!showMore)} className={`underline${showMore ? ' block' : ''}`}>
                     {showMore ? 'Show less' : 'Show more'}
-                </button>
+                </Button>
             </span>
         );
     }

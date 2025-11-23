@@ -1,0 +1,5 @@
+alter table sequence_entries_preprocessed_data
+add column compression_migration_checked_at timestamp;
+
+alter table sequence_entries
+add column compression_migration_checked_at timestamp;

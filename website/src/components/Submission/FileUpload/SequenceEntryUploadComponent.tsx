@@ -1,15 +1,16 @@
 import { useState, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { routes } from '../../../routes/routes';
+import { Button } from '../../common/Button';
 import type { UploadAction } from '../DataUploadForm';
 import { metadataFormatDocsUrl } from '../metadataFormatDocsUrl';
+import type { ColumnMapping } from './ColumnMapping';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
 import type { InputField } from '../../../types/config';
 import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
-import type { ColumnMapping } from './ColumnMapping';
 
 type SequenceEntryUploadProps = {
     organism: string;
@@ -195,9 +196,9 @@ const DevExampleData = ({
                 onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
                 className='w-32 h-6 rounded'
             />
-            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 ml-2 h-6'>
+            <Button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 ml-2 h-6'>
                 Load Example Data
-            </button>{' '}
+            </Button>{' '}
             <br />
             {dataIsLoaded && <span className='text-xs text-gray-500'>Data loaded</span>}
         </p>

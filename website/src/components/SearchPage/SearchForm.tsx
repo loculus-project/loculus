@@ -6,6 +6,7 @@ import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 import { Button } from '../common/Button';
 import type { LapisSearchParameters } from './DownloadDialog/SequenceFilters.tsx';
 import { SuborganismSelector } from './SuborganismSelector.tsx';
+import { getDisplayState } from './TableColumnSelectorModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { DateRangeField } from './fields/DateRangeField.tsx';
@@ -21,7 +22,7 @@ import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGe
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
 import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
-import { type MetadataFilterSchema } from '../../utils/search.ts';
+import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
 import MaterialSymbolsHelpOutline from '~icons/material-symbols/help-outline';
@@ -38,7 +39,7 @@ interface SearchFormProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
-    searchVisibilities: Map<string, boolean>;
+    searchVisibilities: Map<string, MetadataVisibility>;
     setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     lapisSearchParameters: LapisSearchParameters;
@@ -62,7 +63,9 @@ export const SearchForm = ({
     selectedSuborganism,
     setSelectedSuborganism,
 }: SearchFormProps) => {
-    const visibleFields = filterSchema.filters.filter((field) => searchVisibilities.get(field.name));
+    const visibleFields = filterSchema.filters.filter(
+        (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
+    );
 
     const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false);
     const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
@@ -98,6 +101,8 @@ export const SearchForm = ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),
             header: filter.header,
+            displayState: getDisplayState(filter, selectedSuborganism, suborganismIdentifierField),
+            isChecked: searchVisibilities.get(filter.name)?.isChecked ?? false,
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
@@ -108,9 +113,9 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
+                <Button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
                     Modify search query
-                </button>
+                </Button>
             </div>
             {isMobileOpen && <OffCanvasOverlay className='md:hidden' onClick={closeOnMobile} />}
             <div
@@ -151,13 +156,6 @@ export const SearchForm = ({
                         isOpen={isFieldSelectorOpen}
                         onClose={toggleFieldSelector}
                         fields={fieldItems}
-                        selectedFields={
-                            new Set(
-                                Array.from(searchVisibilities.entries())
-                                    .filter(([_, visible]) => visible)
-                                    .map(([field]) => field),
-                            )
-                        }
                         setFieldSelected={setASearchVisibility}
                     />
                     <AdvancedOptionsModal
@@ -190,7 +188,7 @@ export const SearchForm = ({
                             <MutationField
                                 suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
-                                onChange={(value) => setSomeFieldValues(['mutation', value])}
+                                onChange={(value) => setSomeFieldValues([MUTATION_KEY, value])}
                             />
                         )}
                         {visibleFields.map((filter) => (
@@ -203,7 +201,7 @@ export const SearchForm = ({
                                 lapisSearchParameters={lapisSearchParameters}
                             />
                         ))}
-                    </div>{' '}
+                    </div>
                 </div>
             </div>
         </QueryClientProvider>
@@ -338,9 +336,9 @@ const AdvancedOptionsModal = ({
                 ))}
             </div>
             <div className='mt-6 flex justify-end'>
-                <button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
+                <Button type='button' className='btn loculusColor text-white -py-1' onClick={onClose}>
                     Close
-                </button>
+                </Button>
             </div>
         </BaseDialog>
     );

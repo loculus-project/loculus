@@ -1,8 +1,9 @@
-import { Input } from '@headlessui/react';
 import { type FC } from 'react';
 
 import type { InputFieldOption } from '../../types/config';
+import { Button } from '../common/Button';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../common/headlessui/Combobox';
+import { Input } from '../common/headlessui/Input';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
@@ -97,7 +98,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                     onChange={(e) => onChange({ ...row, value: e.target.value })}
                 />
             )}
-            <button
+            <Button
                 className='bg-white bg-opacity-50 rounded-lg -m-12 px-3'
                 onClick={() => onChange({ ...row, value: row.initialValue })}
             >
@@ -109,7 +110,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName,
                         <UndoTwoToneIcon color='action' />
                     </div>
                 )}
-            </button>
+            </Button>
         </>
     );
 };

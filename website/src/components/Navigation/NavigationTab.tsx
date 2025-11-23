@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Button } from '../common/Button';
+
 type NavigationTabProps =
     | {
           isActive?: boolean;
@@ -36,8 +38,8 @@ export const NavigationTab: React.FC<NavigationTabProps> = (props) => {
     }
 
     return (
-        <button onClick={props.onClick} className={combinedClassName}>
+        <Button onClick={props.onClick} className={combinedClassName}>
             {children}
-        </button>
+        </Button>
     );
 };

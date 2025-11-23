@@ -9,7 +9,7 @@ This website uses [Astro](https://astro.build/) for static site generation and
 
 -   Set up your `.env` file, e.g. by copying `.env.example` with `cp .env.example .env`
 -   Install packages: `npm ci` (`ci` as opposed to `install` makes sure to install the exact versions specified in `package-lock.json`)
--   Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`. If you are not running the backend locally, run `../generate_local_test_config.sh --from-live` to point to the backend from the live server (preview of the `main` branch).
+-   Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`. If you are not running the backend locally, run `../generate_local_test_config.sh --from-live` to point to the backend from the live server (preview of the `main` branch) or `../generate_local_test_config.sh --from-live --live-host main.loculus.org` to specify a particular host which can also be a preview.
 -   Run `npm run start` to start a local development server with hot reloading.
 -   Run `npm run format-fast` to format the code.
 
@@ -76,6 +76,11 @@ When using interactive components (buttons, Headless UI components like Combobox
 
 -   **For buttons**: Use `Button` from `src/components/common/Button.tsx` instead of native `<button>`
 -   **For Headless UI Combobox**: Import from `src/components/common/headlessui/Combobox.tsx` instead of `@headlessui/react`
+-   **For Headless UI Input**: Import from `src/components/common/headlessui/Input.tsx` instead of `@headlessui/react`
 -   **For other interactive elements**: Consider wrapping with `DisabledUntilHydrated` or using the `useClientFlag` hook
 
 These wrappers automatically disable components until client-side hydration is complete, preventing Playwright from interacting with them before they're ready.
+
+### Codemods
+
+Inspiration for writing codemods can be found in [codemods/AGENTS.md](./codemods/AGENTS.md).

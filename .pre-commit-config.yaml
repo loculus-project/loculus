@@ -7,9 +7,13 @@ repos:
     - id: ruff-check
       args: [ --fix ]
       files: ^ena-submission/
+    # Run lint but only fix auto-fixable issues.
+    - id: ruff-check
+      args: [ --fix-only ]
+      files: ^preprocessing/nextclade/
     # Run the formatter.
     - id: ruff-format
-      files: ^ena-submission/
+      files: ^ena-submission/|^preprocessing/nextclade/
 - repo: local
   hooks:
     - id: prettier-values-schema

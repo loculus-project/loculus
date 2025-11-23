@@ -53,3 +53,21 @@ jobs:
           uv pip install --system '.[test]'
       - name: Run mypy (checks type hints)
         run: mypy . --config-file .mypy.ini --non-interactive --install-types
+  formatCheck:
+    name: Code Format Checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: preprocessing/nextclade/environment.yml
+          micromamba-version: 'latest'
+          cache-environment: true
+          post-cleanup: 'all'
+      - name: Run ruff format check
+        run: ruff format --diff .
+      - name: Run ruff check for auto-fixable lints issues
+        if: ${{ always() }}
+        run: ruff check --diff .

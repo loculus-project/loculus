@@ -15,34 +15,51 @@ const { currentOrganism, currentOrganismObject, currentPath } = Astro.props;
 // Get the navigation items for this organism
 const sequenceRelatedItems = getSequenceRelatedItems(currentOrganism);
 const extraItems = extraSequenceRelatedTopNavigationItems(currentOrganism);
+const navigationItems = [...sequenceRelatedItems, ...extraItems];
+const selectId = currentOrganism ? `organism-navigation-${currentOrganism}` : 'organism-navigation';
 ---
 
 {
     currentOrganism && (
         <nav class='bg-gray-50 border-gray-200 border-b-[1.5px]' aria-label='Organism navigation'>
-            <div class='flex items-center gap-2 px-4 py-2 mx-4'>
-                <span class='text-gray-700 font-medium mr-3'>
-                    {currentOrganismObject?.displayName || currentOrganism}
-                </span>
-                <span class='text-gray-300 mr-2'>|</span>
-                {sequenceRelatedItems.map(({ text, path, icon }) => {
-                    const Icon = icon;
-                    const isActive = currentPath.startsWith(path);
-                    return (
-                        <SubmenuLink href={path} isActive={isActive}>
-                            {Icon && <Icon className='w-4 h-4' />}
-                            {text}
-                        </SubmenuLink>
-                    );
-                })}
-                {extraItems.map(({ text, path }) => {
-                    const isActive = currentPath.startsWith(path);
-                    return (
-                        <SubmenuLink href={path} isActive={isActive}>
-                            {text}
-                        </SubmenuLink>
-                    );
-                })}
+            <div class='flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2 mx-4'>
+                <div class='flex items-center gap-2 w-full sm:flex-1 flex-wrap sm:flex-nowrap'>
+                    <span class='text-gray-700 font-medium sm:mr-3'>
+                        {currentOrganismObject?.displayName || currentOrganism}
+                    </span>
+                    <span class='hidden sm:inline text-gray-300 mr-2'>|</span>
+                    <div class='hidden sm:flex items-center gap-2 flex-wrap'>
+                        {navigationItems.map(({ text, path, icon }) => {
+                            const Icon = icon;
+                            const isActive = currentPath.startsWith(path);
+                            return (
+                                <SubmenuLink href={path} isActive={isActive}>
+                                    {Icon && <Icon className='w-4 h-4' />}
+                                    {text}
+                                </SubmenuLink>
+                            );
+                        })}
+                    </div>
+                </div>
+                <div class='w-full sm:hidden'>
+                    <label class='sr-only' for={selectId}>
+                        Select organism section
+                    </label>
+                    <select
+                        id={selectId}
+                        class='w-full rounded border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm text-gray-800 shadow-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200'
+                        onchange='if (this.value) window.location.href = this.value;'
+                    >
+                        {navigationItems.map(({ text, path }) => {
+                            const isActive = currentPath.startsWith(path);
+                            return (
+                                <option value={path} selected={isActive}>
+                                    {text}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </div>
             </div>
         </nav>
     )

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FieldSelectorModal, getDefaultSelectedFields } from './FieldSelectorModal';
 import { ACCESSION_VERSION_FIELD } from '../../../../settings';
 import { type Metadata } from '../../../../types/config';
+import { MetadataVisibility } from '../../../../utils/search.ts';
 
 // Mock BaseDialog component
 vi.mock('../../../common/BaseDialog.tsx', () => ({
@@ -157,18 +158,71 @@ describe('FieldSelectorModal', () => {
             const accessionVersionInput = screen.getByLabelText(accessionVersionField.renderedDisplayName);
             expect(accessionVersionInput).toBeChecked();
         });
+
+        it('should disable fields that are not for the currently selected suborganism', () => {
+            renderFieldSelectorModal('suborganism1', [
+                {
+                    name: 'field1',
+                    displayName: 'Field 1',
+                    type: 'string',
+                    header: 'Group 1',
+                    includeInDownloadsByDefault: true,
+                },
+                {
+                    name: 'field2',
+                    displayName: 'Field 2',
+                    type: 'string',
+                    header: 'Group 1',
+                    includeInDownloadsByDefault: true,
+                    onlyForSuborganism: 'suborganism1',
+                },
+                {
+                    name: 'field3',
+                    displayName: 'Field 3',
+                    type: 'string',
+                    header: 'Group 2',
+                    includeInDownloadsByDefault: true,
+                    onlyForSuborganism: 'suborganism2',
+                },
+                accessionVersionField,
+            ]);
+
+            expect(screen.getByLabelText(accessionVersionField.renderedDisplayName)).toBeChecked();
+            expect(screen.getByLabelText('Field 1')).toBeChecked();
+            expect(screen.getByLabelText('Field 2')).toBeChecked();
+            expect(screen.getByLabelText('Field 3')).not.toBeChecked();
+        });
     });
 
-    function renderFieldSelectorModal() {
-        const { result } = renderHook(() => useState(getDefaultSelectedFields(mockMetadata)));
+    function renderFieldSelectorModal(selectedSuborganism: string | null = null, metadata: Metadata[] = mockMetadata) {
+        const { result } = renderHook(() => useState(getDefaultSelectedFields(metadata)));
 
         const getComponent = () => (
             <FieldSelectorModal
                 isOpen={true}
                 onClose={() => {}}
-                metadata={mockMetadata}
-                selectedFields={result.current[0]}
+                schema={{
+                    defaultOrder: 'ascending',
+                    defaultOrderBy: '',
+                    inputFields: [],
+                    organismName: 'dummy',
+                    primaryKey: ACCESSION_VERSION_FIELD,
+                    submissionDataTypes: {
+                        consensusSequences: true,
+                    },
+                    tableColumns: [],
+                    metadata,
+                }}
+                downloadFieldVisibilities={
+                    new Map(
+                        metadata.map((field) => [
+                            field.name,
+                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForSuborganism),
+                        ]),
+                    )
+                }
                 onSelectedFieldsChange={result.current[1]}
+                selectedSuborganism={selectedSuborganism}
             />
         );
 

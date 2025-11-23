@@ -98,9 +98,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <div>
-                <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
-            </div>
             <div className='flex flex-col'>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Description</p>
