@@ -2,7 +2,13 @@ import { expect, Download, Page } from '@playwright/test';
 import { test } from '../../../fixtures/console-warnings.fixture';
 import { SearchPage } from '../../../pages/search.page';
 
-async function performSequenceDownload(page: Page, selectRawNucleotide = false): Promise<Download> {
+interface PerformDownloadOptions {
+    selectRawNucleotide?: boolean;
+}
+
+async function performSequenceDownload(page: Page, options: PerformDownloadOptions = {}): Promise<Download> {
+    const { selectRawNucleotide = false } = options;
+
     await page.getByRole('button', { name: 'Download' }).click();
 
     if (selectRawNucleotide) {
@@ -48,7 +54,7 @@ test.describe('Search sequence download functionality', () => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 
-        const download = await performSequenceDownload(page, true);
+        const download = await performSequenceDownload(page, { selectRawNucleotide: true });
 
         const downloadPath = await download.path();
         expect(downloadPath).toBeTruthy();
