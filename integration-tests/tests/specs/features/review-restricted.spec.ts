@@ -22,8 +22,6 @@ test.describe('Review page restricted sequences', () => {
         await reviewPage.approveAll();
         await reviewPage.waitForTotalSequenceCountCorrect(0);
 
-        // Navigate to "My Sequences" filtered by RESTRICTED
-        // Using expect.poll to handle indexing delay
         await page.goto(`/ebola-sudan/submission/${groupId}/released?dataUseTerms=RESTRICTED`);
 
         await expect
@@ -43,7 +41,6 @@ test.describe('Review page restricted sequences', () => {
         await expect(rowLocator).toBeVisible();
         await rowLocator.click();
 
-        // Verify "Restricted-Use sequence" banner/text
         await expect(page.getByText('Restricted-Use sequence')).toBeVisible();
     });
 });

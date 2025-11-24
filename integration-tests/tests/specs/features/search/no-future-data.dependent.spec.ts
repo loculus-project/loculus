@@ -7,7 +7,6 @@ test.describe('The search page', () => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 
-        // We look for a container having 'Collection date' and 'From' to target the range filter
         const collectionDateRangeFilter = page
             .locator('div')
             .filter({ hasText: 'Collection date' })

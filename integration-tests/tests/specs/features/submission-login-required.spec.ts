@@ -11,11 +11,9 @@ test.describe('Submission page login requirements', () => {
         await navigation.selectOrganism('Ebola Sudan');
         await navigation.clickSubmitSequences();
 
-        // When not logged in, user should see a login prompt
         const loginLink = page.getByRole('link', { name: 'Login or register' });
         await expect(loginLink).toBeVisible();
 
-        // Click login and verify we're redirected to Keycloak
         await loginLink.click();
         await expect(page).toHaveURL(/realms\/loculus/);
     });
