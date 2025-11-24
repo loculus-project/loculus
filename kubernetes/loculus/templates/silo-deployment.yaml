@@ -1,7 +1,8 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
-{{- range $key, $organism := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- range $_, $organism := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := get $organism "name" }}
 {{- $lineageSystem := $organism | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: apps/v1

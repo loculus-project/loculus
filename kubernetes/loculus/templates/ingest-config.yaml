@@ -3,7 +3,8 @@
 {{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend%s%s" .Values.subdomainSeparator $.Values.host) ($testconfig | ternary (printf "http://%s:8079" $.Values.localHost) "http://loculus-backend-service:8079") }}
 {{- $enaDepositionHost := $testconfig | ternary (printf "http://%s:5000" $.Values.localHost) "http://loculus-ena-submission-service:5000" }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
-{{- range $key, $values := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- range $_, $values := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := get $values "name" }}
 {{- if $values.ingest }}
 {{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
 {{- $nucleotideSequencesList := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).nucleotideSequences | default (list "main")}}

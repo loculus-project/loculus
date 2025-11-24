@@ -1,4 +1,5 @@
-{{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- range $_, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $organism := get $organismConfig "name" }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
 {{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
 {{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
