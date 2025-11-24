@@ -35,14 +35,14 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({
             </Button>
             {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
             <div
-                className={`fixed top-0 right-0 z-50 w-64 min-h-screen bg-white flex flex-col transition-transform duration-300 ${
+                className={`fixed top-0 right-0 z-50 w-64 h-screen bg-white flex flex-col transition-transform duration-300 ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
                 <Button className='absolute z-50 right-3 top-4 p-2' onClick={toggleMenu} aria-label='Close main menu'>
                     <SandwichIcon isOpen={isOpen} />
                 </Button>
-                <div className='p-5 flex flex-col justify-between min-h-screen overflow-y-auto'>
+                <div className='p-5 flex flex-col justify-between h-full overflow-y-auto'>
                     <div>
                         <div className='h-10 font-bold'>
                             <a href='/' className='text-gray-900 hover:text-primary-600 transition-colors'>

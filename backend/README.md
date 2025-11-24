@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-- Java 21 installed on your system
+- [Java 21](https://adoptium.net/de/temurin/releases) – You can do this with [SDKMAN!](https://sdkman.io/).
 
 ### Starting the backend
 
@@ -31,7 +31,7 @@ All commands mentioned in this section are run from the `backend` directory unle
    ./start_dev.sh
    ```
 
-The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
+The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>. The test config will be written to `loculus/website/tests/config`.
 
 3. Clean up the database when done:
 

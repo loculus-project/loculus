@@ -82,8 +82,6 @@ enum class UploadType {
 class SubmitModel(
     private val uploadDatabaseService: UploadDatabaseService,
     private val filesDatabaseService: FilesDatabaseService,
-    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
-    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
@@ -165,14 +163,6 @@ class SubmitModel(
      * Inserts the uploaded metadata (and sequence data) into the 'aux' tables in the database.
      */
     private fun insertDataIntoAux(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
-        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
-                submissionParams.groupId,
-                submissionParams.authenticatedUser,
-            )
-            dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
-        }
-
         val metadataTempFileToDelete = MaybeFile()
         val metadataStream = getStreamFromFile(
             submissionParams.metadataFile,

@@ -1,10 +1,10 @@
 import logging
 from typing import Any
-from unidecode import unidecode
 
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, Reference, SeqFeature
 from Bio.SeqRecord import SeqRecord
+from unidecode import unidecode
 
 from loculus_preprocessing.datatypes import MoleculeType, ProcessedMetadata, SubmissionData
 

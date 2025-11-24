@@ -1,0 +1,24 @@
+name: Mirror NCBI Datasets (Priority 1 - Every 2 Hours)
+on:
+  workflow_dispatch:  # Allows manual triggering to re-run all priority-1 taxa
+  schedule:
+    - cron: '12 */2 * * *' # Runs every two hours at 12 minutes past the hour
+jobs:
+  mirror:
+    strategy:
+      matrix:
+        taxon_id:
+          - 10244    # Mpox
+          - 11234    # Measles morbillivirus
+          - 1868215  # Orthopneumovirus
+          - 3048148  # Metapneumovirus hominis
+          - 3048448  # West nile virus
+          - 3052460  # Orthoebolavirus sudanense
+          - 3052462  # Orthoebolavirus zairense
+          - 3052505  # Orthomarburgvirus marburgense
+          - 3052518  # CCHFV
+      fail-fast: false
+    uses: ./.github/workflows/datasets-mirror.yml
+    secrets: inherit
+    with:
+      taxon_id: ${{ matrix.taxon_id }}

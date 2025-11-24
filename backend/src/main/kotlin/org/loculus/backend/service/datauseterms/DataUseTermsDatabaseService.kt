@@ -38,7 +38,6 @@ class DataUseTermsDatabaseService(
             }
 
             dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(chunk, newDataUseTerms)
-            dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)
 
             DataUseTermsTable.batchInsert(chunk) {
                 this[DataUseTermsTable.accessionColumn] = it
