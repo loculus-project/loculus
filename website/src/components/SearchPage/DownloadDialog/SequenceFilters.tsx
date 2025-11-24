@@ -102,6 +102,28 @@ export class FieldFilterSet implements SequenceFilter {
             }
         }
 
+        // Convert string values to numbers for int/float fields
+        for (const filterName of Object.keys(sequenceFilters)) {
+            const fieldType = this.filterSchema.getType(filterName);
+            if (fieldType === 'int' || fieldType === 'float') {
+                const value = sequenceFilters[filterName];
+                if (Array.isArray(value)) {
+                    // Convert array of strings to array of numbers
+                    sequenceFilters[filterName] = value.map((v: any) => {
+                        if (v === null || v === undefined) return v;
+                        const num = Number(v);
+                        return isNaN(num) ? v : num;
+                    });
+                } else if (typeof value === 'string') {
+                    // Convert single string to number
+                    const num = Number(value);
+                    if (!isNaN(num)) {
+                        sequenceFilters[filterName] = num;
+                    }
+                }
+            }
+        }
+
         if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
