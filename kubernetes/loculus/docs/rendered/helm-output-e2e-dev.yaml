@@ -9778,7 +9778,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.543267485 +0000 UTC m=+0.834122052"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-ingest-deployment-cchf
@@ -9872,7 +9872,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.543414982 +0000 UTC m=+0.834269549"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-ingest-deployment-ebola-sudan
@@ -9966,7 +9966,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.543513667 +0000 UTC m=+0.834368245"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-ingest-deployment-enteroviruses
@@ -10060,7 +10060,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.54360552 +0000 UTC m=+0.834460097"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-ingest-deployment-west-nile
@@ -10154,7 +10154,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.53748846 +0000 UTC m=+0.828343027"
+        timestamp: ""
       labels:
         app: loculus
         component: keycloak-database
@@ -10394,7 +10394,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.536860221 +0000 UTC m=+0.827714798"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-cchf
@@ -10521,7 +10521,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.536964637 +0000 UTC m=+0.827819214"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-dummy-organism
@@ -10648,7 +10648,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.537039758 +0000 UTC m=+0.827894325"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-dummy-organism-with-files
@@ -10775,7 +10775,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.537111102 +0000 UTC m=+0.827965679"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-ebola-sudan
@@ -10902,7 +10902,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.537177547 +0000 UTC m=+0.828032114"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-enteroviruses
@@ -11029,7 +11029,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.537241497 +0000 UTC m=+0.828096074"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-not-aligned-organism
@@ -11156,7 +11156,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.537307611 +0000 UTC m=+0.828162188"
+        timestamp: ""
       labels:
         app: loculus
         component: lapis-west-nile
@@ -11284,7 +11284,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.265478116 +0000 UTC m=+0.556332694"
+        timestamp: ""
       labels:
         app: loculus
         component: backend
@@ -11537,7 +11537,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.104733758 +0000 UTC m=+0.395588335"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-cchf-v1-0
@@ -11591,7 +11591,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.104855557 +0000 UTC m=+0.395710134"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-dummy-organism-v2-0
@@ -11640,7 +11640,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.104946046 +0000 UTC m=+0.395800623"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-dummy-organism-with-files-v1-0
@@ -11687,7 +11687,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.105087332 +0000 UTC m=+0.395941899"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-ebola-sudan-v1-0
@@ -11741,7 +11741,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.105146743 +0000 UTC m=+0.396001320"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-ebola-sudan-v2-1
@@ -11795,7 +11795,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.105276276 +0000 UTC m=+0.396130843"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-enteroviruses-v1-0
@@ -11849,7 +11849,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.105385641 +0000 UTC m=+0.396240218"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-not-aligned-organism-v4-0
@@ -11903,7 +11903,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:07.105494516 +0000 UTC m=+0.396349083"
+        timestamp: ""
       labels:
         app: loculus
         component: loculus-preprocessing-west-nile-v1-0
@@ -11957,7 +11957,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.938778874 +0000 UTC m=+0.229633451"
+        timestamp: ""
       labels:
         app: loculus
         component: website
@@ -12141,7 +12141,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.891628818 +0000 UTC m=+0.182483405"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-cchf
@@ -12340,7 +12340,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.892504531 +0000 UTC m=+0.183359128"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-dummy-organism
@@ -12539,7 +12539,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.89334549 +0000 UTC m=+0.184200077"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-dummy-organism-with-files
@@ -12738,7 +12738,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.907133658 +0000 UTC m=+0.197988245"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-ebola-sudan
@@ -12933,7 +12933,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.922902397 +0000 UTC m=+0.213756974"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-enteroviruses
@@ -13128,7 +13128,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.923696036 +0000 UTC m=+0.214550634"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-not-aligned-organism
@@ -13327,7 +13327,7 @@ spec:
   template:
     metadata:
       annotations:
-        timestamp: "2025-11-24 09:54:06.938119867 +0000 UTC m=+0.228974444"
+        timestamp: ""
       labels:
         app: loculus
         component: silo-west-nile
@@ -13838,12 +13838,33 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "default-cors-all-origins@kubernetescrd,default-strip-enteroviruses-prefix@kubernetescrd,default-strip-not-aligned-organism-prefix@kubernetescrd,default-strip-west-nile-prefix@kubernetescrd,default-strip-cchf-prefix@kubernetescrd,default-strip-dummy-organism-prefix@kubernetescrd,default-strip-dummy-organism-with-files-prefix@kubernetescrd,default-strip-ebola-sudan-prefix@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "default-cors-all-origins@kubernetescrd,default-strip-dummy-organism-prefix@kubernetescrd,default-strip-dummy-organism-with-files-prefix@kubernetescrd,default-strip-ebola-sudan-prefix@kubernetescrd,default-strip-enteroviruses-prefix@kubernetescrd,default-strip-not-aligned-organism-prefix@kubernetescrd,default-strip-west-nile-prefix@kubernetescrd,default-strip-cchf-prefix@kubernetescrd"
 spec:
   rules:
   - host: lapis-localhost:3000
     http:
       paths:
+      - path: /dummy-organism/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /dummy-organism-with-files/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-dummy-organism-with-files
+            port:
+              number: 8080
+      - path: /ebola-sudan/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-ebola-sudan
+            port:
+              number: 8080
       - path: /enteroviruses/
         pathType: ImplementationSpecific
         backend:
@@ -13872,27 +13893,6 @@ spec:
             name: loculus-lapis-service-cchf
             port:
               number: 8080
-      - path: /dummy-organism/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: loculus-lapis-service-dummy-organism
-            port:
-              number: 8080
-      - path: /dummy-organism-with-files/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: loculus-lapis-service-dummy-organism-with-files
-            port:
-              number: 8080
-      - path: /ebola-sudan/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: loculus-lapis-service-ebola-sudan
-            port:
-              number: 8080
   tls:
   - hosts:
     - lapis-localhost:3000
@@ -13913,46 +13913,6 @@ spec:
   - host: lapis-localhost:3000
     http:
       paths:
-      - path: /enteroviruses
-        pathType: Exact
-        backend:
-          # An Ingress path requires a backend. Since the redirect happens before
-          # the request is forwarded, we can point all paths to the first
-          # organism's service as a placeholder.
-          service:
-            name: loculus-lapis-service-enteroviruses
-            port:
-              number: 8080
-      - path: /not-aligned-organism
-        pathType: Exact
-        backend:
-          # An Ingress path requires a backend. Since the redirect happens before
-          # the request is forwarded, we can point all paths to the first
-          # organism's service as a placeholder.
-          service:
-            name: loculus-lapis-service-enteroviruses
-            port:
-              number: 8080
-      - path: /west-nile
-        pathType: Exact
-        backend:
-          # An Ingress path requires a backend. Since the redirect happens before
-          # the request is forwarded, we can point all paths to the first
-          # organism's service as a placeholder.
-          service:
-            name: loculus-lapis-service-enteroviruses
-            port:
-              number: 8080
-      - path: /cchf
-        pathType: Exact
-        backend:
-          # An Ingress path requires a backend. Since the redirect happens before
-          # the request is forwarded, we can point all paths to the first
-          # organism's service as a placeholder.
-          service:
-            name: loculus-lapis-service-enteroviruses
-            port:
-              number: 8080
       - path: /dummy-organism
         pathType: Exact
         backend:
@@ -13960,7 +13920,7 @@ spec:
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
-            name: loculus-lapis-service-enteroviruses
+            name: loculus-lapis-service-dummy-organism
             port:
               number: 8080
       - path: /dummy-organism-with-files
@@ -13970,7 +13930,7 @@ spec:
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
-            name: loculus-lapis-service-enteroviruses
+            name: loculus-lapis-service-dummy-organism
             port:
               number: 8080
       - path: /ebola-sudan
@@ -13980,7 +13940,47 @@ spec:
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
-            name: loculus-lapis-service-enteroviruses
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /enteroviruses
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /not-aligned-organism
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /west-nile
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /cchf
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-dummy-organism
             port:
               number: 8080
 ---
@@ -14035,6 +14035,36 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
+  name: strip-dummy-organism-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /dummy-organism/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-dummy-organism-with-files-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /dummy-organism-with-files/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-ebola-sudan-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /ebola-sudan/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
   name: strip-enteroviruses-prefix
 spec:
   stripPrefix:
@@ -14070,36 +14100,6 @@ spec:
   stripPrefix:
     prefixes:
       - /cchf/
----
-# Source: loculus/templates/lapis-ingress.yaml
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: strip-dummy-organism-prefix
-spec:
-  stripPrefix:
-    prefixes:
-      - /dummy-organism/
----
-# Source: loculus/templates/lapis-ingress.yaml
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: strip-dummy-organism-with-files-prefix
-spec:
-  stripPrefix:
-    prefixes:
-      - /dummy-organism-with-files/
----
-# Source: loculus/templates/lapis-ingress.yaml
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: strip-ebola-sudan-prefix
-spec:
-  stripPrefix:
-    prefixes:
-      - /ebola-sudan/
 ---
 # Source: loculus/templates/lapis-ingress.yaml
 apiVersion: traefik.containo.us/v1alpha1
