@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-- [Java 21](https://www.oracle.com/java/technologies/downloads/) installed on your system
+- [Java 21](https://adoptium.net/de/temurin/releases)
 
 ### Starting the backend
 
