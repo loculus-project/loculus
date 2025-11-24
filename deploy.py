@@ -22,7 +22,7 @@ except ImportError as e:
         f"pyyaml is not installed but required by ./deploy.py\n"
         "You can install it for example with 'pip install pyyaml' or 'conda install pyyaml' (if using conda)\n"
         f"You are currently using Python version {sys.version} from {sys.executable}"
-            )
+        )
     raise ImportError(msg) from e
 
 script_path = Path(__file__).resolve()
