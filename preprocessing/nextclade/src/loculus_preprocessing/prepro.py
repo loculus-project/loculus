@@ -231,13 +231,6 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for segment in config.nucleotideSequences:
-        key = "length" if not config.multi_segment else "length_" + segment
-        if key in config.processing_spec:
-            output_metadata[key] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, segment
-            )
-
     for output_field, spec_dict in config.processing_spec.items():
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
@@ -249,17 +242,16 @@ def get_output_metadata(
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
+            segment_name: SegmentName | None = "main"
             if spec.args.get("useFirstSegment", False):
                 non_null_segment_names = [
                     key
                     for key, seq in unprocessed.unalignedNucleotideSequences.items()
                     if seq is not None
                 ]
-                segment = non_null_segment_names[0] if non_null_segment_names else None
-            else:
-                segment = "main"
+                segment_name = non_null_segment_names[0] if non_null_segment_names else None
             output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, segment
+                unprocessed.unalignedNucleotideSequences, segment_name
             )
             continue
 
