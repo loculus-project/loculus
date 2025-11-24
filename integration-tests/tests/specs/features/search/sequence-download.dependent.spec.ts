@@ -6,7 +6,10 @@ interface PerformDownloadOptions {
     selectRawNucleotide?: boolean;
 }
 
-async function performSequenceDownload(page: Page, options: PerformDownloadOptions = {}): Promise<Download> {
+async function performSequenceDownload(
+    page: Page,
+    options: PerformDownloadOptions = {},
+): Promise<Download> {
     const { selectRawNucleotide = false } = options;
 
     await page.getByRole('button', { name: 'Download' }).click();

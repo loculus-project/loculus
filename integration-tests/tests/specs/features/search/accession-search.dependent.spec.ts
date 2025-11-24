@@ -26,7 +26,9 @@ test.describe('Accession search functionality', () => {
         return accessions;
     }
 
-    test('should search for a single sequence by accession and click it', async ({ page }) => {
+    test('should search by accession, display correct metadata, and allow clicking the result', async ({
+        page,
+    }) => {
         await searchPage.ebolaSudan();
 
         const accessionVersion = await searchPage.waitForLoculusId();
@@ -34,6 +36,12 @@ test.describe('Accession search functionality', () => {
 
         await searchPage.enterAccessions(accessionVersion);
         await searchPage.expectSequenceCount(1);
+
+        const rows = searchPage.getSequenceRows();
+        await expect(rows.first()).toBeVisible();
+
+        const rowText = await rows.first().innerText();
+        expect(rowText).toContain(accessionVersion);
 
         const accessionLink = page.getByRole('link', { name: accessionVersion });
         await expect(accessionLink).toBeVisible();
@@ -88,22 +96,6 @@ test.describe('Accession search functionality', () => {
         for (const accession of accessions) {
             await expect(page.getByRole('link', { name: accession })).toBeVisible();
         }
-    });
-
-    test('should search by accession', async () => {
-        await searchPage.ebolaSudan();
-
-        const accessionVersion = await searchPage.waitForLoculusId();
-        expect(accessionVersion).toBeTruthy();
-
-        await searchPage.enterAccessions(accessionVersion);
-        await searchPage.expectSequenceCount(1);
-
-        const rows = searchPage.getSequenceRows();
-        await expect(rows.first()).toBeVisible();
-
-        const rowText = await rows.first().innerText();
-        expect(rowText).toContain(accessionVersion);
     });
 
     test('should clear accession search when reset button is clicked', async ({ page }) => {
