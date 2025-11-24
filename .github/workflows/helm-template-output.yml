@@ -37,6 +37,7 @@ jobs:
         helm template loculus kubernetes/loculus \
           --values kubernetes/loculus/values.yaml \
           > kubernetes/loculus/docs/rendered/helm-output.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output.yaml
 
     - name: Generate helm template output for e2e/dev values
       run: |
@@ -44,6 +45,7 @@ jobs:
           --values kubernetes/loculus/values.yaml \
           --values kubernetes/loculus/values_e2e_and_dev.yaml \
           > kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
 
     - name: Generate helm template output for preview server values
       run: |
@@ -51,6 +53,7 @@ jobs:
           --values kubernetes/loculus/values.yaml \
           --values kubernetes/loculus/values_preview_server.yaml \
           > kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
 
     - name: Show generated outputs
       run: |
