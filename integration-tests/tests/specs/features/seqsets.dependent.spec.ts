@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 import { test } from '../../fixtures/group.fixture';
 import { SearchPage } from '../../pages/search.page';
@@ -48,7 +48,7 @@ test.describe('SeqSet management', () => {
         const [focalAccession, backgroundAccession] = await collectAccessibleAccessions(searchPage);
 
         const seqSetPage = new SeqSetPage(page);
-        const seqSetName = `SeqSet ${uuidv4().slice(0, 8)}`;
+        const seqSetName = `SeqSet ${randomUUID().slice(0, 8)}`;
         const seqSetDescription = 'Playwright generated seqset for integration coverage';
 
         await seqSetPage.gotoList();
