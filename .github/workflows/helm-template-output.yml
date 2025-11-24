@@ -1,0 +1,93 @@
+name: Generate and Validate Helm Template Output
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+    paths:
+      - 'kubernetes/loculus/**'
+      - '.github/workflows/helm-template-output.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-helm-output:
+    runs-on: ubuntu-latest
+
+    # Explicitly set permissions needed for committing
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'v3.14.0'
+
+    - name: Create output directory
+      run: mkdir -p kubernetes/loculus/docs/rendered
+
+    - name: Generate helm template output for default values
+      run: |
+        helm template loculus kubernetes/loculus \
+          --values kubernetes/loculus/values.yaml \
+          > kubernetes/loculus/docs/rendered/helm-output.yaml
+
+    - name: Generate helm template output for e2e/dev values
+      run: |
+        helm template loculus kubernetes/loculus \
+          --values kubernetes/loculus/values.yaml \
+          --values kubernetes/loculus/values_e2e_and_dev.yaml \
+          > kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
+
+    - name: Generate helm template output for preview server values
+      run: |
+        helm template loculus kubernetes/loculus \
+          --values kubernetes/loculus/values.yaml \
+          --values kubernetes/loculus/values_preview_server.yaml \
+          > kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
+
+    - name: Show generated outputs
+      run: |
+        echo "=== Default values output (first 50 lines) ==="
+        head -n 50 kubernetes/loculus/docs/rendered/helm-output.yaml
+        echo ""
+        echo "=== E2E/Dev values output (first 50 lines) ==="
+        head -n 50 kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
+        echo ""
+        echo "=== Preview server values output (first 50 lines) ==="
+        head -n 50 kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
+
+    - name: Stage rendered output files
+      run: git add kubernetes/loculus/docs/rendered/
+
+    - name: Check for output changes
+      id: check-changes
+      run: |
+        if ! git diff --cached --quiet kubernetes/loculus/docs/rendered/; then
+          echo "Helm template output changes detected"
+          echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --cached --stat kubernetes/loculus/docs/rendered/
+        else
+          echo "No helm template output changes detected"
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Handle output changes
+      if: steps.check-changes.outputs.changed == 'true'
+      run: |
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'update_helm_output') }}" == "true" ]]; then
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git commit -m "Update helm template output documentation"
+          git push
+        else
+          echo "::error::Helm template output changes detected but 'update_helm_output' label is not present on the PR"
+          echo "Please add the 'update_helm_output' label if these changes are intentional"
+          exit 1
+        fi
