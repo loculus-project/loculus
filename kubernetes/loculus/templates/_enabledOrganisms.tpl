@@ -7,11 +7,3 @@
 {{- end -}}
 {{- $enabled | toJson -}}
 {{- end -}}
-
-{{/*
-Returns a sorted list of enabled organism keys for deterministic iteration.
-Usage: {{ include "loculus.sortedOrganismKeys" . }}
-*/}}
-{{- define "loculus.sortedOrganismKeys" -}}
-{{- keys (include "loculus.enabledOrganisms" . | fromJson) | sortAlpha | toJson -}}
-{{- end -}}
