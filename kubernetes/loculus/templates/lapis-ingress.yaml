@@ -1,5 +1,5 @@
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $organismKeys := keys (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $organismKeys := include "loculus.sortedOrganismKeys" . | fromJson }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
