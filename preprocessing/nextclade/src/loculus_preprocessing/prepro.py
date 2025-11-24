@@ -211,12 +211,11 @@ def processed_entry_no_alignment(
         submitter=unprocessed.submitter,
     )
 
+
 def get_sequence_length(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
-    segment: SegmentName | None,
+    segment: SegmentName | None
 ) -> int:
-    if segment is None:
-        return 0
     sequence = unaligned_nucleotide_sequences.get(segment, None)
     return len(sequence) if sequence else 0
 
@@ -237,12 +236,19 @@ def get_output_metadata(
                 unprocessed.unalignedNucleotideSequences, segment
             )
 
-    length_fields = [
-        "length" if not config.multi_segment else "length_" + segment
-        for segment in config.nucleotideSequences
-    ]
     for output_field, spec_dict in config.processing_spec.items():
-        if output_field in length_fields:
+        if output_field == "length":
+            if spec.args.get("useFirstSegment", False):
+                non_null_segment_names = [key for key, seq in unprocessed.unalignedNucleotideSequences.items() if seq is not None]
+                segment = non_null_segment_names[0] if non_null_segment_names else None
+            else:
+                segment = "main"
+            output_metadata[output_field] = get_sequence_length(unprocessed.unalignedNucleotideSequences, segment)
+            continue
+
+        if output_field.startswith("length_") and output_field[7:] in config.nucleotideSequences:
+            segment = output_field[7:]
+            output_metadata[output_field] = get_sequence_length(unprocessed.unalignedNucleotideSequences, segment)
             continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
@@ -278,6 +284,7 @@ def get_output_metadata(
             input_data=input_data,
             input_fields=input_fields,
         )
+
         output_metadata[output_field] = processing_result.datum
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
