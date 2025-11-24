@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../fixtures/group.fixture';
 import { GroupPage } from '../../pages/group.page';
 import { AuthPage } from '../../pages/auth.page';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 // Tests covering group user management and editing
 
@@ -15,9 +15,9 @@ test.describe('Group management', () => {
         const newPage = await context.newPage();
         const authPage = new AuthPage(newPage);
         const newAccount = {
-            username: `user_${uuidv4().slice(0, 8)}`,
+            username: `user_${randomUUID().slice(0, 8)}`,
             password: 'password',
-            email: `test_${uuidv4().slice(0, 8)}@test.com`,
+            email: `test_${randomUUID().slice(0, 8)}@test.com`,
             firstName: 'Test',
             lastName: 'User',
             organization: 'Test Org',
@@ -36,9 +36,9 @@ test.describe('Group management', () => {
         void groupId;
         const groupPage = new GroupPage(page);
 
-        const newName = `group_${uuidv4().slice(0, 8)}`;
+        const newName = `group_${randomUUID().slice(0, 8)}`;
         const newInstitution = 'New Institution';
-        const newEmail = `contact_${uuidv4().slice(0, 8)}@test.com`;
+        const newEmail = `contact_${randomUUID().slice(0, 8)}@test.com`;
         const newLine1 = '456 New Street';
         const newCity = 'New City';
         const newState = 'CA';

@@ -39,6 +39,12 @@ class SubmissionPage {
         await this.page.getByText('I confirm I have not and will').click();
     }
 
+    async selectRestrictedDataUseTerms() {
+        const restrictedSelector = '#data-use-restricted';
+        await this.page.waitForSelector(restrictedSelector);
+        await this.page.click(restrictedSelector);
+    }
+
     // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
     async submitSequence(): Promise<ReviewPage> {
         await this.page
@@ -156,12 +162,14 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             collectionDate,
             authorAffiliations,
             groupId = undefined,
+            isRestricted = false,
         }: {
             submissionId: string;
             collectionCountry: string;
             collectionDate: string;
             authorAffiliations: string;
             groupId?: string;
+            isRestricted?: boolean;
         },
         sequenceData: Record<string, string>,
     ): Promise<ReviewPage> {
@@ -179,6 +187,11 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
             authorAffiliations,
         });
         await this.fillSequenceData(sequenceData);
+
+        if (isRestricted) {
+            await this.selectRestrictedDataUseTerms();
+        }
+
         await this.acceptTerms();
         return this.submitSequence();
     }
