@@ -71,18 +71,19 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        path: kubernetes/loculus/docs/rendered/
+        path: /tmp/helm-artifacts/
 
     - name: Reorganize artifacts
       run: |
-        # Move files from artifact subdirectories to the correct location
+        # Clear any existing rendered output
+        rm -rf kubernetes/loculus/docs/rendered/default kubernetes/loculus/docs/rendered/e2e-dev kubernetes/loculus/docs/rendered/preview-server
+
+        # Move artifacts to the correct location
+        # Artifacts are downloaded as: /tmp/helm-artifacts/helm-output-{name}/*
         for config in default e2e-dev preview-server; do
-          if [ -d "kubernetes/loculus/docs/rendered/helm-output-$config/$config" ]; then
-            mv kubernetes/loculus/docs/rendered/helm-output-$config/$config/* kubernetes/loculus/docs/rendered/helm-output-$config/
-            rmdir kubernetes/loculus/docs/rendered/helm-output-$config/$config
-          fi
-          if [ -d "kubernetes/loculus/docs/rendered/helm-output-$config" ]; then
-            mv kubernetes/loculus/docs/rendered/helm-output-$config kubernetes/loculus/docs/rendered/$config
+          if [ -d "/tmp/helm-artifacts/helm-output-$config" ]; then
+            mkdir -p kubernetes/loculus/docs/rendered/$config
+            mv /tmp/helm-artifacts/helm-output-$config/* kubernetes/loculus/docs/rendered/$config/
           fi
         done
 
