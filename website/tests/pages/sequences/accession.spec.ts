@@ -1,20 +1,10 @@
 import { routes } from '../../../src/routes/routes.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, expect, test, testSequenceEntryData } from '../../e2e.fixture';
+import { baseUrl, expect, test } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The detailed sequence page', () => {
-    test('can load and show sequence data', async ({ sequencePage }) => {
-        const testSequenceEntry = getTestSequences().testSequenceEntry;
-
-        await sequencePage.goto(testSequenceEntry);
-        await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a)).not.toBeVisible();
-
-        await sequencePage.loadSequences();
-        await sequencePage.selectORF1a();
-
-        await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a, { exact: false })).toBeVisible();
-    });
+    // NOTE: 'can load and show sequence data' test removed - covered by integration-tests/tests/specs/features/sequence-detail-page.dependent.spec.ts
 
     test('check initial sequences and verify that banners are shown when revoked or revised', async ({
         sequencePage,
