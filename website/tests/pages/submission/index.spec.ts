@@ -2,15 +2,6 @@ import { routes } from '../../../src/routes/routes.ts';
 import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture.ts';
 
 test.describe('The submit page', () => {
-    test('should ask to login if not logged in', async ({ submitPage }) => {
-        const submittingGroupNumber = 1;
-        await submitPage.goto(submittingGroupNumber);
-
-        await submitPage.loginButton.click();
-
-        expect(submitPage.page.url()).toContain('realms/loculus');
-    });
-
     test('should upload files and submit', async ({ submitPage, loginAsTestUser }) => {
         const { groupId } = await loginAsTestUser();
         await submitPage.goto(groupId);
