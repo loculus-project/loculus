@@ -121,7 +121,7 @@ def add_input_metadata(
     return unprocessed.inputMetadata[input_path]
 
 
-def _call_processing_function(
+def _call_processing_function(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
@@ -129,8 +129,6 @@ def _call_processing_function(
     submitted_at: str | None,
     input_data: InputMetadata,
     input_fields: list[str],
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     args = dict(spec.args)
     args["submitter"] = submitter
@@ -148,9 +146,6 @@ def _call_processing_function(
     except Exception as e:
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
-
-    errors.extend(processing_result.errors)
-    warnings.extend(processing_result.warnings)
 
     return processing_result
 
@@ -240,10 +235,10 @@ def get_output_metadata(
             submitted_at=submitted_at,
             input_data=input_data,
             input_fields=input_fields,
-            errors=errors,
-            warnings=warnings,
         )
         output_metadata[output_field] = processing_result.datum
+        errors.extend(processing_result.errors)
+        warnings.extend(processing_result.warnings)
         if (
             null_per_backend(processing_result.datum)
             and spec.required
