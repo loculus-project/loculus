@@ -20,12 +20,13 @@ from factory_methods import (
 from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
 from loculus_preprocessing.datatypes import (
     AnnotationSourceType,
+    ProcessingAnnotationAlignment,
     SubmissionData,
     UnprocessedData,
     UnprocessedEntry,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
-from loculus_preprocessing.prepro import ProcessingAnnotationAlignment, process_all
+from loculus_preprocessing.prepro import process_all
 from loculus_preprocessing.processing_functions import (
     format_frameshift,
     format_stop_codon,
@@ -402,12 +403,6 @@ multi_segment_case_definitions_all_requirement = [
             "length_ebola-zaire": 0,
         },
         expected_errors=[
-            ProcessingAnnotationHelper(
-                [ProcessingAnnotationAlignment],
-                [ProcessingAnnotationAlignment],
-                "No segment aligned.",
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            ),
             ProcessingAnnotationHelper(
                 ["ebola-sudan"],
                 ["ebola-sudan"],

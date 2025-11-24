@@ -197,12 +197,6 @@ def verify_processed_entry(
         f"does not match expected output {expected_output.accession}.{expected_output.version}."
     )
 
-    # Check metadata
-    assert processed_entry.data.metadata == expected_output.data.metadata, (
-        f"{test_name}: processed metadata {processed_entry.data.metadata} "
-        f"does not match expected metadata {expected_output.data.metadata}."
-    )
-
     # Check errors
     processed_errors = sort_annotations(processed_entry.errors)
     expected_errors = sort_annotations(expected_output.errors)
@@ -217,6 +211,12 @@ def verify_processed_entry(
     assert processed_warnings == expected_warnings, (
         f"{test_name}: processed warnings {processed_warnings}"
         f"does not match expected output {expected_warnings}."
+    )
+
+    # Check metadata
+    assert processed_entry.data.metadata == expected_output.data.metadata, (
+        f"{test_name}: processed metadata {processed_entry.data.metadata} "
+        f"does not match expected metadata {expected_output.data.metadata}."
     )
 
     # Check alignment data
