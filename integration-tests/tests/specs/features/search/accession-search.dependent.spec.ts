@@ -26,9 +26,7 @@ test.describe('Accession search functionality', () => {
         return accessions;
     }
 
-    test('should search by accession, and click the result', async ({
-        page,
-    }) => {
+    test('should search by accession, and click the result', async ({ page }) => {
         await searchPage.ebolaSudan();
 
         const accessionVersion = await searchPage.waitForLoculusId();
