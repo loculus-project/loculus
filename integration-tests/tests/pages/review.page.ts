@@ -3,6 +3,11 @@ import { NavigationPage } from './navigation.page';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { SearchPage } from './search.page';
 
+type ReviewPageOverview = {
+    processed: number;
+    total: number;
+};
+
 export class ReviewPage {
     private page: Page;
     private navigation: NavigationPage;
@@ -19,9 +24,86 @@ export class ReviewPage {
     public sequenceViewerContent = () => this.page.getByTestId('fixed-length-text-viewer');
     private sequenceTabs = () => this.page.locator('.tab');
 
+    public readonly approveAllButton = () =>
+        this.page.getByRole('button', { name: 'Release', exact: false });
+    public readonly discardOpenMenuButton = () =>
+        this.page.getByRole('button', { name: 'Discard sequences', exact: false });
+    public readonly discardAllButton = () => this.page.getByText('Discard all', { exact: false });
+    public readonly confirmReleaseButton = () =>
+        this.page.getByRole('button', { name: 'Release', exact: true });
+    public readonly confirmDiscardButton = () =>
+        this.page.getByRole('button', { name: 'Discard', exact: true });
+
     constructor(page: Page) {
         this.page = page;
         this.navigation = new NavigationPage(page);
+    }
+
+    async goto(groupId: number) {
+        await this.page.goto(`/ebola-sudan/submission/${groupId}/review`);
+    }
+
+    async getReviewPageOverview(): Promise<ReviewPageOverview> {
+        const nothingToReview = this.page.getByText(
+            'You do not currently have any unreleased sequences awaiting review.',
+        );
+        const sequencesProcessed = this.page.getByText('sequences processed');
+        await expect(nothingToReview.or(sequencesProcessed)).toBeVisible();
+
+        const nothingToReviewIsVisible = await nothingToReview.isVisible();
+        if (nothingToReviewIsVisible) {
+            return { processed: 0, total: 0 };
+        }
+        const infoText = await sequencesProcessed.textContent();
+
+        const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
+
+        if (matchResult !== null) {
+            const processed = parseInt(matchResult[1], 10);
+            const total = parseInt(matchResult[2], 10);
+
+            return { processed, total };
+        } else {
+            throw new Error('Unable to extract processed sequences information from the page.');
+        }
+    }
+
+    async waitForTotalSequenceCountCorrect(
+        expectedTotal: number,
+        comparator: 'less' | 'equal' = 'equal',
+        retries: number = 10,
+        delayInSeconds: number = 1,
+    ) {
+        let currentTotal;
+        for (let i = 0; i < retries; i++) {
+            await new Promise((resolve) => setTimeout(resolve, delayInSeconds * 1000));
+
+            currentTotal = (await this.getReviewPageOverview()).total;
+            if (comparator === 'equal' && currentTotal === expectedTotal) {
+                return true;
+            }
+            if (comparator === 'less' && currentTotal < expectedTotal) {
+                return true;
+            }
+        }
+        throw new Error(
+            `Sequence count ${currentTotal} not ${comparator} expected count ${expectedTotal}`,
+        );
+    }
+
+    async approveAll() {
+        await expect(this.approveAllButton()).toBeVisible();
+        await this.approveAllButton().click();
+        await expect(this.confirmReleaseButton()).toBeVisible();
+        await this.confirmReleaseButton().click();
+    }
+
+    async discardAll() {
+        await expect(this.discardOpenMenuButton()).toBeVisible();
+        await this.discardOpenMenuButton().click();
+        await this.discardAllButton().click();
+        await expect(this.confirmDiscardButton()).toBeVisible();
+        await this.confirmDiscardButton().click();
     }
 
     async waitForZeroProcessing() {

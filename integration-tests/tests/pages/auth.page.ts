@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { TestAccount } from '../types/auth.types';
 
 export class AuthPage {
@@ -67,11 +67,10 @@ export class AuthPage {
     }
 
     async logout() {
-        await this.page.waitForLoadState('networkidle');
         await this.page.goto('/');
-        await this.page.waitForLoadState('networkidle');
         await this.page.getByRole('link', { name: 'My account' }).click();
         await this.page.getByRole('link', { name: 'Logout' }).click();
         await this.page.getByRole('button', { name: 'Logout' }).click();
+        await expect(this.page.getByText('You have been logged out')).toBeVisible();
     }
 }

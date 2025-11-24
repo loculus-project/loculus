@@ -165,14 +165,13 @@ export class SingleSequenceSubmissionPage extends SubmissionPage {
         },
         sequenceData: Record<string, string>,
     ): Promise<ReviewPage> {
-        await this.navigateToSubmissionPage();
         if (groupId) {
-            const currentUrl = this.page.url();
-            const newUrl = currentUrl.replace(/submission\/\d+/, `submission/${groupId}`);
-            if (currentUrl !== newUrl) {
-                await this.page.goto(newUrl);
-            }
+            await this.page.goto(`/ebola-sudan/submission/${groupId}/submit`);
+            await this.page.getByRole('link', { name: 'Submit single sequence' }).click();
+        } else {
+            await this.navigateToSubmissionPage();
         }
+
         await this.fillSubmissionForm({
             submissionId,
             collectionCountry,
