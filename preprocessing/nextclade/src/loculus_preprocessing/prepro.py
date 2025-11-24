@@ -52,6 +52,7 @@ from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
 
+
 def accession_from_str(id_str: AccessionVersion) -> str:
     return id_str.split(".")[0]
 
