@@ -167,7 +167,7 @@ def add_input_metadata(
     return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
-def _call_processing_function(
+def _call_processing_function(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
