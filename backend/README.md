@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-- [Java 21](https://adoptium.net/de/temurin/releases)
+- [Java 21](https://adoptium.net/de/temurin/releases) – You can do this with [SDKMAN!](https://sdkman.io/).
 
 ### Starting the backend
 
