@@ -262,9 +262,9 @@ def get_output_metadata(
 def add_alignment_errors_warnings(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
     if not any(unprocessed.unalignedNucleotideSequences.values()):
         errors.append(
             ProcessingAnnotation.from_single(
@@ -336,8 +336,6 @@ def process_single(
     alignment_errors, alignment_warnings = add_alignment_errors_warnings(
         unprocessed,
         config,
-        errors,
-        warnings,
     )
     errors += alignment_errors
     warnings += alignment_warnings
