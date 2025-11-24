@@ -297,7 +297,7 @@ def alignment_errors_warnings(
         )
         errors.append(
             ProcessingAnnotation.from_single(
-                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                nput_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)"alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
         )
         return (errors, warnings)
