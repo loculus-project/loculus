@@ -17,7 +17,6 @@ import {
 const TEST_ORGANISM = 'ebola-sudan';
 const SEQUENCES_TO_REVISE = 3;
 const SEARCH_INDEXING_TIMEOUT = 60000;
-const BULK_REVISION_TEST_TIMEOUT = 120000;
 
 sequenceTest(
     'revising sequence data works: segment can be deleted; segment can be edited',
@@ -69,11 +68,12 @@ sequenceTest(
 
 groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
-        groupTest.setTimeout(BULK_REVISION_TEST_TIMEOUT);
+        groupTest.setTimeout(200_000);
 
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const timestamp = Date.now();
 
+        // TODO #5524 Optimize by using bulk submission instead of 3 sequential single submissions
         for (let i = 0; i < SEQUENCES_TO_REVISE; i++) {
             await submissionPage.completeSubmission(
                 createTestMetadata({ submissionId: `bulk-revise-${timestamp}-${i}` }),
