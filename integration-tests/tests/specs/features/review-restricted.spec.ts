@@ -14,7 +14,7 @@ test.describe('Review page restricted sequences', () => {
                 ...createTestMetadata(),
                 isRestricted: true,
             },
-            createTestSequenceData()
+            createTestSequenceData(),
         );
 
         await reviewPage.goto(groupId);
@@ -26,14 +26,19 @@ test.describe('Review page restricted sequences', () => {
         // Using expect.poll to handle indexing delay
         await page.goto(`/ebola-sudan/submission/${groupId}/released?dataUseTerms=RESTRICTED`);
 
-        await expect.poll(async () => {
-            await page.reload();
-            return page.getByText('Search returned 1 sequence').isVisible();
-        }, {
-            message: 'Expected 1 restricted sequence to appear',
-            timeout: 60_000
-        }).toBe(true);
-        
+        await expect
+            .poll(
+                async () => {
+                    await page.reload();
+                    return page.getByText('Search returned 1 sequence').isVisible();
+                },
+                {
+                    message: 'Expected 1 restricted sequence to appear',
+                    timeout: 60_000,
+                },
+            )
+            .toBe(true);
+
         const rowLocator = page.locator('a[href*="/seq/LOC"]').first();
         await expect(rowLocator).toBeVisible();
         await rowLocator.click();
