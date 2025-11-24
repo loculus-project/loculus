@@ -1,0 +1,16 @@
+# Source: loculus/templates/loculus-database-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-database-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: database
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: http
+---

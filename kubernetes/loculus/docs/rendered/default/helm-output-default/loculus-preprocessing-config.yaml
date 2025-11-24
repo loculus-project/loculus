@@ -1,0 +1,5249 @@
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-cchf-v1-0
+data:
+  preprocessing-config.yaml: |
+    organism: cchf
+    batch_size: 100
+    create_embl_file: true
+    genes:
+    - RdRp
+    - GPC
+    - NP
+    log_level: DEBUG
+    molecule_type: genomic RNA
+    nextclade_dataset_name: community/pathoplexus/cchfv
+    nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+    scientific_name: Orthonairovirus haemorrhagiae
+    taxon_id: 3052518
+    nucleotideSequences:
+    - L
+    - M
+    - S
+    processing_spec:
+      
+      
+      ampliconPcrPrimerScheme:  
+        function: identity
+        inputs:
+          input: ampliconPcrPrimerScheme
+        args:
+      ampliconSize:  
+        function: identity
+        inputs:
+          input: ampliconSize
+        args:
+      anatomicalMaterial:  
+        function: identity
+        inputs:
+          input: anatomicalMaterial
+        args:
+      anatomicalPart:  
+        function: identity
+        inputs:
+          input: anatomicalPart
+        args:
+      authorAffiliations:  
+        function: identity
+        inputs:
+          input: authorAffiliations
+        args:
+      authors:  
+        function: check_authors
+        inputs:
+          authors: authors
+        args:
+          type: authors
+      bioprojectAccession:  
+        function: identity
+        inputs:
+          input: bioprojectAccession
+        args:
+      biosampleAccession:  
+        function: identity
+        inputs:
+          input: biosampleAccession
+        args:
+      bodyProduct:  
+        function: identity
+        inputs:
+          input: bodyProduct
+        args:
+      breadthOfCoverage:  
+        function: identity
+        inputs:
+          input: breadthOfCoverage
+        args:
+          type: int
+      cellLine:  
+        function: identity
+        inputs:
+          input: cellLine
+        args:
+      collectionDevice:  
+        function: identity
+        inputs:
+          input: collectionDevice
+        args:
+      collectionMethod:  
+        function: identity
+        inputs:
+          input: collectionMethod
+        args:
+      completeness_L:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: L
+          type: float
+      completeness_M:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: M
+          type: float
+      completeness_S:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: S
+          type: float
+      consensusSequenceSoftwareName:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareName
+        args:
+      consensusSequenceSoftwareVersion:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareVersion
+        args:
+      cultureId:  
+        function: identity
+        inputs:
+          input: cultureId
+        args:
+      dehostingMethod:  
+        function: identity
+        inputs:
+          input: dehostingMethod
+        args:
+      depthOfCoverage:  
+        function: identity
+        inputs:
+          input: depthOfCoverage
+        args:
+          type: int
+      diagnosticMeasurementMethod:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementMethod
+        args:
+      diagnosticMeasurementUnit:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementUnit
+        args:
+      diagnosticMeasurementValue:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementValue
+        args:
+      diagnosticTargetGeneName:  
+        function: identity
+        inputs:
+          input: diagnosticTargetGeneName
+        args:
+      diagnosticTargetPresence:  
+        function: identity
+        inputs:
+          input: diagnosticTargetPresence
+        args:
+      displayName:  
+        function: concatenate
+        inputs:
+          geoLocCountry: geoLocCountry
+          sampleCollectionDate: sampleCollectionDate
+        args:
+          
+          order:
+          - geoLocCountry
+          - accession_version
+          - sampleCollectionDate
+          type:
+          - string
+          - string
+          - string
+      earliestReleaseDate:  
+        function: identity
+        inputs:
+          input: earliestReleaseDate
+        args:
+          type: date
+      environmentalMaterial:  
+        function: identity
+        inputs:
+          input: environmentalMaterial
+        args:
+      environmentalSite:  
+        function: identity
+        inputs:
+          input: environmentalSite
+        args:
+      experimentalSpecimenRoleType:  
+        function: identity
+        inputs:
+          input: experimentalSpecimenRoleType
+        args:
+      exposureDetails:  
+        function: identity
+        inputs:
+          input: exposureDetails
+        args:
+      exposureEvent:  
+        function: identity
+        inputs:
+          input: exposureEvent
+        args:
+      exposureSetting:  
+        function: identity
+        inputs:
+          input: exposureSetting
+        args:
+      foodProduct:  
+        function: identity
+        inputs:
+          input: foodProduct
+        args:
+      foodProductProperties:  
+        function: identity
+        inputs:
+          input: foodProductProperties
+        args:
+      frameShifts_L:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: L
+      frameShifts_M:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: M
+      frameShifts_S:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: S
+      gcaAccession:  
+        function: identity
+        inputs:
+          input: gcaAccession
+        args:
+      geoLocAdmin1:  
+        function: identity
+        inputs:
+          input: geoLocAdmin1
+        args:
+      geoLocAdmin2:  
+        function: identity
+        inputs:
+          input: geoLocAdmin2
+        args:
+      geoLocCity:  
+        function: identity
+        inputs:
+          input: geoLocCity
+        args:
+      geoLocCountry:  
+        function: process_options
+        inputs:
+          input: geoLocCountry
+        args:
+          options: 
+          - Afghanistan
+          - Albania
+          - Algeria
+          - American Samoa
+          - Andorra
+          - Angola
+          - Anguilla
+          - Antarctica
+          - Antigua and Barbuda
+          - Arctic Ocean
+          - Argentina
+          - Armenia
+          - Aruba
+          - Ashmore and Cartier Islands
+          - Atlantic Ocean
+          - Australia
+          - Austria
+          - Azerbaijan
+          - Bahamas
+          - Bahrain
+          - Baltic Sea
+          - Baker Island
+          - Bangladesh
+          - Barbados
+          - Bassas da India
+          - Belarus
+          - Belgium
+          - Belize
+          - Benin
+          - Bermuda
+          - Bhutan
+          - Bolivia
+          - Borneo
+          - Bosnia and Herzegovina
+          - Botswana
+          - Bouvet Island
+          - Brazil
+          - British Virgin Islands
+          - Brunei
+          - Bulgaria
+          - Burkina Faso
+          - Burundi
+          - Cambodia
+          - Cameroon
+          - Canada
+          - Cape Verde
+          - Cayman Islands
+          - Central African Republic
+          - Chad
+          - Chile
+          - China
+          - Christmas Island
+          - Clipperton Island
+          - Cocos Islands
+          - Colombia
+          - Comoros
+          - Cook Islands
+          - Coral Sea Islands
+          - Costa Rica
+          - Cote d'Ivoire
+          - Croatia
+          - Cuba
+          - Curacao
+          - Cyprus
+          - Czechia
+          - Democratic Republic of the Congo
+          - Denmark
+          - Djibouti
+          - Dominica
+          - Dominican Republic
+          - Ecuador
+          - Egypt
+          - El Salvador
+          - Equatorial Guinea
+          - Eritrea
+          - Estonia
+          - Eswatini
+          - Ethiopia
+          - Europa Island
+          - Falkland Islands (Islas Malvinas)
+          - Faroe Islands
+          - Fiji
+          - Finland
+          - France
+          - French Guiana
+          - French Polynesia
+          - French Southern and Antarctic Lands
+          - Gabon
+          - Gambia
+          - Gaza Strip
+          - Georgia
+          - Germany
+          - Ghana
+          - Gibraltar
+          - Glorioso Islands
+          - Greece
+          - Greenland
+          - Grenada
+          - Guadeloupe
+          - Guam
+          - Guatemala
+          - Guernsey
+          - Guinea
+          - Guinea-Bissau
+          - Guyana
+          - Haiti
+          - Heard Island and McDonald Islands
+          - Honduras
+          - Hong Kong
+          - Howland Island
+          - Hungary
+          - Iceland
+          - India
+          - Indian Ocean
+          - Indonesia
+          - Iran
+          - Iraq
+          - Ireland
+          - Isle of Man
+          - Israel
+          - Italy
+          - Jamaica
+          - Jan Mayen
+          - Japan
+          - Jarvis Island
+          - Jersey
+          - Johnston Atoll
+          - Jordan
+          - Juan de Nova Island
+          - Kazakhstan
+          - Kenya
+          - Kerguelen Archipelago
+          - Kingman Reef
+          - Kiribati
+          - Kosovo
+          - Kuwait
+          - Kyrgyzstan
+          - Laos
+          - Latvia
+          - Lebanon
+          - Lesotho
+          - Liberia
+          - Libya
+          - Liechtenstein
+          - Line Islands
+          - Lithuania
+          - Luxembourg
+          - Macau
+          - Madagascar
+          - Malawi
+          - Malaysia
+          - Maldives
+          - Mali
+          - Malta
+          - Marshall Islands
+          - Martinique
+          - Mauritania
+          - Mauritius
+          - Mayotte
+          - Mediterranean Sea
+          - Mexico
+          - Micronesia, Federated States of
+          - Midway Islands
+          - Moldova
+          - Monaco
+          - Mongolia
+          - Montenegro
+          - Montserrat
+          - Morocco
+          - Mozambique
+          - Myanmar
+          - Namibia
+          - Nauru
+          - Navassa Island
+          - Nepal
+          - Netherlands
+          - New Caledonia
+          - New Zealand
+          - Nicaragua
+          - Niger
+          - Nigeria
+          - Niue
+          - Norfolk Island
+          - North Korea
+          - North Macedonia
+          - North Sea
+          - Northern Mariana Islands
+          - Norway
+          - Oman
+          - Pacific Ocean
+          - Pakistan
+          - Palau
+          - Palmyra Atoll
+          - Panama
+          - Papua New Guinea
+          - Paracel Islands
+          - Paraguay
+          - Peru
+          - Philippines
+          - Pitcairn Islands
+          - Poland
+          - Portugal
+          - Puerto Rico
+          - Qatar
+          - Republic of the Congo
+          - Reunion
+          - Romania
+          - Ross Sea
+          - Russia
+          - Rwanda
+          - Saint Barthelemy
+          - Saint Helena
+          - Saint Kitts and Nevis
+          - Saint Lucia
+          - Saint Martin
+          - Saint Pierre and Miquelon
+          - Saint Vincent and the Grenadines
+          - Samoa
+          - San Marino
+          - Sao Tome and Principe
+          - Saudi Arabia
+          - Senegal
+          - Serbia
+          - Seychelles
+          - Sierra Leone
+          - Singapore
+          - Sint Maarten
+          - Slovakia
+          - Slovenia
+          - Solomon Islands
+          - Somalia
+          - South Africa
+          - South Georgia and the South Sandwich Islands
+          - South Korea
+          - South Sudan
+          - Southern Ocean
+          - Spain
+          - Spratly Islands
+          - Sri Lanka
+          - State of Palestine
+          - Sudan
+          - Suriname
+          - Svalbard
+          - Sweden
+          - Switzerland
+          - Syria
+          - Taiwan
+          - Tajikistan
+          - Tanzania
+          - Tasman Sea
+          - Thailand
+          - Timor-Leste
+          - Togo
+          - Tokelau
+          - Tonga
+          - Trinidad and Tobago
+          - Tromelin Island
+          - Tunisia
+          - Turkey
+          - Turkmenistan
+          - Turks and Caicos Islands
+          - Tuvalu
+          - Uganda
+          - Ukraine
+          - United Arab Emirates
+          - United Kingdom
+          - Uruguay
+          - USA
+          - Uzbekistan
+          - Vanuatu
+          - Venezuela
+          - Viet Nam
+          - Virgin Islands
+          - Wake Island
+          - Wallis and Futuna
+          - West Bank
+          - Western Sahara
+          - Yemen
+          - Zambia
+          - Zimbabwe
+          - Belgian Congo
+          - British Guiana
+          - Burma
+          - Czechoslovakia
+          - Czech Republic
+          - East Timor
+          - Korea
+          - Macedonia
+          - Micronesia
+          - Netherlands Antilles
+          - Serbia and Montenegro
+          - Siam
+          - Swaziland
+          - The former Yugoslav Republic of Macedonia
+          - USSR
+          - Yugoslavia
+          - Zaire
+        required: true
+      geoLocLatitude:  
+        function: identity
+        inputs:
+          input: geoLocLatitude
+        args:
+          type: float
+      geoLocLongitude:  
+        function: identity
+        inputs:
+          input: geoLocLongitude
+        args:
+          type: float
+      geoLocSite:  
+        function: identity
+        inputs:
+          input: geoLocSite
+        args:
+      hostAge:  
+        function: identity
+        inputs:
+          input: hostAge
+        args:
+          type: int
+      hostAgeBin:  
+        function: identity
+        inputs:
+          input: hostAgeBin
+        args:
+      hostDisease:  
+        function: identity
+        inputs:
+          input: hostDisease
+        args:
+      hostGender:  
+        function: identity
+        inputs:
+          input: hostGender
+        args:
+      hostHealthOutcome:  
+        function: identity
+        inputs:
+          input: hostHealthOutcome
+        args:
+      hostHealthState:  
+        function: identity
+        inputs:
+          input: hostHealthState
+        args:
+      hostNameCommon:  
+        function: identity
+        inputs:
+          input: hostNameCommon
+        args:
+      hostNameScientific:  
+        function: identity
+        inputs:
+          input: hostNameScientific
+        args:
+      hostOriginCountry:  
+        function: identity
+        inputs:
+          input: hostOriginCountry
+        args:
+      hostRole:  
+        function: identity
+        inputs:
+          input: hostRole
+        args:
+      hostTaxonId:  
+        function: identity
+        inputs:
+          input: hostTaxonId
+        args:
+          type: int
+      hostVaccinationStatus:  
+        function: identity
+        inputs:
+          input: hostVaccinationStatus
+        args:
+      insdcAccessionBase_L:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_L
+        args:
+          segment: L
+      insdcAccessionBase_M:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_M
+        args:
+          segment: M
+      insdcAccessionBase_S:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_S
+        args:
+          segment: S
+      insdcAccessionFull_L:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_L
+        args:
+          segment: L
+      insdcAccessionFull_M:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_M
+        args:
+          segment: M
+      insdcAccessionFull_S:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_S
+        args:
+          segment: S
+      insdcRawReadsAccession:  
+        function: identity
+        inputs:
+          input: insdcRawReadsAccession
+        args:
+      insdcVersion_L:  
+        function: identity
+        inputs:
+          input: insdcVersion_L
+        args:
+          segment: L
+          type: int
+      insdcVersion_M:  
+        function: identity
+        inputs:
+          input: insdcVersion_M
+        args:
+          segment: M
+          type: int
+      insdcVersion_S:  
+        function: identity
+        inputs:
+          input: insdcVersion_S
+        args:
+          segment: S
+          type: int
+      isLabHost:  
+        function: identity
+        inputs:
+          input: isLabHost
+        args:
+          type: boolean
+      length_L:  
+        function: identity
+        inputs:
+          input: length_L
+        args:
+          segment: L
+          type: int
+      length_M:  
+        function: identity
+        inputs:
+          input: length_M
+        args:
+          segment: M
+          type: int
+      length_S:  
+        function: identity
+        inputs:
+          input: length_S
+        args:
+          segment: S
+          type: int
+      lineage:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+          
+          segment: S
+      ncbiReleaseDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiReleaseDate
+        args:
+          type: date
+      ncbiSourceDb:  
+        function: identity
+        inputs:
+          input: ncbiSourceDb
+        args:
+      ncbiSubmitterCountry:  
+        function: identity
+        inputs:
+          input: ncbiSubmitterCountry
+        args:
+      ncbiUpdateDate_L:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: L
+          type: date
+      ncbiUpdateDate_M:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: M
+          type: date
+      ncbiUpdateDate_S:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: S
+          type: date
+      ncbiVirusName:  
+        function: identity
+        inputs:
+          input: ncbiVirusName
+        args:
+      ncbiVirusTaxId:  
+        function: identity
+        inputs:
+          input: ncbiVirusTaxId
+        args:
+          type: int
+      passageMethod:  
+        function: identity
+        inputs:
+          input: passageMethod
+        args:
+      passageNumber:  
+        function: identity
+        inputs:
+          input: passageNumber
+        args:
+          type: int
+      presamplingActivity:  
+        function: identity
+        inputs:
+          input: presamplingActivity
+        args:
+      previousInfectionDisease:  
+        function: identity
+        inputs:
+          input: previousInfectionDisease
+        args:
+      previousInfectionOrganism:  
+        function: identity
+        inputs:
+          input: previousInfectionOrganism
+        args:
+      purposeOfSampling:  
+        function: identity
+        inputs:
+          input: purposeOfSampling
+        args:
+      purposeOfSequencing:  
+        function: identity
+        inputs:
+          input: purposeOfSequencing
+        args:
+      qualityControlDetails:  
+        function: identity
+        inputs:
+          input: qualityControlDetails
+        args:
+      qualityControlDetermination:  
+        function: identity
+        inputs:
+          input: qualityControlDetermination
+        args:
+      qualityControlIssues:  
+        function: identity
+        inputs:
+          input: qualityControlIssues
+        args:
+      qualityControlMethodName:  
+        function: identity
+        inputs:
+          input: qualityControlMethodName
+        args:
+      qualityControlMethodVersion:  
+        function: identity
+        inputs:
+          input: qualityControlMethodVersion
+        args:
+      rawSequenceDataProcessingMethod:  
+        function: identity
+        inputs:
+          input: rawSequenceDataProcessingMethod
+        args:
+      referenceGenomeAccession:  
+        function: identity
+        inputs:
+          input: referenceGenomeAccession
+        args:
+      sampleCollectionDate:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          
+          fieldType: dateRangeString
+        required: true
+      sampleCollectionDateRangeLower:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeLower
+      sampleCollectionDateRangeUpper:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeUpper
+      sampleReceivedDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sampleReceivedDate
+        args:
+          type: date
+      sampleType:  
+        function: identity
+        inputs:
+          input: sampleType
+        args:
+      sequencedByContactEmail:  
+        function: identity
+        inputs:
+          input: sequencedByContactEmail
+        args:
+      sequencedByContactName:  
+        function: identity
+        inputs:
+          input: sequencedByContactName
+        args:
+      sequencedByOrganization:  
+        function: identity
+        inputs:
+          input: sequencedByOrganization
+        args:
+      sequencingAssayType:  
+        function: identity
+        inputs:
+          input: sequencingAssayType
+        args:
+      sequencingDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sequencingDate
+        args:
+          type: date
+      sequencingInstrument:  
+        function: identity
+        inputs:
+          input: sequencingInstrument
+        args:
+      sequencingProtocol:  
+        function: identity
+        inputs:
+          input: sequencingProtocol
+        args:
+      signsAndSymptoms:  
+        function: identity
+        inputs:
+          input: signsAndSymptoms
+        args:
+      specimenCollectorSampleId:  
+        function: identity
+        inputs:
+          input: specimenCollectorSampleId
+        args:
+      specimenProcessing:  
+        function: identity
+        inputs:
+          input: specimenProcessing
+        args:
+      specimenProcessingDetails:  
+        function: identity
+        inputs:
+          input: specimenProcessingDetails
+        args:
+      stopCodons_L:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: L
+      stopCodons_M:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: M
+      stopCodons_S:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: S
+      totalAmbiguousNucs_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: L
+          type: int
+      totalAmbiguousNucs_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: M
+          type: int
+      totalAmbiguousNucs_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: S
+          type: int
+      totalDeletedNucs_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: L
+          type: int
+      totalDeletedNucs_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: M
+          type: int
+      totalDeletedNucs_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: S
+          type: int
+      totalFrameShifts_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: L
+          type: int
+      totalFrameShifts_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: M
+          type: int
+      totalFrameShifts_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: S
+          type: int
+      totalInsertedNucs_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: L
+          type: int
+      totalInsertedNucs_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: M
+          type: int
+      totalInsertedNucs_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: S
+          type: int
+      totalSnps_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: L
+          type: int
+      totalSnps_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: M
+          type: int
+      totalSnps_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: S
+          type: int
+      totalStopCodons_L:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: L
+          type: int
+      totalStopCodons_M:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: M
+          type: int
+      totalStopCodons_S:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: S
+          type: int
+      totalUnknownNucs_L:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: L
+          type: int
+      totalUnknownNucs_M:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: M
+          type: int
+      totalUnknownNucs_S:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: S
+          type: int
+      travelHistory:  
+        function: identity
+        inputs:
+          input: travelHistory
+        args:
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-ebola-sudan-v1-0
+data:
+  preprocessing-config.yaml: |
+    organism: ebola-sudan
+    batch_size: 100
+    create_embl_file: true
+    genes:
+    - NP
+    - VP35
+    - VP40
+    - GP
+    - sGP
+    - ssGP
+    - VP30
+    - VP24
+    - L
+    log_level: DEBUG
+    molecule_type: genomic RNA
+    nextclade_dataset_name: nextstrain/ebola/sudan
+    nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+    scientific_name: Sudan ebolavirus
+    taxon_id: 186540
+    nucleotideSequences:
+    - main
+    processing_spec:
+      
+      
+      ampliconPcrPrimerScheme:  
+        function: identity
+        inputs:
+          input: ampliconPcrPrimerScheme
+        args:
+      ampliconSize:  
+        function: identity
+        inputs:
+          input: ampliconSize
+        args:
+      anatomicalMaterial:  
+        function: identity
+        inputs:
+          input: anatomicalMaterial
+        args:
+      anatomicalPart:  
+        function: identity
+        inputs:
+          input: anatomicalPart
+        args:
+      authorAffiliations:  
+        function: identity
+        inputs:
+          input: authorAffiliations
+        args:
+      authors:  
+        function: check_authors
+        inputs:
+          authors: authors
+        args:
+          type: authors
+      bioprojectAccession:  
+        function: identity
+        inputs:
+          input: bioprojectAccession
+        args:
+      biosampleAccession:  
+        function: identity
+        inputs:
+          input: biosampleAccession
+        args:
+      bodyProduct:  
+        function: identity
+        inputs:
+          input: bodyProduct
+        args:
+      breadthOfCoverage:  
+        function: identity
+        inputs:
+          input: breadthOfCoverage
+        args:
+          type: int
+      cellLine:  
+        function: identity
+        inputs:
+          input: cellLine
+        args:
+      collectionDevice:  
+        function: identity
+        inputs:
+          input: collectionDevice
+        args:
+      collectionMethod:  
+        function: identity
+        inputs:
+          input: collectionMethod
+        args:
+      completeness:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          type: float
+      consensusSequenceSoftwareName:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareName
+        args:
+      consensusSequenceSoftwareVersion:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareVersion
+        args:
+      cultureId:  
+        function: identity
+        inputs:
+          input: cultureId
+        args:
+      dehostingMethod:  
+        function: identity
+        inputs:
+          input: dehostingMethod
+        args:
+      depthOfCoverage:  
+        function: identity
+        inputs:
+          input: depthOfCoverage
+        args:
+          type: int
+      diagnosticMeasurementMethod:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementMethod
+        args:
+      diagnosticMeasurementUnit:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementUnit
+        args:
+      diagnosticMeasurementValue:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementValue
+        args:
+      diagnosticTargetGeneName:  
+        function: identity
+        inputs:
+          input: diagnosticTargetGeneName
+        args:
+      diagnosticTargetPresence:  
+        function: identity
+        inputs:
+          input: diagnosticTargetPresence
+        args:
+      displayName:  
+        function: concatenate
+        inputs:
+          geoLocCountry: geoLocCountry
+          sampleCollectionDate: sampleCollectionDate
+        args:
+          
+          order:
+          - geoLocCountry
+          - accession_version
+          - sampleCollectionDate
+          type:
+          - string
+          - string
+          - string
+      earliestReleaseDate:  
+        function: identity
+        inputs:
+          input: earliestReleaseDate
+        args:
+          type: date
+      environmentalMaterial:  
+        function: identity
+        inputs:
+          input: environmentalMaterial
+        args:
+      environmentalSite:  
+        function: identity
+        inputs:
+          input: environmentalSite
+        args:
+      experimentalSpecimenRoleType:  
+        function: identity
+        inputs:
+          input: experimentalSpecimenRoleType
+        args:
+      exposureDetails:  
+        function: identity
+        inputs:
+          input: exposureDetails
+        args:
+      exposureEvent:  
+        function: identity
+        inputs:
+          input: exposureEvent
+        args:
+      exposureSetting:  
+        function: identity
+        inputs:
+          input: exposureSetting
+        args:
+      foodProduct:  
+        function: identity
+        inputs:
+          input: foodProduct
+        args:
+      foodProductProperties:  
+        function: identity
+        inputs:
+          input: foodProductProperties
+        args:
+      frameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+      gcaAccession:  
+        function: identity
+        inputs:
+          input: gcaAccession
+        args:
+      geoLocAdmin1:  
+        function: identity
+        inputs:
+          input: geoLocAdmin1
+        args:
+      geoLocAdmin2:  
+        function: identity
+        inputs:
+          input: geoLocAdmin2
+        args:
+      geoLocCity:  
+        function: identity
+        inputs:
+          input: geoLocCity
+        args:
+      geoLocCountry:  
+        function: process_options
+        inputs:
+          input: geoLocCountry
+        args:
+          options: 
+          - Afghanistan
+          - Albania
+          - Algeria
+          - American Samoa
+          - Andorra
+          - Angola
+          - Anguilla
+          - Antarctica
+          - Antigua and Barbuda
+          - Arctic Ocean
+          - Argentina
+          - Armenia
+          - Aruba
+          - Ashmore and Cartier Islands
+          - Atlantic Ocean
+          - Australia
+          - Austria
+          - Azerbaijan
+          - Bahamas
+          - Bahrain
+          - Baltic Sea
+          - Baker Island
+          - Bangladesh
+          - Barbados
+          - Bassas da India
+          - Belarus
+          - Belgium
+          - Belize
+          - Benin
+          - Bermuda
+          - Bhutan
+          - Bolivia
+          - Borneo
+          - Bosnia and Herzegovina
+          - Botswana
+          - Bouvet Island
+          - Brazil
+          - British Virgin Islands
+          - Brunei
+          - Bulgaria
+          - Burkina Faso
+          - Burundi
+          - Cambodia
+          - Cameroon
+          - Canada
+          - Cape Verde
+          - Cayman Islands
+          - Central African Republic
+          - Chad
+          - Chile
+          - China
+          - Christmas Island
+          - Clipperton Island
+          - Cocos Islands
+          - Colombia
+          - Comoros
+          - Cook Islands
+          - Coral Sea Islands
+          - Costa Rica
+          - Cote d'Ivoire
+          - Croatia
+          - Cuba
+          - Curacao
+          - Cyprus
+          - Czechia
+          - Democratic Republic of the Congo
+          - Denmark
+          - Djibouti
+          - Dominica
+          - Dominican Republic
+          - Ecuador
+          - Egypt
+          - El Salvador
+          - Equatorial Guinea
+          - Eritrea
+          - Estonia
+          - Eswatini
+          - Ethiopia
+          - Europa Island
+          - Falkland Islands (Islas Malvinas)
+          - Faroe Islands
+          - Fiji
+          - Finland
+          - France
+          - French Guiana
+          - French Polynesia
+          - French Southern and Antarctic Lands
+          - Gabon
+          - Gambia
+          - Gaza Strip
+          - Georgia
+          - Germany
+          - Ghana
+          - Gibraltar
+          - Glorioso Islands
+          - Greece
+          - Greenland
+          - Grenada
+          - Guadeloupe
+          - Guam
+          - Guatemala
+          - Guernsey
+          - Guinea
+          - Guinea-Bissau
+          - Guyana
+          - Haiti
+          - Heard Island and McDonald Islands
+          - Honduras
+          - Hong Kong
+          - Howland Island
+          - Hungary
+          - Iceland
+          - India
+          - Indian Ocean
+          - Indonesia
+          - Iran
+          - Iraq
+          - Ireland
+          - Isle of Man
+          - Israel
+          - Italy
+          - Jamaica
+          - Jan Mayen
+          - Japan
+          - Jarvis Island
+          - Jersey
+          - Johnston Atoll
+          - Jordan
+          - Juan de Nova Island
+          - Kazakhstan
+          - Kenya
+          - Kerguelen Archipelago
+          - Kingman Reef
+          - Kiribati
+          - Kosovo
+          - Kuwait
+          - Kyrgyzstan
+          - Laos
+          - Latvia
+          - Lebanon
+          - Lesotho
+          - Liberia
+          - Libya
+          - Liechtenstein
+          - Line Islands
+          - Lithuania
+          - Luxembourg
+          - Macau
+          - Madagascar
+          - Malawi
+          - Malaysia
+          - Maldives
+          - Mali
+          - Malta
+          - Marshall Islands
+          - Martinique
+          - Mauritania
+          - Mauritius
+          - Mayotte
+          - Mediterranean Sea
+          - Mexico
+          - Micronesia, Federated States of
+          - Midway Islands
+          - Moldova
+          - Monaco
+          - Mongolia
+          - Montenegro
+          - Montserrat
+          - Morocco
+          - Mozambique
+          - Myanmar
+          - Namibia
+          - Nauru
+          - Navassa Island
+          - Nepal
+          - Netherlands
+          - New Caledonia
+          - New Zealand
+          - Nicaragua
+          - Niger
+          - Nigeria
+          - Niue
+          - Norfolk Island
+          - North Korea
+          - North Macedonia
+          - North Sea
+          - Northern Mariana Islands
+          - Norway
+          - Oman
+          - Pacific Ocean
+          - Pakistan
+          - Palau
+          - Palmyra Atoll
+          - Panama
+          - Papua New Guinea
+          - Paracel Islands
+          - Paraguay
+          - Peru
+          - Philippines
+          - Pitcairn Islands
+          - Poland
+          - Portugal
+          - Puerto Rico
+          - Qatar
+          - Republic of the Congo
+          - Reunion
+          - Romania
+          - Ross Sea
+          - Russia
+          - Rwanda
+          - Saint Barthelemy
+          - Saint Helena
+          - Saint Kitts and Nevis
+          - Saint Lucia
+          - Saint Martin
+          - Saint Pierre and Miquelon
+          - Saint Vincent and the Grenadines
+          - Samoa
+          - San Marino
+          - Sao Tome and Principe
+          - Saudi Arabia
+          - Senegal
+          - Serbia
+          - Seychelles
+          - Sierra Leone
+          - Singapore
+          - Sint Maarten
+          - Slovakia
+          - Slovenia
+          - Solomon Islands
+          - Somalia
+          - South Africa
+          - South Georgia and the South Sandwich Islands
+          - South Korea
+          - South Sudan
+          - Southern Ocean
+          - Spain
+          - Spratly Islands
+          - Sri Lanka
+          - State of Palestine
+          - Sudan
+          - Suriname
+          - Svalbard
+          - Sweden
+          - Switzerland
+          - Syria
+          - Taiwan
+          - Tajikistan
+          - Tanzania
+          - Tasman Sea
+          - Thailand
+          - Timor-Leste
+          - Togo
+          - Tokelau
+          - Tonga
+          - Trinidad and Tobago
+          - Tromelin Island
+          - Tunisia
+          - Turkey
+          - Turkmenistan
+          - Turks and Caicos Islands
+          - Tuvalu
+          - Uganda
+          - Ukraine
+          - United Arab Emirates
+          - United Kingdom
+          - Uruguay
+          - USA
+          - Uzbekistan
+          - Vanuatu
+          - Venezuela
+          - Viet Nam
+          - Virgin Islands
+          - Wake Island
+          - Wallis and Futuna
+          - West Bank
+          - Western Sahara
+          - Yemen
+          - Zambia
+          - Zimbabwe
+          - Belgian Congo
+          - British Guiana
+          - Burma
+          - Czechoslovakia
+          - Czech Republic
+          - East Timor
+          - Korea
+          - Macedonia
+          - Micronesia
+          - Netherlands Antilles
+          - Serbia and Montenegro
+          - Siam
+          - Swaziland
+          - The former Yugoslav Republic of Macedonia
+          - USSR
+          - Yugoslavia
+          - Zaire
+        required: true
+      geoLocLatitude:  
+        function: identity
+        inputs:
+          input: geoLocLatitude
+        args:
+          type: float
+      geoLocLongitude:  
+        function: identity
+        inputs:
+          input: geoLocLongitude
+        args:
+          type: float
+      geoLocSite:  
+        function: identity
+        inputs:
+          input: geoLocSite
+        args:
+      hostAge:  
+        function: identity
+        inputs:
+          input: hostAge
+        args:
+          type: int
+      hostAgeBin:  
+        function: identity
+        inputs:
+          input: hostAgeBin
+        args:
+      hostDisease:  
+        function: identity
+        inputs:
+          input: hostDisease
+        args:
+      hostGender:  
+        function: identity
+        inputs:
+          input: hostGender
+        args:
+      hostHealthOutcome:  
+        function: identity
+        inputs:
+          input: hostHealthOutcome
+        args:
+      hostHealthState:  
+        function: identity
+        inputs:
+          input: hostHealthState
+        args:
+      hostNameCommon:  
+        function: identity
+        inputs:
+          input: hostNameCommon
+        args:
+      hostNameScientific:  
+        function: identity
+        inputs:
+          input: hostNameScientific
+        args:
+      hostOriginCountry:  
+        function: identity
+        inputs:
+          input: hostOriginCountry
+        args:
+      hostRole:  
+        function: identity
+        inputs:
+          input: hostRole
+        args:
+      hostTaxonId:  
+        function: identity
+        inputs:
+          input: hostTaxonId
+        args:
+          type: int
+      hostVaccinationStatus:  
+        function: identity
+        inputs:
+          input: hostVaccinationStatus
+        args:
+      insdcAccessionBase:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase
+        args:
+      insdcAccessionFull:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull
+        args:
+      insdcRawReadsAccession:  
+        function: identity
+        inputs:
+          input: insdcRawReadsAccession
+        args:
+      insdcVersion:  
+        function: identity
+        inputs:
+          input: insdcVersion
+        args:
+          type: int
+      isLabHost:  
+        function: identity
+        inputs:
+          input: isLabHost
+        args:
+          type: boolean
+      length:  
+        function: identity
+        inputs:
+          input: length
+        args:
+          type: int
+      ncbiReleaseDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiReleaseDate
+        args:
+          type: date
+      ncbiSourceDb:  
+        function: identity
+        inputs:
+          input: ncbiSourceDb
+        args:
+      ncbiSubmitterCountry:  
+        function: identity
+        inputs:
+          input: ncbiSubmitterCountry
+        args:
+      ncbiUpdateDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          type: date
+      ncbiVirusName:  
+        function: identity
+        inputs:
+          input: ncbiVirusName
+        args:
+      ncbiVirusTaxId:  
+        function: identity
+        inputs:
+          input: ncbiVirusTaxId
+        args:
+          type: int
+      passageMethod:  
+        function: identity
+        inputs:
+          input: passageMethod
+        args:
+      passageNumber:  
+        function: identity
+        inputs:
+          input: passageNumber
+        args:
+          type: int
+      presamplingActivity:  
+        function: identity
+        inputs:
+          input: presamplingActivity
+        args:
+      previousInfectionDisease:  
+        function: identity
+        inputs:
+          input: previousInfectionDisease
+        args:
+      previousInfectionOrganism:  
+        function: identity
+        inputs:
+          input: previousInfectionOrganism
+        args:
+      purposeOfSampling:  
+        function: identity
+        inputs:
+          input: purposeOfSampling
+        args:
+      purposeOfSequencing:  
+        function: identity
+        inputs:
+          input: purposeOfSequencing
+        args:
+      qualityControlDetails:  
+        function: identity
+        inputs:
+          input: qualityControlDetails
+        args:
+      qualityControlDetermination:  
+        function: identity
+        inputs:
+          input: qualityControlDetermination
+        args:
+      qualityControlIssues:  
+        function: identity
+        inputs:
+          input: qualityControlIssues
+        args:
+      qualityControlMethodName:  
+        function: identity
+        inputs:
+          input: qualityControlMethodName
+        args:
+      qualityControlMethodVersion:  
+        function: identity
+        inputs:
+          input: qualityControlMethodVersion
+        args:
+      rawSequenceDataProcessingMethod:  
+        function: identity
+        inputs:
+          input: rawSequenceDataProcessingMethod
+        args:
+      referenceGenomeAccession:  
+        function: identity
+        inputs:
+          input: referenceGenomeAccession
+        args:
+      sampleCollectionDate:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          
+          fieldType: dateRangeString
+        required: true
+      sampleCollectionDateRangeLower:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeLower
+      sampleCollectionDateRangeUpper:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeUpper
+      sampleReceivedDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sampleReceivedDate
+        args:
+          type: date
+      sampleType:  
+        function: identity
+        inputs:
+          input: sampleType
+        args:
+      sequencedByContactEmail:  
+        function: identity
+        inputs:
+          input: sequencedByContactEmail
+        args:
+      sequencedByContactName:  
+        function: identity
+        inputs:
+          input: sequencedByContactName
+        args:
+      sequencedByOrganization:  
+        function: identity
+        inputs:
+          input: sequencedByOrganization
+        args:
+      sequencingAssayType:  
+        function: identity
+        inputs:
+          input: sequencingAssayType
+        args:
+      sequencingDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sequencingDate
+        args:
+          type: date
+      sequencingInstrument:  
+        function: identity
+        inputs:
+          input: sequencingInstrument
+        args:
+      sequencingProtocol:  
+        function: identity
+        inputs:
+          input: sequencingProtocol
+        args:
+      signsAndSymptoms:  
+        function: identity
+        inputs:
+          input: signsAndSymptoms
+        args:
+      specimenCollectorSampleId:  
+        function: identity
+        inputs:
+          input: specimenCollectorSampleId
+        args:
+      specimenProcessing:  
+        function: identity
+        inputs:
+          input: specimenProcessing
+        args:
+      specimenProcessingDetails:  
+        function: identity
+        inputs:
+          input: specimenProcessingDetails
+        args:
+      stopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+      totalAmbiguousNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          type: int
+      totalDeletedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          type: int
+      totalFrameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          type: int
+      totalInsertedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          type: int
+      totalSnps:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          type: int
+      totalStopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          type: int
+      totalUnknownNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          type: int
+      travelHistory:  
+        function: identity
+        inputs:
+          input: travelHistory
+        args:
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-ebola-sudan-v2-1
+data:
+  preprocessing-config.yaml: |
+    organism: ebola-sudan
+    batch_size: 100
+    create_embl_file: true
+    genes:
+    - NP
+    - VP35
+    - VP40
+    - GP
+    - sGP
+    - ssGP
+    - VP30
+    - VP24
+    - L
+    log_level: DEBUG
+    molecule_type: genomic RNA
+    nextclade_dataset_name: nextstrain/ebola/sudan
+    nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+    scientific_name: Sudan ebolavirus
+    taxon_id: 186540
+    nucleotideSequences:
+    - main
+    processing_spec:
+      
+      
+      ampliconPcrPrimerScheme:  
+        function: identity
+        inputs:
+          input: ampliconPcrPrimerScheme
+        args:
+      ampliconSize:  
+        function: identity
+        inputs:
+          input: ampliconSize
+        args:
+      anatomicalMaterial:  
+        function: identity
+        inputs:
+          input: anatomicalMaterial
+        args:
+      anatomicalPart:  
+        function: identity
+        inputs:
+          input: anatomicalPart
+        args:
+      authorAffiliations:  
+        function: identity
+        inputs:
+          input: authorAffiliations
+        args:
+      authors:  
+        function: check_authors
+        inputs:
+          authors: authors
+        args:
+          type: authors
+      bioprojectAccession:  
+        function: identity
+        inputs:
+          input: bioprojectAccession
+        args:
+      biosampleAccession:  
+        function: identity
+        inputs:
+          input: biosampleAccession
+        args:
+      bodyProduct:  
+        function: identity
+        inputs:
+          input: bodyProduct
+        args:
+      breadthOfCoverage:  
+        function: identity
+        inputs:
+          input: breadthOfCoverage
+        args:
+          type: int
+      cellLine:  
+        function: identity
+        inputs:
+          input: cellLine
+        args:
+      collectionDevice:  
+        function: identity
+        inputs:
+          input: collectionDevice
+        args:
+      collectionMethod:  
+        function: identity
+        inputs:
+          input: collectionMethod
+        args:
+      completeness:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          type: float
+      consensusSequenceSoftwareName:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareName
+        args:
+      consensusSequenceSoftwareVersion:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareVersion
+        args:
+      cultureId:  
+        function: identity
+        inputs:
+          input: cultureId
+        args:
+      dehostingMethod:  
+        function: identity
+        inputs:
+          input: dehostingMethod
+        args:
+      depthOfCoverage:  
+        function: identity
+        inputs:
+          input: depthOfCoverage
+        args:
+          type: int
+      diagnosticMeasurementMethod:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementMethod
+        args:
+      diagnosticMeasurementUnit:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementUnit
+        args:
+      diagnosticMeasurementValue:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementValue
+        args:
+      diagnosticTargetGeneName:  
+        function: identity
+        inputs:
+          input: diagnosticTargetGeneName
+        args:
+      diagnosticTargetPresence:  
+        function: identity
+        inputs:
+          input: diagnosticTargetPresence
+        args:
+      displayName:  
+        function: concatenate
+        inputs:
+          geoLocCountry: geoLocCountry
+          sampleCollectionDate: sampleCollectionDate
+        args:
+          
+          order:
+          - geoLocCountry
+          - accession_version
+          - sampleCollectionDate
+          type:
+          - string
+          - string
+          - string
+      earliestReleaseDate:  
+        function: identity
+        inputs:
+          input: earliestReleaseDate
+        args:
+          type: date
+      environmentalMaterial:  
+        function: identity
+        inputs:
+          input: environmentalMaterial
+        args:
+      environmentalSite:  
+        function: identity
+        inputs:
+          input: environmentalSite
+        args:
+      experimentalSpecimenRoleType:  
+        function: identity
+        inputs:
+          input: experimentalSpecimenRoleType
+        args:
+      exposureDetails:  
+        function: identity
+        inputs:
+          input: exposureDetails
+        args:
+      exposureEvent:  
+        function: identity
+        inputs:
+          input: exposureEvent
+        args:
+      exposureSetting:  
+        function: identity
+        inputs:
+          input: exposureSetting
+        args:
+      foodProduct:  
+        function: identity
+        inputs:
+          input: foodProduct
+        args:
+      foodProductProperties:  
+        function: identity
+        inputs:
+          input: foodProductProperties
+        args:
+      frameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+      gcaAccession:  
+        function: identity
+        inputs:
+          input: gcaAccession
+        args:
+      geoLocAdmin1:  
+        function: identity
+        inputs:
+          input: geoLocAdmin1
+        args:
+      geoLocAdmin2:  
+        function: identity
+        inputs:
+          input: geoLocAdmin2
+        args:
+      geoLocCity:  
+        function: identity
+        inputs:
+          input: geoLocCity
+        args:
+      geoLocCountry:  
+        function: process_options
+        inputs:
+          input: geoLocCountry
+        args:
+          options: 
+          - Afghanistan
+          - Albania
+          - Algeria
+          - American Samoa
+          - Andorra
+          - Angola
+          - Anguilla
+          - Antarctica
+          - Antigua and Barbuda
+          - Arctic Ocean
+          - Argentina
+          - Armenia
+          - Aruba
+          - Ashmore and Cartier Islands
+          - Atlantic Ocean
+          - Australia
+          - Austria
+          - Azerbaijan
+          - Bahamas
+          - Bahrain
+          - Baltic Sea
+          - Baker Island
+          - Bangladesh
+          - Barbados
+          - Bassas da India
+          - Belarus
+          - Belgium
+          - Belize
+          - Benin
+          - Bermuda
+          - Bhutan
+          - Bolivia
+          - Borneo
+          - Bosnia and Herzegovina
+          - Botswana
+          - Bouvet Island
+          - Brazil
+          - British Virgin Islands
+          - Brunei
+          - Bulgaria
+          - Burkina Faso
+          - Burundi
+          - Cambodia
+          - Cameroon
+          - Canada
+          - Cape Verde
+          - Cayman Islands
+          - Central African Republic
+          - Chad
+          - Chile
+          - China
+          - Christmas Island
+          - Clipperton Island
+          - Cocos Islands
+          - Colombia
+          - Comoros
+          - Cook Islands
+          - Coral Sea Islands
+          - Costa Rica
+          - Cote d'Ivoire
+          - Croatia
+          - Cuba
+          - Curacao
+          - Cyprus
+          - Czechia
+          - Democratic Republic of the Congo
+          - Denmark
+          - Djibouti
+          - Dominica
+          - Dominican Republic
+          - Ecuador
+          - Egypt
+          - El Salvador
+          - Equatorial Guinea
+          - Eritrea
+          - Estonia
+          - Eswatini
+          - Ethiopia
+          - Europa Island
+          - Falkland Islands (Islas Malvinas)
+          - Faroe Islands
+          - Fiji
+          - Finland
+          - France
+          - French Guiana
+          - French Polynesia
+          - French Southern and Antarctic Lands
+          - Gabon
+          - Gambia
+          - Gaza Strip
+          - Georgia
+          - Germany
+          - Ghana
+          - Gibraltar
+          - Glorioso Islands
+          - Greece
+          - Greenland
+          - Grenada
+          - Guadeloupe
+          - Guam
+          - Guatemala
+          - Guernsey
+          - Guinea
+          - Guinea-Bissau
+          - Guyana
+          - Haiti
+          - Heard Island and McDonald Islands
+          - Honduras
+          - Hong Kong
+          - Howland Island
+          - Hungary
+          - Iceland
+          - India
+          - Indian Ocean
+          - Indonesia
+          - Iran
+          - Iraq
+          - Ireland
+          - Isle of Man
+          - Israel
+          - Italy
+          - Jamaica
+          - Jan Mayen
+          - Japan
+          - Jarvis Island
+          - Jersey
+          - Johnston Atoll
+          - Jordan
+          - Juan de Nova Island
+          - Kazakhstan
+          - Kenya
+          - Kerguelen Archipelago
+          - Kingman Reef
+          - Kiribati
+          - Kosovo
+          - Kuwait
+          - Kyrgyzstan
+          - Laos
+          - Latvia
+          - Lebanon
+          - Lesotho
+          - Liberia
+          - Libya
+          - Liechtenstein
+          - Line Islands
+          - Lithuania
+          - Luxembourg
+          - Macau
+          - Madagascar
+          - Malawi
+          - Malaysia
+          - Maldives
+          - Mali
+          - Malta
+          - Marshall Islands
+          - Martinique
+          - Mauritania
+          - Mauritius
+          - Mayotte
+          - Mediterranean Sea
+          - Mexico
+          - Micronesia, Federated States of
+          - Midway Islands
+          - Moldova
+          - Monaco
+          - Mongolia
+          - Montenegro
+          - Montserrat
+          - Morocco
+          - Mozambique
+          - Myanmar
+          - Namibia
+          - Nauru
+          - Navassa Island
+          - Nepal
+          - Netherlands
+          - New Caledonia
+          - New Zealand
+          - Nicaragua
+          - Niger
+          - Nigeria
+          - Niue
+          - Norfolk Island
+          - North Korea
+          - North Macedonia
+          - North Sea
+          - Northern Mariana Islands
+          - Norway
+          - Oman
+          - Pacific Ocean
+          - Pakistan
+          - Palau
+          - Palmyra Atoll
+          - Panama
+          - Papua New Guinea
+          - Paracel Islands
+          - Paraguay
+          - Peru
+          - Philippines
+          - Pitcairn Islands
+          - Poland
+          - Portugal
+          - Puerto Rico
+          - Qatar
+          - Republic of the Congo
+          - Reunion
+          - Romania
+          - Ross Sea
+          - Russia
+          - Rwanda
+          - Saint Barthelemy
+          - Saint Helena
+          - Saint Kitts and Nevis
+          - Saint Lucia
+          - Saint Martin
+          - Saint Pierre and Miquelon
+          - Saint Vincent and the Grenadines
+          - Samoa
+          - San Marino
+          - Sao Tome and Principe
+          - Saudi Arabia
+          - Senegal
+          - Serbia
+          - Seychelles
+          - Sierra Leone
+          - Singapore
+          - Sint Maarten
+          - Slovakia
+          - Slovenia
+          - Solomon Islands
+          - Somalia
+          - South Africa
+          - South Georgia and the South Sandwich Islands
+          - South Korea
+          - South Sudan
+          - Southern Ocean
+          - Spain
+          - Spratly Islands
+          - Sri Lanka
+          - State of Palestine
+          - Sudan
+          - Suriname
+          - Svalbard
+          - Sweden
+          - Switzerland
+          - Syria
+          - Taiwan
+          - Tajikistan
+          - Tanzania
+          - Tasman Sea
+          - Thailand
+          - Timor-Leste
+          - Togo
+          - Tokelau
+          - Tonga
+          - Trinidad and Tobago
+          - Tromelin Island
+          - Tunisia
+          - Turkey
+          - Turkmenistan
+          - Turks and Caicos Islands
+          - Tuvalu
+          - Uganda
+          - Ukraine
+          - United Arab Emirates
+          - United Kingdom
+          - Uruguay
+          - USA
+          - Uzbekistan
+          - Vanuatu
+          - Venezuela
+          - Viet Nam
+          - Virgin Islands
+          - Wake Island
+          - Wallis and Futuna
+          - West Bank
+          - Western Sahara
+          - Yemen
+          - Zambia
+          - Zimbabwe
+          - Belgian Congo
+          - British Guiana
+          - Burma
+          - Czechoslovakia
+          - Czech Republic
+          - East Timor
+          - Korea
+          - Macedonia
+          - Micronesia
+          - Netherlands Antilles
+          - Serbia and Montenegro
+          - Siam
+          - Swaziland
+          - The former Yugoslav Republic of Macedonia
+          - USSR
+          - Yugoslavia
+          - Zaire
+        required: true
+      geoLocLatitude:  
+        function: identity
+        inputs:
+          input: geoLocLatitude
+        args:
+          type: float
+      geoLocLongitude:  
+        function: identity
+        inputs:
+          input: geoLocLongitude
+        args:
+          type: float
+      geoLocSite:  
+        function: identity
+        inputs:
+          input: geoLocSite
+        args:
+      hostAge:  
+        function: identity
+        inputs:
+          input: hostAge
+        args:
+          type: int
+      hostAgeBin:  
+        function: identity
+        inputs:
+          input: hostAgeBin
+        args:
+      hostDisease:  
+        function: identity
+        inputs:
+          input: hostDisease
+        args:
+      hostGender:  
+        function: identity
+        inputs:
+          input: hostGender
+        args:
+      hostHealthOutcome:  
+        function: identity
+        inputs:
+          input: hostHealthOutcome
+        args:
+      hostHealthState:  
+        function: identity
+        inputs:
+          input: hostHealthState
+        args:
+      hostNameCommon:  
+        function: identity
+        inputs:
+          input: hostNameCommon
+        args:
+      hostNameScientific:  
+        function: identity
+        inputs:
+          input: hostNameScientific
+        args:
+      hostOriginCountry:  
+        function: identity
+        inputs:
+          input: hostOriginCountry
+        args:
+      hostRole:  
+        function: identity
+        inputs:
+          input: hostRole
+        args:
+      hostTaxonId:  
+        function: identity
+        inputs:
+          input: hostTaxonId
+        args:
+          type: int
+      hostVaccinationStatus:  
+        function: identity
+        inputs:
+          input: hostVaccinationStatus
+        args:
+      insdcAccessionBase:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase
+        args:
+      insdcAccessionFull:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull
+        args:
+      insdcRawReadsAccession:  
+        function: identity
+        inputs:
+          input: insdcRawReadsAccession
+        args:
+      insdcVersion:  
+        function: identity
+        inputs:
+          input: insdcVersion
+        args:
+          type: int
+      isLabHost:  
+        function: identity
+        inputs:
+          input: isLabHost
+        args:
+          type: boolean
+      length:  
+        function: identity
+        inputs:
+          input: length
+        args:
+          type: int
+      ncbiReleaseDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiReleaseDate
+        args:
+          type: date
+      ncbiSourceDb:  
+        function: identity
+        inputs:
+          input: ncbiSourceDb
+        args:
+      ncbiSubmitterCountry:  
+        function: identity
+        inputs:
+          input: ncbiSubmitterCountry
+        args:
+      ncbiUpdateDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          type: date
+      ncbiVirusName:  
+        function: identity
+        inputs:
+          input: ncbiVirusName
+        args:
+      ncbiVirusTaxId:  
+        function: identity
+        inputs:
+          input: ncbiVirusTaxId
+        args:
+          type: int
+      passageMethod:  
+        function: identity
+        inputs:
+          input: passageMethod
+        args:
+      passageNumber:  
+        function: identity
+        inputs:
+          input: passageNumber
+        args:
+          type: int
+      presamplingActivity:  
+        function: identity
+        inputs:
+          input: presamplingActivity
+        args:
+      previousInfectionDisease:  
+        function: identity
+        inputs:
+          input: previousInfectionDisease
+        args:
+      previousInfectionOrganism:  
+        function: identity
+        inputs:
+          input: previousInfectionOrganism
+        args:
+      purposeOfSampling:  
+        function: identity
+        inputs:
+          input: purposeOfSampling
+        args:
+      purposeOfSequencing:  
+        function: identity
+        inputs:
+          input: purposeOfSequencing
+        args:
+      qualityControlDetails:  
+        function: identity
+        inputs:
+          input: qualityControlDetails
+        args:
+      qualityControlDetermination:  
+        function: identity
+        inputs:
+          input: qualityControlDetermination
+        args:
+      qualityControlIssues:  
+        function: identity
+        inputs:
+          input: qualityControlIssues
+        args:
+      qualityControlMethodName:  
+        function: identity
+        inputs:
+          input: qualityControlMethodName
+        args:
+      qualityControlMethodVersion:  
+        function: identity
+        inputs:
+          input: qualityControlMethodVersion
+        args:
+      rawSequenceDataProcessingMethod:  
+        function: identity
+        inputs:
+          input: rawSequenceDataProcessingMethod
+        args:
+      referenceGenomeAccession:  
+        function: identity
+        inputs:
+          input: referenceGenomeAccession
+        args:
+      sampleCollectionDate:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          
+          fieldType: dateRangeString
+        required: true
+      sampleCollectionDateRangeLower:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeLower
+      sampleCollectionDateRangeUpper:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeUpper
+      sampleReceivedDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sampleReceivedDate
+        args:
+          type: date
+      sampleType:  
+        function: identity
+        inputs:
+          input: sampleType
+        args:
+      sequencedByContactEmail:  
+        function: identity
+        inputs:
+          input: sequencedByContactEmail
+        args:
+      sequencedByContactName:  
+        function: identity
+        inputs:
+          input: sequencedByContactName
+        args:
+      sequencedByOrganization:  
+        function: identity
+        inputs:
+          input: sequencedByOrganization
+        args:
+      sequencingAssayType:  
+        function: identity
+        inputs:
+          input: sequencingAssayType
+        args:
+      sequencingDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sequencingDate
+        args:
+          type: date
+      sequencingInstrument:  
+        function: identity
+        inputs:
+          input: sequencingInstrument
+        args:
+      sequencingProtocol:  
+        function: identity
+        inputs:
+          input: sequencingProtocol
+        args:
+      signsAndSymptoms:  
+        function: identity
+        inputs:
+          input: signsAndSymptoms
+        args:
+      specimenCollectorSampleId:  
+        function: identity
+        inputs:
+          input: specimenCollectorSampleId
+        args:
+      specimenProcessing:  
+        function: identity
+        inputs:
+          input: specimenProcessing
+        args:
+      specimenProcessingDetails:  
+        function: identity
+        inputs:
+          input: specimenProcessingDetails
+        args:
+      stopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+      totalAmbiguousNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          type: int
+      totalDeletedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          type: int
+      totalFrameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          type: int
+      totalInsertedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          type: int
+      totalSnps:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          type: int
+      totalStopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          type: int
+      totalUnknownNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          type: int
+      travelHistory:  
+        function: identity
+        inputs:
+          input: travelHistory
+        args:
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-enteroviruses-v1-0
+data:
+  preprocessing-config.yaml: |
+    organism: enteroviruses
+    batch_size: 100
+    create_embl_file: true
+    genes:
+    - CV-A16-VP4
+    - CV-A16-VP2
+    - CV-A16-VP3
+    - CV-A16-VP1
+    - CV-A16-2A
+    - CV-A16-2B
+    - CV-A16-2C
+    - CV-A16-3A
+    - CV-A16-3B
+    - CV-A16-3C
+    - CV-A16-3D
+    - CV-A10-VP4
+    - CV-A10-VP2
+    - CV-A10-VP3
+    - CV-A10-VP1
+    - CV-A10-2A
+    - CV-A10-2B
+    - CV-A10-2C
+    - CV-A10-3A
+    - CV-A10-3B
+    - CV-A10-3C
+    - CV-A10-3D
+    - EV-A71-VP4
+    - EV-A71-VP2
+    - EV-A71-VP3
+    - EV-A71-VP1
+    - EV-A71-2A
+    - EV-A71-2B
+    - EV-A71-2C
+    - EV-A71-3A
+    - EV-A71-3B
+    - EV-A71-3C
+    - EV-A71-3D
+    - EV-D68-VP4
+    - EV-D68-VP2
+    - EV-D68-VP3
+    - EV-D68-VP1
+    - EV-D68-2A
+    - EV-D68-2B
+    - EV-D68-2C
+    - EV-D68-3A
+    - EV-D68-3B
+    - EV-D68-3C
+    - EV-D68-3D
+    log_level: INFO
+    nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked
+    nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
+    nucleotideSequences:
+    - CV-A16
+    - CV-A10
+    - EV-A71
+    - EV-D68
+    processing_spec:
+      
+      
+      ampliconPcrPrimerScheme:  
+        function: identity
+        inputs:
+          input: ampliconPcrPrimerScheme
+        args:
+      ampliconSize:  
+        function: identity
+        inputs:
+          input: ampliconSize
+        args:
+      anatomicalMaterial:  
+        function: identity
+        inputs:
+          input: anatomicalMaterial
+        args:
+      anatomicalPart:  
+        function: identity
+        inputs:
+          input: anatomicalPart
+        args:
+      authorAffiliations:  
+        function: identity
+        inputs:
+          input: authorAffiliations
+        args:
+      authors:  
+        function: check_authors
+        inputs:
+          authors: authors
+        args:
+          type: authors
+      bioprojectAccession:  
+        function: identity
+        inputs:
+          input: bioprojectAccession
+        args:
+      biosampleAccession:  
+        function: identity
+        inputs:
+          input: biosampleAccession
+        args:
+      bodyProduct:  
+        function: identity
+        inputs:
+          input: bodyProduct
+        args:
+      breadthOfCoverage:  
+        function: identity
+        inputs:
+          input: breadthOfCoverage
+        args:
+          type: int
+      cellLine:  
+        function: identity
+        inputs:
+          input: cellLine
+        args:
+      clade_cv_a10:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+          
+          segment: CV-A10
+      clade_cv_a16:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+          
+          segment: CV-A16
+      clade_ev_a71:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+          
+          segment: EV-A71
+      clade_ev_d68:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+          
+          segment: EV-D68
+      collectionDevice:  
+        function: identity
+        inputs:
+          input: collectionDevice
+        args:
+      collectionMethod:  
+        function: identity
+        inputs:
+          input: collectionMethod
+        args:
+      completeness_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: CV-A16
+          type: float
+      completeness_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: CV-A10
+          type: float
+      completeness_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: EV-A71
+          type: float
+      completeness_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          segment: EV-D68
+          type: float
+      consensusSequenceSoftwareName:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareName
+        args:
+      consensusSequenceSoftwareVersion:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareVersion
+        args:
+      cultureId:  
+        function: identity
+        inputs:
+          input: cultureId
+        args:
+      dehostingMethod:  
+        function: identity
+        inputs:
+          input: dehostingMethod
+        args:
+      depthOfCoverage:  
+        function: identity
+        inputs:
+          input: depthOfCoverage
+        args:
+          type: int
+      diagnosticMeasurementMethod:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementMethod
+        args:
+      diagnosticMeasurementUnit:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementUnit
+        args:
+      diagnosticMeasurementValue:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementValue
+        args:
+      diagnosticTargetGeneName:  
+        function: identity
+        inputs:
+          input: diagnosticTargetGeneName
+        args:
+      diagnosticTargetPresence:  
+        function: identity
+        inputs:
+          input: diagnosticTargetPresence
+        args:
+      displayName:  
+        function: concatenate
+        inputs:
+          geoLocCountry: geoLocCountry
+          sampleCollectionDate: sampleCollectionDate
+        args:
+          
+          order:
+          - geoLocCountry
+          - accession_version
+          - sampleCollectionDate
+          type:
+          - string
+          - string
+          - string
+      earliestReleaseDate:  
+        function: identity
+        inputs:
+          input: earliestReleaseDate
+        args:
+          type: date
+      environmentalMaterial:  
+        function: identity
+        inputs:
+          input: environmentalMaterial
+        args:
+      environmentalSite:  
+        function: identity
+        inputs:
+          input: environmentalSite
+        args:
+      experimentalSpecimenRoleType:  
+        function: identity
+        inputs:
+          input: experimentalSpecimenRoleType
+        args:
+      exposureDetails:  
+        function: identity
+        inputs:
+          input: exposureDetails
+        args:
+      exposureEvent:  
+        function: identity
+        inputs:
+          input: exposureEvent
+        args:
+      exposureSetting:  
+        function: identity
+        inputs:
+          input: exposureSetting
+        args:
+      foodProduct:  
+        function: identity
+        inputs:
+          input: foodProduct
+        args:
+      foodProductProperties:  
+        function: identity
+        inputs:
+          input: foodProductProperties
+        args:
+      frameShifts_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: CV-A16
+      frameShifts_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: CV-A10
+      frameShifts_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: EV-A71
+      frameShifts_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+          segment: EV-D68
+      gcaAccession:  
+        function: identity
+        inputs:
+          input: gcaAccession
+        args:
+      genotype:  
+        function: identity
+        inputs:
+          input: genotype
+        args:
+      geoLocAdmin1:  
+        function: identity
+        inputs:
+          input: geoLocAdmin1
+        args:
+      geoLocAdmin2:  
+        function: identity
+        inputs:
+          input: geoLocAdmin2
+        args:
+      geoLocCity:  
+        function: identity
+        inputs:
+          input: geoLocCity
+        args:
+      geoLocCountry:  
+        function: process_options
+        inputs:
+          input: geoLocCountry
+        args:
+          options: 
+          - Afghanistan
+          - Albania
+          - Algeria
+          - American Samoa
+          - Andorra
+          - Angola
+          - Anguilla
+          - Antarctica
+          - Antigua and Barbuda
+          - Arctic Ocean
+          - Argentina
+          - Armenia
+          - Aruba
+          - Ashmore and Cartier Islands
+          - Atlantic Ocean
+          - Australia
+          - Austria
+          - Azerbaijan
+          - Bahamas
+          - Bahrain
+          - Baltic Sea
+          - Baker Island
+          - Bangladesh
+          - Barbados
+          - Bassas da India
+          - Belarus
+          - Belgium
+          - Belize
+          - Benin
+          - Bermuda
+          - Bhutan
+          - Bolivia
+          - Borneo
+          - Bosnia and Herzegovina
+          - Botswana
+          - Bouvet Island
+          - Brazil
+          - British Virgin Islands
+          - Brunei
+          - Bulgaria
+          - Burkina Faso
+          - Burundi
+          - Cambodia
+          - Cameroon
+          - Canada
+          - Cape Verde
+          - Cayman Islands
+          - Central African Republic
+          - Chad
+          - Chile
+          - China
+          - Christmas Island
+          - Clipperton Island
+          - Cocos Islands
+          - Colombia
+          - Comoros
+          - Cook Islands
+          - Coral Sea Islands
+          - Costa Rica
+          - Cote d'Ivoire
+          - Croatia
+          - Cuba
+          - Curacao
+          - Cyprus
+          - Czechia
+          - Democratic Republic of the Congo
+          - Denmark
+          - Djibouti
+          - Dominica
+          - Dominican Republic
+          - Ecuador
+          - Egypt
+          - El Salvador
+          - Equatorial Guinea
+          - Eritrea
+          - Estonia
+          - Eswatini
+          - Ethiopia
+          - Europa Island
+          - Falkland Islands (Islas Malvinas)
+          - Faroe Islands
+          - Fiji
+          - Finland
+          - France
+          - French Guiana
+          - French Polynesia
+          - French Southern and Antarctic Lands
+          - Gabon
+          - Gambia
+          - Gaza Strip
+          - Georgia
+          - Germany
+          - Ghana
+          - Gibraltar
+          - Glorioso Islands
+          - Greece
+          - Greenland
+          - Grenada
+          - Guadeloupe
+          - Guam
+          - Guatemala
+          - Guernsey
+          - Guinea
+          - Guinea-Bissau
+          - Guyana
+          - Haiti
+          - Heard Island and McDonald Islands
+          - Honduras
+          - Hong Kong
+          - Howland Island
+          - Hungary
+          - Iceland
+          - India
+          - Indian Ocean
+          - Indonesia
+          - Iran
+          - Iraq
+          - Ireland
+          - Isle of Man
+          - Israel
+          - Italy
+          - Jamaica
+          - Jan Mayen
+          - Japan
+          - Jarvis Island
+          - Jersey
+          - Johnston Atoll
+          - Jordan
+          - Juan de Nova Island
+          - Kazakhstan
+          - Kenya
+          - Kerguelen Archipelago
+          - Kingman Reef
+          - Kiribati
+          - Kosovo
+          - Kuwait
+          - Kyrgyzstan
+          - Laos
+          - Latvia
+          - Lebanon
+          - Lesotho
+          - Liberia
+          - Libya
+          - Liechtenstein
+          - Line Islands
+          - Lithuania
+          - Luxembourg
+          - Macau
+          - Madagascar
+          - Malawi
+          - Malaysia
+          - Maldives
+          - Mali
+          - Malta
+          - Marshall Islands
+          - Martinique
+          - Mauritania
+          - Mauritius
+          - Mayotte
+          - Mediterranean Sea
+          - Mexico
+          - Micronesia, Federated States of
+          - Midway Islands
+          - Moldova
+          - Monaco
+          - Mongolia
+          - Montenegro
+          - Montserrat
+          - Morocco
+          - Mozambique
+          - Myanmar
+          - Namibia
+          - Nauru
+          - Navassa Island
+          - Nepal
+          - Netherlands
+          - New Caledonia
+          - New Zealand
+          - Nicaragua
+          - Niger
+          - Nigeria
+          - Niue
+          - Norfolk Island
+          - North Korea
+          - North Macedonia
+          - North Sea
+          - Northern Mariana Islands
+          - Norway
+          - Oman
+          - Pacific Ocean
+          - Pakistan
+          - Palau
+          - Palmyra Atoll
+          - Panama
+          - Papua New Guinea
+          - Paracel Islands
+          - Paraguay
+          - Peru
+          - Philippines
+          - Pitcairn Islands
+          - Poland
+          - Portugal
+          - Puerto Rico
+          - Qatar
+          - Republic of the Congo
+          - Reunion
+          - Romania
+          - Ross Sea
+          - Russia
+          - Rwanda
+          - Saint Barthelemy
+          - Saint Helena
+          - Saint Kitts and Nevis
+          - Saint Lucia
+          - Saint Martin
+          - Saint Pierre and Miquelon
+          - Saint Vincent and the Grenadines
+          - Samoa
+          - San Marino
+          - Sao Tome and Principe
+          - Saudi Arabia
+          - Senegal
+          - Serbia
+          - Seychelles
+          - Sierra Leone
+          - Singapore
+          - Sint Maarten
+          - Slovakia
+          - Slovenia
+          - Solomon Islands
+          - Somalia
+          - South Africa
+          - South Georgia and the South Sandwich Islands
+          - South Korea
+          - South Sudan
+          - Southern Ocean
+          - Spain
+          - Spratly Islands
+          - Sri Lanka
+          - State of Palestine
+          - Sudan
+          - Suriname
+          - Svalbard
+          - Sweden
+          - Switzerland
+          - Syria
+          - Taiwan
+          - Tajikistan
+          - Tanzania
+          - Tasman Sea
+          - Thailand
+          - Timor-Leste
+          - Togo
+          - Tokelau
+          - Tonga
+          - Trinidad and Tobago
+          - Tromelin Island
+          - Tunisia
+          - Turkey
+          - Turkmenistan
+          - Turks and Caicos Islands
+          - Tuvalu
+          - Uganda
+          - Ukraine
+          - United Arab Emirates
+          - United Kingdom
+          - Uruguay
+          - USA
+          - Uzbekistan
+          - Vanuatu
+          - Venezuela
+          - Viet Nam
+          - Virgin Islands
+          - Wake Island
+          - Wallis and Futuna
+          - West Bank
+          - Western Sahara
+          - Yemen
+          - Zambia
+          - Zimbabwe
+          - Belgian Congo
+          - British Guiana
+          - Burma
+          - Czechoslovakia
+          - Czech Republic
+          - East Timor
+          - Korea
+          - Macedonia
+          - Micronesia
+          - Netherlands Antilles
+          - Serbia and Montenegro
+          - Siam
+          - Swaziland
+          - The former Yugoslav Republic of Macedonia
+          - USSR
+          - Yugoslavia
+          - Zaire
+        required: true
+      geoLocLatitude:  
+        function: identity
+        inputs:
+          input: geoLocLatitude
+        args:
+          type: float
+      geoLocLongitude:  
+        function: identity
+        inputs:
+          input: geoLocLongitude
+        args:
+          type: float
+      geoLocSite:  
+        function: identity
+        inputs:
+          input: geoLocSite
+        args:
+      hostAge:  
+        function: identity
+        inputs:
+          input: hostAge
+        args:
+          type: int
+      hostAgeBin:  
+        function: identity
+        inputs:
+          input: hostAgeBin
+        args:
+      hostDisease:  
+        function: identity
+        inputs:
+          input: hostDisease
+        args:
+      hostGender:  
+        function: identity
+        inputs:
+          input: hostGender
+        args:
+      hostHealthOutcome:  
+        function: identity
+        inputs:
+          input: hostHealthOutcome
+        args:
+      hostHealthState:  
+        function: identity
+        inputs:
+          input: hostHealthState
+        args:
+      hostNameCommon:  
+        function: identity
+        inputs:
+          input: hostNameCommon
+        args:
+      hostNameScientific:  
+        function: identity
+        inputs:
+          input: hostNameScientific
+        args:
+      hostOriginCountry:  
+        function: identity
+        inputs:
+          input: hostOriginCountry
+        args:
+      hostRole:  
+        function: identity
+        inputs:
+          input: hostRole
+        args:
+      hostTaxonId:  
+        function: identity
+        inputs:
+          input: hostTaxonId
+        args:
+          type: int
+      hostVaccinationStatus:  
+        function: identity
+        inputs:
+          input: hostVaccinationStatus
+        args:
+      insdcAccessionBase_CV-A16:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_CV-A16
+        args:
+          segment: CV-A16
+      insdcAccessionBase_CV-A10:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_CV-A10
+        args:
+          segment: CV-A10
+      insdcAccessionBase_EV-A71:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_EV-A71
+        args:
+          segment: EV-A71
+      insdcAccessionBase_EV-D68:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase_EV-D68
+        args:
+          segment: EV-D68
+      insdcAccessionFull_CV-A16:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_CV-A16
+        args:
+          segment: CV-A16
+      insdcAccessionFull_CV-A10:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_CV-A10
+        args:
+          segment: CV-A10
+      insdcAccessionFull_EV-A71:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_EV-A71
+        args:
+          segment: EV-A71
+      insdcAccessionFull_EV-D68:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull_EV-D68
+        args:
+          segment: EV-D68
+      insdcRawReadsAccession:  
+        function: identity
+        inputs:
+          input: insdcRawReadsAccession
+        args:
+      insdcVersion_CV-A16:  
+        function: identity
+        inputs:
+          input: insdcVersion_CV-A16
+        args:
+          segment: CV-A16
+          type: int
+      insdcVersion_CV-A10:  
+        function: identity
+        inputs:
+          input: insdcVersion_CV-A10
+        args:
+          segment: CV-A10
+          type: int
+      insdcVersion_EV-A71:  
+        function: identity
+        inputs:
+          input: insdcVersion_EV-A71
+        args:
+          segment: EV-A71
+          type: int
+      insdcVersion_EV-D68:  
+        function: identity
+        inputs:
+          input: insdcVersion_EV-D68
+        args:
+          segment: EV-D68
+          type: int
+      isLabHost:  
+        function: identity
+        inputs:
+          input: isLabHost
+        args:
+          type: boolean
+      length_CV-A16:  
+        function: identity
+        inputs:
+          input: length_CV-A16
+        args:
+          segment: CV-A16
+          type: int
+      length_CV-A10:  
+        function: identity
+        inputs:
+          input: length_CV-A10
+        args:
+          segment: CV-A10
+          type: int
+      length_EV-A71:  
+        function: identity
+        inputs:
+          input: length_EV-A71
+        args:
+          segment: EV-A71
+          type: int
+      length_EV-D68:  
+        function: identity
+        inputs:
+          input: length_EV-D68
+        args:
+          segment: EV-D68
+          type: int
+      ncbiReleaseDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiReleaseDate
+        args:
+          type: date
+      ncbiSourceDb:  
+        function: identity
+        inputs:
+          input: ncbiSourceDb
+        args:
+      ncbiSubmitterCountry:  
+        function: identity
+        inputs:
+          input: ncbiSubmitterCountry
+        args:
+      ncbiUpdateDate_CV-A16:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: CV-A16
+          type: date
+      ncbiUpdateDate_CV-A10:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: CV-A10
+          type: date
+      ncbiUpdateDate_EV-A71:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: EV-A71
+          type: date
+      ncbiUpdateDate_EV-D68:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          segment: EV-D68
+          type: date
+      ncbiVirusName:  
+        function: identity
+        inputs:
+          input: ncbiVirusName
+        args:
+      ncbiVirusTaxId:  
+        function: identity
+        inputs:
+          input: ncbiVirusTaxId
+        args:
+          type: int
+      passageMethod:  
+        function: identity
+        inputs:
+          input: passageMethod
+        args:
+      passageNumber:  
+        function: identity
+        inputs:
+          input: passageNumber
+        args:
+          type: int
+      presamplingActivity:  
+        function: identity
+        inputs:
+          input: presamplingActivity
+        args:
+      previousInfectionDisease:  
+        function: identity
+        inputs:
+          input: previousInfectionDisease
+        args:
+      previousInfectionOrganism:  
+        function: identity
+        inputs:
+          input: previousInfectionOrganism
+        args:
+      purposeOfSampling:  
+        function: identity
+        inputs:
+          input: purposeOfSampling
+        args:
+      purposeOfSequencing:  
+        function: identity
+        inputs:
+          input: purposeOfSequencing
+        args:
+      qualityControlDetails:  
+        function: identity
+        inputs:
+          input: qualityControlDetails
+        args:
+      qualityControlDetermination:  
+        function: identity
+        inputs:
+          input: qualityControlDetermination
+        args:
+      qualityControlIssues:  
+        function: identity
+        inputs:
+          input: qualityControlIssues
+        args:
+      qualityControlMethodName:  
+        function: identity
+        inputs:
+          input: qualityControlMethodName
+        args:
+      qualityControlMethodVersion:  
+        function: identity
+        inputs:
+          input: qualityControlMethodVersion
+        args:
+      rawSequenceDataProcessingMethod:  
+        function: identity
+        inputs:
+          input: rawSequenceDataProcessingMethod
+        args:
+      referenceGenomeAccession:  
+        function: identity
+        inputs:
+          input: referenceGenomeAccession
+        args:
+      sampleCollectionDate:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          
+          fieldType: dateRangeString
+        required: true
+      sampleCollectionDateRangeLower:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeLower
+      sampleCollectionDateRangeUpper:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeUpper
+      sampleReceivedDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sampleReceivedDate
+        args:
+          type: date
+      sampleType:  
+        function: identity
+        inputs:
+          input: sampleType
+        args:
+      sequencedByContactEmail:  
+        function: identity
+        inputs:
+          input: sequencedByContactEmail
+        args:
+      sequencedByContactName:  
+        function: identity
+        inputs:
+          input: sequencedByContactName
+        args:
+      sequencedByOrganization:  
+        function: identity
+        inputs:
+          input: sequencedByOrganization
+        args:
+      sequencingAssayType:  
+        function: identity
+        inputs:
+          input: sequencingAssayType
+        args:
+      sequencingDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sequencingDate
+        args:
+          type: date
+      sequencingInstrument:  
+        function: identity
+        inputs:
+          input: sequencingInstrument
+        args:
+      sequencingProtocol:  
+        function: identity
+        inputs:
+          input: sequencingProtocol
+        args:
+      signsAndSymptoms:  
+        function: identity
+        inputs:
+          input: signsAndSymptoms
+        args:
+      specimenCollectorSampleId:  
+        function: identity
+        inputs:
+          input: specimenCollectorSampleId
+        args:
+      specimenProcessing:  
+        function: identity
+        inputs:
+          input: specimenProcessing
+        args:
+      specimenProcessingDetails:  
+        function: identity
+        inputs:
+          input: specimenProcessingDetails
+        args:
+      stopCodons_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: CV-A16
+      stopCodons_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: CV-A10
+      stopCodons_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: EV-A71
+      stopCodons_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+          segment: EV-D68
+      totalAmbiguousNucs_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: CV-A16
+          type: int
+      totalAmbiguousNucs_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: CV-A10
+          type: int
+      totalAmbiguousNucs_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: EV-A71
+          type: int
+      totalAmbiguousNucs_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          segment: EV-D68
+          type: int
+      totalDeletedNucs_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: CV-A16
+          type: int
+      totalDeletedNucs_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: CV-A10
+          type: int
+      totalDeletedNucs_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: EV-A71
+          type: int
+      totalDeletedNucs_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          segment: EV-D68
+          type: int
+      totalFrameShifts_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: CV-A16
+          type: int
+      totalFrameShifts_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: CV-A10
+          type: int
+      totalFrameShifts_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: EV-A71
+          type: int
+      totalFrameShifts_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          segment: EV-D68
+          type: int
+      totalInsertedNucs_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: CV-A16
+          type: int
+      totalInsertedNucs_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: CV-A10
+          type: int
+      totalInsertedNucs_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: EV-A71
+          type: int
+      totalInsertedNucs_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          segment: EV-D68
+          type: int
+      totalSnps_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: CV-A16
+          type: int
+      totalSnps_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: CV-A10
+          type: int
+      totalSnps_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: EV-A71
+          type: int
+      totalSnps_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          segment: EV-D68
+          type: int
+      totalStopCodons_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: CV-A16
+          type: int
+      totalStopCodons_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: CV-A10
+          type: int
+      totalStopCodons_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: EV-A71
+          type: int
+      totalStopCodons_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          segment: EV-D68
+          type: int
+      totalUnknownNucs_CV-A16:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: CV-A16
+          type: int
+      totalUnknownNucs_CV-A10:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: CV-A10
+          type: int
+      totalUnknownNucs_EV-A71:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: EV-A71
+          type: int
+      totalUnknownNucs_EV-D68:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          segment: EV-D68
+          type: int
+      travelHistory:  
+        function: identity
+        inputs:
+          input: travelHistory
+        args:
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-not-aligned-organism-v4-0
+data:
+  preprocessing-config.yaml: |
+    organism: not-aligned-organism
+    batch_size: 100
+    genes: []
+    log_level: DEBUG
+    nucleotideSequences:
+    - main
+    processing_spec:
+      
+      
+      country:  
+        function: identity
+        inputs:
+          input: country
+        args:
+          type: string
+      date:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: date
+        args:
+          type: date
+        required: true
+      division:  
+        function: identity
+        inputs:
+          input: division
+        args:
+          type: string
+      host:  
+        function: identity
+        inputs:
+          input: host
+        args:
+          type: string
+      lineage:  
+        function: process_options
+        inputs:
+          input: lineage
+        args:
+          type: string
+          options: 
+          - A
+          - A.1
+          - A.1.1
+          - A.2
+          - B
+          - B.1
+          - B.1.1
+          - B.1.1.1
+          - C
+          - C.1
+        required: true
+      region:  
+        function: identity
+        inputs:
+          input: region
+        args:
+          type: string
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
+# Source: loculus/templates/loculus-preprocessing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-west-nile-v1-0
+data:
+  preprocessing-config.yaml: |
+    organism: west-nile
+    batch_size: 100
+    create_embl_file: true
+    genes:
+    - capsid
+    - prM
+    - env
+    - NS1
+    - NS2A
+    - NS2B
+    - NS3
+    - NS4A
+    - 2K
+    - NS4B
+    - NS5
+    log_level: DEBUG
+    molecule_type: genomic RNA
+    nextclade_dataset_name: nextstrain/wnv/all-lineages
+    nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
+    scientific_name: West Nile virus
+    taxon_id: 11082
+    nucleotideSequences:
+    - main
+    processing_spec:
+      
+      
+      ampliconPcrPrimerScheme:  
+        function: identity
+        inputs:
+          input: ampliconPcrPrimerScheme
+        args:
+      ampliconSize:  
+        function: identity
+        inputs:
+          input: ampliconSize
+        args:
+      anatomicalMaterial:  
+        function: identity
+        inputs:
+          input: anatomicalMaterial
+        args:
+      anatomicalPart:  
+        function: identity
+        inputs:
+          input: anatomicalPart
+        args:
+      authorAffiliations:  
+        function: identity
+        inputs:
+          input: authorAffiliations
+        args:
+      authors:  
+        function: check_authors
+        inputs:
+          authors: authors
+        args:
+          type: authors
+      bioprojectAccession:  
+        function: identity
+        inputs:
+          input: bioprojectAccession
+        args:
+      biosampleAccession:  
+        function: identity
+        inputs:
+          input: biosampleAccession
+        args:
+      bodyProduct:  
+        function: identity
+        inputs:
+          input: bodyProduct
+        args:
+      breadthOfCoverage:  
+        function: identity
+        inputs:
+          input: breadthOfCoverage
+        args:
+          type: int
+      cellLine:  
+        function: identity
+        inputs:
+          input: cellLine
+        args:
+      collectionDevice:  
+        function: identity
+        inputs:
+          input: collectionDevice
+        args:
+      collectionMethod:  
+        function: identity
+        inputs:
+          input: collectionMethod
+        args:
+      completeness:  
+        function: identity
+        inputs:
+          input: nextclade.coverage
+        args:
+          type: float
+      consensusSequenceSoftwareName:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareName
+        args:
+      consensusSequenceSoftwareVersion:  
+        function: identity
+        inputs:
+          input: consensusSequenceSoftwareVersion
+        args:
+      cultureId:  
+        function: identity
+        inputs:
+          input: cultureId
+        args:
+      dehostingMethod:  
+        function: identity
+        inputs:
+          input: dehostingMethod
+        args:
+      depthOfCoverage:  
+        function: identity
+        inputs:
+          input: depthOfCoverage
+        args:
+          type: int
+      diagnosticMeasurementMethod:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementMethod
+        args:
+      diagnosticMeasurementUnit:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementUnit
+        args:
+      diagnosticMeasurementValue:  
+        function: identity
+        inputs:
+          input: diagnosticMeasurementValue
+        args:
+      diagnosticTargetGeneName:  
+        function: identity
+        inputs:
+          input: diagnosticTargetGeneName
+        args:
+      diagnosticTargetPresence:  
+        function: identity
+        inputs:
+          input: diagnosticTargetPresence
+        args:
+      displayName:  
+        function: concatenate
+        inputs:
+          geoLocCountry: geoLocCountry
+          sampleCollectionDate: sampleCollectionDate
+        args:
+          
+          order:
+          - geoLocCountry
+          - accession_version
+          - sampleCollectionDate
+          type:
+          - string
+          - string
+          - string
+      earliestReleaseDate:  
+        function: identity
+        inputs:
+          input: earliestReleaseDate
+        args:
+          type: date
+      environmentalMaterial:  
+        function: identity
+        inputs:
+          input: environmentalMaterial
+        args:
+      environmentalSite:  
+        function: identity
+        inputs:
+          input: environmentalSite
+        args:
+      experimentalSpecimenRoleType:  
+        function: identity
+        inputs:
+          input: experimentalSpecimenRoleType
+        args:
+      exposureDetails:  
+        function: identity
+        inputs:
+          input: exposureDetails
+        args:
+      exposureEvent:  
+        function: identity
+        inputs:
+          input: exposureEvent
+        args:
+      exposureSetting:  
+        function: identity
+        inputs:
+          input: exposureSetting
+        args:
+      foodProduct:  
+        function: identity
+        inputs:
+          input: foodProduct
+        args:
+      foodProductProperties:  
+        function: identity
+        inputs:
+          input: foodProductProperties
+        args:
+      frameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.frameShifts
+        args:
+      gcaAccession:  
+        function: identity
+        inputs:
+          input: gcaAccession
+        args:
+      geoLocAdmin1:  
+        function: identity
+        inputs:
+          input: geoLocAdmin1
+        args:
+      geoLocAdmin2:  
+        function: identity
+        inputs:
+          input: geoLocAdmin2
+        args:
+      geoLocCity:  
+        function: identity
+        inputs:
+          input: geoLocCity
+        args:
+      geoLocCountry:  
+        function: process_options
+        inputs:
+          input: geoLocCountry
+        args:
+          options: 
+          - Afghanistan
+          - Albania
+          - Algeria
+          - American Samoa
+          - Andorra
+          - Angola
+          - Anguilla
+          - Antarctica
+          - Antigua and Barbuda
+          - Arctic Ocean
+          - Argentina
+          - Armenia
+          - Aruba
+          - Ashmore and Cartier Islands
+          - Atlantic Ocean
+          - Australia
+          - Austria
+          - Azerbaijan
+          - Bahamas
+          - Bahrain
+          - Baltic Sea
+          - Baker Island
+          - Bangladesh
+          - Barbados
+          - Bassas da India
+          - Belarus
+          - Belgium
+          - Belize
+          - Benin
+          - Bermuda
+          - Bhutan
+          - Bolivia
+          - Borneo
+          - Bosnia and Herzegovina
+          - Botswana
+          - Bouvet Island
+          - Brazil
+          - British Virgin Islands
+          - Brunei
+          - Bulgaria
+          - Burkina Faso
+          - Burundi
+          - Cambodia
+          - Cameroon
+          - Canada
+          - Cape Verde
+          - Cayman Islands
+          - Central African Republic
+          - Chad
+          - Chile
+          - China
+          - Christmas Island
+          - Clipperton Island
+          - Cocos Islands
+          - Colombia
+          - Comoros
+          - Cook Islands
+          - Coral Sea Islands
+          - Costa Rica
+          - Cote d'Ivoire
+          - Croatia
+          - Cuba
+          - Curacao
+          - Cyprus
+          - Czechia
+          - Democratic Republic of the Congo
+          - Denmark
+          - Djibouti
+          - Dominica
+          - Dominican Republic
+          - Ecuador
+          - Egypt
+          - El Salvador
+          - Equatorial Guinea
+          - Eritrea
+          - Estonia
+          - Eswatini
+          - Ethiopia
+          - Europa Island
+          - Falkland Islands (Islas Malvinas)
+          - Faroe Islands
+          - Fiji
+          - Finland
+          - France
+          - French Guiana
+          - French Polynesia
+          - French Southern and Antarctic Lands
+          - Gabon
+          - Gambia
+          - Gaza Strip
+          - Georgia
+          - Germany
+          - Ghana
+          - Gibraltar
+          - Glorioso Islands
+          - Greece
+          - Greenland
+          - Grenada
+          - Guadeloupe
+          - Guam
+          - Guatemala
+          - Guernsey
+          - Guinea
+          - Guinea-Bissau
+          - Guyana
+          - Haiti
+          - Heard Island and McDonald Islands
+          - Honduras
+          - Hong Kong
+          - Howland Island
+          - Hungary
+          - Iceland
+          - India
+          - Indian Ocean
+          - Indonesia
+          - Iran
+          - Iraq
+          - Ireland
+          - Isle of Man
+          - Israel
+          - Italy
+          - Jamaica
+          - Jan Mayen
+          - Japan
+          - Jarvis Island
+          - Jersey
+          - Johnston Atoll
+          - Jordan
+          - Juan de Nova Island
+          - Kazakhstan
+          - Kenya
+          - Kerguelen Archipelago
+          - Kingman Reef
+          - Kiribati
+          - Kosovo
+          - Kuwait
+          - Kyrgyzstan
+          - Laos
+          - Latvia
+          - Lebanon
+          - Lesotho
+          - Liberia
+          - Libya
+          - Liechtenstein
+          - Line Islands
+          - Lithuania
+          - Luxembourg
+          - Macau
+          - Madagascar
+          - Malawi
+          - Malaysia
+          - Maldives
+          - Mali
+          - Malta
+          - Marshall Islands
+          - Martinique
+          - Mauritania
+          - Mauritius
+          - Mayotte
+          - Mediterranean Sea
+          - Mexico
+          - Micronesia, Federated States of
+          - Midway Islands
+          - Moldova
+          - Monaco
+          - Mongolia
+          - Montenegro
+          - Montserrat
+          - Morocco
+          - Mozambique
+          - Myanmar
+          - Namibia
+          - Nauru
+          - Navassa Island
+          - Nepal
+          - Netherlands
+          - New Caledonia
+          - New Zealand
+          - Nicaragua
+          - Niger
+          - Nigeria
+          - Niue
+          - Norfolk Island
+          - North Korea
+          - North Macedonia
+          - North Sea
+          - Northern Mariana Islands
+          - Norway
+          - Oman
+          - Pacific Ocean
+          - Pakistan
+          - Palau
+          - Palmyra Atoll
+          - Panama
+          - Papua New Guinea
+          - Paracel Islands
+          - Paraguay
+          - Peru
+          - Philippines
+          - Pitcairn Islands
+          - Poland
+          - Portugal
+          - Puerto Rico
+          - Qatar
+          - Republic of the Congo
+          - Reunion
+          - Romania
+          - Ross Sea
+          - Russia
+          - Rwanda
+          - Saint Barthelemy
+          - Saint Helena
+          - Saint Kitts and Nevis
+          - Saint Lucia
+          - Saint Martin
+          - Saint Pierre and Miquelon
+          - Saint Vincent and the Grenadines
+          - Samoa
+          - San Marino
+          - Sao Tome and Principe
+          - Saudi Arabia
+          - Senegal
+          - Serbia
+          - Seychelles
+          - Sierra Leone
+          - Singapore
+          - Sint Maarten
+          - Slovakia
+          - Slovenia
+          - Solomon Islands
+          - Somalia
+          - South Africa
+          - South Georgia and the South Sandwich Islands
+          - South Korea
+          - South Sudan
+          - Southern Ocean
+          - Spain
+          - Spratly Islands
+          - Sri Lanka
+          - State of Palestine
+          - Sudan
+          - Suriname
+          - Svalbard
+          - Sweden
+          - Switzerland
+          - Syria
+          - Taiwan
+          - Tajikistan
+          - Tanzania
+          - Tasman Sea
+          - Thailand
+          - Timor-Leste
+          - Togo
+          - Tokelau
+          - Tonga
+          - Trinidad and Tobago
+          - Tromelin Island
+          - Tunisia
+          - Turkey
+          - Turkmenistan
+          - Turks and Caicos Islands
+          - Tuvalu
+          - Uganda
+          - Ukraine
+          - United Arab Emirates
+          - United Kingdom
+          - Uruguay
+          - USA
+          - Uzbekistan
+          - Vanuatu
+          - Venezuela
+          - Viet Nam
+          - Virgin Islands
+          - Wake Island
+          - Wallis and Futuna
+          - West Bank
+          - Western Sahara
+          - Yemen
+          - Zambia
+          - Zimbabwe
+          - Belgian Congo
+          - British Guiana
+          - Burma
+          - Czechoslovakia
+          - Czech Republic
+          - East Timor
+          - Korea
+          - Macedonia
+          - Micronesia
+          - Netherlands Antilles
+          - Serbia and Montenegro
+          - Siam
+          - Swaziland
+          - The former Yugoslav Republic of Macedonia
+          - USSR
+          - Yugoslavia
+          - Zaire
+        required: true
+      geoLocLatitude:  
+        function: identity
+        inputs:
+          input: geoLocLatitude
+        args:
+          type: float
+      geoLocLongitude:  
+        function: identity
+        inputs:
+          input: geoLocLongitude
+        args:
+          type: float
+      geoLocSite:  
+        function: identity
+        inputs:
+          input: geoLocSite
+        args:
+      hostAge:  
+        function: identity
+        inputs:
+          input: hostAge
+        args:
+          type: int
+      hostAgeBin:  
+        function: identity
+        inputs:
+          input: hostAgeBin
+        args:
+      hostDisease:  
+        function: identity
+        inputs:
+          input: hostDisease
+        args:
+      hostGender:  
+        function: identity
+        inputs:
+          input: hostGender
+        args:
+      hostHealthOutcome:  
+        function: identity
+        inputs:
+          input: hostHealthOutcome
+        args:
+      hostHealthState:  
+        function: identity
+        inputs:
+          input: hostHealthState
+        args:
+      hostNameCommon:  
+        function: identity
+        inputs:
+          input: hostNameCommon
+        args:
+      hostNameScientific:  
+        function: identity
+        inputs:
+          input: hostNameScientific
+        args:
+      hostOriginCountry:  
+        function: identity
+        inputs:
+          input: hostOriginCountry
+        args:
+      hostRole:  
+        function: identity
+        inputs:
+          input: hostRole
+        args:
+      hostTaxonId:  
+        function: identity
+        inputs:
+          input: hostTaxonId
+        args:
+          type: int
+      hostVaccinationStatus:  
+        function: identity
+        inputs:
+          input: hostVaccinationStatus
+        args:
+      insdcAccessionBase:  
+        function: identity
+        inputs:
+          input: insdcAccessionBase
+        args:
+      insdcAccessionFull:  
+        function: identity
+        inputs:
+          input: insdcAccessionFull
+        args:
+      insdcRawReadsAccession:  
+        function: identity
+        inputs:
+          input: insdcRawReadsAccession
+        args:
+      insdcVersion:  
+        function: identity
+        inputs:
+          input: insdcVersion
+        args:
+          type: int
+      isLabHost:  
+        function: identity
+        inputs:
+          input: isLabHost
+        args:
+          type: boolean
+      length:  
+        function: identity
+        inputs:
+          input: length
+        args:
+          type: int
+      lineage:  
+        function: identity
+        inputs:
+          input: nextclade.clade
+        args:
+      ncbiReleaseDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiReleaseDate
+        args:
+          type: date
+      ncbiSourceDb:  
+        function: identity
+        inputs:
+          input: ncbiSourceDb
+        args:
+      ncbiSubmitterCountry:  
+        function: identity
+        inputs:
+          input: ncbiSubmitterCountry
+        args:
+      ncbiUpdateDate:  
+        function: parse_timestamp
+        inputs:
+          timestamp: ncbiUpdateDate
+        args:
+          type: date
+      ncbiVirusName:  
+        function: identity
+        inputs:
+          input: ncbiVirusName
+        args:
+      ncbiVirusTaxId:  
+        function: identity
+        inputs:
+          input: ncbiVirusTaxId
+        args:
+          type: int
+      passageMethod:  
+        function: identity
+        inputs:
+          input: passageMethod
+        args:
+      passageNumber:  
+        function: identity
+        inputs:
+          input: passageNumber
+        args:
+          type: int
+      presamplingActivity:  
+        function: identity
+        inputs:
+          input: presamplingActivity
+        args:
+      previousInfectionDisease:  
+        function: identity
+        inputs:
+          input: previousInfectionDisease
+        args:
+      previousInfectionOrganism:  
+        function: identity
+        inputs:
+          input: previousInfectionOrganism
+        args:
+      purposeOfSampling:  
+        function: identity
+        inputs:
+          input: purposeOfSampling
+        args:
+      purposeOfSequencing:  
+        function: identity
+        inputs:
+          input: purposeOfSequencing
+        args:
+      qualityControlDetails:  
+        function: identity
+        inputs:
+          input: qualityControlDetails
+        args:
+      qualityControlDetermination:  
+        function: identity
+        inputs:
+          input: qualityControlDetermination
+        args:
+      qualityControlIssues:  
+        function: identity
+        inputs:
+          input: qualityControlIssues
+        args:
+      qualityControlMethodName:  
+        function: identity
+        inputs:
+          input: qualityControlMethodName
+        args:
+      qualityControlMethodVersion:  
+        function: identity
+        inputs:
+          input: qualityControlMethodVersion
+        args:
+      rawSequenceDataProcessingMethod:  
+        function: identity
+        inputs:
+          input: rawSequenceDataProcessingMethod
+        args:
+      referenceGenomeAccession:  
+        function: identity
+        inputs:
+          input: referenceGenomeAccession
+        args:
+      sampleCollectionDate:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          
+          fieldType: dateRangeString
+        required: true
+      sampleCollectionDateRangeLower:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeLower
+      sampleCollectionDateRangeUpper:  
+        function: parse_date_into_range
+        inputs:
+          date: sampleCollectionDate
+          releaseDate: ncbiReleaseDate
+        args:
+          type: date
+          
+          fieldType: dateRangeUpper
+      sampleReceivedDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sampleReceivedDate
+        args:
+          type: date
+      sampleType:  
+        function: identity
+        inputs:
+          input: sampleType
+        args:
+      sequencedByContactEmail:  
+        function: identity
+        inputs:
+          input: sequencedByContactEmail
+        args:
+      sequencedByContactName:  
+        function: identity
+        inputs:
+          input: sequencedByContactName
+        args:
+      sequencedByOrganization:  
+        function: identity
+        inputs:
+          input: sequencedByOrganization
+        args:
+      sequencingAssayType:  
+        function: identity
+        inputs:
+          input: sequencingAssayType
+        args:
+      sequencingDate:  
+        function: parse_and_assert_past_date
+        inputs:
+          date: sequencingDate
+        args:
+          type: date
+      sequencingInstrument:  
+        function: identity
+        inputs:
+          input: sequencingInstrument
+        args:
+      sequencingProtocol:  
+        function: identity
+        inputs:
+          input: sequencingProtocol
+        args:
+      signsAndSymptoms:  
+        function: identity
+        inputs:
+          input: signsAndSymptoms
+        args:
+      specimenCollectorSampleId:  
+        function: identity
+        inputs:
+          input: specimenCollectorSampleId
+        args:
+      specimenProcessing:  
+        function: identity
+        inputs:
+          input: specimenProcessing
+        args:
+      specimenProcessingDetails:  
+        function: identity
+        inputs:
+          input: specimenProcessingDetails
+        args:
+      stopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.stopCodons
+        args:
+      totalAmbiguousNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalNonACGTNs
+        args:
+          type: int
+      totalDeletedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalDeletions
+        args:
+          type: int
+      totalFrameShifts:  
+        function: identity
+        inputs:
+          input: nextclade.totalFrameShifts
+        args:
+          type: int
+      totalInsertedNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalInsertions
+        args:
+          type: int
+      totalSnps:  
+        function: identity
+        inputs:
+          input: nextclade.totalSubstitutions
+        args:
+          type: int
+      totalStopCodons:  
+        function: identity
+        inputs:
+          input: nextclade.qc.stopCodons.totalStopCodons
+        args:
+          type: int
+      totalUnknownNucs:  
+        function: identity
+        inputs:
+          input: nextclade.totalMissing
+        args:
+          type: int
+      travelHistory:  
+        function: identity
+        inputs:
+          input: travelHistory
+        args:
+      versionComment:
+        function: identity
+        inputs:
+          input: versionComment
+        args:
+---
