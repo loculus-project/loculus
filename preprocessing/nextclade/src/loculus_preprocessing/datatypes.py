@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any
+from typing import Any, Final
+
+ProcessingAnnotationAlignment: Final = "alignment"
 
 AccessionVersion = str
 GeneName = str
