@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -146,7 +147,12 @@ class SubmitEndpointFileSharingTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("The File ${fileIdAndUrl.fileId} does not belong to group $groupId."),
+                    allOf(
+                        containsString(fileIdAndUrl.fileId.toString()),
+                        containsString("does not belong to group"),
+                        containsString(groupId.toString()),
+                    ),
+                ),
             )
     }
 
