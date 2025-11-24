@@ -29,42 +29,42 @@ jobs:
       with:
         version: 'v3.14.0'
 
-    - name: Create output directory
-      run: mkdir -p kubernetes/loculus/docs/rendered
+    - name: Create output directories
+      run: mkdir -p kubernetes/loculus/docs/rendered/{default,e2e-dev,preview-server}
 
-    - name: Generate helm template output for default values
+    - name: Generate and split helm template output for default values
       run: |
         helm template loculus kubernetes/loculus \
           --values kubernetes/loculus/values.yaml \
-          > kubernetes/loculus/docs/rendered/helm-output.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output.yaml
+          > /tmp/helm-output-default.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-default.yaml
+        .github/scripts/split-helm-output.sh /tmp/helm-output-default.yaml kubernetes/loculus/docs/rendered/default
 
-    - name: Generate helm template output for e2e/dev values
+    - name: Generate and split helm template output for e2e/dev values
       run: |
         helm template loculus kubernetes/loculus \
           --values kubernetes/loculus/values.yaml \
           --values kubernetes/loculus/values_e2e_and_dev.yaml \
-          > kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
+          > /tmp/helm-output-e2e-dev.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-e2e-dev.yaml
+        .github/scripts/split-helm-output.sh /tmp/helm-output-e2e-dev.yaml kubernetes/loculus/docs/rendered/e2e-dev
 
-    - name: Generate helm template output for preview server values
+    - name: Generate and split helm template output for preview server values
       run: |
         helm template loculus kubernetes/loculus \
           --values kubernetes/loculus/values.yaml \
           --values kubernetes/loculus/values_preview_server.yaml \
-          > kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
+          > /tmp/helm-output-preview-server.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-preview-server.yaml
+        .github/scripts/split-helm-output.sh /tmp/helm-output-preview-server.yaml kubernetes/loculus/docs/rendered/preview-server
 
-    - name: Show generated outputs
+    - name: Show generated output structure
       run: |
-        echo "=== Default values output (first 50 lines) ==="
-        head -n 50 kubernetes/loculus/docs/rendered/helm-output.yaml
+        echo "=== Generated files structure ==="
+        tree -L 2 kubernetes/loculus/docs/rendered/ || find kubernetes/loculus/docs/rendered/ -type f | head -20
         echo ""
-        echo "=== E2E/Dev values output (first 50 lines) ==="
-        head -n 50 kubernetes/loculus/docs/rendered/helm-output-e2e-dev.yaml
-        echo ""
-        echo "=== Preview server values output (first 50 lines) ==="
-        head -n 50 kubernetes/loculus/docs/rendered/helm-output-preview-server.yaml
+        echo "=== Sample: default/loculus-backend.yaml (first 30 lines) ==="
+        head -n 30 kubernetes/loculus/docs/rendered/default/loculus-backend.yaml || echo "File not found"
 
     - name: Stage rendered output files
       run: git add kubernetes/loculus/docs/rendered/
