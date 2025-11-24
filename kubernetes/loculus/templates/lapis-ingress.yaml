@@ -1,5 +1,6 @@
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $organismKeys := pluck "key" $enabledOrganisms }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -22,18 +23,18 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $organism := $enabledOrganisms }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $organism.key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- range $organism := $enabledOrganisms }}
-      - path: /{{ $organism.key }}/
+      {{- range $key := $organismKeys }}
+      - path: /{{ $key }}/
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
           service:
-            name: {{ template "loculus.lapisServiceName" $organism.key }}
+            name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
       {{- end }}
@@ -43,16 +44,16 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
-{{- range $organism := $enabledOrganisms }}
+{{- range $key := $organismKeys }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: strip-{{ $organism.key }}-prefix
+  name: strip-{{ $key }}-prefix
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $organism.key }}/
+      - /{{ $key }}/
 {{- end }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -86,11 +87,11 @@ spec:
     http:
       paths:
       {{- $firstOrganismKey := "" -}}
-      {{- if gt (len $enabledOrganisms) 0 -}}
-        {{- $firstOrganismKey = (index (first $enabledOrganisms) "key") -}}
+      {{- if gt (len $organismKeys) 0 -}}
+        {{- $firstOrganismKey = (index $organismKeys 0) -}}
       {{- end -}}
-      {{- range $organism := $enabledOrganisms }}
-      - path: /{{ $organism.key }}
+      {{- range $key := $organismKeys }}
+      - path: /{{ $key }}
         pathType: Exact
         backend:
           # An Ingress path requires a backend. Since the redirect happens before
