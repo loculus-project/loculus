@@ -2,8 +2,6 @@ from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
 
-ProcessingAnnotationAlignment: Final = "alignment"
-
 AccessionVersion = str
 GeneName = str
 SegmentName = str
@@ -20,6 +18,8 @@ ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
+
+ProcessingAnnotationAlignment: Final = "alignment"
 
 
 @unique
