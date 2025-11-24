@@ -32,7 +32,6 @@ from .datatypes import (
     ProcessedMetadataValue,
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
-    ProcessingAnnotationAlignment,
     ProcessingResult,
     ProcessingSpec,
     SegmentName,
