@@ -2,6 +2,7 @@
 # ruff: noqa: S101
 from __future__ import annotations
 
+import subprocess  # noqa: S404
 import time
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from helpers import (
     MockHttpResponse,
     compress_ndjson,
     make_mock_download_func,
-    mock_silo_prepro_success,
+    make_mock_subprocess_run,
     read_ndjson_file,
 )
 from silo_import import lineage
@@ -64,19 +65,13 @@ def test_full_import_cycle_with_real_zstd_data(
     monkeypatch.setattr(
         lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: test-data\n")  # noqa: ARG005
     )
+    monkeypatch.setattr(subprocess, "run", make_mock_subprocess_run())
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    # Simulate SILO acknowledging the run
-    ack_thread = mock_silo_prepro_success(paths)
-
     # Run the import
     runner.run_once()
-
-    # Wait for SILO simulation to complete
-    ack_thread.join(timeout=2)
-    assert not ack_thread.is_alive(), "SILO simulation timed out"
 
     # Verify complete import
     assert paths.silo_input_data_path.exists(), "SILO input data should exist"
@@ -117,6 +112,7 @@ def test_multiple_runs_with_state_persistence(
     monkeypatch.setattr(
         lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: v1\n")  # noqa: ARG005
     )
+    monkeypatch.setattr(subprocess, "run", make_mock_subprocess_run())
 
     # Run 1: Initial import
     records_v1 = [{"metadata": {"pipelineVersion": "1"}, "data": "v1"}]
@@ -132,9 +128,7 @@ def test_multiple_runs_with_state_persistence(
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
-    ack_thread_r1.join(timeout=2)
 
     assert runner.current_etag == 'W/"etag1"'
     first_hard_refresh = runner.last_hard_refresh
@@ -171,9 +165,7 @@ def test_multiple_runs_with_state_persistence(
     mock_download_r3, _ = make_mock_download_func(responses_r3)
     runner.download_manager = DownloadManager(download_func=mock_download_r3)
 
-    ack_thread_r3 = mock_silo_prepro_success(paths)
     runner.run_once()
-    ack_thread_r3.join(timeout=2)
 
     assert runner.current_etag == 'W/"etag2"', "ETag should update on new data"
 
@@ -202,6 +194,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(
         lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
     )
+    monkeypatch.setattr(subprocess, "run", make_mock_subprocess_run())
 
     records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
     body = compress_ndjson(records)
@@ -217,9 +210,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
-    ack_thread_r1.join(timeout=2)
 
     assert runner.current_etag == 'W/"initial"'
     initial_refresh_time = runner.last_hard_refresh
@@ -237,9 +228,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
     runner.download_manager = DownloadManager(download_func=mock_download_r2)
 
-    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner.run_once()
-    ack_thread_r2.join(timeout=2)
 
     # Hard refresh should update timestamp even if data unchanged
     assert runner.last_hard_refresh > initial_refresh_time, "Hard refresh time should be updated"
@@ -276,15 +265,18 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download)
 
-    # Don't create ack thread - SILO will timeout
-    with pytest.raises(TimeoutError, match="Timed out waiting for SILO run"):
+    # Mock subprocess to raise TimeoutExpired
+    def mock_timeout(*args, **kwargs):  # noqa: ARG001
+        raise subprocess.TimeoutExpired(cmd=["silo"], timeout=2)
+
+    monkeypatch.setattr(subprocess, "run", mock_timeout)
+
+    # SILO will timeout
+    with pytest.raises(subprocess.TimeoutExpired):
         runner.run_once()
 
     # Verify cleanup happened
     assert not paths.silo_input_data_path.exists(), "SILO input should be cleaned up after timeout"
-    # TODO: check what happens if SILO has no input file?
-    assert not paths.run_silo.exists(), "Run file should be cleared"
-    assert not paths.silo_done.exists(), "Done file should be cleared"
 
     # Verify no timestamped directories remain with processing flag
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -365,13 +357,12 @@ def test_interrupted_run_cleanup_and_hash_skip(
     monkeypatch.setattr(
         lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data\n")  # noqa: ARG005
     )
+    monkeypatch.setattr(subprocess, "run", make_mock_subprocess_run())
 
     runner = ImporterRunner(config, paths)
     runner.download_manager = DownloadManager(download_func=mock_download_r1)
 
-    ack_thread_r1 = mock_silo_prepro_success(paths)
     runner.run_once()
-    ack_thread_r1.join(timeout=2)
 
     # Get the first timestamped directory
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -385,6 +376,9 @@ def test_interrupted_run_cleanup_and_hash_skip(
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 0, "Download directories should be cleared on startup"
 
+    # Sleep briefly to ensure new timestamp
+    time.sleep(1.1)
+
     # Second download with identical data (same hash) but new ETag
     responses_r2 = [
         MockHttpResponse(status=200, headers={"ETag": 'W/"v2"', "x-total-records": "1"}, body=body)
@@ -393,9 +387,7 @@ def test_interrupted_run_cleanup_and_hash_skip(
     runner2.download_manager = DownloadManager(download_func=mock_download_r2)
 
     # Since there's no previous directory (cleared on startup), it will proceed with SILO run
-    ack_thread_r2 = mock_silo_prepro_success(paths)
     runner2.run_once()
-    ack_thread_r2.join(timeout=2)
 
     # ETag should be updated
     assert runner2.current_etag == 'W/"v2"', "ETag should be updated"

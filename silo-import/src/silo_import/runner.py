@@ -14,9 +14,9 @@ from .errors import (
     RecordCountMismatchError,
 )
 from .filesystem import prune_timestamped_directories, safe_remove
-from .instruct_silo import SiloInstructor
 from .lineage import update_lineage_definitions
 from .paths import ImporterPaths
+from .silo_runner import SiloRunner
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class ImporterRunner:
         self.paths = paths
         self.paths.ensure_directories()
         self._clear_download_directories()
-        self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
+        self.silo = SiloRunner()
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
@@ -77,13 +77,14 @@ class ImporterRunner:
         safe_remove(self.paths.silo_input_data_path)
         shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
 
-        run_id = str(int(time.time()))
-        self.silo.request_run(run_id)
         try:
-            self.silo.wait_for_completion(run_id, self.config.silo_run_timeout)
+            self.silo.run_preprocessing(
+                self.paths.input_dir,
+                self.paths.output_dir,
+                self.config.silo_run_timeout,
+            )
         except Exception:
             logger.exception("SILO preprocessing failed; cleaning up input")
-            self.silo.clear_pending()
             safe_remove(self.paths.silo_input_data_path)
             safe_remove(download.directory)
             raise

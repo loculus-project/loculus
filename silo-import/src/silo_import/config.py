@@ -35,8 +35,8 @@ class ImporterConfig:
                 raise RuntimeError(msg) from exc
 
         hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
-        poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
-        silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
+        poll_interval = int(env.get("POLL_INTERVAL_SECONDS", "30"))
+        silo_run_timeout = int(env.get("IMPORT_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
 
