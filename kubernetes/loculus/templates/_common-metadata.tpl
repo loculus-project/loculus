@@ -193,8 +193,11 @@ seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
 organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+  {{- range $organism := $enabledOrganisms }}
+  {{- $key := $organism.key }}
+  {{- $instance := $organism.values }}
   {{ $key }}:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
@@ -369,8 +372,11 @@ fileSharing:
 {{- end }}
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
 organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+  {{- range $organism := $enabledOrganisms }}
+  {{- $key := $organism.key }}
+  {{- $instance := $organism.values }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -504,8 +510,11 @@ fields:
 
 {{/* Generate ENA submission config from passed config object */}}
 {{- define "loculus.generateENASubmissionConfig" }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
 organisms:
-  {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
+  {{- range $organism := $enabledOrganisms }}
+  {{- $key := $organism.key }}
+  {{- $instance := $organism.values }}
   {{- if $instance.enaDeposition }}
   {{ $key }}:
     {{- with $instance.schema }}

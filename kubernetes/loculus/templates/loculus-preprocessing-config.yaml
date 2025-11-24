@@ -1,4 +1,7 @@
-{{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
+{{- range $organism := $enabledOrganisms }}
+{{- $organismKey := $organism.key }}
+{{- $organismConfig := $organism.values }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
 {{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
 {{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
@@ -13,10 +16,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+  name: loculus-preprocessing-config-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
 data:
   preprocessing-config.yaml: |
-    organism: {{ $organism }}
+    organism: {{ $organismKey }}
     {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
     {{- (dict "nucleotideSequences" $nucleotideSequencesList) | toYaml | nindent 4 }}
     processing_spec:

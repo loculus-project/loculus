@@ -1,4 +1,5 @@
-{{- range $key, $_ := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- range $organism := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $key := $organism.key }}
 ---
 apiVersion: v1
 kind: Service

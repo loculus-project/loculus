@@ -6,7 +6,10 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
-{{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
+{{- range $organism := $enabledOrganisms }}
+{{- $organismKey := $organism.key }}
+{{- $organismConfig := $organism.values }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
@@ -15,7 +18,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+  name: loculus-preprocessing-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
@@ -23,18 +26,18 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+      component: loculus-preprocessing-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   template:
     metadata:
       annotations:
         timestamp: {{ now | quote }}
       labels:
         app: loculus
-        component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+        component: loculus-preprocessing-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       {{- include "possiblePriorityClassName" $ | nindent 6 }}
       containers:
-        - name: preprocessing-{{ $organism }}
+        - name: preprocessing-{{ $organismKey }}
           image: {{ $processingConfig.image}}:{{ $thisDockerTag }}
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "preprocessing" $.Values) | nindent 10 }}
@@ -48,19 +51,19 @@ spec:
             {{- range $arg := $processingConfig.args }}
             - "{{ $arg }}"
             {{- end }}
-            - "--backend-host={{ $backendHost }}/{{ $organism }}"
+            - "--backend-host={{ $backendHost }}/{{ $organismKey }}"
             - "--keycloak-host={{ $keycloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
             - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
       {{- if $processingConfig.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:
-            - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+            - name: preprocessing-config-volume-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
               mountPath: /etc/config
       volumes:
-        - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+        - name: preprocessing-config-volume-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
           configMap:
-            name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
+            name: loculus-preprocessing-config-{{ $organismKey }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
       {{- end }}
 {{- end }}
 {{- end }}

@@ -1,5 +1,5 @@
 {{- $lapisHost := printf "lapis%s%s" .Values.subdomainSeparator .Values.host }}
-{{- $organismKeys := keys (include "loculus.enabledOrganisms" . | fromJson) }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -22,18 +22,18 @@ kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key := $organismKeys }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $organism := $enabledOrganisms }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $organism.key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- range $key := $organismKeys }}
-      - path: /{{ $key }}/
+      {{- range $organism := $enabledOrganisms }}
+      - path: /{{ $organism.key }}/
         pathType: {{ ternary "ImplementationSpecific" "Prefix" (eq $.Values.environment "server") }}
         backend:
           service:
-            name: {{ template "loculus.lapisServiceName" $key }}
+            name: {{ template "loculus.lapisServiceName" $organism.key }}
             port:
               number: 8080
       {{- end }}
@@ -43,16 +43,16 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
-{{- range $key := $organismKeys }}
+{{- range $organism := $enabledOrganisms }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: strip-{{ $key }}-prefix
+  name: strip-{{ $organism.key }}-prefix
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $key }}/
+      - /{{ $organism.key }}/
 {{- end }}
 ---
 apiVersion: traefik.containo.us/v1alpha1

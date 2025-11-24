@@ -53,18 +53,18 @@
 
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
-  {{ range $key, $_ := (include "loculus.enabledOrganisms" . | fromJson) }}
-    "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $key }}{{ end }}"
+  {{- $enabledOrganisms := (include "loculus.enabledOrganisms" . | fromJson) -}}
+  {{ range $organism := $enabledOrganisms }}
+    "{{ $organism.key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $organism.key }}:8080{{ else -}}http://{{ $.Values.localHost }}:8080/{{ $organism.key }}{{ end }}"
   {{ end }}
 {{ end }}
 
 {{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $lapisUrlTemplate := .lapisUrlTemplate }}
-{{ range $key, $organism := (.config.organisms | default .config.defaultOrganisms) }}
-{{- if ne $organism.enabled false }}
-"{{ $key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $key }}"
-{{- end }}
+{{- $enabledOrganisms := (include "loculus.enabledOrganisms" (dict "Values" .config) | fromJson) -}}
+{{ range $organism := $enabledOrganisms }}
+"{{ $organism.key -}}": "{{ $lapisUrlTemplate | replace "%organism%" $organism.key }}"
 {{ end }}
 {{ end }}
 

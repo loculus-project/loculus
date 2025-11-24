@@ -1,8 +1,11 @@
 {{- define "loculus.enabledOrganisms" -}}
-{{- $enabled := dict -}}
-{{- range $key, $organism := (.Values.organisms | default .Values.defaultOrganisms) -}}
+{{- $enabled := list -}}
+{{- $source := (.Values.organisms | default .Values.defaultOrganisms) -}}
+{{- range $key := sortAlpha (keys $source) -}}
+{{- $organism := index $source $key -}}
 {{- if ne $organism.enabled false -}}
-{{- $_ := set $enabled $key $organism -}}
+{{- $entry := dict "key" $key "values" $organism -}}
+{{- $enabled = append $enabled $entry -}}
 {{- end -}}
 {{- end -}}
 {{- $enabled | toJson -}}
