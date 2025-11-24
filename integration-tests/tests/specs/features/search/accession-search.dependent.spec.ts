@@ -90,7 +90,7 @@ test.describe('Accession search functionality', () => {
         }
     });
 
-    test('should search by accession and display correct metadata in results', async () => {
+    test('should search by accession', async () => {
         await searchPage.ebolaSudan();
 
         const accessionVersion = await searchPage.waitForLoculusId();
