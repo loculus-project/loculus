@@ -85,15 +85,19 @@ spec:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- range $key := $organismKeys }}
-      - path: /{{ $key }}
+      {{- $firstOrganismKey := "" -}}
+      {{- if gt (len $enabledOrganisms) 0 -}}
+        {{- $firstOrganismKey = (index (first $enabledOrganisms) "key") -}}
+      {{- end -}}
+      {{- range $organism := $enabledOrganisms }}
+      - path: /{{ $organism.key }}
         pathType: Exact
         backend:
           # An Ingress path requires a backend. Since the redirect happens before
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
-            name: {{ template "loculus.lapisServiceName" (first $organismKeys) }}
+            name: {{ template "loculus.lapisServiceName" $firstOrganismKey }}
             port:
               number: 8080
       {{- end }}
