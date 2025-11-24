@@ -86,10 +86,6 @@ spec:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
-      {{- $firstOrganismKey := "" -}}
-      {{- if gt (len $organismKeys) 0 -}}
-        {{- $firstOrganismKey = (index $organismKeys 0) -}}
-      {{- end -}}
       {{- range $key := $organismKeys }}
       - path: /{{ $key }}
         pathType: Exact
@@ -98,7 +94,7 @@ spec:
           # the request is forwarded, we can point all paths to the first
           # organism's service as a placeholder.
           service:
-            name: {{ template "loculus.lapisServiceName" $firstOrganismKey }}
+            name: {{ template "loculus.lapisServiceName" (first $organismKeys) }}
             port:
               number: 8080
       {{- end }}
