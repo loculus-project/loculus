@@ -1,8 +1,9 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- if not .Values.disableIngest }}
-{{- range $_, $value := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := get $value "name" }}
-{{- if $value.ingest }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $organismContent := $item.contents }}
+{{- if $organismContent.ingest }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -49,7 +50,7 @@ spec:
               subPath: config.yaml
       containers:
         - name: ingest-{{ $key }}
-          image: {{ $value.ingest.image}}:{{ $dockerTag }}
+          image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "ingest" $.Values) | nindent 10 }}
           env:
@@ -74,7 +75,7 @@ spec:
             - results/revised
             - results/approved
             - --all-temp # Reduce disk usage by not keeping files around
-      {{- if $value.ingest.configFile }}
+      {{- if $organismContent.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
               mountPath: /package/config/config.yaml
@@ -109,7 +110,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: ingest-{{ $key }}
-              image: {{ $value.ingest.image}}:{{ $dockerTag }}
+              image: {{ $organismContent.ingest.image}}:{{ $dockerTag }}
               imagePullPolicy: {{ $.Values.imagePullPolicy }}
               resources:
                 requests:
@@ -131,7 +132,7 @@ spec:
                 - results/revoked
                 - results/approved
                 - --all-temp # Reduce disk usage by not keeping files around
-          {{- if $value.ingest.configFile }}
+          {{- if $organismContent.ingest.configFile }}
               volumeMounts:
                 - name: loculus-ingest-config-volume-{{ $key }}
                   mountPath: /package/config/config.yaml

@@ -6,9 +6,9 @@
 {{- $testconfig := .Values.testconfig | default false }}
 {{- $keycloakHost := $testconfig | ternary (printf "http://%s:8083" $.Values.localHost) "http://loculus-keycloak-service:8083" }}
 {{- if not .Values.disablePreprocessing }}
-{{- range $_, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $organism := get $organismConfig "name" }}
-{{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
+{{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $organism := $item.key }}
+{{- $flattened := include "loculus.flattenPreprocessingVersions" $item.contents.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- $thisDockerTag := $processingConfig.dockerTag | default $dockerTag }}
 {{- $replicas := $processingConfig.replicas | default 1 }}

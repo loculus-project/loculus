@@ -2,8 +2,8 @@
 {{- $enabledOrganismsResult := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $enabledOrganismsList := $enabledOrganismsResult.organisms }}
 {{- $organismKeys := list -}}
-{{- range $_, $organism := $enabledOrganismsList -}}
-  {{- $organismKeys = append $organismKeys (get $organism "name") -}}
+{{- range $_, $item := $enabledOrganismsList -}}
+  {{- $organismKeys = append $organismKeys $item.key -}}
 {{- end -}}
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

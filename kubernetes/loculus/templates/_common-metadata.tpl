@@ -194,8 +194,9 @@ enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
-  {{- range $_, $instance := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := get $instance "name" }}
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{ $key }}:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
@@ -371,8 +372,9 @@ fileSharing:
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
 organisms:
-  {{- range $_, $instance := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := get $instance "name" }}
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -507,8 +509,9 @@ fields:
 {{/* Generate ENA submission config from passed config object */}}
 {{- define "loculus.generateENASubmissionConfig" }}
 organisms:
-  {{- range $_, $instance := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-{{- $key := get $instance "name" }}
+  {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
+{{- $key := $item.key }}
+{{- $instance := $item.contents }}
   {{- if $instance.enaDeposition }}
   {{ $key }}:
     {{- with $instance.schema }}
