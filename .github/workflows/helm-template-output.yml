@@ -12,10 +12,15 @@ jobs:
   generate-helm-output:
     runs-on: ubuntu-latest
 
-    # Explicitly set permissions needed for committing
-    permissions:
-      contents: write
-      pull-requests: read
+    strategy:
+      matrix:
+        config:
+          - name: default
+            values_files: kubernetes/loculus/values.yaml
+          - name: e2e-dev
+            values_files: kubernetes/loculus/values.yaml --values kubernetes/loculus/values_e2e_and_dev.yaml
+          - name: preview-server
+            values_files: kubernetes/loculus/values.yaml --values kubernetes/loculus/values_preview_server.yaml
 
     steps:
     - name: Checkout repository
@@ -29,34 +34,57 @@ jobs:
       with:
         version: 'v3.14.0'
 
-    - name: Create output directories
-      run: mkdir -p kubernetes/loculus/docs/rendered/{default,e2e-dev,preview-server}
+    - name: Create output directory
+      run: mkdir -p kubernetes/loculus/docs/rendered/${{ matrix.config.name }}
 
-    - name: Generate and split helm template output for default values
+    - name: Generate and split helm template output for ${{ matrix.config.name }}
       run: |
         helm template loculus kubernetes/loculus \
-          --values kubernetes/loculus/values.yaml \
-          > /tmp/helm-output-default.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-default.yaml
-        .github/scripts/split-helm-output.sh /tmp/helm-output-default.yaml kubernetes/loculus/docs/rendered/default
+          --values ${{ matrix.config.values_files }} \
+          > /tmp/helm-output-${{ matrix.config.name }}.yaml
+        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-${{ matrix.config.name }}.yaml
+        .github/scripts/split-helm-output.sh /tmp/helm-output-${{ matrix.config.name }}.yaml kubernetes/loculus/docs/rendered/${{ matrix.config.name }}
 
-    - name: Generate and split helm template output for e2e/dev values
-      run: |
-        helm template loculus kubernetes/loculus \
-          --values kubernetes/loculus/values.yaml \
-          --values kubernetes/loculus/values_e2e_and_dev.yaml \
-          > /tmp/helm-output-e2e-dev.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-e2e-dev.yaml
-        .github/scripts/split-helm-output.sh /tmp/helm-output-e2e-dev.yaml kubernetes/loculus/docs/rendered/e2e-dev
+    - name: Upload rendered output as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: helm-output-${{ matrix.config.name }}
+        path: kubernetes/loculus/docs/rendered/${{ matrix.config.name }}
+        retention-days: 1
 
-    - name: Generate and split helm template output for preview server values
+  commit-changes:
+    runs-on: ubuntu-latest
+    needs: generate-helm-output
+
+    # Explicitly set permissions needed for committing
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: kubernetes/loculus/docs/rendered/
+
+    - name: Reorganize artifacts
       run: |
-        helm template loculus kubernetes/loculus \
-          --values kubernetes/loculus/values.yaml \
-          --values kubernetes/loculus/values_preview_server.yaml \
-          > /tmp/helm-output-preview-server.yaml
-        sed -i 's/timestamp: "[^"]*"/timestamp: ""/g' /tmp/helm-output-preview-server.yaml
-        .github/scripts/split-helm-output.sh /tmp/helm-output-preview-server.yaml kubernetes/loculus/docs/rendered/preview-server
+        # Move files from artifact subdirectories to the correct location
+        for config in default e2e-dev preview-server; do
+          if [ -d "kubernetes/loculus/docs/rendered/helm-output-$config/$config" ]; then
+            mv kubernetes/loculus/docs/rendered/helm-output-$config/$config/* kubernetes/loculus/docs/rendered/helm-output-$config/
+            rmdir kubernetes/loculus/docs/rendered/helm-output-$config/$config
+          fi
+          if [ -d "kubernetes/loculus/docs/rendered/helm-output-$config" ]; then
+            mv kubernetes/loculus/docs/rendered/helm-output-$config kubernetes/loculus/docs/rendered/$config
+          fi
+        done
 
     - name: Show generated output structure
       run: |
