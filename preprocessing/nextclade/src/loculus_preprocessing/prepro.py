@@ -191,11 +191,12 @@ def processed_entry_no_alignment(
 def get_output_metadata(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
-    errors: list[ProcessingAnnotation],
-    warnings: list[ProcessingAnnotation],
     config: Config,
 ) -> tuple[ProcessedMetadata, list[ProcessingAnnotation], list[ProcessingAnnotation]]:
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
+
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
         key = "length" if not config.multi_segment else "length_" + segment
@@ -256,10 +257,11 @@ def get_output_metadata(
                     message=f"Metadata field {output_field} is required.",
                 )
             )
+    logger.debug(f"Processed {accession_version}: {output_metadata}")
     return output_metadata, errors, warnings
 
 
-def add_alignment_errors_warnings(
+def alignment_errors_warnings(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
@@ -323,42 +325,34 @@ def add_alignment_errors_warnings(
     return (errors, warnings)
 
 
+def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not config.create_embl_file or not nextclade_metadata:
+        return None
+    annotations: dict[str, Any] = {}
+    for segment in config.nucleotideSequences:
+        if segment in nextclade_metadata:
+            annotations[segment] = None
+            if nextclade_metadata[segment]:
+                annotations[segment] = nextclade_metadata[segment].get("annotation", None)
+    return annotations
+
+
 def process_single(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
-    errors: list[ProcessingAnnotation] = unprocessed.errors
-    warnings: list[ProcessingAnnotation] = unprocessed.warnings
+    iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
-    alignment_errors, alignment_warnings = add_alignment_errors_warnings(
+    alignment_errors, alignment_warnings = alignment_errors_warnings(
         unprocessed,
         config,
     )
-    errors += alignment_errors
-    warnings += alignment_warnings
 
-    submitter = unprocessed.inputMetadata["submitter"]
-    group_id = int(str(unprocessed.inputMetadata["group_id"]))
-
-    output_metadata, errors, warnings = get_output_metadata(
-        accession_version, unprocessed, errors, warnings, config
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
+        accession_version, unprocessed, config
     )
-    logger.debug(f"Processed {accession_version}: {output_metadata}")
-
-    annotations: dict[str, Any] | None = None
-
-    if config.create_embl_file and unprocessed.nextcladeMetadata is not None:
-        annotations = {}
-        for segment in config.nucleotideSequences:
-            if segment in unprocessed.nextcladeMetadata:
-                annotations[segment] = None
-                if unprocessed.nextcladeMetadata[segment]:
-                    annotations[segment] = unprocessed.nextcladeMetadata[segment].get(
-                        "annotation", None
-                    )
 
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
@@ -371,15 +365,15 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
         ),
-        errors=list(set(errors)),
-        warnings=list(set(warnings)),
+        errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
+        warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
     )
 
     return SubmissionData(
         processed_entry=processed_entry,
-        annotations=annotations,
-        group_id=group_id,
-        submitter=str(submitter),
+        annotations=unpack_annotations(config, unprocessed.nextcladeMetadata),
+        group_id=int(str(unprocessed.inputMetadata["group_id"])),
+        submitter=str(unprocessed.inputMetadata["submitter"]),
     )
 
 
@@ -389,23 +383,18 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
-    errors: list[ProcessingAnnotation] = []
-    warnings: list[ProcessingAnnotation] = []
-    output_metadata: ProcessedMetadata = {}
+    iupac_errors = errors_if_non_iupac(unprocessed.unalignedNucleotideSequences)
 
-    errors.extend(errors_if_non_iupac(unprocessed.unalignedNucleotideSequences))
-
-    output_metadata, errors, warnings = get_output_metadata(
-        accession_version, unprocessed, errors, warnings, config
+    output_metadata, metadata_errors, metadata_warnings = get_output_metadata(
+        accession_version, unprocessed, config
     )
-    logger.debug(f"Processed {accession_version}: {output_metadata}")
 
     return processed_entry_no_alignment(
-        accession_version,
-        unprocessed,
-        output_metadata,
-        errors,
-        warnings,
+        accession_version=accession_version,
+        unprocessed=unprocessed,
+        output_metadata=output_metadata,
+        errors=list(set(iupac_errors + metadata_errors)),
+        warnings=list(set(metadata_warnings)),
     )
 
 
