@@ -26,7 +26,7 @@ test.describe('Accession search functionality', () => {
         return accessions;
     }
 
-    test('should search by accession, display correct metadata, and allow clicking the result', async ({
+    test('should search by accession, and click the result', async ({
         page,
     }) => {
         await searchPage.ebolaSudan();
