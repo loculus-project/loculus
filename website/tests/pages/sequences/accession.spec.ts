@@ -4,7 +4,6 @@ import { baseUrl, expect, test } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The detailed sequence page', () => {
-
     test('check initial sequences and verify that banners are shown when revoked or revised', async ({
         sequencePage,
     }) => {
