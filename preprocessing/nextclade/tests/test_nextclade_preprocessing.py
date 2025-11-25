@@ -975,7 +975,7 @@ multi_pathogen_cases = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={"ebola-zaire": "ebola-zaire"},
+            sequenceNameToFastaId={"ebola-zaire": "ebola-zaire"},
         ),
     ),
     Case(
@@ -1005,7 +1005,7 @@ multi_pathogen_cases = [
                 "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={"ebola-sudan": "ebola-sudan"},
+            sequenceNameToFastaId={"ebola-sudan": "ebola-sudan"},
         ),
     ),
     Case(
@@ -1069,7 +1069,7 @@ multi_pathogen_cases = [
                 "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
-            sequenceNameToFastaHeaderMap={
+            sequenceNameToFastaId={
                 "ebola-sudan": "ebola-sudan",
                 "ebola-zaire": "ebola-zaire",
             },
