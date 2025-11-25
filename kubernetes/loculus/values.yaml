@@ -1861,6 +1861,7 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
+          segment_classification_method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nucleotideSequences:
             - name: CV-A16
