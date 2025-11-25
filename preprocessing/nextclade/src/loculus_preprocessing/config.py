@@ -10,7 +10,7 @@ from typing import Any, get_args
 
 import yaml
 
-from loculus_preprocessing.datatypes import MoleculeType, Topology
+from loculus_preprocessing.datatypes import MoleculeType, SegmentClassificationMethod, Topology
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,7 @@ class Config:
     multi_segment: bool = False
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
+    segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
 
     require_nextclade_sort_match: bool = False
