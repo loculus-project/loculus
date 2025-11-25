@@ -23,6 +23,7 @@ from .datatypes import (
     AnnotationSourceType,
     FileIdAndName,
     GeneName,
+    InputData,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -73,14 +74,14 @@ def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
-) -> str | None:
+) -> InputData:
     segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
     if (
         not unprocessed.nextcladeMetadata
         or segment not in unprocessed.nextcladeMetadata
         or unprocessed.nextcladeMetadata[segment] is None
     ):
-        return None
+        return InputData(datum=None)
     result: str | None = str(
         dpath.get(
             unprocessed.nextcladeMetadata[segment],
@@ -93,23 +94,38 @@ def add_nextclade_metadata(
         try:
             result = format_frameshift(result)
         except Exception:
-            # TODO: somehow this error needs to be returned
-            logger.error("Was unable to format frameshift - this is likely an internal error")
-            result = None
+            msg = "Was unable to format frameshift - this is likely an internal error. Please contact the administrator."
+            logger.error(msg)
+            errors = [
+                ProcessingAnnotation.from_single(
+                    nextclade_path,
+                    AnnotationSourceType.METADATA,
+                    message=msg,
+                ),
+            ]
+            return InputData(datum=None, errors=errors)
     if nextclade_path == "qc.stopCodons.stopCodons":
         try:
             result = format_stop_codon(result)
         except Exception:
-            logger.error("Was unable to format stop codon - this is likely an internal error")
-            result = None
-    return result
+            msg = "Was unable to format stop codon - this is likely an internal error. Please contact the administrator."
+            logger.error(msg)
+            errors = [
+                ProcessingAnnotation.from_single(
+                    nextclade_path,
+                    AnnotationSourceType.METADATA,
+                    message=msg,
+                ),
+            ]
+            return InputData(datum=None, errors=errors)
+    return InputData(datum=result)
 
 
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     input_path: str,
-) -> str | None:
+) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
@@ -117,8 +133,8 @@ def add_input_metadata(
         nextclade_path = input_path[len(nextclade_prefix) :]
         return add_nextclade_metadata(spec, unprocessed, nextclade_path)
     if input_path not in unprocessed.inputMetadata:
-        return None
-    return unprocessed.inputMetadata[input_path]
+        return InputData(datum=None)
+    return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
 def _call_processing_function(  # noqa: PLR0913, PLR0917
@@ -217,7 +233,10 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)
+                input_metadata = add_input_metadata(spec, unprocessed, input_path)
+                input_data[arg_name] = input_metadata.datum
+                errors.extend(input_metadata.errors)
+                warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
                 submitter = unprocessed.inputMetadata["submitter"]
                 submitted_at = unprocessed.inputMetadata["submittedAt"]

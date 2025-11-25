@@ -155,6 +155,13 @@ class SubmissionData:
 
 
 @dataclass
+class InputData:
+    datum: InputMetadataValue
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@dataclass
 class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
