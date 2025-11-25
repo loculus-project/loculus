@@ -235,7 +235,107 @@ def run_sort(
     return alerts
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
+def load_aligned_nuc_sequences(
+    result_dir_seg: str,
+    segment: SegmentName,
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
+) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
+    """
+    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
+    accession to a segmentName: NucleotideSequence dictionary.
+    """
+    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
+        for aligned_sequence in aligned_nuc:
+            sequence_id: str = aligned_sequence.id
+            sequence: NucleotideSequence = str(aligned_sequence.seq)
+            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
+    return aligned_nucleotide_sequences
+
+
+def load_aligned_aa_sequences(
+    result_dir_seg: str,
+    config: Config,
+    aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]],
+) -> dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]]:
+    """
+    Load the nextclade amino acid alignment results into the aligned_aminoacid_sequences dict, mapping each
+    accession to a geneName: AminoAcidSequence dictionary.
+    """
+    for gene in config.genes:
+        translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
+        try:
+            with open(translation_path, encoding="utf-8") as aligned_translations:
+                aligned_translation = SeqIO.parse(aligned_translations, "fasta")
+                for aligned_sequence in aligned_translation:
+                    sequence_id = aligned_sequence.id
+                    masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
+                    aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
+        except FileNotFoundError:
+            # TODO: Add warning to each sequence
+            logger.info(
+                f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
+            )
+    return aligned_aminoacid_sequences
+
+
+def add_segment_name_error_warning(
+    entry: UnprocessedEntry,
+    config: Config,
+    alerts: Alerts,
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
+) -> tuple[Alerts, dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]], dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]]:
+    id = entry.accessionVersion
+    alerts.warnings[id] = []
+    alerts.errors[id] = []
+    num_valid_segments = 0
+    num_duplicate_segments = 0
+    for segment in config.nucleotideSequences:
+        unaligned_segment = [
+            data
+            for data in entry.data.unalignedNucleotideSequences
+            if re.match(segment + "$", data, re.IGNORECASE)
+        ]
+        if len(unaligned_segment) > 1:
+            num_duplicate_segments += len(unaligned_segment)
+            alerts.errors[id].append(
+                ProcessingAnnotation.from_single(
+                    segment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message="Found multiple sequences with the same segment name.",
+                ),
+            )
+        elif len(unaligned_segment) == 1:
+            num_valid_segments += 1
+            unaligned_nucleotide_sequences[id][segment] = entry.data.unalignedNucleotideSequences[
+                unaligned_segment[0]
+            ]
+            aligned_nucleotide_sequences[id][segment] = None
+    if (
+        len(entry.data.unalignedNucleotideSequences) - num_valid_segments - num_duplicate_segments
+        > 0
+    ):
+        alerts.errors[id].append(
+            ProcessingAnnotation.from_single(
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=(
+                    "Found unknown segments in the input data - "
+                    "check your segments are annotated correctly."
+                ),
+            ),
+        )
+    return alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
+
+
+def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -253,66 +353,25 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     """
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    alerts: Alerts = Alerts()
-    input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    aligned_aminoacid_sequences: dict[
-        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
-    ] = {}
+    ] = defaultdict(dict)
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
+    ] = defaultdict(dict)
+    alerts: Alerts = Alerts()
+    input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
         input_metadata[id]["submitter"] = entry.data.submitter
         input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
-        aligned_aminoacid_sequences[id] = {}
-        unaligned_nucleotide_sequences[id] = {}
-        aligned_nucleotide_sequences[id] = {}
-        alerts.warnings[id] = []
-        alerts.errors[id] = []
-        num_valid_segments = 0
-        num_duplicate_segments = 0
-        for segment in config.nucleotideSequences:
-            unaligned_segment = [
-                data
-                for data in entry.data.unalignedNucleotideSequences
-                if re.match(segment + "$", data, re.IGNORECASE)
-            ]
-            if len(unaligned_segment) > 1:
-                num_duplicate_segments += len(unaligned_segment)
-                alerts.errors[id].append(
-                    ProcessingAnnotation.from_single(
-                        segment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message="Found multiple sequences with the same segment name.",
-                    ),
-                )
-            elif len(unaligned_segment) == 1:
-                num_valid_segments += 1
-                unaligned_nucleotide_sequences[id][segment] = (
-                    entry.data.unalignedNucleotideSequences[unaligned_segment[0]]
-                )
-                aligned_nucleotide_sequences[id][segment] = None
-        if (
-            len(entry.data.unalignedNucleotideSequences)
-            - num_valid_segments
-            - num_duplicate_segments
-            > 0
-        ):
-            alerts.errors[id].append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=(
-                        "Found unknown segments in the input data - "
-                        "check your segments are annotated correctly."
-                    ),
-                ),
-            )
+        alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences = add_segment_name_error_warning(
+            entry, config, alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
+        )
 
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = defaultdict(dict)
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
     ] = defaultdict(lambda: defaultdict(dict))
@@ -322,7 +381,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         for segment in config.nucleotideSequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
@@ -366,26 +425,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
             aligned_nucleotide_sequences = load_aligned_nuc_sequences(
                 result_dir_seg, segment, aligned_nucleotide_sequences
             )
-
-            for gene in config.genes:
-                translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
-                try:
-                    with open(translation_path, encoding="utf-8") as aligned_translations:
-                        aligned_translation = SeqIO.parse(aligned_translations, "fasta")
-                        for aligned_sequence in aligned_translation:
-                            sequence_id = aligned_sequence.id
-                            masked_sequence = mask_terminal_gaps(
-                                str(aligned_sequence.seq), mask_char="X"
-                            )
-                            aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
-                except FileNotFoundError:
-                    # TODO: Add warning to each sequence
-                    logger.info(
-                        f"Gene {gene} not found in Nextclade results expected at: {
-                            translation_path
-                        }"
-                    )
-
+            aligned_aminoacid_sequences = load_aligned_aa_sequences(
+                result_dir_seg, config, aligned_aminoacid_sequences
+            )
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
             )  # this includes the "annotation" field
@@ -407,26 +449,6 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
         )
         for id in unaligned_nucleotide_sequences
     }
-
-
-def load_aligned_nuc_sequences(
-    result_dir_seg: str,
-    segment: SegmentName,
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ],
-) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
-    """
-    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
-    accession to a segmentName: NucleotideSequence dictionary.
-    """
-    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
-        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
-        for aligned_sequence in aligned_nuc:
-            sequence_id: str = aligned_sequence.id
-            sequence: NucleotideSequence = str(aligned_sequence.seq)
-            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
-    return aligned_nucleotide_sequences
 
 
 def get_nextclade_dataset_name(config: Config, segment: SegmentName) -> str | None:
