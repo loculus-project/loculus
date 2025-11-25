@@ -153,9 +153,10 @@ class SubmissionData:
     group_id: int | None = None
     annotations: dict[str, Any] | None = None
 
+
 @dataclass
 class InputData:
-    datum: ProcessedMetadataValue
+    datum: InputMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
 

@@ -96,13 +96,13 @@ def add_nextclade_metadata(
         except Exception:
             msg = "Was unable to format frameshift - this is likely an internal error"
             logger.error(msg)
-            errors=[
+            errors = [
                 ProcessingAnnotation.from_single(
                     nextclade_path,
                     AnnotationSourceType.METADATA,
                     message=msg,
                 ),
-            ],
+            ]
             return InputData(datum=None, errors=errors)
     if nextclade_path == "qc.stopCodons.stopCodons":
         try:
@@ -110,13 +110,13 @@ def add_nextclade_metadata(
         except Exception:
             msg = "Was unable to format stop codon - this is likely an internal error"
             logger.error(msg)
-            errors=[
+            errors = [
                 ProcessingAnnotation.from_single(
                     nextclade_path,
                     AnnotationSourceType.METADATA,
                     message=msg,
                 ),
-            ],
+            ]
             return InputData(datum=None, errors=errors)
     return InputData(datum=result)
 
