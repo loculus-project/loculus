@@ -13,20 +13,20 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
-    build_processing_annotations,
 )
 
 from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
 from loculus_preprocessing.datatypes import (
+    AnnotationSource,
     AnnotationSourceType,
+    ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     SubmissionData,
     UnprocessedData,
     UnprocessedEntry,
-    AnnotationSource,
-    ProcessingAnnotation,
 )
 from loculus_preprocessing.embl import create_flatfile, reformat_authors_from_loculus_to_embl_style
 from loculus_preprocessing.prepro import process_all

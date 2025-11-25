@@ -5,9 +5,9 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
-    build_processing_annotations,
 )
 
 from loculus_preprocessing.config import Config, get_config
