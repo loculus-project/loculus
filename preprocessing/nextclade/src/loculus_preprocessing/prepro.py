@@ -94,7 +94,7 @@ def add_nextclade_metadata(
         try:
             result = format_frameshift(result)
         except Exception:
-            msg = "Was unable to format frameshift - this is likely an internal error"
+            msg = "Was unable to format frameshift - this is likely an internal error. Please contact the administrator."
             logger.error(msg)
             errors = [
                 ProcessingAnnotation.from_single(
@@ -108,7 +108,7 @@ def add_nextclade_metadata(
         try:
             result = format_stop_codon(result)
         except Exception:
-            msg = "Was unable to format stop codon - this is likely an internal error"
+            msg = "Was unable to format stop codon - this is likely an internal error. Please contact the administrator."
             logger.error(msg)
             errors = [
                 ProcessingAnnotation.from_single(
