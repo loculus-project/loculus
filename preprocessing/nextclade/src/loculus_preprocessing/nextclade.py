@@ -274,8 +274,8 @@ def load_aligned_aa_sequences(
                     masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
                     aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
         except FileNotFoundError:
-            # TODO: Add warning to each sequence
-            logger.info(
+            # This can happen if the sequence does not cover this gene
+            logger.debug(
                 f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
             )
     return aligned_aminoacid_sequences
@@ -291,7 +291,11 @@ def add_segment_name_error_warning(
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ],
-) -> tuple[Alerts, dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]], dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]]:
+) -> tuple[
+    Alerts,
+    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
+    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
+]:
     id = entry.accessionVersion
     alerts.warnings[id] = []
     alerts.errors[id] = []
@@ -365,8 +369,10 @@ def enrich_with_nextclade(
         input_metadata[id]["submitter"] = entry.data.submitter
         input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
-        alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences = add_segment_name_error_warning(
-            entry, config, alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
+        alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences = (
+            add_segment_name_error_warning(
+                entry, config, alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
+            )
         )
 
     aligned_aminoacid_sequences: dict[
