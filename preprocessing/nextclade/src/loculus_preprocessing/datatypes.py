@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any, Final
+from typing import Any, Final, Iterable
 
 AccessionVersion = str
 GeneName = str
@@ -53,8 +53,8 @@ class ProcessingAnnotation:
     @classmethod
     def from_fields(
         cls,
-        input_fields: list[str],
-        output_fields: list[str],
+        input_fields: Iterable[str],
+        output_fields: Iterable[str],
         type: AnnotationSourceType,
         message: str,
     ):

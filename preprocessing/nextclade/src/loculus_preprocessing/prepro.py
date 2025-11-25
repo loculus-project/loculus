@@ -325,7 +325,7 @@ def get_output_metadata(
         ):
             errors.append(
                 ProcessingAnnotation.from_fields(
-                    list(spec.inputs.values()),
+                    spec.inputs.values(),
                     [output_field],
                     AnnotationSourceType.METADATA,
                     message=f"Metadata field {output_field} is required.",
