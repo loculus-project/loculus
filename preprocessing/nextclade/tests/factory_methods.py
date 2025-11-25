@@ -180,7 +180,11 @@ class Case:
 def sort_annotations(annotations: list[ProcessingAnnotation]) -> list[ProcessingAnnotation]:
     return sorted(
         annotations,
-        key=lambda x: (x.unprocessedFields[0].name, x.processedFields[0].name, x.message),
+        key=lambda x: (
+            x.unprocessedFields[0].name if len(x.unprocessedFields) else None,
+            x.processedFields[0].name if len(x.processedFields) else None,
+            x.message,
+        ),
     )
 
 
