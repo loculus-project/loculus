@@ -54,4 +54,40 @@ export class SequenceDetailPage {
             this.page.getByText('This is not the latest version of this sequence entry'),
         ).not.toBeVisible();
     }
+
+    async expectRevocationVersionBanner() {
+        await expect(this.page.getByText('This is a revocation version.')).toBeVisible();
+    }
+
+    async gotoAllVersions() {
+        const versionLink = this.page.getByText(/Version \d+/);
+        await expect(versionLink).toBeVisible();
+        await versionLink.click();
+
+        const allVersionsLink = this.page.getByRole('link', { name: 'All versions' });
+        await expect(allVersionsLink).toBeVisible();
+        await allVersionsLink.click();
+    }
+
+    async expectVersionsPageFor(accession: string) {
+        await expect(this.page.getByText(`Versions for accession ${accession}`)).toBeVisible();
+    }
+
+    async expectLatestVersionLabel() {
+        await expect(this.page.getByText('Latest version')).toBeVisible();
+    }
+
+    async expectPreviousVersionLabel() {
+        await expect(this.page.getByText('Previous version')).toBeVisible();
+    }
+
+    async clickVersionLink(accessionVersion: string) {
+        const link = this.page.getByRole('link', { name: accessionVersion });
+        await expect(link).toBeVisible();
+        await link.click();
+    }
+
+    getPage() {
+        return this.page;
+    }
 }

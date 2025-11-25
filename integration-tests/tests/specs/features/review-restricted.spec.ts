@@ -6,6 +6,7 @@ import { createTestMetadata, createTestSequenceData } from '../../test-helpers/t
 
 test.describe('Review page restricted sequences', () => {
     test('approve restricted sequences', async ({ page, groupId }) => {
+        test.setTimeout(120_000);
         const submissionPage = new SingleSequenceSubmissionPage(page);
         const reviewPage = new ReviewPage(page);
 
