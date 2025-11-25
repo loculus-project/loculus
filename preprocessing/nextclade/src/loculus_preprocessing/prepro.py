@@ -70,6 +70,12 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+class MultipleValidSegmentsError(Exception):
+    def __init__(self, segments: list[str]):
+        self.segments = segments
+        super().__init__()
+
+
 def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str | None:
     """Returns the segment to use based on spec args"""
     if spec.args and spec.args.get("useFirstSegment", False) and unprocessed.nextcladeMetadata:
@@ -77,7 +83,7 @@ def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) ->
         if not valid_segments:
             return None
         if len(valid_segments) > 1:
-            raise ValueError(f"Multiple valid segments found: {valid_segments}")
+            raise MultipleValidSegmentsError(valid_segments)
         return valid_segments[0]
 
     if spec.args and "segment" in spec.args:
@@ -91,7 +97,26 @@ def add_nextclade_metadata(
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
 ) -> InputData:
-    segment = get_segment(spec, unprocessed)
+    try:
+        segment = get_segment(spec, unprocessed)
+    except MultipleValidSegmentsError as e:
+        message = f"Expected exactly one valid segment, found multiple: {e.segments}"
+        logger.error(message)
+        errors = [
+            ProcessingAnnotation(
+                unprocessedFields=[
+                    AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                    for segment in e.segments
+                ],
+                processedFields=[
+                    AnnotationSource(name=nextclade_path, type=AnnotationSourceType.METADATA)
+                ],
+                message=message,
+            ),
+        ]
+        print(errors)
+        return InputData(datum=None, errors=errors)
+
     if (
         not unprocessed.nextcladeMetadata
         or segment not in unprocessed.nextcladeMetadata

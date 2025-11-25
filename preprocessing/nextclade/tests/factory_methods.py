@@ -112,23 +112,20 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
-        metadata_errors: list[ProcessingAnnotationHelper] | None = None,
-        metadata_warnings: list[ProcessingAnnotationHelper] | None = None,
+        errors: list[ProcessingAnnotation] | None = None,
+        warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
     ) -> ProcessedEntry:
-        if metadata_errors is None:
-            metadata_errors = []
-        if metadata_warnings is None:
-            metadata_warnings = []
+        if errors is None:
+            errors = []
+        if warnings is None:
+            warnings = []
         if self.all_metadata_fields is None:
             self.all_metadata_fields = []
         base_metadata_dict = dict.fromkeys(self.all_metadata_fields)
         base_metadata_dict.update(metadata_dict)
         if not processed_alignment:
             processed_alignment = ProcessedAlignment()
-
-        errors = build_processing_annotations(metadata_errors)
-        warnings = build_processing_annotations(metadata_warnings)
 
         return ProcessedEntry(
             accession=accession,
@@ -153,8 +150,8 @@ class Case:
     input_sequence: dict[str, str | None] = field(default_factory=lambda: {"main": None})
     accession_id: str = "000999"
     expected_metadata: dict[str, ProcessedMetadataValue] = field(default_factory=dict)
-    expected_errors: list[ProcessingAnnotationHelper] | None = None
-    expected_warnings: list[ProcessingAnnotationHelper] | None = None
+    expected_errors: list[ProcessingAnnotation] | None = None
+    expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
@@ -168,8 +165,8 @@ class Case:
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
             accession=unprocessed_entry.accessionVersion.split(".")[0],
-            metadata_errors=self.expected_errors or [],
-            metadata_warnings=self.expected_warnings or [],
+            errors=self.expected_errors or [],
+            warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
         )
         return ProcessingTestCase(
