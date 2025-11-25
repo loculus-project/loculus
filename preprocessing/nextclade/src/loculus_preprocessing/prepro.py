@@ -70,12 +70,15 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
-def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str:
+def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str | None:
     """Returns the segment to use based on spec args"""
     if spec.args and spec.args.get("useFirstSegment", False) and unprocessed.nextcladeMetadata:
-        for segment in unprocessed.nextcladeMetadata.keys():
-            if unprocessed.nextcladeMetadata[segment]:
-                return segment
+        valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
+        if not valid_segments:
+            return None
+        if len(valid_segments) > 1:
+            raise ValueError(f"Multiple valid segments found: {valid_segments}")
+        return valid_segments[0]
 
     if spec.args and "segment" in spec.args:
         return str(spec.args["segment"])
