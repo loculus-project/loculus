@@ -47,7 +47,11 @@ from .nextclade import (
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .processing_functions import (
+    ProcessingFunctions,
+    format_frameshift,
+    format_stop_codon,
+)
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -297,7 +301,9 @@ def alignment_errors_warnings(
         )
         errors.append(
             ProcessingAnnotation.from_single(
-                nput_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)"alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=message,
             )
         )
         return (errors, warnings)

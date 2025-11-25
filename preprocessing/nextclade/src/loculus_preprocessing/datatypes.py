@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
@@ -18,6 +19,7 @@ ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
+FastaId = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
 
@@ -83,14 +85,6 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
-class SegmentAssignment:
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
-    errors: list[ProcessingAnnotation]
-    warnings: list[ProcessingAnnotation]
-
-
-@dataclass
 class ProcessingSpec:
     inputs: FunctionInputs
     function: FunctionName
@@ -109,7 +103,7 @@ class UnprocessedAfterNextclade:
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -128,7 +122,7 @@ class ProcessedData:
     nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, str]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 
@@ -139,8 +133,12 @@ class Annotation:
 
 @dataclass
 class Alerts:
-    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
-    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
 
 @dataclass
@@ -176,6 +174,29 @@ class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@unique
+class SegmentClassificationMethod(StrEnum):
+    ALIGN = "align"
+    MINIMIZER = "minimizer"
+
+
+@dataclass
+class SegmentAssignment:
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
+    errors: list[ProcessingAnnotation]
+    warnings: list[ProcessingAnnotation]
+
+
+@dataclass
+class SegmentAssignmentBatch:
+    unalignedNucleotideSequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ]
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]]  # noqa: N815
+    alerts: Alerts
 
 
 @dataclass

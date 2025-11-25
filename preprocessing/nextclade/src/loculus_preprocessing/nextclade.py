@@ -21,6 +21,7 @@ from .datatypes import (
     AminoAcidInsertion,
     AminoAcidSequence,
     AnnotationSourceType,
+    FastaId,
     GeneName,
     GenericSequence,
     NucleotideInsertion,
@@ -28,6 +29,8 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     SegmentAssignment,
+    SegmentAssignmentBatch,
+    SegmentClassificationMethod,
     SegmentName,
     UnprocessedAfterNextclade,
     UnprocessedEntry,
@@ -269,92 +272,87 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     return alerts
 
 
-# TODO: running this for each sequence is inefficient, should be run once per batch
-def assign_segment_with_nextclade_sort(
-    input_unaligned_sequences: dict[str, NucleotideSequence | None],
-    config: Config,
-    dataset_dir: str,
-) -> SegmentAssignment:
+def assign_segment_with_nextclade_align(
+    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+) -> SegmentAssignmentBatch:
     """
-    Run nextclade sort
-    - assert highest score is in sequence_and_dataset.accepted_sort_matches
-    (default is nextclade_dataset_name)
+    Run nextclade align
     """
-    errors = []
-    warnings = []
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    nextclade_dataset_server = config.nextclade_dataset_server
-    has_duplicate_segments = False
-    has_missing_segments = False
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
+    alerts: Alerts = Alerts()
 
+    has_missing_segments: dict[AccessionVersion, bool] = defaultdict(bool)
+    has_duplicate_segments: dict[AccessionVersion, bool] = defaultdict(bool)
+
+    id_map: defaultdict[str, tuple[AccessionVersion, FastaId]] = defaultdict(
+        lambda: (AccessionVersion(), FastaId())
+    )
+    align_results_map: dict[AccessionVersion, dict[SegmentName, list[str]]] = defaultdict(dict)
+    input_unaligned_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+
+    all_dfs = []
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
         os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        with open(input_file, "w", encoding="utf-8") as f:
-            for id, seq in input_unaligned_sequences.items():
-                f.write(f">{id}\n")
-                f.write(f"{seq}\n")
+        for entry in unprocessed:
+            accession_version = entry.accessionVersion
+            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
+            with open(input_file, "a", encoding="utf-8") as f:
+                for fastaId, seq in input_unaligned_sequences[accession_version].items():
+                    id = f"{accession_version}__{fastaId}"
+                    id_map[id] = (accession_version, fastaId)
+                    f.write(f">{id}\n")
+                    f.write(f"{seq}\n")
 
-        result_file = result_dir + "/sort_output.tsv"
-        df = run_sort(
-            result_file,
-            input_file,
-            config,
-            nextclade_dataset_server,
-            dataset_dir,
-        )
-
-        no_hits = df[df["score"].isna()]
-        hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
-        for seq_name in no_hits["seqName"].unique():
-            if seq_name not in hits["seqName"].unique():
-                msg = (
-                    f"Sequence with fasta header {seq_name} does not appear to match any reference for organism: "
-                    f"{config.organism} per `nextclade sort`. "
-                    f"Double check you are submitting to the correct organism."
-                )
-                has_missing_segments = True
-                if config.alignment_requirement == AlignmentRequirement.ALL:
-                    errors.append(
-                        ProcessingAnnotation.from_single(
-                            ProcessingAnnotationAlignment,
-                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            message=msg,
-                        )
-                    )
-                else:
-                    warnings.append(
-                        ProcessingAnnotation.from_single(
-                            ProcessingAnnotationAlignment,
-                            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                            message=msg,
-                        )
-                    )
-
-        best_hits = hits.groupby("seqName", as_index=False).first()
-        logger.info(f"Found hits: {best_hits['seqName'].tolist()}")
-
-        sort_results_map: dict[SegmentName, list[str]] = {}
-
-        for _, row in best_hits.iterrows():
-            not_found = True
-            for segment in config.nucleotideSequences:
-                # TODO: need to check somewhere that accepted_sort_matches does not overlap across segments
-                if row["dataset"] in segment.accepted_sort_matches:
-                    not_found = False
-                    sort_results_map.setdefault(segment.name, []).append(row["seqName"])
-                    break
-            if not not_found:
-                continue
-            has_missing_segments = True
-            msg = (
-                f"Sequence {row['seqName']} best matches {row['dataset']}, "
-                "which is currently not an accepted option for organism: "
-                f"{config.organism}. It is therefore not possible to release. "
-                "Contact the administrator if you think this message is an error."
+        for sequence_and_dataset in config.nucleotideSequences:
+            segment = sequence_and_dataset.name
+            dataset_dir_seg = (
+                dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
             )
+            result_file_seg = result_dir + "/sort_output_" + segment + ".tsv"
+
+            command = [
+                "nextclade3",
+                "run",
+                f"--output-tsv={result_file_seg}",
+                f"--input-dataset={dataset_dir_seg}",
+                "--jobs=1",
+                "--",
+                input_file,
+            ]
+            exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+            if exit_code != 0:
+                msg = f"nextclade failed with exit code {exit_code}"
+                raise Exception(msg)
+
+            logger.debug("Nextclade results available in %s", result_dir)
+            df = pd.read_csv(result_file_seg, sep="\t")
+            df["segment"] = segment
+            all_dfs.append(df)
+
+    df_combined = pd.concat(all_dfs, ignore_index=True)
+    no_hits = df_combined[df_combined["alignmentScore"].isna()]
+    hits = (
+        df_combined.dropna(subset=["alignmentScore"])
+        .sort_values(by=["seqName", "alignmentScore"], ascending=[True, False])
+        .drop_duplicates(subset="seqName", keep="first")
+    )
+    for seq_name in no_hits["seqName"].unique():
+        if seq_name not in hits["seqName"].unique():
+            (accession_version, fastaId) = id_map[seq_name]
+            msg = (
+                f"Sequence with fasta header {fastaId} does not align to any segment for"
+                f" organism: {config.organism} per `nextclade align`. "
+                f"Double check you are submitting to the correct organism."
+            )
+            has_missing_segments[accession_version] = True
             if config.alignment_requirement == AlignmentRequirement.ALL:
-                errors.append(
+                alerts.errors.setdefault(accession_version, []).append(
                     ProcessingAnnotation.from_single(
                         ProcessingAnnotationAlignment,
                         AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -362,22 +360,34 @@ def assign_segment_with_nextclade_sort(
                     )
                 )
             else:
-                warnings.append(
+                alerts.warnings.setdefault(accession_version, []).append(
                     ProcessingAnnotation.from_single(
                         ProcessingAnnotationAlignment,
                         AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                         message=msg,
                     )
                 )
-        sequenceNameToFastaId: dict[SegmentName, str] = {}
-        for segment_name, headers in sort_results_map.items():
+
+    best_hits = hits.groupby("seqName", as_index=False).first()
+    logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
+
+    for _, row in best_hits.iterrows():
+        (accession_version, fastaId) = id_map[row["seqName"]]
+        for seg in config.nucleotideSequences:
+            if row["segment"] == seg.name:
+                align_results_map[accession_version].setdefault(seg.name, []).append(fastaId)
+                break
+        continue
+
+    for accession_version, segment_map in align_results_map.items():
+        for segment_name, headers in segment_map.items():
             if len(headers) > 1:
                 msg = (
                     f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
-                    f" {segment_name} - only one entry is allowed."
+                    f"{segment_name} - only one entry is allowed."
                 )
-                has_duplicate_segments = True
-                errors.append(
+                has_duplicate_segments[accession_version] = True
+                alerts.errors.setdefault(accession_version, []).append(
                     ProcessingAnnotation.from_single(
                         ProcessingAnnotationAlignment,
                         AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -385,27 +395,193 @@ def assign_segment_with_nextclade_sort(
                     )
                 )
                 continue
-            sequenceNameToFastaId[segment_name] = headers[0]
-            unaligned_nucleotide_sequences[segment_name] = input_unaligned_sequences[headers[0]]
-
-    if (
-        len(unaligned_nucleotide_sequences) == 0
-        and not has_duplicate_segments
-        and (not has_missing_segments or config.alignment_requirement == AlignmentRequirement.ANY)
-    ):
-        errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="No sequence data could be classified - check you are submitting to the correct organism.",
+            sequenceNameToFastaId[accession_version][segment_name] = headers[0]
+            unaligned_nucleotide_sequences[accession_version][segment_name] = (
+                input_unaligned_sequences[accession_version][headers[0]]
             )
-        )
 
-    return SegmentAssignment(
+    for entry in unprocessed:
+        accession_version = entry.accessionVersion
+        if (
+            len(unaligned_nucleotide_sequences[accession_version]) == 0
+            and not has_duplicate_segments.get(accession_version)
+            and (
+                not has_missing_segments.get(accession_version)
+                or config.alignment_requirement == AlignmentRequirement.ANY
+            )
+        ):
+            alerts.errors.setdefault(accession_version, []).append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message="No sequence data could be classified - "
+                    "check you are submitting to the correct organism.",
+                )
+            )
+
+    return SegmentAssignmentBatch(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
         sequenceNameToFastaId=sequenceNameToFastaId,
-        errors=errors,
-        warnings=warnings,
+        alerts=alerts,
+    )
+
+
+def assign_segment_with_nextclade_sort(
+    unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
+) -> SegmentAssignmentBatch:
+    """
+    Run nextclade sort
+    - assert highest score is in sequence_and_dataset.accepted_sort_matches
+    (default is nextclade_dataset_name)
+    """
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
+    alerts: Alerts = Alerts()
+
+    has_missing_segments: dict[AccessionVersion, bool] = defaultdict(bool)
+    has_duplicate_segments: dict[AccessionVersion, bool] = defaultdict(bool)
+
+    id_map: defaultdict[str, tuple[AccessionVersion, FastaId]] = defaultdict(
+        lambda: (AccessionVersion(), FastaId())
+    )
+    sort_results_map: dict[AccessionVersion, dict[SegmentName, list[str]]] = defaultdict(dict)
+    input_unaligned_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
+        input_file = result_dir + "/input.fasta"
+        os.makedirs(os.path.dirname(input_file), exist_ok=True)
+        for entry in unprocessed:
+            accession_version = entry.accessionVersion
+            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
+            with open(input_file, "a", encoding="utf-8") as f:
+                for fastaId, seq in input_unaligned_sequences[accession_version].items():
+                    id = f"{accession_version}__{fastaId}"
+                    id_map[id] = (accession_version, fastaId)
+                    f.write(f">{id}\n")
+                    f.write(f"{seq}\n")
+
+        result_file = result_dir + "/sort_output.tsv"
+        df = run_sort(
+            result_file,
+            input_file,
+            config,
+            config.nextclade_dataset_server,
+            dataset_dir,
+        )
+
+    no_hits = df[df["score"].isna()]
+    hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+    for seq_name in no_hits["seqName"].unique():
+        if seq_name not in hits["seqName"].unique():
+            (accession_version, fastaId) = id_map[seq_name]
+            msg = (
+                f"Sequence with fasta header {fastaId} does not appear to match any reference for"
+                f" organism: {config.organism} per `nextclade sort`. "
+                f"Double check you are submitting to the correct organism."
+            )
+            has_missing_segments[accession_version] = True
+            if config.alignment_requirement == AlignmentRequirement.ALL:
+                alerts.errors.setdefault(accession_version, []).append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        message=msg,
+                    )
+                )
+            else:
+                alerts.warnings.setdefault(accession_version, []).append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        message=msg,
+                    )
+                )
+
+    best_hits = hits.groupby("seqName", as_index=False).first()
+    logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
+
+    for _, row in best_hits.iterrows():
+        (accession_version, fastaId) = id_map[row["seqName"]]
+        not_found = True
+        for segment in config.nucleotideSequences:
+            # TODO: need to check that accepted_sort_matches does not overlap across segments
+            if row["dataset"] in segment.accepted_sort_matches:
+                not_found = False
+                sort_results_map[accession_version].setdefault(segment.name, []).append(fastaId)
+                break
+        if not not_found:
+            continue
+        has_missing_segments[accession_version] = True
+        msg = (
+            f"Sequence {fastaId} best matches {row['dataset']}, "
+            "which is currently not an accepted option for organism: "
+            f"{config.organism}. It is therefore not possible to release. "
+            "Contact the administrator if you think this message is an error."
+        )
+        if config.alignment_requirement == AlignmentRequirement.ALL:
+            alerts.errors[accession_version].append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message=msg,
+                )
+            )
+        else:
+            alerts.warnings[accession_version].append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message=msg,
+                )
+            )
+
+    for accession_version, segment_map in sort_results_map.items():
+        for segment_name, headers in segment_map.items():
+            if len(headers) > 1:
+                msg = (
+                    f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
+                    f"{segment_name} - only one entry is allowed."
+                )
+                has_duplicate_segments[accession_version] = True
+                alerts.errors.setdefault(accession_version, []).append(
+                    ProcessingAnnotation.from_single(
+                        ProcessingAnnotationAlignment,
+                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        message=msg,
+                    )
+                )
+                continue
+            sequenceNameToFastaId[accession_version][segment_name] = headers[0]
+            unaligned_nucleotide_sequences[accession_version][segment_name] = (
+                input_unaligned_sequences[accession_version][headers[0]]
+            )
+
+    for entry in unprocessed:
+        accession_version = entry.accessionVersion
+        if (
+            len(unaligned_nucleotide_sequences[accession_version]) == 0
+            and not has_duplicate_segments.get(accession_version)
+            and (
+                not has_missing_segments.get(accession_version)
+                or config.alignment_requirement == AlignmentRequirement.ANY
+            )
+        ):
+            alerts.errors.setdefault(accession_version, []).append(
+                ProcessingAnnotation.from_single(
+                    ProcessingAnnotationAlignment,
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    message="No sequence data could be classified - "
+                    "check you are submitting to the correct organism.",
+                )
+            )
+
+    return SegmentAssignmentBatch(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        sequenceNameToFastaId=sequenceNameToFastaId,
+        alerts=alerts,
     )
 
 
@@ -440,6 +616,33 @@ def assign_single_segment(
         sequenceNameToFastaId=sequenceNameToFastaId,
         errors=errors,
         warnings=warnings,
+    )
+
+
+def assign_all_single_segments(
+    unprocessed: Sequence[UnprocessedEntry], config: Config
+) -> SegmentAssignmentBatch:
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    segment_to_header: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
+    alerts: Alerts = Alerts()
+    for entry in unprocessed:
+        accession_version = entry.accessionVersion
+        segment_assignment = assign_single_segment(
+            entry.data.unalignedNucleotideSequences,
+            config=config,
+        )
+        segment_to_header[accession_version] = segment_assignment.sequenceNameToFastaId
+        unaligned_nucleotide_sequences[accession_version] = (
+            segment_assignment.unalignedNucleotideSequences
+        )
+        alerts.errors[accession_version] = segment_assignment.errors
+        alerts.warnings[accession_version] = segment_assignment.warnings
+    return SegmentAssignmentBatch(
+        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
+        sequenceNameToFastaId=segment_to_header,
+        alerts=alerts,
     )
 
 
@@ -504,7 +707,7 @@ def assign_segment_using_header(
                     f"{', '.join(remaining_segments)}. "
                     "Each metadata entry can have multiple corresponding fasta sequence "
                     "entries with format <submissionId>_<segmentName> valid segments are: "
-                    f"{', '.join([sequence_and_dataset.name for sequence_and_dataset in config.nucleotideSequences])}."
+                    f"{', '.join([seq.name for seq in config.nucleotideSequences])}."
                 ),
             )
         )
@@ -524,7 +727,53 @@ def assign_segment_using_header(
     )
 
 
-def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
+def load_aligned_nuc_sequences(
+    result_dir_seg: str,
+    segment: SegmentName,
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
+) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
+    """
+    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
+    accession to a segmentName: NucleotideSequence dictionary.
+    """
+    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
+        for aligned_sequence in aligned_nuc:
+            sequence_id: str = aligned_sequence.id
+            sequence: NucleotideSequence = str(aligned_sequence.seq)
+            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
+    return aligned_nucleotide_sequences
+
+
+def load_aligned_aa_sequences(
+    result_dir_seg: str,
+    config: Config,
+    aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]],
+) -> dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]]:
+    """
+    Load the nextclade amino acid alignment results into the aligned_aminoacid_sequences dict, mapping each
+    accession to a geneName: AminoAcidSequence dictionary.
+    """
+    for gene in config.genes:
+        translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
+        try:
+            with open(translation_path, encoding="utf-8") as aligned_translations:
+                aligned_translation = SeqIO.parse(aligned_translations, "fasta")
+                for aligned_sequence in aligned_translation:
+                    sequence_id = aligned_sequence.id
+                    masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
+                    aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
+        except FileNotFoundError:
+            # This can happen if the sequence does not cover this gene
+            logger.debug(
+                f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
+            )
+    return aligned_aminoacid_sequences
+
+
+def enrich_with_nextclade(  # noqa: PLR0914
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     """
@@ -541,43 +790,45 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             sequenceNameToFastaId: dict[SegmentName, str]
     )` object.
     """
-    unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    segment_assignment_map: dict[AccessionVersion, dict[SegmentName, str]] = {}
-    alerts: Alerts = Alerts()
-    input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    aligned_aminoacid_sequences: dict[
-        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
-    ] = {}
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = {}
-    for entry in unprocessed:
-        id = entry.accessionVersion
-        input_metadata[id] = entry.data.metadata
-        input_metadata[id]["submitter"] = entry.data.submitter
-        input_metadata[id]["submittedAt"] = entry.data.submittedAt
-        input_metadata[id]["group_id"] = entry.data.group_id
-        aligned_aminoacid_sequences[id] = {}
-        aligned_nucleotide_sequences[id] = {}
-        segment_assignment_map[id] = {}
-        if not config.multi_segment:
-            segment_assignment = assign_single_segment(
-                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
-                config=config,
-            )
-        else:
-            segment_assignment = assign_segment_with_nextclade_sort(
-                input_unaligned_sequences=entry.data.unalignedNucleotideSequences,
+    input_metadata: dict[AccessionVersion, dict[str, Any]] = {
+        entry.accessionVersion: {
+            **entry.data.metadata,
+            "submitter": entry.data.submitter,
+            "submittedAt": entry.data.submittedAt,
+            "group_id": entry.data.group_id,
+        }
+        for entry in unprocessed
+    }
+
+    if not config.multi_segment:
+        batch = assign_all_single_segments(
+            unprocessed,
+            config=config,
+        )
+    else:
+        batch = (
+            assign_segment_with_nextclade_sort(
+                unprocessed,
                 config=config,
                 dataset_dir=dataset_dir,
             )
-        unaligned_nucleotide_sequences[id] = segment_assignment.unalignedNucleotideSequences
-        alerts.errors[id] = segment_assignment.errors
-        alerts.warnings[id] = segment_assignment.warnings
-        segment_assignment_map[id] = segment_assignment.sequenceNameToFastaId
+            if config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
+            else assign_segment_with_nextclade_align(
+                unprocessed,
+                config=config,
+                dataset_dir=dataset_dir,
+            )
+        )
+    unaligned_nucleotide_sequences = batch.unalignedNucleotideSequences
+    segment_assignment_map = batch.sequenceNameToFastaId
+    alerts: Alerts = batch.alerts
 
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = defaultdict(dict)
     nextclade_metadata: defaultdict[
         AccessionVersion, defaultdict[SegmentName, dict[str, Any] | None]
     ] = defaultdict(lambda: defaultdict(dict))
@@ -587,7 +838,7 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
             result_dir_seg = result_dir if not config.multi_segment else result_dir + "/" + segment
@@ -608,7 +859,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
 
             if config.require_nextclade_sort_match:
                 alerts = check_nextclade_sort_matches(
-                    result_dir_seg, input_file, alerts, config, sequence_and_dataset, dataset_dir
+                    result_dir_seg,
+                    input_file,
+                    alerts,
+                    config,
+                    sequence_and_dataset,
+                    dataset_dir,
                 )
 
             command = [
@@ -636,31 +892,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             aligned_nucleotide_sequences = load_aligned_nuc_sequences(
                 result_dir_seg, segment, aligned_nucleotide_sequences
             )
-
-            for gene in config.genes:
-                translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
-                try:
-                    with open(translation_path, encoding="utf-8") as aligned_translations:
-                        aligned_translation = SeqIO.parse(aligned_translations, "fasta")
-                        for aligned_sequence in aligned_translation:
-                            sequence_id = aligned_sequence.id
-                            masked_sequence = mask_terminal_gaps(
-                                str(aligned_sequence.seq), mask_char="X"
-                            )
-                            gene_name = (
-                                sequence_and_dataset.gene_prefix + gene
-                                if sequence_and_dataset.gene_prefix
-                                else gene
-                            )
-                            aligned_aminoacid_sequences[sequence_id][gene_name] = masked_sequence
-                except FileNotFoundError:
-                    # TODO: Add warning to each sequence
-                    logger.info(
-                        f"Gene {gene} not found in Nextclade results expected at: {
-                            translation_path
-                        }"
-                    )
-
+            aligned_aminoacid_sequences = load_aligned_aa_sequences(
+                result_dir_seg, config, aligned_aminoacid_sequences
+            )
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
             )  # this includes the "annotation" field
@@ -685,28 +919,8 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914, PLR0915
             errors=alerts.errors[id],
             warnings=alerts.warnings[id],
         )
-        for id in unaligned_nucleotide_sequences
+        for id in input_metadata
     }
-
-
-def load_aligned_nuc_sequences(
-    result_dir_seg: str,
-    segment: SegmentName,
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ],
-) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
-    """
-    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
-    accession to a segmentName: NucleotideSequence dictionary.
-    """
-    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
-        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
-        for aligned_sequence in aligned_nuc:
-            sequence_id: str = aligned_sequence.id
-            sequence: NucleotideSequence = str(aligned_sequence.seq)
-            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
-    return aligned_nucleotide_sequences
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
@@ -731,7 +945,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
             dataset_download_command.append(f"--tag={sequence_and_dataset.nextclade_dataset_tag}")
 
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
-        if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
+        if subprocess.run(dataset_download_command, check=False).returncode != 0:
             msg = "Dataset download failed"
             raise RuntimeError(msg)
         logger.info("Nextclade dataset downloaded successfully")
