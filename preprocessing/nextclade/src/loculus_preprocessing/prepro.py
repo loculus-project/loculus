@@ -242,7 +242,10 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)
+                input_metadata = add_input_metadata(spec, unprocessed, input_path)
+                input_data[arg_name] = input_metadata.datum
+                errors.extend(input_metadata.errors)
+                warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
                 submitter = unprocessed.inputMetadata["submitter"]
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
