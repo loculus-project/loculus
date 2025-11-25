@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any, Final, Iterable
+from typing import Any, Final
 
 AccessionVersion = str
 GeneName = str
