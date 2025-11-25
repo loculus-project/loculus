@@ -284,26 +284,27 @@ def add_alignment_errors_warnings(
         return (errors, warnings)
     aligned_segments = set()
     for segment in config.nucleotideSequences:
-        if segment not in unprocessed.unalignedNucleotideSequences:
+        segment_name = segment.name
+        if segment_name not in unprocessed.unalignedNucleotideSequences:
             continue
         if unprocessed.nextcladeMetadata and (
-            segment not in unprocessed.nextcladeMetadata
-            or (unprocessed.nextcladeMetadata[segment] is None)
+            segment_name not in unprocessed.nextcladeMetadata
+            or (unprocessed.nextcladeMetadata[segment_name] is None)
         ):
             message = (
                 "Nucleotide sequence failed to align"
                 if not config.multi_segment
-                else f"Nucleotide sequence for {segment} failed to align"
+                else f"Nucleotide sequence for {segment_name} failed to align"
             )
             annotation = ProcessingAnnotation.from_single(
-                segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                segment_name, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
             if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
                 warnings.append(annotation)
             else:
                 errors.append(annotation)
             continue
-        aligned_segments.add(segment)
+        aligned_segments.add(segment_name)
 
     if (
         not aligned_segments
@@ -355,7 +356,9 @@ def get_output_metadata(
             )
             continue
 
-        if output_field.startswith("length_") and output_field[7:] in [seq.name for seq in config.nucleotideSequences]:
+        if output_field.startswith("length_") and output_field[7:] in [
+            seq.name for seq in config.nucleotideSequences
+        ]:
             segment = output_field[7:]
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, segment
