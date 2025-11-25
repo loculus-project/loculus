@@ -453,7 +453,7 @@ def enrich_with_nextclade(
             errors=alerts.errors[id],
             warnings=alerts.warnings[id],
         )
-        for id in unaligned_nucleotide_sequences
+        for id in input_metadata
     }
 
 
