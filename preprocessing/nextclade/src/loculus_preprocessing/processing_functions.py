@@ -103,7 +103,8 @@ def check_latin_characters(
 ) -> tuple[list[ProcessingAnnotation], list[ProcessingAnnotation]]:
     warnings: list[ProcessingAnnotation] = []
     errors: list[ProcessingAnnotation] = []
-    # Check if all characters in the authors string are Latin letters or spaces (transformable to ASCII)
+    # Check if all characters in the authors string are Latin letters or spaces
+    # (transformable to ASCII)
     for char in authors:
         # If character is already ASCII, skip
         if ord(char) < 128:
