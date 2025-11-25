@@ -114,7 +114,6 @@ def add_nextclade_metadata(
                 message=message,
             ),
         ]
-        print(errors)
         return InputData(datum=None, errors=errors)
 
     if (
