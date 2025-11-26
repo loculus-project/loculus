@@ -550,8 +550,8 @@ def assign_single_segment(
             )
         )
     else:
-        fastaHeader, value = next(iter(input_unaligned_sequences.items()))
-        sequenceNameToFastaId["main"] = fastaHeader
+        fasta_id, value = next(iter(input_unaligned_sequences.items()))
+        sequenceNameToFastaId["main"] = fasta_id
         unaligned_nucleotide_sequences["main"] = value
     return SegmentAssignment(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
