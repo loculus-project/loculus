@@ -43,16 +43,16 @@ export class SequenceDetailPage {
         await expect(this.page.getByText('This sequence entry has been revoked!')).toBeVisible();
     }
 
+    private get notLatestVersionBanner() {
+        return this.page.getByText('This is not the latest version of this sequence entry');
+    }
+
     async expectNotLatestVersionBanner() {
-        await expect(
-            this.page.getByText('This is not the latest version of this sequence entry'),
-        ).toBeVisible();
+        await expect(this.notLatestVersionBanner).toBeVisible();
     }
 
     async expectNoNotLatestVersionBanner() {
-        await expect(
-            this.page.getByText('This is not the latest version of this sequence entry'),
-        ).not.toBeVisible();
+        await expect(this.notLatestVersionBanner).not.toBeVisible();
     }
 
     async expectRevocationVersionBanner() {
