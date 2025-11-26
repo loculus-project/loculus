@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
@@ -136,8 +137,12 @@ class Annotation:
 
 @dataclass
 class Alerts:
-    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
-    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
 
 @dataclass

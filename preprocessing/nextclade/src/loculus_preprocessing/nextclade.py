@@ -293,8 +293,6 @@ def add_segment_name_error_warning(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
     aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
     id = entry.accessionVersion
-    alerts.warnings[id] = []
-    alerts.errors[id] = []
     num_valid_segments = 0
     num_duplicate_segments = 0
     for segment in config.nucleotideSequences:
