@@ -285,17 +285,13 @@ def add_segment_name_error_warning(
     entry: UnprocessedEntry,
     config: Config,
     alerts: Alerts,
-    unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ],
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ],
 ) -> tuple[
     Alerts,
-    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
-    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
+    dict[SegmentName, NucleotideSequence | None],
+    dict[SegmentName, NucleotideSequence | None],
 ]:
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
     id = entry.accessionVersion
     alerts.warnings[id] = []
     alerts.errors[id] = []
@@ -318,10 +314,10 @@ def add_segment_name_error_warning(
             )
         elif len(unaligned_segment) == 1:
             num_valid_segments += 1
-            unaligned_nucleotide_sequences[id][segment] = entry.data.unalignedNucleotideSequences[
+            unaligned_nucleotide_sequences[segment] = entry.data.unalignedNucleotideSequences[
                 unaligned_segment[0]
             ]
-            aligned_nucleotide_sequences[id][segment] = None
+            aligned_nucleotide_sequences[segment] = None
     if (
         len(entry.data.unalignedNucleotideSequences) - num_valid_segments - num_duplicate_segments
         > 0
@@ -369,10 +365,8 @@ def enrich_with_nextclade(
         input_metadata[id]["submitter"] = entry.data.submitter
         input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
-        alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences = (
-            add_segment_name_error_warning(
-                entry, config, alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
-            )
+        alerts, unaligned_nucleotide_sequences[id], aligned_nucleotide_sequences[id] = (
+            add_segment_name_error_warning(entry, config, alerts)
         )
 
     aligned_aminoacid_sequences: dict[
