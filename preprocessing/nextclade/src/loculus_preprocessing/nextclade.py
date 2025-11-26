@@ -434,21 +434,22 @@ def assign_segment_with_nextclade_sort(
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
         os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        for entry in unprocessed:
-            accession_version = entry.accessionVersion
-            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
-            with open(input_file, "a", encoding="utf-8") as f:
+        with open(input_file, "w", encoding="utf-8") as f:
+            for entry in unprocessed:
+                accession_version = entry.accessionVersion
+                input_unaligned_sequences[accession_version] = (
+                    entry.data.unalignedNucleotideSequences
+                )
                 for fastaId, seq in input_unaligned_sequences[accession_version].items():
                     id = f"{accession_version}__{fastaId}"
                     id_map[id] = (accession_version, fastaId)
                     f.write(f">{id}\n")
                     f.write(f"{seq}\n")
 
-        result_file = result_dir + "/sort_output.tsv"
         df = run_sort(
-            result_file,
-            input_file,
-            dataset_dir,
+            result_file=result_dir + "/sort_output.tsv",
+            input_file=input_file,
+            dataset_dir=dataset_dir,
         )
 
     no_hits = df[df["score"].isna()]
