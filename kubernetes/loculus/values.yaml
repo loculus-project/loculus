@@ -1841,8 +1841,9 @@ defaultOrganisms:
           noInput: true
           generateIndex: true
           autocomplete: true
-          ingest: segment
           initiallyVisible: true
+          preprocessing:
+            inputs: {input: ASSIGNED_SEGMENT}
       website:
         <<: *website
         tableColumns:
@@ -1882,11 +1883,6 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 12059
-        segment_identification:
-          method: "minimizer"
-          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          minimizer_parser:
-            - segment
     referenceGenomes:
       CV-A16:
         nucleotideSequences:
