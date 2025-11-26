@@ -42,6 +42,16 @@ csv.field_size_limit(sys.maxsize)
 logger = logging.getLogger(__name__)
 
 
+def sequence_annotation(
+    message: str,
+) -> ProcessingAnnotation:
+    return ProcessingAnnotation.from_single(
+        ProcessingAnnotationAlignment,
+        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+        message=message,
+    )
+
+
 def mask_terminal_gaps(
     sequence: GenericSequence, mask_char: Literal["N"] | Literal["X"] = "N"
 ) -> GenericSequence:
@@ -231,13 +241,9 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message=(
-                    "Sequence does not appear to match reference, per `nextclade sort`. "
-                    "Double check you are submitting to the correct organism."
-                ),
+            sequence_annotation(
+                "Sequence does not appear to match reference, per `nextclade sort`. "
+                "Double check you are submitting to the correct organism."
             )
         )
 
@@ -245,16 +251,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
         # If best match is not the same as the dataset we are submitting to, add an error
         if row["dataset"] not in accepted_sort_matches_or_default(sequence_and_dataset):
             alerts.errors[row["seqName"]].append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=(
-                        f"Sequence best matches {row['dataset']}, "
-                        "a different organism than the one you are submitting to: "
-                        f"{config.organism}. It is therefore not possible to release. "
-                        "Contact the administrator if you think this message is an error."
-                    ),
-                )
+                sequence_annotation(
+                    f"Sequence best matches {row['dataset']}, "
+                    "a different organism than the one you are submitting to: "
+                    f"{config.organism}. It is therefore not possible to release. "
+                    "Contact the administrator if you think this message is an error."
+                ),
             )
 
     return alerts
@@ -333,28 +335,16 @@ def assign_segment_with_nextclade_align(
     for seq_name in no_hits["seqName"].unique():
         if seq_name not in hits["seqName"].unique():
             (accession_version, fastaId) = id_map[seq_name]
-            msg = (
+            has_missing_segments[accession_version] = True
+            annotation = sequence_annotation(
                 f"Sequence with fasta header {fastaId} does not align to any segment for"
                 f" organism: {config.organism} per `nextclade align`. "
                 f"Double check you are submitting to the correct organism."
             )
-            has_missing_segments[accession_version] = True
             if config.alignment_requirement == AlignmentRequirement.ALL:
-                alerts.errors.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
-                    )
-                )
+                alerts.errors[accession_version].append(annotation)
             else:
-                alerts.warnings.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
-                    )
-                )
+                alerts.warnings[accession_version].append(annotation)
 
     best_hits = hits.groupby("seqName", as_index=False).first()
     logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
@@ -370,16 +360,11 @@ def assign_segment_with_nextclade_align(
     for accession_version, segment_map in align_results_map.items():
         for segment_name, headers in segment_map.items():
             if len(headers) > 1:
-                msg = (
-                    f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
-                    f"{segment_name} - only one entry is allowed."
-                )
                 has_duplicate_segments[accession_version] = True
-                alerts.errors.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
+                alerts.errors[accession_version].append(
+                    sequence_annotation(
+                        f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
+                        f"{segment_name} - only one entry is allowed."
                     )
                 )
                 continue
@@ -398,11 +383,9 @@ def assign_segment_with_nextclade_align(
                 or config.alignment_requirement == AlignmentRequirement.ANY
             )
         ):
-            alerts.errors.setdefault(accession_version, []).append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data could be classified - "
+            alerts.errors[accession_version].append(
+                sequence_annotation(
+                    "No sequence data could be classified - "
                     "check you are submitting to the correct organism.",
                 )
             )
@@ -466,14 +449,10 @@ def assign_segment_with_nextclade_sort(
     for seq_name in seqNames - seqNamesWithHits:
         (accession_version, fastaId) = id_map[seq_name]
         has_missing_segments[accession_version] = True
-        annotation = ProcessingAnnotation.from_single(
-            ProcessingAnnotationAlignment,
-            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-            message=(
-                f"Sequence with fasta header {fastaId} does not appear to match any reference for"
-                f" organism: {config.organism} per `nextclade sort`. "
-                f"Double check you are submitting to the correct organism."
-            ),
+        annotation = sequence_annotation(
+            f"Sequence with fasta header {fastaId} does not appear to match any reference for"
+            f" organism: {config.organism} per `nextclade sort`. "
+            f"Double check you are submitting to the correct organism."
         )
         if config.alignment_requirement == AlignmentRequirement.ALL:
             alerts.errors[accession_version].append(annotation)
@@ -495,42 +474,25 @@ def assign_segment_with_nextclade_sort(
         if not not_found:
             continue
         has_missing_segments[accession_version] = True
-        msg = (
+        annotation = sequence_annotation(
             f"Sequence {fastaId} best matches {row['dataset']}, "
             "which is currently not an accepted option for organism: "
             f"{config.organism}. It is therefore not possible to release. "
             "Contact the administrator if you think this message is an error."
         )
         if config.alignment_requirement == AlignmentRequirement.ALL:
-            alerts.errors[accession_version].append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=msg,
-                )
-            )
+            alerts.errors[accession_version].append(annotation)
         else:
-            alerts.warnings[accession_version].append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=msg,
-                )
-            )
+            alerts.warnings[accession_version].append(annotation)
 
     for accession_version, segment_map in sort_results_map.items():
         for segment_name, headers in segment_map.items():
             if len(headers) > 1:
-                msg = (
-                    f"Multiple sequences (with fasta headers: {', '.join(headers)}) align to "
-                    f"{segment_name} - only one entry is allowed."
-                )
                 has_duplicate_segments[accession_version] = True
                 alerts.errors.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
+                    sequence_annotation(
+                        f"Multiple sequences (with fasta headers: {', '.join(headers)}) align "
+                        f"to {segment_name} - only one entry is allowed."
                     )
                 )
                 continue
@@ -550,10 +512,8 @@ def assign_segment_with_nextclade_sort(
             )
         ):
             alerts.errors.setdefault(accession_version, []).append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message="No sequence data could be classified - "
+                sequence_annotation(
+                    "No sequence data could be classified - "
                     "check you are submitting to the correct organism.",
                 )
             )
@@ -575,16 +535,12 @@ def assign_single_segment(
     sequenceNameToFastaId: dict[SegmentName, str] = {}
     if len(input_unaligned_sequences) > 1:
         errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message=(
-                    f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
-                    f" input data, but organism: {config.organism} is single-segmented. "
-                    "Please check that your metadata and sequences are annotated correctly."
-                    "Each metadata entry should have a single corresponding fasta sequence "
-                    "entry with the same submissionId."
-                ),
+            sequence_annotation(
+                f"Multiple sequences: {list(input_unaligned_sequences.keys())} found in the"
+                f" input data, but organism: {config.organism} is single-segmented. "
+                "Please check that your metadata and sequences are annotated correctly."
+                "Each metadata entry should have a single corresponding fasta sequence "
+                "entry with the same submissionId."
             )
         )
     else:
@@ -657,14 +613,10 @@ def assign_segment_using_header(
         if len(unaligned_segment) > 1:
             duplicate_segments.update(unaligned_segment)
             errors.append(
-                ProcessingAnnotation.from_single(
-                    ProcessingAnnotationAlignment,
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                    message=(
-                        f"Found multiple sequences with the same segment name: {segment}. "
-                        "Each metadata entry can have multiple corresponding fasta sequence "
-                        "entries with format <submissionId>_<segmentName>."
-                    ),
+                sequence_annotation(
+                    f"Found multiple sequences with the same segment name: {segment}. "
+                    "Each metadata entry can have multiple corresponding fasta sequence "
+                    "entries with format <submissionId>_<segmentName>."
                 )
             )
         elif len(unaligned_segment) == 1:
@@ -679,24 +631,18 @@ def assign_segment_using_header(
     )
     if len(remaining_segments) > 0:
         errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message=(
-                    f"Found sequences in the input data with segments that are not in the config: "
-                    f"{', '.join(remaining_segments)}. "
-                    "Each metadata entry can have multiple corresponding fasta sequence "
-                    "entries with format <submissionId>_<segmentName> valid segments are: "
-                    f"{', '.join([seq.name for seq in config.nucleotideSequences])}."
-                ),
+            sequence_annotation(
+                f"Found sequences in the input data with segments that are not in the config: "
+                f"{', '.join(remaining_segments)}. "
+                "Each metadata entry can have multiple corresponding fasta sequence "
+                "entries with format <submissionId>_<segmentName> valid segments are: "
+                f"{', '.join([seq.name for seq in config.nucleotideSequences])}."
             )
         )
     if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments:
         errors.append(
-            ProcessingAnnotation.from_single(
-                ProcessingAnnotationAlignment,
-                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                message="No sequence data found - ",
+            sequence_annotation(
+                "No sequence data found - ",
             )
         )
     return SegmentAssignment(
