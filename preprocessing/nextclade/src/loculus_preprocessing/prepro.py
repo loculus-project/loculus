@@ -88,7 +88,9 @@ class MultipleValidSegmentsError(Exception):
         )
 
 
-def get_segment(spec: ProcessingSpec, data_per_segment: dict[SegmentName, Any] | None) -> str | None:
+def get_segment(
+    spec: ProcessingSpec, data_per_segment: dict[SegmentName, Any] | None
+) -> str | None:
     """Returns the segment to use based on spec args"""
     if spec.args and spec.args.get("useFirstSegment", False) and data_per_segment:
         valid_segments = [key for key, value in data_per_segment.items() if value]
