@@ -147,8 +147,6 @@ def parse_nextclade_json(
 def run_sort(
     result_file: str,
     input_file: str,
-    config: Config,
-    nextclade_dataset_server: str,
     dataset_dir: str,
 ) -> pd.DataFrame:
     """
@@ -160,7 +158,7 @@ def run_sort(
         for arg in [
             "nextclade",
             "sort",
-            f"-m={dataset_dir}/minimizer/minimizer.json" if config.minimizer_index else "",
+            f"-m={dataset_dir}/minimizer/minimizer.json",
             "--output-results-tsv",
             result_file,
             "--max-score-gap",
@@ -170,7 +168,6 @@ def run_sort(
             "--min-hits",
             "2",
             "--all-matches",
-            f"--server={nextclade_dataset_server}" if nextclade_dataset_server != "TEST" else "",
             "--",
             input_file,
         ]
@@ -212,8 +209,6 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     df = run_sort(
         result_file,
         input_file,
-        config,
-        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server,
         dataset_dir,
     )
 
@@ -453,8 +448,6 @@ def assign_segment_with_nextclade_sort(
         df = run_sort(
             result_file,
             input_file,
-            config,
-            config.nextclade_dataset_server,
             dataset_dir,
         )
 
