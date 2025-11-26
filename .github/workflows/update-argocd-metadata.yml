@@ -23,8 +23,12 @@ jobs:
         id: get_sha
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
-      # Waits are identical to the e2e-k3d.yml workflow file
-      # Mirror changes to that file
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Wait for Prepro Dummy Docker Image
         uses: lewagon/wait-on-check-action@v1.4.1
         with:
@@ -51,13 +55,6 @@ jobs:
         with:
           ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 2
-      - name: Wait for Website Docker Image
-        uses: lewagon/wait-on-check-action@v1.4.1
-        with:
-          ref: ${{ github.sha }}
-          check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       - name: Wait for Prepro Nextclade Docker Image
@@ -88,6 +85,13 @@ jobs:
           check-name: Build ena-submission Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      - name: Wait for Website Docker Image
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 200
+          retry_wait_seconds: 5
+          command: docker manifest inspect ghcr.io/loculus-project/website:commit-${{ steps.get_sha.outputs.sha }}
       # End of wait block
       - name: Checkout External Repository
         uses: actions/checkout@v5
