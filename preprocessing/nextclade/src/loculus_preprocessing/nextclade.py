@@ -192,6 +192,16 @@ def run_sort(
     )
 
 
+def accepted_sort_matches_or_default(
+    sequence_and_dataset: NextcladeSequenceAndDataset,
+) -> list[str]:
+    if sequence_and_dataset.accepted_sort_matches:
+        return sequence_and_dataset.accepted_sort_matches
+    if sequence_and_dataset.nextclade_dataset_name:
+        return [sequence_and_dataset.nextclade_dataset_name]
+    return [sequence_and_dataset.name]
+
+
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
@@ -231,12 +241,9 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
             )
         )
 
-    accepted_sort_matches = sequence_and_dataset.accepted_sort_matches or [
-        (sequence_and_dataset.nextclade_dataset_name or sequence_and_dataset.name)
-    ]
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] not in accepted_sort_matches:
+        if row["dataset"] not in accepted_sort_matches_or_default(sequence_and_dataset):
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation.from_single(
                     ProcessingAnnotationAlignment,
@@ -452,33 +459,26 @@ def assign_segment_with_nextclade_sort(
             dataset_dir=dataset_dir,
         )
 
-    no_hits = df[df["score"].isna()]
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
-    for seq_name in no_hits["seqName"].unique():
-        if seq_name not in hits["seqName"].unique():
-            (accession_version, fastaId) = id_map[seq_name]
-            msg = (
+
+    seqNames = set(df["seqName"].tolist())
+    seqNamesWithHits = set(df.dropna(subset=["score"])["seqName"].tolist())
+    for seq_name in seqNames - seqNamesWithHits:
+        (accession_version, fastaId) = id_map[seq_name]
+        has_missing_segments[accession_version] = True
+        annotation = ProcessingAnnotation.from_single(
+            ProcessingAnnotationAlignment,
+            AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+            message=(
                 f"Sequence with fasta header {fastaId} does not appear to match any reference for"
                 f" organism: {config.organism} per `nextclade sort`. "
                 f"Double check you are submitting to the correct organism."
-            )
-            has_missing_segments[accession_version] = True
-            if config.alignment_requirement == AlignmentRequirement.ALL:
-                alerts.errors.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
-                    )
-                )
-            else:
-                alerts.warnings.setdefault(accession_version, []).append(
-                    ProcessingAnnotation.from_single(
-                        ProcessingAnnotationAlignment,
-                        AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                        message=msg,
-                    )
-                )
+            ),
+        )
+        if config.alignment_requirement == AlignmentRequirement.ALL:
+            alerts.errors[accession_version].append(annotation)
+        else:
+            alerts.warnings[accession_version].append(annotation)
 
     best_hits = hits.groupby("seqName", as_index=False).first()
     logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
@@ -488,7 +488,7 @@ def assign_segment_with_nextclade_sort(
         not_found = True
         for segment in config.nucleotideSequences:
             # TODO: need to check that accepted_sort_matches does not overlap across segments
-            if row["dataset"] in segment.accepted_sort_matches:
+            if row["dataset"] in accepted_sort_matches_or_default(segment):
                 not_found = False
                 sort_results_map[accession_version].setdefault(segment.name, []).append(fastaId)
                 break
