@@ -155,30 +155,27 @@ def run_sort(
     Run nextclade
     - use config.minimizer_index or default minimizer from nextclade server
     """
-    subprocess_args_with_emtpy_strings = [
-        "nextclade3",
-        "sort",
-        input_file,
-        *(
-            [
-                "-m",
-                dataset_dir + "/minimizer/minimizer.json",
-            ]
-            if config.minimizer_index
-            else []
-        ),
-        "--output-results-tsv",
-        result_file,
-        "--max-score-gap",
-        "0.3",
-        "--min-score",
-        "0.05",
-        "--min-hits",
-        "2",
-        "--all-matches",
-        *(["--server", nextclade_dataset_server] if nextclade_dataset_server != "TEST" else []),
+    subprocess_args = [
+        arg
+        for arg in [
+            "nextclade",
+            "sort",
+            f"-m={dataset_dir}/minimizer/minimizer.json" if config.minimizer_index else "",
+            "--output-results-tsv",
+            result_file,
+            "--max-score-gap",
+            "0.3",
+            "--min-score",
+            "0.05",
+            "--min-hits",
+            "2",
+            "--all-matches",
+            f"--server={nextclade_dataset_server}" if nextclade_dataset_server != "TEST" else "",
+            "--",
+            input_file,
+        ]
+        if arg
     ]
-    subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
 
     logger.debug(f"Running nextclade sort: {subprocess_args}")
 
