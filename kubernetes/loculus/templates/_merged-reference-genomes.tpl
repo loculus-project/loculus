@@ -41,3 +41,20 @@
 {{- end -}}
 
 {{- end -}}
+
+
+{{- define "loculus.extractUniqueRawNucleotideSequenceNames" -}}
+{{- $referenceGenomes := . -}}
+{{- $segmentNames := list -}}
+
+{{- range $suborganismName, $referenceGenomeRaw := $referenceGenomes -}}
+  {{- $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml -}}
+
+  {{- range $sequence := $referenceGenome.nucleotideSequences -}}
+    {{- $segmentNames = append $segmentNames $sequence.name -}}
+  {{- end -}}
+{{- end -}}
+
+segments:
+{{- $segmentNames | uniq | toYaml | nindent 2 -}}
+{{- end -}}

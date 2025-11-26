@@ -1,0 +1,37 @@
+# Expects that only a single segment is present per sequence entry.
+batch_size: 100
+alignment_requirement: ALL
+genes:
+- NPEbolaSudan
+- VP35EbolaSudan
+- VP24EbolaZaire
+- LEbolaZaire
+log_level: DEBUG
+nextclade_dataset_name: ebola-dataset
+nextclade_dataset_server: fake_url
+nucleotideSequences:
+- ebola-sudan
+- ebola-zaire
+organism: multi-ebola-test
+processing_spec:
+  totalSnps:
+    args:
+      useFirstSegment: true
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalSubstitutions
+  totalInsertedNucs:
+    args:
+      useFirstSegment: true
+      type: int
+    function: identity
+    inputs:
+      input: nextclade.totalInsertions
+  length:
+    args:
+      useFirstSegment: true
+      type: int
+    function: identity
+    inputs:
+      input: length_ebola-sudan

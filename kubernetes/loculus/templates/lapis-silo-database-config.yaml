@@ -10,11 +10,13 @@ kind: ConfigMap
 metadata:
   name: lapis-silo-database-config-{{ $key }}
 data:
-  {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
-  {{- $args := merge (dict "commonMetadata" $commonMetadata) . }}
+  {{- $args := dict
+    "schema" ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml)
+    "commonMetadata" $commonMetadata
+    "referenceGenomes" $instance.referenceGenomes
+  }}
   database_config.yaml: |
     {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
-  {{- end }}
 
   preprocessing_config.yaml: |
     ndjsonInputFilename: data.ndjson.zst
