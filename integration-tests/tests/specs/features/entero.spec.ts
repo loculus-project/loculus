@@ -15,8 +15,9 @@ test.describe('EV sequence submission', () => {
         });
         await submissionPage.fillSequenceData({ mySequence: a71Sequence });
         await submissionPage.acceptTerms();
-        await submissionPage.submitSequence();
-        await page.waitForURL('**/review');
+        const reviewPage = await submissionPage.submitSequence();
+
+        await reviewPage.waitForAllProcessed();
     });
 
     test('submit files', async ({ page, groupId }) => {
@@ -32,8 +33,8 @@ test.describe('EV sequence submission', () => {
             ],
         );
         await submissionPage.uploadSequencesFile({
-            first_shouldBeA71: a71Sequence,
-            second_shouldBeD68: d68Sequence,
+            first: a71Sequence,
+            second: d68Sequence,
         });
         await submissionPage.acceptTerms();
         const reviewPage = await submissionPage.submitSequence();
