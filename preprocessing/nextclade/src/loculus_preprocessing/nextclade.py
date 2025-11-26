@@ -293,9 +293,9 @@ def assign_segment_with_nextclade_align(
             accession_version = entry.accessionVersion
             input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
             with open(input_file, "a", encoding="utf-8") as f:
-                for fastaId, seq in input_unaligned_sequences[accession_version].items():
-                    id = f"{accession_version}__{fastaId}"
-                    id_map[id] = (accession_version, fastaId)
+                for fasta_id, seq in input_unaligned_sequences[accession_version].items():
+                    id = f"{accession_version}__{fasta_id}"
+                    id_map[id] = (accession_version, fasta_id)
                     f.write(f">{id}\n")
                     f.write(f"{seq}\n")
 
@@ -334,10 +334,10 @@ def assign_segment_with_nextclade_align(
     )
     for seq_name in no_hits["seqName"].unique():
         if seq_name not in hits["seqName"].unique():
-            (accession_version, fastaId) = id_map[seq_name]
+            (accession_version, fasta_id) = id_map[seq_name]
             has_missing_segments[accession_version] = True
             annotation = sequence_annotation(
-                f"Sequence with fasta header {fastaId} does not align to any segment for"
+                f"Sequence with fasta header {fasta_id} does not align to any segment for"
                 f" organism: {config.organism} per `nextclade align`. "
                 f"Double check you are submitting to the correct organism."
             )
@@ -350,10 +350,10 @@ def assign_segment_with_nextclade_align(
     logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
 
     for _, row in best_hits.iterrows():
-        (accession_version, fastaId) = id_map[row["seqName"]]
+        (accession_version, fasta_id) = id_map[row["seqName"]]
         for seg in config.nucleotideSequences:
             if row["segment"] == seg.name:
-                align_results_map[accession_version].setdefault(seg.name, []).append(fastaId)
+                align_results_map[accession_version].setdefault(seg.name, []).append(fasta_id)
                 break
         continue
 
@@ -430,9 +430,9 @@ def assign_segment_with_nextclade_sort(
                 input_unaligned_sequences[accession_version] = (
                     entry.data.unalignedNucleotideSequences
                 )
-                for fastaId, seq in input_unaligned_sequences[accession_version].items():
-                    id = f"{accession_version}__{fastaId}"
-                    id_map[id] = (accession_version, fastaId)
+                for fasta_id, seq in input_unaligned_sequences[accession_version].items():
+                    id = f"{accession_version}__{fasta_id}"
+                    id_map[id] = (accession_version, fasta_id)
                     f.write(f">{id}\n")
                     f.write(f"{seq}\n")
 
@@ -444,13 +444,13 @@ def assign_segment_with_nextclade_sort(
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
 
-    seqNames = set(df["seqName"].tolist())
-    seqNamesWithHits = set(df.dropna(subset=["score"])["seqName"].tolist())
-    for seq_name in seqNames - seqNamesWithHits:
-        (accession_version, fastaId) = id_map[seq_name]
+    seq_names = set(df["seqName"].tolist())
+    seq_names_with_hits = set(df.dropna(subset=["score"])["seqName"].tolist())
+    for seq_name in seq_names - seq_names_with_hits:
+        (accession_version, fasta_id) = id_map[seq_name]
         has_missing_segments[accession_version] = True
         annotation = sequence_annotation(
-            f"Sequence with fasta header {fastaId} does not appear to match any reference for"
+            f"Sequence with fasta header {fasta_id} does not appear to match any reference for"
             f" organism: {config.organism} per `nextclade sort`. "
             f"Double check you are submitting to the correct organism."
         )
@@ -463,19 +463,19 @@ def assign_segment_with_nextclade_sort(
     logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
 
     for _, row in best_hits.iterrows():
-        (accession_version, fastaId) = id_map[row["seqName"]]
+        (accession_version, fasta_id) = id_map[row["seqName"]]
         not_found = True
         for segment in config.nucleotideSequences:
             # TODO: need to check that accepted_sort_matches does not overlap across segments
             if row["dataset"] in accepted_sort_matches_or_default(segment):
                 not_found = False
-                sort_results_map[accession_version].setdefault(segment.name, []).append(fastaId)
+                sort_results_map[accession_version].setdefault(segment.name, []).append(fasta_id)
                 break
         if not not_found:
             continue
         has_missing_segments[accession_version] = True
         annotation = sequence_annotation(
-            f"Sequence {fastaId} best matches {row['dataset']}, "
+            f"Sequence {fasta_id} best matches {row['dataset']}, "
             "which is currently not an accepted option for organism: "
             f"{config.organism}. It is therefore not possible to release. "
             "Contact the administrator if you think this message is an error."
