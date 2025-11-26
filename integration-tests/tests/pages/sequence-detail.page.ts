@@ -15,23 +15,27 @@ export class SequenceDetailPage {
         }
     }
 
+    private get unalignedTab() {
+        return this.page.getByRole('button', { name: /unaligned/i });
+    }
+
+    private get alignedTab() {
+        return this.page.getByRole('button', { name: /^aligned/i });
+    }
+
     async waitForSequenceTabs(timeout = 30000) {
-        const unalignedTab = this.page.getByRole('button', { name: /unaligned/i });
-        const alignedTab = this.page.getByRole('button', { name: /^aligned/i });
-        await expect(unalignedTab.or(alignedTab).first()).toBeVisible({ timeout });
+        await expect(this.unalignedTab.or(this.alignedTab).first()).toBeVisible({ timeout });
     }
 
     async selectUnalignedTab() {
-        const unalignedTab = this.page.getByRole('button', { name: /unaligned/i });
-        if (await unalignedTab.isVisible()) {
-            await unalignedTab.click();
+        if (await this.unalignedTab.isVisible()) {
+            await this.unalignedTab.click();
         }
     }
 
     async selectAlignedTab() {
-        const alignedTab = this.page.getByRole('button', { name: /^aligned/i });
-        if (await alignedTab.isVisible()) {
-            await alignedTab.click();
+        if (await this.alignedTab.isVisible()) {
+            await this.alignedTab.click();
         }
     }
 
