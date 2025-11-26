@@ -17,7 +17,7 @@ export class SequenceDetailPage {
 
     async waitForSequenceTabs(timeout = 30000) {
         const unalignedTab = this.page.getByRole('button', { name: /unaligned/i });
-        const alignedTab = this.page.getByRole('button', { name: /aligned/i });
+        const alignedTab = this.page.getByRole('button', { name: /^aligned/i });
         await expect(unalignedTab.or(alignedTab).first()).toBeVisible({ timeout });
     }
 
@@ -29,7 +29,7 @@ export class SequenceDetailPage {
     }
 
     async selectAlignedTab() {
-        const alignedTab = this.page.getByRole('button', { name: /aligned/i });
+        const alignedTab = this.page.getByRole('button', { name: /^aligned/i });
         if (await alignedTab.isVisible()) {
             await alignedTab.click();
         }
