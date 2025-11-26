@@ -26,7 +26,7 @@ jobs:
       dir-hash: ${{ steps.prepare.outputs.dir-hash }}
       sha-short: ${{ steps.prepare.outputs.sha-short }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Generate files hash
         id: prepare
         run: |
@@ -63,7 +63,7 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Prepare build variables
         id: prepare
         run: |
