@@ -8,11 +8,9 @@ test.describe('Login Flow', () => {
         authPage = new AuthPage(page);
     });
 
-    test('should login with valid credentials', async ({ page, testAccount }) => {
+    test('should login with valid credentials', async ({ testAccount }) => {
         await authPage.createAccount(testAccount);
-        await page.waitForTimeout(1000);
         await authPage.logout();
-        await page.waitForTimeout(1000);
         await authPage.login(testAccount.username, testAccount.password);
     });
 });

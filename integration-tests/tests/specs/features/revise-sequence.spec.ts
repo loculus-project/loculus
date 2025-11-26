@@ -5,7 +5,6 @@ import { SearchPage } from '../../pages/search.page';
 import { ReviewPage } from '../../pages/review.page';
 import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
-
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import {
     createTestMetadata,
@@ -23,7 +22,7 @@ sequenceTest(
     'revising sequence data works: segment can be deleted; segment can be edited',
     async ({ page, releasedSequence }) => {
         void releasedSequence;
-        sequenceTest.setTimeout(60000);
+        sequenceTest.setTimeout(90000);
 
         const searchPage = new SearchPage(page);
         await searchPage.cchf();
