@@ -1,5 +1,6 @@
 name: ena-submission-unit-tests
 on:
+  merge_group:
   # test
   pull_request:
     paths:
