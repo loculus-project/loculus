@@ -216,8 +216,8 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
     alerts: Alerts,
-    config: Config,
-    sequence_and_dataset: NextcladeSequenceAndDataset,
+    organism: str,
+    accepted_sort_matches: list[str],
     dataset_dir: str,
 ) -> Alerts:
     """
@@ -785,12 +785,12 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
             if config.require_nextclade_sort_match:
                 alerts = check_nextclade_sort_matches(
-                    result_dir_seg,
-                    input_file,
-                    alerts,
-                    config,
-                    sequence_and_dataset,
-                    dataset_dir,
+                    result_file_dir=result_dir_seg,
+                    input_file=input_file,
+                    alerts=alerts,
+                    organism=config.organism,
+                    accepted_sort_matches=accepted_sort_matches_or_default(sequence_and_dataset),
+                    dataset_dir=dataset_dir,
                 )
 
             command = [
