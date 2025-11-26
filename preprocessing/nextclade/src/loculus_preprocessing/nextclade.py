@@ -303,16 +303,13 @@ def assign_segment_with_nextclade_align(
 
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
-            dataset_dir_seg = (
-                dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
-            )
-            result_file_seg = result_dir + "/sort_output_" + segment + ".tsv"
+            result_file_seg = f"{result_dir}/sort_output_{segment}.tsv"
 
             command = [
                 "nextclade3",
                 "run",
                 f"--output-tsv={result_file_seg}",
-                f"--input-dataset={dataset_dir_seg}",
+                f"--input-dataset={dataset_dir}/{segment}",
                 "--jobs=1",
                 "--",
                 input_file,
@@ -770,10 +767,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
-            result_dir_seg = result_dir if not config.multi_segment else result_dir + "/" + segment
-            dataset_dir_seg = (
-                dataset_dir if not config.multi_segment else dataset_dir + "/" + segment
-            )
+            result_dir_seg = result_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
             is_empty: bool = True
@@ -800,7 +794,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 "nextclade3",
                 "run",
                 f"--output-all={result_dir_seg}",
-                f"--input-dataset={dataset_dir_seg}",
+                f"--input-dataset={dataset_dir}/{segment}",
                 f"--output-translations={result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
                 "--",
@@ -854,25 +848,21 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for sequence_and_dataset in config.nucleotideSequences:
-        name = sequence_and_dataset.name
-        nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
-        nextclade_dataset_server = (
-            sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
-        )
-
-        dataset_dir_seg = dataset_dir if not config.multi_segment else dataset_dir + "/" + name
         dataset_download_command = [
             "nextclade3",
             "dataset",
             "get",
-            f"--name={nextclade_dataset_name}",
-            f"--server={nextclade_dataset_server}",
-            f"--output-dir={dataset_dir_seg}",
+            f"--name={sequence_and_dataset.nextclade_dataset_name}",
+            f"--server={
+                sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+            }",
+            f"--output-dir={dataset_dir}/{sequence_and_dataset.name}",
+            *(
+                f"--tag={sequence_and_dataset.nextclade_dataset_tag}"
+                if sequence_and_dataset.nextclade_dataset_tag
+                else []
+            ),
         ]
-
-        if sequence_and_dataset.nextclade_dataset_tag is not None:
-            dataset_download_command.append(f"--tag={sequence_and_dataset.nextclade_dataset_tag}")
-
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
             msg = "Dataset download failed"
