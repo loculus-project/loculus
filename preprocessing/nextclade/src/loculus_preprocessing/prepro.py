@@ -82,19 +82,21 @@ def add_nextclade_metadata(
         or unprocessed.nextcladeMetadata[segment] is None
     ):
         return InputData(datum=None)
-    result: str | None = str(
-        dpath.get(
-            unprocessed.nextcladeMetadata[segment],
-            nextclade_path,
-            separator=".",
-            default=None,
-        )
+    raw = dpath.get(
+        unprocessed.nextcladeMetadata[segment],
+        nextclade_path,
+        separator=".",
+        default=None,
     )
+    result = None if raw is None else str(raw)
     if nextclade_path == "frameShifts":
         try:
             result = format_frameshift(result)
         except Exception:
-            msg = "Was unable to format frameshift - this is likely an internal error. Please contact the administrator."
+            msg = (
+                "Was unable to format frameshift - this is likely an internal error. "
+                "Please contact the administrator."
+            )
             logger.error(msg)
             errors = [
                 ProcessingAnnotation.from_single(
@@ -108,7 +110,10 @@ def add_nextclade_metadata(
         try:
             result = format_stop_codon(result)
         except Exception:
-            msg = "Was unable to format stop codon - this is likely an internal error. Please contact the administrator."
+            msg = (
+                "Was unable to format stop codon - this is likely an internal error. "
+                "Please contact the administrator."
+            )
             logger.error(msg)
             errors = [
                 ProcessingAnnotation.from_single(
