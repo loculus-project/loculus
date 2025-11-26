@@ -53,17 +53,17 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-json:0.61.0"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
-    implementation "org.hibernate.validator:hibernate-validator:9.0.1.Final"
+    implementation "org.hibernate.validator:hibernate-validator:9.1.0.Final"
     implementation "org.keycloak:keycloak-admin-client:26.0.7"
     implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.38.2")
+    implementation("software.amazon.awssdk:s3:2.39.2")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'com.github.luben:zstd-jni:1.5.7-6'
-    implementation 'org.tukaani:xz:1.10'
+    implementation 'org.tukaani:xz:1.11'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
     implementation("org.jsoup:jsoup:1.21.2")
@@ -79,7 +79,7 @@ dependencies {
     testImplementation "org.testcontainers:minio:1.21.3"
     testImplementation platform("org.junit:junit-bom:6.0.1")
     testImplementation "org.junit.platform:junit-platform-launcher"
-    ktlint("com.pinterest.ktlint:ktlint-cli:1.7.1") {
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
         }
