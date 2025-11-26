@@ -815,7 +815,7 @@ multi_pathogen_cases = [
                 processedFields=[
                     AnnotationSource(name="totalInsertions", type=AnnotationSourceType.METADATA)
                 ],
-                message="Expected exactly one valid segment, found multiple: ['ebola-sudan', 'ebola-zaire']",
+                message="Organism multi-ebola-test is configured to only accept one segment per submission, found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
             ),
             ProcessingAnnotation(
                 unprocessedFields=[
@@ -829,7 +829,7 @@ multi_pathogen_cases = [
                 processedFields=[
                     AnnotationSource(name="totalSubstitutions", type=AnnotationSourceType.METADATA)
                 ],
-                message="Expected exactly one valid segment, found multiple: ['ebola-sudan', 'ebola-zaire']",
+                message="Organism multi-ebola-test is configured to only accept one segment per submission, found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
             ),
         ],
         expected_warnings=[],
