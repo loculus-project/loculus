@@ -289,10 +289,12 @@ def assign_segment_with_nextclade_align(
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
         os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        for entry in unprocessed:
-            accession_version = entry.accessionVersion
-            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
-            with open(input_file, "a", encoding="utf-8") as f:
+        with open(input_file, "w", encoding="utf-8") as f:
+            for entry in unprocessed:
+                accession_version = entry.accessionVersion
+                input_unaligned_sequences[accession_version] = (
+                    entry.data.unalignedNucleotideSequences
+                )
                 for fasta_id, seq in input_unaligned_sequences[accession_version].items():
                     id = f"{accession_version}__{fasta_id}"
                     id_map[id] = (accession_version, fasta_id)
@@ -326,25 +328,26 @@ def assign_segment_with_nextclade_align(
             all_dfs.append(df)
 
     df_combined = pd.concat(all_dfs, ignore_index=True)
-    no_hits = df_combined[df_combined["alignmentScore"].isna()]
     hits = (
         df_combined.dropna(subset=["alignmentScore"])
         .sort_values(by=["seqName", "alignmentScore"], ascending=[True, False])
         .drop_duplicates(subset="seqName", keep="first")
     )
-    for seq_name in no_hits["seqName"].unique():
-        if seq_name not in hits["seqName"].unique():
-            (accession_version, fasta_id) = id_map[seq_name]
-            has_missing_segments[accession_version] = True
-            annotation = sequence_annotation(
-                f"Sequence with fasta header {fasta_id} does not align to any segment for"
-                f" organism: {config.organism} per `nextclade align`. "
-                f"Double check you are submitting to the correct organism."
-            )
-            if config.alignment_requirement == AlignmentRequirement.ALL:
-                alerts.errors[accession_version].append(annotation)
-            else:
-                alerts.warnings[accession_version].append(annotation)
+
+    seq_names = set(df_combined["seqName"].tolist())
+    seq_names_with_hits = set(hits["seqName"].tolist())
+    for seq_name in seq_names - seq_names_with_hits:
+        (accession_version, fasta_id) = id_map[seq_name]
+        has_missing_segments[accession_version] = True
+        annotation = sequence_annotation(
+            f"Sequence with fasta header {fasta_id} does not align to any segment for"
+            f" organism: {config.organism} per `nextclade align`. "
+            f"Double check you are submitting to the correct organism."
+        )
+        if config.alignment_requirement == AlignmentRequirement.ALL:
+            alerts.errors[accession_version].append(annotation)
+        else:
+            alerts.warnings[accession_version].append(annotation)
 
     best_hits = hits.groupby("seqName", as_index=False).first()
     logger.debug(f"Found hits: {best_hits['seqName'].tolist()}")
