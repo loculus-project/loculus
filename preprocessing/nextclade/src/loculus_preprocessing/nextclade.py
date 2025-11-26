@@ -208,26 +208,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     - assert highest score is in sequence_and_dataset.accepted_sort_matches
     (default is nextclade_dataset_name)
     """
-    nextclade_dataset_name = sequence_and_dataset.nextclade_dataset_name
-    if not sequence_and_dataset.accepted_sort_matches and not nextclade_dataset_name:
-        logger.warning("No nextclade dataset name or accepted dataset match list found in config")
-        return alerts
-    nextclade_dataset_server = (
-        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
-    )
-
-    accepted_dataset_names = (
-        sequence_and_dataset.accepted_sort_matches
-        or [nextclade_dataset_name]  # type: ignore
-        or [sequence_and_dataset.name]  # type: ignore
-    )
-
     result_file = result_file_dir + "/sort_output.tsv"
     df = run_sort(
         result_file,
         input_file,
         config,
-        nextclade_dataset_server,
+        sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server,
         dataset_dir,
     )
 
@@ -250,9 +236,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
             )
         )
 
+    accepted_sort_matches = sequence_and_dataset.accepted_sort_matches or [
+        (sequence_and_dataset.nextclade_dataset_name or sequence_and_dataset.name)
+    ]
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] not in accepted_dataset_names:
+        if row["dataset"] not in accepted_sort_matches:
             alerts.errors[row["seqName"]].append(
                 ProcessingAnnotation.from_single(
                     ProcessingAnnotationAlignment,
