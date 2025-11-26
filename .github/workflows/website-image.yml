@@ -109,7 +109,7 @@ jobs:
           retention-days: 1
 
   merge-or-retag:
-    name: Build Website Docker Image
+    name: Publish Website Docker Image
     needs: [check-cache, build]
     if: always() && needs.check-cache.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
