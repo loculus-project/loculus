@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const browser = process.env.BROWSER;
+const readonlySetupName = 'readonly-setup';
 
 /**
  * Read environment variables from file.
@@ -44,13 +45,14 @@ const config = {
     projects: [
         // Dependent project setup
         {
-            name: 'readonly setup',
+            name: readonlySetupName,
+            use: { ...devices['Desktop Chrome'] },
             testMatch: /readonly\.setup\.ts/,
         },
         {
             name: 'chromium-with-dep',
             use: { ...devices['Desktop Chrome'] },
-            dependencies: ['readonly setup'],
+            dependencies: [readonlySetupName],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
         {
@@ -58,7 +60,7 @@ const config = {
             use: {
                 ...devices['Desktop Firefox'],
             },
-            dependencies: ['readonly setup'],
+            dependencies: [readonlySetupName],
             testMatch: /.*\.dependent\.spec\.ts/,
         },
 
@@ -93,13 +95,15 @@ if (testSuite === 'cli') {
     if (testSuite === 'browser') {
         // Run only browser tests (exclude CLI)
         config.projects = config.projects.filter(
-            (p) => p.name.startsWith(browser) || p.name === 'readonly setup',
+            (p) => p.name.startsWith(browser) || p.name === readonlySetupName,
         );
     } else {
         // Default 'all': run both browser and CLI tests
         config.projects = config.projects.filter(
             (p) =>
-                p.name.startsWith(browser) || p.name === 'readonly setup' || p.name === 'cli-tests',
+                p.name.startsWith(browser) ||
+                p.name === readonlySetupName ||
+                p.name === 'cli-tests',
         );
     }
 }
