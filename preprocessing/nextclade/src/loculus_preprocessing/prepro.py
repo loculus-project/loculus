@@ -88,10 +88,10 @@ class MultipleValidSegmentsError(Exception):
         )
 
 
-def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str | None:
+def get_segment(spec: ProcessingSpec, data_per_segment: dict[SegmentName, Any] | None) -> str | None:
     """Returns the segment to use based on spec args"""
-    if spec.args and spec.args.get("useFirstSegment", False) and unprocessed.nextcladeMetadata:
-        valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
+    if spec.args and spec.args.get("useFirstSegment", False) and data_per_segment:
+        valid_segments = [key for key, value in data_per_segment.items() if value]
         if not valid_segments:
             return None
         if len(valid_segments) > 1:
@@ -110,7 +110,7 @@ def add_nextclade_metadata(
     nextclade_path: str,
 ) -> InputData:
     try:
-        segment = get_segment(spec, unprocessed)
+        segment = get_segment(spec, unprocessed.nextcladeMetadata)
     except MultipleValidSegmentsError as e:
         error_annotation = e.getProcessingAnnotation(nextclade_path)
         logger.error(error_annotation.message)
@@ -270,7 +270,7 @@ def get_output_metadata(
         input_fields: list[str] = []
         if output_field == "length":
             try:
-                segment_name = get_segment(spec, unprocessed)
+                segment_name = get_segment(spec, unprocessed.unalignedNucleotideSequences)
             except MultipleValidSegmentsError as e:
                 error_annotation = e.getProcessingAnnotation(output_field)
                 logger.error(error_annotation.message)
