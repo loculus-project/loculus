@@ -800,7 +800,7 @@ multi_pathogen_cases = [
         expected_metadata={
             "totalInsertedNucs": None,
             "totalSnps": None,
-            "length": len(consensus_sequence("ebola-sudan")),
+            "length": None,
         },
         expected_errors=[
             ProcessingAnnotation(

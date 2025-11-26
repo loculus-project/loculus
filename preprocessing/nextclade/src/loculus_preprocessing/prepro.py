@@ -75,6 +75,18 @@ class MultipleValidSegmentsError(Exception):
         self.segments = segments
         super().__init__()
 
+    def getProcessingAnnotation(self, processed_field_name: str) -> ProcessingAnnotation:
+        return ProcessingAnnotation(
+            unprocessedFields=[
+                AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                for segment in self.segments
+            ],
+            processedFields=[
+                AnnotationSource(name=processed_field_name, type=AnnotationSourceType.METADATA)
+            ],
+            message=f"Expected exactly one valid segment, found multiple: {self.segments}",
+        )
+
 
 def get_segment(spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade) -> str | None:
     """Returns the segment to use based on spec args"""
@@ -100,21 +112,9 @@ def add_nextclade_metadata(
     try:
         segment = get_segment(spec, unprocessed)
     except MultipleValidSegmentsError as e:
-        message = f"Expected exactly one valid segment, found multiple: {e.segments}"
-        logger.error(message)
-        errors = [
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
-                    for segment in e.segments
-                ],
-                processedFields=[
-                    AnnotationSource(name=nextclade_path, type=AnnotationSourceType.METADATA)
-                ],
-                message=message,
-            ),
-        ]
-        return InputData(datum=None, errors=errors)
+        error_annotation = e.getProcessingAnnotation(nextclade_path)
+        logger.error(error_annotation.message)
+        return InputData(datum=None, errors=[error_annotation])
 
     if (
         not unprocessed.nextcladeMetadata
@@ -269,14 +269,14 @@ def get_output_metadata(
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
-            segment_name: SegmentName | None = "main"
-            if spec.args.get("useFirstSegment", False):
-                non_null_segment_names = [
-                    key
-                    for key, seq in unprocessed.unalignedNucleotideSequences.items()
-                    if seq is not None
-                ]
-                segment_name = non_null_segment_names[0] if non_null_segment_names else None
+            try:
+                segment_name = get_segment(spec, unprocessed)
+            except MultipleValidSegmentsError as e:
+                error_annotation = e.getProcessingAnnotation(output_field)
+                logger.error(error_annotation.message)
+                output_metadata[output_field] = None
+                continue
+
             output_metadata[output_field] = get_sequence_length(
                 unprocessed.unalignedNucleotideSequences, segment_name
             )
