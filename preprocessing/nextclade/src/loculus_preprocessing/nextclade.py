@@ -249,12 +249,12 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
-        if row["dataset"] not in accepted_sort_matches_or_default(sequence_and_dataset):
+        if row["dataset"] not in accepted_sort_matches:
             alerts.errors[row["seqName"]].append(
                 sequence_annotation(
                     f"Sequence best matches {row['dataset']}, "
                     "a different organism than the one you are submitting to: "
-                    f"{config.organism}. It is therefore not possible to release. "
+                    f"{organism}. It is therefore not possible to release. "
                     "Contact the administrator if you think this message is an error."
                 ),
             )
