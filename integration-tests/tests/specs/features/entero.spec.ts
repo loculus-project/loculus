@@ -18,6 +18,9 @@ test.describe('EV sequence submission', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await reviewPage.waitForAllProcessed();
+        await reviewPage.approveAll();
+
+        await reviewPage.waitForTotalSequenceCountCorrect(0);
     });
 
     test('submit files', async ({ page, groupId }) => {
@@ -26,7 +29,7 @@ test.describe('EV sequence submission', () => {
 
         await submissionPage.navigateToSubmissionPage('Enterovirus');
         await submissionPage.uploadMetadataFile(
-            ['id', 'collection_country', 'collection_date'],
+            ['id', 'geoLocCountry', 'sampleCollectionDate'],
             [
                 ['first', 'Uganda', '2023-10-15'],
                 ['second', 'Uganda', '2023-10-16'],
@@ -40,6 +43,9 @@ test.describe('EV sequence submission', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await reviewPage.waitForAllProcessed();
+        await reviewPage.approveAll();
+
+        await reviewPage.waitForTotalSequenceCountCorrect(0);
     });
 });
 
