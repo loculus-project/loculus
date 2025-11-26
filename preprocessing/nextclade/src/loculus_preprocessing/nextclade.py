@@ -264,22 +264,30 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
 def write_nextclade_input_fasta(
     unprocessed: Sequence[UnprocessedEntry], input_file: str
-) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
+) -> tuple[
+    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
+    defaultdict[str, tuple[AccessionVersion, FastaId]],
+]:
     """
     Write unprocessed sequences to a fasta file for nextclade input
     """
     input_unaligned_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = defaultdict(dict)
+    id_map: defaultdict[str, tuple[AccessionVersion, FastaId]] = defaultdict(
+        lambda: (AccessionVersion(), FastaId())
+    )
+    os.makedirs(os.path.dirname(input_file), exist_ok=True)
     with open(input_file, "w", encoding="utf-8") as f:
         for entry in unprocessed:
             accession_version = entry.accessionVersion
             input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
             for fasta_id, seq in input_unaligned_sequences[accession_version].items():
                 id = f"{accession_version}__{fasta_id}"
+                id_map[id] = (accession_version, fasta_id)
                 f.write(f">{id}\n")
                 f.write(f"{seq}\n")
-    return input_unaligned_sequences
+    return input_unaligned_sequences, id_map
 
 
 def assign_segment_with_nextclade_align(
@@ -297,9 +305,6 @@ def assign_segment_with_nextclade_align(
     has_missing_segments: dict[AccessionVersion, bool] = defaultdict(bool)
     has_duplicate_segments: dict[AccessionVersion, bool] = defaultdict(bool)
 
-    id_map: defaultdict[str, tuple[AccessionVersion, FastaId]] = defaultdict(
-        lambda: (AccessionVersion(), FastaId())
-    )
     align_results_map: dict[AccessionVersion, dict[SegmentName, list[str]]] = defaultdict(dict)
     input_unaligned_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
@@ -308,18 +313,7 @@ def assign_segment_with_nextclade_align(
     all_dfs = []
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        with open(input_file, "w", encoding="utf-8") as f:
-            for entry in unprocessed:
-                accession_version = entry.accessionVersion
-                input_unaligned_sequences[accession_version] = (
-                    entry.data.unalignedNucleotideSequences
-                )
-                for fasta_id, seq in input_unaligned_sequences[accession_version].items():
-                    id = f"{accession_version}__{fasta_id}"
-                    id_map[id] = (accession_version, fasta_id)
-                    f.write(f">{id}\n")
-                    f.write(f"{seq}\n")
+        input_unaligned_sequences, id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
@@ -433,14 +427,11 @@ def assign_segment_with_nextclade_sort(
 
     has_missing_segments: dict[AccessionVersion, bool] = defaultdict(bool)
     has_duplicate_segments: dict[AccessionVersion, bool] = defaultdict(bool)
-
-    id_map: defaultdict[str, tuple[AccessionVersion, FastaId]] = defaultdict(
-        lambda: (AccessionVersion(), FastaId())
-    )
     sort_results_map: dict[AccessionVersion, dict[SegmentName, list[str]]] = defaultdict(dict)
+
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        input_unaligned_sequences = write_nextclade_input_fasta(unprocessed, input_file)
+        input_unaligned_sequences, id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
         df = run_sort(
             result_file=result_dir + "/sort_output.tsv",
