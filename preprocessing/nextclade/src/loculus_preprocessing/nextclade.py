@@ -262,6 +262,26 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     return alerts
 
 
+def write_nextclade_input_fasta(
+    unprocessed: Sequence[UnprocessedEntry], input_file: str
+) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
+    """
+    Write unprocessed sequences to a fasta file for nextclade input
+    """
+    input_unaligned_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = defaultdict(dict)
+    with open(input_file, "w", encoding="utf-8") as f:
+        for entry in unprocessed:
+            accession_version = entry.accessionVersion
+            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
+            for fasta_id, seq in input_unaligned_sequences[accession_version].items():
+                id = f"{accession_version}__{fasta_id}"
+                f.write(f">{id}\n")
+                f.write(f"{seq}\n")
+    return input_unaligned_sequences
+
+
 def assign_segment_with_nextclade_align(
     unprocessed: Sequence[UnprocessedEntry], config: Config, dataset_dir: str
 ) -> SegmentAssignmentBatch:
@@ -418,23 +438,9 @@ def assign_segment_with_nextclade_sort(
         lambda: (AccessionVersion(), FastaId())
     )
     sort_results_map: dict[AccessionVersion, dict[SegmentName, list[str]]] = defaultdict(dict)
-    input_unaligned_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = defaultdict(dict)
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        os.makedirs(os.path.dirname(input_file), exist_ok=True)
-        with open(input_file, "w", encoding="utf-8") as f:
-            for entry in unprocessed:
-                accession_version = entry.accessionVersion
-                input_unaligned_sequences[accession_version] = (
-                    entry.data.unalignedNucleotideSequences
-                )
-                for fasta_id, seq in input_unaligned_sequences[accession_version].items():
-                    id = f"{accession_version}__{fasta_id}"
-                    id_map[id] = (accession_version, fasta_id)
-                    f.write(f">{id}\n")
-                    f.write(f"{seq}\n")
+        input_unaligned_sequences = write_nextclade_input_fasta(unprocessed, input_file)
 
         df = run_sort(
             result_file=result_dir + "/sort_output.tsv",
