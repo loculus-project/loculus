@@ -75,7 +75,9 @@ class MultipleValidSegmentsError(Exception):
         self.segments = segments
         super().__init__()
 
-    def getProcessingAnnotation(self, processed_field_name: str) -> ProcessingAnnotation:
+    def getProcessingAnnotation(
+        self, processed_field_name: str, organism: str
+    ) -> ProcessingAnnotation:
         return ProcessingAnnotation(
             unprocessedFields=[
                 AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
@@ -84,7 +86,7 @@ class MultipleValidSegmentsError(Exception):
             processedFields=[
                 AnnotationSource(name=processed_field_name, type=AnnotationSourceType.METADATA)
             ],
-            message=f"Expected exactly one valid segment, found multiple: {self.segments}",
+            message=f"Organism {organism} is configured to only accept one segment per submission, found multiple valid segments: {self.segments}.",
         )
 
 
@@ -110,11 +112,14 @@ def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
+    config: Config,
 ) -> InputData:
     try:
         segment = get_segment(spec, unprocessed.nextcladeMetadata)
     except MultipleValidSegmentsError as e:
-        error_annotation = e.getProcessingAnnotation(nextclade_path)
+        error_annotation = e.getProcessingAnnotation(
+            processed_field_name=nextclade_path, organism=config.organism
+        )
         logger.error(error_annotation.message)
         return InputData(datum=None, errors=[error_annotation])
 
@@ -167,13 +172,14 @@ def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     input_path: str,
+    config: Config,
 ) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         nextclade_path = input_path[len(nextclade_prefix) :]
-        return add_nextclade_metadata(spec, unprocessed, nextclade_path)
+        return add_nextclade_metadata(spec, unprocessed, nextclade_path, config=config)
     if input_path not in unprocessed.inputMetadata:
         return InputData(datum=None)
     return InputData(datum=unprocessed.inputMetadata[input_path])
@@ -274,7 +280,9 @@ def get_output_metadata(
             try:
                 segment_name = get_segment(spec, unprocessed.unalignedNucleotideSequences)
             except MultipleValidSegmentsError as e:
-                error_annotation = e.getProcessingAnnotation(output_field)
+                error_annotation = e.getProcessingAnnotation(
+                    processed_field_name=output_field, organism=config.organism
+                )
                 logger.error(error_annotation.message)
                 output_metadata[output_field] = None
                 continue
@@ -293,7 +301,7 @@ def get_output_metadata(
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_metadata = add_input_metadata(spec, unprocessed, input_path)
+                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
                 input_data[arg_name] = input_metadata.datum
                 errors.extend(input_metadata.errors)
                 warnings.extend(input_metadata.warnings)
