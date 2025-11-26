@@ -84,7 +84,7 @@ export class SearchPage {
         await this.page.getByRole('button', { name: 'Reset' }).click();
     }
 
-    async waitForLoculusId(timeout = 60000): Promise<string | null> {
+    async waitForLoculusId(timeout = 60000): Promise<string> {
         await this.page.waitForFunction(
             () => {
                 const content = document.body.innerText;
@@ -108,7 +108,7 @@ export class SearchPage {
         await rows.nth(rowIndex).click();
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
         const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
