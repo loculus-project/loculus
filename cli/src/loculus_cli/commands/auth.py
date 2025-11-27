@@ -51,6 +51,23 @@ def login(ctx: click.Context, username: str, password: str) -> None:
             token_info = auth_client.login(username, password)
             auth_client.set_current_user(username)
 
+            # Verify the token was stored and can be retrieved from keyring
+            # Create a fresh AuthClient to ensure we're reading from keyring, not cache
+            verify_client = AuthClient(instance_config)
+            stored_user = verify_client.get_current_user()
+            if stored_user != username:
+                raise RuntimeError(
+                    f"Login verification failed: expected user '{username}' "
+                    f"but got '{stored_user}'"
+                )
+
+            # Verify we can retrieve a valid token from keyring
+            retrieved_token = verify_client.get_valid_token(username)
+            if not retrieved_token:
+                raise RuntimeError(
+                    "Login verification failed: could not retrieve stored token"
+                )
+
         console.print(
             f"✓ Successfully logged in as [bold green]{username}[/bold green]"
         )
