@@ -7,7 +7,7 @@ topology: "linear"
 db_name: "Loculus"
 minimizer_index: TEST
 nucleotideSequences:
-- nextclade_dataset_name: ebola-sudan-test-dataset
+- nextclade_dataset_name: ebola-sudan
   genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]
 organism: ebola-sudan-test
 processing_spec:

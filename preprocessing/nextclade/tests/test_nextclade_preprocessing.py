@@ -116,6 +116,18 @@ def invalid_sequence() -> str:
     return "ATGCGTACGTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGC"  # Invalid sequence for testing
 
 
+def multiple_valid_segments_error(metadata_name: str) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        unprocessedFields=[
+            AnnotationSource(name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
+            AnnotationSource(name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
+        ],
+        processedFields=[AnnotationSource(name=metadata_name, type=AnnotationSourceType.METADATA)],
+        message="Organism multi-ebola-test is configured to only accept one segment per submission,"
+        " found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
+    )
+
+
 single_segment_case_definitions = [
     Case(
         name="with mutation",
@@ -199,6 +211,9 @@ single_segment_case_definitions = [
             sequenceNameToFastaId={"main": "fastaHeader"},
         ),
     ),
+]
+
+single_segment_failed_case_definitions = [
     Case(
         name="with failed alignment",
         input_metadata={},
@@ -224,6 +239,91 @@ single_segment_case_definitions = [
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
             unalignedNucleotideSequences={"main": invalid_sequence()},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"main": "fastaHeader"},
+        ),
+    ),
+]
+
+single_segment_failed_with_require_sort_case_definitions = [
+    Case(
+        name="with failed alignment",
+        input_metadata={},
+        input_sequence={"fastaHeader": invalid_sequence()},
+        accession_id="1",
+        expected_metadata={
+            "completeness": None,
+            "totalInsertedNucs": None,
+            "totalSnps": None,
+            "totalDeletedNucs": None,
+            "length": len(invalid_sequence()),
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["main"],
+                    ["main"],
+                    "Nucleotide sequence failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["alignment"],
+                    ["alignment"],
+                    "Sequence does not appear to match reference, per `nextclade sort`. "
+                    "Double check you are submitting to the correct organism.",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": invalid_sequence()},
+            alignedNucleotideSequences={},
+            nucleotideInsertions={},
+            alignedAminoAcidSequences={},
+            aminoAcidInsertions={},
+            sequenceNameToFastaId={"main": "fastaHeader"},
+        ),
+    ),
+    Case(
+        name="with better alignment",
+        input_metadata={},
+        input_sequence={"fastaHeader": consensus_sequence("ebola-zaire")},
+        accession_id="1",
+        expected_metadata={
+            "completeness": None,
+            "totalInsertedNucs": None,
+            "totalSnps": None,
+            "totalDeletedNucs": None,
+            "length": len(consensus_sequence("ebola-zaire")),
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["main"],
+                    ["main"],
+                    "Nucleotide sequence failed to align",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+                ProcessingAnnotationHelper(
+                    ["alignment"],
+                    ["alignment"],
+                    "Sequence best matches ebola-zaire, a different organism than the one "
+                    "you are submitting to: ebola-sudan-test. It is therefore not possible "
+                    "to release. Contact the administrator if you think this message is an error.",
+                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                ),
+            ]
+        ),
+        expected_warnings=[],
+        expected_processed_alignment=ProcessedAlignment(
+            unalignedNucleotideSequences={"main": consensus_sequence("ebola-zaire")},
             alignedNucleotideSequences={},
             nucleotideInsertions={},
             alignedAminoAcidSequences={},
@@ -921,235 +1021,6 @@ multi_segment_case_definitions_none_requirement = [
     ),
 ]
 
-
-def process_single_entry(
-    test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
-) -> SubmissionData:
-    result = process_all([test_case.input], dataset_dir, config)
-    return result[0]
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    single_segment_case_definitions + segment_validation_tests_single_segment,
-    ids=lambda tc: f"single segment {tc.name}",
-)
-def test_preprocessing_single_segment(test_case_def: Case):
-    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions
-    + segment_validation_tests_multi_segments
-    + multi_segment_case_definitions_all_requirement_sort_classification,
-    ids=lambda tc: f"multi segment, segment classification with sort {tc.name}",
-)
-def test_preprocessing_multi_segment_all_requirement_sort_classification(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions
-    + segment_validation_tests_multi_segments
-    + multi_segment_case_definitions_all_requirement_align_classification,
-    ids=lambda tc: f"multi segment, segment classification with align {tc.name}",
-)
-def test_preprocessing_multi_segment_all_requirement_align_classification(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.segment_classification_method = SegmentClassificationMethod.ALIGN
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions
-    + segment_validation_tests_multi_segments
-    + multi_segment_case_definitions_any_requirement_sort_classification,
-    ids=lambda tc: f"multi segment, segment classification with sort {tc.name}",
-)
-def test_preprocessing_multi_segment_any_requirement_sort_classification(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.alignment_requirement = AlignmentRequirement.ANY
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions
-    + segment_validation_tests_multi_segments
-    + multi_segment_case_definitions_any_requirement_align_classification,
-    ids=lambda tc: f"multi segment, segment classification with align {tc.name}",
-)
-def test_preprocessing_multi_segment_any_requirement_align_classification(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    config.alignment_requirement = AlignmentRequirement.ANY
-    config.segment_classification_method = SegmentClassificationMethod.ALIGN
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-@pytest.mark.parametrize(
-    "test_case_def",
-    multi_segment_case_definitions_none_requirement,
-    ids=lambda tc: f"multi segment not aligned {tc.name}",
-)
-def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
-    config = get_config(MULTI_SEGMENT_CONFIG_UNALIGNED, ignore_args=True)
-    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
-    test_case = test_case_def.create_test_case(factory_custom)
-    processed_entry = process_single_entry(test_case, config)
-    verify_processed_entry(
-        processed_entry.processed_entry, test_case.expected_output, test_case.name
-    )
-
-
-def test_preprocessing_without_metadata() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            group_id=2,
-            submitter="test_submitter",
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={},
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-        ),
-    )
-
-    config.processing_spec = {}
-
-    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
-    processed_entry = result[0].processed_entry
-
-    assert processed_entry.errors == []
-    assert processed_entry.warnings == []
-    assert processed_entry.data.metadata == {}
-
-
-def test_format_frameshift():
-    # Test case 1: Empty input
-    assert not format_frameshift("[]")
-
-    # Test case 2: Single frameshift
-    input_single = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}]'  # noqa: E501
-    expected_single = "GPC:3-7(nt:98-112)"
-    assert format_frameshift(input_single) == expected_single
-
-    # Test case 3: Multiple frameshifts
-    input_multiple = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}, {"cdsName": "NP", "nucRel": {"begin": 10, "end": 15}, "nucAbs": [{"begin": 200, "end": 205}], "codon": {"begin": 3, "end": 5}, "gapsLeading": {"begin": 2, "end": 3}, "gapsTrailing": {"begin": 5, "end": 6}}]'  # noqa: E501
-    expected_multiple = "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
-    assert format_frameshift(input_multiple) == expected_multiple
-
-    # Test case 4: Single nucleotide frameshift
-    input_single_nuc = '[{"cdsName": "L", "nucRel": {"begin": 30, "end": 31}, "nucAbs": [{"begin": 500, "end": 501}], "codon": {"begin": 10, "end": 11}, "gapsLeading": {"begin": 9, "end": 10}, "gapsTrailing": {"begin": 11, "end": 12}}]'  # noqa: E501
-    expected_single_nuc = "L:11(nt:501)"
-    assert format_frameshift(input_single_nuc) == expected_single_nuc
-
-
-def test_format_stop_codon():
-    # Test case 1: Empty input
-    assert not format_stop_codon("[]")
-
-    # Test case 2: Single stop codon
-    input_single = '[{"cdsName": "GPC", "codon": 123}]'
-    expected_single = "GPC:124"
-    assert format_stop_codon(input_single) == expected_single
-
-    # Test case 3: Multiple stop codons
-    input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
-    expected_multiple = "GPC:124,NP:457"
-    assert format_stop_codon(input_multiple) == expected_multiple
-
-    # Test case 4: Stop codon at position 0
-    input_zero = '[{"cdsName": "L", "codon": 0}]'
-    expected_zero = "L:1"
-    assert format_stop_codon(input_zero) == expected_zero
-
-
-def test_reformat_authors_from_loculus_to_embl_style():
-    authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
-    result = reformat_authors_from_loculus_to_embl_style(authors)
-    desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
-    assert result == desired_result
-
-    extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
-    result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
-    desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
-    assert result_extended == desired_result_extended
-
-
-def test_create_flatfile():
-    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
-    embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
-    config.processing_spec.update(embl_fields)
-    config.create_embl_file = True
-    sequence_entry_data = UnprocessedEntry(
-        accessionVersion="LOC_01.1",
-        data=UnprocessedData(
-            submitter="test_submitter",
-            group_id=2,
-            submittedAt=ts_from_ymd(2021, 12, 15),
-            metadata={
-                "sampleCollectionDate": "2024-01-01",
-                "geoLocCountry": "Netherlands",
-                "geoLocAdmin1": "North Holland",
-                "geoLocCity": "Amsterdam",
-                "authors": "Smith, Doe A;",
-            },
-            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
-        ),
-    )
-
-    result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
-
-    embl_str = create_flatfile(config, result[0])
-    expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
-    assert embl_str == expected_embl
-
-
-def multiple_valid_segments_error(metadata_name: str) -> ProcessingAnnotation:
-    return ProcessingAnnotation(
-        unprocessedFields=[
-            AnnotationSource(name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
-            AnnotationSource(name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
-        ],
-        processedFields=[AnnotationSource(name=metadata_name, type=AnnotationSourceType.METADATA)],
-        message="Organism multi-ebola-test is configured to only accept one segment per submission,"
-        " found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
-    )
-
-
 multi_pathogen_cases = [
     Case(
         name="with only first one uploaded",
@@ -1267,6 +1138,135 @@ multi_pathogen_cases = [
 ]
 
 
+def process_single_entry(
+    test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
+) -> SubmissionData:
+    result = process_all([test_case.input], dataset_dir, config)
+    return result[0]
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    single_segment_case_definitions
+    + segment_validation_tests_single_segment
+    + single_segment_failed_case_definitions,
+    ids=lambda tc: f"single segment {tc.name}",
+)
+def test_preprocessing_single_segment(test_case_def: Case):
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    single_segment_case_definitions
+    + segment_validation_tests_single_segment
+    + single_segment_failed_with_require_sort_case_definitions,
+    ids=lambda tc: f"single segment with require_nextclade_sort_match {tc.name}",
+)
+def test_preprocessing_single_segment_with_require_nextclade_sort_match(test_case_def: Case):
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    config.require_nextclade_sort_match = True
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_all_requirement_sort_classification,
+    ids=lambda tc: f"multi segment, segment classification with sort {tc.name}",
+)
+def test_preprocessing_multi_segment_all_requirement_sort_classification(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_all_requirement_align_classification,
+    ids=lambda tc: f"multi segment, segment classification with align {tc.name}",
+)
+def test_preprocessing_multi_segment_all_requirement_align_classification(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.segment_classification_method = SegmentClassificationMethod.ALIGN
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_any_requirement_sort_classification,
+    ids=lambda tc: f"multi segment, segment classification with sort {tc.name}",
+)
+def test_preprocessing_multi_segment_any_requirement_sort_classification(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions
+    + segment_validation_tests_multi_segments
+    + multi_segment_case_definitions_any_requirement_align_classification,
+    ids=lambda tc: f"multi segment, segment classification with align {tc.name}",
+)
+def test_preprocessing_multi_segment_any_requirement_align_classification(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    config.alignment_requirement = AlignmentRequirement.ANY
+    config.segment_classification_method = SegmentClassificationMethod.ALIGN
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config, MULTI_EBOLA_DATASET)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case_def",
+    multi_segment_case_definitions_none_requirement,
+    ids=lambda tc: f"multi segment not aligned {tc.name}",
+)
+def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
+    config = get_config(MULTI_SEGMENT_CONFIG_UNALIGNED, ignore_args=True)
+    factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
+    test_case = test_case_def.create_test_case(factory_custom)
+    processed_entry = process_single_entry(test_case, config)
+    verify_processed_entry(
+        processed_entry.processed_entry, test_case.expected_output, test_case.name
+    )
+
+
 @pytest.mark.parametrize(
     "test_case_def",
     multi_pathogen_cases,
@@ -1281,6 +1281,113 @@ def test_preprocessing_multi_pathogen(test_case_def: Case):
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
+
+
+def test_preprocessing_without_metadata() -> None:
+    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            group_id=2,
+            submitter="test_submitter",
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={},
+            unalignedNucleotideSequences={
+                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
+                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
+            },
+        ),
+    )
+
+    config.processing_spec = {}
+
+    result = process_all([sequence_entry_data], MULTI_EBOLA_DATASET, config)
+    processed_entry = result[0].processed_entry
+
+    assert processed_entry.errors == []
+    assert processed_entry.warnings == []
+    assert processed_entry.data.metadata == {}
+
+
+def test_format_frameshift():
+    # Test case 1: Empty input
+    assert not format_frameshift("[]")
+
+    # Test case 2: Single frameshift
+    input_single = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}]'  # noqa: E501
+    expected_single = "GPC:3-7(nt:98-112)"
+    assert format_frameshift(input_single) == expected_single
+
+    # Test case 3: Multiple frameshifts
+    input_multiple = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}, {"cdsName": "NP", "nucRel": {"begin": 10, "end": 15}, "nucAbs": [{"begin": 200, "end": 205}], "codon": {"begin": 3, "end": 5}, "gapsLeading": {"begin": 2, "end": 3}, "gapsTrailing": {"begin": 5, "end": 6}}]'  # noqa: E501
+    expected_multiple = "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
+    assert format_frameshift(input_multiple) == expected_multiple
+
+    # Test case 4: Single nucleotide frameshift
+    input_single_nuc = '[{"cdsName": "L", "nucRel": {"begin": 30, "end": 31}, "nucAbs": [{"begin": 500, "end": 501}], "codon": {"begin": 10, "end": 11}, "gapsLeading": {"begin": 9, "end": 10}, "gapsTrailing": {"begin": 11, "end": 12}}]'  # noqa: E501
+    expected_single_nuc = "L:11(nt:501)"
+    assert format_frameshift(input_single_nuc) == expected_single_nuc
+
+
+def test_format_stop_codon():
+    # Test case 1: Empty input
+    assert not format_stop_codon("[]")
+
+    # Test case 2: Single stop codon
+    input_single = '[{"cdsName": "GPC", "codon": 123}]'
+    expected_single = "GPC:124"
+    assert format_stop_codon(input_single) == expected_single
+
+    # Test case 3: Multiple stop codons
+    input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
+    expected_multiple = "GPC:124,NP:457"
+    assert format_stop_codon(input_multiple) == expected_multiple
+
+    # Test case 4: Stop codon at position 0
+    input_zero = '[{"cdsName": "L", "codon": 0}]'
+    expected_zero = "L:1"
+    assert format_stop_codon(input_zero) == expected_zero
+
+
+def test_reformat_authors_from_loculus_to_embl_style():
+    authors = "Xi,L.;Smith, Anna Maria; Perez Gonzalez, Anthony J.;Doe,;von Doe, John"
+    result = reformat_authors_from_loculus_to_embl_style(authors)
+    desired_result = "Xi L., Smith A.M., Perez Gonzalez A.J., Doe, von Doe J."
+    assert result == desired_result
+
+    extended_latin_authors = "Pérez, José; Bailley, François; Møller, Anäis; Wałęsa, Lech"
+    result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
+    desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L."
+    assert result_extended == desired_result_extended
+
+
+def test_create_flatfile():
+    config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
+    embl_fields = get_config(EMBL_METADATA, ignore_args=True).processing_spec
+    config.processing_spec.update(embl_fields)
+    config.create_embl_file = True
+    sequence_entry_data = UnprocessedEntry(
+        accessionVersion="LOC_01.1",
+        data=UnprocessedData(
+            submitter="test_submitter",
+            group_id=2,
+            submittedAt=ts_from_ymd(2021, 12, 15),
+            metadata={
+                "sampleCollectionDate": "2024-01-01",
+                "geoLocCountry": "Netherlands",
+                "geoLocAdmin1": "North Holland",
+                "geoLocCity": "Amsterdam",
+                "authors": "Smith, Doe A;",
+            },
+            unalignedNucleotideSequences={"main": sequence_with_mutation("single")},
+        ),
+    )
+
+    result = process_all([sequence_entry_data], EBOLA_SUDAN_DATASET, config)
+
+    embl_str = create_flatfile(config, result[0])
+    expected_embl = Path(SINGLE_SEGMENT_EMBL).read_text(encoding="utf-8")
+    assert embl_str == expected_embl
 
 
 if __name__ == "__main__":
