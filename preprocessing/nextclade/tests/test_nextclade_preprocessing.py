@@ -810,7 +810,7 @@ segment_validation_tests_multi_segments = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Multiple sequences (with fasta headers: duplicate_ebola-sudan, ebola-sudan) "
+                    "Multiple sequences (with fasta headers: ebola-sudan, duplicate_ebola-sudan) "
                     "align to ebola-sudan - only one entry is allowed.",
                 ),
             ]
