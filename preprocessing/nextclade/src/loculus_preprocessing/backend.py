@@ -221,17 +221,24 @@ def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
         raise RuntimeError(msg)
 
 
-def download_minimizer(url, save_path):
+def download_minimizer(config: Config, save_path: str) -> None:
+    if config.minimizer_url:
+        url = config.minimizer_url
+    elif config.nextclade_dataset_server:
+        url = config.nextclade_dataset_server.rstrip("/") + "/minimizer_index.json"
+    else:
+        msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
+        logger.error(msg)
+        raise RuntimeError(msg)
+
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
         Path(save_path).write_bytes(response.content)
-
-        logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
-
     except requests.exceptions.RequestException as e:
         msg = f"Failed to download minimizer: {e}"
         logger.error(msg)
         raise RuntimeError(msg) from e
+
+    logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")

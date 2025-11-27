@@ -580,8 +580,8 @@ def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         if config.nextclade_dataset_name:
             download_nextclade_dataset(dataset_dir, config)
-        if config.minimizer_url and config.require_nextclade_sort_match:
-            download_minimizer(config.minimizer_url, dataset_dir + "/minimizer/minimizer.json")
+        if config.minimizer_url or config.require_nextclade_sort_match:
+            download_minimizer(config, dataset_dir + "/minimizer/minimizer.json")
         total_processed = 0
         etag = None
         last_force_refresh = time.time()

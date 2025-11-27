@@ -152,36 +152,34 @@ def run_sort(
     if not config.accepted_dataset_matches and not nextclade_dataset_name:
         logger.warning("No nextclade dataset name or accepted dataset match list found in config")
         return alerts
-    nextclade_dataset_server = get_nextclade_dataset_server(config, segment)
-
-    if config.minimizer_url:
-        minimizer_file = dataset_dir + "/minimizer/minimizer.json"
 
     accepted_dataset_names = config.accepted_dataset_matches or [nextclade_dataset_name]  # type: ignore
 
     result_file = result_file_dir + "/sort_output.tsv"
-    command = [
-        "nextclade3",
-        "sort",
-        input_file,
-        "-m" if config.minimizer_url else "",
-        f"{minimizer_file}" if config.minimizer_url else "",
-        "--output-results-tsv",
-        f"{result_file}",
-        "--max-score-gap",
-        "0.3",
-        "--min-score",
-        "0.05",
-        "--min-hits",
-        "2",
-        "--all-matches",
-        "--server",
-        f"{nextclade_dataset_server}",
+    subprocess_args = [
+        arg
+        for arg in [
+            "nextclade3",
+            "sort",
+            f"-m={dataset_dir}/minimizer/minimizer.json",
+            "--output-results-tsv",
+            result_file,
+            "--max-score-gap",
+            "0.3",
+            "--min-score",
+            "0.05",
+            "--min-hits",
+            "2",
+            "--all-matches",
+            "--",
+            input_file,
+        ]
+        if arg
     ]
 
-    logger.debug(f"Running nextclade sort: {command}")
+    logger.debug(f"Running nextclade sort: {subprocess_args}")
 
-    exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+    exit_code = subprocess.run(subprocess_args, check=False).returncode  # noqa: S603
     if exit_code != 0:
         msg = f"nextclade sort failed with exit code {exit_code}"
         raise Exception(msg)
@@ -199,10 +197,7 @@ def run_sort(
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
     best_hits = hits.groupby("seqName", as_index=False).first()
-
-    all_ids = df["seqName"].unique()
-    hit_ids = best_hits["seqName"]
-    missing_ids = set(all_ids) - set(hit_ids)
+    missing_ids = set(df["seqName"].unique()) - set(best_hits["seqName"].unique())
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
