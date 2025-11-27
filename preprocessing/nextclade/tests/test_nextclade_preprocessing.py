@@ -1,8 +1,6 @@
 # ruff: noqa: S101
 
 
-import os
-import shutil
 from pathlib import Path
 from typing import Literal
 
@@ -46,7 +44,7 @@ EMBL_METADATA = "tests/embl_required_metadata.yaml"
 
 EBOLA_SUDAN_DATASET = "tests/ebola-dataset/ebola-sudan"
 EBOLA_ZAIRE_DATASET = "tests/ebola-dataset/ebola-zaire"
-MULTI_EBOLA_DATASET = "tests/ebola-dataset"
+MULTI_EBOLA_DATASET = "tests/ebola-multipath-dataset"
 
 SINGLE_SEGMENT_EMBL = "tests/flatfiles/single_segment.embl"
 
@@ -58,7 +56,7 @@ def consensus_sequence(
         next(
             SeqIO.parse(
                 (EBOLA_ZAIRE_DATASET if type == "ebola-zaire" else EBOLA_SUDAN_DATASET)
-                + "/reference.fasta",
+                + "/main/reference.fasta",
                 "fasta",
             )
         ).seq
@@ -924,19 +922,6 @@ multi_segment_case_definitions_none_requirement = [
 ]
 
 
-def copy_dataset(source_folder: str, destination_folder: str) -> None:
-    os.makedirs(destination_folder, exist_ok=True)
-
-    for item in os.listdir(source_folder):
-        src_path = os.path.join(source_folder, item)
-
-        if not os.path.isfile(src_path):
-            continue
-
-        dst_path = os.path.join(destination_folder, item)
-        shutil.copy2(src_path, dst_path)
-
-
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
 ) -> SubmissionData:
@@ -953,8 +938,6 @@ def test_preprocessing_single_segment(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
-    # process_single expects dataset to be in a subfolder with the segment name (in this case "main")
-    copy_dataset(EBOLA_SUDAN_DATASET, os.path.join(EBOLA_SUDAN_DATASET, "main"))
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
