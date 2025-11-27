@@ -47,7 +47,11 @@ from .nextclade import (
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .processing_functions import (
+    ProcessingFunctions,
+    format_frameshift,
+    format_stop_codon,
+)
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -174,6 +178,27 @@ def add_nextclade_metadata(
     return InputData(datum=result)
 
 
+def add_assigned_segment(
+    unprocessed: UnprocessedAfterNextclade,
+    config: Config,
+) -> InputData:
+    if not unprocessed.nextcladeMetadata:
+        return InputData(datum=None)
+    valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
+    if not valid_segments:
+        return InputData(datum=None)
+    if len(valid_segments) > 1:
+        return InputData(
+            datum=None,
+            errors=[
+                MultipleValidSegmentsError(valid_segments).getProcessingAnnotation(
+                    processed_field_name="ASSIGNED_SEGMENT", organism=config.organism
+                )
+            ],
+        )
+    return InputData(datum=valid_segments[0])
+
+
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -182,6 +207,8 @@ def add_input_metadata(
 ) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
+    if input_path == "ASSIGNED_SEGMENT":
+        return add_assigned_segment(unprocessed, config=config)
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         nextclade_path = input_path[len(nextclade_prefix) :]
