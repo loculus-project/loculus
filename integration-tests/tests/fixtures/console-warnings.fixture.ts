@@ -1,7 +1,14 @@
 import { test as base, ConsoleMessage, expect } from '@playwright/test';
+import { patchLocatorClick } from '../setup/safe-click';
+
+// Ensure patching is attempted when fixture is loaded
+patchLocatorClick();
 
 export const test = base.extend({
     page: async ({ page, browserName }, use) => {
+        // Try patching again when page is created (Locator class should be loaded by now)
+        patchLocatorClick();
+
         const handleConsole = (msg: ConsoleMessage) => {
             if (msg.type() === 'warning' || msg.type() === 'error') {
                 const messageText = msg.text();
