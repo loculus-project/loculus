@@ -1188,6 +1188,17 @@ def test_create_flatfile():
     assert embl_str == expected_embl
 
 
+def multiple_valid_segments_error(metadata_name: str) -> ProcessingAnnotation:
+    return ProcessingAnnotation(
+        unprocessedFields=[
+            AnnotationSource(name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
+            AnnotationSource(name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
+        ],
+        processedFields=[AnnotationSource(name=metadata_name, type=AnnotationSourceType.METADATA)],
+        message="Organism multi-ebola-test is configured to only accept one segment per submission, found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
+    )
+
+
 multi_pathogen_cases = [
     Case(
         name="with only first one uploaded",
@@ -1200,6 +1211,7 @@ multi_pathogen_cases = [
             "totalInsertedNucs": 0,
             "totalSnps": 1,
             "length": len(consensus_sequence("ebola-zaire")),
+            "subtype": "ebola-zaire",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -1230,6 +1242,7 @@ multi_pathogen_cases = [
             "totalInsertedNucs": 0,
             "totalSnps": 1,
             "length": len(consensus_sequence("ebola-sudan")),
+            "subtype": "ebola-sudan",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -1265,32 +1278,16 @@ multi_pathogen_cases = [
         expected_errors=[
             ProcessingAnnotation(
                 unprocessedFields=[
-                    AnnotationSource(
-                        name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
-                    AnnotationSource(
-                        name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
+                    AnnotationSource(name="ASSIGNED_SEGMENT", type=AnnotationSourceType.METADATA)
                 ],
                 processedFields=[
-                    AnnotationSource(name="totalInsertions", type=AnnotationSourceType.METADATA)
+                    AnnotationSource(name="subtype", type=AnnotationSourceType.METADATA)
                 ],
-                message="Organism multi-ebola-test is configured to only accept one segment per submission, found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
+                message="Metadata field subtype is required.",
             ),
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(
-                        name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
-                    AnnotationSource(
-                        name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE
-                    ),
-                ],
-                processedFields=[
-                    AnnotationSource(name="totalSubstitutions", type=AnnotationSourceType.METADATA)
-                ],
-                message="Organism multi-ebola-test is configured to only accept one segment per submission, found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
-            ),
+            multiple_valid_segments_error(metadata_name="ASSIGNED_SEGMENT"),
+            multiple_valid_segments_error(metadata_name="totalInsertions"),
+            multiple_valid_segments_error(metadata_name="totalSubstitutions"),
         ],
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
