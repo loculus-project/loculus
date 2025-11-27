@@ -570,7 +570,8 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
                     processedFields=[
                         AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
                     ],
-                    message="Failed to create or upload EMBL file. Please contact your administrator.",
+                    message="Failed to create or upload EMBL file. "
+                    "Please contact your administrator.",
                 )
             )
 
