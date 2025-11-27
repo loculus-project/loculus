@@ -256,25 +256,47 @@ export class CliPage {
 
     /**
      * Login with username and password.
-     * By default, asserts that login succeeded. Use assertSuccess: false for negative tests.
+     * By default, asserts that login succeeded and retries up to 3 times on failure.
+     * Use assertSuccess: false for negative tests (no retries, no assertion).
      */
     async login(
         username: string,
         password: string,
-        options?: { assertSuccess?: boolean },
+        options?: { assertSuccess?: boolean; maxRetries?: number },
     ): Promise<CliResult> {
-        const result = await this.execute([
-            'auth',
-            'login',
-            '--username',
-            username,
-            '--password',
-            password,
-        ]);
-        if (options?.assertSuccess !== false) {
-            this.assertSuccess(result, 'Login');
+        const maxRetries = options?.assertSuccess === false ? 0 : (options?.maxRetries ?? 3);
+        let lastResult: CliResult | null = null;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const result = await this.execute([
+                'auth',
+                'login',
+                '--username',
+                username,
+                '--password',
+                password,
+            ]);
+            lastResult = result;
+
+            if (result.exitCode === 0) {
+                return result;
+            }
+
+            // Don't retry on invalid credentials (expected failure)
+            if (result.stderr.includes('Invalid username or password')) {
+                break;
+            }
+
+            // Wait before retrying (exponential backoff: 500ms, 1s, 2s)
+            if (attempt < maxRetries) {
+                await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt)));
+            }
         }
-        return result;
+
+        if (options?.assertSuccess !== false) {
+            this.assertSuccess(lastResult!, 'Login');
+        }
+        return lastResult!;
     }
 
     /**
