@@ -290,7 +290,7 @@ def write_nextclade_input_fasta(
     return input_unaligned_sequences, id_map
 
 
-def process_unprocessed_entries(
+def assign_segment(
     entry: UnprocessedEntry, id_map, best_hits, config: Config
 ) -> SegmentAssignment:
     seq_names_with_hits = set(best_hits["seqName"].tolist())
@@ -430,7 +430,7 @@ def assign_segment_with_nextclade_align(
     best_hits = hits.groupby("seqName", as_index=False).first()
 
     for entry in unprocessed:
-        segment_assignment = process_unprocessed_entries(
+        segment_assignment = assign_segment(
             entry,
             id_map,
             best_hits,
@@ -477,7 +477,7 @@ def assign_segment_with_nextclade_sort(
     best_hits = hits.groupby("seqName", as_index=False).first()
 
     for entry in unprocessed:
-        segment_assignment = process_unprocessed_entries(
+        segment_assignment = assign_segment(
             entry,
             id_map,
             best_hits,
