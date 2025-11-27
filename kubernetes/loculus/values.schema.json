@@ -337,6 +337,12 @@
                   "default": true,
                   "description": "If false, the submission form will not allow submission of consensus sequences (i.e. the sequences file must be omitted). All consensus sequence related parts on the website will be hidden."
                 },
+                "maxSequencesPerEntry": {
+                  "groups": ["schema"],
+                  "type": ["integer", "null"],
+                  "default": null,
+                  "description": "Maximum number of sequences allowed per submission entry. Set to null for unlimited sequences per entry. For single-segment organisms, set to 1 to ensure only one sequence per entry."
+                },
                 "files": {
                   "type": "object",
                   "properties": {
