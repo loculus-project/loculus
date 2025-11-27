@@ -106,6 +106,20 @@ See [the documentation of the Testcontainers](https://java.testcontainers.org/su
 ./gradlew ktlintFormat
 ```
 
+### Run without Docker
+
+Install the dependencies via Gradle:
+
+```bash
+./gradlew downloadDependencies
+```
+
+Then run the backend with:
+
+```bash
+USE_NONDOCKER_INFRA=true ./gradlew test
+```
+
 ## Logs
 
 The backend writes logs to stdout and stores them logs in `./log/backend.log`, relative to the working directory.
