@@ -25,8 +25,6 @@ export class CliPage {
     constructor() {
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
-        // Generate a unique ID for this test instance using UUID to prevent race conditions
-        // when parallel tests start within the same millisecond (Date.now() has ms precision only)
         const uniqueId = randomUUID();
         // Generate a unique keyring service name for this test instance
         this.keyringService = `loculus-cli-test-${uniqueId}`;
@@ -266,7 +264,6 @@ export class CliPage {
     ): Promise<CliResult> {
         const maxRetries = options?.assertSuccess === false ? 0 : (options?.maxRetries ?? 3);
 
-        // First attempt
         let result = await this.execute([
             'auth',
             'login',
@@ -276,7 +273,6 @@ export class CliPage {
             password,
         ]);
 
-        // Retry loop (only if first attempt failed)
         for (let attempt = 1; attempt <= maxRetries && result.exitCode !== 0; attempt++) {
             // Don't retry on invalid credentials (expected failure)
             if (result.stderr.includes('Invalid username or password')) {
