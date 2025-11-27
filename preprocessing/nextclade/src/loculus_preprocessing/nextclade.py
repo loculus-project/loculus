@@ -301,7 +301,7 @@ def assign_segment(entry: UnprocessedEntry, id_map, best_hits, config: Config) -
             has_missing_segments = True
             annotation = annotation = sequence_annotation(
                 f"Sequence with fasta header {fasta_id} does not align to any segment for"
-                f" organism: {config.organism} per `{config.segment_classification_method}`. "
+                f" organism: {config.organism} per `nextclade {config.segment_classification_method}`. "
                 f"Double check you are submitting to the correct organism."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
@@ -432,6 +432,8 @@ def assign_segment_with_nextclade_align(
         unaligned_nucleotide_sequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
+        alerts.errors[accession_version] = segment_assignment.errors
+        alerts.warnings[accession_version] = segment_assignment.warnings
 
     return SegmentAssignmentBatch(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
@@ -479,6 +481,8 @@ def assign_segment_with_nextclade_sort(
         unaligned_nucleotide_sequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
+        alerts.errors[accession_version] = segment_assignment.errors
+        alerts.warnings[accession_version] = segment_assignment.warnings
 
     return SegmentAssignmentBatch(
         unalignedNucleotideSequences=unaligned_nucleotide_sequences,
