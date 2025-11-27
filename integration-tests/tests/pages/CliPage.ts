@@ -255,10 +255,26 @@ export class CliPage {
     }
 
     /**
-     * Login with username and password
+     * Login with username and password.
+     * By default, asserts that login succeeded. Use assertSuccess: false for negative tests.
      */
-    async login(username: string, password: string): Promise<CliResult> {
-        return this.execute(['auth', 'login', '--username', username, '--password', password]);
+    async login(
+        username: string,
+        password: string,
+        options?: { assertSuccess?: boolean },
+    ): Promise<CliResult> {
+        const result = await this.execute([
+            'auth',
+            'login',
+            '--username',
+            username,
+            '--password',
+            password,
+        ]);
+        if (options?.assertSuccess !== false) {
+            this.assertSuccess(result, 'Login');
+        }
+        return result;
     }
 
     /**
