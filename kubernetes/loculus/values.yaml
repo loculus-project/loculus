@@ -1684,6 +1684,7 @@ defaultOrganisms:
         nucleotideSequences:
           - name: "main"
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/sars-cov-2/reference.fasta]]"
+        genes: []
   cchf:
     <<: *defaultOrganismConfig
     schema:
