@@ -1,7 +1,6 @@
 """Authentication commands for Loculus CLI."""
 
 import click
-import keyring
 from rich.console import Console
 from rich.prompt import Prompt
 
@@ -51,25 +50,6 @@ def login(ctx: click.Context, username: str, password: str) -> None:
         with console.status("Logging in..."):
             token_info = auth_client.login(username, password)
             auth_client.set_current_user(username)
-
-            # Verify the token was stored and can be retrieved from keyring
-            # Use direct keyring access to avoid any caching or extra validation
-            service_name = auth_client._service_name
-            stored_user = keyring.get_password(service_name, "current_user")
-            if stored_user != username:
-                raise RuntimeError(
-                    f"Login verification failed: expected user '{username}' "
-                    f"but got '{stored_user}'"
-                )
-
-            # Verify the token data was stored
-            token_key = f"{instance_config.keycloak_url}#{username}"
-            stored_token = keyring.get_password(service_name, token_key)
-            if not stored_token:
-                raise RuntimeError(
-                    f"Login verification failed: could not retrieve stored token "
-                    f"(key: {token_key})"
-                )
 
         console.print(
             f"✓ Successfully logged in as [bold green]{username}[/bold green]"
