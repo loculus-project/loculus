@@ -316,7 +316,7 @@ def assign_segment(
             if method == "minimizer":
                 method = "sort"
             annotation = annotation = sequence_annotation(
-                f"Sequence with fasta header {fasta_id} does not align to any segment for"
+                f"Sequence with fasta header {fasta_id} does not match any reference for"
                 f" organism: {config.organism} per `nextclade {method}`. "
                 f"Double check you are submitting to the correct organism."
             )
@@ -446,7 +446,7 @@ def assign_segment_with_nextclade_align(
             config,
         )
         accession_version = entry.accessionVersion
-        sequence_name_to_fasta_id[accession_version] = segment_assignment.sequence_name_to_fasta_id
+        sequence_name_to_fasta_id[accession_version] = segment_assignment.sequenceNameToFastaId
         unaligned_nucleotide_sequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
