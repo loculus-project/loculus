@@ -201,6 +201,7 @@ def run_sort(
         },
     )
 
+
 def accepted_sort_matches_or_default(
     segment: NextcladeSequenceAndDataset,
 ) -> list[str]:

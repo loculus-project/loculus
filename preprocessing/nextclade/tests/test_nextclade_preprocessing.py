@@ -2,8 +2,8 @@
 
 
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -936,8 +936,6 @@ def copy_dataset(source_folder: str) -> None:
 
         dst_path = os.path.join(destination_folder, item)
         shutil.copy2(src_path, dst_path)
-
-
 
 
 def process_single_entry(
