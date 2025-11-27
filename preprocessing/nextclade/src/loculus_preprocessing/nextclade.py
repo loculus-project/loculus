@@ -214,7 +214,7 @@ def accepted_sort_matches_or_default(
     return list(accepted_dataset_names)
 
 
-#TODO: to be deprecated and multi-path feature used instead
+# TODO: to be deprecated and multi-path feature used instead
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
@@ -273,7 +273,7 @@ def write_nextclade_input_fasta(
             accession_version = entry.accessionVersion
             for fasta_id, seq in entry.data.unalignedNucleotideSequences.items():
                 id = f"{accession_version}__{fasta_id}"
-                id_map[(accession_version, fasta_id)] = id
+                id_map[accession_version, fasta_id] = id
                 f.write(f">{id}\n")
                 f.write(f"{seq}\n")
     return id_map
@@ -295,8 +295,8 @@ def assign_segment(
     """
     sort_results_map: dict[SegmentName, list[str]] = defaultdict(list)
 
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
-    sequence_name_to_fasta_id: dict[SegmentName, FastaId] = defaultdict(dict)
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
+    sequence_name_to_fasta_id: dict[SegmentName, FastaId] = defaultdict()
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
 
@@ -304,7 +304,7 @@ def assign_segment(
     has_duplicate_segments = False
 
     for fasta_id in entry.data.unalignedNucleotideSequences:
-        seq_id = id_map[(entry.accessionVersion, fasta_id)]
+        seq_id = id_map[entry.accessionVersion, fasta_id]
         if seq_id not in best_hits["seqName"].unique():
             has_missing_segments = True
             method = config.segment_classification_method.value
@@ -426,9 +426,8 @@ def assign_segment_with_nextclade_align(
             all_dfs.append(df)
 
     df_combined = pd.concat(all_dfs, ignore_index=True)
-    hits = (
-        df_combined.dropna(subset=["alignmentScore"])
-        .sort_values(by=["seqName", "alignmentScore"], ascending=[True, False])
+    hits = df_combined.dropna(subset=["alignmentScore"]).sort_values(
+        by=["seqName", "alignmentScore"], ascending=[True, False]
     )
     best_hits = hits.groupby("seqName", as_index=False).first()
 
