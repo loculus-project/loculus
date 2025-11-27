@@ -1420,6 +1420,7 @@ defaultOrganisms:
       - <<: *preprocessing
         version: 1
         configFile:
+          <<: *preprocessingConfigFile
           nucleotideSequences:
             - nextclade_dataset_name: nextstrain/wnv/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
@@ -1677,7 +1678,6 @@ defaultOrganisms:
           - "prepro"
         configFile:
           log_level: DEBUG
-          genes: []
           batch_size: 100
     referenceGenomes:
       singleReference:
