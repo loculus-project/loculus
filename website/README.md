@@ -19,19 +19,6 @@ In order to run the website locally you will need to install [nodejs](https://no
 
 Run `npm run test` to execute the unit tests.
 
-### End-to-end Tests
-
-We use [Playwright](https://playwright.dev/) for end-to-end tests.
-The e2e tests assume that the website is running on `http://localhost:3000` by running `npm run start-server` (don't use `npm run start` because it's much slower and causes more flakiness in the tests).
-Run `npm run e2e` to execute the end-to-end tests.
-
-If you run Playwright for the first time, you might need to run `npx playwright install`
-and `npx playwright install-deps` first. Playwright will tell you if that's the case.
-
-(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail, and you need to delete the data first.
-
-(!) Note: The e2e tests mock the preprocessing pipeline. Ingest and preprocessing are not tested by the e2e tests.
-
 ### Running The Application
 
 Run `npm run start-server` to build and run the application with the Astro dev server.
@@ -71,17 +58,6 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 -   Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
 -   For VS code, use the ESlint extension which must be configured with `"eslint.workingDirectories": ["./website"],` in the settings.json
 -   Tips & Tricks for using icons from MUI https://mui.com/material-ui/guides/minimizing-bundle-size/
-
-### Preventing Flaky Playwright Tests
-
-When using interactive components (buttons, Headless UI components like Combobox, etc.), ensure they are disabled until React hydration completes to prevent race conditions in Playwright tests:
-
--   **For buttons**: Use `Button` from `src/components/common/Button.tsx` instead of native `<button>`
--   **For Headless UI Combobox**: Import from `src/components/common/headlessui/Combobox.tsx` instead of `@headlessui/react`
--   **For Headless UI Input**: Import from `src/components/common/headlessui/Input.tsx` instead of `@headlessui/react`
--   **For other interactive elements**: Consider wrapping with `DisabledUntilHydrated` or using the `useClientFlag` hook
-
-These wrappers automatically disable components until client-side hydration is complete, preventing Playwright from interacting with them before they're ready.
 
 ### Codemods
 
