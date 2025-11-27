@@ -2,7 +2,6 @@
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
 {{- range $key, $organism := (include "loculus.enabledOrganisms" . | fromJson) }}
-{{- $lineageSystem := $organism | include "loculus.lineageSystemForOrganism" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -111,9 +110,37 @@ spec:
               {{- else }}
               value: "http://loculus-backend-service:8079/{{ $key }}"
               {{- end }}
-            {{- if $lineageSystem }}
+            {{- if $organism.schema }}
+            {{- $schema := $organism.schema | include "loculus.patchMetadataSchema" | fromYaml }}
+            {{- $lineageSystems := list }}
+            {{- range $entry := $schema.metadata }}
+              {{- if hasKey $entry "lineageSystem" }}
+                {{- $lineageSystems = append $lineageSystems $entry.lineageSystem }}
+              {{- end }}
+            {{- end }}
+            {{- $uniqueLineageSystems := $lineageSystems | uniq }}
+            {{- if gt (len $uniqueLineageSystems) 1 }}
+              {{- fail (printf "Multiple lineage systems found for organism %s: %v. Only one lineage system per organism is currently supported." $key $uniqueLineageSystems) }}
+            {{- end }}
+            {{- range $lineageSystem := $uniqueLineageSystems }}
+              {{- $lineageDefinitionsMap := dict }}
+              {{- $missingVersions := list }}
+              {{- $flattened := include "loculus.flattenPreprocessingVersions" $organism.preprocessing | fromJson }}
+              {{- range $preprocessing := $flattened.items }}
+                {{- if and $preprocessing.lineageDefinitions (hasKey $preprocessing.lineageDefinitions $lineageSystem) }}
+                  {{- $lineageDefinitionsMap = set $lineageDefinitionsMap (printf "%d" (int $preprocessing.version)) (index $preprocessing.lineageDefinitions $lineageSystem) }}
+                {{- else }}
+                  {{- $missingVersions = append $missingVersions $preprocessing.version }}
+                {{- end }}
+              {{- end }}
+              {{- if $missingVersions }}
+                {{- fail (printf "Organism %s uses lineage system '%s' but preprocessing versions %v are missing lineageDefinitions for this system" $key $lineageSystem $missingVersions) }}
+              {{- end }}
+              {{- if $lineageDefinitionsMap }}
             - name: LINEAGE_DEFINITIONS
-              value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
+              value: {{ $lineageDefinitionsMap | toJson | quote }}
+              {{- end }}
+            {{- end }}
             {{- end }}
           volumeMounts:
             - name: lapis-silo-database-config-processed

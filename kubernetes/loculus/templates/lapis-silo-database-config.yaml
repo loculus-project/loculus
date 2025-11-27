@@ -3,7 +3,15 @@
 
 {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
 
-{{- $lineageSystem := $instance | include "loculus.lineageSystemForOrganism" }}
+{{- $hasLineageSystem := false }}
+{{- if $instance.schema }}
+{{- $schema := $instance.schema | include "loculus.patchMetadataSchema" | fromYaml }}
+{{- range $entry := $schema.metadata }}
+  {{- if hasKey $entry "lineageSystem" }}
+    {{- $hasLineageSystem = true }}
+  {{- end }}
+{{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -21,7 +29,7 @@ data:
   preprocessing_config.yaml: |
     ndjsonInputFilename: data.ndjson.zst
     referenceGenomeFilename: reference_genomes.json
-    {{- if $lineageSystem }}
+    {{- if $hasLineageSystem }}
     lineageDefinitionsFilename: lineage_definitions.yaml
     {{- end }}
 
