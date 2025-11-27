@@ -3,6 +3,7 @@ import { promisify, stripVTControlCharacters } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
 import { test } from '@playwright/test';
 
 const execAsync = promisify(exec);
@@ -24,13 +25,13 @@ export class CliPage {
     constructor() {
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+        // Generate a unique ID for this test instance using UUID to prevent race conditions
+        // when parallel tests start within the same millisecond (Date.now() has ms precision only)
+        const uniqueId = randomUUID();
         // Generate a unique keyring service name for this test instance
-        this.keyringService = `loculus-cli-test-${process.pid}-${Date.now()}`;
+        this.keyringService = `loculus-cli-test-${uniqueId}`;
         // Generate a unique config file for this test instance
-        this.configFile = join(
-            tmpdir(),
-            `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`,
-        );
+        this.configFile = join(tmpdir(), `loculus-cli-test-config-${uniqueId}.yml`);
     }
 
     /**
@@ -167,7 +168,7 @@ export class CliPage {
      * Create a temporary file with the given content
      */
     async createTempFile(content: string, suffix: string = '.tmp'): Promise<string> {
-        const filename = `cli-test-${Date.now()}${suffix}`;
+        const filename = `cli-test-${randomUUID()}${suffix}`;
         const filepath = join(tmpdir(), filename);
         await writeFile(filepath, content, 'utf-8');
         return filepath;
