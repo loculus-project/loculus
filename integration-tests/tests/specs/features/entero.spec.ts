@@ -1,8 +1,9 @@
 import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
+import { expect } from '@playwright/test';
 
 test.describe('EV sequence submission', () => {
-    test('submit something', async ({ page, groupId }) => {
+    test('submit single sequence, edit and release', async ({ page, groupId }) => {
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
@@ -13,14 +14,30 @@ test.describe('EV sequence submission', () => {
             collectionDate: '2023-10-15',
             authorAffiliations: 'Research Lab, University',
         });
-        await submissionPage.fillSequenceData({ mySequence: a71Sequence });
+        await submissionPage.fillSequenceData({ mySequence: 'should not align' });
         await submissionPage.acceptTerms();
         const reviewPage = await submissionPage.submitSequence();
 
         await reviewPage.waitForAllProcessed();
-        await reviewPage.approveAll();
 
-        await reviewPage.waitForTotalSequenceCountCorrect(0);
+        await page.getByTestId(/^LOC_\w+\.1\.edit$/).click();
+        await expect(page.getByText(/^Edit LOC_\w+\.1$/)).toBeVisible();
+        await page.getByRole('button', { name: 'Discard file' }).click();
+        await page.getByLabel(/Add a segment/).setInputFiles({
+            name: 'example.txt',
+            mimeType: 'text/plain',
+            buffer: Buffer.from(`>key\n${a71Sequence}`),
+        });
+        await page.getByRole('textbox', { name: 'Authors' }).fill('Integration Test Edit');
+        await page.getByRole('button', { name: 'Submit' }).click();
+        await expect(page.getByText('Do you really want to submit?')).toBeVisible();
+        await page.getByRole('button', { name: 'Confirm' }).click();
+
+        await reviewPage.waitForAllProcessed();
+        const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
+
+        await releasedPage.waitForSequencesInSearch(1);
+        await expect(page.getByRole('cell', { name: 'EV-A71' })).toBeVisible();
     });
 
     test('submit files', async ({ page, groupId }) => {
@@ -43,9 +60,11 @@ test.describe('EV sequence submission', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await reviewPage.waitForAllProcessed();
-        await reviewPage.approveAll();
+        const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-        await reviewPage.waitForTotalSequenceCountCorrect(0);
+        await releasedPage.waitForSequencesInSearch(2);
+        await expect(page.getByRole('cell', { name: 'EV-A71' })).toBeVisible();
+        await expect(page.getByRole('cell', { name: 'EV-D68' })).toBeVisible();
     });
 });
 
