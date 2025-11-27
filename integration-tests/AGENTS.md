@@ -108,6 +108,58 @@ PLAYWRIGHT_TEST_BASE_URL=https://main.loculus.org npx playwright test --reporter
 PLAYWRIGHT_TEST_BASE_URL=https://preview-123.loculus.org npx playwright test --reporter=list
 ```
 
+## Test Fixtures
+
+The `tests/fixtures/` directory contains reusable Playwright test fixtures that handle common setup operations. Fixtures are layered, with each building on the previous.
+
+### Fixture Hierarchy
+
+```
+console-warnings.fixture.ts (base)
+    └── auth.fixture.ts
+        └── group.fixture.ts
+            ├── sequence.fixture.ts
+            ├── tmpdir.fixture.ts
+            └── cli.fixture.ts
+```
+
+### Available Fixtures
+
+**console-warnings.fixture.ts** - Base fixture that monitors browser console
+- Fails tests on unexpected console warnings/errors (Chromium only)
+- Filters known harmless messages (form submission cancellation, chunked encoding errors)
+
+**auth.fixture.ts** - Authentication fixtures
+- `testAccount`: Generates a unique `TestAccount` object with randomized username/email
+- `authenticatedUser`: Creates the account via UI, logs in, and logs out after test completes (30s timeout)
+
+**group.fixture.ts** - Group management fixtures (requires `authenticatedUser`)
+- `groupName`: Generates a unique test group name
+- `groupId`: Creates a submitting group via UI and returns its numeric ID
+
+**sequence.fixture.ts** - Sequence submission fixtures (requires `groupId`)
+- `releasedSequence`: Submits a CCHFV sequence with L/M/S segments, releases it, and waits for processing to complete (90s timeout). Returns the submission ID.
+
+**tmpdir.fixture.ts** - Temporary directory fixture (requires `groupId`)
+- `tmpDir`: Creates an auto-cleaned temporary directory for file operations during tests
+
+**cli.fixture.ts** - CLI testing fixture (requires `groupId`)
+- `cliPage`: Provides a `TestCliPage` instance configured with test credentials and group info. Handles cleanup before and after tests.
+
+**user.fixture.ts** - Static test user credentials
+- `readonlyUser`: Pre-defined account credentials for read-only test scenarios (not a Playwright fixture)
+
+### Usage Example
+
+```typescript
+import { test } from '../fixtures/group.fixture';
+
+test('create sequence in group', async ({ page, groupId, authenticatedUser }) => {
+    // groupId is already created, authenticatedUser is logged in
+    // ...test code...
+});
+```
+
 ## Checklist before committing code
 
 Run `npm run format` to ensure proper formatting and linting before committing.
