@@ -50,9 +50,17 @@ export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
 export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupData, onSubmit }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const internalOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (isSubmitting) {
+            return;
+        }
+
+        setErrorMessage(undefined);
+        setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
 
@@ -60,15 +68,26 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
 
         if (group.address.country === CountryInputNoOptionChosen) {
             setErrorMessage('Please choose a country');
+            setIsSubmitting(false);
             return false;
         }
 
-        const result = await onSubmit(group);
+        try {
+            const result = await onSubmit(group);
 
-        if (result.succeeded) {
-            window.location.href = result.nextPageHref;
-        } else {
-            setErrorMessage(result.errorMessage);
+            if (result.succeeded) {
+                window.location.href = result.nextPageHref;
+            } else {
+                setErrorMessage(result.errorMessage);
+                setIsSubmitting(false);
+            }
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? `An error occurred: ${error.message}`
+                    : 'An unexpected error occurred. Please check your network connection and try again.';
+            setErrorMessage(message);
+            setIsSubmitting(false);
         }
     };
 
@@ -99,8 +118,12 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <Button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
-                            {buttonText}
+                        <Button
+                            type='submit'
+                            className='btn btn-primary px-4 py-2 loculusColor text-white rounded'
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Submitting...' : buttonText}
                         </Button>
                     </div>
                 </div>
