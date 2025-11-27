@@ -166,7 +166,7 @@ def run_sort(
     subprocess_args = [
         arg
         for arg in [
-            "nextclade",
+            "nextclade3",
             "sort",
             f"-m={dataset_dir}/minimizer/minimizer.json",
             "--output-results-tsv",
