@@ -79,7 +79,7 @@ class UploadDatabaseService(
                 this[groupIdColumn] = groupId
                 this[uploadedAtColumn] = uploadedAt
                 this[submissionIdColumn] = it.submissionId
-                this[fastaIdsColumn] = it.fastaIds
+                this[fastaIdsColumn] = it.fastaIds?.toList()
                 this[metadataColumn] = it.metadata
                 this[filesColumn] = files?.get(it.submissionId)
                 this[organismColumn] = submittedOrganism.name
@@ -118,7 +118,7 @@ class UploadDatabaseService(
                     this[submitterColumn] = authenticatedUser.username
                     this[uploadedAtColumn] = uploadedAt
                     this[submissionIdColumn] = it.submissionId
-                    this[fastaIdsColumn] = it.fastaIds
+                    this[fastaIdsColumn] = it.fastaIds?.toList()
                     this[metadataColumn] = it.metadata
                     this[filesColumn] = files?.get(it.submissionId)
                     this[organismColumn] = submittedOrganism.name

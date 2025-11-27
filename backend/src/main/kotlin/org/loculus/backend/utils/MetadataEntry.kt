@@ -18,7 +18,7 @@ import java.io.InputStreamReader
 data class MetadataEntry(
     val submissionId: SubmissionId,
     val metadata: Map<String, String>,
-    val fastaIds: List<FastaId>? = null,
+    val fastaIds: Set<FastaId>? = null,
 )
 
 private fun invalidTsvFormatException(originalException: Exception) = UnprocessableEntityException(
@@ -50,7 +50,7 @@ fun extractAndValidateFastaIds(
     submissionId: String,
     recordNumber: Int,
     maxSequencesPerEntry: Int? = null,
-): List<FastaId> {
+): Set<FastaId> {
     val headerNames = record.parser.headerNames
     return when (headerNames.contains(FASTA_IDS_HEADER)) {
         true -> {
@@ -65,6 +65,15 @@ fun extractAndValidateFastaIds(
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
 
+            val duplicateFastaIds = fastaIdList.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            if (duplicateFastaIds.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber with id '$submissionId': " +
+                        "found duplicate fasta ids in column '$FASTA_ID_HEADER': " +
+                        duplicateFastaIds.joinToString(", "),
+                )
+            }
+
             if (maxSequencesPerEntry != null && fastaIdList.size > maxSequencesPerEntry) {
                 throw UnprocessableEntityException(
                     "In metadata file: record #$recordNumber with id '$submissionId': " +
@@ -73,9 +82,11 @@ fun extractAndValidateFastaIds(
                 )
             }
 
-            fastaIdList
+            fastaIdList.toSet()
         }
-        false -> listOf(submissionId)
+        false -> {
+            setOf(submissionId)
+        }
     }
 }
 
@@ -159,7 +170,7 @@ data class RevisionEntry(
     val submissionId: SubmissionId,
     val accession: Accession,
     val metadata: Map<String, String>,
-    val fastaIds: List<FastaId>? = null,
+    val fastaIds: Set<FastaId>? = null,
 )
 
 fun revisionEntryStreamAsSequence(
