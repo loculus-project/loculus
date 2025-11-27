@@ -18,6 +18,13 @@ nucleotideSequences:
   accepted_sort_matches: ebola-zaire
 organism: multi-ebola-test
 processing_spec:
+  subtype:
+    args:
+      type: str
+    function: identity
+    inputs:
+      input: ASSIGNED_SEGMENT
+    required: true
   totalSnps:
     args:
       useFirstSegment: true
