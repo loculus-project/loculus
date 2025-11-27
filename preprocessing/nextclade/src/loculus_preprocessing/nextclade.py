@@ -250,7 +250,7 @@ def load_aligned_nuc_sequences(
         aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
         for aligned_sequence in aligned_nuc:
             aligned_nucleotide_sequences[aligned_sequence.id][segment] = mask_terminal_gaps(
-                aligned_sequence.seq
+                str(aligned_sequence.seq)
             )
     return aligned_nucleotide_sequences
 
