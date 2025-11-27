@@ -249,9 +249,9 @@ def load_aligned_nuc_sequences(
     with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
         aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
         for aligned_sequence in aligned_nuc:
-            sequence_id: str = aligned_sequence.id
-            sequence: NucleotideSequence = str(aligned_sequence.seq)
-            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
+            aligned_nucleotide_sequences[aligned_sequence.id][segment] = mask_terminal_gaps(
+                aligned_sequence.seq
+            )
     return aligned_nucleotide_sequences
 
 
@@ -270,9 +270,9 @@ def load_aligned_aa_sequences(
             with open(translation_path, encoding="utf-8") as aligned_translations:
                 aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                 for aligned_sequence in aligned_translation:
-                    sequence_id = aligned_sequence.id
-                    masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
-                    aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
+                    aligned_aminoacid_sequences[aligned_sequence.id][gene] = mask_terminal_gaps(
+                        str(aligned_sequence.seq), mask_char="X"
+                    )
         except FileNotFoundError:
             # This can happen if the sequence does not cover this gene
             logger.debug(
@@ -290,8 +290,8 @@ def add_segment_name_error_warning(
     dict[SegmentName, NucleotideSequence | None],
     dict[SegmentName, NucleotideSequence | None],
 ]:
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
-    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
+    aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
     id = entry.accessionVersion
     num_valid_segments = 0
     num_duplicate_segments = 0
