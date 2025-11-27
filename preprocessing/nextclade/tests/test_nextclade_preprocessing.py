@@ -1,7 +1,9 @@
 # ruff: noqa: S101
 
 
+import os
 from pathlib import Path
+import shutil
 from typing import Literal
 
 import pytest
@@ -23,7 +25,6 @@ from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     ProcessingAnnotation,
-    ProcessingAnnotationAlignment,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -923,6 +924,22 @@ multi_segment_case_definitions_none_requirement = [
 ]
 
 
+def copy_dataset(source_folder: str) -> None:
+    destination_folder = os.path.join(source_folder, "main")
+    os.makedirs(destination_folder, exist_ok=True)
+
+    for item in os.listdir(source_folder):
+        src_path = os.path.join(source_folder, item)
+
+        if not os.path.isfile(src_path):
+            continue
+
+        dst_path = os.path.join(destination_folder, item)
+        shutil.copy2(src_path, dst_path)
+
+
+
+
 def process_single_entry(
     test_case: ProcessingTestCase, config: Config, dataset_dir: str = "temp"
 ) -> SubmissionData:
@@ -939,6 +956,7 @@ def test_preprocessing_single_segment(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
+    copy_dataset(EBOLA_SUDAN_DATASET)
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
@@ -1030,13 +1048,6 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
-
-
-def test_config_accepted_sort_matches() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    accepted_fields = config.nucleotideSequences[0].accepted_sort_matches
-    expected_fields = {"ebola-dataset/ebola-sudan", "ebola-sudan", "accepted-name"}
-    assert set(accepted_fields) == expected_fields
 
 
 def test_preprocessing_without_metadata() -> None:

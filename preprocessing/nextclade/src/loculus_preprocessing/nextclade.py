@@ -201,15 +201,17 @@ def run_sort(
         },
     )
 
-
 def accepted_sort_matches_or_default(
-    sequence_and_dataset: NextcladeSequenceAndDataset,
+    segment: NextcladeSequenceAndDataset,
 ) -> list[str]:
-    if sequence_and_dataset.accepted_sort_matches:
-        return sequence_and_dataset.accepted_sort_matches
-    if sequence_and_dataset.nextclade_dataset_name:
-        return [sequence_and_dataset.nextclade_dataset_name]
-    return [sequence_and_dataset.name]
+    accepted_dataset_names = set()
+
+    if segment.accepted_sort_matches:
+        accepted_dataset_names.update(segment.accepted_sort_matches)
+    if segment.nextclade_dataset_name:
+        accepted_dataset_names.add(segment.nextclade_dataset_name)
+    accepted_dataset_names.add(segment.name)
+    return list(accepted_dataset_names)
 
 
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
