@@ -14,6 +14,7 @@ from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     ProcessedMetadataValue,
     ProcessingAnnotation,
+    ProcessingAnnotationAlignment,
     SegmentName,
     UnprocessedData,
     UnprocessedEntry,
@@ -41,6 +42,15 @@ class ProcessingAnnotationHelper:
     processed_field_names: list[str]
     message: str
     type: AnnotationSourceType = AnnotationSourceType.METADATA
+
+    @classmethod
+    def sequence_annotation_helper(cls, message: str) -> "ProcessingAnnotationHelper":
+        return cls(
+            unprocessed_field_names=[ProcessingAnnotationAlignment],
+            processed_field_names=[ProcessingAnnotationAlignment],
+            message=message,
+            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+        )
 
 
 @dataclass
