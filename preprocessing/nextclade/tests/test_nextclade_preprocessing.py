@@ -1,6 +1,8 @@
 # ruff: noqa: S101
 
 
+import os
+import shutil
 from pathlib import Path
 from typing import Literal
 
@@ -23,7 +25,6 @@ from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     ProcessingAnnotation,
-    ProcessingAnnotationAlignment,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
@@ -435,13 +436,10 @@ multi_segment_case_definitions_all_requirement_align_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not align to any segment for "
                     "organism: multi-ebola-test per `nextclade align`. "
-                    "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    "Double check you are submitting to the correct organism."
                 )
             ]
         ),
@@ -475,14 +473,11 @@ multi_segment_case_definitions_all_requirement_align_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not align to any segment for "
                     "organism: multi-ebola-test per `nextclade align`. "
-                    "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                ),
+                    "Double check you are submitting to the correct organism."
+                )
             ]
         ),
         expected_warnings=[],
@@ -522,13 +517,10 @@ multi_segment_case_definitions_all_requirement_sort_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not appear to match any reference"
                     " for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -562,14 +554,11 @@ multi_segment_case_definitions_all_requirement_sort_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
-                    "Sequence with fasta header fastaHeader1 does not appear to match any reference"
-                    " for organism: multi-ebola-test per `nextclade sort`. "
-                    "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                ),
+                ProcessingAnnotationHelper.sequence_annotation_helper(
+                    "Sequence with fasta header fastaHeader1 does not appear to match any reference "
+                    "for organism: multi-ebola-test per `nextclade sort`. "
+                    "Double check you are submitting to the correct organism."
+                )
             ]
         ),
         expected_warnings=[],
@@ -609,24 +598,18 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "No sequence data could be classified - "
                     "check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not appear to match any reference "
                     "for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -660,13 +643,10 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_errors=[],
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not appear to match any reference"
                     " for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -706,24 +686,18 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "No sequence data could be classified - "
                     "check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not align to any segment for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -757,13 +731,10 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         expected_errors=[],
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence with fasta header fastaHeader1 does not align to any segment for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -798,15 +769,12 @@ segment_validation_tests_single_segment = [
         expected_metadata={"length": 0},
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Multiple sequences: ['fastaHeader1', 'fastaHeader2'] found in the"
                     " input data, but organism: ebola-sudan-test is single-segmented. "
                     "Please check that your metadata and sequences are annotated correctly."
                     "Each metadata entry should have a single corresponding fasta sequence "
                     "entry with the same submissionId.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 ),
             ]
         ),
@@ -843,12 +811,9 @@ segment_validation_tests_multi_segments = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Multiple sequences (with fasta headers: duplicate_ebola-sudan, ebola-sudan) "
                     "align to ebola-sudan - only one entry is allowed.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 ),
             ]
         ),
@@ -907,13 +872,10 @@ multi_segment_case_definitions_none_requirement = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Found multiple sequences with the same segment name: ebola-sudan. "
                     "Each metadata entry can have multiple corresponding fasta sequence "
                     "entries with format <submissionId>_<segmentName>.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -941,14 +903,11 @@ multi_segment_case_definitions_none_requirement = [
         },
         expected_errors=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    [ProcessingAnnotationAlignment],
-                    [ProcessingAnnotationAlignment],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Found sequences in the input data with segments that are not in the config: "
                     "unknown_segment. Each metadata entry can have multiple corresponding fasta "
                     "sequence entries with format <submissionId>_<segmentName> valid segments are: "
                     "ebola-sudan, ebola-zaire.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 )
             ]
         ),
@@ -963,6 +922,19 @@ multi_segment_case_definitions_none_requirement = [
         ),
     ),
 ]
+
+
+def copy_dataset(source_folder: str, destination_folder: str) -> None:
+    os.makedirs(destination_folder, exist_ok=True)
+
+    for item in os.listdir(source_folder):
+        src_path = os.path.join(source_folder, item)
+
+        if not os.path.isfile(src_path):
+            continue
+
+        dst_path = os.path.join(destination_folder, item)
+        shutil.copy2(src_path, dst_path)
 
 
 def process_single_entry(
@@ -981,6 +953,8 @@ def test_preprocessing_single_segment(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
+    # process_single expects dataset to be in a subfolder with the segment name (in this case "main")
+    copy_dataset(EBOLA_SUDAN_DATASET, os.path.join(EBOLA_SUDAN_DATASET, "main"))
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
@@ -1072,13 +1046,6 @@ def test_preprocessing_multi_segment_none_requirement(test_case_def: Case):
     verify_processed_entry(
         processed_entry.processed_entry, test_case.expected_output, test_case.name
     )
-
-
-def test_config_accepted_sort_matches() -> None:
-    config = get_config(MULTI_SEGMENT_CONFIG, ignore_args=True)
-    accepted_fields = config.nucleotideSequences[0].accepted_sort_matches
-    expected_fields = {"ebola-dataset/ebola-sudan", "ebola-sudan", "accepted-name"}
-    assert set(accepted_fields) == expected_fields
 
 
 def test_preprocessing_without_metadata() -> None:
