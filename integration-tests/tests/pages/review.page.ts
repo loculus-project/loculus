@@ -113,6 +113,29 @@ export class ReviewPage {
         );
     }
 
+    /**
+     * Wait until all sequences have been processed (processed count equals total count).
+     * Polls the "X of Y sequences processed" text until X === Y.
+     */
+    async waitForAllProcessed(timeout = 60000) {
+        await expect
+            .poll(
+                async () => {
+                    const processingText = await this.page
+                        .locator('text=/\\d+ of \\d+ sequences processed/')
+                        .textContent();
+                    if (!processingText) return false;
+                    const match = processingText.match(/(\d+) of (\d+)/);
+                    return match && match[1] === match[2];
+                },
+                {
+                    message: 'Processing did not complete',
+                    timeout,
+                },
+            )
+            .toBe(true);
+    }
+
     async navigateToReviewPage() {
         await this.page.goto('/');
         await this.navigation.openOrganismNavigation();

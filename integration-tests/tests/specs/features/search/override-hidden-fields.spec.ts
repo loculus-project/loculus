@@ -3,13 +3,13 @@ import { test } from '../../../fixtures/group.fixture';
 import { ReviewPage } from '../../../pages/review.page';
 import { SearchPage } from '../../../pages/search.page';
 import { SingleSequenceSubmissionPage } from '../../../pages/submission.page';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 test('Override hidden fields', async ({ page, groupId }) => {
     // This test is really slow - it can take at least 150s. Speed depends on how much else is running, hence let's use buffer.
     test.setTimeout(200_000);
     void groupId;
-    const uuid = uuidv4();
+    const uuid = randomUUID();
 
     await page.goto('/');
     const submissionPage = new SingleSequenceSubmissionPage(page);

@@ -1,6 +1,6 @@
 import { test as groupTest } from './group.fixture';
 import { expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { SingleSequenceSubmissionPage } from '../pages/submission.page';
 
 type SequenceFixtures = {
@@ -14,7 +14,7 @@ export const test = groupTest.extend<SequenceFixtures>({
             void groupId;
 
             const submissionPage = new SingleSequenceSubmissionPage(page);
-            const submissionId = `test_${uuidv4().slice(0, 8)}`;
+            const submissionId = `test_${randomUUID().slice(0, 8)}`;
 
             await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
             await submissionPage.fillSubmissionForm({

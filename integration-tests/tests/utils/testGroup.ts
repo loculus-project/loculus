@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface TestGroup {
     name: string;
@@ -20,9 +20,9 @@ export const readonlyGroup: TestGroup = {
     country: 'USA',
 };
 
-export const buildTestGroup = (name = `test_group_${uuidv4().slice(0, 8)}`): TestGroup => ({
+export const buildTestGroup = (name = `test_group_${randomUUID().slice(0, 8)}`): TestGroup => ({
     name,
-    email: `test_${uuidv4().slice(0, 8)}@test.com`,
+    email: `test_${randomUUID().slice(0, 8)}@test.com`,
     institution: 'Test Institution',
     addressLine1: '123 Test Street',
     city: 'Test City',
