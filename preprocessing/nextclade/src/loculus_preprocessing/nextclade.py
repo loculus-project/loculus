@@ -214,6 +214,7 @@ def accepted_sort_matches_or_default(
     return list(accepted_dataset_names)
 
 
+#TODO: to be deprecated and multi-path feature used instead
 def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     result_file_dir: str,
     input_file: str,
@@ -227,9 +228,8 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     - assert highest score is in sequence_and_dataset.accepted_sort_matches
     (default is nextclade_dataset_name)
     """
-    result_file = result_file_dir + "/sort_output.tsv"
     df = run_sort(
-        result_file,
+        result_file_dir + "/sort_output.tsv",
         input_file,
         dataset_dir,
     )
@@ -237,11 +237,7 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
     best_hits = hits.groupby("seqName", as_index=False).first()
 
-    all_ids = df["seqName"].unique()
-    hit_ids = best_hits["seqName"]
-    missing_ids = set(all_ids) - set(hit_ids)
-
-    for seq in missing_ids:
+    for seq in best_hits["seqName"].unique():
         alerts.warnings[seq].append(
             sequence_annotation(
                 "Sequence does not appear to match reference, per `nextclade sort`. "
@@ -297,7 +293,6 @@ def assign_segment(
     4. If no sequences assigned and no errors about missing/duplicate segments, add error about
        no sequence data found (e.g. when alignment requirement is ANY and all sequences miss)
     """
-    seq_names_with_hits = set(best_hits["seqName"].tolist())
     sort_results_map: dict[SegmentName, list[str]] = defaultdict(list)
 
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
@@ -310,7 +305,7 @@ def assign_segment(
 
     for fasta_id in entry.data.unalignedNucleotideSequences:
         seq_id = id_map[(entry.accessionVersion, fasta_id)]
-        if seq_id not in seq_names_with_hits:
+        if seq_id not in best_hits["seqName"].unique():
             has_missing_segments = True
             method = config.segment_classification_method.value
             if method == "minimizer":
@@ -434,7 +429,6 @@ def assign_segment_with_nextclade_align(
     hits = (
         df_combined.dropna(subset=["alignmentScore"])
         .sort_values(by=["seqName", "alignmentScore"], ascending=[True, False])
-        .drop_duplicates(subset="seqName", keep="first")
     )
     best_hits = hits.groupby("seqName", as_index=False).first()
 
