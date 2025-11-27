@@ -35,7 +35,8 @@ logging.basicConfig(
 @dataclass
 class SubmissionResults:
     entries_to_submit: dict[AccessionVersion, dict[str, Any]]
-    entries_with_ext_metadata_to_submit: dict[AccessionVersion, dict[str, Any]]
+    entries_with_complete_ena_metadata: dict[AccessionVersion, dict[str, Any]]
+    entries_with_incomplete_ena_metadata: dict[AccessionVersion, dict[str, Any]]
     revoked_entries: dict[AccessionVersion, dict[str, Any]]
 
 
@@ -55,7 +56,7 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
     return {line.strip() for line in response.text.splitlines() if line.strip()}
 
 
-def filter_for_submission(
+def filter_for_submission(  # noqa: PLR0912
     config: Config,
     db_pool: SimpleConnectionPool,
     entries_iterator: Iterator[dict[str, Any]],
@@ -76,7 +77,8 @@ def filter_for_submission(
           (if it is, we send a separate notification)
     """
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
-    entries_with_external_metadata: set[Accession] = set()
+    entries_with_complete_ena_metadata: set[Accession] = set()
+    entries_with_incomplete_ena_metadata: set[Accession] = set()
     revoked_entries: set[Accession] = set()
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
@@ -109,15 +111,33 @@ def filter_for_submission(
             if entry["metadata"].get(field)
         ]
         if ena_specific_metadata:
-            logger.warning(
-                f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
-                f"submitted by us or {config.ingest_pipeline_submission_group}: "
-                f"{ena_specific_metadata}"
+            all_fields_present = all(
+                entry["metadata"].get(field) for field in ena_specific_metadata_fields
             )
-            entries_with_external_metadata.add(accession)
+
+            if all_fields_present:
+                logger.info(
+                    f"Found sequence: {accession_version} with complete ENA metadata: "
+                    f"{ena_specific_metadata}"
+                )
+                entries_with_complete_ena_metadata.add(accession)
+                entries_with_incomplete_ena_metadata.discard(accession)
+            else:
+                missing_fields = [
+                    field
+                    for field in ena_specific_metadata_fields
+                    if not entry["metadata"].get(field)
+                ]
+                logger.warning(
+                    f"Found sequence: {accession_version} with incomplete ENA metadata. "
+                    f"Missing: {missing_fields}. Present: {ena_specific_metadata}"
+                )
+                entries_with_incomplete_ena_metadata.add(accession)
+                entries_with_complete_ena_metadata.discard(accession)
         else:
-            # If lower version had external metadata and this one doesn't, remove it from that set
-            entries_with_external_metadata.discard(accession)
+            # If lower version had external metadata and this one doesn't, remove it from those sets
+            entries_with_complete_ena_metadata.discard(accession)
+            entries_with_incomplete_ena_metadata.discard(accession)
         entries_to_submit[accession] = entry
         if entry["metadata"].get("isRevocation", True):
             if accession_version in suppressed_accessions:
@@ -126,21 +146,30 @@ def filter_for_submission(
             else:
                 logger.debug(f"Found revoked sequence: {accession_version}")
                 revoked_entries.add(accession)
-            entries_with_external_metadata.discard(accession)
+            entries_with_complete_ena_metadata.discard(accession)
+            entries_with_incomplete_ena_metadata.discard(accession)
         else:
             revoked_entries.discard(accession)
 
+    all_entries_with_external_metadata = (
+        entries_with_complete_ena_metadata | entries_with_incomplete_ena_metadata
+    )
     return SubmissionResults(
         entries_to_submit={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
             if entry["metadata"]["accession"]
-            not in (entries_with_external_metadata | revoked_entries)
+            not in (all_entries_with_external_metadata | revoked_entries)
         },
-        entries_with_ext_metadata_to_submit={
+        entries_with_complete_ena_metadata={
             entry["metadata"]["accessionVersion"]: entry
             for entry in entries_to_submit.values()
-            if entry["metadata"]["accession"] in entries_with_external_metadata
+            if entry["metadata"]["accession"] in entries_with_complete_ena_metadata
+        },
+        entries_with_incomplete_ena_metadata={
+            entry["metadata"]["accessionVersion"]: entry
+            for entry in entries_to_submit.values()
+            if entry["metadata"]["accession"] in entries_with_incomplete_ena_metadata
         },
         revoked_entries={
             entry["metadata"]["accessionVersion"]: entry
@@ -227,21 +256,33 @@ def get_ena_submission_list(config_file) -> None:
             send_slack_notification_with_file(
                 slack_config, message, submission_results.entries_to_submit, output_file
             )
-        if submission_results.entries_with_ext_metadata_to_submit:
+        if submission_results.entries_with_complete_ena_metadata:
             message = (
-                f"{config.backend_url}: {organism} - ENA Submission pipeline found "
-                f"{len(submission_results.entries_with_ext_metadata_to_submit)} sequences with"
-                " ena-specific-metadata fields"
-                " and not submitted by us or ingested from the INSDC, this might be a user error."
-                " If you think this is accurate ensure bioproject and biosample are set correctly."
-                " Bioprojects should be public and SRA accessions should also include bioprojects"
-                " and biosamples."
+                f"{config.backend_url}: {organism} - Found "
+                f"{len(submission_results.entries_with_complete_ena_metadata)} sequences "
+                f"with complete ENA metadata (usually: bioproject, biosample, sraRunAccession). "
+                f"Before submitting, verify that these accessions are public and that the SRA "
+                f"accessions correctly reference the bioproject and biosample."
             )
-            output_file = f"{organism}_with_ena_fields_{output_file_suffix}"
+            output_file = f"{organism}_complete_ena_metadata_{output_file_suffix}"
             send_slack_notification_with_file(
                 slack_config,
                 message,
-                submission_results.entries_with_ext_metadata_to_submit,
+                submission_results.entries_with_complete_ena_metadata,
+                output_file,
+            )
+        if submission_results.entries_with_incomplete_ena_metadata:
+            message = (
+                f"{config.backend_url}: {organism} - Found "
+                f"{len(submission_results.entries_with_incomplete_ena_metadata)} sequences "
+                f"with incomplete ENA metadata. Not all expected fields are present. "
+                f"This may be user error - please review."
+            )
+            output_file = f"{organism}_incomplete_ena_metadata_{output_file_suffix}"
+            send_slack_notification_with_file(
+                slack_config,
+                message,
+                submission_results.entries_with_incomplete_ena_metadata,
                 output_file,
             )
         if submission_results.revoked_entries:
