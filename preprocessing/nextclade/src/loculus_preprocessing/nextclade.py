@@ -17,6 +17,7 @@ from Bio import SeqIO
 from .config import Config
 from .datatypes import (
     AccessionVersion,
+    Alert,
     Alerts,
     AminoAcidInsertion,
     AminoAcidSequence,
@@ -205,7 +206,7 @@ def run_sort(
     missing_ids = set(all_ids) - set(hit_ids)
 
     for seq in missing_ids:
-        alerts.warnings[seq].append(
+        alerts[seq].warnings.append(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -219,7 +220,7 @@ def run_sort(
     for _, row in best_hits.iterrows():
         # If best match is not the same as the dataset we are submitting to, add an error
         if row["dataset"] not in accepted_dataset_names:
-            alerts.errors[row["seqName"]].append(
+            alerts[row["seqName"]].errors.append(
                 ProcessingAnnotation.from_single(
                     ProcessingAnnotationAlignment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -284,15 +285,15 @@ def load_aligned_aa_sequences(
 def add_segment_name_error_warning(
     entry: UnprocessedEntry,
     config: Config,
-    alerts: Alerts,
 ) -> tuple[
-    Alerts,
+    Alert,
     dict[SegmentName, NucleotideSequence | None],
     dict[SegmentName, NucleotideSequence | None],
 ]:
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
     aligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
-    id = entry.accessionVersion
+    alert: Alert = Alert()
+
     num_valid_segments = 0
     num_duplicate_segments = 0
     for segment in config.nucleotideSequences:
@@ -303,7 +304,7 @@ def add_segment_name_error_warning(
         ]
         if len(unaligned_segment) > 1:
             num_duplicate_segments += len(unaligned_segment)
-            alerts.errors[id].append(
+            alert.errors.append(
                 ProcessingAnnotation.from_single(
                     segment,
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -320,7 +321,7 @@ def add_segment_name_error_warning(
         len(entry.data.unalignedNucleotideSequences) - num_valid_segments - num_duplicate_segments
         > 0
     ):
-        alerts.errors[id].append(
+        alert.errors.append(
             ProcessingAnnotation.from_single(
                 ProcessingAnnotationAlignment,
                 AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
@@ -330,7 +331,7 @@ def add_segment_name_error_warning(
                 ),
             ),
         )
-    return alerts, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
+    return alert, unaligned_nucleotide_sequences, aligned_nucleotide_sequences
 
 
 def enrich_with_nextclade(
@@ -355,7 +356,7 @@ def enrich_with_nextclade(
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = defaultdict(dict)
-    alerts: Alerts = Alerts()
+    alerts: Alerts = defaultdict(lambda: Alert())
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
@@ -363,8 +364,8 @@ def enrich_with_nextclade(
         input_metadata[id]["submitter"] = entry.data.submitter
         input_metadata[id]["group_id"] = entry.data.group_id
         input_metadata[id]["submittedAt"] = entry.data.submittedAt
-        alerts, unaligned_nucleotide_sequences[id], aligned_nucleotide_sequences[id] = (
-            add_segment_name_error_warning(entry, config, alerts)
+        alerts[id], unaligned_nucleotide_sequences[id], aligned_nucleotide_sequences[id] = (
+            add_segment_name_error_warning(entry, config)
         )
 
     aligned_aminoacid_sequences: dict[
@@ -442,8 +443,8 @@ def enrich_with_nextclade(
             nucleotideInsertions=nucleotide_insertions[id],
             alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
-            errors=alerts.errors[id],
-            warnings=alerts.warnings[id],
+            errors=alerts[id].errors,
+            warnings=alerts[id].warnings,
         )
         for id in input_metadata
     }
