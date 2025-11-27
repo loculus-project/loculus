@@ -224,8 +224,9 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
          version: 1
          dockerTag: commit-xxxxx
          configFile:
-            nextclade_dataset_name: nextstrain/wnv/all-lineages
-            genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+            nucleotideSequences:
+            - name: main # default value, not actually required
+               nextclade_dataset_name: nextstrain/wnv/all-lineages
             batch_size: 100
       -  image: ghcr.io/loculus-project/preprocessing-nextclade
          args:
@@ -233,7 +234,8 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
          version: 2
          dockerTag: commit-yyyyyyy
          configFile:
-            nextclade_dataset_name: nextstrain/wnv/all-lineages
-            genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+            nucleotideSequences:
+            - name: main
+               nextclade_dataset_name: nextstrain/wnv/all-lineages
             batch_size: 100
 ```
