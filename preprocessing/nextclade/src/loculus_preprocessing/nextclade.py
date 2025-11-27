@@ -266,33 +266,24 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
 def write_nextclade_input_fasta(
     unprocessed: Sequence[UnprocessedEntry], input_file: str
-) -> tuple[
-    dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]],
-    defaultdict[str, tuple[AccessionVersion, FastaId]],
-]:
+) -> defaultdict[tuple[AccessionVersion, FastaId], str]:
     """
     Write unprocessed sequences to a fasta file for nextclade input
     """
-    input_unaligned_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = defaultdict(dict)
     id_map: defaultdict[tuple[AccessionVersion, FastaId], str] = defaultdict()
     os.makedirs(os.path.dirname(input_file), exist_ok=True)
     with open(input_file, "w", encoding="utf-8") as f:
         for entry in unprocessed:
             accession_version = entry.accessionVersion
-            input_unaligned_sequences[accession_version] = entry.data.unalignedNucleotideSequences
-            for fasta_id, seq in input_unaligned_sequences[accession_version].items():
+            for fasta_id, seq in entry.data.unalignedNucleotideSequences.items():
                 id = f"{accession_version}__{fasta_id}"
                 id_map[(accession_version, fasta_id)] = id
                 f.write(f">{id}\n")
                 f.write(f"{seq}\n")
-    return input_unaligned_sequences, id_map
+    return id_map
 
 
-def assign_segment(
-    entry: UnprocessedEntry, id_map, best_hits, config: Config
-) -> SegmentAssignment:
+def assign_segment(entry: UnprocessedEntry, id_map, best_hits, config: Config) -> SegmentAssignment:
     seq_names_with_hits = set(best_hits["seqName"].tolist())
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
     sequenceNameToFastaId: dict[SegmentName, FastaId] = defaultdict(dict)
@@ -396,7 +387,7 @@ def assign_segment_with_nextclade_align(
     all_dfs = []
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        _, id_map = write_nextclade_input_fasta(unprocessed, input_file)
+        id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
         for sequence_and_dataset in config.nucleotideSequences:
             segment = sequence_and_dataset.name
@@ -465,7 +456,7 @@ def assign_segment_with_nextclade_sort(
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        _, id_map = write_nextclade_input_fasta(unprocessed, input_file)
+        id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
         df = run_sort(
             result_file=result_dir + "/sort_output.tsv",
