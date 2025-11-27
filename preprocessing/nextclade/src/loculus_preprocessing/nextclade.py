@@ -236,7 +236,7 @@ def check_nextclade_sort_matches(  # noqa: PLR0913, PLR0917
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
     best_hits = hits.groupby("seqName", as_index=False).first()
-    missing_ids = df["seqName"].unique() - best_hits["seqName"].unique()
+    missing_ids = set(df["seqName"].unique()) - set(best_hits["seqName"].unique())
 
     for seq in missing_ids:
         alerts.warnings[seq].append(
