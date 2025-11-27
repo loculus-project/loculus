@@ -90,19 +90,6 @@ class Config:
     )
 
 
-def get_accepted_sort_matches(
-    segment: NextcladeSequenceAndDataset,
-) -> list[str]:
-    accepted_dataset_names = set()
-
-    if segment.accepted_sort_matches:
-        accepted_dataset_names.update(segment.accepted_sort_matches)
-    if segment.nextclade_dataset_name:
-        accepted_dataset_names.add(segment.nextclade_dataset_name)
-    accepted_dataset_names.add(segment.name)
-    return list(accepted_dataset_names)
-
-
 def assign_nextclade_sequence_and_dataset(
     nuc_seq_values: list[dict[str, Any]],
 ) -> list[NextcladeSequenceAndDataset]:
@@ -118,7 +105,6 @@ def assign_nextclade_sequence_and_dataset(
         for seq_key, seq_value in value.items():
             if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
                 setattr(seq_and_dataset, seq_key, seq_value)
-        seq_and_dataset.accepted_sort_matches = get_accepted_sort_matches(seq_and_dataset)
         nextclade_sequence_and_dataset_list.append(seq_and_dataset)
     return nextclade_sequence_and_dataset_list
 
