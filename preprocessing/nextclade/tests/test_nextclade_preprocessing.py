@@ -1146,7 +1146,7 @@ def multiple_valid_segments_error(metadata_name: str) -> ProcessingAnnotation:
         ],
         processedFields=[AnnotationSource(name=metadata_name, type=AnnotationSourceType.METADATA)],
         message="Organism multi-ebola-test is configured to only accept one segment per submission,"
-          " found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
+        " found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
     )
 
 
