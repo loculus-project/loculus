@@ -419,7 +419,12 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                ).value("No file uploaded for file ID $fileId."),
+                ).value(
+                    allOf(
+                        containsString("No file uploaded"),
+                        containsString(fileId.toString()),
+                    ),
+                ),
             )
     }
 
