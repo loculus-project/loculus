@@ -291,13 +291,9 @@ def write_nextclade_input_fasta(
 
 
 def process_unprocessed_entries(
-    entry: UnprocessedEntry,
-    id_map,
-    seq_names_with_hits,
-    best_hits,
-    config: Config,
-    sequenceNameToFastaId,
+    entry: UnprocessedEntry, id_map, best_hits, config: Config
 ) -> SegmentAssignment:
+    seq_names_with_hits = set(best_hits["seqName"].tolist())
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict(dict)
     sequenceNameToFastaId: dict[SegmentName, FastaId] = defaultdict(dict)
     errors: list[ProcessingAnnotation] = []
@@ -330,11 +326,7 @@ def process_unprocessed_entries(
             if (
                 config.segment_classification_method == SegmentClassificationMethod.ALIGN
                 and best_hit["segment"].iloc[0] == segment.name
-            ):
-                not_found = False
-                sort_results_map.setdefault(segment.name, []).append(fasta_id)
-                break
-            elif (
+            ) or (
                 config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
                 and best_hit["dataset"].iloc[0] in accepted_sort_matches_or_default(segment)
             ):
@@ -355,7 +347,6 @@ def process_unprocessed_entries(
             else:
                 warnings.append(annotation)
 
-    # handle duplicates and fill outputs
     for segment_name, headers in sort_results_map.items():
         if len(headers) > 1:
             has_duplicate_segments = True
@@ -436,18 +427,14 @@ def assign_segment_with_nextclade_align(
         .sort_values(by=["seqName", "alignmentScore"], ascending=[True, False])
         .drop_duplicates(subset="seqName", keep="first")
     )
-
-    seq_names_with_hits = set(hits["seqName"].tolist())
     best_hits = hits.groupby("seqName", as_index=False).first()
 
     for entry in unprocessed:
         segment_assignment = process_unprocessed_entries(
             entry,
             id_map,
-            seq_names_with_hits,
             best_hits,
             config,
-            sequenceNameToFastaId,
         )
         accession_version = entry.accessionVersion
         sequenceNameToFastaId[accession_version] = segment_assignment.sequenceNameToFastaId
@@ -478,7 +465,7 @@ def assign_segment_with_nextclade_sort(
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
-        input_unaligned_sequences, id_map = write_nextclade_input_fasta(unprocessed, input_file)
+        _, id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
         df = run_sort(
             result_file=result_dir + "/sort_output.tsv",
@@ -487,17 +474,14 @@ def assign_segment_with_nextclade_sort(
         )
 
     hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
-    seq_names_with_hits = set(df.dropna(subset=["score"])["seqName"].tolist())
     best_hits = hits.groupby("seqName", as_index=False).first()
 
     for entry in unprocessed:
         segment_assignment = process_unprocessed_entries(
             entry,
             id_map,
-            seq_names_with_hits,
             best_hits,
             config,
-            sequenceNameToFastaId,
         )
         accession_version = entry.accessionVersion
         sequenceNameToFastaId[accession_version] = segment_assignment.sequenceNameToFastaId
