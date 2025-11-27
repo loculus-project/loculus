@@ -8,7 +8,6 @@ genes:
 log_level: DEBUG
 minimizer_index: TEST
 segment_classification_method: "minimizer"
-nextclade_dataset_server: TEST
 nucleotideSequences:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
