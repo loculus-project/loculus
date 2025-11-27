@@ -265,10 +265,28 @@ export class CliPage {
         options?: { assertSuccess?: boolean; maxRetries?: number },
     ): Promise<CliResult> {
         const maxRetries = options?.assertSuccess === false ? 0 : (options?.maxRetries ?? 3);
-        let lastResult: CliResult | null = null;
 
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            const result = await this.execute([
+        // First attempt
+        let result = await this.execute([
+            'auth',
+            'login',
+            '--username',
+            username,
+            '--password',
+            password,
+        ]);
+
+        // Retry loop (only if first attempt failed)
+        for (let attempt = 1; attempt <= maxRetries && result.exitCode !== 0; attempt++) {
+            // Don't retry on invalid credentials (expected failure)
+            if (result.stderr.includes('Invalid username or password')) {
+                break;
+            }
+
+            // Wait before retrying (exponential backoff: 500ms, 1s, 2s)
+            await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
+
+            result = await this.execute([
                 'auth',
                 'login',
                 '--username',
@@ -276,27 +294,12 @@ export class CliPage {
                 '--password',
                 password,
             ]);
-            lastResult = result;
-
-            if (result.exitCode === 0) {
-                return result;
-            }
-
-            // Don't retry on invalid credentials (expected failure)
-            if (result.stderr.includes('Invalid username or password')) {
-                break;
-            }
-
-            // Wait before retrying (exponential backoff: 500ms, 1s, 2s)
-            if (attempt < maxRetries) {
-                await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt)));
-            }
         }
 
         if (options?.assertSuccess !== false) {
-            this.assertSuccess(lastResult!, 'Login');
+            this.assertSuccess(result, 'Login');
         }
-        return lastResult!;
+        return result;
     }
 
     /**
