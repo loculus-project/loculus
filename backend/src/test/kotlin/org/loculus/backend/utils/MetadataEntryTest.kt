@@ -123,6 +123,105 @@ class MetadataEntryTest {
         assert(exception.message!!.contains("not a valid TSV file"))
         assert(exception.message!!.contains("Common causes include"))
     }
+
+    @Test
+    fun `test maxSequencesPerEntry not set allows multiple sequences`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1 seq2 seq3${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = null).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1", "seq2", "seq3"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry allows sequences within limit`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1 seq2${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1", "seq2"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry allows sequences at exact limit`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1 seq2 seq3${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1", "seq2", "seq3"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry rejects sequences exceeding limit`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1 seq2 seq3 seq4${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
+        }
+        assert(exception.message!!.contains("record #1"))
+        assert(exception.message!!.contains("foo"))
+        assert(exception.message!!.contains("found 4 fasta ids"))
+        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 3"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry with single sequence limit`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1 seq2${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
+        }
+        assert(exception.message!!.contains("record #1"))
+        assert(exception.message!!.contains("foo"))
+        assert(exception.message!!.contains("found 2 fasta ids"))
+        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 1"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry allows single sequence when limit is 1`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo${'\t'}seq1${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1"))
+    }
+
+    @Test
+    fun `test maxSequencesPerEntry correct record number for multiple rows`() {
+        val str = """
+            submissionId${'\t'}fastaId${'\t'}Country
+            foo1${'\t'}seq1${'\t'}bar
+            foo2${'\t'}seq2 seq3${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
+        }
+        assert(exception.message!!.contains("record #2"))
+        assert(exception.message!!.contains("foo2"))
+    }
 }
 
 class RevisionEntryTest {
@@ -212,5 +311,47 @@ class RevisionEntryTest {
         }
         assert(exception.message!!.contains("Record #1"))
         assert(exception.message!!.contains("accession"))
+    }
+
+    @Test
+    fun `test revision maxSequencesPerEntry allows sequences within limit`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            foo${'\t'}ACC123${'\t'}seq1 seq2${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1", "seq2"))
+    }
+
+    @Test
+    fun `test revision maxSequencesPerEntry rejects sequences exceeding limit`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            foo${'\t'}ACC123${'\t'}seq1 seq2 seq3${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 2).toList()
+        }
+        assert(exception.message!!.contains("record #1"))
+        assert(exception.message!!.contains("foo"))
+        assert(exception.message!!.contains("found 3 fasta ids"))
+        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 2"))
+    }
+
+    @Test
+    fun `test revision maxSequencesPerEntry with single sequence limit`() {
+        val str = """
+            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            foo${'\t'}ACC123${'\t'}seq1${'\t'}bar
+        """.trimIndent()
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
+        assert(entries.size == 1)
+        assert(entries[0].submissionId == "foo")
+        assert(entries[0].fastaIds == listOf("seq1"))
     }
 }

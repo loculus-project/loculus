@@ -14,10 +14,7 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
-import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -41,7 +38,6 @@ private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
 typealias FastaId = String
-typealias SegmentName = String
 
 const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
 
@@ -88,7 +84,6 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
-    private val s3Service: S3Service,
 ) {
 
     companion object AcceptedFileTypes {
@@ -259,10 +254,15 @@ class SubmitModel(
                 "from $submissionParams.submitter with UploadId $uploadId"
         }
         val now = dateProvider.getCurrentDateTime()
+        val maxSequencesPerEntry = backendConfig.getInstanceConfig(submissionParams.organism)
+            .schema
+            .submissionDataTypes
+            .maxSequencesPerEntry
+
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream)
+                    metadataEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
@@ -278,7 +278,7 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream)
+                    revisionEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
