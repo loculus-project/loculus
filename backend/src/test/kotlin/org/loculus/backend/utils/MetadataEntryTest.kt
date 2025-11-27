@@ -134,7 +134,7 @@ class MetadataEntryTest {
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = null).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1", "seq2", "seq3"))
+        assert(entries[0].fastaIds == setOf("seq1", "seq2", "seq3"))
     }
 
     @Test
@@ -147,7 +147,7 @@ class MetadataEntryTest {
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1", "seq2"))
+        assert(entries[0].fastaIds == setOf("seq1", "seq2"))
     }
 
     @Test
@@ -160,7 +160,7 @@ class MetadataEntryTest {
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1", "seq2", "seq3"))
+        assert(entries[0].fastaIds == setOf("seq1", "seq2", "seq3"))
     }
 
     @Test
@@ -205,7 +205,7 @@ class MetadataEntryTest {
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1"))
+        assert(entries[0].fastaIds == setOf("seq1"))
     }
 
     @Test
@@ -323,7 +323,7 @@ class RevisionEntryTest {
         val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1", "seq2"))
+        assert(entries[0].fastaIds == setOf("seq1", "seq2"))
     }
 
     @Test
@@ -352,6 +352,6 @@ class RevisionEntryTest {
         val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
         assert(entries.size == 1)
         assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == listOf("seq1"))
+        assert(entries[0].fastaIds == setOf("seq1"))
     }
 }
