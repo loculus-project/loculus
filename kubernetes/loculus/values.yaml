@@ -1324,9 +1324,11 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
-        genes: []
         batch_size: 100
         create_embl_file: true
+        nucleotideSequences:
+          - name: "main"
+            genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
