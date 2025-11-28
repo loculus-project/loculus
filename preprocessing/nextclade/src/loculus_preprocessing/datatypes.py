@@ -1,4 +1,3 @@
-from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
@@ -139,13 +138,12 @@ class Annotation:
 
 
 @dataclass
-class Alerts:
-    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+class Alert:
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+Alerts = dict[AccessionVersion, Alert]
 
 
 @dataclass
@@ -193,8 +191,7 @@ class SegmentClassificationMethod(StrEnum):
 class SegmentAssignment:
     unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
     sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
-    errors: list[ProcessingAnnotation]
-    warnings: list[ProcessingAnnotation]
+    alert: Alert
 
 
 @dataclass
