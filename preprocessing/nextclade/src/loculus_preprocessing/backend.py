@@ -15,6 +15,8 @@ import jwt
 import pytz
 import requests
 
+from .nextclade import get_nextclade_dataset_server
+
 from .config import Config
 from .datatypes import (
     FileUploadInfo,
@@ -224,8 +226,8 @@ def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
 def download_minimizer(config: Config, save_path: str) -> None:
     if config.minimizer_url:
         url = config.minimizer_url
-    elif config.nextclade_dataset_server:
-        url = config.nextclade_dataset_server.rstrip("/") + "/minimizer_index.json"
+    elif get_nextclade_dataset_server(config) is not None:
+        url = get_nextclade_dataset_server(config).rstrip("/") + "/minimizer_index.json"
     else:
         msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
         logger.error(msg)
