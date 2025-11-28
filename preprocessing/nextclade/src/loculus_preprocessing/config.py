@@ -91,7 +91,7 @@ class Config:
 
 
 def assign_nextclade_sequence_and_dataset(
-    nuc_seq_values: list[dict[str, Any]],
+    nuc_seq_values: list[dict[str, Any]], config: Config
 ) -> list[NextcladeSequenceAndDataset]:
     if not isinstance(nuc_seq_values, list):
         error_msg = f"nucleotideSequences should be a list of dicts, got: {type(nuc_seq_values)}"
@@ -105,6 +105,8 @@ def assign_nextclade_sequence_and_dataset(
         for seq_key, seq_value in value.items():
             if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
                 setattr(seq_and_dataset, seq_key, seq_value)
+        if not seq_and_dataset.nextclade_dataset_server:
+            seq_and_dataset.nextclade_dataset_server = config.nextclade_dataset_server
         nextclade_sequence_and_dataset_list.append(seq_and_dataset)
     return nextclade_sequence_and_dataset_list
 
@@ -127,7 +129,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
             if key == "nucleotideSequences":
-                setattr(config, key, assign_nextclade_sequence_and_dataset(value))
+                setattr(config, key, assign_nextclade_sequence_and_dataset(value, config))
                 continue
             attr = getattr(config, key)
             if isinstance(attr, StrEnum):
