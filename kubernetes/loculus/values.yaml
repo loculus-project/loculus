@@ -1877,7 +1877,8 @@ defaultOrganisms:
               gene_prefix: "EV-A71-"
             - name: EV-D68
               gene_prefix: "EV-D68-"
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68
+              nextclade_dataset_name: enpen/enterovirus/ev-d68
+              nextclade_dataset_server: https://data.clades.nextstrain.org/v3
           nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
     ingest:
       <<: *ingest
