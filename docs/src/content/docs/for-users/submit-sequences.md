@@ -24,19 +24,19 @@ Before starting the upload process, ensure your data is correctly formatted. Eve
 Loculus expects:
 
 - Sequence data in [`fasta` format](../../reference/fasta-format) with a unique `fastaId` per sequence.
-- Metadata for each sample with a unique `submissionId`.
+- Metadata for each sample with a unique `id`.
   - When uploading through the API, only `tsv` is supported.
   - When uploading through the website, `xlsx` files are also accepted.
   - Each organism has its own metadata template available on the submission page.
   - You can map columns from your file to the expected metadata fields using the **Add column mapping** option.
 
-By default, Loculus matches metadata and sequences using `submissionId` and `fastaId` (i.e. the sequence with `fastaId=12` will be joined with the metadata entry with `submissionId=12`). For multi-segmented pathogens, you can provide an additional metadata field called `fastaId` containing a space-separated list of fastaIds to link multiple sequences to a single submission.
+By default, Loculus matches metadata and sequences using `id` and `fastaId` (i.e. the sequence with `fastaId=12` will be joined with the metadata entry with `id=12`). For multi-segmented pathogens, you can provide an additional metadata field called `fastaId` containing a space-separated list of fastaIds to link multiple sequences to a single submission.
 
 ![Metadata template.](../../../assets/MetadataTemplate.png)
 
 ### Multi-segmented Pathogens
 
-Multi-segmented pathogens must have one unique `submissionId` per **isolate** (i.e. one per pathogen sample containing all segments). Each segment requires its own unique `fastaId`. Metadata is uploaded per isolate, meaning there will be a single metadata row per `submissionId`. This row should include a `fastaId` field listing all segment IDs, separated by spaces.
+Multi-segmented pathogens must have one unique `id` per **isolate** (i.e. one per pathogen sample containing all segments). Each segment requires its own unique `fastaId`. Metadata is uploaded per isolate, meaning there will be a single metadata row per `id`. This row should include a `fastaId` field listing all segment `fastaId`s, separated by spaces.
 
 Segment-specific metadata fields (e.g. `length_{segmentName}`) must be provided individually for each segment.
 
