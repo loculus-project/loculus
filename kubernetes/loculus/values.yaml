@@ -1324,6 +1324,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       replicas: 2
       configFile: &preprocessingConfigFile
         log_level: DEBUG
+        genes: []
         batch_size: 100
         create_embl_file: true
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
@@ -1347,6 +1348,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nucleotideSequences:
             - nextclade_dataset_name: nextstrain/ebola/sudan
+              genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
     ingest:
       <<: *ingest
@@ -1423,6 +1425,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nucleotideSequences:
             - nextclade_dataset_name: nextstrain/wnv/all-lineages
+              genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
     ingest:
       <<: *ingest
@@ -1744,10 +1747,13 @@ defaultOrganisms:
           nucleotideSequences:
             - name: L
               nextclade_dataset_name: community/pathoplexus/cchfv/L
+              genes: [RdRp]
             - name: M
               nextclade_dataset_name: community/pathoplexus/cchfv/M
+              genes: [GPC]
             - name: S
               nextclade_dataset_name: community/pathoplexus/cchfv/S
+              genes: [NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1869,14 +1875,18 @@ defaultOrganisms:
               nextclade_dataset_name: enpen/enterovirus/CV-A16
               accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
               gene_prefix: "CV-A16-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: CV-A10
               nextclade_dataset_name: enpen/enterovirus/CV-A10
               gene_prefix: "CV-A10-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-A71
               nextclade_dataset_name: enpen/enterovirus/EV-A71
               gene_prefix: "EV-A71-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-D68
               gene_prefix: "EV-D68-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
               nextclade_dataset_name: enpen/enterovirus/ev-d68
               nextclade_dataset_server: https://data.clades.nextstrain.org/v3
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output

@@ -47,6 +47,7 @@ class NextcladeSequenceAndDataset:
     nextclade_dataset_server: str | None = None
     accepted_sort_matches: list[str] = dataclasses.field(default_factory=list)
     gene_prefix: str | None = None
+    genes: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclass
@@ -65,7 +66,6 @@ class Config:
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    genes: list[str] = dataclasses.field(default_factory=list)
     nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
         default_factory=list
     )

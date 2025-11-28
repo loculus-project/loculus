@@ -85,6 +85,10 @@ def mask_terminal_gaps(
     )
 
 
+def create_gene_name(gene: str, gene_prefix: str | None) -> str:
+    return gene_prefix + gene if gene_prefix else gene
+
+
 def parse_nextclade_tsv(
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
@@ -114,11 +118,7 @@ def parse_nextclade_tsv(
                     continue
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in config.genes:
-                    gene_name = (
-                        sequence_and_dataset.gene_prefix + gene
-                        if sequence_and_dataset.gene_prefix
-                        else gene
-                    )
+                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
                     amino_acid_insertions[id][gene_name].append(val)
                 else:
                     logger.debug(
@@ -682,20 +682,24 @@ def load_aligned_aa_sequences(
     Load the nextclade amino acid alignment results into the aligned_aminoacid_sequences dict, mapping each
     accession to a geneName: AminoAcidSequence dictionary.
     """
-    for gene in config.genes:
-        translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
-        try:
-            with open(translation_path, encoding="utf-8") as aligned_translations:
-                aligned_translation = SeqIO.parse(aligned_translations, "fasta")
-                for aligned_sequence in aligned_translation:
-                    sequence_id = aligned_sequence.id
-                    masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
-                    aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
-        except FileNotFoundError:
-            # This can happen if the sequence does not cover this gene
-            logger.debug(
-                f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
-            )
+    for segment_sequence_and_dataset in config.nucleotideSequences:
+        for gene in segment_sequence_and_dataset.genes:
+            translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
+            try:
+                with open(translation_path, encoding="utf-8") as aligned_translations:
+                    aligned_translation = SeqIO.parse(aligned_translations, "fasta")
+                    for aligned_sequence in aligned_translation:
+                        sequence_id = aligned_sequence.id
+                        masked_sequence = mask_terminal_gaps(
+                            str(aligned_sequence.seq), mask_char="X"
+                        )
+                        gene_name = create_gene_name(gene, segment_sequence_and_dataset.gene_prefix)
+                        aligned_aminoacid_sequences[sequence_id][gene_name] = masked_sequence
+            except FileNotFoundError:
+                # This can happen if the sequence does not cover this gene
+                logger.debug(
+                    f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
+                )
     return aligned_aminoacid_sequences
 
 
