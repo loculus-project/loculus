@@ -1892,7 +1892,7 @@ defaultOrganisms:
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
               nextclade_dataset_name: enpen/enterovirus/ev-d68
               nextclade_dataset_server: https://data.clades.nextstrain.org/v3
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest
       configFile:
