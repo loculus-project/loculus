@@ -16,7 +16,7 @@ The text immediately following `>` and extending to the first space (or the end 
 
 For isolates composed of multiple segments, Loculus requires one metadata entry per sample, and every segment must appear as a separate sequence in the uploaded FASTA file.
 
-The metadata file should include a field named `fastaId`, containing a space-separated list of all FASTA IDs associated with that sample. For example, if the following three sequences correspond to the metadata entry NIPAK-sample, the fastaID should be:
+The metadata file should include a field named `fastaId`, containing a space-separated list of all FASTA IDs associated with that sample. For example, if the following three sequences correspond to the metadata entry NIPAK-sample, the `fastaId` should be:
 
 ```
 test_NIHPAK-19_L test_NIHPAK-19_M test_NIHPAK-19_S
