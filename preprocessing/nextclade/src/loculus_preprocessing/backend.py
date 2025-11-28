@@ -225,7 +225,7 @@ def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
 def download_minimizer(config: Config, save_path: str) -> None:
     if config.minimizer_url:
         url = config.minimizer_url
-    elif get_nextclade_dataset_server(config) is not None:
+    elif get_nextclade_dataset_server(config, "main") is not None:
         url = get_nextclade_dataset_server(config).rstrip("/") + "/minimizer_index.json"
     else:
         msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
