@@ -1,7 +1,4 @@
 batch_size: 100
-genes:
-- NPEbolaSudan
-- VP35EbolaSudan
 log_level: DEBUG
 nextclade_dataset_server: TEST
 scientific_name: "Test Ebola Sudan Virus"
@@ -11,6 +8,7 @@ db_name: "Loculus"
 minimizer_index: TEST
 nucleotideSequences:
 - nextclade_dataset_name: ebola-sudan-test-dataset
+  genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]
 organism: ebola-sudan-test
 processing_spec:
   completeness:

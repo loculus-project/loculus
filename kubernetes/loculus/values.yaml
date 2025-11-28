@@ -1326,6 +1326,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         batch_size: 100
         create_embl_file: true
+        nucleotideSequences:
+          - name: "main"
+            genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1347,6 +1350,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nucleotideSequences:
             - nextclade_dataset_name: nextstrain/ebola/sudan
+              genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
     ingest:
       <<: *ingest
@@ -1423,6 +1427,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           nucleotideSequences:
             - nextclade_dataset_name: nextstrain/wnv/all-lineages
+              genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
     ingest:
       <<: *ingest
@@ -1744,10 +1749,13 @@ defaultOrganisms:
           nucleotideSequences:
             - name: L
               nextclade_dataset_name: community/pathoplexus/cchfv/L
+              genes: [RdRp]
             - name: M
               nextclade_dataset_name: community/pathoplexus/cchfv/M
+              genes: [GPC]
             - name: S
               nextclade_dataset_name: community/pathoplexus/cchfv/S
+              genes: [NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1789,13 +1797,13 @@ defaultOrganisms:
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A16+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a16&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (CV-A10)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:CV-A10+rich|fasta]}}&dataset-name=enpen/enterovirus/cv-a10&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (EV-A71)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-A71+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-a71&dataset-server=https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output"
         - name: "Nextclade (EV-D68)"
-          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68&dataset-server=https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output"
+          url: "https://clades.nextstrain.org/?input-fasta={{[unalignedNucleotideSequences:EV-D68+rich|fasta]}}&dataset-name=enpen/enterovirus/ev-d68"
       metadataAdd:
         - &evMetadataAdd
           name: clade_cv_a16
@@ -1866,19 +1874,27 @@ defaultOrganisms:
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nucleotideSequences:
             - name: CV-A16
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16
+              nextclade_dataset_name: enpen/enterovirus/cv-a16
               accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
               gene_prefix: "CV-A16-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: CV-A10
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10
+              nextclade_dataset_name: enpen/enterovirus/cv-a10
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
               gene_prefix: "CV-A10-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-A71
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71
+              nextclade_dataset_name: enpen/enterovirus/ev-a71
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
               gene_prefix: "EV-A71-"
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-D68
               gene_prefix: "EV-D68-"
-              nextclade_dataset_name: community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68
-          nextclade_dataset_server: https://raw.githubusercontent.com/alejandra-gonzalezsanchez/nextclade_data/multi-pathogen-evs/data_output
+              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              nextclade_dataset_name: enpen/enterovirus/ev-d68
+              nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest
       configFile:

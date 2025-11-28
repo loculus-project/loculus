@@ -155,6 +155,7 @@ organisms:
           batch_size: 100
           nucleotideSequences:
             - name: 'main'
+              genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:
