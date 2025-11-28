@@ -334,7 +334,9 @@ def enrich_with_nextclade(  # noqa: C901, PLR0912, PLR0914, PLR0915
                 continue
 
             if config.require_nextclade_sort_match:
-                alerts = run_sort(result_dir_seg, input_file, alerts, config, segment, dataset_dir)
+                alerts = run_sort(
+                    result_dir_seg, input_file, alerts, config, segment, dataset_dir_seg
+                )
 
             command = [
                 "nextclade3",

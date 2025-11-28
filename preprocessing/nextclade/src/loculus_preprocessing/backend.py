@@ -222,24 +222,32 @@ def upload_embl_file_to_presigned_url(content: str, url: str) -> None:
         raise RuntimeError(msg)
 
 
-def download_minimizer(config: Config, save_path: str) -> None:
-    if config.minimizer_url:
-        url = config.minimizer_url
-    elif get_nextclade_dataset_server(config, "main") is not None:
-        url = get_nextclade_dataset_server(config).rstrip("/") + "/minimizer_index.json"
-    else:
-        msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
-        logger.error(msg)
-        raise RuntimeError(msg)
+def download_minimizer(config: Config, results_dir: str) -> None:
+    for segment in config.nucleotideSequences:
+        if config.minimizer_url:
+            url = config.minimizer_url
+        elif get_nextclade_dataset_server(config, segment) is not None:
+            url = (
+                get_nextclade_dataset_server(config, segment).rstrip("/") + "/minimizer_index.json"
+            )
+        else:
+            msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
+            logger.error(msg)
+            raise RuntimeError(msg)
 
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(save_path).write_bytes(response.content)
-    except requests.exceptions.RequestException as e:
-        msg = f"Failed to download minimizer: {e}"
-        logger.error(msg)
-        raise RuntimeError(msg) from e
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            save_path = (
+                f"{results_dir}/minimizer_index.json"
+                if segment == "main"
+                else f"{results_dir}/{segment}/minimizer_index.json"
+            )
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            Path(save_path).write_bytes(response.content)
+        except requests.exceptions.RequestException as e:
+            msg = f"Failed to download minimizer: {e}"
+            logger.error(msg)
+            raise RuntimeError(msg) from e
 
-    logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
+        logger.info(f"Minimizer downloaded successfully and saved to '{save_path}'")
