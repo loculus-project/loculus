@@ -24,7 +24,7 @@ Before starting the upload process, ensure your data is correctly formatted. Eve
 Loculus expects:
 
 - Sequence data in [`fasta` format](../../reference/fasta-format) with a unique `fastaId` per sequence.
-- Metadata for each sample with a unique `submissionId`. 
+- Metadata for each sample with a unique `submissionId`.
   - When uploading through the API, only `tsv` is supported.
   - When uploading through the website, `xlsx` files are also accepted.
   - Each organism has its own metadata template available on the submission page.

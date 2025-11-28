@@ -21,6 +21,7 @@ The metadata file should include a field named `fastaID`, containing a space-sep
 ```
 test_NIHPAK-19_L test_NIHPAK-19_M test_NIHPAK-19_S
 ```
+
 Example sequences:
 
 ```
