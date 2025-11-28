@@ -117,7 +117,7 @@ def parse_nextclade_tsv(
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                if gene in config.genes:
+                if gene in sequence_and_dataset.genes:
                     gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
                     amino_acid_insertions[id][gene_name].append(val)
                 else:
