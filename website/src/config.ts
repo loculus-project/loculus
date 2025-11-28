@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
+import { ACCESSION_FIELD, FASTA_ID_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
@@ -187,9 +187,22 @@ function getSubmissionIdInputField(): InputField {
     return {
         name: SUBMISSION_ID_INPUT_FIELD,
         displayName: 'ID',
+        definition: 'METADATA ID',
+        guidance:
+            'Your sample identifier. If no FastaId is provided, this ID will be used to associate the metadata with the sequence.',
+        example: 'GJP123',
+        noEdit: true,
+        required: true,
+    };
+}
+
+function getFastaIdInputField(): InputField {
+    return {
+        name: FASTA_ID_FIELD,
+        displayName: 'FASTA ID',
         definition: 'FASTA ID',
         guidance:
-            'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
+            'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
         example: 'GJP123',
         noEdit: true,
         required: true,
@@ -210,11 +223,11 @@ export function getGroupedInputFields(
     const desiredFields = inputFields.filter((meta) => meta.desired);
 
     const coreFields =
-        action === 'submit' ? [getSubmissionIdInputField()] : [getSubmissionIdInputField(), getAccessionInputField()];
+        action === 'submit' ? [getSubmissionIdInputField(), getFastaIdInputField()] : [getSubmissionIdInputField(), getFastaIdInputField(), getAccessionInputField()];
 
     groups.set('Required fields', [...coreFields, ...requiredFields]);
     groups.set('Desired fields', desiredFields);
-    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField()]);
+    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField(), getFastaIdInputField()]);
 
     const fieldAlreadyAdded = (fieldName: string) =>
         Array.from(groups.values())
