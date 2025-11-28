@@ -183,30 +183,42 @@ function getAccessionInputField(): InputField {
     };
 }
 
-function getSubmissionIdInputField(): InputField {
-    return {
-        name: SUBMISSION_ID_INPUT_FIELD,
-        displayName: 'ID',
-        definition: 'METADATA ID',
-        guidance:
-            'Your sample identifier. If no FastaId is provided, this ID will be used to associate the metadata with the sequence.',
-        example: 'GJP123',
-        noEdit: true,
-        required: true,
-    };
-}
-
-function getFastaIdInputField(): InputField {
-    return {
-        name: FASTA_ID_FIELD,
-        displayName: 'FASTA ID',
-        definition: 'FASTA ID',
-        guidance:
-            'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
-        example: 'GJP123',
-        noEdit: true,
-        required: true,
-    };
+function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
+    if (!isMultiSegmented) {
+        return [
+            {
+                name: SUBMISSION_ID_INPUT_FIELD,
+                displayName: 'ID',
+                definition: 'FASTA ID',
+                guidance:
+                    'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence.',
+                example: 'GJP123',
+                noEdit: true,
+                required: true,
+            },
+        ];
+    }
+    return [
+        {
+            name: SUBMISSION_ID_INPUT_FIELD,
+            displayName: 'ID',
+            definition: 'METADATA ID',
+            guidance:
+                'Your sample identifier. If no FastaId is provided, this ID will be used to associate the metadata with the sequence.',
+            example: 'GJP123',
+            noEdit: true,
+            required: true,
+        },
+        {
+            name: FASTA_ID_FIELD,
+            displayName: 'FASTA ID',
+            definition: 'FASTA ID',
+            guidance: 'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
+            example: 'GJP123',
+            noEdit: true,
+            required: true,
+        },
+    ];
 }
 
 export function getGroupedInputFields(
@@ -215,6 +227,9 @@ export function getGroupedInputFields(
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
     const inputFields = getConfig(organism).schema.inputFields;
+    const referenceGenomes = getReferenceGenome(organism);
+    const segmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name);
+    const isMultiSegmented = segmentNames.length > 1;
     const metadata = getConfig(organism).schema.metadata;
 
     const groups = new Map<string, InputField[]>();
@@ -223,12 +238,13 @@ export function getGroupedInputFields(
     const desiredFields = inputFields.filter((meta) => meta.desired);
 
     const coreFields =
-        action === 'submit' ? [getSubmissionIdInputField(), getFastaIdInputField()] : [getSubmissionIdInputField(), getFastaIdInputField(), getAccessionInputField()];
+        action === 'submit'
+            ? getSubmissionIdInputFields(isMultiSegmented)
+            : getSubmissionIdInputFields(isMultiSegmented).concat(getAccessionInputField());
 
     groups.set('Required fields', [...coreFields, ...requiredFields]);
     groups.set('Desired fields', desiredFields);
-    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField(), getFastaIdInputField()]);
-
+    if (!excludeDuplicates) groups.set('Submission details', getSubmissionIdInputFields(isMultiSegmented));
     const fieldAlreadyAdded = (fieldName: string) =>
         Array.from(groups.values())
             .flatMap((fields) => fields.map((f) => f.name))
