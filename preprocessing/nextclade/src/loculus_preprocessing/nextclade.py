@@ -85,6 +85,10 @@ def mask_terminal_gaps(
     )
 
 
+def create_gene_name(gene: str, gene_prefix: str | None) -> str:
+    return gene_prefix + gene if gene_prefix else gene
+
+
 def parse_nextclade_tsv(
     amino_acid_insertions: defaultdict[
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
@@ -93,7 +97,6 @@ def parse_nextclade_tsv(
         AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
     ],
     result_dir: str,
-    config: Config,
     sequence_and_dataset: NextcladeSequenceAndDataset,
 ) -> tuple[
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
@@ -113,12 +116,8 @@ def parse_nextclade_tsv(
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                if gene in config.genes:
-                    gene_name = (
-                        sequence_and_dataset.gene_prefix + gene
-                        if sequence_and_dataset.gene_prefix
-                        else gene
-                    )
+                if gene in sequence_and_dataset.genes:
+                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
                     amino_acid_insertions[id][gene_name].append(val)
                 else:
                     logger.debug(
@@ -675,14 +674,14 @@ def load_aligned_nuc_sequences(
 
 def load_aligned_aa_sequences(
     result_dir_seg: str,
-    config: Config,
+    sequence_and_dataset: NextcladeSequenceAndDataset,
     aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]],
 ) -> dict[AccessionVersion, dict[GeneName, AminoAcidSequence | None]]:
     """
     Load the nextclade amino acid alignment results into the aligned_aminoacid_sequences dict, mapping each
     accession to a geneName: AminoAcidSequence dictionary.
     """
-    for gene in config.genes:
+    for gene in sequence_and_dataset.genes:
         translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
         try:
             with open(translation_path, encoding="utf-8") as aligned_translations:
@@ -690,7 +689,8 @@ def load_aligned_aa_sequences(
                 for aligned_sequence in aligned_translation:
                     sequence_id = aligned_sequence.id
                     masked_sequence = mask_terminal_gaps(str(aligned_sequence.seq), mask_char="X")
-                    aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
+                    gene_name = create_gene_name(gene, sequence_and_dataset.gene_prefix)
+                    aligned_aminoacid_sequences[sequence_id][gene_name] = masked_sequence
         except FileNotFoundError:
             # This can happen if the sequence does not cover this gene
             logger.debug(
@@ -816,7 +816,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 result_dir_seg, segment, aligned_nucleotide_sequences
             )
             aligned_aminoacid_sequences = load_aligned_aa_sequences(
-                result_dir_seg, config, aligned_aminoacid_sequences
+                result_dir_seg, sequence_and_dataset, aligned_aminoacid_sequences
             )
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, segment, unaligned_nucleotide_sequences
@@ -825,7 +825,6 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 amino_acid_insertions,
                 nucleotide_insertions,
                 result_dir_seg,
-                config,
                 sequence_and_dataset,
             )
 
