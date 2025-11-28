@@ -15,8 +15,6 @@ import jwt
 import pytz
 import requests
 
-from .nextclade import get_nextclade_dataset_server
-
 from .config import Config
 from .datatypes import (
     FileUploadInfo,
@@ -24,6 +22,7 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
+from .nextclade import get_nextclade_dataset_server
 from .processing_functions import trim_ns
 
 logger = logging.getLogger(__name__)
