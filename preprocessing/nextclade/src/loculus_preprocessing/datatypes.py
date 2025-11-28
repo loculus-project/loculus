@@ -135,12 +135,9 @@ class Annotation:
 
 
 @dataclass
-class Alert:
-    errors: list[ProcessingAnnotation] = field(default_factory=list)
-    warnings: list[ProcessingAnnotation] = field(default_factory=list)
-
-
-Alerts = dict[AccessionVersion, Alert]
+class Alerts:
+    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
 
 
 @dataclass
