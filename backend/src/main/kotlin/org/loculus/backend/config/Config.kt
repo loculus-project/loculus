@@ -51,11 +51,13 @@ data class Schema(
     val externalMetadata: List<ExternalMetadata> = emptyList(),
     val earliestReleaseDate: EarliestReleaseDate = EarliestReleaseDate(false, emptyList()),
     val submissionDataTypes: SubmissionDataTypes = SubmissionDataTypes(),
-    val files: List<FileCategory> = emptyList(),
+    val files: List<FileCategory> = emptyList(), // Allowed file categories for output files
 )
 
 data class SubmissionDataTypes(
     val consensusSequences: Boolean = true,
+    val maxSequencesPerEntry: Int? = null, // null means unlimited sequences per entry
+    // Allowed file categories for submission files
     val files: FilesSubmissionDataType = FilesSubmissionDataType(false, emptyList()),
 )
 
