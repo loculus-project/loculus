@@ -671,7 +671,8 @@
                     "type": "integer",
                     "description": "Timeout in seconds for requests to the backend server for data to process"
                   }
-                }
+                },
+                "required": ["version", "image", "nextcladeSequenceAndDatasets"]
               }
             }
           }
