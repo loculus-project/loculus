@@ -189,18 +189,22 @@ class SegmentClassificationMethod(StrEnum):
 
 @dataclass
 class SegmentAssignment:
-    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]  # noqa: N815
-    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
-    alert: Alert
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None] = field(
+        default_factory=dict
+    )
+    sequenceNameToFastaId: dict[SegmentName, FastaId] = field(default_factory=dict)  # noqa: N815
+    alert: Alert = field(default_factory=Alert)
 
 
 @dataclass
 class SegmentAssignmentBatch:
     unalignedNucleotideSequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ]
-    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]]  # noqa: N815
-    alerts: Alerts
+    ] = field(default_factory=dict)
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]] = field(
+        default_factory=dict
+    )
+    alerts: Alerts = field(default_factory=Alerts)
 
 
 @dataclass
