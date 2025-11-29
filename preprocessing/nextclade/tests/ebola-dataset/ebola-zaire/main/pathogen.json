@@ -1,0 +1,24 @@
+{
+  "attributes": {
+    "name": "Ebolavirus Zaire",
+    "reference accession": "NC_002549.1",
+    "reference name": "COD/1976/Yambuku-Mayinga"
+  },
+  "compatibility": {
+    "cli": "3.0.0-alpha.0",
+    "web": "3.0.0-alpha.0"
+  },
+  "deprecated": false,
+  "enabled": true,
+  "experimental": true,
+  "files": {
+    "genomeAnnotation": "genome_annotation.gff3",
+    "pathogenJson": "pathogen.json",
+    "reference": "reference.fasta"
+  },
+  "official": false,
+  "qc": {},
+  "schemaVersion": "3.0.0",
+  "shortcuts": [
+  ]
+}

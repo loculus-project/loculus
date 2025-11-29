@@ -1,0 +1,19 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region NC_002549.1 1 18959
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=186538
+NC_002549.1	RefSeq	gene	9885	11518	.	+	.	ID=gene-ZEBOVgp6;Dbxref=GeneID:911828;Name=VP24EbolaZaire;Note=putative;gbkey=Gene;gene=VP24EbolaZaire;gene_biotype=protein_coding;locus_tag=ZEBOVgp6
+NC_002549.1	RefSeq	mRNA	9885	11496	.	+	.	ID=rna-ZEBOVgp6;Parent=gene-ZEBOVgp6;Dbxref=GeneID:911828;gbkey=mRNA;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;product=VP24
+NC_002549.1	RefSeq	exon	9885	11496	.	+	.	ID=exon-ZEBOVgp6-1;Parent=rna-ZEBOVgp6;Dbxref=GeneID:911828;gbkey=mRNA;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;product=VP24
+NC_002549.1	RefSeq	CDS	10345	11100	.	+	0	ID=cds-NP_066250.1;Parent=rna-ZEBOVgp6;Dbxref=GenBank:NP_066250.1,GeneID:911828;Name=VP24EbolaZaire;gbkey=CDS;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;product=membrane-associated protein;protein_id=NP_066250.1
+NC_002549.1	RefSeq	sequence_feature	11497	11500	.	+	.	ID=id-ZEBOVgp6;Dbxref=GeneID:911828;Note=intergenic region;gbkey=misc_feature;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6
+NC_002549.1	RefSeq	regulatory_region	9885	9896	.	+	.	ID=id-ZEBOVgp6-2;Parent=gene-ZEBOVgp6;Dbxref=GeneID:911828;Note=transcription start signal;gbkey=regulatory;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;regulatory_class=other
+NC_002549.1	RefSeq	polyA_signal_sequence	11485	11496	.	+	.	ID=id-ZEBOVgp6-3;Parent=gene-ZEBOVgp6;Dbxref=GeneID:911828;Note=putative;gbkey=regulatory;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;regulatory_class=polyA_signal_sequence
+NC_002549.1	RefSeq	polyA_signal_sequence	11508	11518	.	+	.	ID=id-ZEBOVgp6-4;Parent=gene-ZEBOVgp6;Dbxref=GeneID:911828;gbkey=regulatory;gene=VP24EbolaZaire;locus_tag=ZEBOVgp6;regulatory_class=polyA_signal_sequence
+NC_002549.1	RefSeq	gene	11501	18282	.	+	.	ID=gene-ZEBOVgp7;Dbxref=GeneID:911824;Name=LEbolaZaire;gbkey=Gene;gene=LEbolaZaire;gene_biotype=protein_coding;locus_tag=ZEBOVgp7
+NC_002549.1	RefSeq	mRNA	11501	18282	.	+	.	ID=rna-ZEBOVgp7;Parent=gene-ZEBOVgp7;Dbxref=GeneID:911824;gbkey=mRNA;gene=LEbolaZaire;locus_tag=ZEBOVgp7;product=polymerase
+NC_002549.1	RefSeq	exon	11501	18282	.	+	.	ID=exon-ZEBOVgp7-1;Parent=rna-ZEBOVgp7;Dbxref=GeneID:911824;gbkey=mRNA;gene=LEbolaZaire;locus_tag=ZEBOVgp7;product=polymerase
+NC_002549.1	RefSeq	CDS	11581	18219	.	+	0	ID=cds-NP_066251.1;Parent=rna-ZEBOVgp7;Dbxref=GenBank:NP_066251.1,GeneID:911824;Name=LEbolaZaire;gbkey=CDS;gene=LEbolaZaire;locus_tag=ZEBOVgp7;product=RNA-dependent RNA polymerase;protein_id=NP_066251.1
+NC_002549.1	RefSeq	regulatory_region	11501	11512	.	+	.	ID=id-ZEBOVgp7;Parent=gene-ZEBOVgp7;Dbxref=GeneID:911824;Note=transcription start signal;gbkey=regulatory;gene=LEbolaZaire;locus_tag=ZEBOVgp7;regulatory_class=other
+NC_002549.1	RefSeq	polyA_signal_sequence	18272	18282	.	+	.	ID=id-ZEBOVgp7-2;Parent=gene-ZEBOVgp7;Dbxref=GeneID:911824;gbkey=regulatory;gene=LEbolaZaire;locus_tag=ZEBOVgp7;regulatory_class=polyA_signal_sequence

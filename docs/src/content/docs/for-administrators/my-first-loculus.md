@@ -152,8 +152,10 @@ organisms:
           - 'prepro'
         configFile:
           log_level: DEBUG
-          genes: []
           batch_size: 100
+          nucleotideSequences:
+            - name: 'main'
+              genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:

@@ -2,6 +2,7 @@ export const pageSize = 100;
 
 export const ACCESSION_VERSION_FIELD = 'accessionVersion';
 export const ACCESSION_FIELD = 'accession';
+export const FASTA_ID_FIELD = 'fastaId';
 export const VERSION_FIELD = 'version';
 export const VERSION_STATUS_FIELD = 'versionStatus';
 export const IS_REVOCATION_FIELD = 'isRevocation';

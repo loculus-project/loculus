@@ -7,7 +7,7 @@ import { Button } from '../../common/Button';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
-export const FileUploadComponent = ({
+export const FileUploadComponent = <F extends ProcessedFile>({
     setFile,
     name,
     ariaLabel,
@@ -18,17 +18,17 @@ export const FileUploadComponent = ({
     onDownload = undefined,
     downloadDisabled = false,
 }: {
-    setFile: (file: ProcessedFile | undefined) => Promise<void> | void;
+    setFile: (file: F | undefined) => Promise<void> | void;
     name: string;
     ariaLabel: string;
-    fileKind: FileKind;
+    fileKind: FileKind<F>;
     small?: boolean;
-    initialValue?: ProcessedFile;
+    initialValue?: F;
     showUndo?: boolean;
     onDownload?: () => void;
     downloadDisabled?: boolean;
 }) => {
-    const [myFile, rawSetMyFile] = useState<ProcessedFile | undefined>(initialValue);
+    const [myFile, rawSetMyFile] = useState<F | undefined>(initialValue);
     const [isDragOver, setIsDragOver] = useState(false);
     const isClient = useClientFlag();
 
@@ -36,7 +36,7 @@ export const FileUploadComponent = ({
 
     const setMyFile = useCallback(
         async (file: File | null) => {
-            let processedFile: ProcessedFile | undefined = undefined;
+            let processedFile: F | undefined = undefined;
             if (file !== null) {
                 const processingResult = await fileKind.processRawFile(file);
                 processedFile = processingResult.match(

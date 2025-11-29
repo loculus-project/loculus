@@ -93,6 +93,10 @@ const dataToView: SequenceEntryToEdit = {
         },
         nucleotideInsertions: {},
         aminoAcidInsertions: {},
+        sequenceNameToFastaId: {
+            [sequence1]: 'header1',
+            [sequence2]: 'header2',
+        },
         files: null,
     },
     status: processedStatus,
