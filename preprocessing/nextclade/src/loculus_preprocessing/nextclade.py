@@ -296,10 +296,7 @@ def assign_segment(
        no sequence data found (e.g. when alignment requirement is ANY and all sequences miss)
     """
     sort_results_map: dict[SegmentName, list[str]] = defaultdict(list)
-
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = defaultdict()
-    sequence_name_to_fasta_id: dict[SegmentName, FastaId] = defaultdict()
-    alert = Alert()
+    segment_assignment = SegmentAssignment()
 
     has_missing_segments = False
     has_duplicate_segments = False
@@ -311,15 +308,15 @@ def assign_segment(
             method = config.segment_classification_method.value
             if method == "minimizer":
                 method = "sort"
-            annotation = annotation = sequence_annotation(
+            annotation = sequence_annotation(
                 f"Sequence with fasta header {fasta_id} does not match any reference for"
                 f" organism: {config.organism} per `nextclade {method}`. "
                 f"Double check you are submitting to the correct organism."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
-                alert.errors.append(annotation)
+                segment_assignment.alert.errors.append(annotation)
             else:
-                alert.warnings.append(annotation)
+                segment_assignment.alert.warnings.append(annotation)
             continue
 
         best_hit = best_hits[best_hits["seqName"] == seq_id]
@@ -346,14 +343,14 @@ def assign_segment(
                 "Contact the administrator if you think this message is an error."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
-                alert.errors.append(annotation)
+                segment_assignment.alert.errors.append(annotation)
             else:
-                alert.warnings.append(annotation)
+                segment_assignment.alert.warnings.append(annotation)
 
     for segment_name, headers in sort_results_map.items():
         if len(headers) > 1:
             has_duplicate_segments = True
-            alert.errors.append(
+            segment_assignment.alert.errors.append(
                 sequence_annotation(
                     f"Multiple sequences (with fasta headers: {', '.join(headers)}) align "
                     f"to {segment_name} - only one entry is allowed."
@@ -361,28 +358,24 @@ def assign_segment(
             )
             continue
 
-        sequence_name_to_fasta_id[segment_name] = headers[0]
-        unaligned_nucleotide_sequences[segment_name] = entry.data.unalignedNucleotideSequences[
-            headers[0]
-        ]
+        segment_assignment.sequenceNameToFastaId[segment_name] = headers[0]
+        segment_assignment.unalignedNucleotideSequences[segment_name] = (
+            entry.data.unalignedNucleotideSequences[headers[0]]
+        )
 
     if (
-        len(unaligned_nucleotide_sequences) == 0
+        len(segment_assignment.unalignedNucleotideSequences) == 0
         and not has_duplicate_segments
         and (not has_missing_segments or config.alignment_requirement == AlignmentRequirement.ANY)
     ):
-        alert.errors.append(
+        segment_assignment.alert.errors.append(
             sequence_annotation(
                 "No sequence data could be classified - "
                 "check you are submitting to the correct organism.",
             )
         )
 
-    return SegmentAssignment(
-        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaId=sequence_name_to_fasta_id,
-        alert=alert,
-    )
+    return segment_assignment
 
 
 def assign_segment_with_nextclade_align(
@@ -390,12 +383,9 @@ def assign_segment_with_nextclade_align(
 ) -> SegmentAssignmentBatch:
     """
     Run nextclade align
+    - assert sequence aligns to one of the segments in config.nucleotideSequences
     """
-    unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = defaultdict(dict)
-    sequence_name_to_fasta_id: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
-    alerts: Alerts = Alerts()
+    batch = SegmentAssignmentBatch()
 
     all_dfs = []
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
@@ -439,17 +429,13 @@ def assign_segment_with_nextclade_align(
             config,
         )
         accession_version = entry.accessionVersion
-        sequence_name_to_fasta_id[accession_version] = segment_assignment.sequenceNameToFastaId
-        unaligned_nucleotide_sequences[accession_version] = (
+        batch.sequenceNameToFastaId[accession_version] = segment_assignment.sequenceNameToFastaId
+        batch.unalignedNucleotideSequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
-        alerts[accession_version] = segment_assignment.alert
+        batch.alerts[accession_version] = segment_assignment.alert
 
-    return SegmentAssignmentBatch(
-        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaId=sequence_name_to_fasta_id,
-        alerts=alerts,
-    )
+    return batch
 
 
 def assign_segment_with_nextclade_sort(
@@ -460,11 +446,7 @@ def assign_segment_with_nextclade_sort(
     - assert highest score is in sequence_and_dataset.accepted_sort_matches
     (default is nextclade_dataset_name)
     """
-    unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = defaultdict(dict)
-    sequence_name_to_fasta_id: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
-    alerts: Alerts = Alerts()
+    batch = SegmentAssignmentBatch()
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         input_file = result_dir + "/input.fasta"
@@ -487,17 +469,12 @@ def assign_segment_with_nextclade_sort(
             config,
         )
         accession_version = entry.accessionVersion
-        sequence_name_to_fasta_id[accession_version] = segment_assignment.sequenceNameToFastaId
-        unaligned_nucleotide_sequences[accession_version] = (
+        batch.sequenceNameToFastaId[accession_version] = segment_assignment.sequenceNameToFastaId
+        batch.unalignedNucleotideSequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
-        alerts[accession_version] = segment_assignment.alert
-
-    return SegmentAssignmentBatch(
-        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaId=sequence_name_to_fasta_id,
-        alerts=alerts,
-    )
+        batch.alerts[accession_version] = segment_assignment.alert
+    return batch
 
 
 def assign_single_segment(
@@ -506,8 +483,6 @@ def assign_single_segment(
 ) -> SegmentAssignment:
     if len(input_unaligned_sequences) > 1:
         return SegmentAssignment(
-            unalignedNucleotideSequences={},
-            sequenceNameToFastaId={},
             alert=Alert(
                 errors=[
                     sequence_annotation(
@@ -523,50 +498,35 @@ def assign_single_segment(
     return SegmentAssignment(
         unalignedNucleotideSequences={"main": next(iter(input_unaligned_sequences.values()))},
         sequenceNameToFastaId={"main": next(iter(input_unaligned_sequences.keys()))},
-        alert=Alert(),
     )
 
 
 def assign_all_single_segments(
     unprocessed: Sequence[UnprocessedEntry], config: Config
 ) -> SegmentAssignmentBatch:
-    unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ] = defaultdict(dict)
-    segment_to_header: dict[AccessionVersion, dict[SegmentName, str]] = defaultdict(dict)
-    alerts: Alerts = Alerts()
+    batch = SegmentAssignmentBatch()
     for entry in unprocessed:
         accession_version = entry.accessionVersion
         segment_assignment = assign_single_segment(
             entry.data.unalignedNucleotideSequences,
             config=config,
         )
-        segment_to_header[accession_version] = segment_assignment.sequenceNameToFastaId
-        unaligned_nucleotide_sequences[accession_version] = (
+        batch.sequenceNameToFastaId[accession_version] = segment_assignment.sequenceNameToFastaId
+        batch.unalignedNucleotideSequences[accession_version] = (
             segment_assignment.unalignedNucleotideSequences
         )
-        alerts[accession_version] = segment_assignment.alert
-    return SegmentAssignmentBatch(
-        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaId=segment_to_header,
-        alerts=alerts,
-    )
+        batch.alerts[accession_version] = segment_assignment.alert
+    return batch
 
 
 def assign_segment_using_header(
     input_unaligned_sequences: dict[str, NucleotideSequence | None],
     config: Config,
 ) -> SegmentAssignment:
-    alert = Alert()
-    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None] = {}
-    sequenceNameToFastaId: dict[SegmentName, str] = {}
+    segment_assignment = SegmentAssignment()
     duplicate_segments = set()
     if not config.nucleotideSequences:
-        return SegmentAssignment(
-            unalignedNucleotideSequences={},
-            sequenceNameToFastaId={},
-            alert=alert,
-        )
+        return segment_assignment
     if not config.multi_segment:
         return assign_single_segment(input_unaligned_sequences, config)
     for sequence_and_dataset in config.nucleotideSequences:
@@ -581,7 +541,7 @@ def assign_segment_using_header(
         ]
         if len(unaligned_segment) > 1:
             duplicate_segments.update(unaligned_segment)
-            alert.errors.append(
+            segment_assignment.alert.errors.append(
                 sequence_annotation(
                     f"Found multiple sequences with the same segment name: {segment}. "
                     "Each metadata entry can have multiple corresponding fasta sequence "
@@ -589,17 +549,17 @@ def assign_segment_using_header(
                 )
             )
         elif len(unaligned_segment) == 1:
-            sequenceNameToFastaId[segment] = unaligned_segment[0]
-            unaligned_nucleotide_sequences[segment] = input_unaligned_sequences[
+            segment_assignment.sequenceNameToFastaId[segment] = unaligned_segment[0]
+            segment_assignment.unalignedNucleotideSequences[segment] = input_unaligned_sequences[
                 unaligned_segment[0]
             ]
     remaining_segments = (
         set(input_unaligned_sequences.keys())
-        - set(sequenceNameToFastaId.values())
+        - set(segment_assignment.sequenceNameToFastaId.values())
         - duplicate_segments
     )
     if len(remaining_segments) > 0:
-        alert.errors.append(
+        segment_assignment.alert.errors.append(
             sequence_annotation(
                 f"Found sequences in the input data with segments that are not in the config: "
                 f"{', '.join(remaining_segments)}. "
@@ -608,17 +568,13 @@ def assign_segment_using_header(
                 f"{', '.join([seq.name for seq in config.nucleotideSequences])}."
             )
         )
-    if len(unaligned_nucleotide_sequences) == 0 and not duplicate_segments:
-        alert.errors.append(
+    if len(segment_assignment.unalignedNucleotideSequences) == 0 and not duplicate_segments:
+        segment_assignment.alert.errors.append(
             sequence_annotation(
                 "No sequence data found - check segments are annotated correctly.",
             )
         )
-    return SegmentAssignment(
-        unalignedNucleotideSequences=unaligned_nucleotide_sequences,
-        sequenceNameToFastaId=sequenceNameToFastaId,
-        alert=alert,
-    )
+    return segment_assignment
 
 
 def load_aligned_nuc_sequences(
