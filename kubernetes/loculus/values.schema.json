@@ -597,7 +597,8 @@
                   "nextclade_dataset_server": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Server from which to download nextclade datasets."
                   },
                   "nextcladeSequenceAndDatasets": {
                     "groups": ["nextcladePipelineConfigFile"],
