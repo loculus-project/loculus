@@ -261,12 +261,9 @@ single_segment_failed_with_require_sort_case_definitions = [
         ),
         expected_warnings=build_processing_annotations(
             [
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence does not appear to match reference, per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 ),
             ]
         ),
@@ -299,13 +296,10 @@ single_segment_failed_with_require_sort_case_definitions = [
                     "Nucleotide sequence failed to align",
                     AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 ),
-                ProcessingAnnotationHelper(
-                    ["alignment"],
-                    ["alignment"],
+                ProcessingAnnotationHelper.sequence_annotation_helper(
                     "Sequence best matches ebola-zaire, a different organism than the one "
                     "you are submitting to: ebola-sudan-test. It is therefore not possible "
                     "to release. Contact the administrator if you think this message is an error.",
-                    AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
                 ),
             ]
         ),
