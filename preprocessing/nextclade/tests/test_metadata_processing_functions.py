@@ -660,7 +660,7 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
         ),
     )
 
-    config.nucleotideSequences = []
+    config.nextclade_sequence_and_datasets = []
 
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)
     processed_entry = result[0].processed_entry

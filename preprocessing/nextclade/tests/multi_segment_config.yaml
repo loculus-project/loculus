@@ -3,7 +3,7 @@ alignment_requirement: ALL
 log_level: DEBUG
 minimizer_index: TEST
 segment_classification_method: "minimizer"
-nucleotideSequences:
+nextclade_sequence_and_datasets:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
   genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]

@@ -4,7 +4,7 @@ alignment_requirement: ALL
 log_level: DEBUG
 minimizer_index: TEST
 nextclade_dataset_server: TEST
-nucleotideSequences:
+nextclade_sequence_and_datasets:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
   accepted_sort_matches: ebola-sudan
