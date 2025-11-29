@@ -1684,6 +1684,9 @@ defaultOrganisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
+          nextcladeSequenceAndDatasets:
+            - name: "main"
+              genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:
