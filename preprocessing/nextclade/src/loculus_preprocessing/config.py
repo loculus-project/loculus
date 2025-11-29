@@ -66,7 +66,7 @@ class Config:
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    nucleotideSequences: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
+    nextcladeSequenceAndDatasets: list[NextcladeSequenceAndDataset] = dataclasses.field(  # noqa: N815
         default_factory=list
     )
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
@@ -94,7 +94,9 @@ def assign_nextclade_sequence_and_dataset(
     nuc_seq_values: list[dict[str, Any]], config: Config
 ) -> list[NextcladeSequenceAndDataset]:
     if not isinstance(nuc_seq_values, list):
-        error_msg = f"nucleotideSequences should be a list of dicts, got: {type(nuc_seq_values)}"
+        error_msg = (
+            f"nextcladeSequenceAndDatasets should be a list of dicts, got: {type(nuc_seq_values)}"
+        )
         logger.error(error_msg)
         raise ValueError(error_msg)
     nextclade_sequence_and_dataset_list: list[NextcladeSequenceAndDataset] = []
@@ -113,7 +115,7 @@ def assign_nextclade_sequence_and_dataset(
 
 def set_alignment_requirement(config: Config) -> AlignmentRequirement:
     need_nextclade_dataset: bool = False
-    for sequence in config.nucleotideSequences:
+    for sequence in config.nextcladeSequenceAndDatasets:
         if sequence.nextclade_dataset_name:
             need_nextclade_dataset = True
     if not need_nextclade_dataset:
@@ -128,7 +130,7 @@ def load_config_from_yaml(config_file: str, config: Config | None = None) -> Con
         logger.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
         if value is not None and hasattr(config, key):
-            if key == "nucleotideSequences":
+            if key == "nextcladeSequenceAndDatasets":
                 setattr(config, key, assign_nextclade_sequence_and_dataset(value, config))
                 continue
             attr = getattr(config, key)
@@ -217,7 +219,7 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
 
     config.alignment_requirement = set_alignment_requirement(config)
 
-    if len(config.nucleotideSequences) > 1:
+    if len(config.nextcladeSequenceAndDatasets) > 1:
         config.multi_segment = True
 
     return config

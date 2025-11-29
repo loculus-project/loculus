@@ -1326,7 +1326,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         batch_size: 100
         create_embl_file: true
-        nucleotideSequences:
+        nextcladeSequenceAndDatasets:
           - name: "main"
             genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
@@ -1348,7 +1348,7 @@ defaultOrganisms:
         version: [1, 2]
         configFile:
           <<: *preprocessingConfigFile
-          nucleotideSequences:
+          nextcladeSequenceAndDatasets:
             - nextclade_dataset_name: nextstrain/ebola/sudan
               genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1425,7 +1425,7 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
-          nucleotideSequences:
+          nextcladeSequenceAndDatasets:
             - nextclade_dataset_name: nextstrain/wnv/all-lineages
               genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
@@ -1684,6 +1684,9 @@ defaultOrganisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
+          nextcladeSequenceAndDatasets:
+            - name: "main"
+              genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1746,7 +1749,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           log_level: DEBUG
           minimizer_index: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
-          nucleotideSequences:
+          nextcladeSequenceAndDatasets:
             - name: L
               nextclade_dataset_name: community/pathoplexus/cchfv/L
               genes: [RdRp]
@@ -1872,7 +1875,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           segment_classification_method: "minimizer"
           minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          nucleotideSequences:
+          nextcladeSequenceAndDatasets:
             - name: CV-A16
               nextclade_dataset_name: enpen/enterovirus/cv-a16
               accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
