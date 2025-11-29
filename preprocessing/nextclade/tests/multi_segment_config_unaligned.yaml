@@ -2,7 +2,7 @@ batch_size: 100
 alignment_requirement: NONE
 log_level: DEBUG
 minimizer_index: TEST
-nucleotideSequences:
+nextcladeSequenceAndDatasets:
 - name: ebola-sudan
 - name: ebola-zaire
 organism: multi-ebola-test

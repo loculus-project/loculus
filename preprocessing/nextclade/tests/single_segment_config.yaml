@@ -6,7 +6,7 @@ molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
 minimizer_index: TEST
-nucleotideSequences:
+nextcladeSequenceAndDatasets:
 - nextclade_dataset_name: ebola-sudan-test-dataset
   genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]
 organism: ebola-sudan-test
