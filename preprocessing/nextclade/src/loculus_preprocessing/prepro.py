@@ -395,7 +395,9 @@ def alignment_errors_warnings(
         )
         errors.append(
             ProcessingAnnotation.from_single(
-                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=message,
             )
         )
         return (errors, warnings)
