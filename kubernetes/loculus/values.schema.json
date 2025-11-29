@@ -604,7 +604,7 @@
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "array",
-                    "description": "Array of [nextcladeSequenceAndDataset](#nextclade-preprocessing-pipeline-nextcladeSequenceAndDataset-type) objects containing nucleotide sequence names and datasets.",
+                    "description": "Array of [nextcladeSequenceAndDataset](#nextclade-preprocessing-pipeline-sequence-and-dataset-objects-type) objects containing nucleotide sequence names and datasets.",
                     "items": {
                       "type": "object",
                       "additionalProperties": false,
