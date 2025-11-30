@@ -183,7 +183,7 @@ function getAccessionInputField(): InputField {
     };
 }
 
-function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
+export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
     if (!isMultiSegmented) {
         return [
             {
@@ -221,15 +221,19 @@ function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
     ];
 }
 
+export function isMultiSegmentedOrganism(organism: string): boolean {
+    const referenceGenomes = getReferenceGenome(organism);
+    const segmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name);
+    return segmentNames.length > 1;
+}
+
 export function getGroupedInputFields(
     organism: string,
     action: 'submit' | 'revise',
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
     const inputFields = getConfig(organism).schema.inputFields;
-    const referenceGenomes = getReferenceGenome(organism);
-    const segmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name);
-    const isMultiSegmented = segmentNames.length > 1;
+    const isMultiSegmented = isMultiSegmentedOrganism(organism);
     const metadata = getConfig(organism).schema.metadata;
 
     const groups = new Map<string, InputField[]>();
