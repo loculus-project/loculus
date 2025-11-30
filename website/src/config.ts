@@ -216,7 +216,7 @@ function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
             guidance: 'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
             example: 'GJP123',
             noEdit: true,
-            required: true,
+            desired: true,
         },
     ];
 }
