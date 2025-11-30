@@ -21,6 +21,10 @@ fields:
     type: int
     notSearchable: true
     hideOnSequenceDetailsPage: true
+  - name: fastaIds
+    type: string
+    notSearchable: true
+    hideOnSequenceDetailsPage: true
   - name: submissionId
     displayName: Submission ID
     type: string
