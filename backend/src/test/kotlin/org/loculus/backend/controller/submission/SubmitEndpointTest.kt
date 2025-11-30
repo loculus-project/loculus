@@ -624,7 +624,7 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN valid input multi-segment data w/o fastaIDs THEN data is accepted and originalData shows fastaIDs`() {
+    fun `GIVEN valid input multi-segment data wo fastaIDs THEN data is accepted and originalData shows fastaIDs`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
         submissionControllerClient.submit(
