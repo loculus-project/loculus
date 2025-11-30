@@ -96,7 +96,7 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
                     <p className='text-gray-400 text-xs mt-3'>
                         {organism.toUpperCase()} has a multi-segmented genome. Please submit one metadata entry with a
                         unique <i>id</i> column for the full multi-segmented sample, e.g. <b>sample1</b> and a{' '}
-                        <i>fastaId</i> column with a space-separated list of the fasta headers of all segments, e.g.{' '}
+                        <i>fastaIds</i> column with a space-separated list of the fasta headers of all segments, e.g.{' '}
                         <b>fastaHeaderSegment1 fastaHeaderSegment2 fastaHeaderSegment3</b>.
                     </p>
                 )}

@@ -2,7 +2,7 @@ import { type Dispatch, type FC, type SetStateAction } from 'react';
 import { toast } from 'react-toastify';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
-import { FASTA_ID_SEPARATOR } from '../../types/config.ts';
+import { FASTA_IDS_SEPARATOR } from '../../types/config.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualPlainSegmentFile } from '../Submission/FileUpload/fileProcessing.ts';
@@ -160,7 +160,7 @@ export class EditableSequences {
 
     getFastaIds(): string {
         const filledRows = this.rows.filter((row) => row.value !== null);
-        return filledRows.map((sequence) => sequence.fastaHeader).join(FASTA_ID_SEPARATOR);
+        return filledRows.map((sequence) => sequence.fastaHeader).join(FASTA_IDS_SEPARATOR);
     }
 
     getSequenceFasta(): File | undefined {

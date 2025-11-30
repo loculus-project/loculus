@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { ACCESSION_FIELD, FASTA_ID_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
@@ -206,17 +206,17 @@ export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputFiel
             displayName: 'ID',
             definition: 'METADATA ID',
             guidance:
-                'Your sample identifier. If no FastaIds is provided, this ID will be used to associate the metadata with the sequence.',
+                'Your sample identifier. If no column with FASTA IDS is provided, this ID will be used to associate the metadata with the sequence.',
             example: 'GJP123',
             noEdit: true,
             required: true,
         },
         {
-            name: FASTA_ID_FIELD,
+            name: FASTA_IDS_FIELD,
             displayName: 'FASTA IDS',
             definition: 'FASTA IDS',
-            guidance: 'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
-            example: 'GJP123',
+            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
+            example: 'GJP123 GJP124',
             noEdit: true,
             desired: true,
         },
