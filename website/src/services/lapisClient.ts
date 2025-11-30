@@ -166,11 +166,34 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         });
     }
 
+    public getAlignedSequences(accessionVersion: string) {
+        return this.call('alignedNucleotideSequences', {
+            [this.schema.primaryKey]: accessionVersion,
+            dataFormat: 'FASTA',
+        });
+    }
+
     public async getUnalignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
         const results = await Promise.all(
             segmentNames.map((segment) =>
                 this.call(
                     'unalignedNucleotideSequencesMultiSegment',
+                    {
+                        [this.schema.primaryKey]: accessionVersion,
+                        dataFormat: 'FASTA',
+                    },
+                    { params: { segment } },
+                ),
+            ),
+        );
+        return Result.combine(results);
+    }
+
+    public async getAlignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
+        const results = await Promise.all(
+            segmentNames.map((segment) =>
+                this.call(
+                    'alignedNucleotideSequencesMultiSegment',
                     {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
@@ -191,6 +214,32 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         segmentNames: string[],
     ): Promise<Result<string, ProblemDetail>> {
         const segments = await this.getUnalignedSequencesMultiSegment(accessionVersion, segmentNames);
+        return segments.map((segmentFastas) =>
+            segmentFastas
+                .map((fasta, i) => {
+                    const parsed = parseFasta(fasta);
+                    if (parsed.length === 0) {
+                        return '';
+                    }
+                    const withSegmentSuffix = {
+                        name: `${parsed[0].name}_${segmentNames[i]}`,
+                        sequence: parsed[0].sequence,
+                    };
+                    return fastaEntryToString([withSegmentSuffix]);
+                })
+                .join(''),
+        );
+    }
+
+    public getAlignedSequenceFasta(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
+        return this.getAlignedSequences(accessionVersion);
+    }
+
+    public async getAlignedMultiSegmentSequenceFasta(
+        accessionVersion: string,
+        segmentNames: string[],
+    ): Promise<Result<string, ProblemDetail>> {
+        const segments = await this.getAlignedSequencesMultiSegment(accessionVersion, segmentNames);
         return segments.map((segmentFastas) =>
             segmentFastas
                 .map((fasta, i) => {
