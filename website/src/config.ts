@@ -238,15 +238,16 @@ export function getGroupedInputFields(
 
     const groups = new Map<string, InputField[]>();
 
-    const requiredFields = inputFields.filter((meta) => meta.required);
-    const desiredFields = inputFields.filter((meta) => meta.desired);
-
     const coreFields =
         action === 'submit'
             ? getSubmissionIdInputFields(isMultiSegmented)
             : getSubmissionIdInputFields(isMultiSegmented).concat(getAccessionInputField());
 
-    groups.set('Required fields', [...coreFields, ...requiredFields]);
+    const allFields = [...coreFields, ...inputFields];
+    const requiredFields = allFields.filter((meta) => meta.required);
+    const desiredFields = allFields.filter((meta) => meta.desired);
+
+    groups.set('Required fields', requiredFields);
     groups.set('Desired fields', desiredFields);
     if (!excludeDuplicates) groups.set('Submission details', getSubmissionIdInputFields(isMultiSegmented));
     const fieldAlreadyAdded = (fieldName: string) =>
