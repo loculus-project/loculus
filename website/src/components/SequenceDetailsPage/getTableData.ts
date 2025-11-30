@@ -60,9 +60,10 @@ export async function getTableData(
                     }
 
                     const suborganism = suborganismResult.value;
+                    const geneCount = getGeneCount(referenceGenomes, suborganism);
 
                     return ok({
-                        data: toTableData(schema, suborganism, data),
+                        data: toTableData(schema, suborganism, geneCount, data),
                         suborganism,
                         isRevocation: isRevocationEntry(data.details),
                     });
@@ -113,6 +114,11 @@ function getSuborganism(
     return ok(suborganism);
 }
 
+function getGeneCount(referenceGenomes: ReferenceGenomes, suborganism: Suborganism): number {
+    const referenceGenome = referenceGenomes[suborganism];
+    return referenceGenome.genes.length;
+}
+
 function isRevocationEntry(details: Details): boolean {
     return details.isRevocation === true;
 }
@@ -141,6 +147,7 @@ function mutationDetails(
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
     suborganism: Suborganism,
+    geneCount: number,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -150,7 +157,7 @@ function mutationDetails(
             header: 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, suborganism),
+                value: substitutionsMap(nucleotideMutations, suborganism, geneCount),
             },
             type: { kind: 'mutation' },
         },
@@ -175,7 +182,7 @@ function mutationDetails(
             header: 'Amino acid mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, suborganism),
+                value: substitutionsMap(aminoAcidMutations, suborganism, geneCount),
             },
             type: { kind: 'mutation' },
         },
@@ -200,6 +207,7 @@ function mutationDetails(
 function toTableData(
     config: Schema,
     suborganism: Suborganism,
+    geneCount: number,
     {
         details,
         nucleotideMutations,
@@ -234,6 +242,7 @@ function toTableData(
             nucleotideInsertions,
             aminoAcidInsertions,
             suborganism,
+            geneCount,
         );
         data.push(...mutations);
     }
@@ -256,6 +265,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
     suborganism: Suborganism,
+    geneCount: number,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -273,6 +283,15 @@ export function substitutionsMap(
             .get(sequenceKey)!
             .push({ sequenceName: sequenceDisplayName, mutationFrom, position, mutationTo });
     }
+
+    if (geneCount > 50) {
+        const flattenedMutations = Array.from(segmentMutationsMap.values()).flat();
+        if (flattenedMutations.length > 0) {
+            result.push({ segment: '', mutations: flattenedMutations });
+        }
+        return result;
+    }
+
     for (const [segment, mutations] of segmentMutationsMap.entries()) {
         result.push({ segment, mutations });
     }
