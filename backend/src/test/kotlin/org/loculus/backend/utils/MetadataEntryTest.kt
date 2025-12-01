@@ -1,5 +1,9 @@
 package org.loculus.backend.utils
 
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -14,9 +18,9 @@ class MetadataEntryTest {
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].metadata["Country"] == "bar")
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].metadata["Country"], equalTo("bar"))
     }
 
     @Test
@@ -39,8 +43,8 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("whitespace"))
-        assert(exception.message!!.contains("Record #1")) // First data record is #1
+        assertThat(exception.message, containsString("whitespace"))
+        assertThat(exception.message, containsString("Record #1")) // First data record is #1
     }
 
     @Test
@@ -53,8 +57,8 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("Record #1"))
-        assert(exception.message!!.contains("contains no value for"))
+        assertThat(exception.message, containsString("Record #1"))
+        assertThat(exception.message, containsString("contains no value for"))
     }
 
     @Test
@@ -70,7 +74,7 @@ class MetadataEntryTest {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
         // The error should occur on record #3 (foo1=1, foo2=2, empty=3)
-        assert(exception.message!!.contains("Record #3"))
+        assertThat(exception.message, containsString("Record #3"))
     }
 
     @Test
@@ -84,8 +88,8 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("not a valid TSV file"))
-        assert(exception.message!!.contains("Common causes include"))
+        assertThat(exception.message, containsString("not a valid TSV file"))
+        assertThat(exception.message, containsString("Common causes include"))
     }
 
     @Test
@@ -100,7 +104,7 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("whitespace"))
+        assertThat(exception.message, containsString("whitespace"))
     }
 
     @Test
@@ -120,98 +124,98 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("not a valid TSV file"))
-        assert(exception.message!!.contains("Common causes include"))
+        assertThat(exception.message, containsString("not a valid TSV file"))
+        assertThat(exception.message, containsString("Common causes include"))
     }
 
     @Test
     fun `test maxSequencesPerEntry not set allows multiple sequences`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2 seq3${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = null).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1", "seq2", "seq3"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1", "seq2", "seq3")))
     }
 
     @Test
     fun `test maxSequencesPerEntry allows sequences within limit`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1", "seq2"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1", "seq2")))
     }
 
     @Test
     fun `test maxSequencesPerEntry allows sequences at exact limit`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2 seq3${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1", "seq2", "seq3"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1", "seq2", "seq3")))
     }
 
     @Test
     fun `test maxSequencesPerEntry rejects sequences exceeding limit`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2 seq3 seq4${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         }
-        assert(exception.message!!.contains("record #1"))
-        assert(exception.message!!.contains("foo"))
-        assert(exception.message!!.contains("found 4 fasta ids"))
-        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 3"))
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("foo"))
+        assertThat(exception.message, containsString("found 4 fasta ids"))
+        assertThat(exception.message, containsString("maximum allowed number of sequences per entry is 3"))
     }
 
     @Test
     fun `test maxSequencesPerEntry with single sequence limit`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
         }
-        assert(exception.message!!.contains("record #1"))
-        assert(exception.message!!.contains("foo"))
-        assert(exception.message!!.contains("found 2 fasta ids"))
-        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 1"))
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("foo"))
+        assertThat(exception.message, containsString("found 2 fasta ids"))
+        assertThat(exception.message, containsString("maximum allowed number of sequences per entry is 1"))
     }
 
     @Test
     fun `test maxSequencesPerEntry allows single sequence when limit is 1`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1")))
     }
 
     @Test
     fun `test maxSequencesPerEntry correct record number for multiple rows`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo1${'\t'}seq1${'\t'}bar
             foo2${'\t'}seq2 seq3${'\t'}bar
         """.trimIndent()
@@ -219,39 +223,39 @@ class MetadataEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
         }
-        assert(exception.message!!.contains("record #2"))
-        assert(exception.message!!.contains("foo2"))
+        assertThat(exception.message, containsString("record #2"))
+        assertThat(exception.message, containsString("foo2"))
     }
 
     @Test
     fun `test multiple duplicate fasta IDs are all reported`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq2 seq1 seq2 seq3${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("record #1"))
-        assert(exception.message!!.contains("foo"))
-        assert(exception.message!!.contains("duplicate fasta ids"))
-        assert(exception.message!!.contains("seq1"))
-        assert(exception.message!!.contains("seq2"))
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("foo"))
+        assertThat(exception.message, containsString("duplicate fasta ids"))
+        assertThat(exception.message, containsString("seq1"))
+        assertThat(exception.message, containsString("seq2"))
     }
 
     @Test
     fun `test duplicate detection works with maxSequencesPerEntry`() {
         val str = """
-            submissionId${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}fastaIds${'\t'}Country
             foo${'\t'}seq1 seq1${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             metadataEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         }
-        assert(exception.message!!.contains("duplicate fasta ids"))
-        assert(exception.message!!.contains("seq1"))
+        assertThat(exception.message, containsString("duplicate fasta ids"))
+        assertThat(exception.message, containsString("seq1"))
     }
 }
 
@@ -264,10 +268,10 @@ class RevisionEntryTest {
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = revisionEntryStreamAsSequence(inputStream).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].accession == "ACC123")
-        assert(entries[0].metadata["Country"] == "bar")
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].accession, equalTo("ACC123"))
+        assertThat(entries[0].metadata["Country"], equalTo("bar"))
     }
 
     @Test
@@ -291,8 +295,8 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("not a valid TSV file"))
-        assert(exception.message!!.contains("Common causes include"))
+        assertThat(exception.message, containsString("not a valid TSV file"))
+        assertThat(exception.message, containsString("Common causes include"))
     }
 
     @Test
@@ -312,8 +316,8 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("not a valid TSV file"))
-        assert(exception.message!!.contains("Common causes include"))
+        assertThat(exception.message, containsString("not a valid TSV file"))
+        assertThat(exception.message, containsString("Common causes include"))
     }
 
     @Test
@@ -326,8 +330,8 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("Record #1"))
-        assert(exception.message!!.contains("contains no value for"))
+        assertThat(exception.message, containsString("Record #1"))
+        assertThat(exception.message, containsString("contains no value for"))
     }
 
     @Test
@@ -340,79 +344,79 @@ class RevisionEntryTest {
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("Record #1"))
-        assert(exception.message!!.contains("accession"))
+        assertThat(exception.message, containsString("Record #1"))
+        assertThat(exception.message, containsString("accession"))
     }
 
     @Test
     fun `test revision maxSequencesPerEntry allows sequences within limit`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
             foo${'\t'}ACC123${'\t'}seq1 seq2${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1", "seq2"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1", "seq2")))
     }
 
     @Test
     fun `test revision maxSequencesPerEntry rejects sequences exceeding limit`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
             foo${'\t'}ACC123${'\t'}seq1 seq2 seq3${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 2).toList()
         }
-        assert(exception.message!!.contains("record #1"))
-        assert(exception.message!!.contains("foo"))
-        assert(exception.message!!.contains("found 3 fasta ids"))
-        assert(exception.message!!.contains("maximum allowed number of sequences per entry is 2"))
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("foo"))
+        assertThat(exception.message, containsString("found 3 fasta ids"))
+        assertThat(exception.message, containsString("maximum allowed number of sequences per entry is 2"))
     }
 
     @Test
     fun `test revision maxSequencesPerEntry with single sequence limit`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
             foo${'\t'}ACC123${'\t'}seq1${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val entries = revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 1).toList()
-        assert(entries.size == 1)
-        assert(entries[0].submissionId == "foo")
-        assert(entries[0].fastaIds == setOf("seq1"))
+        assertThat(entries, hasSize(1))
+        assertThat(entries[0].submissionId, equalTo("foo"))
+        assertThat(entries[0].fastaIds, equalTo(setOf("seq1")))
     }
 
     @Test
     fun `test revision duplicate fasta IDs are rejected`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
             foo${'\t'}ACC123${'\t'}seq1 seq2 seq1${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream).toList()
         }
-        assert(exception.message!!.contains("record #1"))
-        assert(exception.message!!.contains("foo"))
-        assert(exception.message!!.contains("duplicate fasta ids"))
-        assert(exception.message!!.contains("seq1"))
+        assertThat(exception.message, containsString("record #1"))
+        assertThat(exception.message, containsString("foo"))
+        assertThat(exception.message, containsString("duplicate fasta ids"))
+        assertThat(exception.message, containsString("seq1"))
     }
 
     @Test
     fun `test revision duplicate detection works with maxSequencesPerEntry`() {
         val str = """
-            submissionId${'\t'}accession${'\t'}fastaId${'\t'}Country
+            submissionId${'\t'}accession${'\t'}fastaIds${'\t'}Country
             foo${'\t'}ACC123${'\t'}seq1 seq1${'\t'}bar
         """.trimIndent()
         val inputStream = ByteArrayInputStream(str.toByteArray())
         val exception = assertThrows<UnprocessableEntityException> {
             revisionEntryStreamAsSequence(inputStream, maxSequencesPerEntry = 3).toList()
         }
-        assert(exception.message!!.contains("duplicate fasta ids"))
-        assert(exception.message!!.contains("seq1"))
+        assertThat(exception.message, containsString("duplicate fasta ids"))
+        assertThat(exception.message, containsString("seq1"))
     }
 }

@@ -61,28 +61,28 @@ fun extractAndValidateFastaIds(
                 )
             }
 
-            val fastaIdList = fastaIdValues.split(Regex(FASTA_IDS_SEPARATOR))
+            val fastaIds = fastaIdValues.split(Regex(FASTA_IDS_SEPARATOR))
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
 
-            val duplicateFastaIds = fastaIdList.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            val duplicateFastaIds = fastaIds.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
             if (duplicateFastaIds.isNotEmpty()) {
                 throw UnprocessableEntityException(
                     "In metadata file: record #$recordNumber with id '$submissionId': " +
-                        "found duplicate fasta ids in column '$FASTA_ID_HEADER': " +
+                        "found duplicate fasta ids in column '$FASTA_IDS_HEADER': " +
                         duplicateFastaIds.joinToString(", "),
                 )
             }
 
-            if (maxSequencesPerEntry != null && fastaIdList.size > maxSequencesPerEntry) {
+            if (maxSequencesPerEntry != null && fastaIds.size > maxSequencesPerEntry) {
                 throw UnprocessableEntityException(
                     "In metadata file: record #$recordNumber with id '$submissionId': " +
-                        "found ${fastaIdList.size} fasta ids but the maximum allowed number of " +
+                        "found ${fastaIds.size} fasta ids but the maximum allowed number of " +
                         "sequences per entry is $maxSequencesPerEntry",
                 )
             }
 
-            fastaIdList.toSet()
+            fastaIds.toSet()
         }
         false -> {
             setOf(submissionId)
