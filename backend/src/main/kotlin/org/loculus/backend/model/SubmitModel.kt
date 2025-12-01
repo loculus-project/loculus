@@ -356,7 +356,7 @@ class SubmitModel(
                 "Metadata file contains ${metadataKeysNotInSequences.size} FASTA ids that are not present " +
                     "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) {
                         "'$it'"
-                    }
+                    } + ". "
             } else {
                 ""
             }
