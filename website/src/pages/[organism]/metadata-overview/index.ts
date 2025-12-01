@@ -1,8 +1,12 @@
 import type { APIRoute } from 'astro';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
-import { getSchema } from '../../../config.ts';
-import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings.ts';
+import { getSchema, getSubmissionIdInputFields, isMultiSegmentedOrganism } from '../../../config.ts';
+import type { InputField } from '../../../types/config.ts';
+
+function createRowFromField(field: InputField): string {
+    return `${field.name}\t${field.required ?? ''}\t${field.definition ?? ''} ${field.guidance ?? ''}\t${field.example ?? ''}`;
+}
 
 export const GET: APIRoute = ({ params }) => {
     const rawOrganism = params.organism!;
@@ -13,7 +17,9 @@ export const GET: APIRoute = ({ params }) => {
         });
     }
 
-    const extraFields = [SUBMISSION_ID_INPUT_FIELD];
+    const extraFields = getSubmissionIdInputFields(isMultiSegmentedOrganism(organism.key)).map((field) =>
+        createRowFromField(field),
+    );
 
     const tableHeader = 'Field Name\tRequired\tDefinition\tGuidance\tExample';
 
@@ -26,10 +32,7 @@ export const GET: APIRoute = ({ params }) => {
     const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`;
     headers['Content-Disposition'] = `attachment; filename="${filename}"`;
 
-    const fieldNames = inputFields.map(
-        (field) =>
-            `${field.name}\t${field.required ?? ''}\t${field.definition ?? ''} ${field.guidance ?? ''}\t${field.example ?? ''}`,
-    );
+    const fieldNames = inputFields.map((field) => createRowFromField(field));
     const tsvTemplate = [tableHeader, ...extraFields, ...fieldNames].join('\n');
 
     return new Response(tsvTemplate, {
