@@ -1,7 +1,6 @@
 {{- range $organism, $organismConfig := (include "loculus.enabledOrganisms" . | fromJson) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
-{{- $rawNucleotideSequences := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).nucleotideSequences) }}
-{{- $nucleotideSequences := ($rawNucleotideSequences | default "" ) }}
+{{- $rawNucleotideSequences := $organismConfig.schema.nucleotideSequences }}
 {{- $nucleotideSequencesList := (eq $rawNucleotideSequences nil | ternary (list "main") $rawNucleotideSequences) }}
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
@@ -20,7 +19,7 @@ data:
     {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
     {{- (dict "nucleotideSequences" $nucleotideSequencesList) | toYaml | nindent 4 }}
     processing_spec:
-      {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
+      {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
       versionComment:
         function: identity

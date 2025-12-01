@@ -39,7 +39,7 @@ jobs:
       packages: write
       checks: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - name: Set up Docker Buildx

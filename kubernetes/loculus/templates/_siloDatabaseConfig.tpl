@@ -12,16 +12,17 @@
 
 
 {{- define "loculus.siloDatabaseConfig" }}
+{{- $schema := .schema }}
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 schema:
-  {{- $segments := .nucleotideSequences | default (list "main")}}
-  {{- $is_segmented := gt (len $segments) 1 }}
-  instanceName: {{ .organismName }}
+  instanceName: {{ $schema.organismName }}
   opennessLevel: OPEN
   metadata:
-  {{- range (concat .commonMetadata .metadata) }}
+  {{- range (concat .commonMetadata $schema.metadata) }}
   {{- $currentItem := . }}
-  {{- if and $is_segmented .perSegment }}
-    {{- range $segment := $segments }}
+  {{- if and $isSegmented .perSegment }}
+    {{- range $segment := $rawUniqueSegments }}
     {{- with $currentItem }}
     {{- include "loculus.siloDatabaseShared" . | nindent 4 }}
       name: {{ printf "%s_%s" .name $segment | quote}}
@@ -32,8 +33,8 @@ schema:
       name: {{ .name }}
   {{- end }}
   {{- end }}
-  {{- if .files }}
-  {{- range .files }}
+  {{- if $schema.files }}
+  {{- range $schema.files }}
     - type: string
       name: {{ .name }}
   {{- end }}

@@ -23,6 +23,7 @@ from .datatypes import (
     AnnotationSourceType,
     FileIdAndName,
     GeneName,
+    InputData,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -69,56 +70,124 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+class MultipleValidSegmentsError(Exception):
+    def __init__(self, segments: list[str]):
+        self.segments = segments
+        super().__init__()
+
+    def getProcessingAnnotation(
+        self, processed_field_name: str, organism: str
+    ) -> ProcessingAnnotation:
+        return ProcessingAnnotation(
+            unprocessedFields=[
+                AnnotationSource(name=segment, type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE)
+                for segment in self.segments
+            ],
+            processedFields=[
+                AnnotationSource(name=processed_field_name, type=AnnotationSourceType.METADATA)
+            ],
+            message=f"Organism {organism} is configured to only accept one segment per submission, found multiple valid segments: {self.segments}.",
+        )
+
+
+def get_segment(
+    spec: ProcessingSpec, data_per_segment: dict[SegmentName, Any] | None
+) -> str | None:
+    """Returns the segment to use based on spec args"""
+    if spec.args and spec.args.get("useFirstSegment", False) and data_per_segment:
+        valid_segments = [key for key, value in data_per_segment.items() if value]
+        if not valid_segments:
+            return None
+        if len(valid_segments) > 1:
+            raise MultipleValidSegmentsError(valid_segments)
+        return valid_segments[0]
+
+    if spec.args and "segment" in spec.args:
+        return str(spec.args["segment"])
+
+    return "main"
+
+
 def add_nextclade_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     nextclade_path: str,
-) -> str | None:
-    segment = str(spec.args["segment"]) if spec.args and "segment" in spec.args else "main"
+    config: Config,
+) -> InputData:
+    try:
+        segment = get_segment(spec, unprocessed.nextcladeMetadata)
+    except MultipleValidSegmentsError as e:
+        error_annotation = e.getProcessingAnnotation(
+            processed_field_name=nextclade_path, organism=config.organism
+        )
+        logger.error(error_annotation.message)
+        return InputData(datum=None, errors=[error_annotation])
+
     if (
         not unprocessed.nextcladeMetadata
         or segment not in unprocessed.nextcladeMetadata
         or unprocessed.nextcladeMetadata[segment] is None
     ):
-        return None
-    result: str | None = str(
-        dpath.get(
-            unprocessed.nextcladeMetadata[segment],
-            nextclade_path,
-            separator=".",
-            default=None,
-        )
+        return InputData(datum=None)
+    raw = dpath.get(
+        unprocessed.nextcladeMetadata[segment],
+        nextclade_path,
+        separator=".",
+        default=None,
     )
+    result = None if raw is None else str(raw)
     if nextclade_path == "frameShifts":
         try:
             result = format_frameshift(result)
         except Exception:
-            # TODO: somehow this error needs to be returned
-            logger.error("Was unable to format frameshift - this is likely an internal error")
-            result = None
+            msg = (
+                "Was unable to format frameshift - this is likely an internal error. "
+                "Please contact the administrator."
+            )
+            logger.error(msg)
+            errors = [
+                ProcessingAnnotation.from_single(
+                    nextclade_path,
+                    AnnotationSourceType.METADATA,
+                    message=msg,
+                ),
+            ]
+            return InputData(datum=None, errors=errors)
     if nextclade_path == "qc.stopCodons.stopCodons":
         try:
             result = format_stop_codon(result)
         except Exception:
-            logger.error("Was unable to format stop codon - this is likely an internal error")
-            result = None
-    return result
+            msg = (
+                "Was unable to format stop codon - this is likely an internal error. "
+                "Please contact the administrator."
+            )
+            logger.error(msg)
+            errors = [
+                ProcessingAnnotation.from_single(
+                    nextclade_path,
+                    AnnotationSourceType.METADATA,
+                    message=msg,
+                ),
+            ]
+            return InputData(datum=None, errors=errors)
+    return InputData(datum=result)
 
 
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
     input_path: str,
-) -> str | None:
+    config: Config,
+) -> InputData:
     """Returns value of input_path in unprocessed metadata"""
     # If field starts with "nextclade.", take from nextclade metadata
     nextclade_prefix = "nextclade."
     if input_path.startswith(nextclade_prefix):
         nextclade_path = input_path[len(nextclade_prefix) :]
-        return add_nextclade_metadata(spec, unprocessed, nextclade_path)
+        return add_nextclade_metadata(spec, unprocessed, nextclade_path, config=config)
     if input_path not in unprocessed.inputMetadata:
-        return None
-    return unprocessed.inputMetadata[input_path]
+        return InputData(datum=None)
+    return InputData(datum=unprocessed.inputMetadata[input_path])
 
 
 def _call_processing_function(  # noqa: PLR0913, PLR0917
@@ -183,6 +252,16 @@ def processed_entry_no_alignment(
     )
 
 
+def get_sequence_length(
+    unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
+    segment: SegmentName | None,
+) -> int:
+    if segment is None:
+        return 0
+    sequence = unaligned_nucleotide_sequences.get(segment)
+    return len(sequence) if sequence else 0
+
+
 def get_output_metadata(
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData | UnprocessedAfterNextclade,
@@ -192,19 +271,7 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for segment in config.nucleotideSequences:
-        sequence = unprocessed.unalignedNucleotideSequences.get(segment, None)
-        key = "length" if not config.multi_segment else "length_" + segment
-        if key in config.processing_spec:
-            output_metadata[key] = len(sequence) if sequence else 0
-
-    length_fields = [
-        "length" if not config.multi_segment else "length_" + segment
-        for segment in config.nucleotideSequences
-    ]
     for output_field, spec_dict in config.processing_spec.items():
-        if output_field in length_fields:
-            continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
             function=spec_dict["function"],
@@ -214,10 +281,35 @@ def get_output_metadata(
         spec.args = {} if spec.args is None else spec.args
         input_data: InputMetadata = {}
         input_fields: list[str] = []
+        if output_field == "length":
+            try:
+                segment_name = get_segment(spec, unprocessed.unalignedNucleotideSequences)
+            except MultipleValidSegmentsError as e:
+                error_annotation = e.getProcessingAnnotation(
+                    processed_field_name=output_field, organism=config.organism
+                )
+                logger.error(error_annotation.message)
+                output_metadata[output_field] = None
+                continue
+
+            output_metadata[output_field] = get_sequence_length(
+                unprocessed.unalignedNucleotideSequences, segment_name
+            )
+            continue
+
+        if output_field.startswith("length_") and output_field[7:] in config.nucleotideSequences:
+            segment = output_field[7:]
+            output_metadata[output_field] = get_sequence_length(
+                unprocessed.unalignedNucleotideSequences, segment
+            )
+            continue
 
         for arg_name, input_path in spec.inputs.items():
             if isinstance(unprocessed, UnprocessedAfterNextclade):
-                input_data[arg_name] = add_input_metadata(spec, unprocessed, input_path)
+                input_metadata = add_input_metadata(spec, unprocessed, input_path, config=config)
+                input_data[arg_name] = input_metadata.datum
+                errors.extend(input_metadata.errors)
+                warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
                 submitter = unprocessed.inputMetadata["submitter"]
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
@@ -236,6 +328,7 @@ def get_output_metadata(
             input_data=input_data,
             input_fields=input_fields,
         )
+
         output_metadata[output_field] = processing_result.datum
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
@@ -477,8 +570,8 @@ def upload_flatfiles(processed: Sequence[SubmissionData], config: Config) -> Non
                     processedFields=[
                         AnnotationSource(name="embl_upload", type=AnnotationSourceType.METADATA)
                     ],
-                    message="Failed to create or upload EMBL file "
-                    "please contact your administrator.",
+                    message="Failed to create or upload EMBL file. "
+                    "Please contact your administrator.",
                 )
             )
 

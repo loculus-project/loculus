@@ -40,7 +40,7 @@ jobs:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
@@ -79,21 +79,9 @@ jobs:
         run: cd cli && uv sync && uv build && uv pip install --system dist/*.whl
       - name: Install keyring backend for CLI
         run: uv pip install --system keyrings.alt
-      - name: Get Installed Playwright Version
-        id: playwright-version
-        run: cd integration-tests && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      # Firefox's readonly-setup is also done with Chromium
       - name: Install Playwright Browsers and System Dependencies
-        run: cd integration-tests && npx playwright install --with-deps
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-      - name: Install only System Dependencies
-        run: cd website && npx playwright install-deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: cd integration-tests && npx playwright install --with-deps --only-shell chromium ${{ matrix.browser == 'firefox' && 'firefox' || '' }}
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs

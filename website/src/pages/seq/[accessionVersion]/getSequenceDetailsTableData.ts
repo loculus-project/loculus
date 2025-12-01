@@ -14,7 +14,6 @@ import { parseAccessionVersionFromString } from '../../../utils/extractAccession
 export enum SequenceDetailsTableResultType {
     TABLE_DATA = 'tableData',
     REDIRECT = 'redirect',
-    ERROR = 'error',
 }
 
 export type TableData = {

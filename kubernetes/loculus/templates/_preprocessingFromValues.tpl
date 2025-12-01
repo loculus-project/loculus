@@ -16,6 +16,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .useFirstSegment }}
+    useFirstSegment: {{ .useFirstSegment }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -41,6 +44,9 @@
     {{- if .segment }}
     segment: {{ .segment }}
     {{- end }}
+    {{- if .useFirstSegment }}
+    useFirstSegment: {{ .useFirstSegment }}
+    {{- end }}
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
@@ -50,22 +56,30 @@
   {{- end }}
 {{- end }}
 
+{{/* Expects an object { metadata: [...], referenceGenomes: {...} }
+  .metadata is an array of metadata fields. Each has name, type, displayName, header, required etc.
+  .referenceGenomes is a map of reference genome definitions directly taken from the instance config of an organism.
+*/}}
 {{- define "loculus.preprocessingSpecs" -}}
 {{- $metadata := .metadata }}
-{{/* .metadata is an array of metadata fields. Each has name, type, displayName, header, required etc. */}}
-{{- $segments := .nucleotideSequences}}
-{{- $is_segmented := gt (len $segments) 1 }}
+{{- $referenceGenomes := .referenceGenomes}}
+
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
+
+{{- $hasMultipleSuborganisms := gt (len $referenceGenomes) 1 }}
 {{- range $metadata }}
     {{- $currentItem := . }}
-    {{- if and $is_segmented .perSegment }}
-        {{- range $segment := $segments }}
+    {{- if and $isSegmented .perSegment }}
+        {{- range $segment := $rawUniqueSegments }}
             {{- with $currentItem }}
-            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment)) }}
+            {{- $args := deepCopy . | merge (dict "segment" $segment "key" (printf "%s_%s" .name $segment) "useFirstSegment" false) }}
             {{- include "loculus.sharedPreproSpecs" $args }}
             {{- end }}
         {{- end }}
     {{- else }}
-        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name) }}
+        {{- $useFirstSegment := and .perSegment $hasMultipleSuborganisms }}
+        {{- $args := deepCopy . | merge (dict "segment" "" "key" .name "useFirstSegment" $useFirstSegment) }}
         {{- include "loculus.sharedPreproSpecs" $args }}
     {{- end }}
 {{- end }}

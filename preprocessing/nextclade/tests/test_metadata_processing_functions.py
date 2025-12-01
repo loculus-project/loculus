@@ -5,6 +5,7 @@ from factory_methods import (
     ProcessedEntryFactory,
     ProcessingAnnotationHelper,
     ProcessingTestCase,
+    build_processing_annotations,
     ts_from_ymd,
     verify_processed_entry,
 )
@@ -32,29 +33,35 @@ test_case_definitions = [
         input_metadata={"submissionId": "missing_required_fields"},
         accession_id="0",
         expected_metadata={"concatenated_string": "LOC_0.1"},
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["name_required"], ["name_required"], "Metadata field name_required is required."
-            ),
-            ProcessingAnnotationHelper(
-                ["ncbi_required_collection_date"],
-                ["required_collection_date"],
-                "Metadata field required_collection_date is required.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["name_required"],
+                    ["name_required"],
+                    "Metadata field name_required is required.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["ncbi_required_collection_date"],
+                    ["required_collection_date"],
+                    "Metadata field required_collection_date is required.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="missing_one_required_field",
         input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
         accession_id="1",
         expected_metadata={"name_required": "name", "concatenated_string": "LOC_1.1"},
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["ncbi_required_collection_date"],
-                ["required_collection_date"],
-                "Metadata field required_collection_date is required.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["ncbi_required_collection_date"],
+                    ["required_collection_date"],
+                    "Metadata field required_collection_date is required.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_option",
@@ -70,13 +77,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "Afrika/LOC_2.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["continent"],
-                ["continent"],
-                "Metadata field continent:'Afrika' - not in list of accepted options.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["continent"],
+                    ["continent"],
+                    "Metadata field continent:'Afrika' - not in list of accepted options.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="collection_date_in_future",
@@ -93,13 +102,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_3.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["collection_date"],
-                ["collection_date"],
-                "Metadata field collection_date:'2088-12-01' is in the future.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["collection_date"],
+                    ["collection_date"],
+                    "Metadata field collection_date:'2088-12-01' is in the future.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_collection_date",
@@ -115,13 +126,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_4.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["collection_date"],
-                ["collection_date"],
-                "Metadata field collection_date: Date format is not recognized.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["collection_date"],
+                    ["collection_date"],
+                    "Metadata field collection_date: Date format is not recognized.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_timestamp",
@@ -137,16 +150,18 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_5.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["sequenced_timestamp"],
-                ["sequenced_timestamp"],
-                (
-                    "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
-                    "Parsing error: Unknown string format:  2022-11-01Europe"
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["sequenced_timestamp"],
+                    ["sequenced_timestamp"],
+                    (
+                        "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
+                        "Parsing error: Unknown string format:  2022-11-01Europe"
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="date_only_year",
@@ -164,16 +179,18 @@ test_case_definitions = [
             "concatenated_string": "LOC_6.1/2022-11-01",
         },
         expected_errors=[],
-        expected_warnings=[
-            ProcessingAnnotationHelper(
-                ["collection_date"],
-                ["collection_date"],
-                (
-                    "Metadata field collection_date:'2023' - Month and day are missing. "
-                    "Assuming January 1st."
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["collection_date"],
+                    ["collection_date"],
+                    (
+                        "Metadata field collection_date:'2023' - Month and day are missing. "
+                        "Assuming January 1st."
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="regex_match",
@@ -212,16 +229,18 @@ test_case_definitions = [
             "concatenated_string": "LOC_6.1/2022-11-01",
             "regex_field": None,
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["regex_field"],
-                ["regex_field"],
-                (
-                    "The value 'EPIISL_123456' does not match the expected regex pattern: "
-                    "'^EPI_ISL_[0-9]+$'."
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["regex_field"],
+                    ["regex_field"],
+                    (
+                        "The value 'EPIISL_123456' does not match the expected regex pattern: "
+                        "'^EPI_ISL_[0-9]+$'."
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
         expected_warnings=[],
     ),
     Case(
@@ -240,13 +259,15 @@ test_case_definitions = [
             "concatenated_string": "LOC_7.1/2022-11-01",
         },
         expected_errors=[],
-        expected_warnings=[
-            ProcessingAnnotationHelper(
-                ["collection_date"],
-                ["collection_date"],
-                "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
-            ),
-        ],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["collection_date"],
+                    ["collection_date"],
+                    "Metadata field collection_date:'2023-12' - Day is missing. Assuming the 1st.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_int",
@@ -262,11 +283,13 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_8.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["age_int"], ["age_int"], "Invalid int value: asdf for field age_int."
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["age_int"], ["age_int"], "Invalid int value: asdf for field age_int."
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_float",
@@ -282,13 +305,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_9.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["percentage_float"],
-                ["percentage_float"],
-                "Invalid float value: asdf for field percentage_float.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["percentage_float"],
+                    ["percentage_float"],
+                    "Invalid float value: asdf for field percentage_float.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="invalid_date",
@@ -304,16 +329,18 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_10.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["other_date"],
-                ["other_date"],
-                (
-                    "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. "
-                    "Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["other_date"],
+                    ["other_date"],
+                    (
+                        "Date is 01-02-2024 which is not in the required format YYYY-MM-DD. "
+                        "Parsing error: time data '01-02-2024' does not match format '%Y-%m-%d'"
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="invalid_boolean",
@@ -329,13 +356,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_11.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["is_lab_host_bool"],
-                ["is_lab_host_bool"],
-                "Invalid boolean value: maybe for field is_lab_host_bool.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["is_lab_host_bool"],
+                    ["is_lab_host_bool"],
+                    "Invalid boolean value: maybe for field is_lab_host_bool.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="warn_potential_author_error",
@@ -353,21 +382,23 @@ test_case_definitions = [
             "authors": "Anna Smith, Cameron Tucker",
         },
         expected_errors=[],
-        expected_warnings=[
-            ProcessingAnnotationHelper(
-                ["authors"],
-                ["authors"],
-                (
-                    "The authors list might not be using the Loculus "
-                    "format. Please ensure that authors are separated by semi-colons. Each "
-                    "author's name should be in the format 'last name, first name;'. Last name(s) "
-                    "is mandatory, a comma is mandatory to separate first names/initials from last "
-                    "name. Only ASCII alphabetical characters A-Z are allowed. For example: "
-                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
-                    "unknown."
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "The authors list might not be using the Loculus "
+                        "format. Please ensure that authors are separated by semi-colons. Each "
+                        "author's name should be in the format 'last name, first name;'. Last name(s) "
+                        "is mandatory, a comma is mandatory to separate first names/initials from last "
+                        "name. Only ASCII alphabetical characters A-Z are allowed. For example: "
+                        "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
+                        "unknown."
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="non_latin_characters_authors",
@@ -383,13 +414,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_13.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["authors"],
-                ["authors"],
-                "Unsupported non-Latin character encountered: 汉 (U+6C49).",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    "Unsupported non-Latin character encountered: 汉 (U+6C49).",
+                ),
+            ]
+        ),
     ),
     Case(
         name="diacritics_in_authors",
@@ -440,13 +473,15 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_15.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["percentage_float"],
-                ["percentage_float"],
-                "Invalid float value: Infinity for field percentage_float.",
-            ),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["percentage_float"],
+                    ["percentage_float"],
+                    "Invalid float value: Infinity for field percentage_float.",
+                ),
+            ]
+        ),
     ),
     Case(
         name="and_in_authors",
@@ -464,17 +499,19 @@ test_case_definitions = [
             "authors": "Smith, Anna; Perez, Tom J. and Xu X. L.",
         },
         expected_errors=[],
-        expected_warnings=[
-            ProcessingAnnotationHelper(
-                ["authors"],
-                ["authors"],
-                (
-                    "Authors list contains 'and'. "
-                    "This may indicate a misformatted authors list. Authors should always be "
-                    "separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "Authors list contains 'and'. "
+                        "This may indicate a misformatted authors list. Authors should always be "
+                        "separated by semi-colons only e.g. `Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="trailing_dots_in_authors",
@@ -516,21 +553,23 @@ test_case_definitions = [
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_17.1/2022-11-01",
         },
-        expected_errors=[
-            ProcessingAnnotationHelper(
-                ["authors"],
-                ["authors"],
-                (
-                    "Invalid name(s): 'Invalid Name'; 'BadFormat123'; '12345' ... and 1 others. "
-                    "Please ensure that authors are separated by semi-colons. Each author's name "
-                    "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
-                    "a comma is mandatory to separate first names/initials from last name. "
-                    "Only ASCII alphabetical characters A-Z are allowed. For example: "
-                    "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
-                    "unknown."
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "Invalid name(s): 'Invalid Name'; 'BadFormat123'; '12345' ... and 1 others. "
+                        "Please ensure that authors are separated by semi-colons. Each author's name "
+                        "should be in the format 'last name, first name;'. Last name(s) is mandatory, "
+                        "a comma is mandatory to separate first names/initials from last name. "
+                        "Only ASCII alphabetical characters A-Z are allowed. For example: "
+                        "'Smith, Anna; Perez, Tom J.; Xu, X.L.;' or 'Xu,;' if the first name is "
+                        "unknown."
+                    ),
                 ),
-            ),
-        ],
+            ]
+        ),
     ),
     Case(
         name="strip_spaces_in_metadata",

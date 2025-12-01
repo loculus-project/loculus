@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any, Final
@@ -51,7 +52,13 @@ class ProcessingAnnotation:
         return hash((self.unprocessedFields, self.processedFields, self.message))
 
     @classmethod
-    def from_fields(cls, input_fields, output_fields, type, message):
+    def from_fields(
+        cls,
+        input_fields: Iterable[str],
+        output_fields: Iterable[str],
+        type: AnnotationSourceType,
+        message: str,
+    ):
         return cls(
             unprocessedFields=[AnnotationSource(name=f, type=type) for f in input_fields],
             processedFields=[AnnotationSource(name=f, type=type) for f in output_fields],
@@ -152,6 +159,13 @@ class SubmissionData:
     submitter: str | None
     group_id: int | None = None
     annotations: dict[str, Any] | None = None
+
+
+@dataclass
+class InputData:
+    datum: InputMetadataValue
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
 
 
 @dataclass
