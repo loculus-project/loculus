@@ -305,13 +305,15 @@ def assign_segment(
         seq_id = id_map[entry.accessionVersion, fasta_id]
         if seq_id not in best_hits["seqName"].unique():
             has_missing_segments = True
-            method = config.segment_classification_method.value
-            if method == "minimizer":
-                method = "sort"
+            method = (
+                "sort"
+                if config.segment_classification_method.value == "minimizer"
+                else config.segment_classification_method.value
+            )
             annotation = sequence_annotation(
-                f"Sequence with fasta id {fasta_id} does not match any reference for"
-                f" organism: {config.organism} per `nextclade {method}`. "
-                f"Double check you are submitting to the correct organism."
+                f"Sequence with fasta id {fasta_id} does not match any reference for "
+                f"organism: {config.organism} per `nextclade "
+                f"{method}`. Double check you are submitting to the correct organism."
             )
             if config.alignment_requirement == AlignmentRequirement.ALL:
                 segment_assignment.alert.errors.append(annotation)
