@@ -164,8 +164,7 @@ export function getMetadataTemplateFields(
     const submissionIdInputFields = getSubmissionIdInputFields(isMultiSegmentedOrganism(organism)).map(
         (field) => field.name,
     );
-    const extraFields =
-        action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
+    const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
     const allFields = [...extraFields, ...baseFields];
     const fieldsToDisplaynames = new Map<string, string | undefined>(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
