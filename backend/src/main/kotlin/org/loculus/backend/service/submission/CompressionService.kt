@@ -102,7 +102,7 @@ class CompressionService(private val compressionDictService: CompressionDictServ
             }
         },
         processedData.aminoAcidInsertions,
-            processedData.sequenceNameToFastaId,
+        processedData.sequenceNameToFastaId,
         processedData.files,
     )
 
