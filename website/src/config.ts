@@ -206,15 +206,15 @@ export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputFiel
             displayName: 'ID',
             definition: 'METADATA ID',
             guidance:
-                'Your sample identifier. If no FastaId is provided, this ID will be used to associate the metadata with the sequence.',
+                'Your sample identifier. If no FastaIds is provided, this ID will be used to associate the metadata with the sequence.',
             example: 'GJP123',
             noEdit: true,
             required: true,
         },
         {
             name: FASTA_ID_FIELD,
-            displayName: 'FASTA ID',
-            definition: 'FASTA ID',
+            displayName: 'FASTA IDS',
+            definition: 'FASTA IDS',
             guidance: 'Space-separated list of IDs of each FASTA sequence to be associated with this metadata entry.',
             example: 'GJP123',
             noEdit: true,
