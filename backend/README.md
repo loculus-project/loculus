@@ -106,6 +106,12 @@ See [the documentation of the Testcontainers](https://java.testcontainers.org/su
 ./gradlew ktlintFormat
 ```
 
+### Upgrading Gradle (short version)
+
+1. Check the Kotlin Gradle plugin version in `build.gradle` (plugins block).
+2. Look up the max supported Gradle for that Kotlin version in the compatibility table: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin.
+3. If the target Gradle version is supported, run `./gradlew wrapper --gradle-version=<version> && ./gradlew wrapper` to regenerate the wrapper, commit the changed wrapper files, then validate with `./gradlew test --console=plain` and `./gradlew ktlintFormat`.
+
 ## Logs
 
 The backend writes logs to stdout and stores them logs in `./log/backend.log`, relative to the working directory.
