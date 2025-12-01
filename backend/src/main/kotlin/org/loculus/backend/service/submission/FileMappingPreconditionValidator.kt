@@ -81,7 +81,7 @@ class FileMappingPreconditionValidator(
         return this
     }
 
-    fun validateFilesUploadedNotJustRequested(fileIds: Set<FileId>): FileMappingPreconditionValidator {
+    fun validateFilesUploaded(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         val uncheckedFileIds = filesDatabaseService.getUncheckedFileIds(fileIds)
         val fileIdsWithoutFile = uncheckedFileIds.mapNotNull { fileId ->
             val fileSize = s3Service.getFileSize(fileId)
@@ -104,7 +104,7 @@ class FileMappingPreconditionValidator(
      */
     fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         validateFileIdsExist(fileIds)
-        validateFilesUploadedNotJustRequested(fileIds)
+        validateFilesUploaded(fileIds)
         return this
     }
 
