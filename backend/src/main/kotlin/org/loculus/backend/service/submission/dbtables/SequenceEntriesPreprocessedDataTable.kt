@@ -23,7 +23,6 @@ object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSE
     val processingStatusColumn = varchar("processing_status", 255)
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
-    val compressionMigrationCheckedAtColumn = datetime("compression_migration_checked_at").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
 

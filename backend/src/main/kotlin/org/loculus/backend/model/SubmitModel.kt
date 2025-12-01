@@ -38,6 +38,7 @@ private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
 typealias FastaId = String
+typealias SegmentName = String
 
 const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
 
@@ -145,7 +146,7 @@ class SubmitModel(
         submissionParams.files?.let { submittedFiles ->
             val fileSubmissionIds = submittedFiles.keys
             validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+            validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
@@ -381,28 +382,21 @@ class SubmitModel(
         }
     }
 
-    private fun validateFileExistenceAndGroupOwnership(
+    private fun validateFileGroupOwnership(
         submittedFiles: SubmissionIdFilesMap,
         submissionParams: SubmissionParams,
         uploadId: String,
     ) {
-        val usedFileIds = submittedFiles.getAllFileIds()
-        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
-
-        log.debug { "Validating that all submitted file IDs exist." }
-        val notExistingIds = usedFileIds.subtract(fileGroups.keys)
-        if (notExistingIds.isNotEmpty()) {
-            throw BadRequestException("The File IDs $notExistingIds do not exist.")
-        }
-
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
+        val usedFileIds = submittedFiles.getAllFileIds()
+        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             fileGroups.forEach {
                 if (it.value != submissionParams.groupId) {
                     throw BadRequestException(
-                        "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
+                        "File ${it.key} does not belong to group ${submissionParams.groupId}.",
                     )
                 }
             }

@@ -16,7 +16,6 @@ test.describe('Sequence detail page', () => {
         const detailPage = new SequenceDetailPage(page);
         await detailPage.goto(accessionVersion);
 
-        await detailPage.loadSequencesIfNeeded();
         await detailPage.waitForSequenceTabs();
         await detailPage.selectUnalignedTab();
         await detailPage.expectSequenceContentVisible();

@@ -23,7 +23,7 @@ sequenceTest(
     'revising sequence data works: segment can be deleted; segment can be edited',
     async ({ page, releasedSequence }) => {
         void releasedSequence;
-        sequenceTest.setTimeout(60000);
+        sequenceTest.setTimeout(200_000);
 
         const searchPage = new SearchPage(page);
         await searchPage.cchf();

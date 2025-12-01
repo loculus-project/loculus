@@ -9,12 +9,10 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Transaction
@@ -35,7 +33,6 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.stringParam
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption.PostgreSQL.ForUpdate
@@ -189,7 +186,6 @@ class SubmissionDatabaseService(
                 val chunkOfUnprocessedData = chunk.map {
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
-                        organism,
                     )
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
@@ -250,8 +246,9 @@ class SubmissionDatabaseService(
                     .validateCategoriesMatchOutputSchema(fileMapping, organism)
                     .validateMultipartUploads(fileMapping.fileIds)
                     .validateFilesExist(fileMapping.fileIds)
-                val av = AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
-                processedFiles[av] = fileMapping.fileIds
+                val accessionVersion =
+                    AccessionVersion(submittedProcessedData.accession, submittedProcessedData.version)
+                processedFiles[accessionVersion] = fileMapping.fileIds
             }
 
             val processingResult = submittedProcessedData.processingResult()
@@ -393,7 +390,6 @@ class SubmissionDatabaseService(
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-                it[compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
@@ -438,7 +434,7 @@ class SubmissionDatabaseService(
         organism: Organism,
     ) = try {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
-        throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData)
+        validateFilesBelongToSubmittingGroup(submittedProcessedData)
         val processedData = makeSequencesUpperCase(submittedProcessedData.data)
         processedSequenceEntryValidatorFactory.create(organism).validate(processedData)
     } catch (validationException: ProcessingValidationException) {
@@ -521,13 +517,12 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun throwIfFilesDoNotExistOrBelongToWrongGroup(submittedProcessedData: SubmittedProcessedData) {
+    private fun validateFilesBelongToSubmittingGroup(submittedProcessedData: SubmittedProcessedData) {
         // TODO(#3951): This implementation is very inefficient as it makes two requests to the database for
         //  each sequence entry.
         if (submittedProcessedData.data.files == null) {
             return
         }
-        val accessionVersion = submittedProcessedData.displayAccessionVersion()
         val sequenceEntryGroup = SequenceEntriesTable
             .select(groupIdColumn)
             .where {
@@ -537,15 +532,11 @@ class SubmissionDatabaseService(
             .single()[groupIdColumn]
         val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
         val fileGroups = filesDatabaseService.getGroupIds(fileIds)
-        val notExistingIds = fileIds.subtract(fileGroups.keys)
-        if (notExistingIds.isNotEmpty()) {
-            throw UnprocessableEntityException("The File IDs $notExistingIds do not exist.")
-        }
-        fileGroups.forEach { fileId, fileGroup ->
+        fileGroups.forEach { (fileId, fileGroup) ->
             if (fileGroup != sequenceEntryGroup) {
                 throw UnprocessableEntityException(
-                    "Accession version $accessionVersion belongs to group $sequenceEntryGroup but the attached file " +
-                        "$fileId belongs to the group $fileGroup.",
+                    "Accession version ${submittedProcessedData.displayAccessionVersion()} belongs to " +
+                        "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
                 )
             }
         }
@@ -1071,6 +1062,7 @@ class SubmissionDatabaseService(
             fileMappingPreconditionValidator
                 .validateFilenamesAreUnique(fileMapping)
                 .validateCategoriesMatchSubmissionSchema(fileMapping, organism)
+                .validateMultipartUploads(fileMapping.fileIds)
                 .validateFilesExist(fileMapping.fileIds)
         }
 
@@ -1142,7 +1134,6 @@ class SubmissionDatabaseService(
             ),
             originalData = compressionService.decompressSequencesInOriginalData(
                 selectedSequenceEntry[SequenceEntriesView.originalDataColumn]!!,
-                organism,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],

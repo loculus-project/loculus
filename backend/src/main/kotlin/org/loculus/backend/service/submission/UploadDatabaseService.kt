@@ -208,8 +208,7 @@ class UploadDatabaseService(
                 submitter,
                 group_id,
                 submitted_at,
-                original_data,
-                compression_migration_checked_at
+                original_data
             )
             SELECT
                 m.accession,
@@ -224,8 +223,7 @@ class UploadDatabaseService(
                     'files',    m.files,
                     'unalignedNucleotideSequences',
                     COALESCE(x.seq_map, '{}'::jsonb)
-                ),
-                NOW()
+                )
             FROM metadata_upload_aux_table AS m
             LEFT JOIN LATERAL (
                 SELECT jsonb_object_agg(s.fasta_id, s.compressed_sequence_data::jsonb) AS seq_map
