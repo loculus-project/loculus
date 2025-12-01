@@ -4,7 +4,7 @@ import { Fragment, type Dispatch, type FC, type SetStateAction } from 'react';
 
 import { EditableDataRow } from './DataRow.tsx';
 import type { Row } from './InputField';
-import { ACCESSION_FIELD, FASTA_ID_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import { mapErrorsAndWarnings, type SequenceEntryToEdit } from '../../types/backend.ts';
 import type { InputField } from '../../types/config';
 
@@ -71,9 +71,9 @@ export class EditableMetadata {
      * @param submissionId optional (might already be in the rows if add to the form initially).
      *      The submission ID to put into the TSV.
      * @param accession optional. If an accession is already assigned to this sequence, it should be given.
-     * @param fastaId optional. Add a fastaId field with content if supplied.
+     * @param fastaIds optional. Add a fastaIds field with content if supplied.
      */
-    getMetadataTsv(submissionId?: string, accession?: string, fastaId?: string): File | undefined {
+    getMetadataTsv(submissionId?: string, accession?: string, fastaIds?: string): File | undefined {
         // if no values are set at all, return undefined
         if (!this.rows.some((row) => row.value !== '')) return undefined;
 
@@ -94,8 +94,8 @@ export class EditableMetadata {
             tsvFields.set(ACCESSION_FIELD, accession);
         }
 
-        if (fastaId) {
-            tsvFields.set(FASTA_ID_FIELD, fastaId);
+        if (fastaIds) {
+            tsvFields.set(FASTA_IDS_FIELD, fastaIds);
         }
 
         const tsvContent = Papa.unparse([Array.from(tsvFields.keys()), Array.from(tsvFields.values())], {
