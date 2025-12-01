@@ -390,7 +390,9 @@ def alignment_errors_warnings(
         )
         errors.append(
             ProcessingAnnotation.from_single(
-                "alignment", AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
+                ProcessingAnnotationAlignment,
+                AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                message=message,
             )
         )
         return (errors, warnings)
@@ -509,7 +511,7 @@ def process_single_unaligned(
         accession_version=accession_version,
         unprocessed=unprocessed,
         output_metadata=output_metadata,
-        errors=list(set(iupac_errors + metadata_errors + segment_assignment.errors)),
+        errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
     )
