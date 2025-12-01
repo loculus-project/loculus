@@ -42,7 +42,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
         suborganism,
     );
 
-    const [loadSequences, setLoadSequences] = useState<boolean>(() => loadSequencesAutomatically);
+    const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
     const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
