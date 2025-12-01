@@ -585,13 +585,13 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN valid input multi segment data THEN data is accepted and originalData shows fastaID`() {
+    fun `GIVEN valid input multi segment data THEN data is accepted and originalData shows fastaIDs`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
-                        submissionId	firstColumn	fastaId
+                        submissionId	firstColumn	fastaIds
                         header1	someValue	header1_seg1 header1_seg2
                         header2	someValue	fasta_header2_seg1
                 """.trimIndent(),
@@ -624,7 +624,7 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN valid input multi segment data without fastaID THEN data is accepted and originalData shows fastaID`() {
+    fun `GIVEN valid input multi-segment data wo fastaIDs THEN data is accepted and originalData shows fastaIDs`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
         submissionControllerClient.submit(

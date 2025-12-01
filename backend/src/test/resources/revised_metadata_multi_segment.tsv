@@ -1,4 +1,4 @@
-accession	submissionId	date	region	country	division	host	fastaId
+accession	submissionId	date	region	country	division	host	fastaIds
 1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	custom0_notOnlySegment
 2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	custom1_notOnlySegment custom1_secondSegment
 3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	custom2_notOnlySegment

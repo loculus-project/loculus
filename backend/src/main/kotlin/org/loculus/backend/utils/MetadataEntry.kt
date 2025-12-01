@@ -5,8 +5,8 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
-import org.loculus.backend.model.FASTA_ID_HEADER
-import org.loculus.backend.model.FASTA_ID_SEPARATOR
+import org.loculus.backend.model.FASTA_IDS_HEADER
+import org.loculus.backend.model.FASTA_IDS_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
@@ -46,16 +46,16 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
 
 fun extractFastaIdsFromRecord(record: CSVRecord, submissionId: String, recordNumber: Int): List<FastaId> {
     val headerNames = record.parser.headerNames
-    return when (headerNames.contains(FASTA_ID_HEADER)) {
+    return when (headerNames.contains(FASTA_IDS_HEADER)) {
         true -> {
-            val fastaIdValues = record[FASTA_ID_HEADER]
+            val fastaIdValues = record[FASTA_IDS_HEADER]
             if (fastaIdValues.isNullOrEmpty()) {
                 throw UnprocessableEntityException(
-                    "In metadata file: record #$recordNumber: column `$FASTA_ID_HEADER` is empty. This is invalid. Full record: $record",
+                    "In metadata file: record #$recordNumber: column `$FASTA_IDS_HEADER` is empty. This is invalid. Full record: $record",
                 )
             }
 
-            fastaIdValues.split(Regex(FASTA_ID_SEPARATOR))
+            fastaIdValues.split(Regex(FASTA_IDS_SEPARATOR))
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
         }
@@ -100,7 +100,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader &&
-                        it != FASTA_ID_HEADER
+                        it != FASTA_IDS_HEADER
                 }
                 val entry = MetadataEntry(submissionId, metadata, fastaIds)
 
@@ -175,7 +175,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader && it != ACCESSION_HEADER &&
-                        it != FASTA_ID_HEADER
+                        it != FASTA_IDS_HEADER
                 }
                 val entry = RevisionEntry(submissionId, accession, metadata, fastaIds)
 
