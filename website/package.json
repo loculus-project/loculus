@@ -30,7 +30,7 @@
         "@types/sanitize-html": "^2.16.0",
         "@zodios/core": "^10.9.6",
         "@zodios/react": "^10.4.5",
-        "astro": "^5.16.0",
+        "astro": "^5.16.3",
         "axios": "^1.13.2",
         "change-case": "~5.3.0",
         "chart.js": "^4.5.1",
@@ -60,12 +60,12 @@
         "zod": "^3.25.67"
     },
     "devDependencies": {
-        "@astrojs/check": "^0.9.5",
+        "@astrojs/check": "^0.9.6",
         "@astrojs/react": "^4.4.2",
         "@astrojs/tailwind": "^6.0.2",
         "@emotion/styled": "^11.14.1",
         "@eslint/js": "^9.39.1",
-        "@iconify/json": "^2.2.410",
+        "@iconify/json": "^2.2.413",
         "@tailwindcss/forms": "^0.5.9",
         "@tanstack/eslint-plugin-query": "^5.91.2",
         "@testing-library/dom": "^10.4.1",
@@ -91,7 +91,7 @@
         "eslint-plugin-jsx-a11y": "^6.10.2",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^6.1.1",
-        "happy-dom": "^20.0.10",
+        "happy-dom": "^20.0.11",
         "jsdom-testing-mocks": "^1.16.0",
         "msw": "^2.12.3",
         "prettier": "3.6.2",
@@ -102,7 +102,7 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.48.0",
         "uuid": "^13.0.0",
-        "vite": "^7.2.4",
-        "vitest": "4.0.13"
+        "vite": "^7.2.6",
+        "vitest": "4.0.14"
     }
 }
