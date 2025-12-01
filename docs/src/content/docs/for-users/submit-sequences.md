@@ -19,18 +19,24 @@ The form submits a single individual sequence entry, to submit multiple sequence
 
 ## Submit sequences via file upload
 
-Before you begin this process, you should ensure your data is in the correct format. Each sequence should have a unique ID that can be used to associate it with its corresponding metadata entry.
+Before starting the upload process, ensure your data is correctly formatted. Every sequence must have a unique ID that can be used to link it with its metadata entry.
 
 Loculus expects:
 
-- Sequence data in [`fasta` format](../../reference/fasta-format) with a unique ID per sequence.
-- Metadata for each sequence. If you upload through the API, only `tsv` is supported. If you upload through the Website, you can also use Excel files (`xlsx` format). If you need help formatting metadata, there is a metadata template for each organism on the submission page in each of the supported formats. You can also map columns in your file to the expected upload column names by clicking the 'Add column mapping' button.
+- Sequence data in [`fasta` format](../../reference/fasta-format) with a unique fasta ID per sequence. The fasta ID is the start of the header up to and excluding the first white space character. For example the fasta header `>seq_12` has fasta ID `seq_12`.
+- Metadata for each sample with a unique `id`.
+  - When uploading through the API, only `tsv` is supported.
+  - When uploading through the website, `xlsx` files are also accepted.
+  - Each organism has its own metadata template available on the submission page.
+  - On the website, you can map columns from your file to the expected metadata fields using the **Add column mapping** option.
+
+Loculus matches metadata and sequences using the `id` column in the metadata (i.e. the sequence with fasta ID `seq_12` will be joined with the metadata entry with `id` of `seq_12`). For multi-segmented pathogens, you can provide an additional metadata field called `fastaIds` containing a space-separated list of fasta IDs to link multiple sequences to a single submission, e.g. `seq_12_A seq_12_B`.
 
 ![Metadata template.](../../../assets/MetadataTemplate.png)
 
 ### Multi-segmented Pathogens
 
-Loculus expects multi-segmented pathogens to have one unique ID per **isolate** (pathogen sample containing all segments). However, `fasta` files should still have a separate entry/record per segment. Therefore, each record's FASTA id should include the unique ID of the isolate and the segment name, for example: `ID + '_' + segmentName`. The metadata is uploaded per isolate, i.e. there will be only one row for each `ID` and segmented metadata parameters need to be uploaded individually, i.e. under `length_{segmentName}` etc.
+Multi-segmented pathogens must have one unique `id` per **isolate** (i.e. one per pathogen sample containing all segments). Each segment will be a unique entry in the FASTA file with its own FASTA ID. Metadata is uploaded per isolate, meaning there will be a single metadata row per `id`. This row should include a `fastaIds` field listing all segment fasta IDs, separated by spaces.
 
 ### Website
 

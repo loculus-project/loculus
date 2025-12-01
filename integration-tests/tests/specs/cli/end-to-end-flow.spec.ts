@@ -17,7 +17,7 @@ cliTest.describe('CLI End-to-End Submission Flow', () => {
             const submissionId1 = `cli_e2e_${timestamp}_001`;
             const submissionId2 = `cli_e2e_${timestamp}_002`;
 
-            const testMetadata = `authorAffiliations\tauthors\tgeoLocCountry\thostNameScientific\thostTaxonId\tsampleCollectionDate\tspecimenCollectorSampleId\tsubmissionId\tfastaId
+            const testMetadata = `authorAffiliations\tauthors\tgeoLocCountry\thostNameScientific\thostTaxonId\tsampleCollectionDate\tspecimenCollectorSampleId\tsubmissionId\tfastaIds
 "National Institute of Health, Department of Virology"\t"Ammar, M.; Salman, M.; Umair, M.; Ali, Q.; Hakim, R.; Haider, S.A.; Jamal, Z."\tPakistan\tHomo sapiens\t9606\t2023-08-26\tCCHF/NIHPAK-19/2023\t${submissionId1}\t${submissionId1}_L ${submissionId1}_M ${submissionId1}_S
 "Research Lab, University of Example"\t"Example, A.; Test, B.; Sample, C."\tColombia\tHomo sapiens\t9606\t2021-12-12\tXF499\t${submissionId2}\t${submissionId2}_L ${submissionId2}_M ${submissionId2}_S`;
 

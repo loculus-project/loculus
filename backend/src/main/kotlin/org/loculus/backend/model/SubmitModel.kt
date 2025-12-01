@@ -33,8 +33,8 @@ import java.io.InputStream
 
 const val METADATA_ID_HEADER = "id"
 const val METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
-const val FASTA_ID_HEADER = "fastaId"
-const val FASTA_ID_SEPARATOR = " "
+const val FASTA_IDS_HEADER = "fastaIds"
+const val FASTA_IDS_SEPARATOR = " "
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
