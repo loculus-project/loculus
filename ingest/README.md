@@ -56,7 +56,7 @@ We group segments by adding a `jointAccession` field to the metadata which consi
 
 Using the config `grouping_override` you can provide a URL to a JSON file containing grouping overrides. The file should contain a dictionary mapping group names to lists of accessions.
 
-During grouping, this file will be used first to group segments together into a sequence entry. Only the remaining segments will be grouped in the way described above.
+During grouping, this file will be used first to group segments together into a sequence entry. Only the remaining segments will be grouped using heuristic grouping (as described above).
 
 ### Getting status and hashes of previously submitted sequences and triaging
 
