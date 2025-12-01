@@ -107,8 +107,9 @@ However, the `preprocessing` field can be customized to take an arbitrary number
 1. `parse_and_assert_past_date`: Take a date string and return a date field in the "%Y-%m-%d" format, ensure date is before release_date or today's date. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
 2. `check_date`: Take a date string and return a date field in the "%Y-%m-%d" format. Incomplete dates `%Y` or `%Y-%m` default the unspecified part to `1`.
 3. `parse_timestamp`: Take a timestamp e.g. 2022-11-01T00:00:00Z and return that field in the "%Y-%m-%d" format.
-4. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
-5. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is the "insdc_ingest_user".
+4. `parse_date_into_range`: Takes an incomplete (or complete) date (Just `%Y`, just `%Y-%m` or a full date) and turns it into two date fields: an upper and a lower date for the date range. Can optionally take another date field (the release date) into account, as an upper bound for the date range. For example, a sample collected in "2025-03" and released "2025-03-23" will mean the lower bound for the collection date is 2025-03-01 and the upper bound is the release date, 2025-03-23. To use this function fully, define three metadata fields: one for the plain string, one for the upper bound, one for the lower bound. See example below.
+5. `concatenate`: Take multiple metadata fields (including the accessionVersion) and concatenate them in the order specified by the `arg.order` parameter, fields will first be processed based on their `arg.type` (the order of the types should correspond to the order of fields specified by the order argument).
+6. `process_options`: Only accept input that is in `args.options`, this check is case-insensitive. If input value is not in options raise an error, or return null if the submitter is the "insdc_ingest_user".
 
 Using these functions in your `values.yaml` will look like:
 
@@ -140,6 +141,44 @@ Using these functions in your `values.yaml` will look like:
             - Bolivia
             _ Columbia
             -...
+```
+
+Example of using the `parse_date_into_range` below. The same function is called three times on three fields, but with different `fieldType` argument. The `sampleCollectionDate` is a required input field, while the other two fields are `noInput`:
+
+```yaml
+- name: sampleCollectionDate
+  displayName: Collection date
+  required: true
+  preprocessing:
+    function: parse_date_into_range
+    inputs:
+      date: sampleCollectionDate
+      releaseDate: ncbiReleaseDate
+    args:
+      fieldType: dateRangeString
+  notSearchable: true
+- name: sampleCollectionDateRangeLower
+  displayName: Collection date (lower bound)
+  type: date
+  noInput: true
+  preprocessing:
+    function: parse_date_into_range
+    inputs:
+      date: sampleCollectionDate
+      releaseDate: ncbiReleaseDate
+    args:
+      fieldType: dateRangeLower
+- name: sampleCollectionDateRangeUpper
+  displayName: Collection date (upper bound)
+  type: date
+  noInput: true
+  preprocessing:
+    function: parse_date_into_range
+    inputs:
+      date: sampleCollectionDate
+      releaseDate: ncbiReleaseDate
+    args:
+      fieldType: dateRangeUpper
 ```
 
 ### Nextclade results
