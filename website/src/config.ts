@@ -193,7 +193,7 @@ export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputFiel
                 displayName: 'ID',
                 definition: 'FASTA ID',
                 guidance:
-                    'Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.',
+                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
                 example: 'GJP123',
                 noEdit: true,
                 required: true,
