@@ -1,6 +1,17 @@
 name: Integration tests
 on:
   workflow_dispatch:
+    inputs:
+      subcomponent:
+        description: 'Which test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - chromium
+          - firefox
+          - cli
   pull_request:
     paths:
       - "backend/**"
@@ -16,7 +27,21 @@ on:
     branches:
       - main
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ inputs.subcomponent }}" == "all" ]; then
+            echo 'matrix=["chromium","firefox","cli"]' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix=["${{ inputs.subcomponent }}"]' >> $GITHUB_OUTPUT
+          fi
+
   integration-tests:
+    needs: setup
     permissions:
       packages: read
       contents: read
@@ -26,10 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser:
-          - chromium
-          - firefox
-          - cli
+        browser: ${{ fromJSON(needs.setup.outputs.matrix) }}
     timeout-minutes: 45
     env:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
