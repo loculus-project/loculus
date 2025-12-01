@@ -99,8 +99,8 @@ class FileMappingPreconditionValidator(
     }
 
     /**
-     1. Validate that the fileIds exist (have been requested for upload)
-     2. Check that a file has been uploaded for each fileId by checking S3 for its size
+     * 1. Validate that the fileIds exist (have been requested for upload)
+     * 2. Check that a file has been uploaded for each fileId by checking S3 for its size
      */
     fun validateFilesExist(fileIds: Set<FileId>): FileMappingPreconditionValidator {
         validateFileIdsExist(fileIds)
