@@ -8,13 +8,6 @@ export class SequenceDetailPage {
         await expect(this.page.getByRole('heading', { name: accessionVersion })).toBeVisible();
     }
 
-    async loadSequencesIfNeeded() {
-        const loadButton = this.page.getByRole('button', { name: 'Load sequences' });
-        if (await loadButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await loadButton.click();
-        }
-    }
-
     private get unalignedTab() {
         return this.page.getByRole('button', { name: /unaligned/i });
     }
