@@ -106,7 +106,7 @@ See [the documentation of the Testcontainers](https://java.testcontainers.org/su
 ./gradlew ktlintFormat
 ```
 
-### Upgrading Gradle (short version)
+### Upgrading Gradle
 
 1. Check the Kotlin Gradle plugin version in `build.gradle` (plugins block).
 2. Look up the max supported Gradle for that Kotlin version in the compatibility table: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin.
