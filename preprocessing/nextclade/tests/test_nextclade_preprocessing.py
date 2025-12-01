@@ -517,7 +517,7 @@ multi_segment_case_definitions_all_requirement_align_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference for "
+                    "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism."
                 )
@@ -554,7 +554,7 @@ multi_segment_case_definitions_all_requirement_align_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference for "
+                    "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism."
                 )
@@ -598,7 +598,7 @@ multi_segment_case_definitions_all_requirement_sort_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference"
+                    "Sequence with fasta id fastaHeader1 does not match any reference"
                     " for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
                 )
@@ -635,7 +635,7 @@ multi_segment_case_definitions_all_requirement_sort_classification = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference "
+                    "Sequence with fasta id fastaHeader1 does not match any reference "
                     "for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism."
                 )
@@ -687,7 +687,7 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_warnings=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference "
+                    "Sequence with fasta id fastaHeader1 does not match any reference "
                     "for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
                 )
@@ -724,7 +724,7 @@ multi_segment_case_definitions_any_requirement_sort_classification = [
         expected_warnings=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference"
+                    "Sequence with fasta id fastaHeader1 does not match any reference"
                     " for organism: multi-ebola-test per `nextclade sort`. "
                     "Double check you are submitting to the correct organism.",
                 )
@@ -775,7 +775,7 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         expected_warnings=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference for "
+                    "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
                 )
@@ -812,7 +812,7 @@ multi_segment_case_definitions_any_requirement_align_classification = [
         expected_warnings=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Sequence with fasta header fastaHeader1 does not match any reference for "
+                    "Sequence with fasta id fastaHeader1 does not match any reference for "
                     "organism: multi-ebola-test per `nextclade align`. "
                     "Double check you are submitting to the correct organism.",
                 )
@@ -892,7 +892,7 @@ segment_validation_tests_multi_segments = [
         expected_errors=build_processing_annotations(
             [
                 ProcessingAnnotationHelper.sequence_annotation_helper(
-                    "Multiple sequences (with fasta headers: ebola-sudan, duplicate_ebola-sudan) "
+                    "Multiple sequences (with fasta ids: ebola-sudan, duplicate_ebola-sudan) "
                     "align to ebola-sudan - only one entry is allowed.",
                 ),
             ]

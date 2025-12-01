@@ -309,7 +309,7 @@ def assign_segment(
             if method == "minimizer":
                 method = "sort"
             annotation = sequence_annotation(
-                f"Sequence with fasta header {fasta_id} does not match any reference for"
+                f"Sequence with fasta id {fasta_id} does not match any reference for"
                 f" organism: {config.organism} per `nextclade {method}`. "
                 f"Double check you are submitting to the correct organism."
             )
@@ -347,20 +347,20 @@ def assign_segment(
             else:
                 segment_assignment.alert.warnings.append(annotation)
 
-    for segment_name, headers in sort_results_map.items():
-        if len(headers) > 1:
+    for segment_name, ids in sort_results_map.items():
+        if len(ids) > 1:
             has_duplicate_segments = True
             segment_assignment.alert.errors.append(
                 sequence_annotation(
-                    f"Multiple sequences (with fasta headers: {', '.join(headers)}) align "
+                    f"Multiple sequences (with fasta ids: {', '.join(ids)}) align "
                     f"to {segment_name} - only one entry is allowed."
                 )
             )
             continue
 
-        segment_assignment.sequenceNameToFastaId[segment_name] = headers[0]
+        segment_assignment.sequenceNameToFastaId[segment_name] = ids[0]
         segment_assignment.unalignedNucleotideSequences[segment_name] = (
-            entry.data.unalignedNucleotideSequences[headers[0]]
+            entry.data.unalignedNucleotideSequences[ids[0]]
         )
 
     if (
