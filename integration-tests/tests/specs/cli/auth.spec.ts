@@ -23,13 +23,14 @@ cliTest.describe('CLI Authentication', () => {
         expect(initialStatusResult.stdout).toContain('Not logged in');
 
         // Step 3: Fail login with invalid credentials
-        const invalidLoginResult = await cliPage.login('invalid_user', 'invalid_password');
+        const invalidLoginResult = await cliPage.login('invalid_user', 'invalid_password', {
+            assertSuccess: false,
+        });
         expect(invalidLoginResult.exitCode).not.toBe(0);
         expect(invalidLoginResult.stderr).toContain('Invalid username or password');
 
-        // Step 4: Login with valid credentials
+        // Step 4: Login with valid credentials (asserts success by default)
         const validLoginResult = await cliPage.login('testuser', 'testuser');
-        cliPage.assertSuccess(validLoginResult, 'Valid login');
         expect(validLoginResult.stdout).toContain('Successfully logged in');
 
         // Check that we're now authenticated

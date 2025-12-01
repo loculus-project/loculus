@@ -3,6 +3,7 @@ import { promisify, stripVTControlCharacters } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
 import { test } from '@playwright/test';
 
 const execAsync = promisify(exec);
@@ -24,13 +25,11 @@ export class CliPage {
     constructor() {
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+        const uniqueId = randomUUID();
         // Generate a unique keyring service name for this test instance
-        this.keyringService = `loculus-cli-test-${process.pid}-${Date.now()}`;
+        this.keyringService = `loculus-cli-test-${uniqueId}`;
         // Generate a unique config file for this test instance
-        this.configFile = join(
-            tmpdir(),
-            `loculus-cli-test-config-${process.pid}-${Date.now()}.yml`,
-        );
+        this.configFile = join(tmpdir(), `loculus-cli-test-config-${uniqueId}.yml`);
     }
 
     /**
@@ -167,7 +166,7 @@ export class CliPage {
      * Create a temporary file with the given content
      */
     async createTempFile(content: string, suffix: string = '.tmp'): Promise<string> {
-        const filename = `cli-test-${Date.now()}${suffix}`;
+        const filename = `cli-test-${randomUUID()}${suffix}`;
         const filepath = join(tmpdir(), filename);
         await writeFile(filepath, content, 'utf-8');
         return filepath;
@@ -254,10 +253,49 @@ export class CliPage {
     }
 
     /**
-     * Login with username and password
+     * Login with username and password.
+     * By default, asserts that login succeeded and retries up to 3 times on failure.
+     * Use assertSuccess: false for negative tests (no retries, no assertion).
      */
-    async login(username: string, password: string): Promise<CliResult> {
-        return this.execute(['auth', 'login', '--username', username, '--password', password]);
+    async login(
+        username: string,
+        password: string,
+        options?: { assertSuccess?: boolean; maxRetries?: number },
+    ): Promise<CliResult> {
+        const maxRetries = options?.assertSuccess === false ? 0 : (options?.maxRetries ?? 3);
+
+        let result = await this.execute([
+            'auth',
+            'login',
+            '--username',
+            username,
+            '--password',
+            password,
+        ]);
+
+        for (let attempt = 1; attempt <= maxRetries && result.exitCode !== 0; attempt++) {
+            // Don't retry on invalid credentials (expected failure)
+            if (result.stderr.includes('Invalid username or password')) {
+                break;
+            }
+
+            // Wait before retrying (exponential backoff: 500ms, 1s, 2s)
+            await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
+
+            result = await this.execute([
+                'auth',
+                'login',
+                '--username',
+                username,
+                '--password',
+                password,
+            ]);
+        }
+
+        if (options?.assertSuccess !== false) {
+            this.assertSuccess(result, 'Login');
+        }
+        return result;
     }
 
     /**
