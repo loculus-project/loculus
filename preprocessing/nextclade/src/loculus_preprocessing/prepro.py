@@ -324,7 +324,7 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_") and output_field[7:] in [
-            seq.name for seq in config.nucleotideSequences
+            seq.name for seq in config.nextclade_sequence_and_datasets
         ]:
             segment = output_field[7:]
             output_metadata[output_field] = get_sequence_length(
@@ -397,7 +397,7 @@ def alignment_errors_warnings(
         )
         return (errors, warnings)
     aligned_segments = set()
-    for sequence_and_dataset in config.nucleotideSequences:
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
         if segment not in unprocessed.unalignedNucleotideSequences:
             continue
@@ -440,7 +440,7 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
     if not config.create_embl_file or not nextclade_metadata:
         return None
     annotations: dict[str, Any] = {}
-    for sequence_and_dataset in config.nucleotideSequences:
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
         if segment in nextclade_metadata:
             annotations[segment] = None

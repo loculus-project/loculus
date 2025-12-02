@@ -224,7 +224,7 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
          version: 1
          dockerTag: commit-xxxxx
          configFile:
-            nucleotideSequences:
+            nextclade_sequence_and_datasets:
             - name: main # default value, not actually required
                nextclade_dataset_name: nextstrain/wnv/all-lineages
             batch_size: 100
@@ -234,7 +234,7 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
          version: 2
          dockerTag: commit-yyyyyyy
          configFile:
-            nucleotideSequences:
+            nextclade_sequence_and_datasets:
             - name: main
                nextclade_dataset_name: nextstrain/wnv/all-lineages
             batch_size: 100
