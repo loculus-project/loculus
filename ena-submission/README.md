@@ -188,9 +188,11 @@ pip install -e .
 
 #### Unit tests
 
+To run `scripts/test_ena_submission_integration.py` and `scripts/test_api.py` locally you will need to have the database running locally (see the steps above on how to run the database with the ena_deposition_schema).
+
 ```sh
 micromamba activate loculus-ena-submission
-python3 scripts/test_ena_submission.py
+pytest --ignore=./scripts/test_ena_submission_integration.py --ignore=./scripts/test_api.py
 ```
 
 #### Dry run

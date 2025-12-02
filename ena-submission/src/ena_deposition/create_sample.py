@@ -102,7 +102,9 @@ def get_sample_attributes(
                     )
                     continue
         else:
-            value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
+            value = "; ".join(
+                str(value) for value in loculus_metadata_field_values if value is not None
+            )
 
         if value_or_default := value or mapping.default:
             result.append(
