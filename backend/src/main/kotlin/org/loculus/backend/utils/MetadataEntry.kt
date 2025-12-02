@@ -2,6 +2,7 @@ package org.loculus.backend.utils
 
 import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
@@ -17,7 +18,7 @@ import java.io.InputStreamReader
 data class MetadataEntry(
     val submissionId: SubmissionId,
     val metadata: Map<String, String>,
-    val fastaIds: List<FastaId>? = null,
+    val fastaIds: Set<FastaId>? = null,
 )
 
 private fun invalidTsvFormatException(originalException: Exception) = UnprocessableEntityException(
@@ -44,7 +45,12 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
     return submissionIdHeaders.first()
 }
 
-fun extractFastaIdsFromRecord(record: CSVRecord, submissionId: String, recordNumber: Int): List<FastaId> {
+fun extractAndValidateFastaIds(
+    record: CSVRecord,
+    submissionId: String,
+    recordNumber: Int,
+    maxSequencesPerEntry: Int? = null,
+): Set<FastaId> {
     val headerNames = record.parser.headerNames
     return when (headerNames.contains(FASTA_IDS_HEADER)) {
         true -> {
@@ -55,21 +61,83 @@ fun extractFastaIdsFromRecord(record: CSVRecord, submissionId: String, recordNum
                 )
             }
 
-            fastaIdValues.split(Regex(FASTA_IDS_SEPARATOR))
+            val fastaIds = fastaIdValues.split(Regex(FASTA_IDS_SEPARATOR))
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
+
+            val duplicateFastaIds = fastaIds.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            if (duplicateFastaIds.isNotEmpty()) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber with id '$submissionId': " +
+                        "found duplicate fasta ids in column '$FASTA_IDS_HEADER': " +
+                        duplicateFastaIds.joinToString(", "),
+                )
+            }
+
+            if (maxSequencesPerEntry != null && fastaIds.size > maxSequencesPerEntry) {
+                throw UnprocessableEntityException(
+                    "In metadata file: record #$recordNumber with id '$submissionId': " +
+                        "found ${fastaIds.size} fasta ids but the maximum allowed number of " +
+                        "sequences per entry is $maxSequencesPerEntry",
+                )
+            }
+
+            fastaIds.toSet()
         }
-        false -> listOf(submissionId)
+        false -> {
+            setOf(submissionId)
+        }
     }
 }
 
-fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
+private fun setUpCsvParser(metadataInputStream: InputStream): CSVParser {
     val csvParser = try {
         CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
             .parse(InputStreamReader(metadataInputStream))
     } catch (e: CSVException) {
         throw invalidTsvFormatException(e)
     }
+    return csvParser
+}
+
+private fun getValueAndValidateNoWhitespace(record: CSVRecord, fieldName: String, recordNumber: Int): String {
+    val fieldValue = record[fieldName]
+    if (fieldValue.isNullOrEmpty()) {
+        val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
+        throw UnprocessableEntityException(
+            "Record #$recordNumber in the metadata file contains no value for '$fieldName'. Row: $rowValues",
+        )
+    }
+    if (fieldValue.any { it.isWhitespace() }) {
+        throw UnprocessableEntityException(
+            "Record #$recordNumber in the metadata file: the value for '$fieldName' contains whitespace: '$fieldValue'",
+        )
+    }
+    return fieldValue
+}
+
+private fun validateMetadataNotEmpty(metadata: Map<String, String>, submissionId: String, recordNumber: Int) {
+    if (metadata.isEmpty()) {
+        throw UnprocessableEntityException(
+            "In metadata file: record #$recordNumber with id $submissionId contains no metadata. This is invalid.",
+        )
+    }
+}
+
+private fun throwWithCsvExceptionUnwrapped(e: Exception): Nothing {
+    // CSVException is wrapped in UncheckedIOException during iteration
+    val cause = e.cause
+    if (cause is CSVException) {
+        throw invalidTsvFormatException(cause)
+    }
+    throw e
+}
+
+fun metadataEntryStreamAsSequence(
+    metadataInputStream: InputStream,
+    maxSequencesPerEntry: Int? = null,
+): Sequence<MetadataEntry> {
+    val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
@@ -78,47 +146,22 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
                 val recordNumber = index + 1 // First data record is #1 (header not counted)
-                val submissionId = record[submissionIdHeader]
-                if (submissionId.isNullOrEmpty()) {
-                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
-                    throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
-                    )
-                }
 
-                if (submissionId.any { it.isWhitespace() }) {
-                    throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file: the value for '$submissionIdHeader' contains whitespace: '$submissionId'",
-                    )
-                }
+                val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
 
-                val fastaIds = extractFastaIdsFromRecord(
-                    record,
-                    submissionId,
-                    recordNumber,
-                )
+                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber, maxSequencesPerEntry)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader &&
                         it != FASTA_IDS_HEADER
                 }
-                val entry = MetadataEntry(submissionId, metadata, fastaIds)
 
-                if (entry.metadata.isEmpty()) {
-                    throw UnprocessableEntityException(
-                        "In metadata file: record #$recordNumber contains no metadata. This is invalid. Full record: $entry",
-                    )
-                }
+                validateMetadataNotEmpty(metadata, submissionId, recordNumber)
 
-                yield(entry)
+                yield(MetadataEntry(submissionId, metadata, fastaIds))
             }
         } catch (e: java.io.UncheckedIOException) {
-            // CSVException is wrapped in UncheckedIOException during iteration
-            val cause = e.cause
-            if (cause is CSVException) {
-                throw invalidTsvFormatException(cause)
-            }
-            throw e
+            throwWithCsvExceptionUnwrapped(e)
         }
     }
 }
@@ -127,16 +170,14 @@ data class RevisionEntry(
     val submissionId: SubmissionId,
     val accession: Accession,
     val metadata: Map<String, String>,
-    val fastaIds: List<FastaId>? = null,
+    val fastaIds: Set<FastaId>? = null,
 )
 
-fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
-    val csvParser = try {
-        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).get()
-            .parse(InputStreamReader(metadataInputStream))
-    } catch (e: CSVException) {
-        throw invalidTsvFormatException(e)
-    }
+fun revisionEntryStreamAsSequence(
+    metadataInputStream: InputStream,
+    maxSequencesPerEntry: Int? = null,
+): Sequence<RevisionEntry> {
+    val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
@@ -151,49 +192,22 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
                 val recordNumber = index + 1 // First data record is #1 (header not counted)
-                val submissionId = record[submissionIdHeader]
-                if (submissionId.isNullOrEmpty()) {
-                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
-                    throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file contains no value for '$submissionIdHeader'. Row: $rowValues",
-                    )
-                }
 
-                val accession = record[ACCESSION_HEADER]
-                if (accession.isNullOrEmpty()) {
-                    val rowValues = record.toList().joinToString("', '", prefix = "['", postfix = "']")
-                    throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file contains no value for '$ACCESSION_HEADER'. Row: $rowValues",
-                    )
-                }
+                val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
+                val accession = getValueAndValidateNoWhitespace(record, ACCESSION_HEADER, recordNumber)
 
-                val fastaIds = extractFastaIdsFromRecord(
-                    record,
-                    submissionId,
-                    recordNumber,
-                )
+                val fastaIds = extractAndValidateFastaIds(record, submissionId, recordNumber, maxSequencesPerEntry)
 
                 val metadata = record.toMap().filterKeys {
                     it != submissionIdHeader && it != ACCESSION_HEADER &&
                         it != FASTA_IDS_HEADER
                 }
-                val entry = RevisionEntry(submissionId, accession, metadata, fastaIds)
+                validateMetadataNotEmpty(metadata, submissionId, recordNumber)
 
-                if (entry.metadata.isEmpty()) {
-                    throw UnprocessableEntityException(
-                        "Record #$recordNumber in the metadata file contains no metadata columns: $entry",
-                    )
-                }
-
-                yield(entry)
+                yield(RevisionEntry(submissionId, accession, metadata, fastaIds))
             }
         } catch (e: java.io.UncheckedIOException) {
-            // CSVException is wrapped in UncheckedIOException during iteration
-            val cause = e.cause
-            if (cause is CSVException) {
-                throw invalidTsvFormatException(cause)
-            }
-            throw e
+            throwWithCsvExceptionUnwrapped(e)
         }
     }
 }
