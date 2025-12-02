@@ -84,6 +84,7 @@ fun extractAndValidateFastaIds(
 
             fastaIds.toSet()
         }
+
         false -> {
             setOf(submissionId)
         }

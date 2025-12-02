@@ -775,19 +775,21 @@ def enrich_with_nextclade(  # noqa: PLR0914
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         dataset_download_command = [
-            "nextclade3",
-            "dataset",
-            "get",
-            f"--name={sequence_and_dataset.nextclade_dataset_name}",
-            f"--server={
-                sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
-            }",
-            f"--output-dir={dataset_dir}/{sequence_and_dataset.name}",
-            *(
+            arg
+            for arg in [
+                "nextclade3",
+                "dataset",
+                "get",
+                f"--name={sequence_and_dataset.nextclade_dataset_name}",
+                f"--server={
+                    sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+                }",
+                f"--output-dir={dataset_dir}/{sequence_and_dataset.name}",
                 f"--tag={sequence_and_dataset.nextclade_dataset_tag}"
                 if sequence_and_dataset.nextclade_dataset_tag
-                else []
-            ),
+                else "",
+            ]
+            if arg
         ]
         logger.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
