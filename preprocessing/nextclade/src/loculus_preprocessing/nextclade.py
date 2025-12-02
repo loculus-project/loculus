@@ -324,7 +324,7 @@ def assign_segment(
         best_hit = best_hits[best_hits["seqName"] == seq_id]
 
         not_found = True
-        for segment in config.nucleotideSequences:
+        for segment in config.nextclade_sequence_and_datasets:
             if (
                 config.segment_classification_method == SegmentClassificationMethod.ALIGN
                 and best_hit["segment"].iloc[0] == segment.name
@@ -385,7 +385,7 @@ def assign_segment_with_nextclade_align(
 ) -> SegmentAssignmentBatch:
     """
     Run nextclade align
-    - assert sequence aligns to one of the segments in config.nucleotideSequences
+    - assert sequence aligns to one of the segments in config.nextclade_sequence_and_datasets
     """
     batch = SegmentAssignmentBatch()
 
@@ -394,7 +394,7 @@ def assign_segment_with_nextclade_align(
         input_file = result_dir + "/input.fasta"
         id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
-        for sequence_and_dataset in config.nucleotideSequences:
+        for sequence_and_dataset in config.nextclade_sequence_and_datasets:
             segment = sequence_and_dataset.name
             result_file_seg = f"{result_dir}/sort_output_{segment}.tsv"
 
@@ -527,11 +527,11 @@ def assign_segment_using_header(
 ) -> SegmentAssignment:
     segment_assignment = SegmentAssignment()
     duplicate_segments = set()
-    if not config.nucleotideSequences:
+    if not config.nextclade_sequence_and_datasets:
         return segment_assignment
     if not config.multi_segment:
         return assign_single_segment(input_unaligned_sequences, config)
-    for sequence_and_dataset in config.nucleotideSequences:
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
         unaligned_segment = [
             data
@@ -567,7 +567,7 @@ def assign_segment_using_header(
                 f"{', '.join(remaining_segments)}. "
                 "Each metadata entry can have multiple corresponding fasta sequence "
                 "entries with format <submissionId>_<segmentName> valid segments are: "
-                f"{', '.join([seq.name for seq in config.nucleotideSequences])}."
+                f"{', '.join([seq.name for seq in config.nextclade_sequence_and_datasets])}."
             )
         )
     if len(segment_assignment.unalignedNucleotideSequences) == 0 and not duplicate_segments:
@@ -692,7 +692,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
-        for sequence_and_dataset in config.nucleotideSequences:
+        for sequence_and_dataset in config.nextclade_sequence_and_datasets:
             segment = sequence_and_dataset.name
             result_dir_seg = result_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
@@ -773,7 +773,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
-    for sequence_and_dataset in config.nucleotideSequences:
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         dataset_download_command = [
             "nextclade3",
             "dataset",
