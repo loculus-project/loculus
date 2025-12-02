@@ -22,16 +22,9 @@ export const test = base.extend<TestFixtures>({
         await use(testAccount);
     },
 
-    authenticatedUser: [
-        async ({ page, testAccount }, use) => {
-            const authPage = new AuthPage(page);
-            await authPage.createAccount(testAccount);
-            try {
-                await use(testAccount);
-            } finally {
-                await authPage.logout();
-            }
-        },
-        { timeout: 30_000 },
-    ],
+    authenticatedUser: async ({ page, testAccount }, use) => {
+        const authPage = new AuthPage(page);
+        await authPage.createAccount(testAccount);
+        await use(testAccount);
+    },
 });
