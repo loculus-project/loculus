@@ -766,6 +766,7 @@ class SubmissionDatabaseService(
         val organismCondition = SequenceEntriesView.organismIs(organism)
         val processingResultCondition = when (processingResultFilter) {
             null -> Op.TRUE
+
             else -> SequenceEntriesView.processingResultIsOneOf(processingResultFilter) or
                 // processingResultFilter has no effect on sequences in states other than PROCESSED
                 not(SequenceEntriesView.statusIs(Status.PROCESSED))

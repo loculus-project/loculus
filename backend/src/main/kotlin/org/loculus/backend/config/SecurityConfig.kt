@@ -133,7 +133,9 @@ fun getRoles(jwt: Jwt): List<String> {
     val defaultRealmAccess = mapOf<String, List<String>>()
     val realmAccess = when (jwt.claims["realm_access"]) {
         null -> defaultRealmAccess
+
         is Map<*, *> -> jwt.claims["realm_access"] as Map<*, *>
+
         else -> {
             log.debug { "Ignoring value of realm_access in jwt because type was not Map<*,*>" }
             defaultRealmAccess
@@ -142,7 +144,9 @@ fun getRoles(jwt: Jwt): List<String> {
 
     return when (realmAccess["roles"]) {
         null -> emptyList()
+
         is List<*> -> (realmAccess["roles"] as List<*>).filterIsInstance<String>()
+
         else -> {
             log.debug { "Ignoring value of roles in jwt because type was not List<*>" }
             emptyList()

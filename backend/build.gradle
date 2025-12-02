@@ -57,14 +57,14 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.7"
     implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.38.2")
+    implementation("software.amazon.awssdk:s3:2.39.6")
 
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
     implementation 'com.github.luben:zstd-jni:1.5.7-6'
-    implementation 'org.tukaani:xz:1.10'
+    implementation 'org.tukaani:xz:1.11'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
     implementation("org.jsoup:jsoup:1.21.2")
@@ -80,7 +80,7 @@ dependencies {
     testImplementation "org.testcontainers:postgresql"
     testImplementation "org.testcontainers:minio"
     testImplementation "org.junit.platform:junit-platform-launcher"
-    ktlint("com.pinterest.ktlint:ktlint-cli:1.7.1") {
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
         }

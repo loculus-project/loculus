@@ -71,6 +71,7 @@ class GroupManagementDatabaseService(
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
         val groupsQuery = when (authenticatedUser.isSuperUser) {
             true -> GroupsTable.selectAll()
+
             false ->
                 UserGroupsTable
                     .join(

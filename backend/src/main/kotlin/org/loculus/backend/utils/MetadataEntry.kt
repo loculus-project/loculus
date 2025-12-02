@@ -28,6 +28,7 @@ fun findAndValidateSubmissionIdHeader(headerNames: List<String>): String {
         submissionIdHeaders.isEmpty() -> throw UnprocessableEntityException(
             "The metadata file does not contain either header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' or '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'",
         )
+
         submissionIdHeaders.size > 1 -> throw UnprocessableEntityException(
             "The metadata file contains both '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES' and '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT'. Only one is allowed.",
         )

@@ -91,6 +91,7 @@ sealed interface DataUseTerms {
 
         fun fromParameters(type: DataUseTermsType, restrictedUntil: LocalDate?): DataUseTerms = when (type) {
             DataUseTermsType.OPEN -> Open
+
             DataUseTermsType.RESTRICTED -> {
                 restrictedUntil ?: throw BadRequestException(
                     "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
