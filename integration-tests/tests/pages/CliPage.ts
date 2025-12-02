@@ -166,7 +166,7 @@ export class CliPage {
      * Create a temporary file with the given content
      */
     async createTempFile(content: string, suffix: string = '.tmp'): Promise<string> {
-        const filename = `cli-test-${uuidv4()}${suffix}`;
+        const filename = `cli-test-${randomUUID()}${suffix}`;
         const filepath = join(tmpdir(), filename);
         await writeFile(filepath, content, 'utf-8');
         return filepath;
