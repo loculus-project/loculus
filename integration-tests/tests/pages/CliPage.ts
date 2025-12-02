@@ -4,7 +4,7 @@ import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { test } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const execAsync = promisify(exec);
 
@@ -23,7 +23,7 @@ export class CliPage {
     private configFile: string;
 
     constructor() {
-        const uuid = uuidv4();
+        const uuid = randomUUID();
         // Get base URL from environment or default to localhost
         this.baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
         // Generate a unique keyring service name for this test instance
