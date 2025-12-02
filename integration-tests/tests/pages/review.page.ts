@@ -229,7 +229,10 @@ export class ReviewPage {
     }
 
     async editFirstSequence() {
-        await this.page.getByTestId(/^LOC_\w+\.1\.edit$/).first().click();
+        await this.page
+            .getByTestId(/^LOC_\w+\.1\.edit$/)
+            .first()
+            .click();
         await expect(this.page.getByText(/^Edit LOC_\w+\.1$/)).toBeVisible();
         return new EditPage(this.page);
     }
