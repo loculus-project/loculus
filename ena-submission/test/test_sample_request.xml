@@ -32,6 +32,10 @@
                                 <VALUE>Punjab; Rawalpindi; Rawalpindi</VALUE>
                         </SAMPLE_ATTRIBUTE>
                         <SAMPLE_ATTRIBUTE>
+                                <TAG>host age</TAG>
+                                <VALUE>50</VALUE>
+                        </SAMPLE_ATTRIBUTE>
+                        <SAMPLE_ATTRIBUTE>
                                 <TAG>host health state</TAG>
                                 <VALUE>Hospital care required</VALUE>
                         </SAMPLE_ATTRIBUTE>
