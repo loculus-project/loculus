@@ -82,7 +82,10 @@ export function createTestSequenceData(sequence: string = EBOLA_SUDAN_SHORT_SEQU
  * @param accessionVersions - Array of accessions to revise
  * @param baseSubmissionId - Base ID for submission IDs (will be appended with index)
  */
-export function createRevisionMetadataTsv(accessionVersions: AccessionVersion[], baseSubmissionId?: string): string {
+export function createRevisionMetadataTsv(
+    accessionVersions: AccessionVersion[],
+    baseSubmissionId?: string,
+): string {
     const baseId = baseSubmissionId || `revision-${Date.now()}`;
     const header = 'accession\tsubmissionId\tcollectionCountry\tcollectionDate\tauthorAffiliations';
     const rows = accessionVersions.map(({ accession }, index) => {
