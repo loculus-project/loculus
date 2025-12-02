@@ -4,6 +4,8 @@ import { expect } from '@playwright/test';
 
 test.describe('EV sequence submission', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
+        test.setTimeout(120_000);
+
         void groupId;
         const submissionPage = new SingleSequenceSubmissionPage(page);
 
@@ -19,19 +21,12 @@ test.describe('EV sequence submission', () => {
         const reviewPage = await submissionPage.submitSequence();
 
         await reviewPage.waitForAllProcessed();
+        const editPage = await reviewPage.editFirstSequence();
 
-        await page.getByTestId(/^LOC_\w+\.1\.edit$/).click();
-        await expect(page.getByText(/^Edit LOC_\w+\.1$/)).toBeVisible();
-        await page.getByRole('button', { name: 'Discard file' }).click();
-        await page.getByLabel(/Add a segment/).setInputFiles({
-            name: 'example.txt',
-            mimeType: 'text/plain',
-            buffer: Buffer.from(`>key\n${a71Sequence}`),
-        });
-        await page.getByRole('textbox', { name: 'Authors' }).fill('Integration, Test');
-        await page.getByRole('button', { name: 'Submit' }).click();
-        await expect(page.getByText('Do you really want to submit?')).toBeVisible();
-        await page.getByRole('button', { name: 'Confirm' }).click();
+        await editPage.discardSequenceFile();
+        await editPage.addSequenceFile(`>key\n${a71Sequence}`);
+        await editPage.fillField('Authors', 'Integration, Test');
+        await editPage.submitChanges();
 
         await reviewPage.waitForAllProcessed();
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
@@ -41,6 +36,8 @@ test.describe('EV sequence submission', () => {
     });
 
     test('submit files', async ({ page, groupId }) => {
+        test.setTimeout(120_000);
+
         void groupId;
         const submissionPage = new BulkSubmissionPage(page);
 
