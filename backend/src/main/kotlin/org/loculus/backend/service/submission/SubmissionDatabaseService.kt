@@ -186,7 +186,6 @@ class SubmissionDatabaseService(
                 val chunkOfUnprocessedData = chunk.map {
                     val originalData = compressionService.decompressSequencesInOriginalData(
                         it[table.originalDataColumn]!!,
-                        organism,
                     )
                     val originalDataWithFileUrls = OriginalDataWithFileUrls(
                         originalData.metadata,
@@ -391,7 +390,6 @@ class SubmissionDatabaseService(
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = dateProvider.getCurrentDateTime()
-                it[compressionMigrationCheckedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
@@ -1135,7 +1133,6 @@ class SubmissionDatabaseService(
             ),
             originalData = compressionService.decompressSequencesInOriginalData(
                 selectedSequenceEntry[SequenceEntriesView.originalDataColumn]!!,
-                organism,
             ),
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
