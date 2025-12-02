@@ -32,7 +32,7 @@ test.describe('EV sequence submission', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         await releasedPage.waitForSequencesInSearch(1);
-        await expect(page.getByRole('cell', { name: 'EV-A71' })).toBeVisible();
+        await releasedPage.expectResultTableCellText('EV-A71');
     });
 
     test('submit files', async ({ page, groupId }) => {
@@ -60,8 +60,8 @@ test.describe('EV sequence submission', () => {
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
         const accessionVersions = await releasedPage.waitForSequencesInSearch(2);
-        await expect(page.getByRole('cell', { name: 'EV-A71' })).toBeVisible();
-        await expect(page.getByRole('cell', { name: 'EV-D68' })).toBeVisible();
+        await releasedPage.expectResultTableCellText('EV-A71');
+        await releasedPage.expectResultTableCellText('EV-D68');
 
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
@@ -91,7 +91,7 @@ test.describe('EV sequence submission', () => {
                 },
             )
             .toBeTruthy();
-        await expect(page.getByRole('cell', { name: authorAffiliations })).toBeVisible();
+        await releasedPage.expectResultTableCellText(authorAffiliations);
     });
 });
 
