@@ -153,7 +153,7 @@ organisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
-          nucleotideSequences:
+          nextclade_sequence_and_datasets:
             - name: 'main'
               genes: []
     referenceGenomes:
