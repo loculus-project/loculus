@@ -1,6 +1,10 @@
 import { Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 
+export type AccessionVersion = { accession: string; version: number };
+
+const accessionVersionRegex = /LOC_[A-Z0-9]+\.[0-9]+/;
+
 export class SearchPage {
     constructor(private page: Page) {}
 
@@ -88,13 +92,13 @@ export class SearchPage {
         await this.page.waitForFunction(
             () => {
                 const content = document.body.innerText;
-                return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
+                return accessionVersionRegex.test(content);
             },
             { timeout },
         );
 
         const content = await this.page.content();
-        const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const loculusIdMatch = content.match(accessionVersionRegex);
         const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
         return loculusId;
     }
@@ -108,11 +112,21 @@ export class SearchPage {
         await rows.nth(rowIndex).click();
     }
 
+    async openPreviewOfAccessionVersion(accessionVersion: string) {
+        await this.getSequenceRows().filter({ hasText: accessionVersion }).click();
+    }
+
+    async reviseSequence() {
+        const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
+        await expect(reviseButton).toBeVisible();
+        await reviseButton.click();
+    }
+
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
         const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
-        const accessionVersionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const accessionVersionMatch = rowText.match(accessionVersionRegex);
         const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
         await row.click();
         return accessionVersion;
@@ -191,7 +205,7 @@ export class SearchPage {
         await this.page.goto(`/${organism}/submission/${groupId}/released`);
     }
 
-    async getAccessions(): Promise<string[]> {
+    async getAccessionVersions(): Promise<AccessionVersion[]> {
         const rows = this.getSequenceRows();
         const count = await rows.count();
 
@@ -199,12 +213,13 @@ export class SearchPage {
             return [];
         }
 
-        const accessions: string[] = [];
+        const accessions: AccessionVersion[] = [];
         for (let i = 0; i < count; i++) {
             const rowText = await rows.nth(i).innerText();
-            const match = rowText.match(/LOC_[A-Z0-9]+/);
+            const match = rowText.match(accessionVersionRegex);
             if (match) {
-                accessions.push(match[0]);
+                const [accession, version] = match[0].split('.');
+                accessions.push({ accession, version: Number.parseInt(version) });
             }
         }
 
@@ -214,13 +229,16 @@ export class SearchPage {
     /**
      * Wait for sequences to appear in search after release (handles indexing delay)
      */
-    async waitForSequencesInSearch(minCount: number, timeoutMs: number = 60000): Promise<string[]> {
-        let accessions: string[] = [];
+    async waitForSequencesInSearch(
+        minCount: number,
+        timeoutMs: number = 60000,
+    ): Promise<AccessionVersion[]> {
+        let accessions: AccessionVersion[] = [];
         await expect
             .poll(
                 async () => {
                     await this.page.reload();
-                    accessions = await this.getAccessions();
+                    accessions = await this.getAccessionVersions();
                     return accessions.length;
                 },
                 {

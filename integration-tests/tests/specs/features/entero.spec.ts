@@ -28,7 +28,7 @@ test.describe('EV sequence submission', () => {
             mimeType: 'text/plain',
             buffer: Buffer.from(`>key\n${a71Sequence}`),
         });
-        await page.getByRole('textbox', { name: 'Authors' }).fill('Integration Test Edit');
+        await page.getByRole('textbox', { name: 'Authors' }).fill('Integration, Test');
         await page.getByRole('button', { name: 'Submit' }).click();
         await expect(page.getByText('Do you really want to submit?')).toBeVisible();
         await page.getByRole('button', { name: 'Confirm' }).click();
@@ -62,9 +62,40 @@ test.describe('EV sequence submission', () => {
         await reviewPage.waitForAllProcessed();
         const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
 
-        await releasedPage.waitForSequencesInSearch(2);
+        const accessionVersions = await releasedPage.waitForSequencesInSearch(2);
         await expect(page.getByRole('cell', { name: 'EV-A71' })).toBeVisible();
         await expect(page.getByRole('cell', { name: 'EV-D68' })).toBeVisible();
+
+        const firstAccessionVersion = accessionVersions[0];
+        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
+        await releasedPage.reviseSequence();
+
+        const authorAffiliations = 'integration test affiliation';
+        await page.getByRole('textbox', { name: 'Author affiliations' }).fill(authorAffiliations);
+        await page.getByRole('button', { name: 'Submit' }).click();
+        await page.getByRole('button', { name: 'Confirm' }).click();
+
+        await reviewPage.waitForAllProcessed();
+        await reviewPage.releaseAndGoToReleasedSequences();
+
+        await expect
+            .poll(
+                async () => {
+                    await page.reload();
+                    const accessionVersions = await releasedPage.getAccessionVersions();
+                    return accessionVersions.some(
+                        ({ accession, version }) =>
+                            accession === firstAccessionVersion.accession && version === 2,
+                    );
+                },
+                {
+                    message: `Did not find revised accession version ${firstAccessionVersion.accession}.2`,
+                    timeout: 60000,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeTruthy();
+        await expect(page.getByRole('cell', { name: authorAffiliations })).toBeVisible();
     });
 });
 
