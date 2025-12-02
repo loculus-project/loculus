@@ -65,12 +65,11 @@ test.describe('EV sequence submission', () => {
 
         const firstAccessionVersion = accessionVersions[0];
         await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
-        await releasedPage.reviseSequence();
+        const editPage = await releasedPage.reviseSequence();
 
         const authorAffiliations = 'integration test affiliation';
-        await page.getByRole('textbox', { name: 'Author affiliations' }).fill(authorAffiliations);
-        await page.getByRole('button', { name: 'Submit' }).click();
-        await page.getByRole('button', { name: 'Confirm' }).click();
+        await editPage.fillField('Author affiliations', authorAffiliations);
+        await editPage.submitChanges();
 
         await reviewPage.waitForAllProcessed();
         await reviewPage.releaseAndGoToReleasedSequences();
