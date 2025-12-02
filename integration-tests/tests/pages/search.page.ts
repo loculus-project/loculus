@@ -2,7 +2,17 @@ import { Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
 
-export type AccessionVersion = { accession: string; version: number };
+function makeAccessionVersion({
+    accession,
+    version,
+}: {
+    accession: string;
+    version: number;
+}): AccessionVersion {
+    return { accession, version, accessionVersion: `${accession}.${version}` };
+}
+
+export type AccessionVersion = { accession: string; version: number; accessionVersion: string };
 
 const accessionVersionRegex = /LOC_[A-Z0-9]+\.[0-9]+/;
 
@@ -87,21 +97,6 @@ export class SearchPage {
 
     async resetSearchForm() {
         await this.page.getByRole('button', { name: 'Reset' }).click();
-    }
-
-    async waitForLoculusId(timeout = 60000): Promise<string> {
-        await this.page.waitForFunction(
-            () => {
-                const content = document.body.innerText;
-                return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
-            },
-            { timeout },
-        );
-
-        const content = await this.page.content();
-        const loculusIdMatch = content.match(accessionVersionRegex);
-        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
-        return loculusId;
     }
 
     getSequenceRows() {
@@ -222,7 +217,9 @@ export class SearchPage {
             const match = rowText.match(accessionVersionRegex);
             if (match) {
                 const [accession, version] = match[0].split('.');
-                accessions.push({ accession, version: Number.parseInt(version) });
+                accessions.push(
+                    makeAccessionVersion({ accession, version: Number.parseInt(version) }),
+                );
             }
         }
 

@@ -6,7 +6,8 @@ test.describe('Sequence FASTA endpoint', () => {
     test('returns valid FASTA with CORS headers', async ({ page, baseURL, request }) => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
-        const accessionVersion = await searchPage.waitForLoculusId();
+        const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+        const { accessionVersion } = accessionVersions[0];
 
         const response = await request.get(`${baseURL}/seq/${accessionVersion}.fa`);
 
@@ -26,7 +27,8 @@ test.describe('Sequence FASTA endpoint', () => {
     }) => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
-        const accessionVersion = await searchPage.waitForLoculusId();
+        const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+        const { accessionVersion } = accessionVersions[0];
 
         const response = await request.get(`${baseURL}/seq/${accessionVersion}.fa?download=true`);
 
