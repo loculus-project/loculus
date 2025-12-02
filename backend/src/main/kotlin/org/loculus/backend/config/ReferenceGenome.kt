@@ -24,7 +24,7 @@ data class ReferenceGenome(val nucleotideSequences: List<ReferenceSequence>, val
         ?.sequence
 
     private fun shortenSequence(sequence: String) = when {
-        sequence.length > 10 -> sequence.substring(0, 10) + "..."
+        sequence.length > 10 -> sequence.take(10) + "..."
         else -> sequence
     }
 

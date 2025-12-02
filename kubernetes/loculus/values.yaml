@@ -56,6 +56,9 @@ lineageSystemDefinitions:
     1: https://pathoplexus.github.io/silo-lineage-hierarchy-definitions/definitions/cchf/S/2025-09-24--07-29-03Z/lineages.yaml
 defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
+    submissionDataTypes: &defaultSubmissionDataTypes
+      consensusSequences: true
+      maxSequencesPerEntry: 1
     loadSequencesAutomatically: true
     earliestReleaseDate:
       enabled: true
@@ -1469,6 +1472,7 @@ defaultOrganisms:
             sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
+      submissionDataTypes: *defaultSubmissionDataTypes
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       organismName: "Test Dummy Organism"
       metadataTemplate:
@@ -1612,6 +1616,7 @@ defaultOrganisms:
   not-aligned-organism:
     enabled: true
     schema:
+      submissionDataTypes: *defaultSubmissionDataTypes
       image: "https://cdn.who.int/media/images/default-source/mca/mca-covid-19/coronavirus-2.tmb-1920v.jpg?sfvrsn=4dba955c_19"
       organismName: "Test organism (without alignment)"
       metadata:
@@ -1694,6 +1699,9 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
+      submissionDataTypes:
+        <<: *defaultSubmissionDataTypes
+        maxSequencesPerEntry: 3
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       nucleotideSequences: [L, M, S]
       image: "/images/organisms/cchf_small.jpg"
