@@ -9,8 +9,8 @@ test.describe('Sequence detail page', () => {
         await searchPage.ebolaSudan();
 
         // Get an accession from search results
-        const accessionVersion = await searchPage.waitForLoculusId();
-        expect(accessionVersion).toBeTruthy();
+        const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+        const { accessionVersion } = accessionVersions[0];
 
         // Navigate to the full sequence detail page
         const detailPage = new SequenceDetailPage(page);
