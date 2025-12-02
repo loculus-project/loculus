@@ -2,7 +2,7 @@ import { test } from '../../fixtures/group.fixture';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { expect } from '@playwright/test';
 
-test.describe('EV sequence submission', () => {
+test.describe('Multi-pathogen submission flow', () => {
     test('submit single sequence, edit and release', async ({ page, groupId }) => {
         test.setTimeout(120_000);
 
@@ -35,7 +35,7 @@ test.describe('EV sequence submission', () => {
         await releasedPage.expectResultTableCellText('EV-A71');
     });
 
-    test('submit files', async ({ page, groupId }) => {
+    test('submit files and revise released version', async ({ page, groupId }) => {
         test.setTimeout(120_000);
 
         void groupId;
