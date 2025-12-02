@@ -122,9 +122,13 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+
                     "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+
                     "groupId" -> assertThat(value.intValue(), `is`(groupId))
+
                     else -> {
                         assertThat(expectedMetadata.keys, hasItem(key))
                         assertThat(value, `is`(expectedMetadata[key]))

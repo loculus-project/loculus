@@ -211,6 +211,7 @@ class SubmissionConvenienceClient(
             *accessionVersions.map {
                 when (organism) {
                     DEFAULT_ORGANISM -> PreparedProcessedData.successfullyProcessed(accession = it.accession)
+
                     OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
                         accession = it.accession,
                     )

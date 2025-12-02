@@ -1,4 +1,4 @@
-/**
+/*
  * Includes API data classes that are used for the file sharing feature.
  */
 package org.loculus.backend.api
@@ -9,7 +9,10 @@ import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.service.files.FileId
 
 data class FileIdAndWriteUrl(
-    @Schema(description = "The id of the file.", example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793") val fileId: FileId,
+    @Schema(
+        description = "The id of the file.",
+        example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
+    ) val fileId: FileId,
     @Schema(
         description = "A presigned URL, allowing users to PUT an object.",
         example = "https://dummyendpoint.com/dummybucket/files/2ea137d0-8773-4e0a-a9aa-5591de12ff23?" +
@@ -23,7 +26,10 @@ data class FileIdAndWriteUrl(
 )
 
 data class FileIdAndMultipartWriteUrl(
-    @Schema(description = "The id of the file.", example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793") val fileId: FileId,
+    @Schema(
+        description = "The id of the file.",
+        example = "8D8AC610-566D-4EF0-9C22-186B2A5ED793",
+    ) val fileId: FileId,
     @Schema(
         description = "A list of presigned URL, allowing users to PUT parts of an object.",
     )
