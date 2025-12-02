@@ -253,4 +253,8 @@ export class SearchPage {
             .toBeGreaterThanOrEqual(minCount);
         return accessions;
     }
+
+    async expectResultTableCellText(text: string) {
+        await expect(this.page.getByRole('cell', { name: text })).toBeVisible();
+    }
 }
