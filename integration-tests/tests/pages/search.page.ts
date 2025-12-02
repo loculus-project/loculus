@@ -93,7 +93,7 @@ export class SearchPage {
         await this.page.waitForFunction(
             () => {
                 const content = document.body.innerText;
-                return accessionVersionRegex.test(content);
+                return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
             },
             { timeout },
         );
