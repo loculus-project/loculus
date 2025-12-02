@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
+import { EditPage } from './edit.page';
 
 export type AccessionVersion = { accession: string; version: number };
 
@@ -120,6 +121,8 @@ export class SearchPage {
         const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
         await expect(reviseButton).toBeVisible();
         await reviseButton.click();
+        await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
+        return new EditPage(this.page);
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
