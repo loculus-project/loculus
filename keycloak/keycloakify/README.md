@@ -15,7 +15,7 @@ Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/com
 
 First, ensure [nvm](https://github.com/nvm-sh/nvm) is installed and that corepack is enabled (`corepack enable`).
 If you don't have the version of npm specified in `.nvmrc` installed, do so by running `nvm install` in this directory.
-Then, run the following commands (all together, not as individual commands):
+Then, run the following commands:
 ```bash
 nvm use
 corepack install
