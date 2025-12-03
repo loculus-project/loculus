@@ -44,7 +44,7 @@ export class EditableSequences {
         return this.maxNumberOfRows > 1;
     }
 
-    static invertRecordMulti(obj: Record<string, string | null>): Record<string, string[]> {
+    private static invertRecordMulti(obj: Record<string, string | null>): Record<string, string[]> {
         const inverted: Record<string, string[]> = {};
 
         for (const key in obj) {
