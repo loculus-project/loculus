@@ -58,7 +58,15 @@ test.describe('Multi-pathogen submission flow', () => {
         const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
         await releasedPage.expectResultTableCellText('EV-A71');
         const firstAccessionVersion = accessionVersions[0];
-        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
+        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
+        await releasedPage.revokeSequence('revocation for integration test');
+
+        await reviewPage.waitForAllProcessed();
+        await reviewPage.releaseAndGoToReleasedSequences();
+
+        await releasedPage.waitForAccessionVersionInSearch(firstAccessionVersion.accession, 2);
+        await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
+        await expect(page.getByText(/This is a revocation version/)).toBeVisible();
     });
 
     test('submit files and revise released version', async ({ page, groupId }) => {
@@ -90,7 +98,7 @@ test.describe('Multi-pathogen submission flow', () => {
         await releasedPage.expectResultTableCellText('EV-D68');
 
         const firstAccessionVersion = accessionVersions[0];
-        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
+        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accessionVersion);
         const editPage = await releasedPage.reviseSequence();
 
         const authorAffiliations = 'integration test affiliation';
@@ -100,24 +108,13 @@ test.describe('Multi-pathogen submission flow', () => {
         await reviewPage.waitForAllProcessed();
         await reviewPage.releaseAndGoToReleasedSequences();
 
-        await expect
-            .poll(
-                async () => {
-                    await page.reload();
-                    const accessionVersions = await releasedPage.getAccessionVersions();
-                    return accessionVersions.some(
-                        ({ accession, version }) =>
-                            accession === firstAccessionVersion.accession && version === 2,
-                    );
-                },
-                {
-                    message: `Did not find revised accession version ${firstAccessionVersion.accession}.2`,
-                    timeout: 60000,
-                    intervals: [2000, 5000],
-                },
-            )
-            .toBeTruthy();
+        await releasedPage.waitForAccessionVersionInSearch(firstAccessionVersion.accession, 2);
         await releasedPage.expectResultTableCellText(authorAffiliations);
+        await releasedPage.openPreviewOfAccessionVersion(`${firstAccessionVersion.accession}.2`);
+        const expectedDisplayName = new RegExp(
+            `^Display Name: Uganda/${firstAccessionVersion.accession}\\.2`,
+        );
+        await expect(page.getByText(expectedDisplayName)).toBeVisible();
     });
 });
 
