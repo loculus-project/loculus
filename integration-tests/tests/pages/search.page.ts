@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { EditPage } from './edit.page';
+import { ReviewPage } from './review.page';
 
 function makeAccessionVersion({
     accession,
@@ -118,6 +119,20 @@ export class SearchPage {
         await reviseButton.click();
         await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
         return new EditPage(this.page);
+    }
+
+    async revokeSequence(revocationReason: string = 'Test revocation') {
+        const revokeButton = this.page.getByRole('button', { name: 'Revoke this sequence' });
+        await expect(revokeButton).toBeVisible();
+        await revokeButton.click();
+
+        await expect(
+            this.page.getByText('Are you sure you want to create a revocation for this sequence?'),
+        ).toBeVisible();
+        await this.page.getByPlaceholder('Enter reason for revocation').fill(revocationReason);
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+
+        return new ReviewPage(this.page);
     }
 
     async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
@@ -249,6 +264,26 @@ export class SearchPage {
             )
             .toBeGreaterThanOrEqual(minCount);
         return accessions;
+    }
+
+    async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    const accessionVersions = await this.getAccessionVersions();
+                    return accessionVersions.some(
+                        ({ accession, version }) =>
+                            accession === expectedAccession && version === expectedVersion,
+                    );
+                },
+                {
+                    message: `Did not find accession version ${expectedAccession}.${expectedVersion} in search results`,
+                    timeout: 60000,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeTruthy();
     }
 
     async expectResultTableCellText(text: string) {
