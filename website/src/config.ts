@@ -15,7 +15,6 @@ import {
 import {
     type NamedSequence,
     type ReferenceAccession,
-    type ReferenceGenome,
     type ReferenceGenomes,
     type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
