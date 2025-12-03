@@ -1038,6 +1038,7 @@ def test_preprocessing_single_segment(test_case_def: Case):
 def test_preprocessing_single_segment_with_require_nextclade_sort_match(test_case_def: Case):
     config = get_config(SINGLE_SEGMENT_CONFIG, ignore_args=True)
     config.require_nextclade_sort_match = True
+    config.minimizer_url = "TEST"  # will use minimizer in EBOLA_SUDAN_DATASET
     factory_custom = ProcessedEntryFactory(all_metadata_fields=list(config.processing_spec.keys()))
     test_case = test_case_def.create_test_case(factory_custom)
     processed_entry = process_single_entry(test_case, config, EBOLA_SUDAN_DATASET)

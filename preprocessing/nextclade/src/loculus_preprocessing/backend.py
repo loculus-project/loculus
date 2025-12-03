@@ -225,7 +225,7 @@ def download_minimizer(config, save_path):
     if config.minimizer_url:
         url = config.minimizer_url
     elif config.nextclade_dataset_server:
-        url = config.nextclade_dataset_server.rstrip("/") + "/minimizer_url.json"
+        url = config.nextclade_dataset_server.rstrip("/") + "/minimizer_index.json"
     else:
         msg = "Cannot download minimizer: no minimizer_url or nextclade_dataset_server specified in config"
         logger.error(msg)

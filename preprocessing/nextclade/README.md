@@ -188,6 +188,7 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
             nextclade_sequence_and_datasets:
             - name: main # default value, not actually required
                nextclade_dataset_name: nextstrain/wnv/all-lineages
+               genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
             batch_size: 100
       -  image: ghcr.io/loculus-project/preprocessing-nextclade
          args:
@@ -198,5 +199,6 @@ To add multiple preprocessing pipelines alter the preprocessing section of the `
             nextclade_sequence_and_datasets:
             - name: main
                nextclade_dataset_name: nextstrain/wnv/all-lineages
+               genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
             batch_size: 100
 ```
