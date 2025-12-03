@@ -1756,7 +1756,7 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
-          minimizer_index: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
+          minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nextclade_sequence_and_datasets:
             - name: L
               nextclade_dataset_name: community/pathoplexus/cchfv/L
@@ -1882,7 +1882,7 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           segment_classification_method: "minimizer"
-          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nextclade_sequence_and_datasets:
             - name: CV-A16
               nextclade_dataset_name: enpen/enterovirus/cv-a16

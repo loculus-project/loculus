@@ -161,7 +161,7 @@ def run_sort(
 ) -> pd.DataFrame:
     """
     Run nextclade
-    - use config.minimizer_index or default minimizer from nextclade server
+    - use config.minimizer_url or default minimizer from nextclade server
     """
     subprocess_args = [
         arg
