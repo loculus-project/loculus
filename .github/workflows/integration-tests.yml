@@ -59,6 +59,8 @@ jobs:
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
+      - name: Get runner IP
+        run: curl -4 ifconfig.me
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
       - name: Checkout repository

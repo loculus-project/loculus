@@ -509,23 +509,8 @@ def install_secret_generator():
         "mittwald",
         "https://helm.mittwald.de",
     ]
-
-    # Retry logic for helm repo add with exponential backoff
-    max_retries = 5
-    retry_delay = 5
-    for attempt in range(max_retries + 1):
-        try:
-            run_command(add_helm_repo_command)
-            print("Mittwald repository added to Helm.")
-            break
-        except subprocess.SubprocessError as e:
-            if attempt < max_retries:
-                print(f"Failed to add Mittwald repository (attempt {attempt + 1}/{max_retries + 1}). Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-                retry_delay = min(retry_delay * 2, 60)
-            else:
-                print(f"Failed to add Mittwald repository after {max_retries + 1} attempts.")
-                raise e
+    run_command(add_helm_repo_command)
+    print("Mittwald repository added to Helm.")
 
     update_helm_repo_command = ["helm", "repo", "update"]
     run_command(update_helm_repo_command)
