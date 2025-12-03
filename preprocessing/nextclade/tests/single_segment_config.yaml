@@ -5,7 +5,7 @@ scientific_name: "Test Ebola Sudan Virus"
 molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
-minimizer_index: TEST
+minimizer_url: TEST
 nextclade_sequence_and_datasets:
 - nextclade_dataset_name: ebola-sudan
   genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]

@@ -666,7 +666,7 @@
                     "type": "boolean",
                     "description": "If true run nextclade sort and require that the highest scoring match is in the config.accepted_dataset_matches"
                   },
-                  "minimizer_index": {
+                  "minimizer_url": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,
                     "type": "string",
@@ -741,7 +741,7 @@
                       "type": "array",
                       "description": "Required if method is minimizer, list of the name of each '_' - separated metadata field in the minimizer index"
                     },
-                    "minimizer_index": {
+                    "minimizer_url": {
                       "groups": ["ingestPipelineConfigFile"],
                       "docsIncludePrefix": false,
                       "type": "string",

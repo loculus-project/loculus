@@ -23,7 +23,7 @@ logging.basicConfig(
 
 @dataclass
 class NextcladeSortParams:
-    minimizer_index: str
+    minimizer_url: str
     minimizer_parser: list[str]
     method: str = "minimizer"
 
@@ -32,7 +32,7 @@ class NextcladeSortParams:
 class Config:
     segment_identification: NextcladeSortParams
     nucleotide_sequences: list[str]
-    minimizer_index: str | None
+    minimizer_url: str | None
     minimizer_parser: list[str] | None
     segmented: bool = False
 
@@ -88,7 +88,7 @@ def main(config_file: str, sort_results: str, output: str, log_level: str) -> No
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         if not relevant_config["segmented"]:
             relevant_config["segment_identification"] = NextcladeSortParams(
-                relevant_config["minimizer_index"], relevant_config["minimizer_parser"]
+                relevant_config["minimizer_url"], relevant_config["minimizer_parser"]
             )
         else:
             relevant_config["segment_identification"] = NextcladeSortParams(
