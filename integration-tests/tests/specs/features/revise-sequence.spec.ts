@@ -7,10 +7,11 @@ import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import {
+    CCHF_S_SEGMENT_FULL_SEQUENCE,
+    createFastaContent,
+    createRevisionMetadataTsv,
     createTestMetadata,
     createTestSequenceData,
-    createRevisionMetadataTsv,
-    createFastaContent,
     EBOLA_SUDAN_SHORT_SEQUENCE,
 } from '../../test-helpers/test-data';
 
@@ -39,14 +40,12 @@ sequenceTest(
         await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
         await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();
 
-        await page.getByTestId(/^discard.*L\)_segment_file$/).click();
-        await page.getByTestId(/^discard.*S\)_segment_file$/).click();
-        const newSsequence =
-            'CAAATGGTTTGAGGAGTTCAAGAAAGGAAATGGACTTGTGGACACTTTCACAAACTCNTATTCCTTTTGTGAAAGCGTNCCAAATCTGGACAGNTTTGTNTTCCAGATGGCNAGTGCCACTGATGATGCACAAAANGANTCCATCTACGCATCTGCNCTGGTGGANGCAACCAAATTTTGTGCACCTATATACGAGTGTGCTTGGGCTAGCTCCACTGGCATTGTTAAAAAGGGACTGGAGTGGTTCGAGAAAAATGCAGGAACCATTAAATCCTGGGATGAGAGTTATACTGAGCTTAAAGTTGAAGTTCCCAAAATAGAACAACTCTCCAACTACCAGCAGGCTGCTCTCAAATGGAGAAAAGACATAGGCTTCCGTGTCAATGCAAATACGGCAGCTTTGAGTAACAAAGTCCTAGCAGAGTACAAAGTTCCTGGCGAGATTGTAATGTCTGTCAAAGAGATGTTGTCAGATATGATTAGAAGNAGGAACCTGATTCTCAACAGAGGTGGTGATGAGAACCCACGCGGCCCAGTTAGCCGTGAACATGTGGAGTGGTGCAGGGAATTCGTCAAAGGCAAGTACATAATGGCTTTCAACCCACCCTGGGGAGACATCAACAAGTCAGGCCGTTCAGGAATAGCACTTGTTGCAACAGGCCTTGCCAAGCTTGCAGAGACTGAAGGGAAGGGAGTTTTTGACGAAGCCAAGAAGACTATAGAGGCTCTTAACGGGTATCTGGACAAGCATAAGGATGAAGTTGACAAAGCAAGTGCCGACAGCATGATAACAAACCTCCTTAAGCACATTGCTAAGGCACAAGAGCTTTACAAAAACTCGTCTGCTCTTCGTGCTCAGGGTGCACAGATTGACACCGTCTTCAGCTCATACTACTGGCTCTACAAGGCCGGTGTGACTCCAGAGACCTTCCCGACTGTTTCACAGTTCCTTTTTGAGTTAGGGAAGCAACCAAGGGGCACCAAGAAAATGAAGAAGGCACTCCTGAGCACCCCAATGAAGTGGGGAAAGAAGCTTTATGAGCTTTTTGCTGATGATTCCTTCCAACAGAACAGGATCTACATGCACCCCGCTGTGCTAACAGCTGGCAGAATCAGTGAAATGGGTGTCTGCTTCGGAACAATCCCTGTGGCCAATCCTGATGATGCCGCCTTAGGATCTGGACACACCAAGTCCATTCTCAACCTTCGGACAAACACTGAGACCAACAATCCGTGTGCCAAGACAATTGTTAAGTTGTTTGAAATTCANAAAACAGGGTTNAACATACAGGACATGGANATTGTGGCCTCNGAGCATCTGCTGCACCAATCCCTTGTTGGCAAGCAGTCTCCATTTCAAAATGCTTACAACGTCAAGGGGAANGCCACCAGTGCCAANATCATCTAAAGCNNANAATNNTCTNCAATCAGCTTTNCC';
+        await page.getByTestId(/^discard_fastaHeaderL/).click();
+        await page.getByTestId(/^discard_fastaHeaderS/).click();
         await page.getByTestId('Add a segment_segment_file').setInputFiles({
             name: 'update_S.txt',
             mimeType: 'text/plain',
-            buffer: Buffer.from('>S\n' + newSsequence),
+            buffer: Buffer.from('>S\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
         await page.getByRole('button', { name: 'Submit' }).click();
@@ -62,9 +61,8 @@ sequenceTest(
 
         expect(tabs).toContain('S (unaligned)');
         await reviewPage.switchSequenceTab('S (unaligned)');
-        const actual = (await reviewPage.getSequenceContent()).replace(/\s+/g, '');
-        const expected = newSsequence.replace(/\s+/g, '');
-        expect(actual.startsWith(expected)).toBe(true);
+        const actual = removeWhitespaces(await reviewPage.getSequenceContent());
+        expect(actual).toBe(CCHF_S_SEGMENT_FULL_SEQUENCE);
 
         await reviewPage.closeSequencesDialog();
     },
@@ -121,3 +119,7 @@ groupTest.describe('Bulk sequence revision', () => {
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
     });
 });
+
+function removeWhitespaces(string: string) {
+    return string.replace(/\s+/g, '');
+}
