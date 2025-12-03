@@ -6,7 +6,7 @@ segment_classification_method: "minimizer"
 nextclade_sequence_and_datasets:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
-  genes: [NPEbolaSudan, VP35EbolaSudan, LEbolaSudan]
+  genes: [NPEbolaSudan, VP35EbolaSudan]
 - name: ebola-zaire
   nextclade_dataset_name: ebola-dataset/ebola-zaire
   genes: [VP24EbolaZaire, LEbolaZaire]
