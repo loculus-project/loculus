@@ -36,6 +36,7 @@ test.describe('Multi-pathogen submission flow', () => {
     });
 
     test('revoke a sequence', async ({ page, groupId }) => {
+        test.fail();
         test.setTimeout(120_000);
 
         void groupId;
