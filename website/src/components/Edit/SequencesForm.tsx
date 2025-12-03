@@ -134,8 +134,10 @@ export class EditableSequences {
         if (existingFileIndex === -1 && this.editableSequenceFiles.length === this.maxNumberOfRows) {
             throw new Error(`Maximum limit reached — you can add up to ${this.maxNumberOfRows} sequence file(s) only.`);
         }
+        const segmentNumber = existingFileIndex > -1 ? existingFileIndex + 1 : this.editableSequenceFiles.length + 1;
 
-        fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
+        fastaHeader ??= value == null ? null : `Segment_${segmentNumber}`; // Ensure fastaHeader is never null if a sequence exists
+        label ??= value == null ? null : `Segment ${segmentNumber}`;
         if (this.editableSequenceFiles.some((seq) => seq.fastaHeader === fastaHeader)) {
             toast.error(`A sequence with the fastaHeader ${fastaHeader} already exists.`);
             return new EditableSequences(
