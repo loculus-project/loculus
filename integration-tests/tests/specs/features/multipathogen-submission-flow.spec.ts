@@ -35,6 +35,32 @@ test.describe('Multi-pathogen submission flow', () => {
         await releasedPage.expectResultTableCellText('EV-A71');
     });
 
+    test('revoke a sequence', async ({ page, groupId }) => {
+        test.setTimeout(120_000);
+
+        void groupId;
+        const submissionPage = new SingleSequenceSubmissionPage(page);
+
+        await submissionPage.navigateToSubmissionPage('Enterovirus');
+        await submissionPage.fillSubmissionForm({
+            submissionId: 'id',
+            collectionCountry: 'Uganda',
+            collectionDate: '2023-10-15',
+            authorAffiliations: 'Research Lab, University',
+        });
+        await submissionPage.fillSequenceData({ mySequence: a71Sequence });
+        await submissionPage.acceptTerms();
+        const reviewPage = await submissionPage.submitSequence();
+
+        await reviewPage.waitForAllProcessed();
+        const releasedPage = await reviewPage.releaseAndGoToReleasedSequences();
+
+        const accessionVersions = await releasedPage.waitForSequencesInSearch(1);
+        await releasedPage.expectResultTableCellText('EV-A71');
+        const firstAccessionVersion = accessionVersions[0];
+        await releasedPage.openPreviewOfAccessionVersion(firstAccessionVersion.accession);
+    });
+
     test('submit files and revise released version', async ({ page, groupId }) => {
         test.setTimeout(120_000);
 
