@@ -15,7 +15,6 @@ import {
 import {
     type NamedSequence,
     type ReferenceAccession,
-    type ReferenceGenome,
     type ReferenceGenomes,
     type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
@@ -250,13 +249,6 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
         throw new Error(`No lapis url configured for organism ${organism}`);
     }
     return serviceConfig.lapisUrls[organism];
-}
-
-/**
- * TODO(#3984) this should be removed. Use `getReferenceGenomes` instead.
- */
-export function getReferenceGenome(organism: string): ReferenceGenome {
-    return Object.values(getConfig(organism).referenceGenomes)[0];
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomes {
