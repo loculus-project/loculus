@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { EditableSequences } from './SequencesForm';
+import { EditableSequences } from './EditableSequences.ts';
 import { defaultReviewData } from '../../../vitest.setup';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
@@ -30,7 +30,7 @@ function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenome
 }
 
 /* eslint-disable @typescript-eslint/naming-convention -- this test has keys that expectedly contain spaces */
-describe('SequencesForm', () => {
+describe('EditableSequences', () => {
     beforeEach(() => {
         vi.spyOn(toast, 'error');
     });
@@ -38,6 +38,7 @@ describe('SequencesForm', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
+
     test('Empty editable sequences produces no output', () => {
         const emptyEditableSequences = EditableSequences.fromSequenceNames(
             makeReferenceGenomeLightweightSchema(['foo', 'bar']),
