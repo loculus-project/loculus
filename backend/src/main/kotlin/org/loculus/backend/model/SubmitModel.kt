@@ -171,7 +171,7 @@ class SubmitModel(
             metadataFileTypes,
             metadataTempFileToDelete,
         )
-        val addFastaId = requiresConsensusSequenceFile(submissionParams.organism)
+        val requireConsensusSequence = requiresConsensusSequenceFile(submissionParams.organism)
         try {
             uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
         } finally {
@@ -180,14 +180,14 @@ class SubmitModel(
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (addFastaId) {
+            if (requireConsensusSequence) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
             }
             return
         }
-        if (!addFastaId) {
+        if (!requireConsensusSequence) {
             throw BadRequestException(
                 "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
             )
