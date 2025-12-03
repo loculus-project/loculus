@@ -618,7 +618,7 @@ def run(config: Config) -> None:
         if config.alignment_requirement != AlignmentRequirement.NONE:
             download_nextclade_dataset(dataset_dir, config)
         if (
-            config.minimizer_index
+            config.minimizer_url
             or config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
             or config.require_nextclade_sort_match
         ):

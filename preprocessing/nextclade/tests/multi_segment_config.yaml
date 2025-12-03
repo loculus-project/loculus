@@ -1,7 +1,7 @@
 batch_size: 100
 alignment_requirement: ALL
 log_level: DEBUG
-minimizer_index: TEST
+minimizer_url: TEST
 segment_classification_method: "minimizer"
 nextclade_sequence_and_datasets:
 - name: ebola-sudan
