@@ -13,6 +13,9 @@ Based on upstream commit: https://github.com/keycloakify/keycloakify-starter/com
 
 ## Quick start
 
+First, ensure [nvm](https://github.com/nvm-sh/nvm) is installed and that corepack is enabled (`corepack enable`).
+If you don't have the version of npm specified in `.nvmrc` installed, do so by running `nvm install` in this directory.
+Then, run the following commands (all together, not as individual commands):
 ```bash
 nvm use
 corepack install
@@ -25,7 +28,7 @@ If you get:
 error This project's package.json defines "packageManager": "yarn@4.5.1". However the current global version of Yarn is 1.22.22.
 ```
 
-then uninstall the global yarn version (e.g. `homebrew install yarn`) and try `yarn install` again.
+then uninstall the global yarn version (e.g. `brew uninstall yarn`) and try `yarn install` again.
 
 ## Testing the theme locally
 
