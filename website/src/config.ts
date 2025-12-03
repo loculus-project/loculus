@@ -223,9 +223,16 @@ export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputFiel
 }
 
 export function isMultiSegmentedOrganism(organism: string): boolean {
-    const referenceGenomes = getReferenceGenome(organism);
-    const segmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name);
-    return segmentNames.length > 1;
+    const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
+    const numberOfRows = Math.max(
+            ...Object.values(referenceGenomeLightweightSchema).map(
+                (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
+            ),
+        );
+    if (numberOfRows > 1) {
+            return true;
+        }
+    return false;  
 }
 
 export function getGroupedInputFields(
