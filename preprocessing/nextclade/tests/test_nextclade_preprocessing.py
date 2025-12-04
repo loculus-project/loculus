@@ -127,6 +127,7 @@ single_segment_case_definitions = [
             "totalSnps": 1,
             "totalDeletedNucs": 0,
             "length": len(consensus_sequence("single")),
+            "nonExistentField": "None",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -152,6 +153,7 @@ single_segment_case_definitions = [
             "totalSnps": 0,
             "totalDeletedNucs": 0,
             "length": len(sequence_with_insertion("single")),
+            "nonExistentField": "None",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -177,6 +179,7 @@ single_segment_case_definitions = [
             "totalSnps": 0,
             "totalDeletedNucs": 3,
             "length": len(consensus_sequence("single")) - 3,
+            "nonExistentField": "None",
         },
         expected_errors=[],
         expected_warnings=[],
@@ -206,6 +209,7 @@ single_segment_case_definitions = [
             "totalSnps": None,
             "totalDeletedNucs": None,
             "length": len(invalid_sequence()),
+            "nonExistentField": None,
         },
         expected_errors=build_processing_annotations(
             [
