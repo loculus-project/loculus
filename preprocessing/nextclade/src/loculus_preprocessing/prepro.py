@@ -46,7 +46,11 @@ from .nextclade import (
     download_nextclade_dataset,
     enrich_with_nextclade,
 )
-from .processing_functions import ProcessingFunctions, format_frameshift, format_stop_codon
+from .processing_functions import (
+    ProcessingFunctions,
+    process_frameshifts,
+    process_stop_codons,
+)
 from .sequence_checks import errors_if_non_iupac
 
 logger = logging.getLogger(__name__)
@@ -129,48 +133,21 @@ def add_nextclade_metadata(
         or unprocessed.nextcladeMetadata[segment] is None
     ):
         return InputData(datum=None)
-    raw = dpath.get(
+
+    raw: str | None = dpath.get(
         unprocessed.nextcladeMetadata[segment],
         nextclade_path,
         separator=".",
         default=None,
-    )
-    result = None if raw is None else str(raw)
-    if nextclade_path == "frameShifts":
-        try:
-            result = format_frameshift(result)
-        except Exception:
-            msg = (
-                "Was unable to format frameshift - this is likely an internal error. "
-                "Please contact the administrator."
-            )
-            logger.error(msg)
-            errors = [
-                ProcessingAnnotation.from_single(
-                    nextclade_path,
-                    AnnotationSourceType.METADATA,
-                    message=msg,
-                ),
-            ]
-            return InputData(datum=None, errors=errors)
-    if nextclade_path == "qc.stopCodons.stopCodons":
-        try:
-            result = format_stop_codon(result)
-        except Exception:
-            msg = (
-                "Was unable to format stop codon - this is likely an internal error. "
-                "Please contact the administrator."
-            )
-            logger.error(msg)
-            errors = [
-                ProcessingAnnotation.from_single(
-                    nextclade_path,
-                    AnnotationSourceType.METADATA,
-                    message=msg,
-                ),
-            ]
-            return InputData(datum=None, errors=errors)
-    return InputData(datum=result)
+    )  # type: ignore[assignment]
+
+    match nextclade_path:
+        case "frameshifts":
+            return process_frameshifts(raw)
+        case "stopCodons.stopCodons":
+            return process_stop_codons(raw)
+        case _:
+            return InputData(datum=str(raw))
 
 
 def add_input_metadata(
