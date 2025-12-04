@@ -171,8 +171,8 @@ describe('SequencesForm', () => {
         );
     });
 
-    test('GIVEN no initial data WHEN I add and remove a sequence THEN input is also removed again', () => {
-        const MAX_SEQUENCES_PER_ENTRY = 1;
+    test('GIVEN no initial data and max 2 seq per entry WHEN I add and remove a sequence THEN input is also removed again', () => {
+        const MAX_SEQUENCES_PER_ENTRY = 2;
         let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const key = editableSequences.rows[0].key;
@@ -181,6 +181,23 @@ describe('SequencesForm', () => {
         expect(editableSequences.rows).toEqual([
             { label: key, value: 'ATCG', initialValue: null, key, fastaHeader: key },
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
+
+        editableSequences = editableSequences.update(key, null, null, null);
+        expect(editableSequences.rows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
+    });
+
+    test('GIVEN no initial data and max 1 seq per entry WHEN I add and remove a sequence THEN input is also removed again', () => {
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
+
+        const key = editableSequences.rows[0].key;
+
+        editableSequences = editableSequences.update(key, 'ATCG', key, key);
+        expect(editableSequences.rows).toEqual([
+            { label: key, value: 'ATCG', initialValue: null, key, fastaHeader: key },
         ]);
 
         editableSequences = editableSequences.update(key, null, null, null);
