@@ -173,7 +173,6 @@ def add_assigned_segment(
     return InputData(datum=valid_segments[0])
 
 
-
 def add_assigned_segment(
     unprocessed: UnprocessedAfterNextclade,
     config: Config,
