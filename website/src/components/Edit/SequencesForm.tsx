@@ -22,6 +22,10 @@ function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string)
     URL.revokeObjectURL(url);
 }
 
+function getFastaId(fastaHeader: string | null): string | null {
+    return fastaHeader?.match(/^\S+/)?.[0] ?? null;
+}
+
 type EditableSequenceFile = {
     key: string;
     label: string | null;
@@ -136,8 +140,8 @@ export class EditableSequences {
         }
 
         fastaHeader ??= value == null ? null : key; // Ensure fastaHeader is never null if a sequence exists
-        if (this.editableSequenceFiles.some((seq) => seq.fastaHeader === fastaHeader)) {
-            toast.error(`A sequence with the fastaHeader ${fastaHeader} already exists.`);
+        if (this.editableSequenceFiles.some((seq) => getFastaId(seq.fastaHeader) === getFastaId(fastaHeader))) {
+            toast.error(`A sequence with the fastaID ${getFastaId(fastaHeader)} already exists.`);
             return new EditableSequences(
                 this.editableSequenceFiles.filter((file) => file.value !== null),
                 this.maxNumberOfRows,
@@ -162,7 +166,7 @@ export class EditableSequences {
         return this.rows
             .flatMap((row) => {
                 if (row.value === null) return [];
-                const id = row.fastaHeader?.match(/^\S+/)?.[0];
+                const id = getFastaId(row.fastaHeader);
                 return id ? [id] : [];
             })
             .join(FASTA_IDS_SEPARATOR);

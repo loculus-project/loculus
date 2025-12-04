@@ -96,6 +96,7 @@ describe('SequencesForm', () => {
                     fastaHeader: 'subId_Segment1',
                 },
             ]);
+            expect(editableSequences.getFastaIds()).toEqual('subId_Segment1');
         }
     });
 
@@ -112,16 +113,22 @@ describe('SequencesForm', () => {
 
         let secondKey;
         {
-            editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', 'subId_Segment1');
+            editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', 'subId_Segment1 description');
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId_Segment1\nATCG');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ subId_Segment1: 'ATCG' });
+            expect.soft(fastaText).toBe('>subId_Segment1 description\nATCG');
+            expect(editableSequences.getSequenceRecord()).deep.equals({ 'subId_Segment1 description': 'ATCG' });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, fastaHeader: 'subId_Segment1', key: firstKey },
+                {
+                    label: 'Segment 1',
+                    value: 'ATCG',
+                    initialValue: null,
+                    fastaHeader: 'subId_Segment1 description',
+                    key: firstKey,
+                },
                 { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
             ]);
             secondKey = rows[1].key;
@@ -132,12 +139,21 @@ describe('SequencesForm', () => {
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe('>subId_Segment1\nATCG\n>subId_Segment2\nTT');
-            expect(editableSequences.getSequenceRecord()).deep.equals({ subId_Segment1: 'ATCG', subId_Segment2: 'TT' });
+            expect.soft(fastaText).toBe('>subId_Segment1 description\nATCG\n>subId_Segment2\nTT');
+            expect(editableSequences.getSequenceRecord()).deep.equals({
+                'subId_Segment1 description': 'ATCG',
+                'subId_Segment2': 'TT',
+            });
 
             const rows = editableSequences.rows;
             expect(rows).deep.equals([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: 'subId_Segment1' },
+                {
+                    label: 'Segment 1',
+                    value: 'ATCG',
+                    initialValue: null,
+                    key: firstKey,
+                    fastaHeader: 'subId_Segment1 description',
+                },
                 { label: 'Segment 2', value: 'TT', initialValue: null, key: secondKey, fastaHeader: 'subId_Segment2' },
             ]);
         }
@@ -145,6 +161,7 @@ describe('SequencesForm', () => {
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 2 sequence file(s) only.',
         );
+        expect(editableSequences.getFastaIds()).toEqual('subId_Segment1 subId_Segment2');
     });
 
     test('GIVEN a multi-segmented organism THEN do not allow duplicate fasta headers', () => {
@@ -162,9 +179,9 @@ describe('SequencesForm', () => {
         const rowsAfterFirstUpdate = editableSequences.rows;
         const secondKey = rowsAfterFirstUpdate[1].key;
 
-        editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', 'subId_Segment');
+        editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', 'subId_Segment description');
 
-        const errorMessage = 'A sequence with the fastaHeader subId_Segment already exists.';
+        const errorMessage = 'A sequence with the fastaID subId_Segment already exists.';
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
 
         // Expect that the second sequence was not added
@@ -172,6 +189,7 @@ describe('SequencesForm', () => {
             { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: 'subId_Segment' },
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
+        expect(editableSequences.getFastaIds()).toEqual('subId_Segment');
     });
 
     test('GIVEN a single-segmented organism THEN only allows 1 input and fasta header does not contain the segment name', async () => {
@@ -216,6 +234,7 @@ describe('SequencesForm', () => {
         expect(editableSequences.rows).toEqual([
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
+        expect(editableSequences.getFastaIds()).toEqual('');
     });
 
     test('GIVEN initial data with an empty segment THEN the fasta does not contain the empty segment', async () => {
@@ -230,6 +249,7 @@ describe('SequencesForm', () => {
         expect.soft(fastaText).toBe('>subId_label\nATCG');
 
         expect(editableSequences.getSequenceRecord()).deep.equals({ subId_label: 'ATCG' });
+        expect(editableSequences.getFastaIds()).toEqual('subId_label');
     });
 
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
@@ -264,5 +284,6 @@ describe('SequencesForm', () => {
                 key: expect.any(String),
             },
         ]);
+        expect(editableSequences.getFastaIds()).toEqual('');
     });
 });
