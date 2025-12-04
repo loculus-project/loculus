@@ -1,7 +1,7 @@
 batch_size: 100
 genes:
-  - NPEbolaSudan
-  - VP35EbolaSudan
+- NPEbolaSudan
+- VP35EbolaSudan
 log_level: DEBUG
 nextclade_dataset_name: ebola-sudan-test-dataset
 nextclade_dataset_server: fake_url
@@ -10,7 +10,7 @@ molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
 nucleotideSequences:
-  - main
+- main
 organism: ebola-sudan-test
 processing_spec:
   completeness:
