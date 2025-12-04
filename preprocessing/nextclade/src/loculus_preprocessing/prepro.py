@@ -173,27 +173,6 @@ def add_assigned_segment(
     return InputData(datum=valid_segments[0])
 
 
-def add_assigned_segment(
-    unprocessed: UnprocessedAfterNextclade,
-    config: Config,
-) -> InputData:
-    if not unprocessed.nextcladeMetadata:
-        return InputData(datum=None)
-    valid_segments = [key for key, value in unprocessed.nextcladeMetadata.items() if value]
-    if not valid_segments:
-        return InputData(datum=None)
-    if len(valid_segments) > 1:
-        return InputData(
-            datum=None,
-            errors=[
-                MultipleValidSegmentsError(valid_segments).getProcessingAnnotation(
-                    processed_field_name="ASSIGNED_SEGMENT", organism=config.organism
-                )
-            ],
-        )
-    return InputData(datum=valid_segments[0])
-
-
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
