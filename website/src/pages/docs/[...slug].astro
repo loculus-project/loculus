@@ -1,28 +1,42 @@
 ---
-import '../styles/mdcontainer.scss';
-import BaseLayout from './BaseLayout.astro';
-import DocsMenu from '../components/Navigation/DocsMenu';
-import { getWebsiteConfig } from '../config';
-import type { MdxPage } from '../types/mdxTypes';
+import { getCollection, render } from 'astro:content';
+
+import '../../styles/mdcontainer.scss';
+import DocsMenu from '../../components/Navigation/DocsMenu';
+import { getWebsiteConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import MdiGithub from '~icons/mdi/github';
 
-const { frontmatter } = Astro.props;
-const activeTopNavigationItem = frontmatter?.activeTopNavigationItem ?? '/docs/';
-const file = Astro.props.file;
-const FILE_BEGINNING = 'src/pages/';
-const fileLocation = file.slice(file.indexOf(FILE_BEGINNING), file.length);
-const docsPages = Object.values(import.meta.glob<MdxPage>('../pages/docs/**/*.mdx', { eager: true }));
+export async function getStaticPaths() {
+    const docs = await getCollection('docs');
+    return docs.map((entry) => ({
+        params: { slug: entry.id },
+        props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const docs = await getCollection('docs');
+const docsPages = docs.map((doc) => ({
+    url: `/docs/${doc.id}`,
+    file: `src/content/docs/${doc.id}.mdx`,
+    frontmatter: doc.data,
+}));
+
 const currentPageUrl = Astro.url.pathname;
 const { gitHubEditLink } = getWebsiteConfig();
+const fileLocation = `src/content/docs/${entry.id}.mdx`;
 const editUrl = `${gitHubEditLink}${fileLocation}`;
 ---
 
-<BaseLayout title={frontmatter.title} activeTopNavigationItem={activeTopNavigationItem}>
+<BaseLayout title={entry.data.title} activeTopNavigationItem='/docs/'>
     <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
         <DocsMenu docsPages={docsPages} currentPageUrl={currentPageUrl} title='Documentation' client:load />
         <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
-            <h1>{frontmatter.title}</h1>
-            <slot />
+            <h1>{entry.data.title}</h1>
+            <Content />
             {
                 gitHubEditLink !== undefined && (
                     <div class='text-right text-sm text-gray-500'>

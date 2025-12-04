@@ -1,0 +1,37 @@
+---
+import { getCollection, render } from 'astro:content';
+
+import '../../styles/mdcontainer.scss';
+import DocsMenu from '../../components/Navigation/DocsMenu';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+    const about = await getCollection('about');
+    return about.map((entry) => ({
+        params: { slug: entry.id },
+        props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const about = await getCollection('about');
+const aboutPages = about.map((doc) => ({
+    url: `/about/${doc.id}`,
+    file: `src/content/about/${doc.id}.mdx`,
+    frontmatter: doc.data,
+}));
+
+const currentPageUrl = Astro.url.pathname;
+---
+
+<BaseLayout title={entry.data.title} activeTopNavigationItem='/about'>
+    <div class='md:flex md:justify-between max-w-5xl mx-auto items-start gap-10'>
+        <DocsMenu docsPages={aboutPages} currentPageUrl={currentPageUrl} title='About' client:load />
+        <div class='mdContainer mdContainerItself text-gray-700 leading-relaxed'>
+            <h1>{entry.data.title}</h1>
+            <Content />
+        </div>
+    </div>
+</BaseLayout>

@@ -1,4 +1,8 @@
-import type { MDXInstance } from 'astro';
+import type { DocsFrontmatter } from '../content.config';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(#3451) use content collections for proper types
-export type MdxPage = MDXInstance<Record<string, any>>;
+/** Page shape used by DocsMenu, adapted from content collections */
+export interface MdxPage {
+    url: string;
+    file: string;
+    frontmatter: DocsFrontmatter;
+}
