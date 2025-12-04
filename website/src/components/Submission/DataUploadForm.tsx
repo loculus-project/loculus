@@ -19,7 +19,6 @@ import {
 } from '../../types/backend.ts';
 import type { FileCategory, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -37,7 +36,6 @@ type DataUploadFormProps = {
     action: UploadAction;
     inputMode: InputMode;
     group: Group;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     onSuccess: () => void;
     onError: (message: string) => void;
@@ -56,7 +54,6 @@ const InnerDataUploadForm = ({
     onSuccess,
     onError,
     group,
-    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
     dataUseTermsEnabled,
@@ -157,7 +154,6 @@ const InnerDataUploadForm = ({
                             setFileFactory={setFileFactory}
                             organism={organism}
                             action={action}
-                            referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                             metadataTemplateFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}
                         />
@@ -168,7 +164,6 @@ const InnerDataUploadForm = ({
                         setFileFactory={setFileFactory}
                         organism={organism}
                         action={action}
-                        referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                         metadataTemplateFields={metadataTemplateFields}
                         submissionDataTypes={submissionDataTypes}
                     />
