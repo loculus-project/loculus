@@ -46,7 +46,6 @@ function getErrorDetail(error: unknown): string {
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
-    referenceGenomeLightweightSchema,
     clientConfig,
     accessToken,
     groupedInputFields,
@@ -54,7 +53,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromInitialData(dataToEdit, referenceGenomeLightweightSchema),
+        EditableSequences.fromInitialData(dataToEdit, submissionDataTypes.maxSequencesPerEntry),
     );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;

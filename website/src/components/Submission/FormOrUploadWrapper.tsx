@@ -67,7 +67,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(referenceGenomeLightweightSchema),
+        EditableSequences.empty(submissionDataTypes.maxSequencesPerEntry),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);

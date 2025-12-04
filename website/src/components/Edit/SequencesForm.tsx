@@ -3,7 +3,6 @@ import { toast } from 'react-toastify';
 
 import { type SequenceEntryToEdit } from '../../types/backend.ts';
 import { FASTA_IDS_SEPARATOR } from '../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import { FileUploadComponent } from '../Submission/FileUpload/FileUploadComponent.tsx';
 import { PLAIN_SEGMENT_KIND, VirtualPlainSegmentFile } from '../Submission/FileUpload/fileProcessing.ts';
 
@@ -78,11 +77,8 @@ export class EditableSequences {
      * @param initialData The sequence entry to edit, from which the initial sequence data is taken.
      * @param referenceGenomeLightweightSchema
      */
-    static fromInitialData(
-        initialData: SequenceEntryToEdit,
-        referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
-    ): EditableSequences {
-        const maxNumberRows = this.getMaxNumberOfRows(referenceGenomeLightweightSchema);
+    static fromInitialData(initialData: SequenceEntryToEdit, maxSequencesPerEntry?: number): EditableSequences {
+        const maxNumberRows = maxSequencesPerEntry ?? Infinity;
         const fastaHeaderMap = EditableSequences.invertRecordMulti(initialData.processedData.sequenceNameToFastaId);
         const existingDataRows = Object.entries(initialData.originalData.unalignedNucleotideSequences).map(
             ([key, value]) => {
@@ -106,19 +102,10 @@ export class EditableSequences {
     }
 
     /**
-     * Create an empty {@link EditableSequences} object from segment names.
-     * Each segment will be empty initially.
+     * Create an empty {@link EditableSequences} object.
      */
-    static fromSequenceNames(referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema): EditableSequences {
-        return new EditableSequences([], this.getMaxNumberOfRows(referenceGenomeLightweightSchema));
-    }
-
-    private static getMaxNumberOfRows(referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema): number {
-        return Math.max(
-            ...Object.values(referenceGenomeLightweightSchema).map(
-                (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
-            ),
-        );
+    static empty(maxSequencesPerEntry?: number): EditableSequences {
+        return new EditableSequences([], maxSequencesPerEntry ?? Infinity);
     }
 
     private static getNextKey(): string {
