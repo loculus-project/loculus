@@ -75,7 +75,7 @@ export class EditableSequences {
 
     /**
      * @param initialData The sequence entry to edit, from which the initial sequence data is taken.
-     * @param referenceGenomeLightweightSchema
+     * @param maxSequencesPerEntry The maximum number of sequences allowed per entry.
      */
     static fromInitialData(initialData: SequenceEntryToEdit, maxSequencesPerEntry?: number): EditableSequences {
         const maxNumberRows = maxSequencesPerEntry ?? Infinity;

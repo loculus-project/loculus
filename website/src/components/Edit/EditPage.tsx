@@ -10,7 +10,6 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -22,7 +21,6 @@ type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
