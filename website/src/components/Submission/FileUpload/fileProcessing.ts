@@ -94,7 +94,7 @@ export const PLAIN_SEGMENT_KIND: FileKind<ProcessedPlainSegmentFile> = {
                 new Error(`Found ${headerLines.length} headers in uploaded file, only a single header is allowed.`),
             );
         }
-        const header = headerLines.length === 1 ? headerLines[0].substring(1).trim().split(/\s+/)[0] : null;
+        const header = headerLines.length === 1 ? headerLines[0].substring(1).trim() : null;
         const segmentData = lines
             .filter((l) => !l.startsWith('>'))
             .map((l) => l.trim())

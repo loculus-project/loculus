@@ -80,6 +80,6 @@ describe('fileProcessing', () => {
         const processedFile = result._unsafeUnwrap();
         const processedText = await processedFile.text();
         expect(processedText).toBe('ACTGACTGACTG');
-        expect(processedFile.fastaHeader()).toBe('fooid');
+        expect(processedFile.fastaHeader()).toBe('fooid description');
     });
 });
