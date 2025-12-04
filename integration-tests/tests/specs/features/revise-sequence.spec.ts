@@ -45,7 +45,7 @@ sequenceTest(
         await page.getByTestId('Add a segment_segment_file').setInputFiles({
             name: 'update_S.txt',
             mimeType: 'text/plain',
-            buffer: Buffer.from('>S\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
+            buffer: Buffer.from('>S description\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
         await page.getByRole('button', { name: 'Submit' }).click();
