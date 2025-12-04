@@ -2,32 +2,20 @@ import { toast } from 'react-toastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { EditableSequences } from './EditableSequences.ts';
-import { defaultReviewData } from '../../../vitest.setup';
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
+import {
+    defaultReviewData,
+    originalFastaHeader,
+    originalUnalignedNucleotideSequenceValue,
+    unalignedProcessedSequenceName,
+} from '../../../vitest.setup';
 
-function makeReferenceGenomeLightweightSchema(nucleotideSegmentNames: string[]): ReferenceGenomesLightweightSchema {
-    return {
-        [SINGLE_REFERENCE]: {
-            nucleotideSegmentNames,
-            geneNames: [],
-            insdcAccessionFull: [],
-        },
-    };
-}
-
-function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenomesLightweightSchema {
-    const result: ReferenceGenomesLightweightSchema = {};
-
-    for (const suborganism of suborganisms) {
-        result[suborganism] = {
-            nucleotideSegmentNames: ['main'],
-            geneNames: [],
-            insdcAccessionFull: [],
-        };
-    }
-
-    return result;
-}
+const FASTAHEADER = 'FASTAHEADER';
+const FASTAHEADER_WITH_DESCRIPTION = `${FASTAHEADER} description`;
+const OTHER_FASTAHEADER = 'FASTAHEADER_2';
+const SEQUENCE = 'ATCG';
+const OTHER_SEQUENCE = 'GGTA';
+const LABEL = 'Segment 1';
+const OTHER_LABEL = 'Segment 2';
 
 describe('EditableSequences', () => {
     beforeEach(() => {
@@ -38,35 +26,32 @@ describe('EditableSequences', () => {
         vi.restoreAllMocks();
     });
     test('Empty editable sequences produces no output', () => {
-        const emptyEditableSequences = EditableSequences.fromSequenceNames(
-            makeReferenceGenomeLightweightSchema(['foo', 'bar']),
-        );
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        const emptyEditableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         expect(emptyEditableSequences.getSequenceFasta()).toBeUndefined();
         expect(emptyEditableSequences.getSequenceRecord()).deep.equals({});
     });
 
-    test('GIVEN organism with 2 suborganisms with 1 segment each THEN allows at max 1 inputs', async () => {
-        const FASTAHEADER = 'FASTAHEADER';
-        let editableSequences = EditableSequences.fromSequenceNames(
-            makeSubOrganismReferenceSchema(['suborg1', 'suborg2']),
-        );
+    test('GIVEN organism with MAX_SEQUENCES_PER_ENTRY is 1 THEN allows at max 1 inputs', async () => {
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
         const firstKey = initialRows[0].key;
         {
-            editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER);
+            editableSequences = editableSequences.update(firstKey, SEQUENCE, LABEL, FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe(`>${FASTAHEADER}\nATCG`);
-            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: 'ATCG' });
+            expect.soft(fastaText).toBe(`>${FASTAHEADER}\n${SEQUENCE}`);
+            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: SEQUENCE });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
-                { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: FASTAHEADER },
+                { label: LABEL, value: SEQUENCE, initialValue: null, key: firstKey, fastaHeader: FASTAHEADER },
             ]);
         }
 
@@ -80,18 +65,18 @@ describe('EditableSequences', () => {
         const rowsAfterDeletion = editableSequences.rows;
         const newFirstKey = rowsAfterDeletion[0].key;
         {
-            editableSequences = editableSequences.update(newFirstKey, 'ATCG', 'Segment 1', FASTAHEADER);
+            editableSequences = editableSequences.update(newFirstKey, SEQUENCE, LABEL, FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe(`>${FASTAHEADER}\nATCG`);
-            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: 'ATCG' });
+            expect.soft(fastaText).toBe(`>${FASTAHEADER}\n${SEQUENCE}`);
+            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: SEQUENCE });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
                 {
-                    label: 'Segment 1',
-                    value: 'ATCG',
+                    label: LABEL,
+                    value: SEQUENCE,
                     initialValue: null,
                     key: newFirstKey,
                     fastaHeader: FASTAHEADER,
@@ -101,13 +86,9 @@ describe('EditableSequences', () => {
         }
     });
 
-    test('GIVEN organism with 2 segments THEN allows at max 2 inputs', async () => {
-        const FASTAHEADER_SEGMENT1 = 'FASTAHEADER';
-        const FASTAHEADER_WITH_DESCRIPTION = FASTAHEADER_SEGMENT1 + ' description';
-        const FASTAHEADER_SEGMENT2 = 'FASTAHEADER_SEGMENT2';
-        let editableSequences = EditableSequences.fromSequenceNames(
-            makeReferenceGenomeLightweightSchema(['foo', 'bar']),
-        );
+    test('GIVEN organism with MAX_SEQUENCES_PER_ENTRY is 2 THEN allows at max 2 inputs', async () => {
+        const MAX_SEQUENCES_PER_ENTRY = 2;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
@@ -117,20 +98,20 @@ describe('EditableSequences', () => {
 
         let secondKey;
         {
-            editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER_WITH_DESCRIPTION);
+            editableSequences = editableSequences.update(firstKey, SEQUENCE, LABEL, FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe(`>${FASTAHEADER_WITH_DESCRIPTION}\nATCG`);
-            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER_WITH_DESCRIPTION]: 'ATCG' });
+            expect.soft(fastaText).toBe(`>${FASTAHEADER}\n${SEQUENCE}`);
+            expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: SEQUENCE });
 
             const rows = editableSequences.rows;
             expect(rows).toEqual([
                 {
-                    label: 'Segment 1',
-                    value: 'ATCG',
+                    label: LABEL,
+                    value: SEQUENCE,
                     initialValue: null,
-                    fastaHeader: FASTAHEADER_WITH_DESCRIPTION,
+                    fastaHeader: FASTAHEADER,
                     key: firstKey,
                 },
                 { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
@@ -139,14 +120,14 @@ describe('EditableSequences', () => {
         }
 
         {
-            editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', FASTAHEADER_SEGMENT2);
+            editableSequences = editableSequences.update(secondKey, OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
-            expect.soft(fastaText).toBe(`>${FASTAHEADER_WITH_DESCRIPTION}\nATCG\n>${FASTAHEADER_SEGMENT2}\nTT`);
+            expect.soft(fastaText).toBe(`>${FASTAHEADER}\n${SEQUENCE}\n>${OTHER_FASTAHEADER}\n${OTHER_SEQUENCE}`);
             expect(editableSequences.getSequenceRecord()).deep.equals({
-                [FASTAHEADER_WITH_DESCRIPTION]: 'ATCG',
-                [FASTAHEADER_SEGMENT2]: 'TT',
+                [FASTAHEADER]: SEQUENCE,
+                [OTHER_FASTAHEADER]: OTHER_SEQUENCE,
             });
 
             const rows = editableSequences.rows;
@@ -156,14 +137,14 @@ describe('EditableSequences', () => {
                     value: 'ATCG',
                     initialValue: null,
                     key: firstKey,
-                    fastaHeader: FASTAHEADER_WITH_DESCRIPTION,
+                    fastaHeader: FASTAHEADER,
                 },
                 {
-                    label: 'Segment 2',
-                    value: 'TT',
+                    label: OTHER_LABEL,
+                    value: OTHER_SEQUENCE,
                     initialValue: null,
                     key: secondKey,
-                    fastaHeader: FASTAHEADER_SEGMENT2,
+                    fastaHeader: OTHER_FASTAHEADER,
                 },
             ]);
         }
@@ -171,14 +152,12 @@ describe('EditableSequences', () => {
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 2 sequence file(s) only.',
         );
-        expect(editableSequences.getFastaIds()).toEqual(`${FASTAHEADER_SEGMENT1} ${FASTAHEADER_SEGMENT2}`);
+        expect(editableSequences.getFastaIds()).toEqual(`${FASTAHEADER} ${OTHER_FASTAHEADER}`);
     });
 
-    test('GIVEN a multi-segmented organism THEN do not allow duplicate fasta headers', () => {
-        const FASTAHEADER = 'FASTAHEADER';
-        let editableSequences = EditableSequences.fromSequenceNames(
-            makeReferenceGenomeLightweightSchema(['foo', 'bar']),
-        );
+    test('GIVEN MAX_SEQUENCES_PER_ENTRY is 2 THEN do not allow duplicate fasta headers', () => {
+        const MAX_SEQUENCES_PER_ENTRY = 2;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
@@ -186,26 +165,31 @@ describe('EditableSequences', () => {
         ]);
         const firstKey = initialRows[0].key;
 
-        editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER);
+        editableSequences = editableSequences.update(firstKey, SEQUENCE, LABEL, FASTAHEADER);
         const rowsAfterFirstUpdate = editableSequences.rows;
         const secondKey = rowsAfterFirstUpdate[1].key;
 
-        editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', 'FASTAHEADER description');
+        editableSequences = editableSequences.update(
+            secondKey,
+            OTHER_SEQUENCE,
+            OTHER_LABEL,
+            FASTAHEADER_WITH_DESCRIPTION,
+        );
 
         const errorMessage = `A sequence with the fastaID ${FASTAHEADER} already exists.`;
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
 
         // Expect that the second sequence was not added
         expect(editableSequences.rows).toEqual([
-            { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: FASTAHEADER },
+            { label: 'Segment 1', value: SEQUENCE, initialValue: null, key: firstKey, fastaHeader: FASTAHEADER },
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
         expect(editableSequences.getFastaIds()).toEqual(FASTAHEADER);
     });
 
     test('GIVEN a single-segmented organism THEN only allows 1 input', async () => {
-        const FASTAHEADER = 'FASTAHEADER';
-        let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
@@ -213,24 +197,23 @@ describe('EditableSequences', () => {
         ]);
         const key = initialRows[0].key;
 
-        editableSequences = editableSequences.update(key, 'ATCG', key, FASTAHEADER);
+        editableSequences = editableSequences.update(key, SEQUENCE, key, FASTAHEADER);
         const fasta = editableSequences.getSequenceFasta();
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
-        expect.soft(fastaText).toBe(`>${FASTAHEADER}\nATCG`);
-
-        expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: 'ATCG' });
+        expect.soft(fastaText).toBe(`>${FASTAHEADER}\n${SEQUENCE}`);
+        expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: SEQUENCE });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, fastaHeader: FASTAHEADER, key }]);
-
-        expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
-        );
+        expect(rows).deep.equals([{ label: key, value: SEQUENCE, initialValue: null, fastaHeader: FASTAHEADER, key }]);
+        expect(() =>
+            editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER),
+        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
     });
 
-    test('GIVEN an edit with an empty fasta header THEN use key as fasta header', async () => {
-        let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
+    test('GIVEN MAX_SEQUENCES_PER_ENTRY is 1 THEN only allows 1 input and fasta header does not contain the segment name', async () => {
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const initialRows = editableSequences.rows;
         expect(initialRows).toEqual([
@@ -238,32 +221,29 @@ describe('EditableSequences', () => {
         ]);
         const key = initialRows[0].key;
 
-        editableSequences = editableSequences.update(key, 'ATCG', 'subId', null);
+        editableSequences = editableSequences.update(key, SEQUENCE, LABEL, null);
         const fasta = editableSequences.getSequenceFasta();
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
-        expect.soft(fastaText).toBe(`>${key}\nATCG`);
-
-        expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: 'ATCG' });
+        expect.soft(fastaText).toBe(`>${key}\n${SEQUENCE}`);
+        expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: SEQUENCE });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: 'subId', value: 'ATCG', initialValue: null, fastaHeader: key, key }]);
-
-        expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
-        );
+        expect(rows).deep.equals([{ label: LABEL, value: SEQUENCE, initialValue: null, fastaHeader: key, key }]);
+        expect(() =>
+            editableSequences.update('another key', OTHER_SEQUENCE, OTHER_LABEL, OTHER_FASTAHEADER),
+        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
     });
 
-    test('GIVEN no initial data WHEN I add and remove a sequence THEN input is also removed again', () => {
-        let editableSequences = EditableSequences.fromSequenceNames(
-            makeReferenceGenomeLightweightSchema(['foo', 'bar']),
-        );
+    test('GIVEN no initial data and max 2 seq per entry WHEN I add and remove a sequence THEN input is also removed again', () => {
+        const MAX_SEQUENCES_PER_ENTRY = 2;
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
 
         const key = editableSequences.rows[0].key;
 
-        editableSequences = editableSequences.update(key, 'ATCG', key, key);
+        editableSequences = editableSequences.update(key, SEQUENCE, key, key);
         expect(editableSequences.rows).toEqual([
-            { label: key, value: 'ATCG', initialValue: null, key, fastaHeader: key },
+            { label: key, value: SEQUENCE, initialValue: null, key, fastaHeader: key },
             { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
         ]);
 
@@ -274,34 +254,47 @@ describe('EditableSequences', () => {
         expect(editableSequences.getFastaIds()).toEqual('');
     });
 
+    test('GIVEN no initial data and max 1 seq per entry WHEN I add and remove a sequence THEN input is also removed again', () => {
+        const MAX_SEQUENCES_PER_ENTRY = 1;
+
+        let editableSequences = EditableSequences.empty(MAX_SEQUENCES_PER_ENTRY);
+
+        const key = editableSequences.rows[0].key;
+
+        editableSequences = editableSequences.update(key, SEQUENCE, key, key);
+        expect(editableSequences.rows).toEqual([
+            { label: key, value: SEQUENCE, initialValue: null, key, fastaHeader: key },
+        ]);
+
+        editableSequences = editableSequences.update(key, null, null, null);
+        expect(editableSequences.rows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
+    });
+
     test('GIVEN initial data with an empty segment THEN the fasta does not contain the empty segment', async () => {
-        const FASTAHEADER = 'FASTAHEADER_label';
-        let editableSequences = EditableSequences.fromInitialData(
-            defaultReviewData,
-            makeReferenceGenomeLightweightSchema(['originalSequenceName', 'anotherSequenceName']),
-        );
-        editableSequences = editableSequences.update(editableSequences.rows[0].key, 'ATCG', 'label', FASTAHEADER);
+        const MAX_SEQUENCES_PER_ENTRY = 2;
+        let editableSequences = EditableSequences.fromInitialData(defaultReviewData, MAX_SEQUENCES_PER_ENTRY);
+        editableSequences = editableSequences.update(editableSequences.rows[0].key, SEQUENCE, LABEL, OTHER_FASTAHEADER);
         const fasta = editableSequences.getSequenceFasta();
         expect(fasta).not.toBeUndefined();
         const fastaText = await fasta!.text();
-        expect.soft(fastaText).toBe(`>${FASTAHEADER}\nATCG`);
+        expect.soft(fastaText).toBe(`>${OTHER_FASTAHEADER}\n${SEQUENCE}`);
 
-        expect(editableSequences.getSequenceRecord()).deep.equals({ [FASTAHEADER]: 'ATCG' });
-        expect(editableSequences.getFastaIds()).toEqual(FASTAHEADER);
+        expect(editableSequences.getSequenceRecord()).deep.equals({ [OTHER_FASTAHEADER]: SEQUENCE });
+        expect(editableSequences.getFastaIds()).toEqual(OTHER_FASTAHEADER);
     });
 
     test('GIVEN initial segment data that is then deleted as an edit THEN the edit record does not contain the segment key but input field is kept', () => {
-        let editableSequences = EditableSequences.fromInitialData(
-            defaultReviewData,
-            makeReferenceGenomeLightweightSchema(['originalSequenceName', 'anotherSequenceName']),
-        );
+        const MAX_SEQUENCES_PER_ENTRY = 2;
+        let editableSequences = EditableSequences.fromInitialData(defaultReviewData, MAX_SEQUENCES_PER_ENTRY);
 
         expect(editableSequences.rows).toEqual([
             {
-                label: 'originalFastaHeader (mapped to unalignedProcessedSequenceName)',
-                fastaHeader: 'originalFastaHeader',
-                value: 'originalUnalignedNucleotideSequencesValue',
-                initialValue: 'originalUnalignedNucleotideSequencesValue',
+                label: `${originalFastaHeader} (mapped to ${unalignedProcessedSequenceName})`,
+                fastaHeader: originalFastaHeader,
+                value: originalUnalignedNucleotideSequenceValue,
+                initialValue: originalUnalignedNucleotideSequenceValue,
                 key: expect.any(String),
             },
             { label: 'Add a segment', value: null, initialValue: null, key: expect.any(String), fastaHeader: null },

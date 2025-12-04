@@ -6,7 +6,6 @@ import { describe, expect, test, vi } from 'vitest';
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
-import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 import { Button } from '../common/Button';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
@@ -61,16 +60,10 @@ const MockSaveWrapper = ({
                 action='submit'
                 organism='foo'
                 setFileFactory={setFileFactory}
-                referenceGenomeLightweightSchema={{
-                    [SINGLE_REFERENCE]: {
-                        nucleotideSegmentNames: ['foo', 'bar'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
-                    },
-                }}
                 metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
                 submissionDataTypes={{
                     consensusSequences: enableConsensusSequences,
+                    maxSequencesPerEntry: 2,
                 }}
             />
             <Button onClick={handler}>generate</Button>

@@ -14,7 +14,6 @@ import {
 } from '../../../vitest.setup.ts';
 import { type UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
-import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -42,17 +41,13 @@ function renderEditPage({
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
-                referenceGenomeLightweightSchema={{
-                    [SINGLE_REFERENCE]: {
-                        nucleotideSegmentNames: ['originalSequenceName'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
-                    },
-                }}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
                 groupedInputFields={groupedInputFields}
-                submissionDataTypes={{ consensusSequences: allowSubmissionOfConsensusSequences }}
+                submissionDataTypes={{
+                    consensusSequences: allowSubmissionOfConsensusSequences,
+                    maxSequencesPerEntry: 1,
+                }}
             />
         </QueryClientProvider>,
     );
