@@ -160,9 +160,7 @@ export function getMetadataTemplateFields(
 ): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
     const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
-    const submissionIdInputFields = getSubmissionIdInputFields(isMultiSegmentedOrganism(organism)).map(
-        (field) => field.name,
-    );
+    const submissionIdInputFields = getSubmissionIdInputFields(schema).map((field) => field.name);
     const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
     const allFields = [...extraFields, ...baseFields];
     const fieldsToDisplaynames = new Map<string, string | undefined>(
@@ -184,8 +182,10 @@ function getAccessionInputField(): InputField {
     };
 }
 
-export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
-    if (!isMultiSegmented) {
+export function getSubmissionIdInputFields(schema: Schema): InputField[] {
+    const maxSequencesPerEntry = schema.submissionDataTypes.maxSequencesPerEntry ?? Infinity;
+
+    if (maxSequencesPerEntry == 1) {
         return [
             {
                 name: SUBMISSION_ID_INPUT_FIELD,
@@ -222,49 +222,33 @@ export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputFiel
     ];
 }
 
-export function isMultiSegmentedOrganism(organism: string): boolean {
-    const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
-    const numberOfRows = Math.max(
-        ...Object.values(referenceGenomeLightweightSchema).map(
-            (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
-        ),
-    );
-    if (numberOfRows > 1) {
-        return true;
-    }
-    return false;
-}
-
 export function getGroupedInputFields(
     organism: string,
     action: 'submit' | 'revise',
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
-    const inputFields = getConfig(organism).schema.inputFields;
-    const isMultiSegmented = isMultiSegmentedOrganism(organism);
-    const metadata = getConfig(organism).schema.metadata;
+    const schema = getConfig(organism).schema;
+    const submissionIdInputFields = getSubmissionIdInputFields(schema);
 
-    const groups = new Map<string, InputField[]>();
-
-    const coreFields =
-        action === 'submit'
-            ? getSubmissionIdInputFields(isMultiSegmented)
-            : getSubmissionIdInputFields(isMultiSegmented).concat(getAccessionInputField());
-
-    const allFields = [...coreFields, ...inputFields];
+    const allFields = [
+        ...submissionIdInputFields,
+        ...(action === 'submit' ? [] : [getAccessionInputField()]),
+        ...schema.inputFields,
+    ];
     const requiredFields = allFields.filter((meta) => meta.required);
     const desiredFields = allFields.filter((meta) => meta.desired);
 
+    const groups = new Map<string, InputField[]>();
     groups.set('Required fields', requiredFields);
     groups.set('Desired fields', desiredFields);
-    if (!excludeDuplicates) groups.set('Submission details', getSubmissionIdInputFields(isMultiSegmented));
+    if (!excludeDuplicates) groups.set('Submission details', submissionIdInputFields);
     const fieldAlreadyAdded = (fieldName: string) =>
         Array.from(groups.values())
             .flatMap((fields) => fields.map((f) => f.name))
             .some((name) => name === fieldName);
 
-    inputFields.forEach((field) => {
-        const metadataEntry = metadata.find((meta) => meta.name === field.name);
+    schema.inputFields.forEach((field) => {
+        const metadataEntry = schema.metadata.find((meta) => meta.name === field.name);
         const header = metadataEntry?.header ?? 'Uncategorized';
 
         if (!groups.has(header)) {
