@@ -5,7 +5,6 @@ import type { ColumnMapping } from './FileUpload/ColumnMapping';
 import { SequenceEntryUpload } from './FileUpload/SequenceEntryUploadComponent';
 import type { ProcessedFile } from './FileUpload/fileProcessing';
 import type { InputField, SubmissionDataTypes } from '../../types/config';
-import { getFirstLightweightSchema, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import { EditableMetadata, MetadataForm } from '../Edit/MetadataForm';
 import { EditableSequences, SequencesForm } from '../Edit/SequencesForm';
 
@@ -41,7 +40,6 @@ type FormOrUploadWrapperProps = {
     setFileFactory: Dispatch<SetStateAction<FileFactory | undefined>>;
     organism: string;
     action: UploadAction;
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     metadataTemplateFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
 };
@@ -58,13 +56,10 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
     setFileFactory,
     organism,
     action,
-    referenceGenomeLightweightSchema,
     metadataTemplateFields,
     submissionDataTypes,
 }) => {
     const enableConsensusSequences = submissionDataTypes.consensusSequences;
-    const isMultiSegmented =
-        getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
         EditableSequences.empty(submissionDataTypes.maxSequencesPerEntry),
@@ -139,8 +134,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
                 metadataTemplateFields={metadataTemplateFields}
-                enableConsensusSequences={enableConsensusSequences}
-                isMultiSegmented={isMultiSegmented}
+                submissionDataTypes={submissionDataTypes}
             />
         );
     } else {
