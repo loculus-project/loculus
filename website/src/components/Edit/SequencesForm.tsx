@@ -159,8 +159,13 @@ export class EditableSequences {
     }
 
     getFastaIds(): string {
-        const filledRows = this.rows.filter((row) => row.value !== null);
-        return filledRows.map((sequence) => sequence.fastaHeader).join(FASTA_IDS_SEPARATOR);
+        return this.rows
+            .flatMap((row) => {
+                if (row.value === null) return [];
+                const id = row.fastaHeader?.match(/^\S+/)?.[0];
+                return id ? [id] : [];
+            })
+            .join(FASTA_IDS_SEPARATOR);
     }
 
     getSequenceFasta(): File | undefined {
