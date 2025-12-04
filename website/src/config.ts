@@ -222,19 +222,6 @@ export function getSubmissionIdInputFields(schema: Schema): InputField[] {
     ];
 }
 
-export function isMultiSegmentedOrganism(organism: string): boolean {
-    const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
-    const numberOfRows = Math.max(
-        ...Object.values(referenceGenomeLightweightSchema).map(
-            (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
-        ),
-    );
-    if (numberOfRows > 1) {
-        return true;
-    }
-    return false;
-}
-
 export function getGroupedInputFields(
     organism: string,
     action: 'submit' | 'revise',
