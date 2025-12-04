@@ -8,9 +8,13 @@ export class EditPage {
         await this.page.getByRole('button', { name: 'Discard file' }).click();
     }
 
-    async addSequenceFile(content: string) {
+    async discardSequenceFileByTestId(testId: string) {
+        await this.page.getByTestId(testId).click();
+    }
+
+    async addSequenceFile(content: string, name = 'example.txt') {
         await this.page.getByLabel(/Add a segment/).setInputFiles({
-            name: 'example.txt',
+            name,
             mimeType: 'text/plain',
             buffer: Buffer.from(content),
         });

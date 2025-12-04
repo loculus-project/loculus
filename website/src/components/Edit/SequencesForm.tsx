@@ -203,6 +203,8 @@ export class EditableSequences {
     }
 }
 
+const removeExtension = (filename: string | undefined) => filename?.replace(/\.[^/.]+$/, '') ?? null;
+
 type SequenceFormProps = {
     editableSequences: EditableSequences;
     setEditableSequences: Dispatch<SetStateAction<EditableSequences>>;
@@ -228,7 +230,7 @@ export const SequencesForm: FC<SequenceFormProps> = ({
                         <FileUploadComponent
                             setFile={async (file) => {
                                 const text = file ? await file.text() : null;
-                                const fastaHeader = file?.fastaHeader() ?? null;
+                                const fastaHeader = file?.fastaHeader() ?? removeExtension(file?.handle().name) ?? null;
                                 setEditableSequences((editableSequences) =>
                                     editableSequences.update(field.key, text, fastaHeader, fastaHeader),
                                 );
