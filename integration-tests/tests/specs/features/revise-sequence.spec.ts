@@ -100,7 +100,7 @@ groupTest.describe('Bulk sequence revision', () => {
         const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
         const revisedSequences = accessionsToRevise.map((accession, i) => ({
-            id: `${baseSubmissionId}-${i}`,
+            id: `${baseSubmissionId}-${i} description`,
             sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
         }));
         const fastaContent = createFastaContent(revisedSequences);
