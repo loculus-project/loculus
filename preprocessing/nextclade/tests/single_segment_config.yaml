@@ -37,6 +37,12 @@ processing_spec:
     function: identity
     inputs:
       input: nextclade.totalDeletions
+  nonExistentField: # Regression test for #5628
+    args:
+      type: str
+    function: identity
+    inputs:
+      input: nextclade.some.non.existent.path
   length:
     args:
       type: int

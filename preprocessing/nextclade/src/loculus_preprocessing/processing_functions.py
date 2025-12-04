@@ -19,6 +19,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FunctionArgs,
+    InputData,
     InputMetadata,
     ProcessedMetadataValue,
     ProcessingAnnotation,
@@ -1020,6 +1021,38 @@ class ProcessingFunctions:
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
 
 
+def single_metadata_annotation(
+    source_name: str,
+    message: str,
+) -> list[ProcessingAnnotation]:
+    return [
+        ProcessingAnnotation.from_single(
+            source_name,
+            AnnotationSourceType.METADATA,
+            message=message,
+        )
+    ]
+
+
+def process_frameshifts(input: str | None) -> InputData:
+    """Converts frameshift string to InputData for processing"""
+    try:
+        return InputData(datum=format_frameshift(input))
+    except Exception as e:
+        msg = (
+            "Was unable to format frameshift - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "frameshifts",
+                msg,
+            ),
+        )
+
+
 def format_frameshift(input: str | None) -> str | None:
     """
     In nextclade frameshifts have the json format:
@@ -1083,6 +1116,25 @@ def format_frameshift(input: str | None) -> str | None:
             frame_shift["cdsName"] + f":{codon_range}(nt:" + ";".join(nuc_range_list) + ")"
         )
     return ",".join(frame_shift_strings)
+
+
+def process_stop_codons(input: str | None) -> InputData:
+    """Converts stop codon string to InputData for processing"""
+    try:
+        return InputData(datum=format_stop_codon(input))
+    except Exception as e:
+        msg = (
+            "Was unable to format stop codon - this is likely an internal error. "
+            "Please contact the administrator."
+        )
+        logger.error(msg + f" Error: {e}")
+        return InputData(
+            datum=None,
+            errors=single_metadata_annotation(
+                "stopCodons",
+                msg,
+            ),
+        )
 
 
 def format_stop_codon(result: str | None) -> str | None:
