@@ -19,7 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
