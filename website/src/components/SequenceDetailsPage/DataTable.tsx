@@ -17,7 +17,7 @@ interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -42,8 +42,8 @@ const DataTableComponent: React.FC<Props> = ({
     referenceGenomeLightweightSchema,
     suborganism,
 }) => {
-    const reference = referenceGenomeLightweightSchema[suborganism].insdcAccessionFull;
-    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+    const reference = suborganism !== null ? referenceGenomeLightweightSchema[suborganism].insdcAccessionFull : null;
+    const hasReferenceAccession = (reference ?? []).filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>
@@ -63,11 +63,11 @@ const DataTableComponent: React.FC<Props> = ({
                     <div key={header} className='p-4 pl-0'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            {hasReferenceAccession && header.includes('Alignment') && (
+                            {reference !== null && hasReferenceAccession && header.includes('Alignment') && (
                                 <ReferenceSequenceLinkButton reference={reference} />
                             )}
                         </div>
-                        {hasReferenceAccession && header.includes('mutation') && (
+                        {reference !== null && hasReferenceAccession && header.includes('mutation') && (
                             <h2 className='pt-2 text-xs text-gray-500'>
                                 <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
                                 Mutations called relative to the <ReferenceDisplay reference={reference} /> reference

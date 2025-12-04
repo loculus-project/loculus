@@ -351,13 +351,23 @@ describe('getTableData', () => {
 
         expect(result).toStrictEqual(
             err({
-                detail: "Value '5' of field 'genotype' is not a valid string.",
+                detail: "Value '5' of field 'genotype' is not a valid string or null.",
                 instance: '/seq/' + accessionVersion,
                 status: 0,
                 title: 'Invalid suborganism field',
                 type: 'about:blank',
             }),
         );
+    });
+
+    test('should tolerate when suborganism is null (as e.g. for revocation entries)', async () => {
+        mockRequest.lapis.details(200, { info, data: [{ genotype: null }] });
+
+        const result = await getTableData(accessionVersion, schema, multipleReferenceGenomes, lapisClient);
+
+        const suborganism = result._unsafeUnwrap().suborganism;
+
+        expect(suborganism).equals(null);
     });
 
     test('should throw when the suborganism name is not in multiple reference genomes', async () => {

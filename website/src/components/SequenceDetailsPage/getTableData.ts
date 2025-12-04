@@ -17,7 +17,7 @@ import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     isRevocation: boolean;
 };
 
@@ -75,7 +75,7 @@ function getSuborganism(
     schema: Schema,
     referenceGenomes: ReferenceGenomes,
     accessionVersion: string,
-): Result<Suborganism, ProblemDetail> {
+): Result<Suborganism | null, ProblemDetail> {
     if (SINGLE_REFERENCE in referenceGenomes) {
         return ok(SINGLE_REFERENCE);
     }
@@ -90,18 +90,18 @@ function getSuborganism(
         });
     }
     const value = details[suborganismField];
-    const suborganismResult = z.string().safeParse(value);
+    const suborganismResult = z.string().nullable().safeParse(value);
     if (!suborganismResult.success) {
         return err({
             type: 'about:blank',
             title: 'Invalid suborganism field',
             status: 0,
-            detail: `Value '${value}' of field '${suborganismField}' is not a valid string.`,
+            detail: `Value '${value}' of field '${suborganismField}' is not a valid string or null.`,
             instance: '/seq/' + accessionVersion,
         });
     }
     const suborganism = suborganismResult.data;
-    if (!(suborganism in referenceGenomes)) {
+    if (suborganism !== null && !(suborganism in referenceGenomes)) {
         return err({
             type: 'about:blank',
             title: 'Invalid suborganism',
@@ -140,7 +140,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
-    suborganism: Suborganism,
+    suborganism: Suborganism | null,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -199,7 +199,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
-    suborganism: Suborganism,
+    suborganism: Suborganism | null,
     {
         details,
         nucleotideMutations,
@@ -255,7 +255,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
-    suborganism: Suborganism,
+    suborganism: Suborganism | null,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -280,8 +280,11 @@ export function substitutionsMap(
     return result;
 }
 
-function computeSequenceDisplayName(originalSequenceName: string | null, suborganism: Suborganism): string | null {
-    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE) {
+function computeSequenceDisplayName(
+    originalSequenceName: string | null,
+    suborganism: Suborganism | null,
+): string | null {
+    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE || suborganism === null) {
         return originalSequenceName;
     }
 
@@ -296,7 +299,7 @@ function computeSequenceDisplayName(originalSequenceName: string | null, suborga
         : originalSequenceName;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism) {
+function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism | null) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
@@ -345,7 +348,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism) {
+function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism | null) {
     return insertionData
         .map((insertion) => {
             const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, suborganism);
