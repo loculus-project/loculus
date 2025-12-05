@@ -168,7 +168,7 @@ export class EditableSequences {
             .flatMap((row) => {
                 if (row.value === null) return [];
                 const id = getFastaId(row.fastaHeader);
-                return id ? [id] : [];
+                return id === null || id === '' ? [] : [id];
             })
             .join(FASTA_IDS_SEPARATOR);
     }
