@@ -291,7 +291,6 @@ describe('SequencesForm', () => {
 
         expect(editableSequences.rows).toEqual([
             {
-                // label: 'originalFastaHeader (mapped to unalignedProcessedSequenceName)',
                 label: `${originalFastaHeader} (mapped to ${unalignedProcessedSequenceName})`,
                 fastaHeader: originalFastaHeader,
                 value: originalUnalignedNucleotideSequenceValue,
