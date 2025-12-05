@@ -13,6 +13,7 @@ import {
     createTestMetadata,
     createTestSequenceData,
     EBOLA_SUDAN_SHORT_SEQUENCE,
+    removeWhitespaces,
 } from '../../test-helpers/test-data';
 
 const TEST_ORGANISM = 'ebola-sudan';
@@ -40,8 +41,8 @@ sequenceTest(
         await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
         await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();
 
-        await page.getByTestId(/^discard_fastaHeaderL/).click();
-        await page.getByTestId(/^discard_fastaHeaderS/).click();
+        await page.getByTestId(/^discard_edited_L/).click();
+        await page.getByTestId(/^discard_edited_S/).click();
         await page.getByTestId('Add a segment_segment_file').setInputFiles({
             name: 'update_S.txt',
             mimeType: 'text/plain',
@@ -119,7 +120,3 @@ groupTest.describe('Bulk sequence revision', () => {
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
     });
 });
-
-function removeWhitespaces(string: string) {
-    return string.replace(/\s+/g, '');
-}
