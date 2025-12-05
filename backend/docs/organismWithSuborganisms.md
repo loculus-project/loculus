@@ -1,6 +1,6 @@
 # Solution Design - Organisms With Suborganisms
 
-The purpose of this feature to allow a single top level organism to contain multiple suborganisms.
+The purpose of this feature is to allow a single top level organism to contain multiple suborganisms.
 
 Motivation:
 
@@ -50,7 +50,7 @@ defaultOrganisms:
           rangeSearch: true
           preprocessing:
             inputs: {input: nextclade.coverage}
-        # The must be a "discriminator field" that tells which suborganism a sequence belongs to
+        # There must be a "discriminator field" that tells which suborganism a sequence belongs to
         - name: genotype
           displayName: Genotype
           header: "Genotype"
