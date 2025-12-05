@@ -67,9 +67,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
         getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames.length > 1;
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.empty());
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromSequenceNames(
-            getFirstLightweightSchema(referenceGenomeLightweightSchema).nucleotideSegmentNames,
-        ),
+        EditableSequences.fromSequenceNames(referenceGenomeLightweightSchema),
     );
 
     const [metadataFile, setMetadataFile] = useState<ProcessedFile | undefined>(undefined);
@@ -87,11 +85,12 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                         if (!submissionId) {
                             return { type: 'error', errorMessage: 'Please specify an ID.' };
                         }
-                        const metadataFile = editableMetadata.getMetadataTsv();
+                        const fastaIds = enableConsensusSequences ? editableSequences.getFastaIds() : undefined;
+                        const metadataFile = editableMetadata.getMetadataTsv(undefined, undefined, fastaIds);
                         if (!metadataFile) {
                             return { type: 'error', errorMessage: 'Please specify metadata.' };
                         }
-                        const sequenceFile = editableSequences.getSequenceFasta(submissionId);
+                        const sequenceFile = editableSequences.getSequenceFasta();
                         if (!sequenceFile && enableConsensusSequences) {
                             return { type: 'error', errorMessage: 'Please enter sequence data.' };
                         }
@@ -139,7 +138,6 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
                 setSequenceFile={setSequenceFile}
                 columnMapping={columnMapping}
                 setColumnMapping={setColumnMapping}
-                referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 metadataTemplateFields={metadataTemplateFields}
                 enableConsensusSequences={enableConsensusSequences}
                 isMultiSegmented={isMultiSegmented}

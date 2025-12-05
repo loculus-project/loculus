@@ -10,6 +10,7 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type InputField, type SubmissionDataTypes } from '../../types/config.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -21,7 +22,7 @@ type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
-    segmentNames: string[];
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
     accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
@@ -45,7 +46,7 @@ function getErrorDetail(error: unknown): string {
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
-    segmentNames,
+    referenceGenomeLightweightSchema,
     clientConfig,
     accessToken,
     groupedInputFields,
@@ -53,7 +54,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 }) => {
     const [editableMetadata, setEditableMetadata] = useState(EditableMetadata.fromInitialData(dataToEdit));
     const [editableSequences, setEditableSequences] = useState(
-        EditableSequences.fromInitialData(dataToEdit, segmentNames),
+        EditableSequences.fromInitialData(dataToEdit, referenceGenomeLightweightSchema),
     );
 
     const isCreatingRevision = dataToEdit.status === approvedForReleaseStatus;
@@ -76,7 +77,12 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const submitEditedDataForAccessionVersion = () => {
         if (isCreatingRevision) {
-            const metadataFile = editableMetadata.getMetadataTsv(dataToEdit.submissionId, dataToEdit.accession);
+            const fastaIds = submissionDataTypes.consensusSequences ? editableSequences.getFastaIds() : undefined;
+            const metadataFile = editableMetadata.getMetadataTsv(
+                dataToEdit.submissionId,
+                dataToEdit.accession,
+                fastaIds,
+            );
             if (metadataFile === undefined) {
                 toast.error('Please enter metadata.', { position: 'top-center', autoClose: false });
                 return;
@@ -87,7 +93,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 });
                 return;
             }
-            const sequenceFile = editableSequences.getSequenceFasta(dataToEdit.submissionId);
+            const sequenceFile = editableSequences.getSequenceFasta();
             if (!sequenceFile) {
                 toast.error('Please enter a sequence.', {
                     position: 'top-center',

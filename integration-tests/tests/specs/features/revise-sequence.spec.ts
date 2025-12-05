@@ -7,10 +7,11 @@ import { RevisionPage } from '../../pages/revision.page';
 import { NavigationPage } from '../../pages/navigation.page';
 import { SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import {
+    CCHF_S_SEGMENT_FULL_SEQUENCE,
+    createFastaContent,
+    createRevisionMetadataTsv,
     createTestMetadata,
     createTestSequenceData,
-    createRevisionMetadataTsv,
-    createFastaContent,
     EBOLA_SUDAN_SHORT_SEQUENCE,
 } from '../../test-helpers/test-data';
 
@@ -39,12 +40,12 @@ sequenceTest(
         await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
         await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();
 
-        await page.getByTestId('discard_L_segment_file').click();
-        await page.getByTestId('discard_S_segment_file').click();
-        await page.getByTestId('S_segment_file').setInputFiles({
+        await page.getByTestId(/^discard_fastaHeaderL/).click();
+        await page.getByTestId(/^discard_fastaHeaderS/).click();
+        await page.getByTestId('Add a segment_segment_file').setInputFiles({
             name: 'update_S.txt',
             mimeType: 'text/plain',
-            buffer: Buffer.from('AAAAA'),
+            buffer: Buffer.from('>S description\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
         await page.getByRole('button', { name: 'Submit' }).click();
@@ -57,10 +58,11 @@ sequenceTest(
         const tabs = await reviewPage.getAvailableSequenceTabs();
         expect(tabs).not.toContain('L (aligned)');
         expect(tabs).not.toContain('L (unaligned)');
-        expect(tabs).toContain('S (unaligned)');
 
+        expect(tabs).toContain('S (unaligned)');
         await reviewPage.switchSequenceTab('S (unaligned)');
-        expect(await reviewPage.getSequenceContent()).toBe('AAAAA');
+        const actual = removeWhitespaces(await reviewPage.getSequenceContent());
+        expect(actual).toBe(CCHF_S_SEGMENT_FULL_SEQUENCE);
 
         await reviewPage.closeSequencesDialog();
     },
@@ -98,7 +100,7 @@ groupTest.describe('Bulk sequence revision', () => {
         const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
         const revisedSequences = accessionsToRevise.map((accession, i) => ({
-            id: `${baseSubmissionId}-${i}`,
+            id: `${baseSubmissionId}-${i} description`,
             sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
         }));
         const fastaContent = createFastaContent(revisedSequences);
@@ -117,3 +119,7 @@ groupTest.describe('Bulk sequence revision', () => {
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
     });
 });
+
+function removeWhitespaces(string: string) {
+    return string.replace(/\s+/g, '');
+}

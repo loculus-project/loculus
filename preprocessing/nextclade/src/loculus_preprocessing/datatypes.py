@@ -19,6 +19,7 @@ ProcessedMetadataValue = str | int | float | bool | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
+FastaId = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
 
@@ -108,6 +109,7 @@ class UnprocessedAfterNextclade:
     nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     errors: list[ProcessingAnnotation]
     warnings: list[ProcessingAnnotation]
 
@@ -126,6 +128,7 @@ class ProcessedData:
     nucleotideInsertions: dict[SegmentName, Any]  # noqa: N815
     alignedAminoAcidSequences: dict[GeneName, Any]  # noqa: N815
     aminoAcidInsertions: dict[GeneName, Any]  # noqa: N815
+    sequenceNameToFastaId: dict[SegmentName, FastaId]  # noqa: N815
     files: dict[str, list[FileIdAndName]] | None = None
 
 
@@ -135,9 +138,12 @@ class Annotation:
 
 
 @dataclass
-class Alerts:
-    errors: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
-    warnings: dict[AccessionVersion, list[ProcessingAnnotation]] = field(default_factory=dict)
+class Alert:
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+Alerts = dict[AccessionVersion, Alert]
 
 
 @dataclass
@@ -173,6 +179,32 @@ class ProcessingResult:
     datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
+
+
+@unique
+class SegmentClassificationMethod(StrEnum):
+    ALIGN = "align"
+    MINIMIZER = "minimizer"
+
+
+@dataclass
+class SegmentAssignment:
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None] = field(
+        default_factory=dict
+    )
+    sequenceNameToFastaId: dict[SegmentName, FastaId] = field(default_factory=dict)  # noqa: N815
+    alert: Alert = field(default_factory=Alert)
+
+
+@dataclass
+class SegmentAssignmentBatch:
+    unalignedNucleotideSequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = field(default_factory=dict)
+    sequenceNameToFastaId: dict[AccessionVersion, dict[SegmentName, FastaId]] = field(
+        default_factory=dict
+    )
+    alerts: Alerts = field(default_factory=Alerts)
 
 
 @dataclass

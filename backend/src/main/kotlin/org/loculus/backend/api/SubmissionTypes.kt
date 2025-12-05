@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.utils.Accession
@@ -167,6 +168,11 @@ data class ProcessedData<SequenceType>(
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
     @Schema(
+        example = """{"segment1": "fastaHeader1", "segment2": "fastaHeader2"}""",
+        description = "The key is the segment name, the value is the fastaHeader of the original Data",
+    )
+    val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
+    @Schema(
         example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
         description = "The key is the file category name, the value is a list of files, with ID and name.",
     )
@@ -300,9 +306,9 @@ data class OriginalDataInternal<SequenceType, FilesType>(
     val metadata: Map<String, String>,
     @Schema(
         example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
-        description = "The key is the segment name, the value is the nucleotide sequence",
+        description = "The key is the fastaID, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
+    val unalignedNucleotideSequences: Map<FastaId, SequenceType?>,
     @Schema(
         example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
         description = "A map from file categories, to lists of files. The files can also have URLs.",

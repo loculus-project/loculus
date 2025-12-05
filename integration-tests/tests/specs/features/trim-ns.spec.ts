@@ -23,7 +23,7 @@ test.describe('Sequence N trimming functionality', () => {
             'NNNNNNNNNNTTCAACAAGCAAAGCCAACTGTGACGGTGTTCTATATGCTAAAAGGTAACTTGATGAACACAGAGCCAACAGTTGCTGAGCTTGTCAGCTATGGTATAAAGGAAGGCAGGTTTTATAGGCTTTCCGACACCGGAATCAATGCAACCACATANNNNNN';
 
         await submissionPage.fillSequenceData({
-            L: lSegmentWithNs,
+            fastaHeaderL: lSegmentWithNs,
         });
 
         await submissionPage.acceptTerms();

@@ -73,7 +73,7 @@ setup('Initialize some ebola sequences as base data', async ({ page }) => {
                 groupId: groupId.toString(),
             },
             {
-                main: mainSequence,
+                fastaHeader: mainSequence,
             },
         );
 

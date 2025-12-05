@@ -75,7 +75,7 @@ if SEGMENTED:
 
 APPLY_MINIMIZER = (
     SEGMENTED and segment_detection_method == SegmentDetectionMethod.MINIMIZER
-) or (config.get("minimizer_index") and config.get("minimizer_parser"))
+) or (config.get("minimizer_url") and config.get("minimizer_parser"))
 
 print(segment_detection_method)
 
@@ -286,9 +286,9 @@ if APPLY_MINIMIZER:
             results="results/minimizer.json",
         params:
             minimizer=(
-                config.get("segment_identification").get("minimizer_index")
+                config.get("segment_identification").get("minimizer_url")
                 if config.get("segment_identification")
-                else config.get("minimizer_index")
+                else config.get("minimizer_url")
             ),
         shell:
             """

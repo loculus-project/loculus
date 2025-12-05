@@ -1,19 +1,27 @@
 # Expects that only a single segment is present per sequence entry.
 batch_size: 100
 alignment_requirement: ALL
-genes:
-- NPEbolaSudan
-- VP35EbolaSudan
-- VP24EbolaZaire
-- LEbolaZaire
 log_level: DEBUG
-nextclade_dataset_name: ebola-dataset
-nextclade_dataset_server: fake_url
-nucleotideSequences:
-- ebola-sudan
-- ebola-zaire
+minimizer_url: TEST
+nextclade_dataset_server: TEST
+nextclade_sequence_and_datasets:
+- name: ebola-sudan
+  nextclade_dataset_name: ebola-dataset/ebola-sudan
+  accepted_sort_matches: ebola-sudan
+  genes: [NPEbolaSudan, VP35EbolaSudan]
+- name: ebola-zaire
+  nextclade_dataset_name: ebola-dataset/ebola-zaire
+  accepted_sort_matches: ebola-zaire
+  genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:
+  subtype:
+    args:
+      type: str
+    function: identity
+    inputs:
+      input: ASSIGNED_SEGMENT
+    required: true
   totalSnps:
     args:
       useFirstSegment: true

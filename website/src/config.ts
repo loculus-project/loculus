@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
+import { ACCESSION_FIELD, FASTA_IDS_FIELD, SUBMISSION_ID_INPUT_FIELD } from './settings.ts';
 import {
     type InputField,
     type InstanceConfig,
@@ -160,8 +160,10 @@ export function getMetadataTemplateFields(
 ): Map<string, string | undefined> {
     const schema = getConfig(organism).schema;
     const baseFields: string[] = schema.metadataTemplate ?? schema.inputFields.map((field) => field.name);
-    const extraFields =
-        action === 'submit' ? [SUBMISSION_ID_INPUT_FIELD] : [ACCESSION_FIELD, SUBMISSION_ID_INPUT_FIELD];
+    const submissionIdInputFields = getSubmissionIdInputFields(isMultiSegmentedOrganism(organism)).map(
+        (field) => field.name,
+    );
+    const extraFields = action === 'submit' ? submissionIdInputFields : [ACCESSION_FIELD, ...submissionIdInputFields];
     const allFields = [...extraFields, ...baseFields];
     const fieldsToDisplaynames = new Map<string, string | undefined>(
         allFields.map((field) => [field, schema.metadata.find((metadata) => metadata.name === field)?.displayName]),
@@ -182,17 +184,55 @@ function getAccessionInputField(): InputField {
     };
 }
 
-function getSubmissionIdInputField(): InputField {
-    return {
-        name: SUBMISSION_ID_INPUT_FIELD,
-        displayName: 'ID',
-        definition: 'FASTA ID',
-        guidance:
-            'Your sequence identifier; should match the FASTA file header - this is used to link the metadata to the FASTA sequence',
-        example: 'GJP123',
-        noEdit: true,
-        required: true,
-    };
+export function getSubmissionIdInputFields(isMultiSegmented: boolean): InputField[] {
+    if (!isMultiSegmented) {
+        return [
+            {
+                name: SUBMISSION_ID_INPUT_FIELD,
+                displayName: 'ID',
+                definition: 'FASTA ID',
+                guidance:
+                    "Your sequence identifier; should match the sequence's id in the FASTA file - this is used to link the metadata to the FASTA sequence.",
+                example: 'GJP123',
+                noEdit: true,
+                required: true,
+            },
+        ];
+    }
+    return [
+        {
+            name: SUBMISSION_ID_INPUT_FIELD,
+            displayName: 'ID',
+            definition: 'METADATA ID',
+            guidance:
+                'Your sample identifier. If FASTA IDS column is provided, this sample ID will be used to associate the metadata with the sequence.',
+            example: 'GJP123',
+            noEdit: true,
+            required: true,
+        },
+        {
+            name: FASTA_IDS_FIELD,
+            displayName: 'FASTA IDS',
+            definition: 'FASTA IDS',
+            guidance: 'Space-separated list of FASTA IDS of each sequence to be associated with this metadata entry.',
+            example: 'GJP123 GJP124',
+            noEdit: true,
+            desired: true,
+        },
+    ];
+}
+
+export function isMultiSegmentedOrganism(organism: string): boolean {
+    const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
+    const numberOfRows = Math.max(
+        ...Object.values(referenceGenomeLightweightSchema).map(
+            (suborganismSchema) => suborganismSchema.nucleotideSegmentNames.length,
+        ),
+    );
+    if (numberOfRows > 1) {
+        return true;
+    }
+    return false;
 }
 
 export function getGroupedInputFields(
@@ -201,20 +241,23 @@ export function getGroupedInputFields(
     excludeDuplicates: boolean = false,
 ): Map<string, InputField[]> {
     const inputFields = getConfig(organism).schema.inputFields;
+    const isMultiSegmented = isMultiSegmentedOrganism(organism);
     const metadata = getConfig(organism).schema.metadata;
 
     const groups = new Map<string, InputField[]>();
 
-    const requiredFields = inputFields.filter((meta) => meta.required);
-    const desiredFields = inputFields.filter((meta) => meta.desired);
-
     const coreFields =
-        action === 'submit' ? [getSubmissionIdInputField()] : [getSubmissionIdInputField(), getAccessionInputField()];
+        action === 'submit'
+            ? getSubmissionIdInputFields(isMultiSegmented)
+            : getSubmissionIdInputFields(isMultiSegmented).concat(getAccessionInputField());
 
-    groups.set('Required fields', [...coreFields, ...requiredFields]);
+    const allFields = [...coreFields, ...inputFields];
+    const requiredFields = allFields.filter((meta) => meta.required);
+    const desiredFields = allFields.filter((meta) => meta.desired);
+
+    groups.set('Required fields', requiredFields);
     groups.set('Desired fields', desiredFields);
-    if (!excludeDuplicates) groups.set('Submission details', [getSubmissionIdInputField()]);
-
+    if (!excludeDuplicates) groups.set('Submission details', getSubmissionIdInputFields(isMultiSegmented));
     const fieldAlreadyAdded = (fieldName: string) =>
         Array.from(groups.values())
             .flatMap((fields) => fields.map((f) => f.name))

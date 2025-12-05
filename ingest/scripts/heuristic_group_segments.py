@@ -30,6 +30,8 @@ import click
 import orjsonl
 import yaml
 
+FASTA_IDS_SEPARATOR = " "
+
 
 def sort_authors(authors: str) -> str:
     """Sort authors alphabetically"""
@@ -211,6 +213,11 @@ def main(
                 if segment in group
             ]
         )
+        segments_list_str = FASTA_IDS_SEPARATOR.join([
+                f"{joint_key}_{segment}"
+                for segment in config.nucleotide_sequences
+                if segment in group
+            ])
         for segment, accession in group.items():
             fasta_id_map[accession] = f"{joint_key}_{segment}"
 
@@ -233,14 +240,16 @@ def main(
                 )
 
         row["id"] = joint_key
+        row["fastaIds"] = segments_list_str
 
         # Hash of all metadata fields should be the same if
         # 1. field is not in keys_to_keep and
         # 2. field is in keys_to_keep but is "" or None
         filtered_record = {k: str(v) for k, v in row.items() if v is not None and str(v)}
 
-        # rename "id" to "submissionId" for back-compatibility with old hashes
+        # rename "id" to "submissionId" and ignore fastaIds for back-compatibility with old hashes
         filtered_record["submissionId"] = filtered_record.pop("id")
+        filtered_record.pop("fastaIds", None)
 
         row["hash"] = hashlib.md5(
             json.dumps(filtered_record, sort_keys=True).encode(), usedforsecurity=False
