@@ -5,6 +5,6 @@
 --   ORDER BY accession LIMIT $2
 --
 -- The partial index enables Index Only Scan and eliminates runtime filtering
-CREATE INDEX CONCURRENTLY IF NOT EXISTS sequence_entries_organism_not_revocation_idx
+CREATE INDEX IF NOT EXISTS sequence_entries_organism_not_revocation_idx
 ON sequence_entries (organism, accession, version)
 WHERE NOT is_revocation;
