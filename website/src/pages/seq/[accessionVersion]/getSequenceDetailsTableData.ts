@@ -21,7 +21,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     isRevocation: boolean;
 };
 

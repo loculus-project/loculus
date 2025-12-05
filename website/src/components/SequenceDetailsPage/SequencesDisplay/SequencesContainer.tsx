@@ -22,7 +22,7 @@ import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
@@ -37,13 +37,18 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSuborganismSegmentAndGeneInfo(
-        referenceGenomeLightweightSchema,
-        suborganism,
-    );
+    const segmentAndGeneInfo = getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, suborganism);
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
+    const [sequenceType, setSequenceType] = useState<SequenceType>(
+        segmentAndGeneInfo !== null
+            ? unalignedSequenceSegment(segmentAndGeneInfo.nucleotideSegmentInfos[0])
+            : { type: 'nucleotide', aligned: false, name: { lapisName: '', label: '' } },
+    );
+
+    if (segmentAndGeneInfo === null) {
+        return null;
+    }
 
     if (!loadSequences) {
         return (
@@ -58,11 +63,11 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
-            segments={nucleotideSegmentInfos}
+            segments={segmentAndGeneInfo.nucleotideSegmentInfos}
             sequenceType={sequenceType}
             setType={setSequenceType}
-            genes={geneInfos}
-            isMultiSegmented={isMultiSegmented}
+            genes={segmentAndGeneInfo.geneInfos}
+            isMultiSegmented={segmentAndGeneInfo.isMultiSegmented}
         />
     );
 };
