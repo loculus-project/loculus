@@ -45,7 +45,7 @@ sequenceTest(
         await page.getByTestId('Add a segment_segment_file').setInputFiles({
             name: 'update_S.txt',
             mimeType: 'text/plain',
-            buffer: Buffer.from('>S\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
+            buffer: Buffer.from('>S description\n' + CCHF_S_SEGMENT_FULL_SEQUENCE),
         });
 
         await page.getByRole('button', { name: 'Submit' }).click();
@@ -100,7 +100,7 @@ groupTest.describe('Bulk sequence revision', () => {
         const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
         const revisedSequences = accessionsToRevise.map((accession, i) => ({
-            id: `${baseSubmissionId}-${i}`,
+            id: `${baseSubmissionId}-${i} description`,
             sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
         }));
         const fastaContent = createFastaContent(revisedSequences);
