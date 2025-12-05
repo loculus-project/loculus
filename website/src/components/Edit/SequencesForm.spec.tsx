@@ -29,7 +29,6 @@ function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenome
     return result;
 }
 
-/* eslint-disable @typescript-eslint/naming-convention -- this test has keys that expectedly contain spaces */
 describe('SequencesForm', () => {
     beforeEach(() => {
         vi.spyOn(toast, 'error');
@@ -71,9 +70,9 @@ describe('SequencesForm', () => {
             ]);
         }
 
-        expect(() => editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey')).toThrowError(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
-        );
+        expect(() =>
+            editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey'),
+        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
         editableSequences = editableSequences.update(firstKey, null, null, null);
         expect(editableSequences.rows).toEqual([
             { label: 'Add a segment', value: null, fastaHeader: null, initialValue: null, key: expect.any(String) },
@@ -159,7 +158,13 @@ describe('SequencesForm', () => {
                     key: firstKey,
                     fastaHeader: FASTAHEADER_WITH_DESCRIPTION,
                 },
-                { label: 'Segment 2', value: 'TT', initialValue: null, key: secondKey, fastaHeader: FASTAHEADER_SEGMENT2 },
+                {
+                    label: 'Segment 2',
+                    value: 'TT',
+                    initialValue: null,
+                    key: secondKey,
+                    fastaHeader: FASTAHEADER_SEGMENT2,
+                },
             ]);
         }
 
