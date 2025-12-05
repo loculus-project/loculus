@@ -235,7 +235,7 @@ describe('SequencesForm', () => {
         expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: 'ATCG' });
 
         const rows = editableSequences.rows;
-        expect(rows).deep.equals([{ label: "subId", value: 'ATCG', initialValue: null, fastaHeader: key, key }]);
+        expect(rows).deep.equals([{ label: 'subId', value: 'ATCG', initialValue: null, fastaHeader: key, key }]);
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 1 sequence file(s) only.',
