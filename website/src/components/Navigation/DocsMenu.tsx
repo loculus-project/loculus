@@ -1,26 +1,24 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
-import type { MDXInstance } from 'astro';
 import { type FC } from 'react';
 
+import type { MdxPage } from '../../types/mdxTypes';
 import XIcon from '~icons/material-symbols/close';
 import MenuIcon from '~icons/material-symbols/menu';
 
-type Page = MDXInstance<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
-
 interface DocsMenuProps {
-    docsPages: Page[];
+    docsPages: MdxPage[];
     currentPageUrl: string;
     title: string;
 }
 
 interface GroupedPages {
-    groupedPages: Record<string, Page[]>;
-    indexPages: Record<string, Page>;
+    groupedPages: Record<string, MdxPage[]>;
+    indexPages: Record<string, MdxPage>;
 }
 
-const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
-    const groupedPages: Record<string, Page[]> = {};
-    const indexPages: Record<string, Page> = {};
+const groupPagesByDirectory = (pages: MdxPage[]): GroupedPages => {
+    const groupedPages: Record<string, MdxPage[]> = {};
+    const indexPages: Record<string, MdxPage> = {};
 
     pages.forEach((page) => {
         const fileParts = page.file.split('/');
@@ -54,7 +52,7 @@ const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
 const toTitleCase = (str: string): string => str.replace(/\b\w/g, (char) => char.toUpperCase());
 
 interface MenuItemProps {
-    page: Page;
+    page: MdxPage;
     currentPageUrl: string;
 }
 
@@ -73,8 +71,8 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
 
 interface MenuSectionProps {
     dir: string;
-    pages: Page[];
-    indexPage?: Page;
+    pages: MdxPage[];
+    indexPage?: MdxPage;
     currentPageUrl: string;
 }
 
