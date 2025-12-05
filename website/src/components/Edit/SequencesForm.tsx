@@ -23,7 +23,8 @@ function generateAndDownloadFastaFile(fastaHeader: string, sequenceData: string)
 }
 
 function getFastaId(fastaHeader: string | null): string | null {
-    return fastaHeader?.match(/^\S+/)?.[0] ?? null;
+  if (!fastaHeader) return null;
+  return fastaHeader.split(/\s+/)[0] || null;
 }
 
 type EditableSequenceFile = {

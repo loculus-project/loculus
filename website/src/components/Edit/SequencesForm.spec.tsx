@@ -192,7 +192,7 @@ describe('SequencesForm', () => {
         expect(editableSequences.getFastaIds()).toEqual('subId_Segment');
     });
 
-    test('GIVEN a single-segmented organism THEN only allows 1 input and fasta header does not contain the segment name', async () => {
+    test('GIVEN a single-segmented organism THEN only allows 1 input', async () => {
         let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
 
         const initialRows = editableSequences.rows;
@@ -211,6 +211,31 @@ describe('SequencesForm', () => {
 
         const rows = editableSequences.rows;
         expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, fastaHeader: 'subId', key }]);
+
+        expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
+            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+        );
+    });
+
+    test('GIVEN an edit with an empty fasta header THEN use key as fasta header', async () => {
+        let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
+
+        const initialRows = editableSequences.rows;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+        ]);
+        const key = initialRows[0].key;
+
+        editableSequences = editableSequences.update(key, 'ATCG', 'subId', null);
+        const fasta = editableSequences.getSequenceFasta();
+        expect(fasta).not.toBeUndefined();
+        const fastaText = await fasta!.text();
+        expect.soft(fastaText).toBe(`>${key}\nATCG`);
+
+        expect(editableSequences.getSequenceRecord()).deep.equals({ [key]: 'ATCG' });
+
+        const rows = editableSequences.rows;
+        expect(rows).deep.equals([{ label: "subId", value: 'ATCG', initialValue: null, fastaHeader: key, key }]);
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
             'Maximum limit reached — you can add up to 1 sequence file(s) only.',
