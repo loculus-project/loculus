@@ -36,9 +36,4 @@ export type SuborganismReferenceGenomesLightweightSchema = {
 
 export type ReferenceGenomesLightweightSchema = Record<Suborganism, SuborganismReferenceGenomesLightweightSchema>;
 
-// TODO(#3984) this should probably be removed when we're done with the feature
-export function getFirstLightweightSchema(referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema) {
-    return Object.values(referenceGenomeLightweightSchema)[0];
-}
-
 export const SINGLE_REFERENCE = 'singleReference';
