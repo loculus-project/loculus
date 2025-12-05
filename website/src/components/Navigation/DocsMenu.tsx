@@ -1,26 +1,24 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
-import type { MDXInstance } from 'astro';
 import { type FC } from 'react';
 
+import type { MdxPage } from '../../types/mdxTypes';
 import XIcon from '~icons/material-symbols/close';
 import MenuIcon from '~icons/material-symbols/menu';
 
-type Page = MDXInstance<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- TODO(#3451) use a proper type
-
 interface DocsMenuProps {
-    docsPages: Page[];
+    docsPages: MdxPage[];
     currentPageUrl: string;
     title: string;
 }
 
 interface GroupedPages {
-    groupedPages: Record<string, Page[]>;
-    indexPages: Record<string, Page>;
+    groupedPages: Record<string, MdxPage[]>;
+    indexPages: Record<string, MdxPage>;
 }
 
-const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
-    const groupedPages: Record<string, Page[]> = {};
-    const indexPages: Record<string, Page> = {};
+const groupPagesByDirectory = (pages: MdxPage[]): GroupedPages => {
+    const groupedPages: Record<string, MdxPage[]> = {};
+    const indexPages: Record<string, MdxPage> = {};
 
     pages.forEach((page) => {
         const fileParts = page.file.split('/');
@@ -40,11 +38,9 @@ const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
     // Sort pages within each directory
     Object.values(groupedPages).forEach((pages) => {
         pages.sort((a, b) => {
-            const orderA = (a.frontmatter.order ?? Infinity) as number;
-            const orderB = (b.frontmatter.order ?? Infinity) as number;
-            return orderA !== orderB
-                ? orderA - orderB
-                : (a.frontmatter.title as string).localeCompare(b.frontmatter.title as string);
+            const orderA = a.frontmatter.order ?? Infinity;
+            const orderB = b.frontmatter.order ?? Infinity;
+            return orderA !== orderB ? orderA - orderB : a.frontmatter.title.localeCompare(b.frontmatter.title);
         });
     });
 
@@ -54,7 +50,7 @@ const groupPagesByDirectory = (pages: Page[]): GroupedPages => {
 const toTitleCase = (str: string): string => str.replace(/\b\w/g, (char) => char.toUpperCase());
 
 interface MenuItemProps {
-    page: Page;
+    page: MdxPage;
     currentPageUrl: string;
 }
 
@@ -66,15 +62,15 @@ const MenuItem: FC<MenuItemProps> = ({ page, currentPageUrl }) => (
                 page.url === currentPageUrl ? 'font-bold' : ''
             }`}
         >
-            {(page.frontmatter.menuTitle ?? page.frontmatter.title) as string}
+            {page.frontmatter.menuTitle ?? page.frontmatter.title}
         </a>
     </li>
 );
 
 interface MenuSectionProps {
     dir: string;
-    pages: Page[];
-    indexPage?: Page;
+    pages: MdxPage[];
+    indexPage?: MdxPage;
     currentPageUrl: string;
 }
 
@@ -88,7 +84,7 @@ const MenuSection: FC<MenuSectionProps> = ({ dir, pages, indexPage, currentPageU
                         indexPage.url === currentPageUrl ? 'font-bold' : ''
                     }`}
                 >
-                    {indexPage.frontmatter.title as string}
+                    {indexPage.frontmatter.title}
                 </a>
             ) : (
                 toTitleCase(dir.replaceAll('-', ' '))
@@ -107,8 +103,8 @@ const DocsMenu: FC<DocsMenuProps> = ({ docsPages, currentPageUrl, title }) => {
 
     // Sort directories based on index page order
     const sortedDirectories = Object.keys(groupedPages).sort((a, b) => {
-        const orderA = ((a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity) as number;
-        const orderB = ((b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity) as number;
+        const orderA = (a in indexPages ? indexPages[a].frontmatter.order : undefined) ?? Infinity;
+        const orderB = (b in indexPages ? indexPages[b].frontmatter.order : undefined) ?? Infinity;
         return orderA - orderB;
     });
 
