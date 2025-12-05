@@ -272,49 +272,40 @@ The backend just filters out segments that are not in the config and adds those 
 
 ### Sequence entry details page
 
-// TODO clean this up
+The mutation badges should not show the suborganism name.
+The mutations that the website gets from LAPIS will contain the suborganism name,
+the website should strip it before displaying it.
 
-Don't show sequences that are not there anyway.
-Only show the "segments" of the relevant suborganism.
-Only show the relevant genes.
-Strip the suborganism name for the sequence names.
+Also, the website should only show the relevant mutation references.
 
-![img.png](sequenceDisplay.png)
-
-Only show the reference of the relevant suborganism in the mutations header:
-
-![img_1.png](mutationReferences.png)
-
-Mutations should not show the suborganism name:
-
+This is what it should not look like:
 ![img_2.png](mutations.png)
 
-TODO: Is there more?
+This is the expected state:
+![img_3.png](strippedMutations.png)
+
+The sequence display should only display the relevant sequences of the relevant suborganism.
+The segment and gene names should be stripped of the suborganism name.
 
 ### Search Page
 
 Mutation and lineage search should only show up once the search has been narrowed down to a specific suborganism.
+Those filters should be reset when the suborganism filter changes.
 
-Mutation filter: Also strip the suborganism name for the user?
-User inputs `A123T`, we send `suborganism1:A123T` to LAPIS.
-(Similar for amino acid mutations and insertions).
+The mutation filter should only accept mutation codes that don't contain the suborganism name.
 
-Do we still show the segments in the download modal?
-![img.png](downloadModal.png)
+The download modal should only show the sequences relevant for the selected suborganism.
+If there is no suborganism selected yet, the user should only be able to download the unaligned sequences.
+Downloaded FASTA files should not contain the suborganism name in the FASTA headers.
 
 ### Review Page
 
-Do we want to leave all those sequences here?
+The processed sequences display should only show sequences that have a value assigned.
 ![img.png](processedSequences.png)
 
-Do we need to change this on the edit page?
-Those are unprocessed sequences.
-When there backend doesn't know the segments anymore, what do we display here?
-![img.png](editSequences.png)
+The edit page should limit sequence file uploads to the maximum number of segments among all suborganisms.
 
 ## LAPIS / SILO
-
-No changes necessary
 
 The reference genome will be a product "suborganism x segment":
 
@@ -351,6 +342,8 @@ for multi-segment:
   ]
 }
 ```
+
+Other than that, no changes are needed in LAPIS or SILO.
 
 Users of the LAPIS API will see the suborganism names in the sequence names and mutation names,
 e.g. a mutation `suborganism1:A123T` or `suborganism1_gene1:M45I`.
