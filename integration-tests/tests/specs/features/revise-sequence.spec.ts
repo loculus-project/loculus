@@ -90,16 +90,16 @@ groupTest.describe('Bulk sequence revision', () => {
 
         const searchPage = new SearchPage(page);
         await searchPage.searchByGroupId(TEST_ORGANISM, groupId);
-        const accessions = await searchPage.waitForSequencesInSearch(
+        const accessionVersions = await searchPage.waitForSequencesInSearch(
             SEQUENCES_TO_REVISE,
             SEARCH_INDEXING_TIMEOUT,
         );
 
-        const accessionsToRevise = accessions.slice(0, SEQUENCES_TO_REVISE);
+        const accessionsToRevise = accessionVersions.slice(0, SEQUENCES_TO_REVISE);
         const baseSubmissionId = `bulk-revise-updated-${Date.now()}`;
         const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
-        const revisedSequences = accessionsToRevise.map((accession, i) => ({
+        const revisedSequences = accessionsToRevise.map((_, i) => ({
             id: `${baseSubmissionId}-${i} description`,
             sequence: EBOLA_SUDAN_SHORT_SEQUENCE + 'GGGGGG',
         }));

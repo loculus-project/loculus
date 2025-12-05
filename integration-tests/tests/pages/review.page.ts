@@ -2,6 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { NavigationPage } from './navigation.page';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
 import { SearchPage } from './search.page';
+import { EditPage } from './edit.page';
 
 type ReviewPageOverview = {
     processed: number;
@@ -225,5 +226,14 @@ export class ReviewPage {
         }
 
         return tabNames;
+    }
+
+    async editFirstSequence() {
+        await this.page
+            .getByTestId(/^LOC_\w+\.1\.edit$/)
+            .first()
+            .click();
+        await expect(this.page.getByText(/^Edit LOC_\w+\.1$/)).toBeVisible();
+        return new EditPage(this.page);
     }
 }

@@ -3,6 +3,8 @@
  * This file centralizes test data to reduce duplication and improve maintainability.
  */
 
+import { AccessionVersion } from '../pages/search.page';
+
 /**
  * Short Ebola Sudan test sequence for basic testing
  */
@@ -77,13 +79,16 @@ export function createTestSequenceData(sequence: string = EBOLA_SUDAN_SHORT_SEQU
 /**
  * Helper function to create revision metadata TSV with accession column
  * Used for bulk revision operations
- * @param accessions - Array of accessions to revise
+ * @param accessionVersions - Array of accessions to revise
  * @param baseSubmissionId - Base ID for submission IDs (will be appended with index)
  */
-export function createRevisionMetadataTsv(accessions: string[], baseSubmissionId?: string): string {
+export function createRevisionMetadataTsv(
+    accessionVersions: AccessionVersion[],
+    baseSubmissionId?: string,
+): string {
     const baseId = baseSubmissionId || `revision-${Date.now()}`;
     const header = 'accession\tsubmissionId\tcollectionCountry\tcollectionDate\tauthorAffiliations';
-    const rows = accessions.map((accession, index) => {
+    const rows = accessionVersions.map(({ accession }, index) => {
         return `${accession}\t${baseId}-${index}\tFrance\t2021-02-15\tRevision Institute`;
     });
     return [header, ...rows].join('\n');
