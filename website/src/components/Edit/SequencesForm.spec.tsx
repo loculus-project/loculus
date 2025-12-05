@@ -52,10 +52,10 @@ describe('SequencesForm', () => {
             makeSubOrganismReferenceSchema(['suborg1', 'suborg2']),
         );
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
-        ]);
         const firstKey = initialRows[0].key;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: firstKey },
+        ]);
         {
             editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
@@ -69,18 +69,16 @@ describe('SequencesForm', () => {
                 { label: 'Segment 1', value: 'ATCG', initialValue: null, key: firstKey, fastaHeader: FASTAHEADER },
             ]);
         }
-
-        expect(() =>
-            editableSequences.update('another key', 'GG', 'another key', 'FASTAHEADER_anotherkey'),
-        ).toThrowError('Maximum limit reached — you can add up to 1 sequence file(s) only.');
+        expect(() => editableSequences.update('another key', 'GG', 'another key', 'subId_anotherkey')).toThrowError(
+            "Attempting to update sequence with key 'another key' that does not exist.",
+        );
         editableSequences = editableSequences.update(firstKey, null, null, null);
+        const secondKey = String(Number(firstKey) + 1);
         expect(editableSequences.rows).toEqual([
-            { label: 'Add a segment', value: null, fastaHeader: null, initialValue: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, fastaHeader: null, initialValue: null, key: secondKey },
         ]);
-        const rowsAfterDeletion = editableSequences.rows;
-        const newFirstKey = rowsAfterDeletion[0].key;
         {
-            editableSequences = editableSequences.update(newFirstKey, 'ATCG', 'Segment 1', FASTAHEADER);
+            editableSequences = editableSequences.update(secondKey, 'ATCG', 'Segment 1', FASTAHEADER);
             const fasta = editableSequences.getSequenceFasta();
             expect(fasta).not.toBeUndefined();
             const fastaText = await fasta!.text();
@@ -93,7 +91,7 @@ describe('SequencesForm', () => {
                     label: 'Segment 1',
                     value: 'ATCG',
                     initialValue: null,
-                    key: newFirstKey,
+                    key: secondKey,
                     fastaHeader: FASTAHEADER,
                 },
             ]);
@@ -110,12 +108,12 @@ describe('SequencesForm', () => {
         );
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
-        ]);
         const firstKey = initialRows[0].key;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: firstKey },
+        ]);
 
-        let secondKey;
+        const secondKey = String(Number(firstKey) + 1);
         {
             editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER_WITH_DESCRIPTION);
             const fasta = editableSequences.getSequenceFasta();
@@ -133,9 +131,8 @@ describe('SequencesForm', () => {
                     fastaHeader: FASTAHEADER_WITH_DESCRIPTION,
                     key: firstKey,
                 },
-                { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+                { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: secondKey },
             ]);
-            secondKey = rows[1].key;
         }
 
         {
@@ -169,7 +166,7 @@ describe('SequencesForm', () => {
         }
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
-            'Maximum limit reached — you can add up to 2 sequence file(s) only.',
+            "Attempting to update sequence with key 'another key' that does not exist.",
         );
         expect(editableSequences.getFastaIds()).toEqual(`${FASTAHEADER_SEGMENT1} ${FASTAHEADER_SEGMENT2}`);
     });
@@ -181,14 +178,13 @@ describe('SequencesForm', () => {
         );
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
-        ]);
         const firstKey = initialRows[0].key;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: firstKey },
+        ]);
 
         editableSequences = editableSequences.update(firstKey, 'ATCG', 'Segment 1', FASTAHEADER);
-        const rowsAfterFirstUpdate = editableSequences.rows;
-        const secondKey = rowsAfterFirstUpdate[1].key;
+        const secondKey = String(Number(firstKey) + 1);
 
         editableSequences = editableSequences.update(secondKey, 'TT', 'Segment 2', 'FASTAHEADER description');
 
@@ -208,10 +204,10 @@ describe('SequencesForm', () => {
         let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
-        ]);
         const key = initialRows[0].key;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, key: key, fastaHeader: null },
+        ]);
 
         editableSequences = editableSequences.update(key, 'ATCG', key, FASTAHEADER);
         const fasta = editableSequences.getSequenceFasta();
@@ -225,7 +221,7 @@ describe('SequencesForm', () => {
         expect(rows).deep.equals([{ label: key, value: 'ATCG', initialValue: null, fastaHeader: FASTAHEADER, key }]);
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+            `Attempting to update sequence with key 'another key' that does not exist.`,
         );
     });
 
@@ -233,10 +229,10 @@ describe('SequencesForm', () => {
         let editableSequences = EditableSequences.fromSequenceNames(makeReferenceGenomeLightweightSchema(['foo']));
 
         const initialRows = editableSequences.rows;
-        expect(initialRows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
-        ]);
         const key = initialRows[0].key;
+        expect(initialRows).toEqual([
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: key },
+        ]);
 
         editableSequences = editableSequences.update(key, 'ATCG', 'subId', null);
         const fasta = editableSequences.getSequenceFasta();
@@ -250,7 +246,7 @@ describe('SequencesForm', () => {
         expect(rows).deep.equals([{ label: 'subId', value: 'ATCG', initialValue: null, fastaHeader: key, key }]);
 
         expect(() => editableSequences.update('another key', 'GG', 'another key', 'anything')).toThrowError(
-            'Maximum limit reached — you can add up to 1 sequence file(s) only.',
+            `Attempting to update sequence with key 'another key' that does not exist.`,
         );
     });
 
@@ -262,14 +258,16 @@ describe('SequencesForm', () => {
         const key = editableSequences.rows[0].key;
 
         editableSequences = editableSequences.update(key, 'ATCG', key, key);
+        const secondKey = String(Number(key) + 1);
         expect(editableSequences.rows).toEqual([
             { label: key, value: 'ATCG', initialValue: null, key, fastaHeader: key },
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: secondKey },
         ]);
 
         editableSequences = editableSequences.update(key, null, null, null);
+        const thirdKey = String(Number(secondKey) + 1);
         expect(editableSequences.rows).toEqual([
-            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: expect.any(String) },
+            { label: 'Add a segment', value: null, initialValue: null, fastaHeader: null, key: thirdKey },
         ]);
         expect(editableSequences.getFastaIds()).toEqual('');
     });
