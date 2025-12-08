@@ -43,7 +43,9 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     mock_download, responses_list = make_mock_download_func(responses)
 
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)
@@ -124,7 +126,9 @@ def test_runner_skips_on_hash_match_updates_etag(
     mock_download, responses_list = make_mock_download_func(responses)
 
     monkeypatch.setattr(
-        lineage, "_download_lineage_file", lambda url, path: path.write_text("lineage: data")  # noqa: ARG005
+        lineage,
+        "_download_lineage_file",
+        lambda url, path: path.write_text("lineage: data"),  # noqa: ARG005
     )
 
     runner = ImporterRunner(config, paths)

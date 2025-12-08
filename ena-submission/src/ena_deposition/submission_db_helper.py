@@ -127,7 +127,7 @@ def validate_column_name(table_name: str, column_name: str):
 @dataclass
 class SubmissionTableEntry:
     accession: str
-    version: str
+    version: int
     organism: str
     group_id: int
     errors: str | None = None
