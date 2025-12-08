@@ -29,8 +29,8 @@ test.describe('Accession search functionality', () => {
     test('should search by accession, and click the result', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        const accessionVersion = await searchPage.waitForLoculusId();
-        expect(accessionVersion).toBeTruthy();
+        const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+        const { accessionVersion } = accessionVersions[0];
 
         await searchPage.enterAccessions(accessionVersion);
         await searchPage.expectSequenceCount(1);
@@ -99,8 +99,8 @@ test.describe('Accession search functionality', () => {
     test('should clear accession search when reset button is clicked', async ({ page }) => {
         await searchPage.ebolaSudan();
 
-        const accessionVersion = await searchPage.waitForLoculusId();
-        expect(accessionVersion).toBeTruthy();
+        const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+        const { accessionVersion } = accessionVersions[0];
 
         await searchPage.enterAccessions(accessionVersion);
         await searchPage.expectSequenceCount(1);

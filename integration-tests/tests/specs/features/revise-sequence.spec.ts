@@ -33,8 +33,7 @@ sequenceTest(
         await navigation.clickSubmitSequences();
 
         await page.getByRole('link', { name: "View View your group's" }).click();
-        const loculusId = await searchPage.waitForLoculusId();
-        expect(loculusId).toBeTruthy();
+        await searchPage.waitForSequencesInSearch(1);
 
         await searchPage.clickOnSequence(0);
 

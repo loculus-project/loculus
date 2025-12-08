@@ -7,11 +7,11 @@ test('Download metadata TSV for a single sequence', async ({ page }) => {
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
 
-    const loculusId = await searchPage.waitForLoculusId();
-    expect(loculusId).toBeTruthy();
+    const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+    const { accessionVersion } = accessionVersions[0];
 
-    await page.goto(`/seq/${loculusId}`);
-    await expect(page.getByRole('heading', { name: loculusId })).toBeVisible();
+    await page.goto(`/seq/${accessionVersion}`);
+    await expect(page.getByRole('heading', { name: accessionVersion })).toBeVisible();
 
     await page.getByText('Download', { exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
