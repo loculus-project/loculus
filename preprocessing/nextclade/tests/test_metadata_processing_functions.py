@@ -619,6 +619,7 @@ not_accepted_authors = [
     "Anna Maria Smith",
     "Smith9, Anna;",
     "Anna Smith, Cameron Tucker, and Jose Perez",
+    "Count4th, EwanMcGregor, Count4th",
 ]
 
 

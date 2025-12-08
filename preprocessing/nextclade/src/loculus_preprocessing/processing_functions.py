@@ -68,7 +68,10 @@ def valid_name() -> str:
         r"\u0180-\u024F"  # Latin Extended-B
     )
 
-    ordinal = r"\d+(?:st|nd|rd|th)"
+    # Ordinal must be a separate "word":
+    # - preceded only by start-of-string or whitespace
+    # - ends at a word boundary
+    ordinal = r"(?<!\S)\d+(?:st|nd|rd|th)\b"
     alpha_or_ord = rf"\s*(?:[{chars}']|{ordinal})"  # First character: letter or ordinal
     name_chars = rf"(?:[{chars}\s.\-']|{ordinal})*"
 
