@@ -605,6 +605,8 @@ accepted_authors = {
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
+    "'t Hooft, Gerard": "'t Hooft, Gerard",
+    "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
 not_accepted_authors = [
     ";",
