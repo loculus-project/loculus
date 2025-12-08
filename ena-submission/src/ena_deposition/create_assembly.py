@@ -1,4 +1,3 @@
-import json
 import logging
 import random
 import string
@@ -332,7 +331,7 @@ def update_assembly_error(
         conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
             "status": Status.HAS_ERRORS,
-            "errors": json.dumps(error),
+            "errors": error,
             "started_at": datetime.now(tz=pytz.utc),
         },
         table_name=TableName.ASSEMBLY_TABLE,
@@ -494,7 +493,7 @@ def update_assembly_results_with_latest_version(
         conditions=seq_key,
         update_values={
             "status": Status.SUBMITTED,
-            "result": json.dumps(last_version_data[0]["result"]),
+            "result": last_version_data[0]["result"],
         },
         table_name=TableName.ASSEMBLY_TABLE,
         reraise=False,
@@ -612,7 +611,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             assembly_creation_results.result["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
-                "result": json.dumps(assembly_creation_results.result),
+                "result": assembly_creation_results.result,
             }
             logger.info(
                 f"Assembly creation succeeded for {seq_key['accession']} "
@@ -691,7 +690,7 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
                 conditions=seq_key,
                 update_values={
                     "status": status,
-                    "result": json.dumps(new_result.result),
+                    "result": new_result.result,
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 table_name=TableName.ASSEMBLY_TABLE,

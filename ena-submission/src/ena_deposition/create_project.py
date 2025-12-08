@@ -1,4 +1,3 @@
-import json
 import logging
 import threading
 import time
@@ -341,7 +340,7 @@ def project_table_create(
         if project_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(project_creation_results.result),
+                "result": project_creation_results.result,
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
@@ -351,7 +350,7 @@ def project_table_create(
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
-                "errors": json.dumps(project_creation_results.errors),
+                "errors": project_creation_results.errors,
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(

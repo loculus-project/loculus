@@ -31,8 +31,8 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
             version=int(version),
             group_id=data["metadata"]["groupId"],
             organism=data["organism"],
-            metadata=json.dumps(data["metadata"]),
-            unaligned_nucleotide_sequences=json.dumps(data["unalignedNucleotideSequences"]),
+            metadata=data["metadata"],
+            unaligned_nucleotide_sequences=data["unalignedNucleotideSequences"],
         )
         add_to_submission_table(db_config, entry)
         logger.info(f"Inserted {full_accession} into submission_table")

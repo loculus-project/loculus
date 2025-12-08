@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import re
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
 from typing import Any, Final
@@ -124,21 +125,26 @@ def validate_column_name(table_name: str, column_name: str):
         raise ValueError(msg)
 
 
+type Accession = str
+type AccessionVersion = str
+type Version = int
+
+
 @dataclass
 class SubmissionTableEntry:
-    accession: str
-    version: int
+    accession: Accession
+    version: Version
     organism: str
     group_id: int
-    errors: str | None = None
-    warnings: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status_all: StatusAll = StatusAll.READY_TO_SUBMIT
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    metadata: str | None = None
-    unaligned_nucleotide_sequences: str | None = None
+    unaligned_nucleotide_sequences: dict[str, str | None] = field(default_factory=dict)
     center_name: str | None = None
-    external_metadata: str | None = None
+    external_metadata: dict[str, str | Sequence[str]] | None = None
     project_id: int | None = None
 
 
@@ -147,50 +153,53 @@ class ProjectTableEntry:
     group_id: int
     organism: str
     project_id: int | None = None
-    errors: str | None = None
-    warnings: str | None = None
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
     center_name: str | None = None
-    result: dict[str, str] | str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
 
 
 @dataclass(kw_only=True)
 class SampleTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
+    accession: Accession
+    version: Version
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    result: dict[str, str] | str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
 
 
 @dataclass(kw_only=True)
 class AssemblyTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
+    accession: Accession
+    version: Version
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    result: str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_nucleotide_first_publicly_visible: datetime | None = None
     ncbi_nucleotide_first_publicly_visible: datetime | None = None
     ena_gca_first_publicly_visible: datetime | None = None
     ncbi_gca_first_publicly_visible: datetime | None = None
 
 
-type Accession = str
-type AccessionVersion = str
-type Version = int
+def type_conversion(value: Any) -> Any:
+    if isinstance(value, (Status, StatusAll)):
+        return str(value)
+    if isinstance(value, (dict, list)):
+        return json.dumps(value)
+    return value
 
 
 def highest_version_in_submission_table(
@@ -247,10 +256,7 @@ def delete_records_in_db(
 
             cur.execute(
                 query,
-                tuple(
-                    str(value) if isinstance(value, (Status, StatusAll)) else value
-                    for value in conditions.values()
-                ),
+                tuple(type_conversion(value) for value in conditions.values()),
             )
 
             deleted_rows = cur.rowcount  # Get number of affected rows
@@ -294,10 +300,7 @@ def find_conditions_in_db(
                     where_conditions.append(f"{key} IS NULL")
                 else:
                     where_conditions.append(f"{key} = %s")
-                    if isinstance(value, (Status, StatusAll)):
-                        params.append(str(value))
-                    else:
-                        params.append(value)
+                    params.append(type_conversion(value))
             if where_conditions:
                 query += " WHERE " + " AND ".join(where_conditions)
 
@@ -409,18 +412,9 @@ def update_db_where_conditions(
             )
             query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
             parameters = (
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in update_values.values()
-                )
-                + tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                )
-                + tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in update_values.values()
-                )
+                tuple(type_conversion(value) for value in conditions.values())
+                + tuple(type_conversion(value) for value in conditions.values())
+                + tuple(type_conversion(value) for value in update_values.values())
             )
 
             cur.execute(query, parameters)
@@ -601,10 +595,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions: dict[str
             query += f" WHERE {where_clause}"
             cur.execute(
                 query,
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                ),
+                tuple(type_conversion(value) for value in conditions.values()),
             )
             in_db = bool(cur.rowcount)
     finally:
@@ -632,8 +623,8 @@ def add_to_submission_table(
                     str(submission_table_entry.status_all),
                     submission_table_entry.started_at,
                     submission_table_entry.finished_at,
-                    submission_table_entry.metadata,
-                    submission_table_entry.unaligned_nucleotide_sequences,
+                    json.dumps(submission_table_entry.metadata),
+                    json.dumps(submission_table_entry.unaligned_nucleotide_sequences),
                     json.dumps(submission_table_entry.external_metadata),
                 ),
             )
