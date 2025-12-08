@@ -24,22 +24,21 @@ logger = logging.getLogger(__name__)
 def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[str, Any]):
     for full_accession, data in sequences_to_upload.items():
         accession, version = full_accession.split(".")
-        if in_submission_table(db_config, {"accession": accession, "version": version}):
+        if in_submission_table(db_config, {"accession": accession, "version": int(version)}):
             continue
-        entry = {
-            "accession": accession,
-            "version": version,
-            "group_id": data["metadata"]["groupId"],
-            "organism": data["organism"],
-            "metadata": json.dumps(data["metadata"]),
-            "unaligned_nucleotide_sequences": json.dumps(data["unalignedNucleotideSequences"]),
-        }
-        submission_table_entry = SubmissionTableEntry(**entry)
-        add_to_submission_table(db_config, submission_table_entry)
+        entry = SubmissionTableEntry(
+            accession=accession,
+            version=int(version),
+            group_id=data["metadata"]["groupId"],
+            organism=data["organism"],
+            metadata=json.dumps(data["metadata"]),
+            unaligned_nucleotide_sequences=json.dumps(data["unalignedNucleotideSequences"]),
+        )
+        add_to_submission_table(db_config, entry)
         logger.info(f"Inserted {full_accession} into submission_table")
 
 
-def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input_file=None):
+def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input_file: str = None):
     db_config = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:

@@ -42,16 +42,16 @@ def version_key(version_str: str) -> tuple:
         Tuple that can be used for sorting
     """
     # Split on dots and other separators
-    parts = re.split(r'[._-]', version_str.lower())
+    parts = re.split(r"[._-]", version_str.lower())
     result = []
 
     for part in parts:
         # Try to convert to int if it's purely numeric
         if part.isdigit():
             result.append((0, int(part)))  # 0 = numeric, for sorting priority
-        elif part == 'post':
+        elif part == "post":
             result.append((1, 0, 0))  # post marker
-        elif part.startswith('post'):
+        elif part.startswith("post"):
             # Handle 'post0', 'post1', etc.
             num = part[4:]
             if num.isdigit():
@@ -75,7 +75,7 @@ def is_prerelease(version_str: str) -> bool:
     Returns:
         True if it's a pre-release version
     """
-    prerelease_markers = ['rc', 'alpha', 'beta', 'dev', 'pre']
+    prerelease_markers = ["rc", "alpha", "beta", "dev", "pre"]
     version_lower = version_str.lower()
     return any(marker in version_lower for marker in prerelease_markers)
 
@@ -93,24 +93,23 @@ def get_latest_version(package_name: str, include_prerelease: bool = False) -> O
     """
     try:
         result = subprocess.run(
-            ['micromamba', 'search', '-c', 'conda-forge', '-c', 'bioconda',
-             package_name, '--json'],
+            ["micromamba", "search", "-c", "conda-forge", "-c", "bioconda", package_name, "--json"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode != 0:
             return None
 
         data = json.loads(result.stdout)
-        pkgs = data.get('result', {}).get('pkgs', [])
+        pkgs = data.get("result", {}).get("pkgs", [])
 
         if not pkgs:
             return None
 
         # Get unique versions
-        all_versions = set(p['version'] for p in pkgs)
+        all_versions = set(p["version"] for p in pkgs)
 
         # Filter out pre-releases unless requested
         if not include_prerelease:
@@ -142,33 +141,33 @@ def parse_environment_file(filepath: Path) -> List[Tuple[str, str]]:
     packages = []
     in_dependencies = False
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         for line in f:
             line = line.strip()
 
-            if line.startswith('dependencies:'):
+            if line.startswith("dependencies:"):
                 in_dependencies = True
                 continue
 
-            if not in_dependencies or not line.startswith('- '):
+            if not in_dependencies or not line.startswith("- "):
                 continue
 
             # Remove leading '- ' and any comments
-            pkg_spec = line[2:].split('#')[0].strip()
+            pkg_spec = line[2:].split("#")[0].strip()
 
             # Skip pip, python, and packages without version pins
-            if not pkg_spec or pkg_spec == 'pip:':
+            if not pkg_spec or pkg_spec == "pip:":
                 continue
 
             # Parse package specification
-            if '=' in pkg_spec:
-                parts = pkg_spec.split('=')
+            if "=" in pkg_spec:
+                parts = pkg_spec.split("=")
                 pkg_name = parts[0].strip()
                 # Handle cases like "pkg=1.0=build_string"
-                version = parts[1].split('=')[0].strip()
+                version = parts[1].split("=")[0].strip()
 
                 # Remove >= or other operators that might be present
-                if version.startswith('>='):
+                if version.startswith(">="):
                     version = version[2:].strip()
 
                 packages.append((pkg_name, version))
@@ -182,9 +181,9 @@ def check_updates():
     # Find all environment.yml files
     repo_root = Path(__file__).parent.parent
     env_files = [
-        repo_root / 'preprocessing/nextclade/environment.yml',
-        repo_root / 'ingest/environment.yml',
-        repo_root / 'ena-submission/environment.yml',
+        repo_root / "preprocessing/nextclade/environment.yml",
+        repo_root / "ingest/environment.yml",
+        repo_root / "ena-submission/environment.yml",
     ]
 
     # Filter to only existing files
@@ -244,7 +243,7 @@ def check_updates():
         print("All packages are up to date!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         check_updates()
     except KeyboardInterrupt:
