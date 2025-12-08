@@ -429,11 +429,12 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
-    version_to_revise = last_version(db_config, entry)
+    seq_key = AccessionVersion(accession=entry["accession"], version=entry["version"])
+    version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.SUBMISSION_TABLE,
-        conditions={"accession": entry["accession"], "version": version_to_revise},
+        conditions={"accession": seq_key.accession, "version": version_to_revise},
     )
     if len(last_version_data) == 0:
         error_msg = f"Last version {version_to_revise} not found in submission_table"
@@ -444,8 +445,8 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
         != last_version_data[0]["unaligned_nucleotide_sequences"]
     ):
         logger.debug(
-            f"Unaligned nucleotide sequences have changed for {entry['accession']}, "
-            f"from {version_to_revise} to {entry['version']} - should be revised"
+            f"Unaligned nucleotide sequences have changed for {seq_key.accession}, "
+            f"from {version_to_revise} to {seq_key.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
         return True
