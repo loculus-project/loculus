@@ -282,7 +282,7 @@ def check_and_update_visibility_for_column(
     )
 
     for entity in entities_needing_check:
-        entity_id = asdict(entity.primary_key())
+        entity_id = asdict(entity.primary_key)
         accessions = get_accessions_to_check(entity, column_config)
 
         if not accessions:

@@ -702,9 +702,9 @@ class TestFirstPublicUpdate(TestSubmission):
         # Hence the 2 branches below
         if add_function == add_to_project_table:
             # Single key (like project_id)
-            conditions = asdict(entry.primary_key())
+            conditions = asdict(entry.primary_key)
         else:
-            conditions = asdict(entry.primary_key())
+            conditions = asdict(entry.primary_key)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(

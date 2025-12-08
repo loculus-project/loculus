@@ -128,7 +128,7 @@ class AccessionVersion:
     accession: Accession
     version: Version
 
-
+@dataclass(frozen=True)
 class ProjectId:
     project_id: int | None
 
