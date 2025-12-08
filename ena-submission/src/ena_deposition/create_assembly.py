@@ -588,7 +588,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name=TableName.ASSEMBLY_TABLE,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -617,12 +617,12 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
                 "result": assembly_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key['accession']} "
-                f"version {seq_key['version']}"
+                f"Assembly creation succeeded for {seq_key.accession} "
+                f"version {seq_key.version}"
             )
             update_with_retry(
                 db_config=db_config,
-                conditions=seq_key,
+                conditions=asdict(seq_key),
                 update_values=update_values,
                 table_name=TableName.ASSEMBLY_TABLE,
             )
