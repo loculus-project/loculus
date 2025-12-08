@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import string
@@ -413,7 +414,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {differing_fields}"
+            f"last version: {json.dumps(differing_fields)}"
         )
         logger.error(error)
         update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
