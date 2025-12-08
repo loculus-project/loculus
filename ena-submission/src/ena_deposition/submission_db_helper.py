@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final, Sequence
+from typing import Any, Final
 
 import psycopg2
 import pytz
