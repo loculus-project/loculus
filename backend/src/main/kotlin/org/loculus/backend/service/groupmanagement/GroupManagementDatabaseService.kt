@@ -27,14 +27,18 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int): GroupDetails {
+    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
         val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
-
-        return GroupDetails(
+        val details = GroupDetails(
             group = groupEntity.toGroup(),
             users = users.map { User(it.userName) },
         )
+
+        if (user is AuthenticatedUser) {
+            return details
+        }
+        return details.returnPublicDetails()
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {

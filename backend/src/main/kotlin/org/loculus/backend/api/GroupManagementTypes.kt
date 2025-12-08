@@ -43,4 +43,16 @@ data class Group(
 
 data class User(val name: String)
 
-data class GroupDetails(val group: Group, val users: List<User>)
+data class GroupDetails(val group: Group, val users: List<User>) {
+    fun returnPublicDetails(): GroupDetails {
+        val redactedGroup = Group(
+            groupId = this.group.groupId,
+            groupName = this.group.groupName,
+            institution = this.group.institution,
+            address = this.group.address,
+            contactEmail = "N/A",
+        )
+
+        return GroupDetails(redactedGroup, this.users)
+    }
+}
