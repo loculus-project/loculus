@@ -527,7 +527,7 @@ def assign_segment_using_header(
 ) -> SegmentAssignment:
     segment_assignment = SegmentAssignment()
     duplicate_segments = set()
-    if not config.nextclade_sequence_and_datasets:
+    if not config.nextclade_sequence_and_datasets or not input_unaligned_sequences:
         return segment_assignment
     if not config.multi_segment:
         return assign_single_segment(input_unaligned_sequences, config)
