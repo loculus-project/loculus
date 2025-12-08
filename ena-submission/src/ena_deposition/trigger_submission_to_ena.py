@@ -38,7 +38,9 @@ def upload_sequences(db_config: SimpleConnectionPool, sequences_to_upload: dict[
         logger.info(f"Inserted {full_accession} into submission_table")
 
 
-def trigger_submission_to_ena(config: Config, stop_event: threading.Event, input_file: str = None):
+def trigger_submission_to_ena(
+    config: Config, stop_event: threading.Event, input_file: str | None = None
+):
     db_config = db_init(config.db_password, config.db_username, config.db_url)
 
     if input_file:
