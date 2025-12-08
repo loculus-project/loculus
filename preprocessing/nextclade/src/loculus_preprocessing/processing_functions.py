@@ -69,7 +69,7 @@ def valid_name() -> str:
     )
 
     ordinal = r"\d+(?:st|nd|rd|th)"
-    alpha_or_ord = rf"\s*(?:[{chars}']|{ordinal})" # First character: letter or ordinal
+    alpha_or_ord = rf"\s*(?:[{chars}']|{ordinal})"  # First character: letter or ordinal
     name_chars = rf"(?:[{chars}\s.\-']|{ordinal})*"
 
     return alpha_or_ord + name_chars + r"," + name_chars
