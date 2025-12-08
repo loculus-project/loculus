@@ -319,7 +319,7 @@ def submission_table_update(db_config: SimpleConnectionPool) -> None:
 
 def update_assembly_error(
     db_config: SimpleConnectionPool,
-    error: str | list[str],
+    error: list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
@@ -377,7 +377,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
     if entry["metadata"].get("bioprojectAccession"):
         new_project_accession = entry["metadata"]["bioprojectAccession"]
@@ -387,7 +387,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
 
     differing_fields = {}
@@ -417,7 +417,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
             f"last version: {json.dumps(differing_fields)}"
         )
         logger.error(error)
-        update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+        update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
         return False
     return True
 

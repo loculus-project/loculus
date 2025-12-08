@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, StrEnum
@@ -384,7 +384,7 @@ def find_waiting_in_db(
 def update_db_where_conditions(
     db_conn_pool: SimpleConnectionPool,
     table_name: TableName,
-    conditions: dict[str, str | int],
+    conditions: Mapping[str, str | int],
     update_values: dict[str, Any],
 ) -> int:
     updated_row_count = 0
@@ -434,7 +434,7 @@ def update_db_where_conditions(
 
 def update_with_retry(
     db_config: SimpleConnectionPool,
-    conditions: dict[str, str],
+    conditions: Mapping[str, str],
     table_name: TableName,
     update_values: dict[str, Any],
     reraise: bool = True,
