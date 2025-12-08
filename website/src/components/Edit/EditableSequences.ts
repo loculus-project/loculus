@@ -5,7 +5,9 @@ import { FASTA_IDS_SEPARATOR } from '../../types/config.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 function getFastaId(fastaHeader: string | null): string | null {
-    if (!fastaHeader) return null;
+    if (!fastaHeader) {
+        return null;
+    }
     return fastaHeader.split(/\s+/)[0] ?? null;
 }
 
@@ -49,7 +51,7 @@ export class EditableSequences {
         return this.maxNumberOfRows > 1;
     }
 
-    static invertRecordMulti(obj: Record<string, string | null>): Record<string, string[]> {
+    private static invertRecordMulti(obj: Record<string, string | null>): Record<string, string[]> {
         const inverted: Record<string, string[]> = {};
 
         for (const key in obj) {
