@@ -5,7 +5,7 @@ import { FASTA_IDS_SEPARATOR } from '../../types/config.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 function getFastaId(fastaHeader: string | null): string | null {
-    if (!fastaHeader) {
+    if (fastaHeader === null || fastaHeader === '') {
         return null;
     }
     return fastaHeader.split(/\s+/)[0] ?? null;
