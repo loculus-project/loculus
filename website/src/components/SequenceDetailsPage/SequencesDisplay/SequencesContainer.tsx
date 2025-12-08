@@ -22,7 +22,7 @@ import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
-    suborganism: Suborganism | null;
+    suborganism: Suborganism;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
@@ -37,18 +37,13 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
-    const segmentAndGeneInfo = getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, suborganism);
-
-    const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(
-        segmentAndGeneInfo !== null
-            ? unalignedSequenceSegment(segmentAndGeneInfo.nucleotideSegmentInfos[0])
-            : { type: 'nucleotide', aligned: false, name: { lapisName: '', label: '' } },
+    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSuborganismSegmentAndGeneInfo(
+        referenceGenomeLightweightSchema,
+        suborganism,
     );
 
-    if (segmentAndGeneInfo === null) {
-        return null;
-    }
+    const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);
+    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentInfos[0]));
 
     if (!loadSequences) {
         return (
@@ -63,11 +58,11 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             organism={organism}
             accessionVersion={accessionVersion}
             clientConfig={clientConfig}
-            segments={segmentAndGeneInfo.nucleotideSegmentInfos}
+            segments={nucleotideSegmentInfos}
             sequenceType={sequenceType}
             setType={setSequenceType}
-            genes={segmentAndGeneInfo.geneInfos}
-            isMultiSegmented={segmentAndGeneInfo.isMultiSegmented}
+            genes={geneInfos}
+            isMultiSegmented={isMultiSegmented}
         />
     );
 };

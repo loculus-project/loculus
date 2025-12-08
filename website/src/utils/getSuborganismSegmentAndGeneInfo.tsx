@@ -14,6 +14,19 @@ export type SuborganismSegmentAndGeneInfo = {
     isMultiSegmented: boolean;
 };
 
+/**
+ * If we know that the suborganism is not null, then the result will also be non-null.
+ */
+export function getSuborganismSegmentAndGeneInfo(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string,
+): SuborganismSegmentAndGeneInfo;
+
+export function getSuborganismSegmentAndGeneInfo(
+    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    suborganism: string | null,
+): SuborganismSegmentAndGeneInfo | null;
+
 export function getSuborganismSegmentAndGeneInfo(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
     suborganism: string | null,

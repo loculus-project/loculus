@@ -68,7 +68,7 @@ export const SequenceDataUI: FC<Props> = ({
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
             />
-            {schema.submissionDataTypes.consensusSequences && (
+            {schema.submissionDataTypes.consensusSequences && suborganism !== null && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
