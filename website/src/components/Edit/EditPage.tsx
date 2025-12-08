@@ -2,8 +2,9 @@ import { isErrorFromAlias } from '@zodios/core';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { EditableSequences } from './EditableSequences.ts';
 import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
-import { EditableSequences, SequencesForm } from './SequencesForm.tsx';
+import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';

@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { EditableSequences } from './SequencesForm';
+import { EditableSequences } from './EditableSequences.ts';
 import { defaultReviewData } from '../../../vitest.setup';
 import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 
@@ -29,7 +29,7 @@ function makeSubOrganismReferenceSchema(suborganisms: string[]): ReferenceGenome
     return result;
 }
 
-describe('SequencesForm', () => {
+describe('EditableSequences', () => {
     beforeEach(() => {
         vi.spyOn(toast, 'error');
     });
