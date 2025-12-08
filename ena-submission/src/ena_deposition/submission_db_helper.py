@@ -412,7 +412,7 @@ def update_db_where_conditions(
             )
             query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
             parameters = (
-                tuple(type_conversion(value) for value in update_values.values())
+                tuple(type_conversion(value) for value in conditions.values())
                 + tuple(type_conversion(value) for value in conditions.values())
                 + tuple(type_conversion(value) for value in update_values.values())
             )
