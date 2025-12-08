@@ -350,9 +350,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     3. metadata fields in manifest haven't changed since previous version, otherwise
        requires manual revision
     """
-    if not is_revision(db_config, entry):
+    seq_key = AccessionVersion(accession=entry["accession"], version=entry["version"])
+    if not is_revision(db_config, seq_key):
         return False
-    version_to_revise = last_version(db_config, entry)
+    version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.SUBMISSION_TABLE,
