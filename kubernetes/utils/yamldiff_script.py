@@ -25,9 +25,10 @@ def diff_yaml(source_dict1, source_dict2):
     for name, content1 in source_dict1.items():
         content2 = source_dict2.get(name, None)
         if content2:
-            with tempfile.NamedTemporaryFile(
-                mode="w+", delete=False
-            ) as tmp1, tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp2:
+            with (
+                tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp1,
+                tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp2,
+            ):
                 yaml.dump(content1, tmp1)
                 yaml.dump(content2, tmp2)
                 tmp1.flush()

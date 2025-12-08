@@ -31,7 +31,10 @@ parser.add_argument(
     "--maxSequences", type=int, help="Max number of sequence entry versions to process."
 )
 parser.add_argument(
-    "--batchSize", type=int, default=100, help="Max number of sequence entry versions to process in each cycle"
+    "--batchSize",
+    type=int,
+    default=100,
+    help="Max number of sequence entry versions to process in each cycle",
 )
 parser.add_argument(
     "--keycloak-host", type=str, default="http://127.0.0.1:8083", help="Host address of Keycloak"
@@ -146,10 +149,9 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             for file_category, file_list in files.items():
                 processedFiles[file_category] = []
                 for file in file_list:
-                    processedFiles[file_category].append({
-                        "fileId": file["fileId"],
-                        "name": file["name"]
-                    })
+                    processedFiles[file_category].append(
+                        {"fileId": file["fileId"], "name": file["name"]}
+                    )
 
         data = {
             "metadata": metadata,
@@ -160,7 +162,7 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             "nucleotideInsertions": {},
             "aminoAcidInsertions": {},
         }
-        
+
         if not disableConsensusSequences:
             data = {**data, **mock_sequences}
             data["sequenceNameToFastaId"] = {"main": submissionId}
@@ -272,7 +274,9 @@ def main():
         time.sleep(10)
 
     max_sequences = args.maxSequences
-    sequences_to_fetch = max_sequences if max_sequences and max_sequences < args.batchSize else args.batchSize
+    sequences_to_fetch = (
+        max_sequences if max_sequences and max_sequences < args.batchSize else args.batchSize
+    )
 
     while True:
         if last_force_refresh + 3600 < time.time():

@@ -127,7 +127,7 @@ def validate_column_name(table_name: str, column_name: str):
 @dataclass
 class SubmissionTableEntry:
     accession: str
-    version: str
+    version: int
     organism: str
     group_id: int
     errors: str | None = None
@@ -588,7 +588,7 @@ def add_to_assembly_table(
         db_conn_pool.putconn(con)
 
 
-def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
+def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions: dict[str, Any]) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:

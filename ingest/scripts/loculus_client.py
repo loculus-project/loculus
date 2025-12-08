@@ -61,7 +61,12 @@ def get_jwt(config: Config) -> str:
 
     keycloak_token_url = config.keycloak_token_url
 
-    response = requests.post(keycloak_token_url, data=data, headers=headers, timeout=config.backend_request_timeout_seconds)
+    response = requests.post(
+        keycloak_token_url,
+        data=data,
+        headers=headers,
+        timeout=config.backend_request_timeout_seconds,
+    )
     response.raise_for_status()
 
     jwt_keycloak = response.json()
