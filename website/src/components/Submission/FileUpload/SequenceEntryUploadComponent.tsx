@@ -8,7 +8,7 @@ import type { ColumnMapping } from './ColumnMapping';
 import { ColumnMappingModal } from './ColumnMappingModal';
 import { FileUploadComponent } from './FileUploadComponent';
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, RawFile, type ProcessedFile } from './fileProcessing';
-import type { InputField } from '../../../types/config';
+import type { InputField, SubmissionDataTypes } from '../../../types/config';
 import { dataUploadDocsUrl } from '../dataUploadDocsUrl';
 
 type SequenceEntryUploadProps = {
@@ -21,8 +21,7 @@ type SequenceEntryUploadProps = {
     columnMapping: ColumnMapping | null;
     setColumnMapping: Dispatch<SetStateAction<ColumnMapping | null>>;
     metadataTemplateFields: Map<string, InputField[]>;
-    enableConsensusSequences: boolean;
-    isMultiSegmented: boolean;
+    submissionDataTypes: SubmissionDataTypes;
 };
 
 /**
@@ -38,9 +37,10 @@ export const SequenceEntryUpload: FC<SequenceEntryUploadProps> = ({
     columnMapping,
     setColumnMapping,
     metadataTemplateFields,
-    enableConsensusSequences,
-    isMultiSegmented,
+    submissionDataTypes,
 }) => {
+    const enableConsensusSequences = submissionDataTypes.consensusSequences;
+    const isMultiSegmented = submissionDataTypes.maxSequencesPerEntry !== 1;
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
     const handleLoadExampleData = () => {

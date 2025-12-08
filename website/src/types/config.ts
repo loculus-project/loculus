@@ -142,6 +142,7 @@ export const submissionFiles = z.object({
 
 export const submissionDataTypesSchema = z.object({
     consensusSequences: z.boolean(),
+    maxSequencesPerEntry: z.number().int().optional(),
     files: submissionFiles.optional(),
 });
 

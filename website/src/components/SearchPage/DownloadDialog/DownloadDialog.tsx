@@ -75,8 +75,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         useMultiSegmentEndpoint,
         defaultFastaHeaderTemplate,
         getVisibleFields: () => [
-            ...downloadFieldVisibilities
-                .entries()
+            ...Array.from(downloadFieldVisibilities.entries())
                 .filter(([_, visibility]) => visibility.isVisible(selectedSuborganism))
                 .map(([name]) => name),
         ],
