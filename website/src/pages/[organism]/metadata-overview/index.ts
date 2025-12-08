@@ -5,10 +5,11 @@ import { getSchema, getSubmissionIdInputFields } from '../../../config.ts';
 import type { InputField } from '../../../types/config.ts';
 
 function createRowFromField(field: InputField): string {
+    const guidance = field.guidance ? ` ${field.guidance}` : '';
     return [
         field.name,
         field.required ? 'Yes' : 'No',
-        field.definition ? `${field.definition} ${field.guidance ?? ''}`.trim() : '',
+        field.definition ? `${field.definition}${guidance}`.trim() : '',
         field.example ?? '',
     ].join('\t');
 }
@@ -25,7 +26,7 @@ export const GET: APIRoute = ({ params }) => {
 
     const tsvTemplate = [
         ['Field Name', 'Required', 'Definition', 'Example'].join('\t'),
-        [...getSubmissionIdInputFields(schema), ...schema.inputFields].map((field) => createRowFromField(field)),
+        ...[...getSubmissionIdInputFields(schema), ...schema.inputFields].map((field) => createRowFromField(field)),
     ].join('\n');
 
     const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`;
