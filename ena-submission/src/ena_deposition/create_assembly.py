@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import json
 import logging
 import random
@@ -35,6 +36,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     AssemblyTableEntry,
     Status,
     StatusAll,
@@ -470,14 +472,14 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
 
 
 def update_assembly_results_with_latest_version(
-    db_config: SimpleConnectionPool, seq_key: dict[str, Any]
+    db_config: SimpleConnectionPool, seq_key: AccessionVersion
 ):
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.ASSEMBLY_TABLE,
         conditions={
-            "accession": seq_key["accession"],
+            "accession": seq_key.accession,
             "version": version_to_revise,
         },
     )
@@ -485,13 +487,13 @@ def update_assembly_results_with_latest_version(
         error_msg = f"Last version {version_to_revise} not found in assembly_table"
         raise RuntimeError(error_msg)
     logger.info(
-        f"Updating assembly results for accession {seq_key['accession']} version "
-        f"{seq_key['version']} using results from version {version_to_revise} as there was no"
+        f"Updating assembly results for accession {seq_key.accession} version "
+        f"{seq_key.version} using results from version {version_to_revise} as there was no"
         "change in flatfile data."
     )
     update_with_retry(
         db_config=db_config,
-        conditions=seq_key,
+        conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
             "result": last_version_data[0]["result"],
@@ -546,9 +548,9 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = AccessionVersion(accession=row["accession"], version=row["version"])
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
         if len(sample_data_in_submission_table) == 0:
             error_msg = f"Entry {row['accession']} not found in submitting_table"
