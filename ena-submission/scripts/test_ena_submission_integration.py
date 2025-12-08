@@ -702,7 +702,7 @@ class TestFirstPublicUpdate(TestSubmission):
         # Hence the 2 branches below
         if add_function == add_to_project_table:
             # Single key (like project_id)
-            conditions = asdict(entry.primary_key)
+            conditions = {"project_id": entity_id}
         else:
             conditions = asdict(entry.primary_key)
 
