@@ -67,7 +67,7 @@ def create_chromosome_list_object(
 
     entries: list[AssemblyChromosomeListFileObject] = []
 
-    multi_segment = set(unaligned_sequences.keys()) != {"main"}
+    multi_segment = organism_metadata.is_multi_segment()
 
     segment_order = get_segment_order(unaligned_sequences)
 
@@ -205,16 +205,14 @@ def create_manifest_object(
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[submission_table_entry["organism"]]
+    ena_organism = config.enaOrganisms[submission_table_entry["organism"]]
     chromosome_list_object = create_chromosome_list_object(
-        unaligned_nucleotide_sequences, submission_table_entry, organism_metadata
+        unaligned_nucleotide_sequences, submission_table_entry, ena_organism
     )
     chromosome_list_file = create_chromosome_list(list_object=chromosome_list_object, dir=dir)
     logger.debug("Created chromosome list file")
 
-    flat_file = create_flatfile(
-        config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
-    )
+    flat_file = create_flatfile(config, metadata, ena_organism, unaligned_nucleotide_sequences, dir)
 
     assembly_values = get_assembly_values_in_metadata(config, metadata)
 
@@ -226,7 +224,7 @@ def create_manifest_object(
             flatfile=flat_file,
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
-            moleculetype=organism_metadata.molecule_type,
+            moleculetype=ena_organism.molecule_type,
             **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
@@ -678,11 +676,18 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
         logger.debug("Checking state in ENA")
         for row in waiting:
             seq_key = {"accession": row["accession"], "version": row["version"]}
+            sample_data_in_submission_table = find_conditions_in_db(
+                db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
+            )
+            if len(sample_data_in_submission_table) == 0:
+                error_msg = f"Entry {row['accession']} not found in submitting_table"
+                raise RuntimeError(error_msg)
+            organism = config.enaOrganisms[sample_data_in_submission_table[0]["organism"]]
             # Previous means from the last time the entry was checked, from db
             previous_result = row["result"]
             segment_order = previous_result["segment_order"]
             new_result: CreationResult = get_ena_analysis_process(
-                config, previous_result["erz_accession"], segment_order
+                config, previous_result["erz_accession"], segment_order, organism
             )
             _last_ena_check = time
 

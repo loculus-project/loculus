@@ -237,7 +237,7 @@ def type_conversion(value: Any) -> Any:
 
 
 def highest_version_in_submission_table(
-    db_conn_pool: SimpleConnectionPool, organism: str
+    db_conn_pool: SimpleConnectionPool,
 ) -> dict[Accession, Version]:
     """
     Returns the highest version for a given accession in the submission table.
@@ -249,10 +249,9 @@ def highest_version_in_submission_table(
             query = f"""
                 SELECT accession, MAX(version) AS version
                 FROM {TableName.SUBMISSION_TABLE}
-                WHERE organism = %s
                 GROUP BY accession
             """  # noqa: S608
-            cur.execute(query, (organism,))
+            cur.execute(query)
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
@@ -472,7 +471,7 @@ def update_db_where_conditions(
 
 def update_with_retry(
     db_config: SimpleConnectionPool,
-    conditions: Mapping[str, str],
+    conditions: Mapping[str, Any],
     table_name: TableName,
     update_values: dict[str, Any],
     reraise: bool = True,

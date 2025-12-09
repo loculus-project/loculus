@@ -1368,10 +1368,11 @@ defaultOrganisms:
       configFile:
         taxon_id: 3052460
     enaDeposition:
-      configFile:
-        taxon_id: 186540
-        scientific_name: "Sudan ebolavirus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 186540
+          scientific_name: "Sudan ebolavirus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1448,10 +1449,11 @@ defaultOrganisms:
       configFile:
         taxon_id: 3048448
     enaDeposition:
-      configFile:
-        taxon_id: 11082
-        scientific_name: "West Nile virus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 11082
+          scientific_name: "West Nile virus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1766,6 +1768,9 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
           log_level: DEBUG
           taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
@@ -1789,10 +1794,11 @@ defaultOrganisms:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
     enaDeposition:
-      configFile:
-        taxon_id: 3052518
-        scientific_name: "Orthonairovirus haemorrhagiae"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1899,6 +1905,10 @@ defaultOrganisms:
           # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
           create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          # TODO(https://github.com/loculus-project/loculus/issues/5673): embl flat files for multi path case
+          taxon_id: 12059
+          scientific_name: "Enterovirus"
+          molecule_type: "genomic RNA"
           nextclade_sequence_and_datasets:
             - name: CV-A16
               nextclade_dataset_name: enpen/enterovirus/cv-a16
@@ -1927,6 +1937,19 @@ defaultOrganisms:
       configFile:
         taxon_id: 12059
         subsample_fraction: 0.2
+    enaDeposition:
+      CV-A16:
+        configFile:
+          taxon_id: ...
+          scientific_name: "CV-A16"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      CV-A10:
+        configFile:
+          taxon_id: 42769
+          scientific_name: "Coxsackievirus A10"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
     referenceGenomes:
       CV-A16:
         nucleotideSequences:

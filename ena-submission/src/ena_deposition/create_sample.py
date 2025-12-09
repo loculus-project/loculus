@@ -120,7 +120,7 @@ def construct_sample_set_object(
     sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
     center_name = sample_data_in_submission_table["center_name"]
     organism: str = sample_data_in_submission_table["organism"]  # type: ignore
-    organism_metadata = config.organisms[organism]
+    organism_metadata = config.enaOrganisms[organism]
     alias = get_alias(
         f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
         test,

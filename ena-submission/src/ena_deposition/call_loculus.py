@@ -96,8 +96,9 @@ def submit_external_metadata(
         f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
     )
     endpoint: str = "submit-external-metadata"
+    loculus_organism = config.enaOrganisms[organism].loculusOrganism or organism
 
-    url = f"{organism_url(config, organism)}/{endpoint}"
+    url = f"{organism_url(config, loculus_organism)}/{endpoint}"
     params = {
         "externalMetadataUpdater": "ena",
     }

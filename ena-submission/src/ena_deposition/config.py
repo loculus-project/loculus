@@ -49,6 +49,12 @@ class EnaOrganismDetails(BaseModel):
     organismName: str  # noqa: N815
     externalMetadata: list[ExternalMetadataField] = field(default_factory=list)  # noqa: N815
     topology: Topology = Topology.LINEAR
+    segments: list[str]
+    loculusOrganism: str | None = None  # noqa: N815
+    suborganismIdentifierField: str | None = None  # noqa: N815
+
+    def is_multi_segment(self) -> bool:
+        return len(self.segments) > 1
 
 
 type EnaOrganismName = str
@@ -96,7 +102,7 @@ class Config(BaseModel):
     slack_token: str | None
     slack_channel_id: str | None
 
-    organisms: dict[EnaOrganismName, EnaOrganismDetails]
+    enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
     unique_project_suffix: str
     metadata_mapping: dict[str, MetadataMapping]
     manifest_fields_mapping: dict[str, ManifestFieldDetails]
