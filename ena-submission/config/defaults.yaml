@@ -11,6 +11,9 @@ db_name: Loculus
 unique_project_suffix: Loculus
 ena_submission_username: fake-user
 ena_submission_password: fake-password
+approved_list_url: will-be-overwritten
+ena_reports_service_url: will-be-overwritten
+ena_submission_url: will-be-overwritten
 submit_to_ena_prod: False
 allowed_submission_hosts:
   - https://backend.pathoplexus.org
