@@ -48,7 +48,7 @@ data class ApiGroup(
     val groupId: Int,
     @Schema(description = "The display name of the group.", example = "Example Group")
     val groupName: String,
-    @Schema( description = "The name of the institution.", example = "University of Loculus")
+    @Schema(description = "The name of the institution.", example = "University of Loculus")
     val institution: String?,
     @Schema(description = "The address of the institution.")
     val address: Address?,
