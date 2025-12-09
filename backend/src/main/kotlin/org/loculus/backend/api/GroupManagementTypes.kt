@@ -37,21 +37,6 @@ data class Group(
     val institution: String,
     @Schema(description = "The address of the institution.")
     val address: Address,
-    @Schema(description = "The contact email for the group.", example = "something@loculus.org")
-    val contactEmail: String,
-)
-
-data class User(val name: String)
-
-data class ApiGroup(
-    @Schema(description = "The id of the group.", example = "123")
-    val groupId: Int,
-    @Schema(description = "The display name of the group.", example = "Example Group")
-    val groupName: String,
-    @Schema(description = "The name of the institution.", example = "University of Loculus")
-    val institution: String?,
-    @Schema(description = "The address of the institution.")
-    val address: Address?,
     @Schema(
         description = "The contact email for the group. Will be `null` if not authenticated.",
         example = "something@loculus.org",
@@ -59,4 +44,6 @@ data class ApiGroup(
     val contactEmail: String?,
 )
 
-data class GroupDetails(val group: ApiGroup, val users: List<User>?)
+data class User(val name: String)
+
+data class GroupDetails(val group: Group, val users: List<User>?)

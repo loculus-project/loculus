@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
-import org.loculus.backend.api.ApiGroup
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.NewGroup
@@ -34,15 +33,16 @@ class GroupManagementDatabaseService(
         return when (user is AuthenticatedUser) {
             true -> {
                 val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+                println("$users\n\n\n\n")
                 GroupDetails(
-                    group = groupEntity.toApiGroup(),
+                    group = groupEntity.toGroup(),
                     users = users.map { User(it.userName) },
                 )
             }
 
             false ->
                 GroupDetails(
-                    group = groupEntity.toApiGroup(redactEmail = true),
+                    group = groupEntity.toGroup(redactEmail = true),
                     users = null,
                 )
         }
@@ -177,22 +177,7 @@ class GroupManagementDatabaseService(
         contactEmail = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(): Group = Group(
-        groupId = this.id.value,
-        groupName = this.groupName,
-        institution = this.institution,
-        address = Address(
-            line1 = this.addressLine1,
-            line2 = this.addressLine2,
-            postalCode = this.addressPostalCode,
-            city = this.addressCity,
-            state = this.addressState,
-            country = this.addressCountry,
-        ),
-        contactEmail = this.contactEmail,
-    )
-
-    private fun GroupEntity.toApiGroup(redactEmail: Boolean = false): ApiGroup = ApiGroup(
+    private fun GroupEntity.toGroup(redactEmail: Boolean = false): Group = Group(
         groupId = this.id.value,
         groupName = this.groupName,
         institution = this.institution,
