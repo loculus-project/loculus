@@ -48,7 +48,7 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         group: NewGroup,
     ): Group = groupManagementDatabaseService.updateGroup(groupId, group, authenticatedUser)
 
-    @Operation(description = "Get details of a group. Contact information is redacted when not logged in.")
+    @Operation(description = "Get details of a group. Contact information is redacted when not authenticated.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups/{groupId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(
