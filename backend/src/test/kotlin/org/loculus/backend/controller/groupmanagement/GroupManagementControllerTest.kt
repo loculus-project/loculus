@@ -101,7 +101,8 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.group.address.state").value(DEFAULT_GROUP.address.state))
             .andExpect(jsonPath("\$.group.address.postalCode").value(DEFAULT_GROUP.address.postalCode))
             .andExpect(jsonPath("\$.group.address.country").value(DEFAULT_GROUP.address.country))
-            .andExpect(jsonPath("\$.group.contactEmail").value("N/A"))
+            .andExpect(jsonPath("\$.group.contactEmail").isEmpty())
+            .andExpect(jsonPath("\$.users").isEmpty())
     }
 
     @Test

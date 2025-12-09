@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
+import org.loculus.backend.api.ApiGroup
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.NewGroup
@@ -29,16 +30,22 @@ class GroupManagementDatabaseService(
 
     fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
-        val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
-        val details = GroupDetails(
-            group = groupEntity.toGroup(),
-            users = users.map { User(it.userName) },
-        )
 
-        if (user is AuthenticatedUser) {
-            return details
+        return when (user is AuthenticatedUser) {
+            true -> {
+                val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+                GroupDetails(
+                    group = groupEntity.toApiGroup(),
+                    users = users.map { User(it.userName) },
+                )
+            }
+
+            false ->
+                GroupDetails(
+                    group = groupEntity.toApiGroup(redactEmail = true),
+                    users = null,
+                )
         }
-        return details.returnPublicDetails()
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
@@ -183,5 +190,20 @@ class GroupManagementDatabaseService(
             country = this.addressCountry,
         ),
         contactEmail = this.contactEmail,
+    )
+
+    private fun GroupEntity.toApiGroup(redactEmail: Boolean = false): ApiGroup = ApiGroup(
+        groupId = this.id.value,
+        groupName = this.groupName,
+        institution = this.institution,
+        address = Address(
+            line1 = this.addressLine1,
+            line2 = this.addressLine2,
+            postalCode = this.addressPostalCode,
+            city = this.addressCity,
+            state = this.addressState,
+            country = this.addressCountry,
+        ),
+        contactEmail = if (redactEmail) null else this.contactEmail,
     )
 }
