@@ -1922,7 +1922,6 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         taxon_id: 12059
-        subsample_fraction: 0.2
     referenceGenomes:
       CV-A16:
         nucleotideSequences:
