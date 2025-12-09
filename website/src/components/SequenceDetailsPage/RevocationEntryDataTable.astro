@@ -23,7 +23,7 @@ interface Props {
     tableData: TableDataEntry[];
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
-    suborganism: Suborganism;
+    suborganism: Suborganism | null;
 }
 
 const { tableData, dataUseTermsHistory, referenceGenomeLightweightSchema, suborganism } = Astro.props;
