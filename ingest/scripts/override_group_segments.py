@@ -196,6 +196,7 @@ def write_grouped_metadata(
     output_grouped_metadata_path: str,
     config: Config,
     groups: Groups,
+    match_previous_accession_versions: bool,
 ) -> tuple[dict[Accession, Id], set[Accession]]:
     found_groups = {group: [] for group in groups.override_groups}
     # Map from original accession to the new concatenated accession
@@ -207,14 +208,29 @@ def write_grouped_metadata(
     for record in orjsonl.stream(input_metadata_path):
         count_total += 1
         metadata = record["metadata"]
-        if metadata["insdcAccessionFull"] not in groups.accession_to_group:
+        full_accession = metadata["insdcAccessionFull"]
+        group = None
+        if full_accession in groups.accession_to_group:
+            group = groups.accession_to_group[full_accession]
+        elif match_previous_accession_versions:
+            acc, ver = full_accession.split(".")
+            ver = int(ver)
+            # generate previous versions
+            for prev_ver in range(ver - 1, 0, -1):
+                prev_acc = f"{acc}.{prev_ver}"
+                if prev_acc in groups.accession_to_group:
+                    group = groups.accession_to_group[prev_acc]
+                    logger.warning(f"Matched {full_accession} to group via previous version {prev_acc}")
+                    break
+
+        if group is None:
             count_ungrouped += 1
             orjsonl.append(
                 output_ungrouped_metadata_path, {"id": record["id"], "metadata": record["metadata"]}
             )
             ungrouped_accessions.add(record["id"])
             continue
-        group = groups.accession_to_group[metadata["insdcAccessionFull"]]
+
         found_groups[group].append(record)
         if len(found_groups[group]) == len(set(groups.override_groups[group])):
             group_records(
@@ -320,6 +336,11 @@ def get_groups_object(groups_json_path: str) -> Groups:
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
+@click.option(
+    "--match-previous-accession-versions/--no-match-previous-accession-versions",
+    default=False,
+    help="Whether to match against previous versions of accessions (e.g., XX123.1 when XX123.2 is provided)"
+)
 def main(  # noqa: PLR0913, PLR0917
     config_file: str,
     groups: str,
@@ -330,6 +351,7 @@ def main(  # noqa: PLR0913, PLR0917
     output_ungrouped_seq: str,
     output_ungrouped_metadata: str,
     log_level: str,
+    match_previous_accession_versions: bool,
 ) -> None:
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
@@ -351,6 +373,7 @@ def main(  # noqa: PLR0913, PLR0917
         output_metadata,
         config,
         groups_,
+        match_previous_accession_versions,
     )
 
     write_grouped_sequences(
