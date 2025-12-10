@@ -234,6 +234,7 @@ def write_grouped_metadata(
                 prev_acc = f"{acc}.{prev_ver}"
                 if prev_acc in groups.accession_to_group:
                     group = groups.accession_to_group[prev_acc]
+                    logger.warning(f"Matched {full_accession} to group via previous version {prev_acc}")
                     break
 
         if group is None:
