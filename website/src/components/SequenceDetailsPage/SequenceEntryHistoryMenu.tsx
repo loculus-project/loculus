@@ -3,6 +3,7 @@ import React from 'react';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
+import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion';
 import IcBaselineHistory from '~icons/ic/baseline-history';
 import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 
@@ -58,14 +59,20 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                         );
                     })}
                     <li className='border-t mt-1 pt-1'>
-                        <a href={routes.versionPage(accessionVersion)} className='hover:no-underline'>
+                        <a
+                            href={routes.versionPage(parseAccessionVersionFromString(accessionVersion).accession)}
+                            className='hover:no-underline'
+                        >
                             All versions
                         </a>
                     </li>
                 </ul>
             </div>
             <div className='sm:hidden inline-block mr-2'>
-                <a href={routes.versionPage(accessionVersion)} className='text-xl'>
+                <a
+                    href={routes.versionPage(parseAccessionVersionFromString(accessionVersion).accession)}
+                    className='text-xl'
+                >
                     <IcBaselineHistory />
                 </a>
             </div>
