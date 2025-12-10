@@ -37,8 +37,7 @@ sequenceTest(
 
         await searchPage.clickOnSequence(0);
 
-        await page.getByRole('link', { name: 'Revise this sequence' }).click({ timeout: 15000 });
-        await expect(page.getByRole('heading', { name: 'Create new revision from' })).toBeVisible();
+        await searchPage.reviseSequence();
 
         await page.getByTestId(/^discard_edited_L/).click();
         await page.getByTestId(/^discard_edited_S/).click();

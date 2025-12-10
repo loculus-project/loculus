@@ -19,6 +19,10 @@ export class RevisionPage {
      * Clicks the "Revise this sequence" link
      */
     async clickReviseSequenceLink() {
+        // Sometimes clicking revise button doesn't register, so let's wait for sequence viewer to be visible first
+        // See #5447
+        await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
+
         await this.page
             .getByRole('link', { name: 'Revise this sequence' })
             .click({ timeout: 15000 });

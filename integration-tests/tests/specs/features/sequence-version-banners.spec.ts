@@ -80,7 +80,7 @@ test.describe('Sequence version banners', () => {
 
         // Click on the sequence and revise it
         await page.getByRole('cell', { name: 'France' }).click();
-        await page.getByRole('link', { name: 'Revise this sequence' }).click();
+        await search.reviseSequence();
         await page.getByLabel('Collection date').fill('2023-06-15');
         await page.getByRole('button', { name: 'Submit' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
@@ -184,7 +184,7 @@ test.describe('Sequence version banners', () => {
 
         // Revise the sequence
         await page.getByRole('cell', { name: 'Spain' }).click();
-        await page.getByRole('link', { name: 'Revise this sequence' }).click();
+        await search.reviseSequence();
         await page.getByLabel('Collection date').fill('2023-09-20');
         await page.getByRole('button', { name: 'Submit' }).click();
         await page.getByRole('button', { name: 'Confirm' }).click();
