@@ -75,3 +75,4 @@ batch_chunk_size: 10000  # Batch size for submitting sequences to Loculus backen
 nextclade_dataset_server: https://data.clades.nextstrain.org/v3
 time_between_approve_requests_seconds: 60
 backend_request_timeout_seconds: 600
+match_previous_accession_versions: false

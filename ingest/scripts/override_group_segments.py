@@ -210,6 +210,7 @@ def write_grouped_metadata(
     output_grouped_metadata_path: str,
     config: Config,
     groups: Groups,
+    match_previous_accession_versions: bool,
 ) -> tuple[dict[Accession, Id], set[Accession]]:
     found_groups = {group: [] for group in groups.override_groups}
     # Map from original accession to the new concatenated accession
@@ -222,7 +223,6 @@ def write_grouped_metadata(
         count_total += 1
         metadata = record["metadata"]
         full_accession = metadata["insdcAccessionFull"]
-        match_previous_accession_versions = True  # TODO - define somewhere
         group = None
         if full_accession in groups.accession_to_group:
             group = groups.accession_to_group[full_accession]
@@ -349,6 +349,11 @@ def get_groups_object(groups_json_path: str) -> Groups:
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
+@click.option(
+    "--match-previous-accession-versions/--no-match-previous-accession-versions",
+    default=False,
+    help="Whether to match against previous versions of accessions (e.g., XX123.1 when XX123.2 is provided)"
+)
 def main(  # noqa: PLR0913, PLR0917
     config_file: str,
     groups: str,
@@ -359,6 +364,7 @@ def main(  # noqa: PLR0913, PLR0917
     output_ungrouped_seq: str,
     output_ungrouped_metadata: str,
     log_level: str,
+    match_previous_accession_versions: bool,
 ) -> None:
     logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
@@ -380,6 +386,7 @@ def main(  # noqa: PLR0913, PLR0917
         output_metadata,
         config,
         groups_,
+        match_previous_accession_versions,
     )
 
     write_grouped_sequences(
