@@ -221,14 +221,29 @@ def write_grouped_metadata(
     for record in orjsonl.stream(input_metadata_path):
         count_total += 1
         metadata = record["metadata"]
-        if metadata["insdcAccessionFull"] not in groups.accession_to_group:
+        full_accession = metadata["insdcAccessionFull"]
+        match_previous_accession_versions = True  # TODO - define somewhere
+        group = None
+        if full_accession in groups.accession_to_group:
+            group = groups.accession_to_group[full_accession]
+        elif match_previous_accession_versions:
+            acc, ver = full_accession.split(".")
+            ver = int(ver)
+            # generate previous versions
+            for prev_ver in range(ver - 1, 0, -1):
+                prev_acc = f"{acc}.{prev_ver}"
+                if prev_acc in groups.accession_to_group:
+                    group = groups.accession_to_group[prev_acc]
+                    break
+
+        if group is None:
             count_ungrouped += 1
             orjsonl.append(
                 output_ungrouped_metadata_path, {"id": record["id"], "metadata": record["metadata"]}
             )
             ungrouped_accessions.add(record["id"])
             continue
-        group = groups.accession_to_group[metadata["insdcAccessionFull"]]
+
         found_groups[group].append(record)
         if len(found_groups[group]) == len(set(groups.override_groups[group])):
             group_records(
