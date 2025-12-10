@@ -68,11 +68,11 @@ class Config:
 
 @dataclass
 class Groups:
-    """Group override definitions, showing which accessions belong to a given group."""
+    # Group override definitions, showing which accessions belong to a given group.
     override_groups: dict[GroupName, list[InsdcAccession]]
 
-    """Map of nucleotide sequence accessions to their group/assembly names.
-    Basically the reverse map of `override_groups`."""
+    # Map of nucleotide sequence accessions to their group/assembly names.
+    # Basically the reverse map of `override_groups`.
     accession_to_group: dict[InsdcAccession, GroupName]
 
 
@@ -247,7 +247,7 @@ def write_grouped_metadata(
     logger.info(f"No override group definitions found for {count_ungrouped} records")
 
     count_incomplete_groups = len(found_groups)
-    count_empty_groups = len([name for name, records in found_groups if len(records) == 0])
+    count_empty_groups = len([name for name, records in found_groups.items() if len(records) == 0])
 
     # Write out remaining, only partially found groups - even if incomplete
     for name, records in found_groups.items():
@@ -307,7 +307,7 @@ def get_groups_object(groups_json_path: str) -> Groups:
         for accession in metadata:
             accession_to_group[accession] = group
 
-    return Groups(accession_to_group, override_groups)
+    return Groups(override_groups, accession_to_group)
 
 
 @click.command()
