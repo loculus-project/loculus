@@ -1,0 +1,24 @@
+ID   LOC_TEST001; ; linear; RNA; ; UNC; 12 BP.
+XX
+AC   LOC_TEST001;
+XX
+DE   Original sequence submitted to Loculus with accession: LOC_TEST001,
+DE   version: 1
+XX
+OS   Test organism
+OC   .
+XX
+RN   [1]
+RA   Malago' G., O'Brien P.;
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..12
+FT                   /molecule_type="genomic RNA"
+FT                   /organism="Test organism"
+FT                   /country="Italy"
+FT                   /collection_date="2024-01-01"
+XX
+SQ   
+     atcgatcgat cg                                                            12
+//

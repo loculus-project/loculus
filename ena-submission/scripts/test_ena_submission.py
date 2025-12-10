@@ -4,6 +4,7 @@ import csv
 import gzip
 import json
 import logging
+import os
 import unittest
 from pathlib import Path
 from typing import Any, Final
@@ -22,6 +23,7 @@ from ena_deposition.ena_submission_helper import (
     create_ena_project,
     create_ena_sample,
     create_fasta,
+    create_flatfile,
     create_manifest,
     dataclass_to_xml,
     get_chromsome_accessions,
@@ -246,6 +248,53 @@ class AssemblyCreationTests(unittest.TestCase):
         result_extended = reformat_authors_from_loculus_to_embl_style(extended_latin_authors)
         desired_result_extended = "Perez J., Bailley F., Moller A., Walesa L.;"
         self.assertEqual(result_extended, desired_result_extended)
+
+        # Test with apostrophes in surnames (middle and trailing)
+        authors_with_apostrophe = "O'Brien, Patrick; Malago', Giovanni; Smith, Jane"
+        result_apostrophe = reformat_authors_from_loculus_to_embl_style(authors_with_apostrophe)
+        desired_result_apostrophe = "O'Brien P., Malago' G., Smith J.;"
+        self.assertEqual(result_apostrophe, desired_result_apostrophe)
+
+    def test_flatfile_with_apostrophe_in_authors(self):
+        """Test that flatfile generation handles apostrophes correctly"""
+        config = mock_config()
+        metadata = {
+            "accession": "LOC_TEST001",
+            "version": "1",
+            "authors": "Malago', Giovanni; O'Brien, Patrick",
+            "sampleCollectionDate": "2024-01-01",
+            "geoLocCountry": "Italy",
+        }
+        organism_metadata = {
+            "scientific_name": "Test organism",
+            "molecule_type": "genomic RNA",
+            "topology": "linear",
+        }
+        unaligned_sequences = {
+            "main": "ATCGATCGATCG",
+        }
+
+        # Create flatfile
+        flatfile_path = create_flatfile(
+            config, metadata, organism_metadata, unaligned_sequences, dir="./tmp"
+        )
+
+        # Read the generated flatfile content
+        with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
+            generated_content = f.read()
+
+        # Read the expected flatfile content
+        expected_flatfile_path = Path("test/test_flatfile_with_apostrophe.embl")
+        expected_content = Path(expected_flatfile_path).read_text(encoding="utf-8")
+
+        # Compare generated vs expected
+        self.assertEqual(generated_content, expected_content)
+
+        # Additional check: ensure no &apos; entities are present
+        self.assertNotIn("&apos;", generated_content, "Flatfile should not contain &apos; entities")
+
+        # Clean up
+        os.remove(flatfile_path)
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(

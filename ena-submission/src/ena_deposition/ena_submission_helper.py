@@ -444,6 +444,9 @@ def create_flatfile(
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
+    # BioPython's EMBL writer automatically adds a terminating semicolon,
+    # so we need to strip it from our formatted authors string to avoid duplication
+    authors = authors.removesuffix(";")
     country = get_country(metadata)
     organism = organism_metadata.get("scientific_name", "Unknown")
     accession = metadata["accession"]
