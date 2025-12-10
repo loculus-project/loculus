@@ -33,7 +33,6 @@ class GroupManagementDatabaseService(
         return when (user is AuthenticatedUser) {
             true -> {
                 val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
-                println("$users\n\n\n\n")
                 GroupDetails(
                     group = groupEntity.toGroup(),
                     users = users.map { User(it.userName) },
