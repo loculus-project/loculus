@@ -1882,7 +1882,7 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           segment_classification_method: "minimizer"
-          minimizer_index: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index_v2.json"
+          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index_v2.json"
           nextclade_sequence_and_datasets:
             - name: CV-A16
               accepted_sort_matches: ["CV-A16", "CVA16-A", "CVA16-B", "CVA16-B1a", "CVA16-B1b", "CVA16-B1c", CVA16-B2"]
