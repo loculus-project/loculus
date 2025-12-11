@@ -21,7 +21,8 @@ def compress_ndjson(records: Iterable[dict]) -> bytes:
 def read_ndjson_file(path: Path) -> list[dict]:
     decompressor = zstandard.ZstdDecompressor()
     with path.open("rb") as handle:
-        data = decompressor.decompress(handle.read())
+        with decompressor.stream_reader(handle) as reader:
+            data = reader.read()
     return [json.loads(line) for line in data.decode("utf-8").splitlines() if line]
 
 
