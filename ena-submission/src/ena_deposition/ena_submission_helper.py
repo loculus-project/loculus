@@ -10,7 +10,7 @@ import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import Field, dataclass, is_dataclass
+from dataclasses import Field, asdict, dataclass, is_dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal, Protocol
@@ -867,7 +867,7 @@ def check_accession_exists_and_set_error(
         assembly_table_entry = AssemblyTableEntry(
             **conditions,  # type: ignore
             status=Status.HAS_ERRORS,
-            errors=json.dumps([error_text]),
+            errors=[error_text],
             result={},  # type: ignore
         )
         succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
@@ -879,27 +879,34 @@ def check_accession_exists_and_set_error(
 
 def trigger_retry_if_exists(
     entries_with_errors: Iterable[Mapping[str, Any]],
-    db_config: "SimpleConnectionPool",
-    key_fields: list[str],
+    db_config: SimpleConnectionPool,
     table_name: TableName,
     error_substring: str = "does not exist in ENA",
     retry_threshold_hours: int = 1,
     last_retry: datetime | None = None,
-):
+) -> datetime | None:
     if (
         last_retry
         and datetime.now(tz=pytz.utc) - timedelta(hours=retry_threshold_hours) < last_retry
     ):
-        return
+        return last_retry
     for entry in entries_with_errors:
         if error_substring not in str(entry.get("errors", "")):
             continue
+        match table_name:
+            case TableName.PROJECT_TABLE:
+                primary_key = ProjectTableEntry(**entry).primary_key
+            case TableName.SAMPLE_TABLE:
+                primary_key = SampleTableEntry(**entry).primary_key
+            case TableName.ASSEMBLY_TABLE:
+                primary_key = AssemblyTableEntry(**entry).primary_key
+            case _:
+                logger.error(f"Unknown table name: {table_name}")
+                continue
 
         logger.info(
-            f"Retrying submission {key_fields} in {table_name} with error: '{entry.get('errors')}'"
+            f"Retrying submission {primary_key} in {table_name} with error: '{entry.get('errors')}'"
         )
-
-        conditions = {field: entry[field] for field in key_fields}
 
         update_values = {
             "status": Status.READY,
@@ -910,10 +917,11 @@ def trigger_retry_if_exists(
         try:
             update_with_retry(
                 db_config=db_config,
-                conditions=conditions,
+                conditions=asdict(primary_key),
                 update_values=update_values,
                 table_name=table_name,
             )
             last_retry = datetime.now(tz=pytz.utc)
         except Exception as e:
             logger.error(f"Failed to update {table_name} entry for retry: {e!s}")
+    return last_retry

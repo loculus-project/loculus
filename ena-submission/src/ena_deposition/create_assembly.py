@@ -264,13 +264,16 @@ def submission_table_start(db_config: SimpleConnectionPool, config: Config) -> N
             and row["metadata"]["insdcRawReadsAccession"]
         ):
             run_ref = row["metadata"]["insdcRawReadsAccession"]
-            if check_accession_exists_and_set_error(
-                conditions=seq_key,
-                accession=run_ref,
-                accession_type="RUN_REF",
-                db_pool=db_config,
-                config=config,
-            ) is False:
+            if (
+                check_accession_exists_and_set_error(
+                    conditions=seq_key,
+                    accession=run_ref,
+                    accession_type="RUN_REF",
+                    db_pool=db_config,
+                    config=config,
+                )
+                is False
+            ):
                 continue
 
         # 1. check if there exists an entry in the assembly_table for seq_key
@@ -728,32 +731,43 @@ def assembly_table_handle_errors(
     retry_threshold_hours: int = 4,
     waiting_threshold_hours: int = 48,
     slack_retry_threshold_hours: int = 12,
-):
+) -> datetime | None:
     """
     1. Find all entries in assembly_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
     2. If time since last slack notification is over slack_retry_threshold_hours send notification
+    3. Trigger retry if time since last retry is over retry_threshold_hours
     """
-    entries_with_errors = find_errors_in_db(
-        db_config, TableName.ASSEMBLY_TABLE, time_threshold=submitting_time_threshold_min
+    entries_waiting = find_waiting_in_db(
+        db_config, TableName.ASSEMBLY_TABLE, time_threshold=waiting_threshold_hours
     )
-    if len(entries_with_errors) > 0:
-        error_msg = (
+    entries_with_errors = find_errors_in_db(
+        db_config,
+        TableName.ASSEMBLY_TABLE,
+        time_threshold=submitting_time_threshold_min,
+    )
+
+    messages = []
+
+    if entries_waiting:
+        msg = (
+            f"{config.backend_url}: ENA Submission pipeline found "
+            f"{len(entries_waiting)} entries in assembly_table in"
+            f" status WAITING for over {waiting_threshold_hours}h"
+        )
+        messages.append(msg)
+
+    if entries_with_errors:
+        msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
             f"{len(entries_with_errors)} entries in assembly_table in status"
             f" HAS_ERRORS or SUBMITTING for over {submitting_time_threshold_min}m"
         )
-        logger.info(error_msg)
-        send_slack_notification(
-            error_msg,
-            slack_config,
-            time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_retry_threshold_hours,
-        )
-        trigger_retry_if_exists(
+        messages.append(msg)
+
+        last_retry_time = trigger_retry_if_exists(
             entries_with_errors,
             db_config,
-            key_fields=["accession", "version"],
             table_name=TableName.ASSEMBLY_TABLE,
             retry_threshold_hours=retry_threshold_hours,
             last_retry=last_retry_time,
@@ -761,22 +775,18 @@ def assembly_table_handle_errors(
         # TODO: Query ENA to check if assembly has in fact been created
         # If created update assembly_table
         # If not retry 3 times, then raise for manual intervention
-    entries_waiting = find_waiting_in_db(
-        db_config, TableName.ASSEMBLY_TABLE, time_threshold=waiting_threshold_hours
-    )
-    if len(entries_waiting) > 0:
-        error_msg = (
-            f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_waiting)} entries in assembly_table in"
-            f" status WAITING for over {waiting_threshold_hours}h"
-        )
-        logger.info(error_msg)
+
+    if messages:
+        now = datetime.now(tz=pytz.utc)
+        logger.info("\n".join(messages))
         send_slack_notification(
-            error_msg,
+            "\n".join(messages),
             slack_config,
-            time=datetime.now(tz=pytz.utc),
+            time=now,
             time_threshold=slack_retry_threshold_hours,
         )
+
+    return last_retry_time
 
 
 def create_assembly(config: Config, stop_event: threading.Event):
@@ -798,5 +808,5 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
         assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
-        assembly_table_handle_errors(db_config, config, slack_config, last_retry_time)
+        last_retry_time = assembly_table_handle_errors(db_config, config, slack_config, last_retry_time)
         time.sleep(config.time_between_iterations)

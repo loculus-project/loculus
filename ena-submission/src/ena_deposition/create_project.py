@@ -371,7 +371,7 @@ def project_table_handle_errors(
     submitting_time_threshold_min: int = 15,
     retry_threshold_hours: int = 4,
     slack_retry_threshold_hours: int = 12,
-):
+) -> datetime | None:
     """
     1. Find all entries in project_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
@@ -392,10 +392,9 @@ def project_table_handle_errors(
             time=datetime.now(tz=pytz.utc),
             time_threshold=slack_retry_threshold_hours,
         )
-        trigger_retry_if_exists(
+        last_retry = trigger_retry_if_exists(
             entries_with_errors,
             db_config,
-            key_fields=["group_id", "organism"],
             table_name=TableName.PROJECT_TABLE,
             retry_threshold_hours=retry_threshold_hours,
             last_retry=last_retry_time,
@@ -403,6 +402,7 @@ def project_table_handle_errors(
         # TODO: Query ENA to check if project has in fact been created
         # If created update project_table
         # If not retry 3 times, then raise for manual intervention
+    return last_retry
 
 
 def create_project(config: Config, stop_event: threading.Event):
@@ -423,5 +423,7 @@ def create_project(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
-        project_table_handle_errors(db_config, config, slack_config, last_retry_time)
+        last_retry_time = project_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)

@@ -383,38 +383,10 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
             )
         update_with_retry(
             db_config=db_config,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
         )
-
-
-def retry_biosample_submission(
-    entries_with_errors: list[dict[str, Any]],
-    db_config: SimpleConnectionPool,
-    time: datetime,
-    time_threshold: int = 12,
-):
-    for entry in entries_with_errors:
-        if time - timedelta(hours=time_threshold) > entry["started_at"]:
-            continue
-        if "does not exist in ENA" in entry.get("errors", ""):
-            seq_key = {"accession": entry["accession"], "version": entry["version"]}
-            logger.info(
-                f"Retrying biosample submission for {seq_key['accession']} version {seq_key['version']}"
-            )
-            update_values = {
-                "status": Status.READY,
-                "errors": None,
-                "finished_at": None,
-                "result": None,
-            }
-            update_with_retry(
-                db_config=db_config,
-                conditions=asdict(seq_key),
-                update_values=update_values,
-                table_name=TableName.SAMPLE_TABLE,
-            )
 
 
 def sample_table_handle_errors(
@@ -425,7 +397,7 @@ def sample_table_handle_errors(
     submitting_time_threshold_min: int = 15,
     retry_threshold_hours: int = 4,
     slack_retry_threshold_hours: int = 12,
-):
+) -> datetime | None:
     """
     1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
@@ -446,10 +418,9 @@ def sample_table_handle_errors(
             time=datetime.now(tz=pytz.utc),
             time_threshold=slack_retry_threshold_hours,
         )
-        trigger_retry_if_exists(
+        last_retry_time = trigger_retry_if_exists(
             entries_with_errors,
             db_config,
-            key_fields=["accession", "version"],
             table_name=TableName.SAMPLE_TABLE,
             retry_threshold_hours=retry_threshold_hours,
             last_retry=last_retry_time,
@@ -457,6 +428,7 @@ def sample_table_handle_errors(
         # TODO: Query ENA to check if sample has in fact been created
         # If created update sample_table
         # If not retry 3 times, then raise for manual intervention
+    return last_retry_time
 
 
 def create_sample(config: Config, stop_event: threading.Event):
@@ -477,5 +449,5 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
-        sample_table_handle_errors(db_config, config, slack_config, last_retry_time)
+        last_retry_time = sample_table_handle_errors(db_config, config, slack_config, last_retry_time)
         time.sleep(config.time_between_iterations)
