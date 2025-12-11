@@ -51,10 +51,7 @@ def transform_record(record: dict) -> dict:
                 result[segment_key] = None
             else:
                 insertions = nucleotide_insertions.get(segment_key, [])
-                result[segment_key] = {
-                    "sequence": sequence_value,
-                    "insertions": insertions
-                }
+                result[segment_key] = {"sequence": sequence_value, "insertions": insertions}
 
     # Process aligned amino acid sequences
     aligned_aa_seqs = record.get("alignedAminoAcidSequences", {})
@@ -64,10 +61,7 @@ def transform_record(record: dict) -> dict:
                 result[gene_key] = None
             else:
                 insertions = amino_acid_insertions.get(gene_key, [])
-                result[gene_key] = {
-                    "sequence": sequence_value,
-                    "insertions": insertions
-                }
+                result[gene_key] = {"sequence": sequence_value, "insertions": insertions}
 
     # Process unaligned nucleotide sequences
     unaligned_nuc_seqs = record.get("unalignedNucleotideSequences", {})
@@ -109,7 +103,7 @@ def analyze_and_transform_ndjson(path: Path) -> NdjsonAnalysis:
             path.open("rb") as compressed_input,
             decompressor.stream_reader(compressed_input) as reader,
             transformed_path.open("wb") as compressed_output,
-            compressor.stream_writer(compressed_output) as writer
+            compressor.stream_writer(compressed_output) as writer,
         ):
             text_stream = io.TextIOWrapper(reader, encoding="utf-8")
 
@@ -138,7 +132,7 @@ def analyze_and_transform_ndjson(path: Path) -> NdjsonAnalysis:
                     msg = f"Failed to transform record at line {record_count}: {exc}"
                     raise RuntimeError(msg) from exc
 
-                transformed_json = json.dumps(transformed, separators=(',', ':'))
+                transformed_json = json.dumps(transformed, separators=(",", ":"))
                 writer.write(f"{transformed_json}\n".encode("utf-8"))
     except zstandard.ZstdError as exc:
         msg = f"Failed to compress/decompress {path}: {exc}"
@@ -147,5 +141,5 @@ def analyze_and_transform_ndjson(path: Path) -> NdjsonAnalysis:
     return NdjsonAnalysis(
         record_count=record_count,
         pipeline_versions=pipeline_versions,
-        transformed_path=transformed_path
+        transformed_path=transformed_path,
     )

@@ -12,7 +12,8 @@ import requests
 
 from .config import ImporterConfig
 from .constants import (
-    TRANSFORMED_DATA_FILENAME, RAW_DATA_FILENAME,
+    TRANSFORMED_DATA_FILENAME,
+    RAW_DATA_FILENAME,
 )
 from .decompressor import analyze_and_transform_ndjson
 from .errors import (
@@ -171,7 +172,9 @@ class DownloadManager:
                 message = f"Processing failed ({exc})"
                 raise DecompressionFailedError(message) from exc
 
-            logger.info("Downloaded and transformed %s records (ETag %s)", analysis.record_count, etag_value)
+            logger.info(
+                "Downloaded and transformed %s records (ETag %s)", analysis.record_count, etag_value
+            )
 
             # Validate record count
             try:
