@@ -70,7 +70,10 @@ def make_mock_download_func(responses: list[MockHttpResponse]):
     responses_copy = list(responses)
 
     def mock_download(
-        url: str, output_path: Path, etag: str | None = None, timeout: int = 300  # noqa: ARG001
+        url: str,
+        output_path: Path,
+        etag: str | None = None,
+        timeout: int = 300,  # noqa: ARG001
     ) -> HttpResponse:
         if not responses_copy:
             msg = "No fake HTTP responses remaining"
