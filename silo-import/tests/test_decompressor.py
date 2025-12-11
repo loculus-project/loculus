@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from silo_import.decompressor import transform_record
 
 
