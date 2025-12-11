@@ -2,6 +2,7 @@ import logging
 import re
 import threading
 import time
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
@@ -29,6 +30,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
@@ -296,10 +298,10 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if entry is incorrectly added older version - error and do not submit"""
-    version = int(seq_key["version"])
-    accession = {"accession": seq_key["accession"]}
+    version = int(seq_key.version)
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
@@ -312,12 +314,12 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
             "started_at": datetime.now(tz=pytz.utc),
         }
         logger.error(
-            f"Sample creation failed for {seq_key['accession']} version {version} "
+            f"Sample creation failed for {seq_key.accession} version {version} "
             "as it is not the latest version."
         )
         update_with_retry(
             db_config=db_config,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
             reraise=False,
@@ -344,14 +346,14 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = AccessionVersion(accession=row["accession"], version=row["version"])
         if is_old_version(db_config, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
 
         sample_set = construct_sample_set_object(
@@ -364,7 +366,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name=TableName.SAMPLE_TABLE,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -385,7 +387,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Sample creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+                f"Sample creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
         else:
             update_values = {
@@ -394,11 +396,11 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
-                f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
+                f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
             )
         update_with_retry(
             db_config=db_config,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
         )

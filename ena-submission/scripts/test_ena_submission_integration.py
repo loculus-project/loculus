@@ -14,6 +14,7 @@ import json
 import logging
 import re
 import uuid
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Any, Final
 from unittest.mock import Mock, patch
@@ -701,9 +702,9 @@ class TestFirstPublicUpdate(TestSubmission):
         # Hence the 2 branches below
         if add_function == add_to_project_table:
             # Single key (like project_id)
-            conditions = {config.id_fields[0]: entity_id}
+            conditions = {"project_id": entity_id}
         else:
-            conditions = {field: getattr(entry, field) for field in config.id_fields}
+            conditions = asdict(entry.primary_key)
 
         # Run visibility check with invalid accessions
         check_and_update_visibility_for_column(

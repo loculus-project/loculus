@@ -5,7 +5,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Final
 
 import psycopg2
@@ -64,33 +64,27 @@ def db_init(
     )
 
 
-class StatusAll(Enum):
-    READY_TO_SUBMIT = 0
-    SUBMITTING_PROJECT = 1
-    SUBMITTED_PROJECT = 2
-    SUBMITTING_SAMPLE = 3
-    SUBMITTED_SAMPLE = 4
-    SUBMITTING_ASSEMBLY = 5
-    SUBMITTED_ALL = 6
-    SENT_TO_LOCULUS = 7
-    HAS_ERRORS_PROJECT = 8
-    HAS_ERRORS_ASSEMBLY = 9
-    HAS_ERRORS_SAMPLE = 10
-    HAS_ERRORS_EXT_METADATA_UPLOAD = 11
-
-    def __str__(self):
-        return self.name
+class StatusAll(StrEnum):
+    READY_TO_SUBMIT = "READY_TO_SUBMIT"
+    SUBMITTING_PROJECT = "SUBMITTING_PROJECT"
+    SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
+    SUBMITTING_SAMPLE = "SUBMITTING_SAMPLE"
+    SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
+    SUBMITTED_ALL = "SUBMITTED_ALL"
+    SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
+    HAS_ERRORS_PROJECT = "HAS_ERRORS_PROJECT"
+    HAS_ERRORS_ASSEMBLY = "HAS_ERRORS_ASSEMBLY"
+    HAS_ERRORS_SAMPLE = "HAS_ERRORS_SAMPLE"
+    HAS_ERRORS_EXT_METADATA_UPLOAD = "HAS_ERRORS_EXT_METADATA_UPLOAD"
 
 
-class Status(Enum):
-    READY = 0
-    SUBMITTING = 1
-    SUBMITTED = 2
-    HAS_ERRORS = 3
-    WAITING = 4  # Only for assembly creation
-
-    def __str__(self):
-        return self.name
+class Status(StrEnum):
+    READY = "READY"
+    SUBMITTING = "SUBMITTING"
+    SUBMITTED = "SUBMITTED"
+    HAS_ERRORS = "HAS_ERRORS"
+    WAITING = "WAITING"  # Only for assembly creation
 
 
 class TableName(StrEnum):
@@ -126,8 +120,18 @@ def validate_column_name(table_name: str, column_name: str):
 
 
 type Accession = str
-type AccessionVersion = str
 type Version = int
+
+
+@dataclass(frozen=True)
+class AccessionVersion:
+    accession: Accession
+    version: Version
+
+
+@dataclass(frozen=True)
+class ProjectId:
+    project_id: int | None
 
 
 @dataclass
@@ -147,6 +151,10 @@ class SubmissionTableEntry:
     external_metadata: dict[str, str | Sequence[str]] | None = None
     project_id: int | None = None
 
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
 
 @dataclass(kw_only=True)
 class ProjectTableEntry:
@@ -163,6 +171,10 @@ class ProjectTableEntry:
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
 
+    @property
+    def primary_key(self) -> ProjectId:
+        return ProjectId(project_id=self.project_id)
+
 
 @dataclass(kw_only=True)
 class SampleTableEntry:
@@ -176,6 +188,10 @@ class SampleTableEntry:
     result: dict[str, str | Sequence[str]] | None = None
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
+
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
 
 
 @dataclass(kw_only=True)
@@ -192,6 +208,10 @@ class AssemblyTableEntry:
     ncbi_nucleotide_first_publicly_visible: datetime | None = None
     ena_gca_first_publicly_visible: datetime | None = None
     ncbi_gca_first_publicly_visible: datetime | None = None
+
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
 
 
 def type_conversion(value: Any) -> Any:
@@ -226,7 +246,9 @@ def highest_version_in_submission_table(
 
 
 def delete_records_in_db(
-    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
+    db_conn_pool: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, str],
 ) -> int:
     """
     Deletes records from the specified table based on the given conditions.
@@ -270,7 +292,9 @@ def delete_records_in_db(
 
 
 def find_conditions_in_db(
-    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, Any]
+    db_conn_pool: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """
     Return all records from the specified table that match all the conditions
@@ -638,12 +662,12 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
-def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
-    version = seq_key["version"]
+    version = seq_key.version
     if version == "1":
         return False
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
@@ -651,10 +675,10 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
-def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+def last_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> int | None:
     if not is_revision(db_config, seq_key):
         return None
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )

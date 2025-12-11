@@ -11,7 +11,7 @@ import logging
 import threading
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from http import HTTPStatus
@@ -47,7 +47,6 @@ class ColumnCheckConfig:
 
     table_name: TableName
     entry_class: type[ProjectTableEntry | SampleTableEntry | AssemblyTableEntry]
-    id_fields: list[str]
     visibility_column: str
     accession_field_name_prefix: str  # Field prefix in result dict (e.g. "insdc_accession_full")
     checker_class: type  # Which visibility checker to use
@@ -155,7 +154,6 @@ COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ena_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
-        id_fields=["project_id"],
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=ENAVisibilityChecker,
@@ -163,7 +161,6 @@ COLUMN_CONFIGS = {
     (EntityType.PROJECT, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.PROJECT_TABLE,
         entry_class=ProjectTableEntry,
-        id_fields=["project_id"],
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="bioproject_accession",
         checker_class=NCBIVisibilityChecker,
@@ -171,7 +168,6 @@ COLUMN_CONFIGS = {
     (EntityType.SAMPLE, "ena_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ena_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
         checker_class=ENAVisibilityChecker,
@@ -179,7 +175,6 @@ COLUMN_CONFIGS = {
     (EntityType.SAMPLE, "ncbi_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.SAMPLE_TABLE,
         entry_class=SampleTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ncbi_first_publicly_visible",
         accession_field_name_prefix="biosample_accession",
         checker_class=NCBIVisibilityChecker,
@@ -188,7 +183,6 @@ COLUMN_CONFIGS = {
     (EntityType.ASSEMBLY, "ena_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ena_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=ENAVisibilityChecker,
@@ -196,7 +190,6 @@ COLUMN_CONFIGS = {
     (EntityType.ASSEMBLY, "ncbi_nucleotide_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ncbi_nucleotide_first_publicly_visible",
         accession_field_name_prefix="insdc_accession_full",  # Prefix for multi-segment accessions
         checker_class=NCBIVisibilityChecker,
@@ -205,7 +198,6 @@ COLUMN_CONFIGS = {
     (EntityType.ASSEMBLY, "ena_gca_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ena_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=ENAVisibilityChecker,
@@ -213,7 +205,6 @@ COLUMN_CONFIGS = {
     (EntityType.ASSEMBLY, "ncbi_gca_first_publicly_visible"): ColumnCheckConfig(
         table_name=TableName.ASSEMBLY_TABLE,
         entry_class=AssemblyTableEntry,
-        id_fields=["accession", "version"],
         visibility_column="ncbi_gca_first_publicly_visible",
         accession_field_name_prefix="gca_accession",
         checker_class=NCBIVisibilityChecker,
@@ -291,8 +282,7 @@ def check_and_update_visibility_for_column(
     )
 
     for entity in entities_needing_check:
-        # get a dict for id_field column -> value
-        entity_id = {field: getattr(entity, field) for field in column_config.id_fields}
+        entity_id = asdict(entity.primary_key)
         accessions = get_accessions_to_check(entity, column_config)
 
         if not accessions:
