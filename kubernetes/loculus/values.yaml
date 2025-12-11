@@ -29,7 +29,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
-zstdCompressionLevel: 10
+zstdCompressionLevel: 20
 dataUseTerms:
   enabled: true
   urls:
