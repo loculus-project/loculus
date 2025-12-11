@@ -319,7 +319,7 @@ def submission_table_update(db_config: SimpleConnectionPool) -> None:
 
 def update_assembly_error(
     db_config: SimpleConnectionPool,
-    error: str | list[str],
+    error: list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
@@ -332,7 +332,7 @@ def update_assembly_error(
         conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
             "status": Status.HAS_ERRORS,
-            "errors": json.dumps(error),
+            "errors": error,
             "started_at": datetime.now(tz=pytz.utc),
         },
         table_name=TableName.ASSEMBLY_TABLE,
@@ -377,7 +377,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
     if entry["metadata"].get("bioprojectAccession"):
         new_project_accession = entry["metadata"]["bioprojectAccession"]
@@ -387,7 +387,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
 
     differing_fields = {}
@@ -414,10 +414,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {differing_fields}"
+            f"last version: {json.dumps(differing_fields)}"
         )
         logger.error(error)
-        update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+        update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
         return False
     return True
 
@@ -494,7 +494,7 @@ def update_assembly_results_with_latest_version(
         conditions=seq_key,
         update_values={
             "status": Status.SUBMITTED,
-            "result": json.dumps(last_version_data[0]["result"]),
+            "result": last_version_data[0]["result"],
         },
         table_name=TableName.ASSEMBLY_TABLE,
         reraise=False,
@@ -612,7 +612,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             assembly_creation_results.result["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
-                "result": json.dumps(assembly_creation_results.result),
+                "result": assembly_creation_results.result,
             }
             logger.info(
                 f"Assembly creation succeeded for {seq_key['accession']} "
@@ -691,7 +691,7 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
                 conditions=seq_key,
                 update_values={
                     "status": status,
-                    "result": json.dumps(new_result.result),
+                    "result": new_result.result,
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 table_name=TableName.ASSEMBLY_TABLE,

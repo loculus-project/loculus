@@ -1,6 +1,5 @@
 # This script collects the results of the ENA submission and uploads the results to Loculus
 
-import json
 import logging
 import threading
 import time
@@ -197,7 +196,7 @@ def get_external_metadata_and_send_to_loculus(
                         db_config,
                         conditions=seq_key,
                         update_values={
-                            "external_metadata": json.dumps(new_external_metadata),
+                            "external_metadata": new_external_metadata,
                         },
                         table_name=TableName.SUBMISSION_TABLE,
                     )

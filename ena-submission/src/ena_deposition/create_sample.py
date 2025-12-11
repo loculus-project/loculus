@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 import threading
@@ -309,7 +308,7 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     if version < all_versions[-1]:
         update_values = {
             "status": Status.HAS_ERRORS,
-            "errors": json.dumps(["Revision version is not the latest version"]),
+            "errors": ["Revision version is not the latest version"],
             "started_at": datetime.now(tz=pytz.utc),
         }
         logger.error(
@@ -382,7 +381,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(sample_creation_results.result),
+                "result": sample_creation_results.result,
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
@@ -391,7 +390,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
-                "errors": json.dumps(sample_creation_results.errors),
+                "errors": sample_creation_results.errors,
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
