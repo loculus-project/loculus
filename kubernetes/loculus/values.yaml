@@ -1882,30 +1882,31 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           segment_classification_method: "minimizer"
+          create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index_v2.json"
           nextclade_sequence_and_datasets:
             - name: CV-A16
-              accepted_sort_matches: ["CV-A16", "CVA16-A", "CVA16-B", "CVA16-B1a", "CVA16-B1b", "CVA16-B1c", CVA16-B2"]
+              accepted_sort_matches: ["CV-A16", "CVA16-A", "CVA16-B", "CVA16-B1a", "CVA16-B1b", "CVA16-B1c", "CVA16-B2"]
               nextclade_dataset_name: enpen/enterovirus/cv-a16
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+              #accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
               gene_prefix: "CV-A16-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: CV-A10
               accepted_sort_matches: ["CV-A10", "CVA10-C", "CVA10-D", "CVA10-F", "CVA10-G"]
               nextclade_dataset_name: enpen/enterovirus/cv-a10
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+              #accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
               gene_prefix: "CV-A10-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-A71
               accepted_sort_matches: ["EV-A71", "EVA71-A", "EVA71-B2", "EVA71-B3", "EVA71-B4", "EVA71-B5", "EVA71-C", "EVA71-C1like", "EVA71-C2", "EVA71-C3", "EVA71-C4", "EVA71-C5", "EVA71-E", "EVA71-F"]
               nextclade_dataset_name: enpen/enterovirus/ev-a71
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+              #accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
               gene_prefix: "EV-A71-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-D68
               accepted_sort_matches: ["EV-D68", "EVD68-B3", "EVD68-B2", "EVD68-B1", "EVD68-C", "EVD68-A2", "EVD68-A1"]
               gene_prefix: "EV-D68-"
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+              #accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
               nextclade_dataset_name: enpen/enterovirus/ev-d68
               nextclade_dataset_server: https://data.clades.nextstrain.org/v3
