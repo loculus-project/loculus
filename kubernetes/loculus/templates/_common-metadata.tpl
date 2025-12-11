@@ -359,6 +359,7 @@ fields:
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}

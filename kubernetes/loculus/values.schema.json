@@ -940,6 +940,15 @@
       "default": "LOC_",
       "description": "Prefix used for accession numbers"
     },
+    "zstdCompressionLevel": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "integer",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 22,
+      "description": "Zstandard compression level for sequence data (1-22, where higher values provide better compression but slower speed)"
+    },
     "environment": {
       "groups": ["general"],
       "type": "string",

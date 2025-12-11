@@ -11,6 +11,7 @@ data class BackendConfig(
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
     val fileSharing: FileSharing = FileSharing(),
+    val zstdCompressionLevel: Int = 10,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
