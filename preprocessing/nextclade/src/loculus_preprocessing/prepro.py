@@ -145,9 +145,11 @@ def add_nextclade_metadata(
 
     match nextclade_path:
         case "frameShifts":
-            return process_frameshifts(raw)
+            result = None if raw is None else str(raw)
+            return process_frameshifts(result)
         case "qc.stopCodons.stopCodons":
-            return process_stop_codons(raw)
+            result = None if raw is None else str(raw)
+            return process_stop_codons(result)
         case _:
             return InputData(datum=str(raw))
 
