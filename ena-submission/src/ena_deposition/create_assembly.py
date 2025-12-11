@@ -808,5 +808,7 @@ def create_assembly(config: Config, stop_event: threading.Event):
 
         assembly_table_create(db_config, config, test=config.test)
         assembly_table_update(db_config, config, time_threshold=config.min_between_ena_checks)
-        last_retry_time = assembly_table_handle_errors(db_config, config, slack_config, last_retry_time)
+        last_retry_time = assembly_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)

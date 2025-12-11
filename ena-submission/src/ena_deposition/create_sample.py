@@ -449,5 +449,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
-        last_retry_time = sample_table_handle_errors(db_config, config, slack_config, last_retry_time)
+        last_retry_time = sample_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)
