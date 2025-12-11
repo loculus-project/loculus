@@ -38,7 +38,7 @@ from .submission_db_helper import (
     add_to_sample_table,
     db_init,
     find_conditions_in_db,
-    find_errors_in_db,
+    find_errors_or_stuck_in_db,
     is_revision,
     update_db_where_conditions,
     update_with_retry,
@@ -403,7 +403,7 @@ def sample_table_handle_errors(
         over submitting_time_threshold_min
     2. If time since last slack_notification is over slack_retry_threshold_hours send notification
     """
-    entries_with_errors = find_errors_in_db(
+    entries_with_errors = find_errors_or_stuck_in_db(
         db_config, TableName.SAMPLE_TABLE, time_threshold=submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:

@@ -350,7 +350,7 @@ def find_conditions_in_db(
     return results
 
 
-def find_errors_in_db(
+def find_errors_or_stuck_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 15
 ) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
@@ -362,11 +362,11 @@ def find_errors_in_db(
 
             query = f"""
                 SELECT * FROM {table_name}
-                WHERE (status = 'HAS_ERRORS' AND started_at < %s)
+                WHERE (status = 'HAS_ERRORS')
                 OR (status = 'SUBMITTING' AND started_at < %s)
             """  # noqa: S608
 
-            cur.execute(query, (min_start_time, min_start_time))
+            cur.execute(query, (min_start_time))
 
             results = cur.fetchall()
     finally:

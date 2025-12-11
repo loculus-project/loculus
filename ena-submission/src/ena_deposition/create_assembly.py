@@ -45,7 +45,7 @@ from .submission_db_helper import (
     add_to_assembly_table,
     db_init,
     find_conditions_in_db,
-    find_errors_in_db,
+    find_errors_or_stuck_in_db,
     find_waiting_in_db,
     is_revision,
     last_version,
@@ -741,7 +741,7 @@ def assembly_table_handle_errors(
     entries_waiting = find_waiting_in_db(
         db_config, TableName.ASSEMBLY_TABLE, time_threshold=waiting_threshold_hours
     )
-    entries_with_errors = find_errors_in_db(
+    entries_with_errors = find_errors_or_stuck_in_db(
         db_config,
         TableName.ASSEMBLY_TABLE,
         time_threshold=submitting_time_threshold_min,
