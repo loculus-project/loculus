@@ -16,7 +16,7 @@ Install required tools if not already installed:
 docker --version
 
 # Install k3d (Kubernetes in Docker)
-curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 k3d version
 
 # Install Helm
