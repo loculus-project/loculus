@@ -84,7 +84,14 @@ def test_full_import_cycle_with_real_zstd_data(
     # Verify complete import
     assert paths.silo_input_data_path.exists(), "SILO input data should exist"
     output_records = read_ndjson_file(paths.silo_input_data_path)
-    assert output_records == records, "Output records should match input"
+
+    # Expected transformed records
+    expected_records = [
+        {"pipelineVersion": "1", "accession": "seq1", "unaligned_main": "ATCG"},
+        {"pipelineVersion": "1", "accession": "seq2", "unaligned_main": "GCTA"},
+        {"pipelineVersion": "1", "accession": "seq3", "unaligned_main": "TTAA"},
+    ]
+    assert output_records == expected_records, "Output records should match transformed format"
 
     assert runner.current_etag == 'W/"abc123"', "ETag should be updated"
     assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"

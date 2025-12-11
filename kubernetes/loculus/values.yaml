@@ -2035,7 +2035,7 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "0.8.6"
+    tag: "0.8.6" # TODO add hash
     pullPolicy: Always
   siloImporter:
     repository: "ghcr.io/loculus-project/silo-import"

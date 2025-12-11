@@ -12,9 +12,9 @@ import requests
 
 from .config import ImporterConfig
 from .constants import (
-    DATA_FILENAME,
+    TRANSFORMED_DATA_FILENAME, RAW_DATA_FILENAME,
 )
-from .decompressor import analyze_ndjson
+from .decompressor import analyze_and_transform_ndjson
 from .errors import (
     DecompressionFailedError,
     HashUnchangedError,
@@ -129,7 +129,7 @@ class DownloadManager:
         """
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
-        data_path = download_dir / DATA_FILENAME
+        data_path = download_dir / RAW_DATA_FILENAME
 
         try:
             # Download data from backend
@@ -157,21 +157,21 @@ class DownloadManager:
             # Parse expected record count from header
             expected_count = parse_int_header(response.headers.get("x-total-records"))
 
-            # Decompress and analyze the data
+            # Decompress, analyze, and transform the data
             try:
-                analysis = analyze_ndjson(data_path)
+                analysis = analyze_and_transform_ndjson(data_path)
             except RuntimeError as exc:
                 logger.warning(
-                    "Failed to decompress %s (size=%s bytes): %s",
+                    "Failed to process %s (size=%s bytes): %s",
                     data_path,
                     data_path.stat().st_size if data_path.exists() else "missing",
                     exc,
                 )
                 safe_remove(download_dir)
-                message = f"Decompression failed ({exc})"
+                message = f"Processing failed ({exc})"
                 raise DecompressionFailedError(message) from exc
 
-            logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
+            logger.info("Downloaded and transformed %s records (ETag %s)", analysis.record_count, etag_value)
 
             # Validate record count
             try:
@@ -181,14 +181,14 @@ class DownloadManager:
                 raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
-            _handle_previous_directory(paths, download_dir, data_path, etag_value)
+            _handle_previous_directory(paths, download_dir, analysis.transformed_path, etag_value)
 
             # Prune old directories
             prune_timestamped_directories(paths.input_dir)
 
             return DownloadResult(
                 directory=download_dir,
-                data_path=data_path,
+                data_path=analysis.transformed_path,
                 etag=etag_value,
                 pipeline_versions=analysis.pipeline_versions,
             )
@@ -234,7 +234,7 @@ def _handle_previous_directory(
     previous_dirs.sort(key=lambda item: int(item.name))
     previous_dir = previous_dirs[-1]
 
-    previous_data_path = previous_dir / DATA_FILENAME
+    previous_data_path = previous_dir / TRANSFORMED_DATA_FILENAME
 
     # Clean up previous directory with no data
     if not previous_data_path.exists():

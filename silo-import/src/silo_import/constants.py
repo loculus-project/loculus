@@ -7,6 +7,8 @@ SPECIAL_ETAG_NONE = "0"
 
 # File names for downloaded data
 DATA_FILENAME = "data.ndjson.zst"
+RAW_DATA_FILENAME = "raw.ndjson.zst"
+TRANSFORMED_DATA_FILENAME = "transformed_data.ndjson.zst"
 LINEAGES_FILENAME = "lineage_definitions.yaml"
 
 # Sentinel file names
