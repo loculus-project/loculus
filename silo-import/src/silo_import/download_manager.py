@@ -12,8 +12,8 @@ import requests
 
 from .config import ImporterConfig
 from .constants import (
-    TRANSFORMED_DATA_FILENAME,
     RAW_DATA_FILENAME,
+    TRANSFORMED_DATA_FILENAME,
 )
 from .decompressor import analyze_and_transform_ndjson
 from .errors import (

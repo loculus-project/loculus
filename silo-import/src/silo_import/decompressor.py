@@ -133,7 +133,7 @@ def analyze_and_transform_ndjson(path: Path) -> NdjsonAnalysis:
                     raise RuntimeError(msg) from exc
 
                 transformed_json = json.dumps(transformed, separators=(",", ":"))
-                writer.write(f"{transformed_json}\n".encode("utf-8"))
+                writer.write(f"{transformed_json}\n".encode())
     except zstandard.ZstdError as exc:
         msg = f"Failed to compress/decompress {path}: {exc}"
         raise RuntimeError(msg) from exc
