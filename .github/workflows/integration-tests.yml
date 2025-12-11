@@ -67,7 +67,9 @@ jobs:
         uses: actions/checkout@v6
       - name: Install k3d
         run: |
-          curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          for i in {1..5}; do
+            curl https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | DEBUG=true bash && break || sleep $((i * 2))
+          done
           k3d version
       - uses: azure/setup-helm@v4
         with:
