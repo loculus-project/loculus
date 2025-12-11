@@ -53,5 +53,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv pip install --system '.[test]'
+      - name: Run ruff format check
+        run: ruff format --diff .
       - name: Run ruff check
         run: ruff check .
