@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from silo_import.decompressor import transform_record
 
 
@@ -15,11 +13,14 @@ def test_transform_null_values() -> None:
 
     result = transform_record(input_data)
 
-    assert result.get("key") == "id1"
-    assert result.get("col") == "A"
-    assert result.get("segment1") is None
-    assert result.get("gene1") is None
-    assert result.get("unaligned_segment1") is None
+    expected = {
+        "key": "id1",
+        "col": "A",
+        "segment1": None,
+        "gene1": None,
+        "unaligned_segment1": None,
+    }
+    assert result == expected
 
 
 def test_transform_with_data() -> None:
@@ -34,16 +35,17 @@ def test_transform_with_data() -> None:
 
     result = transform_record(input_data)
 
-    assert result.get("key") == "id2"
-    assert result.get("col") == "B"
-    assert result.get("unaligned_segment1") == "C"
-
-    segment1 = result.get("segment1")
-    assert segment1 is not None
-    assert segment1.get("sequence") == "A"
-    assert segment1.get("insertions") == ["123", "456"]
-
-    gene1 = result.get("gene1")
-    assert gene1 is not None
-    assert gene1.get("sequence") == "Y"
-    assert gene1.get("insertions") == ["1", "2"]
+    expected = {
+        "key": "id2",
+        "col": "B",
+        "segment1": {
+            "sequence": "A",
+            "insertions": ["123", "456"],
+        },
+        "gene1": {
+            "sequence": "Y",
+            "insertions": ["1", "2"],
+        },
+        "unaligned_segment1": "C",
+    }
+    assert result == expected
