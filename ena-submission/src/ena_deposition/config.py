@@ -74,7 +74,7 @@ class Config(BaseModel):
     ena_reports_service_url: str
     approved_list_url: str
     approved_list_test_url: str | None
-    suppressed_list_url: str | None
+    suppressed_list_url: str
     suppressed_list_test_url: str | None
     slack_hook: str
     slack_token: str
