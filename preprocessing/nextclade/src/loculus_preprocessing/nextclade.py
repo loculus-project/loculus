@@ -460,7 +460,7 @@ def assign_segment_with_nextclade_sort(
             dataset_dir=dataset_dir,
         )
 
-    hits = df.dropna(subset=["score"]).sort_values("score", ascending=False)
+    hits = df.dropna(subset=["score"]).sort_values(["index", "score"], ascending=[True, False])
     best_hits = hits.groupby("seqName", as_index=False).first()
 
     for entry in unprocessed:
