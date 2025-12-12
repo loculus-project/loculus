@@ -374,6 +374,7 @@ def project_table_handle_errors(
     1. Find all entries in project_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
     2. If time since last slack_notification is over slack_retry_threshold_hours send notification
+    3. Retry entries if time since last retry is over retry_threshold_hours
     """
     entries_with_errors = find_errors_or_stuck_in_db(
         db_config, TableName.PROJECT_TABLE, time_threshold=submitting_time_threshold_min
