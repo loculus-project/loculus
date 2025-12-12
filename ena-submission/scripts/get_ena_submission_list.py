@@ -57,6 +57,13 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
         for line in response.text.splitlines()
         if line.strip()
     }
+    accession_versions_strings = {
+        line.strip() for line in response.text.splitlines() if line.strip()
+    }
+    return {
+        AccessionVersion(line.split(".")[0], int(line.split(".")[1]))
+        for line in accession_versions_strings
+    }
 
 
 def filter_for_submission(
