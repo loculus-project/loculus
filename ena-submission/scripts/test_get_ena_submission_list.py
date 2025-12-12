@@ -33,6 +33,13 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
     )
 
 
+class MockSuppressedList:
+    text = "LOC01.1\n"
+
+    def raise_for_status(self):
+        pass
+
+
 def test_happy_path_single_upload_and_file_content(monkeypatch):
     # Mock database calls, adding a LOC_submitted entry with version 1
     class DummyPool: ...
@@ -62,6 +69,8 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
     monkeypatch.setattr(
         get_ena_submission_list_mod, "upload_file_with_comment", fake_upload_file_with_comment
     )
+
+    monkeypatch.setattr(get_ena_submission_list_mod, "requests.get", MockSuppressedList())
 
     notify_calls = []
     monkeypatch.setattr(

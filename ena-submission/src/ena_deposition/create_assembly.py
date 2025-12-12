@@ -619,8 +619,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
                 "result": assembly_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key.accession} "
-                f"version {seq_key.version}"
+                f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
                 db_config=db_config,
