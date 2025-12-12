@@ -1772,9 +1772,6 @@ defaultOrganisms:
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
           log_level: DEBUG
-          taxon_id: 3052518
-          scientific_name: "Orthonairovirus haemorrhagiae"
-          molecule_type: "genomic RNA"
           minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nextclade_sequence_and_datasets:
             - name: L
