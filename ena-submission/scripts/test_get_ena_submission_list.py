@@ -70,7 +70,10 @@ def test_happy_path_single_upload_and_file_content(monkeypatch):
         get_ena_submission_list_mod, "upload_file_with_comment", fake_upload_file_with_comment
     )
 
-    monkeypatch.setattr(get_ena_submission_list_mod, "requests.get", MockSuppressedList())
+    def mock_get(*args, **kwargs):
+        return MockSuppressedList()
+
+    monkeypatch.setattr(get_ena_submission_list_mod.requests, "get", mock_get)
 
     notify_calls = []
     monkeypatch.setattr(
