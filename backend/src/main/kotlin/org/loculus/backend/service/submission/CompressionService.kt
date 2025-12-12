@@ -5,6 +5,7 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
@@ -22,7 +23,10 @@ enum class CompressionAlgorithm(val extension: String) {
 }
 
 @Service
-class CompressionService(private val compressionDictService: CompressionDictService) {
+class CompressionService(
+    private val compressionDictService: CompressionDictService,
+    private val backendConfig: BackendConfig,
+) {
 
     fun compressOriginalSequence(sequenceData: GeneticSequence, organism: Organism) = compress(
         sequenceData,
@@ -139,9 +143,9 @@ class CompressionService(private val compressionDictService: CompressionDictServ
         val outputBuffer = ByteArray(compressBound)
 
         val compressionReturnCode: Long = if (dictEntry == null) {
-            Zstd.compress(outputBuffer, input, 3)
+            Zstd.compress(outputBuffer, input, backendConfig.zstdCompressionLevel)
         } else {
-            Zstd.compress(outputBuffer, input, dictEntry.dict, 3)
+            Zstd.compress(outputBuffer, input, dictEntry.dict, backendConfig.zstdCompressionLevel)
         }
 
         if (Zstd.isError(compressionReturnCode)) {

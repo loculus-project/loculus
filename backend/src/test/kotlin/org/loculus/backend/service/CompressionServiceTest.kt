@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.service.submission.CompressionService
@@ -13,14 +14,18 @@ import org.loculus.backend.service.submission.DictEntry
 
 class CompressionServiceTest {
     private val compressionDictServiceMock = mockk<CompressionDictService>()
+    private val backendConfigMock = mockk<BackendConfig>()
 
     private val compressor = CompressionService(
         compressionDictService = compressionDictServiceMock,
+        backendConfig = backendConfigMock,
     )
 
     @Test
     fun `Round trip compress and decompress sequences in original data`() {
         val organism = Organism(DEFAULT_ORGANISM)
+
+        every { backendConfigMock.zstdCompressionLevel } returns 10
 
         val dict = "NNACTGACTGACTGACTGATCGATCGATCGATCGATCGATCGATC".toByteArray()
         every { compressionDictServiceMock.getDictForUnalignedSequence(organism) } returns DictEntry(
