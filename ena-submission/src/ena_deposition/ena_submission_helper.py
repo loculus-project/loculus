@@ -35,6 +35,7 @@ from tenacity import (
 from unidecode import unidecode
 
 from ena_deposition.config import Config, EnaOrganismDetails
+from ena_deposition.config import Config, EnaOrganismDetails
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,

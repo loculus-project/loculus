@@ -13,6 +13,7 @@ from unittest import mock
 import xmltodict
 import yaml
 from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
+from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
