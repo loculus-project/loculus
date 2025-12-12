@@ -1902,10 +1902,6 @@ defaultOrganisms:
           # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
           create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          # TODO(https://github.com/loculus-project/loculus/issues/5673): embl flat files for multi path case
-          taxon_id: 12059
-          scientific_name: "Enterovirus"
-          molecule_type: "genomic RNA"
           nextclade_sequence_and_datasets:
             - name: CV-A16
               nextclade_dataset_name: enpen/enterovirus/cv-a16
