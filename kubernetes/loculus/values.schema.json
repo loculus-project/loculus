@@ -947,7 +947,7 @@
       "default": 10,
       "minimum": -7,
       "maximum": 22,
-      "description": "Zstandard compression level for sequence data. Higher means better compression ratio but higher CPU/memory usage.
+      "description": "Zstandard compression level for sequence data. Higher means better compression ratio but higher CPU/memory usage."
     },
     "environment": {
       "groups": ["general"],
