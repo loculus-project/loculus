@@ -24,7 +24,6 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
-    get_molecule_type,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -32,7 +31,6 @@ from .ena_types import (
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
     ChromosomeType,
-    Topology,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -70,7 +68,7 @@ def create_chromosome_list_object(
     segment_order = get_segment_order(unaligned_sequences)
 
     for segment_name in segment_order:
-        topology = Topology(organism_metadata.topology)
+        topology = organism_metadata.topology
         if multi_segment:
             entry = AssemblyChromosomeListFileObject(
                 object_name=f"{seq_key['accession']}_{segment_name}",
@@ -224,7 +222,7 @@ def create_manifest_object(
             flatfile=flat_file,
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
-            moleculetype=get_molecule_type(organism_metadata.molecule_type),
+            moleculetype=organism_metadata.molecule_type,
             **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
