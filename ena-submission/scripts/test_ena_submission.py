@@ -69,6 +69,7 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
     }
     return EnaOrganismDetails(**metadata_dict)
 
+
 def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
