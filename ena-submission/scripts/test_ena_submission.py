@@ -70,6 +70,7 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
         segments=["seg2", "seg3"],
     )
 
+
 def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
