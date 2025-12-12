@@ -366,7 +366,7 @@ def find_errors_or_stuck_in_db(
                 OR (status = 'SUBMITTING' AND started_at < %s)
             """  # noqa: S608
 
-            cur.execute(query, (min_start_time))
+            cur.execute(query, (min_start_time,))
 
             results = cur.fetchall()
     finally:
