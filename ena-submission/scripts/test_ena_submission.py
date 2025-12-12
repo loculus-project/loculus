@@ -286,17 +286,12 @@ class AssemblyCreationTests(unittest.TestCase):
             "sampleCollectionDate": "2024-01-01",
             "geoLocCountry": "Italy",
         }
-        organism_metadata = {
-            "scientific_name": "Test organism",
-            "molecule_type": "genomic RNA",
-            "topology": "linear",
-        }
         unaligned_sequences = {
             "main": "ATCGATCGATCG",
         }
 
         flatfile_path = create_flatfile(
-            config, metadata, organism_metadata, unaligned_sequences, dir="./tmp"
+            config, metadata, mock_organism(), unaligned_sequences, dir="./tmp"
         )
 
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
