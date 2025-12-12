@@ -187,7 +187,7 @@ def create_manifest_object(
     - the organism metadata from the config file
     - sequencing metadata from the corresponding submission table entry
     - unaligned nucleotide sequences from the corresponding submission table entry,
-    these are used to create chromosome files and fasta files which are passed to the manifest.
+    these are used to create chromosome files and emblflat files which are passed to the manifest.
 
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     manifest for testing.
@@ -533,7 +533,7 @@ def get_project_and_sample_results(
 def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in assembly_table in state READY
-    2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
+    2. Create temporary files: chromosome_list_file, embl_file, manifest_file
     3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
@@ -619,8 +619,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
                 "result": assembly_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key.accession} "
-                f"version {seq_key.version}"
+                f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
                 db_config=db_config,

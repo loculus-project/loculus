@@ -514,37 +514,6 @@ def create_flatfile(
     return gzip_filename
 
 
-def create_fasta(
-    unaligned_sequences: dict[str, str],
-    chromosome_list: AssemblyChromosomeListFile,
-    dir: str | None = None,
-) -> str:
-    """
-    Creates a temp fasta file:
-    https://ena-docs.readthedocs.io/en/latest/submit/fileprep/assembly.html#fasta-file
-    """
-    if dir:
-        os.makedirs(dir, exist_ok=True)
-        filename = os.path.join(dir, "fasta.gz")
-    else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".fasta.gz") as temp:
-            filename = temp.name
-
-    multi_segment = set(unaligned_sequences.keys()) != {"main"}
-
-    with gzip.GzipFile(filename, "wb") as gz:
-        if not multi_segment:
-            entry = chromosome_list.chromosomes[0]
-            gz.write(f">{entry.object_name}\n".encode())
-            gz.write(f"{unaligned_sequences['main']}\n".encode())
-        else:
-            for entry in chromosome_list.chromosomes:
-                gz.write(f">{entry.object_name}\n".encode())
-                gz.write(f"{unaligned_sequences[entry.chromosome_name]}\n".encode())
-
-    return filename
-
-
 def create_manifest(
     manifest: AssemblyManifest, is_broker: bool = False, dir: str | None = None
 ) -> str:

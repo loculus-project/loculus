@@ -21,7 +21,6 @@ from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
     create_ena_project,
     create_ena_sample,
-    create_fasta,
     create_manifest,
     dataclass_to_xml,
     get_chromsome_accessions,
@@ -271,30 +270,6 @@ class AssemblyCreationTests(unittest.TestCase):
         self.assertEqual(
             content,
             b"LOC_0001TLY\tgenome\tlinear-monopartite\n",
-        )
-
-    def test_create_fasta_multi(self):
-        chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key, {}
-        )
-        fasta_file_name = create_fasta(self.unaligned_sequences_multi, chromosome_list)
-
-        with gzip.GzipFile(fasta_file_name, "rb") as gz:
-            content = gz.read()
-        self.assertEqual(
-            content,
-            b">LOC_0001TLY_seg2\nGCGGCACGTCAGTACGTAAGTGTATCTCAAAGAAATACTTAACTTTGAGAGAGTGAATT\n>LOC_0001TLY_seg3\nCTTAACTTTGAGAGAGTGAATT\n",
-        )
-
-    def test_create_fasta(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
-        fasta_file_name = create_fasta(self.unaligned_sequences, chromosome_list)
-
-        with gzip.GzipFile(fasta_file_name, "rb") as gz:
-            content = gz.read()
-        self.assertEqual(
-            content,
-            b">LOC_0001TLY\nCTTAACTTTGAGAGAGTGAATT\n",
         )
 
     @mock.patch("ena_deposition.call_loculus.get_group_info")
