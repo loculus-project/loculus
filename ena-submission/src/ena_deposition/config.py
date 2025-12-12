@@ -88,7 +88,7 @@ class Config(BaseModel):
     )
     approved_list_url: str
     approved_list_test_url: str | None
-    suppressed_list_url: str
+    suppressed_list_url: str | None
     suppressed_list_test_url: str | None
 
     # Slack configuration must be provided via environment variables or config
