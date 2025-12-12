@@ -403,16 +403,6 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
-def get_molecule_type(molecule_type_str: str) -> MoleculeType:
-    try:
-        moleculetype = MoleculeType(molecule_type_str)
-    except ValueError as err:
-        msg = f"Invalid molecule type: {molecule_type_str}"
-        logger.error(msg)
-        raise ValueError(msg) from err
-    return moleculetype
-
-
 def get_description(config: Config, metadata: dict[str, str]) -> str:
     return (
         f"Original sequence submitted to {config.db_name} with accession: "
@@ -455,7 +445,6 @@ def create_flatfile(
     organism = organism_metadata.scientific_name
     accession = metadata["accession"]
     description = get_description(config, metadata)
-    moleculetype = get_molecule_type(organism_metadata.molecule_type)
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -483,7 +472,7 @@ def create_flatfile(
             seq=Seq(sequence_str),
             id=f"{accession}_{seq_name}" if multi_segment else accession,
             annotations={
-                "molecule_type": seq_io_moleculetype[moleculetype],
+                "molecule_type": seq_io_moleculetype[organism_metadata.molecule_type],
                 "organism": organism,
                 "topology": organism_metadata.topology,
                 "references": [reference],  # type: ignore
@@ -495,7 +484,7 @@ def create_flatfile(
             FeatureLocation(start=0, end=len(sequence_str)),
             type="source",
             qualifiers={
-                "molecule_type": str(moleculetype),
+                "molecule_type": str(organism_metadata.molecule_type),
                 "organism": organism,
                 "country": country,
                 "collection_date": collection_date,

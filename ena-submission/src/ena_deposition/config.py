@@ -6,6 +6,8 @@ import dotenv
 import yaml
 from pydantic import BaseModel
 
+from ena_deposition.ena_types import MoleculeType, Topology
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,12 +43,12 @@ class ExternalMetadataField(BaseModel):
 class EnaOrganismDetails(BaseModel):
     """Details about an ENA organism from the config file."""
 
-    molecule_type: str
+    molecule_type: MoleculeType
     scientific_name: str
     taxon_id: int
     organismName: str  # noqa: N815
     externalMetadata: list[ExternalMetadataField] = field(default_factory=list)  # noqa: N815
-    topology: str = "linear"
+    topology: Topology = Topology.LINEAR
 
 
 type EnaOrganismName = str
