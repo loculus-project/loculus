@@ -244,10 +244,11 @@ def create_manifest_object(
 def submission_table_start(db_config: SimpleConnectionPool, config: Config) -> None:
     """
     1. Find all entries in submission_table in state SUBMITTED_SAMPLE
-    2. If (exists an entry in the assembly_table for (accession, version)):
+    2. If entry has insdcRawReadsAccession, check it exists in ENA, if not set error and continue
+    3. If (exists an entry in the assembly_table for (accession, version)):
     a.      If (in state SUBMITTED) update state in submission_table to SUBMITTED_ALL
     b.      Else update state to SUBMITTING_ASSEMBLY
-    3. Else create corresponding entry in assembly_table
+    4. Else create corresponding entry in assembly_table
     """
     conditions = {"status_all": StatusAll.SUBMITTED_SAMPLE}
     ready_to_submit = find_conditions_in_db(
