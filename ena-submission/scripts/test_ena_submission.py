@@ -12,6 +12,7 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -46,18 +47,39 @@ with open("config/defaults.yaml", encoding="utf-8") as f:
     defaults = yaml.safe_load(f)
 
 
+def mock_organism() -> EnaOrganismDetails:
+    metadata_dict = {
+        "taxon_id": 12345,
+        "scientific_name": "Test scientific name",
+        "molecule_type": "genomic RNA",
+        "organismName": "Test organism",
+    }
+    return EnaOrganismDetails(**metadata_dict)
+
+
+def mock_multi_segmented_organism() -> EnaOrganismDetails:
+    metadata_dict = {
+        "taxon_id": 12345,
+        "scientific_name": "Test scientific name",
+        "molecule_type": "genomic RNA",
+        "organismName": "Test organism",
+        "topology": "circular",
+    }
+    return EnaOrganismDetails(**metadata_dict)
+
+
 def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    metadata_dict = {
-        "taxon_id": "Test taxon",
-        "scientific_name": "Test scientific name",
-        "molecule_type": "genomic RNA",
+    config.organisms = {"Test organism": mock_organism()}
+    config.metadata_mapping = {
+        key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
-    config.metadata_mapping = defaults["metadata_mapping"]
-    config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
+    config.manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["manifest_fields_mapping"].items()
+    }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -293,7 +315,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key, {"topology": "circular"}
+            self.unaligned_sequences_multi, self.seq_key, mock_multi_segmented_organism()
         )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
@@ -306,7 +328,9 @@ class AssemblyCreationTests(unittest.TestCase):
         )
 
     def test_create_chromosome_list(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences, self.seq_key, mock_organism()
+        )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:

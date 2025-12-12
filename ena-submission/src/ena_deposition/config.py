@@ -1,21 +1,63 @@
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import field
 
 import dotenv
 import yaml
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Config:
+class MetadataMapping(BaseModel):
+    # Map from Biosample key to dict that defines:
+    # - which Loculus field(s) to use as input
+    # - (optional) function: currently only "match" supported
+    # - (optional) args: list of regexes that match against values
+    # - (optional) units: units added to sample attribute
+    # - (optional) default: default value if field not in input data
+    loculus_fields: list[str]
+    default: str | None = None
+    function: str | None = None
+    args: list[str] | None = None
+    units: str | None = None
+
+
+class ManifestFieldDetails(BaseModel):
+    loculus_fields: list[str] = field(default_factory=list)
+    function: str | None = None
+    type: str | None = None
+    default: str | int | None = None
+
+
+class ExternalMetadataField(BaseModel):
+    """Definition of an external metadata field to be uploaded to Loculus."""
+
+    externalMetadataUpdater: str  # noqa: N815
+    name: str
+    type: str
+
+
+class EnaOrganismDetails(BaseModel):
+    """Details about an ENA organism from the config file."""
+
+    molecule_type: str
+    scientific_name: str
+    taxon_id: int
+    organismName: str  # noqa: N815
+    externalMetadata: list[ExternalMetadataField] = field(default_factory=list)  # noqa: N815
+    topology: str = "linear"
+
+
+type EnaOrganismName = str
+
+
+class Config(BaseModel):
     """Configuration for the ENA submission process.
     See config/defaults.yaml for default values."""
 
     test: bool
-    organisms: dict[str, dict[str, Any]]
+    organisms: dict[EnaOrganismName, EnaOrganismDetails]
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
@@ -31,33 +73,17 @@ class Config:
     ena_submission_username: str
     ena_reports_service_url: str
     approved_list_url: str
-    approved_list_test_url: str
-    suppressed_list_url: str
-    suppressed_list_test_url: str
+    approved_list_test_url: str | None
+    suppressed_list_url: str | None
+    suppressed_list_test_url: str | None
     slack_hook: str
     slack_token: str
     slack_channel_id: str
-    # Map from Biosample key to dict that defines:
-    # - which Loculus field(s) to use as input
-    # - (optional) function: currently only "match" supported
-    # - (optional) args: list of regexes that match against values
-    # - (optional) units: units added to sample attribute
-    # - (optional) default: default value if field not in input data
-    metadata_mapping: dict[str, dict[str, str | list[str]]]
-    """
-    manifest_fields_mapping:
-      authors:
-        loculus_fields: [authors]
-        function: reformat_authors
-      program:
-        loculus_fields: [consensusSequenceSoftwareName, consensusSequenceSoftwareVersion]
-        default: "Unknown"
-      ... etc ...
-    """
-    manifest_fields_mapping: dict[str, dict[str, str | list[str]]]
-    ingest_pipeline_submission_group: str
-    ena_deposition_host: str
-    ena_deposition_port: int
+    metadata_mapping: dict[str, MetadataMapping]
+    manifest_fields_mapping: dict[str, ManifestFieldDetails]
+    ingest_pipeline_submission_group: int
+    ena_deposition_host: str | None
+    ena_deposition_port: int | None
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120

@@ -34,7 +34,7 @@ from tenacity import (
 )
 from unidecode import unidecode
 
-from ena_deposition.config import Config
+from ena_deposition.config import Config, EnaOrganismDetails
 
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -403,11 +403,11 @@ def create_chromosome_list(list_object: AssemblyChromosomeListFile, dir: str | N
     return filename
 
 
-def get_molecule_type(organism_metadata: dict[str, str]) -> MoleculeType:
+def get_molecule_type(molecule_type_str: str) -> MoleculeType:
     try:
-        moleculetype = MoleculeType(organism_metadata.get("molecule_type"))
+        moleculetype = MoleculeType(molecule_type_str)
     except ValueError as err:
-        msg = f"Invalid molecule type: {organism_metadata.get('molecule_type')}"
+        msg = f"Invalid molecule type: {molecule_type_str}"
         logger.error(msg)
         raise ValueError(msg) from err
     return moleculetype
@@ -440,7 +440,11 @@ def get_country(metadata: dict[str, str]) -> str:
 
 
 def create_flatfile(
-    config: Config, metadata, organism_metadata, unaligned_nucleotide_sequences, dir
+    config: Config,
+    metadata,
+    organism_metadata: EnaOrganismDetails,
+    unaligned_nucleotide_sequences: dict[str, str],
+    dir: str | None = None,
 ):
     collection_date = metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.collection_date_property, "Unknown")
     authors = get_authors(metadata.get(DEFAULT_EMBL_PROPERTY_FIELDS.authors_property) or "")
@@ -448,10 +452,10 @@ def create_flatfile(
     # so we need to strip it from our formatted authors string to avoid duplication
     authors = authors.removesuffix(";")
     country = get_country(metadata)
-    organism = organism_metadata.get("scientific_name", "Unknown")
+    organism = organism_metadata.scientific_name
     accession = metadata["accession"]
     description = get_description(config, metadata)
-    moleculetype = get_molecule_type(organism_metadata)
+    moleculetype = get_molecule_type(organism_metadata.molecule_type)
 
     if dir:
         os.makedirs(dir, exist_ok=True)
@@ -481,7 +485,7 @@ def create_flatfile(
             annotations={
                 "molecule_type": seq_io_moleculetype[moleculetype],
                 "organism": organism,
-                "topology": organism_metadata.get("topology", "linear"),
+                "topology": organism_metadata.topology,
                 "references": [reference],  # type: ignore
             },
             description=description,
