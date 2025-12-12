@@ -4,9 +4,6 @@
 {{- $flattened := include "loculus.flattenPreprocessingVersions" $organismConfig.preprocessing | fromJson }}
 {{- range $processingIndex, $processingConfig := $flattened.items }}
 {{- if $processingConfig.configFile }}
-{{- /* Use the enaDepositionConfig as the base config */}}
-{{- $enaDepositionConfig := dig "enaDeposition" "configFile" dict $organismConfig }}
-{{- $preproAndEnaConfigFile := merge $processingConfig.configFile $enaDepositionConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -15,7 +12,7 @@ metadata:
 data:
   preprocessing-config.yaml: |
     organism: {{ $organism }}
-    {{- $preproAndEnaConfigFile | toYaml | nindent 4 }}
+    {{- $processingConfig.configFile | toYaml | nindent 4 }}
     processing_spec:
       {{- $args := dict "metadata" $metadata "referenceGenomes" $organismConfig.referenceGenomes }}
       {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
