@@ -274,20 +274,16 @@ class AssemblyCreationTests(unittest.TestCase):
             "main": "ATCGATCGATCG",
         }
 
-        # Create flatfile
         flatfile_path = create_flatfile(
             config, metadata, organism_metadata, unaligned_sequences, dir="./tmp"
         )
 
-        # Read the generated flatfile content
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
             generated_content = f.read()
 
-        # Read the expected flatfile content
         expected_flatfile_path = Path("test/test_flatfile_with_apostrophe.embl")
         expected_content = Path(expected_flatfile_path).read_text(encoding="utf-8")
 
-        # Compare generated vs expected
         self.assertEqual(generated_content, expected_content)
 
         # Additional check: ensure no &apos; entities are present
