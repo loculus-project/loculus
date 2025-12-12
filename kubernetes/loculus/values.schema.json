@@ -586,6 +586,12 @@
                 "type": "object",
                 "description": "Object of type [ConfigFile](#nextclade-preprocessing-pipeline-configfile-type), Fields that should be added to the preprocessing pipeline config file.",
                 "properties": {
+                  "create_embl_file": {
+                    "groups": ["nextcladePipelineConfigFile"],
+                    "docsIncludePrefix": false,
+                    "type": "boolean",
+                    "description": "If prepreprocessing should generate an EMBL file for each sequence, note this requires additional metadata fields to be present (taxon_id, scientific_name, molecule_type)."
+                  },
                   "alignment_requirement": {
                     "groups": ["nextcladePipelineConfigFile"],
                     "docsIncludePrefix": false,

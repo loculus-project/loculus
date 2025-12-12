@@ -99,7 +99,7 @@ In a loop:
   - else: create assembly entry in `assembly_table` for (accession, version).
 - Get sequences in `submission_table` in state SUBMITTING_SAMPLE
   - if (corresponding `assembly_table` entry is in state SUBMITTED): update entries to state SUBMITTED_ALL.
-- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, fasta files and a manifest file, set status to WAITING
+- Get sequences in `assembly_table` in state READY, prepare files: we need chromosome_list, embl flatfiles and a manifest file, set status to WAITING
   - if (submission succeeds): set status to WAITING and fill in results: ena-internal `erz_accession`
   - else: set status to HAS_ERRORS and fill in errors
 - Get sequences in `assembly_table` in state WAITING, every 5minutes (to not overload ENA) check if ENA has processed the assemblies and assigned them `gca_accession`. If so update the table to status SUBMITTED and fill in results

@@ -1355,6 +1355,9 @@ defaultOrganisms:
             - nextclade_dataset_name: nextstrain/ebola/sudan
               genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          taxon_id: 186540
+          scientific_name: "Sudan ebolavirus"
+          molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
@@ -1432,6 +1435,9 @@ defaultOrganisms:
             - nextclade_dataset_name: nextstrain/wnv/all-lineages
               genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
+          taxon_id: 11082
+          scientific_name: "West Nile virus"
+          molecule_type: "genomic RNA"
     ingest:
       <<: *ingest
       configFile:
@@ -1756,6 +1762,9 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           log_level: DEBUG
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
           minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nextclade_sequence_and_datasets:
             - name: L
@@ -1882,6 +1891,8 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           segment_classification_method: "minimizer"
+          # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
+          create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nextclade_sequence_and_datasets:
             - name: CV-A16

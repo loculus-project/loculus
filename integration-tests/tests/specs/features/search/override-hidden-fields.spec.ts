@@ -59,7 +59,7 @@ test('Override hidden fields', async ({ page, groupId }) => {
     await search.fill('Author affiliations', uuid);
 
     await page.getByRole('cell', { name: 'France' }).click();
-    await page.getByRole('link', { name: 'Revise this sequence' }).click();
+    await search.reviseSequence();
     await page.getByLabel('Collection date').fill('2012-12-13');
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();

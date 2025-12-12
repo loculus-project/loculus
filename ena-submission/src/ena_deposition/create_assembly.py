@@ -5,6 +5,7 @@ import string
 import threading
 import time
 import traceback
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Any, Literal
 
@@ -35,6 +36,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     AssemblyTableEntry,
     Status,
     StatusAll,
@@ -185,7 +187,7 @@ def create_manifest_object(
     - the organism metadata from the config file
     - sequencing metadata from the corresponding submission table entry
     - unaligned nucleotide sequences from the corresponding submission table entry,
-    these are used to create chromosome files and fasta files which are passed to the manifest.
+    these are used to create chromosome files and emblflat files which are passed to the manifest.
 
     If test=True add a timestamp to the alias suffix to allow for multiple submissions of the same
     manifest for testing.
@@ -319,7 +321,7 @@ def submission_table_update(db_config: SimpleConnectionPool) -> None:
 
 def update_assembly_error(
     db_config: SimpleConnectionPool,
-    error: str | list[str],
+    error: list[str],
     seq_key: dict[str, str],
     update_type: Literal["revision"] | Literal["creation"],
 ) -> None:
@@ -332,7 +334,7 @@ def update_assembly_error(
         conditions={"accession": seq_key["accession"], "version": seq_key["version"]},
         update_values={
             "status": Status.HAS_ERRORS,
-            "errors": json.dumps(error),
+            "errors": error,
             "started_at": datetime.now(tz=pytz.utc),
         },
         table_name=TableName.ASSEMBLY_TABLE,
@@ -348,9 +350,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     3. metadata fields in manifest haven't changed since previous version, otherwise
        requires manual revision
     """
-    if not is_revision(db_config, entry):
+    seq_key = AccessionVersion(accession=entry["accession"], version=entry["version"])
+    if not is_revision(db_config, seq_key):
         return False
-    version_to_revise = last_version(db_config, entry)
+    version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.SUBMISSION_TABLE,
@@ -377,7 +380,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_sample_accession} differs from last version: {previous_sample_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
     if entry["metadata"].get("bioprojectAccession"):
         new_project_accession = entry["metadata"]["bioprojectAccession"]
@@ -387,7 +390,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
                 f"{new_project_accession} differs from last version: {previous_study_accession}"
             )
             logger.error(error)
-            update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+            update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
             return False
 
     differing_fields = {}
@@ -414,10 +417,10 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
     if differing_fields:
         error = (
             "Assembly cannot be revised because metadata fields in manifest would change from "
-            f"last version: {differing_fields}"
+            f"last version: {json.dumps(differing_fields)}"
         )
         logger.error(error)
-        update_assembly_error(db_config, error, seq_key=entry, update_type="revision")
+        update_assembly_error(db_config, [error], seq_key=entry, update_type="revision")
         return False
     return True
 
@@ -426,11 +429,12 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
     """
     Check if change in sequence or flatfile metadata has occurred since last version.
     """
-    version_to_revise = last_version(db_config, entry)
+    seq_key = AccessionVersion(accession=entry["accession"], version=entry["version"])
+    version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.SUBMISSION_TABLE,
-        conditions={"accession": entry["accession"], "version": version_to_revise},
+        conditions={"accession": seq_key.accession, "version": version_to_revise},
     )
     if len(last_version_data) == 0:
         error_msg = f"Last version {version_to_revise} not found in submission_table"
@@ -441,8 +445,8 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
         != last_version_data[0]["unaligned_nucleotide_sequences"]
     ):
         logger.debug(
-            f"Unaligned nucleotide sequences have changed for {entry['accession']}, "
-            f"from {version_to_revise} to {entry['version']} - should be revised"
+            f"Unaligned nucleotide sequences have changed for {seq_key.accession}, "
+            f"from {version_to_revise} to {seq_key.version} - should be revised"
             "(Metadata maybe also changed.)"
         )
         return True
@@ -470,14 +474,14 @@ def is_flatfile_data_changed(db_config: SimpleConnectionPool, entry: dict[str, A
 
 
 def update_assembly_results_with_latest_version(
-    db_config: SimpleConnectionPool, seq_key: dict[str, Any]
+    db_config: SimpleConnectionPool, seq_key: AccessionVersion
 ):
     version_to_revise = last_version(db_config, seq_key)
     last_version_data = find_conditions_in_db(
         db_config,
         table_name=TableName.ASSEMBLY_TABLE,
         conditions={
-            "accession": seq_key["accession"],
+            "accession": seq_key.accession,
             "version": version_to_revise,
         },
     )
@@ -485,16 +489,16 @@ def update_assembly_results_with_latest_version(
         error_msg = f"Last version {version_to_revise} not found in assembly_table"
         raise RuntimeError(error_msg)
     logger.info(
-        f"Updating assembly results for accession {seq_key['accession']} version "
-        f"{seq_key['version']} using results from version {version_to_revise} as there was no"
+        f"Updating assembly results for accession {seq_key.accession} version "
+        f"{seq_key.version} using results from version {version_to_revise} as there was no"
         "change in flatfile data."
     )
     update_with_retry(
         db_config=db_config,
-        conditions=seq_key,
+        conditions=asdict(seq_key),
         update_values={
             "status": Status.SUBMITTED,
-            "result": json.dumps(last_version_data[0]["result"]),
+            "result": last_version_data[0]["result"],
         },
         table_name=TableName.ASSEMBLY_TABLE,
         reraise=False,
@@ -529,7 +533,7 @@ def get_project_and_sample_results(
 def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test: bool = False):
     """
     1. Find all entries in assembly_table in state READY
-    2. Create temporary files: chromosome_list_file, fasta_file, manifest_file
+    2. Create temporary files: chromosome_list_file, embl_file, manifest_file
     3. Update assembly_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     3. Else update state to HAS_ERRORS with error messages
@@ -546,9 +550,9 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             f"Found {len(ready_to_submit_assembly)} entries in assembly_table in status READY"
         )
     for row in ready_to_submit_assembly:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = AccessionVersion(accession=row["accession"], version=row["version"])
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
         if len(sample_data_in_submission_table) == 0:
             error_msg = f"Entry {row['accession']} not found in submitting_table"
@@ -586,7 +590,7 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name=TableName.ASSEMBLY_TABLE,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -612,15 +616,14 @@ def assembly_table_create(db_config: SimpleConnectionPool, config: Config, test:
             assembly_creation_results.result["segment_order"] = segment_order
             update_values = {
                 "status": Status.WAITING,
-                "result": json.dumps(assembly_creation_results.result),
+                "result": assembly_creation_results.result,
             }
             logger.info(
-                f"Assembly creation succeeded for {seq_key['accession']} "
-                f"version {seq_key['version']}"
+                f"Assembly creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
             update_with_retry(
                 db_config=db_config,
-                conditions=seq_key,
+                conditions=asdict(seq_key),
                 update_values=update_values,
                 table_name=TableName.ASSEMBLY_TABLE,
             )
@@ -691,7 +694,7 @@ def assembly_table_update(db_config: SimpleConnectionPool, config: Config, time_
                 conditions=seq_key,
                 update_values={
                     "status": status,
-                    "result": json.dumps(new_result.result),
+                    "result": new_result.result,
                     "finished_at": datetime.now(tz=pytz.utc),
                 },
                 table_name=TableName.ASSEMBLY_TABLE,
