@@ -52,7 +52,13 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
             f"Failed to retrieve list of suppressed sequences due to requests exception: {e}"
         )
         raise e
-    return {line.strip() for line in response.text.splitlines() if line.strip()}
+    accession_versions_strings = {
+        line.strip() for line in response.text.splitlines() if line.strip()
+    }
+    return {
+        AccessionVersion(line.split(".")[0], int(line.split(".")[1]))
+        for line in accession_versions_strings
+    }
 
 
 def filter_for_submission(
@@ -83,22 +89,27 @@ def filter_for_submission(
     )
     suppressed_accessions = fetch_suppressed_accessions(config)
     for entry in entries_iterator:
-        accession_version: str = entry["metadata"]["accessionVersion"]
-        accession, version_str = accession_version.split(".")
-        version = int(version_str)
+        accession_version = AccessionVersion(
+            entry["metadata"]["accession"], int(entry["metadata"]["version"])
+        )
         if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
         if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
             continue
 
-        if highest_submitted_version.get(accession, -1) >= version:
+        if (
+            highest_submitted_version.get(accession_version.accession, -1)
+            >= accession_version.version
+        ):
             continue
 
         # Ignore if a higher version of this entry is already to be submitted
         version_already_to_submit = int(
-            entries_to_submit.get(accession, {}).get("metadata", {}).get("version", -1)
+            entries_to_submit.get(accession_version.accession, {})
+            .get("metadata", {})
+            .get("version", -1)
         )
-        if version_already_to_submit >= version:
+        if version_already_to_submit >= accession_version.version:
             continue
 
         entry["organism"] = organism
@@ -114,21 +125,21 @@ def filter_for_submission(
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
                 f"{ena_specific_metadata}"
             )
-            entries_with_external_metadata.add(accession)
+            entries_with_external_metadata.add(accession_version.accession)
         else:
             # If lower version had external metadata and this one doesn't, remove it from that set
-            entries_with_external_metadata.discard(accession)
-        entries_to_submit[accession] = entry
+            entries_with_external_metadata.discard(accession_version.accession)
+        entries_to_submit[accession_version.accession] = entry
         if entry["metadata"].get("isRevocation", True):
             if accession_version in suppressed_accessions:
                 logger.debug(f"Skipping suppressed accession: {accession_version}")
-                entries_to_submit.pop(accession)
+                entries_to_submit.pop(accession_version.accession)
             else:
                 logger.debug(f"Found revoked sequence: {accession_version}")
-                revoked_entries.add(accession)
-            entries_with_external_metadata.discard(accession)
+                revoked_entries.add(accession_version.accession)
+            entries_with_external_metadata.discard(accession_version.accession)
         else:
-            revoked_entries.discard(accession)
+            revoked_entries.discard(accession_version.accession)
 
     return SubmissionResults(
         entries_to_submit={
