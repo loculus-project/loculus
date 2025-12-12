@@ -823,26 +823,28 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def check_accession_exists_and_set_error(
-    conditions: dict[str, str | dict[str, str]],
+def accession_exists(
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
-    db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
     """Make request to ENA to check if an accession exists
-    If it does not exist, log error and update the relevant table with error status.
     Returns True if accession exists, False otherwise.
     """
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
-        exists = int(response.json()["total"]) > 0
-        if exists:
-            return True
+        return int(response.json()["total"]) > 0
     except Exception as e:
         logger.error(f"Error checking if accession exists: {e!s}")
+        return False
 
+
+def set_accession_does_not_exist_error(
+    conditions: dict[str, str | dict[str, str]],
+    accession: str,
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    db_pool: SimpleConnectionPool,
+):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
@@ -874,7 +876,6 @@ def check_accession_exists_and_set_error(
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
-    return False
 
 
 def trigger_retry_if_exists(
