@@ -391,7 +391,7 @@ def project_table_handle_errors(
             time=datetime.now(tz=pytz.utc),
             time_threshold=slack_retry_threshold_hours,
         )
-        last_retry = trigger_retry_if_exists(
+        return trigger_retry_if_exists(
             entries_with_errors,
             db_config,
             table_name=TableName.PROJECT_TABLE,
@@ -401,7 +401,7 @@ def project_table_handle_errors(
         # TODO: Query ENA to check if project has in fact been created
         # If created update project_table
         # If not retry 3 times, then raise for manual intervention
-    return last_retry
+    return last_retry_time
 
 
 def create_project(config: Config, stop_event: threading.Event):
