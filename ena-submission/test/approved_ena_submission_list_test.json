@@ -48,7 +48,7 @@
             "geoLocLatitude": null,
             "geoLocLongitude": null,
             "geoLocSite": null,
-            "hostAge": null,
+            "hostAge": 50,
             "hostAgeBin": null,
             "hostDisease": null,
             "hostGender": null,
