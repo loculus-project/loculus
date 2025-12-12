@@ -6,7 +6,7 @@
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
-            <TAXON_ID>Test taxon</TAXON_ID>
+            <TAXON_ID>12345</TAXON_ID>
             <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
             </ORGANISM>
         </SUBMISSION_PROJECT>

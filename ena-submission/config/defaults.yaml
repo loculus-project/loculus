@@ -1,3 +1,7 @@
+approved_list_url: will-be-overwritten
+ena_reports_service_url: will-be-overwritten
+ena_submission_url: will-be-overwritten
+test: true
 username: external_metadata_updater
 password: external_metadata_updater
 keycloak_client_id: backend-client
