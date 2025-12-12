@@ -888,7 +888,7 @@ def trigger_retry_if_exists(
 ) -> datetime | None:
     if (
         last_retry
-        and datetime.now(tz=pytz.utc) - timedelta(minutes=retry_threshold_hours) < last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(hours=retry_threshold_hours) < last_retry
     ):
         return last_retry
     for entry in entries_with_errors:
