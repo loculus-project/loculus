@@ -22,7 +22,6 @@ from ena_deposition.ena_submission_helper import (
     create_chromosome_list,
     create_ena_project,
     create_ena_sample,
-    create_fasta,
     create_flatfile,
     create_manifest,
     dataclass_to_xml,
