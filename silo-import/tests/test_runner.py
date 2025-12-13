@@ -31,7 +31,7 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "payload": 1}]
+    records = [{"metadata": {"pipelineVersion": "1", "payload": 1}}]
     body = compress_ndjson(records)
     responses = [
         MockHttpResponse(
@@ -59,7 +59,8 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert not paths.silo_done.exists()
 
     records_out = read_ndjson_file(paths.silo_input_data_path)
-    assert records_out == records
+    expected_records = [{"pipelineVersion": "1", "payload": 1}]
+    assert records_out == expected_records
     assert runner.current_etag == 'W/"123"'
     assert runner.last_hard_refresh > 0
     assert paths.lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
