@@ -91,8 +91,6 @@ def mock_config():
     config.ena_submission_password = "test_password"  # noqa: S105
     config.ena_submission_username = "test_user"
     config.ena_http_timeout_seconds = 10
-    config.segments = ["main"]
-    config.is_multi_segment = mock.Mock(return_value=False)
     return config
 
 
