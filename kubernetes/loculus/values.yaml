@@ -1933,14 +1933,26 @@ defaultOrganisms:
     enaDeposition:
       CV-A16:
         configFile:
-          taxon_id: ...
-          scientific_name: "CV-A16"
+          taxon_id: 31704
+          scientific_name: "Coxsackievirus A16"
           molecule_type: "genomic RNA"
         suborganismIdentifierField: genotype
       CV-A10:
         configFile:
           taxon_id: 42769
           scientific_name: "Coxsackievirus A10"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-A71:
+        configFile:
+          taxon_id: 39054
+          scientific_name: "Enterovirus A71"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-D68:
+        configFile:
+          taxon_id: 42789
+          scientific_name: "Enterovirus D68"
           molecule_type: "genomic RNA"
         suborganismIdentifierField: genotype
     referenceGenomes:
