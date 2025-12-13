@@ -605,6 +605,8 @@ accepted_authors = {
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
+    "'t Hooft, Gerard": "'t Hooft, Gerard",
+    "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
 not_accepted_authors = [
     ";",
@@ -617,6 +619,7 @@ not_accepted_authors = [
     "Anna Maria Smith",
     "Smith9, Anna;",
     "Anna Smith, Cameron Tucker, and Jose Perez",
+    "Count4th, EwanMcGregor, Count4th",
 ]
 
 

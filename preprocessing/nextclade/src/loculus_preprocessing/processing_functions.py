@@ -68,9 +68,14 @@ def valid_name() -> str:
         r"\u0180-\u024F"  # Latin Extended-B
     )
 
-    alpha = rf"\s*[{chars}]"  # leading letter
-    name_chars = rf"[{chars}\s.\-']*"  # letters + space/.-'
-    return alpha + name_chars + r"," + name_chars
+    # Ordinal must be a separate "word":
+    # - preceded only by start-of-string or whitespace
+    # - ends at a word boundary
+    ordinal = r"(?<!\S)\d+(?:st|nd|rd|th)\b"
+    alpha_or_ord = rf"\s*(?:[{chars}']|{ordinal})"  # First character: letter or ordinal
+    name_chars = rf"(?:[{chars}\s.\-']|{ordinal})*"
+
+    return alpha_or_ord + name_chars + r"," + name_chars
 
 
 def valid_authors(authors: str) -> bool:
