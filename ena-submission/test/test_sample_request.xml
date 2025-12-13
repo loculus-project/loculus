@@ -2,7 +2,7 @@
         <SAMPLE center_name="Fake center name" alias="LOC_0001TLY:Test organism:Test suffix">
                 <TITLE>Test scientific name: Genome sequencing</TITLE>
                 <SAMPLE_NAME>
-                        <TAXON_ID>Test taxon</TAXON_ID>
+                        <TAXON_ID>12345</TAXON_ID>
                         <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
                 </SAMPLE_NAME>
                 <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Fake center name from Loculus</DESCRIPTION>

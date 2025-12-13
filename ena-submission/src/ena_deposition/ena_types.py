@@ -1,7 +1,7 @@
 import dataclasses
 from collections import UserString
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
 class XmlNone(UserString):
@@ -166,21 +166,15 @@ def default_sample_set_type() -> SampleSetType:
     return SampleSetType(sample=[default_sample_type()])
 
 
-class AssemblyType(Enum):
+class AssemblyType(StrEnum):
     CLONE = "clone"
     ISOLATE = "isolate"
 
-    def __str__(self):
-        return self.value
 
-
-class MoleculeType(Enum):
+class MoleculeType(StrEnum):
     GENOMIC_DNA = "genomic DNA"
     GENOMIC_RNA = "genomic RNA"
     VIRAL_CRNA = "viral cRNA"
-
-    def __str__(self):
-        return self.value
 
 
 @dataclass
@@ -203,7 +197,7 @@ class AssemblyManifest:
     authors: str | None = None
 
 
-class ChromosomeType(Enum):
+class ChromosomeType(StrEnum):
     CHROMOSOME = "chromosome"
     PLASMID = "plasmid"
     LINKAGE_GROUP = "linkage_group"
@@ -211,11 +205,8 @@ class ChromosomeType(Enum):
     SEGMENTED = "segmented"
     MULTIPARTITE = "multipartite"
 
-    def __str__(self):
-        return self.value
 
-
-class ChromosomeLocation(Enum):
+class ChromosomeLocation(StrEnum):
     MACRONUCLEAR = "macronuclear"
     NUCLEOMORPH = "nucleomorph"
     MITOCHONDRION = "mitochondrion"
@@ -235,16 +226,10 @@ class ChromosomeLocation(Enum):
     HYDROGENOSOME = "hydrogenosome"
     CHROMATOPHORE = "chromatophore"
 
-    def __str__(self):
-        return self.value
 
-
-class Topology(Enum):
+class Topology(StrEnum):
     LINEAR = "linear"
     CIRCULAR = "circular"
-
-    def __str__(self):
-        return self.value
 
 
 @dataclass
