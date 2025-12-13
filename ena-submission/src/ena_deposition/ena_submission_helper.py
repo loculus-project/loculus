@@ -50,6 +50,7 @@ from .ena_types import (
     XmlAttribute,
     XmlNone,
 )
+from .json_utils import safe_json_loads
 from .submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,
@@ -724,7 +725,7 @@ def get_ena_analysis_process(
         # should still succeed
         return CreationResult(errors=errors, warnings=warnings)
     try:
-        parsed_response = json.loads(response.text)
+        parsed_response = safe_json_loads(response.text, "get_ena_analysis_process")
         entry = parsed_response[0]["report"]
         if entry["processingError"]:
             raise requests.exceptions.RequestException
@@ -837,7 +838,7 @@ def set_error_if_accession_not_exists(
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
-        exists = int(response.json()["total"]) > 0
+        exists = int(safe_json_loads(response.text, "check_accession_exists")["total"]) > 0
         if exists:
             return True
     except Exception as e:

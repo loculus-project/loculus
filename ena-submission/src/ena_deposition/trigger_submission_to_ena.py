@@ -11,6 +11,7 @@ import requests
 from psycopg2.pool import SimpleConnectionPool
 
 from .config import Config
+from .json_utils import safe_json_loads
 from .submission_db_helper import (
     SubmissionTableEntry,
     add_to_submission_table,
@@ -67,7 +68,7 @@ def trigger_submission_to_ena(
             time.sleep(config.min_between_github_requests * 60)
             continue
         try:
-            sequences_to_upload = response.json()
+            sequences_to_upload = safe_json_loads(response.text, "trigger_submission_to_ena")
             upload_sequences(db_config, sequences_to_upload)
         except Exception as upload_error:
             logger.error(f"Failed to upload sequences: {upload_error}")
