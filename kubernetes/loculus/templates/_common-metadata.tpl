@@ -515,7 +515,7 @@ organisms:
   {{- if $instance.enaDeposition }}
   {{ $key }}:
     {{- with $instance.schema }}
-    {{- $instance.enaDeposition.configFile | toYaml | nindent 6 }}
+    {{- $instance.enaDeposition.configFile | toYaml | nindent 4 }}
     organismName: {{ quote .organismName }}
     externalMetadata:
       {{- $args := dict
