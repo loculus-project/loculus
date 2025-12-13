@@ -58,52 +58,63 @@ class Config(BaseModel):
     """Configuration for the ENA submission process.
     See config/defaults.yaml for default values."""
 
-    test: bool
-    organisms: dict[EnaOrganismName, EnaOrganismDetails]
+    # Details for connecting to the Loculus backend
     backend_url: str
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
     password: str
+
+    # Details for connecting to the ENA submission state database
     db_username: str
     db_password: str
     db_url: str
     db_name: str
-    unique_project_suffix: str
+
+    # API host and port for ena-deposition service
+    ena_deposition_host: str | None
+    ena_deposition_port: int | None
+
+    # ENA specific configuration is set in secure_ena_connection()
+    test: bool
     ena_submission_url: str
     ena_submission_password: str
     ena_submission_username: str
     ena_reports_service_url: str
+    submit_to_ena_prod: bool = False
+    is_broker: bool = False
+    allowed_submission_hosts: list[str] = field(
+        default_factory=lambda: ["https://backend.pathoplexus.org"]
+    )
     approved_list_url: str
     approved_list_test_url: str | None
     suppressed_list_url: str
     suppressed_list_test_url: str | None
+
+    # Slack configuration must be provided via environment variables or config
     slack_hook: str | None
     slack_token: str | None
     slack_channel_id: str | None
+
+    organisms: dict[EnaOrganismName, EnaOrganismDetails]
+    unique_project_suffix: str
     metadata_mapping: dict[str, MetadataMapping]
     manifest_fields_mapping: dict[str, ManifestFieldDetails]
     ingest_pipeline_submission_group: int
-    ena_deposition_host: str | None
-    ena_deposition_port: int | None
+    ena_checklist: str | None = None
+    set_alias_suffix: str | None = None  # Add to test revisions in dev
+
     ena_http_timeout_seconds: int = 60
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
     # By default, don't retry HTTP post requests to ENA
     ena_http_post_retry_attempts: int = 1
-    submit_to_ena_prod: bool = False
-    is_broker: bool = False
-    allowed_submission_hosts: list[str] = field(
-        default_factory=lambda: ["https://backend.pathoplexus.org"]
-    )
     min_between_github_requests: int = 2
     time_between_iterations: int = 10
     min_between_publicness_checks: int = 12 * 60  # 12 hours
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
-    ena_checklist: str | None = None
-    set_alias_suffix: str | None = None  # Add to test revisions in dev
 
 
 def secure_ena_connection(config: Config):
