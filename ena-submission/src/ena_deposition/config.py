@@ -78,9 +78,9 @@ class Config(BaseModel):
     approved_list_test_url: str | None
     suppressed_list_url: str
     suppressed_list_test_url: str | None
-    slack_hook: str
-    slack_token: str
-    slack_channel_id: str
+    slack_hook: str | None
+    slack_token: str | None
+    slack_channel_id: str | None
     metadata_mapping: dict[str, MetadataMapping]
     manifest_fields_mapping: dict[str, ManifestFieldDetails]
     ingest_pipeline_submission_group: int
