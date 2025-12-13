@@ -13,12 +13,16 @@ ena_http_post_retry_attempts: 3
 ena_http_get_retry_attempts: 3
 ena_http_timeout_seconds: 60
 
-organisms:
+enaOrganisms:
   cchf:
     molecule_type: genomic RNA
     scientific_name: Orthonairovirus haemorrhagiae
     taxon_id: 3052518
     organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+    segments: 
+      - L
+      - M
+      - S
     externalMetadata:
       - externalMetadataUpdater: ena
         name: bioprojectAccession
@@ -88,6 +92,8 @@ organisms:
     scientific_name: West Nile virus
     taxon_id: 11082
     organismName: "West Nile Virus"
+    segments: 
+      - main
     externalMetadata:
       - externalMetadataUpdater: ena
         name: bioprojectAccession
