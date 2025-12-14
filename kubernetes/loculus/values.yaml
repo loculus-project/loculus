@@ -30,6 +30,7 @@ getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 zstdCompressionLevel: 10
+pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:
   enabled: true
   urls:

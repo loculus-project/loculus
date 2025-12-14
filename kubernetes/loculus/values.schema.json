@@ -955,6 +955,14 @@
       "maximum": 22,
       "description": "Zstandard compression level for sequence data. Higher means better compression ratio but higher CPU/memory usage."
     },
+    "pipelineVersionUpgradeCheckIntervalSeconds": {
+      "groups": ["general"],
+      "group": "general",
+      "type": "integer",
+      "default": 10,
+      "minimum": 1,
+      "description": "Interval in seconds at which the backend checks for and adopts newer preprocessing pipeline versions. Pipeline version upgrades are irreversible one-time changes. The check runs on backend startup (with initial delay of min(interval, 600) seconds to avoid DB load). Higher values reduce database load but delay adoption of new pipeline versions."
+    },
     "environment": {
       "groups": ["general"],
       "type": "string",

@@ -360,6 +360,7 @@ fields:
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
+pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
