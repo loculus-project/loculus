@@ -167,14 +167,14 @@ class SubmissionDatabaseService(
             )
             .where {
                 table.organismIs(organism) and
-                    not(table.isRevocationColumn) and
-                    notExists(
-                        preprocessing.selectAll().where {
-                            (table.accessionColumn eq preprocessing.accessionColumn) and
-                                (table.versionColumn eq preprocessing.versionColumn) and
-                                (preprocessing.pipelineVersionColumn eq pipelineVersion)
-                        },
-                    )
+                        not(table.isRevocationColumn) and
+                        notExists(
+                            preprocessing.selectAll().where {
+                                (table.accessionColumn eq preprocessing.accessionColumn) and
+                                        (table.versionColumn eq preprocessing.versionColumn) and
+                                        (preprocessing.pipelineVersionColumn eq pipelineVersion)
+                            },
+                        )
             }
             .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
@@ -273,16 +273,16 @@ class SubmissionDatabaseService(
 
         log.info {
             "Updated ${processedAccessionVersions.size} sequences to $PROCESSED. " +
-                "Processing result counts: " +
-                processingResultCounts.entries.joinToString { "${it.key}=${it.value}" }
+                    "Processing result counts: " +
+                    processingResultCounts.entries.joinToString { "${it.key}=${it.value}" }
         }
 
         auditLogger.log(
             username = "<pipeline version $pipelineVersion>",
             description = "Processed ${processedAccessionVersions.size} sequences: " +
-                processedAccessionVersions.joinToString() +
-                "Processing result counts: " +
-                processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
+                    processedAccessionVersions.joinToString() +
+                    "Processing result counts: " +
+                    processingResultCounts.entries.joinToString { "${it.key}=${it.value}" },
         )
     }
 
@@ -312,9 +312,9 @@ class SubmissionDatabaseService(
 
         auditLogger.log(
             description = (
-                "Updated external metadata of ${accessionVersions.size} sequences:" +
-                    accessionVersions.joinToString()
-                ),
+                    "Updated external metadata of ${accessionVersions.size} sequences:" +
+                            accessionVersions.joinToString()
+                    ),
             username = externalMetadataUpdater,
         )
     }
@@ -341,8 +341,8 @@ class SubmissionDatabaseService(
             ExternalMetadataTable.update(
                 where = {
                     (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
-                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
-                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                            (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
+                            (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
                 },
             ) {
                 it[accessionColumn] = submittedExternalMetadata.accession
@@ -380,8 +380,8 @@ class SubmissionDatabaseService(
             table.update(
                 where = {
                     table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(IN_PROCESSING) and
-                        (table.pipelineVersionColumn eq pipelineVersion)
+                            table.statusIs(IN_PROCESSING) and
+                            (table.pipelineVersionColumn eq pipelineVersion)
                 },
             ) {
                 it[processingStatusColumn] = PROCESSED.name
@@ -412,8 +412,8 @@ class SubmissionDatabaseService(
                     JoinType.INNER,
                     additionalConstraint = {
                         (preproData.accessionColumn eq sequenceEntries.accessionColumn) and
-                            (preproData.versionColumn eq sequenceEntries.versionColumn) and
-                            (preproData.pipelineVersionColumn greaterEq sequenceEntries.pipelineVersionColumn)
+                                (preproData.versionColumn eq sequenceEntries.versionColumn) and
+                                (preproData.pipelineVersionColumn greaterEq sequenceEntries.pipelineVersionColumn)
                     },
                 )
                 .select(preproData.processedDataColumn)
@@ -480,8 +480,8 @@ class SubmissionDatabaseService(
         if (resultRow[SequenceEntriesView.organismColumn] != organism.name) {
             throw UnprocessableEntityException(
                 "Accession version ${submittedProcessedData.displayAccessionVersion()} is for organism " +
-                    "${resultRow[SequenceEntriesView.organismColumn]}, " +
-                    "but submitted data is for organism ${organism.name}",
+                        "${resultRow[SequenceEntriesView.organismColumn]}, " +
+                        "but submitted data is for organism ${organism.name}",
             )
         }
     }
@@ -509,7 +509,7 @@ class SubmissionDatabaseService(
         if (selectedSequenceEntries.all { it[preprocessing.pipelineVersionColumn] != pipelineVersion }) {
             throw UnprocessableEntityException(
                 "Accession version $accessionVersion is not awaiting processing results of version " +
-                    "$pipelineVersion (anymore)",
+                        "$pipelineVersion (anymore)",
             )
         }
         throw IllegalStateException(
@@ -527,7 +527,7 @@ class SubmissionDatabaseService(
             .select(groupIdColumn)
             .where {
                 (accessionColumn eq submittedProcessedData.accession) and
-                    (versionColumn eq submittedProcessedData.version)
+                        (versionColumn eq submittedProcessedData.version)
             }
             .single()[groupIdColumn]
         val fileIds = submittedProcessedData.data.files.flatMap { it.value.map { it.fileId } }.toSet()
@@ -536,7 +536,7 @@ class SubmissionDatabaseService(
             if (fileGroup != sequenceEntryGroup) {
                 throw UnprocessableEntityException(
                     "Accession version ${submittedProcessedData.displayAccessionVersion()} belongs to " +
-                        "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
+                            "group $sequenceEntryGroup but the attached file $fileId belongs to the group $fileGroup.",
                 )
             }
         }
@@ -609,7 +609,7 @@ class SubmissionDatabaseService(
             .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
             .where {
                 statusCondition and accessionCondition and scopeCondition and groupCondition and
-                    organismCondition and submitterCondition
+                        organismCondition and submitterCondition
             }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
@@ -637,7 +637,7 @@ class SubmissionDatabaseService(
         auditLogger.log(
             authenticatedUser.username,
             "Approved ${accessionVersionsToUpdate.size} sequences: " +
-                accessionVersionsToUpdate.joinToString { it.displayAccessionVersion() },
+                    accessionVersionsToUpdate.joinToString { it.displayAccessionVersion() },
         )
 
         return accessionVersionsToUpdate
@@ -662,8 +662,8 @@ class SubmissionDatabaseService(
         return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
-                    (SequenceEntriesView.isRevocationColumn eq true) and
-                    SequenceEntriesView.organismIs(organism)
+                        (SequenceEntriesView.isRevocationColumn eq true) and
+                        SequenceEntriesView.organismIs(organism)
             }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
@@ -684,7 +684,7 @@ class SubmissionDatabaseService(
         JoinType.LEFT,
         additionalConstraint = {
             (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                (DataUseTermsTable.isNewestDataUseTerms)
+                    (DataUseTermsTable.isNewestDataUseTerms)
         },
     )
         .select(
@@ -755,8 +755,8 @@ class SubmissionDatabaseService(
     ): GetSequenceResponse {
         log.info {
             "getting sequences for user ${authenticatedUser.username} " +
-                "(organism: $organism, groupFilter: $groupIdsFilter, statusFilter: $statusesFilter, " +
-                "processingResultFilter: $processingResultFilter, page: $page, pageSize: $size)"
+                    "(organism: $organism, groupFilter: $groupIdsFilter, statusFilter: $statusesFilter, " +
+                    "processingResultFilter: $processingResultFilter, page: $page, pageSize: $size)"
         }
 
         val statusCondition = when (statusesFilter) {
@@ -769,8 +769,8 @@ class SubmissionDatabaseService(
             null -> Op.TRUE
 
             else -> SequenceEntriesView.processingResultIsOneOf(processingResultFilter) or
-                // processingResultFilter has no effect on sequences in states other than PROCESSED
-                not(SequenceEntriesView.statusIs(Status.PROCESSED))
+                    // processingResultFilter has no effect on sequences in states other than PROCESSED
+                    not(SequenceEntriesView.statusIs(Status.PROCESSED))
         }
 
         val entries = SequenceEntriesView
@@ -779,7 +779,7 @@ class SubmissionDatabaseService(
                 JoinType.LEFT,
                 additionalConstraint = {
                     (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                        (DataUseTermsTable.isNewestDataUseTerms)
+                            (DataUseTermsTable.isNewestDataUseTerms)
                 },
             )
             .select(
@@ -860,7 +860,7 @@ class SubmissionDatabaseService(
             .select(processingResultColumn, countColumn)
             .where {
                 SequenceEntriesView.organismIs(organism) and groupCondition and
-                    SequenceEntriesView.statusIs(Status.PROCESSED)
+                        SequenceEntriesView.statusIs(Status.PROCESSED)
             }
             .groupBy(processingResultColumn)
             .associate { ProcessingResult.fromString(it[processingResultColumn]) to it[countColumn].toInt() }
@@ -920,10 +920,10 @@ class SubmissionDatabaseService(
                 booleanParam(true), SequenceEntriesTable.organismColumn,
             ).where {
                 (
-                    SequenceEntriesTable.accessionColumn inList
-                        accessions
-                    ) and
-                    SequenceEntriesTable.isMaxVersion
+                        SequenceEntriesTable.accessionColumn inList
+                                accessions
+                        ) and
+                        SequenceEntriesTable.isMaxVersion
             },
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
@@ -941,7 +941,7 @@ class SubmissionDatabaseService(
         auditLogger.log(
             authenticatedUser.username,
             "Revoked ${accessions.size} sequences: " +
-                accessions.joinToString(),
+                    accessions.joinToString(),
         )
 
         return SequenceEntriesView
@@ -954,11 +954,11 @@ class SubmissionDatabaseService(
             )
             .where {
                 (SequenceEntriesView.accessionColumn inList accessions) and
-                    SequenceEntriesView.isMaxVersion and
-                    SequenceEntriesView.statusIs(Status.PROCESSED) and
-                    SequenceEntriesView.processingResultIsOneOf(
-                        listOf(HAS_WARNINGS, NO_ISSUES),
-                    )
+                        SequenceEntriesView.isMaxVersion and
+                        SequenceEntriesView.statusIs(Status.PROCESSED) and
+                        SequenceEntriesView.processingResultIsOneOf(
+                            listOf(HAS_WARNINGS, NO_ISSUES),
+                        )
             }
             .orderBy(SequenceEntriesView.accessionColumn)
             .map {
@@ -1011,10 +1011,10 @@ class SubmissionDatabaseService(
 
         val scopeCondition = when (scope) {
             DeleteSequenceScope.PROCESSED_WITH_ERRORS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(HAS_ERRORS)
+                    SequenceEntriesView.processingResultIs(HAS_ERRORS)
 
             DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> SequenceEntriesView.statusIs(Status.PROCESSED) and
-                SequenceEntriesView.processingResultIs(HAS_WARNINGS)
+                    SequenceEntriesView.processingResultIs(HAS_WARNINGS)
 
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }
@@ -1039,7 +1039,7 @@ class SubmissionDatabaseService(
         auditLogger.log(
             authenticatedUser.username,
             "Delete ${sequenceEntriesToDelete.size} " +
-                "unreleased sequences: " + sequenceEntriesToDelete.joinToString { it.displayAccessionVersion() },
+                    "unreleased sequences: " + sequenceEntriesToDelete.joinToString { it.displayAccessionVersion() },
         )
 
         return sequenceEntriesToDelete
@@ -1083,7 +1083,7 @@ class SubmissionDatabaseService(
         auditLogger.log(
             authenticatedUser.username,
             "Edited sequence: " +
-                editedSequenceEntryData.displayAccessionVersion(),
+                    editedSequenceEntryData.displayAccessionVersion(),
         )
     }
 
@@ -1094,7 +1094,7 @@ class SubmissionDatabaseService(
     ): SequenceEntryVersionToEdit {
         log.info {
             "Getting sequence entry ${accessionVersion.displayAccessionVersion()} " +
-                "by ${authenticatedUser.username} to edit"
+                    "by ${authenticatedUser.username} to edit"
         }
 
         accessionPreconditionValidator.validate {
@@ -1251,7 +1251,7 @@ class SubmissionDatabaseService(
             .selectAll()
             .where {
                 SequenceEntriesPreprocessedDataTable.statusIs(IN_PROCESSING) and
-                    (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
+                        (SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn.less(staleDateTime))
             }
             .limit(1)
             .count() > 0
@@ -1267,6 +1267,7 @@ class SubmissionDatabaseService(
     }
 
     fun useNewerProcessingPipelineIfPossible(): Map<String, Long?> {
+
         val latestUpdate = transaction {
             UpdateTrackerTable
                 .select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
@@ -1277,7 +1278,8 @@ class SubmissionDatabaseService(
 
         if (latestUpdate == null || latestUpdate == lastPreprocessedDataUpdate) {
             log.info {
-                "No updates in $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME; skipping pipeline version check"
+                "No updates in $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME since last check at"
+                "$lastPreprocessedDataUpdate; skipping pipeline version upgrade check"
             }
             return emptyMap()
         }
@@ -1287,6 +1289,46 @@ class SubmissionDatabaseService(
         return SequenceEntriesTable.distinctOrganisms().associateWith { organismName ->
             useNewerProcessingPipelineIfPossible(organismName)
         }
+    }
+
+    /**
+     * For all organisms present in the [SequenceEntriesTable], delete all entries from the
+     * [SequenceEntriesPreprocessedDataTable] that are more than `numberOfStaleVersionsToKeep`
+     * versions older than the latest preprocessing pipeline version for that organism.
+     */
+    fun garbageCollectPreprocessingData(
+        numberOfStaleVersionsToKeep: Int,
+    ) {
+        SequenceEntriesTable.distinctOrganisms().map(
+            garbageCollectPreprocessingData(it, numberOfStaleVersionsToKeep),
+        )
+    }
+
+    /**
+     * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that are more than
+     * `numberOfStaleVersionsToKeep` versions older than the latest preprocessing pipeline version
+     * for the given organism.
+     */
+    fun garbageCollectPreprocessingData(
+        organism: String,
+        numberOfStaleVersionsToKeep: Int,
+    ) {
+        val latestVersion = CurrentProcessingPipelineTable.getCurrentPipelineVersion(organism)
+        if (latestVersion == null) {
+            log.warn("No current processing pipeline version found for organism '$organism'; skipping garbage collection")
+            return
+        }
+
+        val earliestVersionToKeep = latestVersion - numberOfStaleVersionsToKeep + 1
+
+        log.info {
+            "Garbage collecting preprocessing data for organism '$organism': " +
+                    "keeping versions >= $earliestVersionToKeep, latest version is $latestVersion"
+        }
+
+        val deletedEntries = cleanUpOutdatedPreprocessingData(organism, earliestVersionToKeep)
+
+        log.info("Garbage collection for organism '$organism' completed: deleted $deletedEntries entries")
     }
 
     /**
@@ -1322,20 +1364,20 @@ class SubmissionDatabaseService(
      * If the [CurrentProcessingPipelineTable] is updated, the newly set version is returned.
      */
     private fun useNewerProcessingPipelineIfPossible(organismName: String): Long? {
-        log.info("Checking for newer processing pipeline versions for organism '$organismName'")
+        log.info("Checking if pipeline version for organism '$organismName' can be upgraded")
         return transaction {
             val newVersion = findNewPreprocessingPipelineVersion(organismName)
                 ?: return@transaction null
 
-            val pipelineNeedsUpdate = CurrentProcessingPipelineTable.pipelineNeedsUpdate(newVersion, organismName)
+            val updateSuccessful = CurrentProcessingPipelineTable.tryUpdatePipelineVersion(
+                organismName,
+                newVersion,
+                dateProvider.getCurrentDateTime(),
+            )
 
-            if (pipelineNeedsUpdate) {
-                log.info { "Updating current processing pipeline to newer version: $newVersion" }
-                CurrentProcessingPipelineTable.updatePipelineVersion(
-                    organismName,
-                    newVersion,
-                    dateProvider.getCurrentDateTime(),
-                )
+            if (!updateSuccessful) {
+                log.info("Pipeline version for organism '$organismName' was already updated by another process")
+                return@transaction null
             }
 
             val logMessage = "Started using results from new processing pipeline: version $newVersion"
@@ -1451,7 +1493,7 @@ private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): L
             ) as newest;
     """.trimIndent()
 
-    return exec(
+    val newVersion = exec(
         sql,
         listOf(
             Pair(VarCharColumnType(), organism),
@@ -1461,16 +1503,15 @@ private fun Transaction.findNewPreprocessingPipelineVersion(organism: String): L
         ),
         explicitStatementType = StatementType.SELECT,
     ) { resultSet ->
-        if (!resultSet.next()) {
-            return@exec null
-        }
-
-        val version = resultSet.getLong("version")
-        when {
-            resultSet.wasNull() -> null
-            else -> version
-        }
+        resultSet.next()
+        resultSet.getLong("version").takeUnless { resultSet.wasNull() }
     }
+    if (newVersion != null) {
+        log.info { "Found newer preprocessing pipeline version $newVersion for organism '$organism'" }
+    } else {
+        log.info { "No newer preprocessing pipeline version found for organism '$organism'" }
+    }
+    return newVersion
 }
 
 data class RawProcessedData(

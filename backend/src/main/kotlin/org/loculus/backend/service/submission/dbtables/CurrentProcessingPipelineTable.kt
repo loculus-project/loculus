@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission.dbtables
 
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
@@ -27,27 +28,20 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
         }
 
     /**
-     * Given a version that was found that is potentially newer than the current one, check if the currently stored
-     * 'current' pipeline version for this organism is less than the one that was found?
-     * If so, the pipeline needs to 'update' i.e. reprocess older entries.
+     * Set the pipeline version for the given organism to newVersion (only if it isn't already set)
      */
-    fun pipelineNeedsUpdate(maybeNewerVersion: Long, organism: String) = CurrentProcessingPipelineTable
-        .selectAll()
-        .where { versionColumn less maybeNewerVersion }
-        .andWhere { organismColumn eq organism }
-        .empty()
-        .not()
-
-    /**
-     * Set the pipeline version for the given organism to newVersion.
-     */
-    fun updatePipelineVersion(organism: String, newVersion: Long, startedUsingAt: LocalDateTime) =
+    fun tryUpdatePipelineVersion(organism: String, newVersion: Long, startedUsingAt: LocalDateTime): Boolean =
         CurrentProcessingPipelineTable.update(
-            where = {
-                organismColumn eq organism
-            },
+            where = { (organismColumn eq organism) and (versionColumn less newVersion) },
         ) {
             it[versionColumn] = newVersion
             it[startedUsingAtColumn] = startedUsingAt
-        }
+        } > 0
+
+    /** Get the current pipeline version for the given organism */
+    fun getCurrentPipelineVersion(organism: String): Long? =
+        CurrentProcessingPipelineTable.selectAll()
+            .andWhere { organismColumn eq organism }
+            .map { it[versionColumn] }
+            .firstOrNull()
 }

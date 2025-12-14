@@ -10,8 +10,8 @@ private val log = mu.KotlinLogging.logger {}
 @Component
 class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseService: SubmissionDatabaseService) {
 
-    // Initial delay to avoid hammering the database on backend startup
     @Scheduled(
+        // Initial delay to avoid hammering the database on backend startup
         initialDelayString =
         "#{T(java.lang.Math).min(" +
             "\${${BackendSpringProperty.PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS}}, 600)}",
@@ -19,20 +19,22 @@ class UseNewerProcessingPipelineVersionTask(private val submissionDatabaseServic
         timeUnit = TimeUnit.SECONDS,
     )
     fun task() {
-        log.info { "Checking for newer preprocessing pipeline versions" }
-        val newVersions = submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        upgradeProcessingPipelineTask()
+        cleanUpOutdatedProcessingDataTask()
+    }
 
-        newVersions.forEach { (organism, latestVersion) ->
-            if (latestVersion != null) {
-                submissionDatabaseService.cleanUpOutdatedPreprocessingData(organism, latestVersion - 1)
-            }
-        }
 
-        val upgradedOrganisms = newVersions.filterValues { it != null }
-        if (upgradedOrganisms.isNotEmpty()) {
-            log.info { "Completed pipeline version upgrade check: upgraded ${upgradedOrganisms.size} organism(s)" }
-        } else {
-            log.debug { "Completed pipeline version upgrade check: no upgrades needed" }
-        }
+    private fun upgradeProcessingPipelineTask() {
+        log.info { "Starting checking for processing pipeline version upgrades" }
+        val startTime = System.currentTimeMillis()
+        submissionDatabaseService.useNewerProcessingPipelineIfPossible()
+        log.info { "Finished checking for processing pipeline version upgrades in ${System.currentTimeMillis() - startTime} ms" }
+    }
+
+    private fun cleanUpOutdatedProcessingDataTask() {
+        log.info { "Starting cleanup of outdated preprocessing data" }
+        val cleanupStartTime = System.currentTimeMillis()
+        submissionDatabaseService.cleanUpOutdatedPreprocessingData(numberOfStaleVersionsToKeep = BackendSpringProperty.STALE_PIPELINE_VERSIONS_TO_KEEP)
+        log.info { "Finished cleanup of outdated preprocessing data in ${System.currentTimeMillis() - cleanupStartTime} ms" }
     }
 }
