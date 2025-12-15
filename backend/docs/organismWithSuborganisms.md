@@ -57,6 +57,8 @@ defaultOrganisms:
           displayName: Genotype
           header: "Genotype"
           noInput: true
+          preprocessing:
+            inputs: {input: ASSIGNED_SEGMENT}
       website:
         <<: *website
         # When the website needs to know which suborganism a sequence entry belongs to,
