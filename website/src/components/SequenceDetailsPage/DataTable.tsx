@@ -9,7 +9,7 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import {
     type ReferenceAccession,
     type ReferenceGenomesLightweightSchema,
-    type Suborganism,
+    type ReferenceName,
 } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
@@ -17,7 +17,7 @@ interface Props {
     dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
-    suborganism: Suborganism | null;
+    segmentReferences: Record<string, string> | null;
 }
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
@@ -40,10 +40,19 @@ const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
     referenceGenomeLightweightSchema,
-    suborganism,
+    segmentReferences,
 }) => {
-    const reference = suborganism !== null ? referenceGenomeLightweightSchema[suborganism].insdcAccessionFull : null;
-    const hasReferenceAccession = (reference ?? []).filter((item) => item.insdcAccessionFull !== undefined).length > 0;
+    // Gather INSDC accessions from all segment/reference combinations
+    const reference: ReferenceAccession[] = [];
+    if (segmentReferences !== null) {
+        for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
+            const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
+            if (segmentData && segmentData.insdcAccessions[referenceName]) {
+                reference.push(segmentData.insdcAccessions[referenceName]);
+            }
+        }
+    }
+    const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     return (
         <div>

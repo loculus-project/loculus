@@ -21,7 +21,7 @@ import type { FieldValues, GroupedMetadataFilter, MetadataFilter, SetSomeFieldVa
 import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { extractArrayValue, validateSingleValue } from '../../utils/extractFieldValue.ts';
-import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
 import { type MetadataFilterSchema, MetadataVisibility, MUTATION_KEY } from '../../utils/search.ts';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { type FieldItem, FieldSelectorModal } from '../common/FieldSelectorModal.tsx';
@@ -47,6 +47,7 @@ interface SearchFormProps {
     suborganismIdentifierField: string | undefined;
     selectedSuborganism: string | null;
     setSelectedSuborganism: (newValue: string | null) => void;
+    selectedReferences: Record<string, string | null>;
 }
 
 export const SearchForm = ({
@@ -62,6 +63,7 @@ export const SearchForm = ({
     suborganismIdentifierField,
     selectedSuborganism,
     setSelectedSuborganism,
+    selectedReferences,
 }: SearchFormProps) => {
     const visibleFields = filterSchema.filters.filter(
         (field) => searchVisibilities.get(field.name)?.isVisible(selectedSuborganism) ?? false,
@@ -107,8 +109,8 @@ export const SearchForm = ({
         }));
 
     const suborganismSegmentAndGeneInfo = useMemo(
-        () => getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
-        [referenceGenomeLightweightSchema, selectedSuborganism],
+        () => getSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedReferences),
+        [referenceGenomeLightweightSchema, selectedReferences],
     );
 
     return (

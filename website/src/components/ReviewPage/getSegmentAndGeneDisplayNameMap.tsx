@@ -1,29 +1,38 @@
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
-import {
-    getMultiPathogenNucleotideSequenceNames,
-    getMultiPathogenSequenceName,
-} from '../../utils/sequenceTypeHelpers.ts';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 export function getSegmentAndGeneDisplayNameMap(
-    referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
+    referenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema,
 ): Map<string, string | null> {
-    if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
-        return new Map();
+    const mappingEntries: [string, string][] = [];
+
+    // Iterate through all segments and references
+    for (const [segmentName, segmentData] of Object.entries(referenceGenomesLightweightSchema.segments)) {
+        // If only one reference, no prefix needed
+        if (segmentData.references.length === 1) {
+            // LAPIS name is just the segment name
+            mappingEntries.push([segmentName, segmentName]);
+
+            // Add genes for this segment/reference
+            const singleRef = segmentData.references[0];
+            const genes = segmentData.genesByReference[singleRef] || [];
+            for (const geneName of genes) {
+                mappingEntries.push([geneName, geneName]);
+            }
+        } else {
+            // Multiple references: use {reference}-{segment} format
+            for (const referenceName of segmentData.references) {
+                const lapisSegmentName = `${referenceName}-${segmentName}`;
+                mappingEntries.push([lapisSegmentName, segmentName]);
+
+                // Add genes for this segment/reference
+                const genes = segmentData.genesByReference[referenceName] || [];
+                for (const geneName of genes) {
+                    const lapisGeneName = `${referenceName}-${geneName}`;
+                    mappingEntries.push([lapisGeneName, geneName]);
+                }
+            }
+        }
     }
 
-    const segmentMappingEntries = Object.entries(referenceGenomeLightweightSchema).flatMap(
-        ([suborganism, suborganismSchema]) =>
-            getMultiPathogenNucleotideSequenceNames(suborganismSchema.nucleotideSegmentNames, suborganism).map(
-                ({ lapisName, label }) => [lapisName, label] as const,
-            ),
-    );
-
-    const geneMappingEntries = Object.entries(referenceGenomeLightweightSchema).flatMap(
-        ([suborganism, suborganismSchema]) =>
-            suborganismSchema.geneNames
-                .map((geneName) => getMultiPathogenSequenceName(geneName, suborganism))
-                .map(({ lapisName, label }) => [lapisName, label] as const),
-    );
-
-    return new Map([...segmentMappingEntries, ...geneMappingEntries]);
+    return new Map(mappingEntries);
 }

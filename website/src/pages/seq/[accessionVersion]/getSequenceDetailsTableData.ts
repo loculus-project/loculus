@@ -8,7 +8,6 @@ import { createBackendClient } from '../../../services/backendClientFactory.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../types/lapis.ts';
-import type { Suborganism } from '../../../types/referencesGenomes.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
 export enum SequenceDetailsTableResultType {
@@ -21,7 +20,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    suborganism: Suborganism | null;
+    segmentReferences: Record<string, string> | null;
     isRevocation: boolean;
 };
 
@@ -64,7 +63,7 @@ export const getSequenceDetailsTableData = async (
             tableData: tableData.data,
             sequenceEntryHistory,
             dataUseTermsHistory,
-            suborganism: tableData.suborganism,
+            segmentReferences: tableData.segmentReferences,
             isRevocation: tableData.isRevocation,
         }),
     );

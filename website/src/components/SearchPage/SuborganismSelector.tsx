@@ -28,7 +28,10 @@ export const SuborganismSelector: FC<SuborganismSelectorProps> = ({
     setSelectedSuborganism,
 }) => {
     const selectId = useId();
-    const suborganismNames = Object.keys(referenceGenomeLightweightSchema);
+
+    // Extract reference names from the segments
+    const segments = Object.values(referenceGenomeLightweightSchema.segments);
+    const suborganismNames = segments.length > 0 ? segments[0].references : [];
     const isSinglePathogen = suborganismNames.length < 2;
 
     const label = useMemo(() => {

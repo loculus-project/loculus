@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { mutationProportionCount, orderDirection } from './lapis.ts';
-import { referenceGenomes } from './referencesGenomes.ts';
+import { segmentFirstReferenceGenomes } from './referencesGenomes.ts';
 
 export const FASTA_IDS_SEPARATOR = ' ';
 
@@ -74,7 +74,8 @@ export const metadata = z.object({
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
-    onlyForSuborganism: z.string().optional(),
+    onlyForReferenceName: z.string().optional(),  // DEPRECATED: Use onlyForReference instead
+    onlyForReference: z.string().optional(),    // NEW: Scopes field to a specific reference (replaces onlyForReferenceName)
 });
 
 export const inputFieldOption = z.object({
@@ -169,7 +170,7 @@ export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenomes,
+    referenceGenomes: segmentFirstReferenceGenomes,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 

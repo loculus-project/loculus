@@ -12,12 +12,12 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { type ReferenceGenomes, SINGLE_REFERENCE, type Suborganism } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes, type ReferenceName } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {
     data: TableDataEntry[];
-    suborganism: Suborganism | null;
+    segmentReferences: Record<string, string> | null;
     isRevocation: boolean;
 };
 
@@ -54,31 +54,48 @@ export async function getTableData(
                     }),
                 )
                 .andThen((data) => {
-                    const suborganismResult = getSuborganism(data.details, schema, referenceGenomes, accessionVersion);
-                    if (suborganismResult.isErr()) {
-                        return err(suborganismResult.error);
+                    const segmentReferencesResult = getSegmentReferences(data.details, schema, referenceGenomes, accessionVersion);
+                    if (segmentReferencesResult.isErr()) {
+                        return err(segmentReferencesResult.error);
                     }
 
-                    const suborganism = suborganismResult.value;
+                    const segmentReferences = segmentReferencesResult.value;
 
                     return ok({
-                        data: toTableData(schema, suborganism, data),
-                        suborganism,
+                        data: toTableData(schema, segmentReferences, data),
+                        segmentReferences,
                         isRevocation: isRevocationEntry(data.details),
                     });
                 }),
         );
 }
 
-function getSuborganism(
+function getSegmentReferences(
     details: Details,
     schema: Schema,
     referenceGenomes: ReferenceGenomes,
     accessionVersion: string,
-): Result<Suborganism | null, ProblemDetail> {
-    if (SINGLE_REFERENCE in referenceGenomes) {
-        return ok(SINGLE_REFERENCE);
+): Result<Record<string, string> | null, ProblemDetail> {
+    const segments = Object.keys(referenceGenomes);
+
+    // Check if single reference mode (only one reference per segment)
+    const firstSegment = segments[0];
+    const firstSegmentRefs = firstSegment ? Object.keys(referenceGenomes[firstSegment] ?? {}) : [];
+    const isSingleReference = firstSegmentRefs.length === 1;
+
+    if (isSingleReference) {
+        // Build segment references from the single reference
+        const segmentReferences: Record<string, string> = {};
+        for (const segmentName of segments) {
+            const refs = Object.keys(referenceGenomes[segmentName] ?? {});
+            if (refs.length > 0) {
+                segmentReferences[segmentName] = refs[0];
+            }
+        }
+        return ok(segmentReferences);
     }
+
+    // Multiple references mode - get from metadata field
     const suborganismField = schema.suborganismIdentifierField;
     if (suborganismField === undefined) {
         return err({
@@ -89,6 +106,7 @@ function getSuborganism(
             instance: '/seq/' + accessionVersion,
         });
     }
+
     const value = details[suborganismField];
     const suborganismResult = z.string().nullable().safeParse(value);
     if (!suborganismResult.success) {
@@ -100,17 +118,38 @@ function getSuborganism(
             instance: '/seq/' + accessionVersion,
         });
     }
-    const suborganism = suborganismResult.data;
-    if (suborganism !== null && !(suborganism in referenceGenomes)) {
+
+    const referenceName = suborganismResult.data;
+    if (referenceName === null) {
+        return ok(null);
+    }
+
+    // Validate that the reference exists in at least one segment
+    let foundInAnySegment = false;
+    for (const segmentName of segments) {
+        if (referenceName in (referenceGenomes[segmentName] ?? {})) {
+            foundInAnySegment = true;
+            break;
+        }
+    }
+
+    if (!foundInAnySegment) {
         return err({
             type: 'about:blank',
             title: 'Invalid suborganism',
             status: 0,
-            detail: `Suborganism '${suborganism}' (value of field '${suborganismField}') not found in reference genomes.`,
+            detail: `ReferenceName '${referenceName}' (value of field '${suborganismField}') not found in reference genomes.`,
             instance: '/seq/' + accessionVersion,
         });
     }
-    return ok(suborganism);
+
+    // Build segment references - all segments use the same reference
+    const segmentReferences: Record<string, string> = {};
+    for (const segmentName of segments) {
+        segmentReferences[segmentName] = referenceName;
+    }
+
+    return ok(segmentReferences);
 }
 
 function isRevocationEntry(details: Details): boolean {
@@ -140,7 +179,7 @@ function mutationDetails(
     aminoAcidMutations: MutationProportionCount[],
     nucleotideInsertions: InsertionCount[],
     aminoAcidInsertions: InsertionCount[],
-    suborganism: Suborganism | null,
+    segmentReferences: Record<string, string> | null,
 ): TableDataEntry[] {
     const data: TableDataEntry[] = [
         {
@@ -150,21 +189,21 @@ function mutationDetails(
             header: 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(nucleotideMutations, suborganism),
+                value: substitutionsMap(nucleotideMutations, segmentReferences),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'nucleotideDeletions',
-            value: deletionsToCommaSeparatedString(nucleotideMutations, suborganism),
+            value: deletionsToCommaSeparatedString(nucleotideMutations, segmentReferences),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'nucleotideInsertions',
-            value: insertionsToCommaSeparatedString(nucleotideInsertions, suborganism),
+            value: insertionsToCommaSeparatedString(nucleotideInsertions, segmentReferences),
             header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         },
@@ -175,21 +214,21 @@ function mutationDetails(
             header: 'Amino acid mutations',
             customDisplay: {
                 type: 'badge',
-                value: substitutionsMap(aminoAcidMutations, suborganism),
+                value: substitutionsMap(aminoAcidMutations, segmentReferences),
             },
             type: { kind: 'mutation' },
         },
         {
             label: 'Deletions',
             name: 'aminoAcidDeletions',
-            value: deletionsToCommaSeparatedString(aminoAcidMutations, suborganism),
+            value: deletionsToCommaSeparatedString(aminoAcidMutations, segmentReferences),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
         {
             label: 'Insertions',
             name: 'aminoAcidInsertions',
-            value: insertionsToCommaSeparatedString(aminoAcidInsertions, suborganism),
+            value: insertionsToCommaSeparatedString(aminoAcidInsertions, segmentReferences),
             header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         },
@@ -199,7 +238,7 @@ function mutationDetails(
 
 function toTableData(
     config: Schema,
-    suborganism: Suborganism | null,
+    segmentReferences: Record<string, string> | null,
     {
         details,
         nucleotideMutations,
@@ -233,7 +272,7 @@ function toTableData(
             aminoAcidMutations,
             nucleotideInsertions,
             aminoAcidInsertions,
-            suborganism,
+            segmentReferences,
         );
         data.push(...mutations);
     }
@@ -255,7 +294,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
 
 export function substitutionsMap(
     mutationData: MutationProportionCount[],
-    suborganism: Suborganism | null,
+    segmentReferences: Record<string, string> | null,
 ): SegmentedMutations[] {
     const result: SegmentedMutations[] = [];
     const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
@@ -263,7 +302,7 @@ export function substitutionsMap(
     const segmentMutationsMap = new Map<string, MutationBadgeData[]>();
     for (const entry of substitutionData) {
         const { sequenceName, mutationFrom, position, mutationTo } = entry;
-        const sequenceDisplayName = computeSequenceDisplayName(sequenceName, suborganism);
+        const sequenceDisplayName = computeSequenceDisplayName(sequenceName, segmentReferences);
 
         const sequenceKey = sequenceDisplayName ?? '';
         if (!segmentMutationsMap.has(sequenceKey)) {
@@ -282,29 +321,35 @@ export function substitutionsMap(
 
 function computeSequenceDisplayName(
     originalSequenceName: string | null,
-    suborganism: Suborganism | null,
+    segmentReferences: Record<string, string> | null,
 ): string | null {
-    if (originalSequenceName === null || suborganism === SINGLE_REFERENCE || suborganism === null) {
+    if (originalSequenceName === null || segmentReferences === null) {
         return originalSequenceName;
     }
 
-    if (originalSequenceName === suborganism) {
-        // there is only one segment in which case the name should be null
-        return null;
+    // Try to strip any reference prefix from the sequence name
+    for (const referenceName of Object.values(segmentReferences)) {
+        // Check if the sequence name is just the reference (single segment case)
+        if (originalSequenceName === referenceName) {
+            return null;
+        }
+
+        // Try to strip the reference prefix
+        const prefixToTrim = `${referenceName}-`;
+        if (originalSequenceName.startsWith(prefixToTrim)) {
+            return originalSequenceName.substring(prefixToTrim.length);
+        }
     }
 
-    const prefixToTrim = `${suborganism}-`;
-    return originalSequenceName.startsWith(prefixToTrim)
-        ? originalSequenceName.substring(prefixToTrim.length)
-        : originalSequenceName;
+    return originalSequenceName;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], suborganism: Suborganism | null) {
+function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], segmentReferences: Record<string, string> | null) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment = computeSequenceDisplayName(m.sequenceName, suborganism);
+            const segment = computeSequenceDisplayName(m.sequenceName, segmentReferences);
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
@@ -348,10 +393,10 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], suborganism: Suborganism | null) {
+function insertionsToCommaSeparatedString(insertionData: InsertionCount[], segmentReferences: Record<string, string> | null) {
     return insertionData
         .map((insertion) => {
-            const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, suborganism);
+            const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, segmentReferences);
 
             const sequenceNamePart = sequenceDisplayName !== null ? sequenceDisplayName + ':' : '';
             return `ins_${sequenceNamePart}${insertion.position}:${insertion.insertedSymbols}`;

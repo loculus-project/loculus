@@ -1,9 +1,9 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type ReferenceName } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
-import { getSuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import { getSegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import {
     alignedSequenceSegment,
     type GeneInfo,
@@ -23,7 +23,7 @@ import { withQueryProvider } from '../../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;
-    suborganism: Suborganism;
+    segmentReferences: Record<string, string>;
     accessionVersion: string;
     clientConfig: ClientConfig;
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema;
@@ -32,15 +32,15 @@ type SequenceContainerProps = {
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     organism,
-    suborganism,
+    segmentReferences,
     accessionVersion,
     clientConfig,
     referenceGenomeLightweightSchema,
     loadSequencesAutomatically,
 }) => {
-    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSuborganismSegmentAndGeneInfo(
+    const { nucleotideSegmentInfos, geneInfos, isMultiSegmented } = getSegmentAndGeneInfo(
         referenceGenomeLightweightSchema,
-        suborganism,
+        segmentReferences,
     );
 
     const [loadSequences, setLoadSequences] = useState(() => loadSequencesAutomatically);

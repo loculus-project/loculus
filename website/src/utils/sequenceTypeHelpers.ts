@@ -62,3 +62,48 @@ export const isUnalignedSequence = (type: SequenceType): boolean => type.type ==
 export const isAlignedSequence = (type: SequenceType): boolean => type.type === 'nucleotide' && type.aligned;
 export const isGeneSequence = (segmentOrGeneInfo: SegmentInfo | GeneInfo, type: SequenceType): boolean =>
     type.type === 'aminoAcid' && type.name.lapisName === segmentOrGeneInfo.lapisName;
+
+// NEW: Segment-first mode helpers
+export type SegmentReferenceSelections = Record<string, string | null>;
+
+/**
+ * Get segment info for segment-first mode where each segment can have its own reference.
+ * @param segmentName - The segment name (e.g., "main", "VP4")
+ * @param referenceName - The selected reference for this segment (e.g., "CV-A16"), or null
+ * @returns SegmentInfo with appropriate LAPIS naming
+ */
+export function getSegmentInfoWithReference(segmentName: string, referenceName: string | null): SegmentInfo {
+    if (referenceName === null) {
+        // No reference selected - use segment name as-is
+        return {
+            lapisName: segmentName,
+            label: segmentName,
+        };
+    }
+    // Reference selected - prefix with reference name for LAPIS
+    return {
+        lapisName: `${referenceName}-${segmentName}`,
+        label: segmentName,
+    };
+}
+
+/**
+ * Get gene info for segment-first mode.
+ * @param geneName - The gene name (e.g., "VP4")
+ * @param referenceName - The reference name (e.g., "CV-A16")
+ * @returns GeneInfo with appropriate LAPIS naming
+ */
+export function getGeneInfoWithReference(geneName: string, referenceName: string | null): GeneInfo {
+    if (referenceName === null) {
+        // No reference selected - use gene name as-is
+        return {
+            lapisName: geneName,
+            label: geneName,
+        };
+    }
+    // Reference selected - prefix with reference name for LAPIS
+    return {
+        lapisName: `${referenceName}-${geneName}`,
+        label: geneName,
+    };
+}

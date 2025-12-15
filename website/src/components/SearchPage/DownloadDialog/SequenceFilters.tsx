@@ -1,5 +1,5 @@
 import { type FieldValues } from '../../../types/config.ts';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import type { SegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import { intoMutationSearchParams } from '../../../utils/mutation.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
@@ -44,7 +44,7 @@ export class FieldFilterSet implements SequenceFilter {
     private readonly filterSchema: MetadataFilterSchema;
     private readonly fieldValues: FieldValues;
     private readonly hiddenFieldValues: FieldValues;
-    private readonly suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null;
+    private readonly suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null;
 
     /**
      * @param filterSchema The {@link MetadataFilterSchema} to use. Provides labels and other
@@ -58,7 +58,7 @@ export class FieldFilterSet implements SequenceFilter {
         filterSchema: MetadataFilterSchema,
         fieldValues: FieldValues,
         hiddenFieldValues: FieldValues,
-        suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo | null,
+        suborganismSegmentAndGeneInfo: SegmentAndGeneInfo | null,
     ) {
         this.filterSchema = filterSchema;
         this.fieldValues = fieldValues;

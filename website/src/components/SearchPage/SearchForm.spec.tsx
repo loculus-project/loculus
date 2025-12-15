@@ -9,7 +9,6 @@ import type { MetadataFilter } from '../../types/config.ts';
 import {
     type ReferenceGenomesLightweightSchema,
     type ReferenceAccession,
-    SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
@@ -44,23 +43,28 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
+    segments: {
+        main: {
+            references: ['ref1'],
+            insdcAccessions: { ref1: defaultAccession },
+            genesByReference: { ref1: ['gene1', 'gene2'] },
+        },
     },
 };
 
 const multiPathogenReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    suborganism1: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-    suborganism2: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
+    segments: {
+        main: {
+            references: ['suborganism1', 'suborganism2'],
+            insdcAccessions: {
+                suborganism1: defaultAccession,
+                suborganism2: defaultAccession,
+            },
+            genesByReference: {
+                suborganism1: ['gene1', 'gene2'],
+                suborganism2: ['gene1', 'gene2'],
+            },
+        },
     },
 };
 
@@ -71,7 +75,7 @@ const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
 
 const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
-const setSelectedSuborganism = vi.fn();
+const setSelectedReferenceName = vi.fn();
 
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
@@ -104,7 +108,8 @@ const renderSearchForm = ({
         showMutationSearch: true,
         suborganismIdentifierField,
         selectedSuborganism,
-        setSelectedSuborganism,
+        setSelectedSuborganism: vi.fn(),
+        selectedReferences: {},
     };
 
     render(
@@ -153,7 +158,7 @@ describe('SearchForm', () => {
         expect(suborganismSelector).toBeInTheDocument();
         await userEvent.selectOptions(suborganismSelector, 'suborganism1');
 
-        expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
+        expect(setSelectedReferenceName).toHaveBeenCalledWith('suborganism1');
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {
@@ -179,14 +184,14 @@ describe('SearchForm', () => {
                 type: 'string',
                 displayName: 'Field 1',
                 initiallyVisible: true,
-                onlyForSuborganism: 'suborganism1',
+                onlyForReferenceName: 'suborganism1',
             },
             {
                 name: 'field2',
                 type: 'string',
                 displayName: 'Field 2',
                 initiallyVisible: true,
-                onlyForSuborganism: 'suborganism2',
+                onlyForReferenceName: 'suborganism2',
             },
         ]);
         const searchVisibilities = new Map<string, MetadataVisibility>([

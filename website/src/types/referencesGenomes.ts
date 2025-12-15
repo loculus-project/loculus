@@ -5,35 +5,45 @@ export type ReferenceAccession = {
     insdcAccessionFull?: string;
 };
 
-const namedSequence = z.object({
-    name: z.string(),
-    sequence: z.string(),
-    insdcAccessionFull: z.optional(z.string()),
-});
-export type NamedSequence = z.infer<typeof namedSequence>;
+// Segment-first structure types
+export type SegmentName = string;
+export type ReferenceName = string;
+export type GeneName = string;
 
-export const referenceGenome = z.object({
-    nucleotideSequences: z.array(namedSequence),
-    genes: z.array(namedSequence),
-});
-export type ReferenceGenome = z.infer<typeof referenceGenome>;
-
-export const suborganism = z.string();
-export type Suborganism = z.infer<typeof suborganism>;
-
-export const referenceGenomes = z
-    .record(suborganism, referenceGenome)
-    .refine((value) => Object.entries(value).length > 0, 'The reference genomes must not be empty.');
-export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
-
-export type NucleotideSegmentNames = string[];
-
-export type SuborganismReferenceGenomesLightweightSchema = {
-    nucleotideSegmentNames: NucleotideSegmentNames;
-    geneNames: string[];
-    insdcAccessionFull: ReferenceAccession[];
+export type GeneSequenceData = {
+    sequence: string;
 };
 
-export type ReferenceGenomesLightweightSchema = Record<Suborganism, SuborganismReferenceGenomesLightweightSchema>;
+export type ReferenceSequenceData = {
+    sequence: string;
+    insdcAccessionFull?: string;
+    genes?: Record<GeneName, GeneSequenceData>;
+};
 
-export const SINGLE_REFERENCE = 'singleReference';
+// Segment-first reference genomes structure (from values.yaml)
+// Structure: referenceGenomes[segmentName][referenceName] = { sequence, insdcAccessionFull?, genes? }
+export const segmentFirstReferenceGenomes = z.record(
+    z.string(), // segment name
+    z.record(
+        z.string(), // reference name
+        z.object({
+            sequence: z.string(),
+            insdcAccessionFull: z.string().optional(),
+            genes: z.record(z.string(), z.object({ sequence: z.string() })).optional(),
+        })
+    )
+);
+export type SegmentFirstReferenceGenomes = z.infer<typeof segmentFirstReferenceGenomes>;
+
+// Type alias for the new segment-first structure
+export type ReferenceGenomes = SegmentFirstReferenceGenomes;
+
+// Lightweight schema for segment-first mode
+export type ReferenceGenomesLightweightSchema = {
+    segments: Record<SegmentName, {
+        references: ReferenceName[];
+        insdcAccessions: Record<ReferenceName, ReferenceAccession>;
+        // Genes available for each reference in this segment
+        genesByReference: Record<ReferenceName, GeneName[]>;
+    }>;
+};

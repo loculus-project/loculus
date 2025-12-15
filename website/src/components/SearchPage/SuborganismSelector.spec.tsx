@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SuborganismSelector } from './SuborganismSelector';
-import { type ReferenceGenomesLightweightSchema, SINGLE_REFERENCE } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
 const suborganismIdentifierField = 'genotype';
@@ -16,15 +16,24 @@ const filterSchema = new MetadataFilterSchema([
     },
 ]);
 
-const dummySequences = {
-    nucleotideSegmentNames: [],
-    geneNames: [],
-    insdcAccessionFull: [],
+const mockReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
+    segments: {
+        main: {
+            references: ['suborganism1', 'suborganism2'],
+            insdcAccessions: {},
+            genesByReference: {},
+        },
+    },
 };
 
-const mockReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
-    suborganism1: dummySequences,
-    suborganism2: dummySequences,
+const singleReferenceSchema: ReferenceGenomesLightweightSchema = {
+    segments: {
+        main: {
+            references: ['single'],
+            insdcAccessions: {},
+            genesByReference: {},
+        },
+    },
 };
 
 describe('SuborganismSelector', () => {
@@ -32,7 +41,7 @@ describe('SuborganismSelector', () => {
         const { container } = render(
             <SuborganismSelector
                 filterSchema={filterSchema}
-                referenceGenomeLightweightSchema={{ [SINGLE_REFERENCE]: dummySequences }}
+                referenceGenomeLightweightSchema={singleReferenceSchema}
                 suborganismIdentifierField={suborganismIdentifierField}
                 selectedSuborganism={null}
                 setSelectedSuborganism={vi.fn()}

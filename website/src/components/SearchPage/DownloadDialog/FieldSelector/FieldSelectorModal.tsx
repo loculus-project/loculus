@@ -9,7 +9,7 @@ import {
     fieldItemDisplayStateType,
     FieldSelectorModal as CommonFieldSelectorModal,
 } from '../../../common/FieldSelectorModal.tsx';
-import { isActiveForSelectedSuborganism } from '../../isActiveForSelectedSuborganism.tsx';
+import { isActiveForSelectedReferenceName } from '../../isActiveForSelectedReferenceName.tsx';
 
 type FieldSelectorProps = {
     isOpen: boolean;
@@ -17,7 +17,7 @@ type FieldSelectorProps = {
     schema: Schema;
     downloadFieldVisibilities: Map<string, MetadataVisibility>;
     onSelectedFieldsChange: Dispatch<SetStateAction<Set<string>>>;
-    selectedSuborganism: string | null;
+    selectedReferenceName: string | null;
 };
 
 export const FieldSelectorModal: FC<FieldSelectorProps> = ({
@@ -26,7 +26,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
     schema,
     downloadFieldVisibilities,
     onSelectedFieldsChange,
-    selectedSuborganism,
+    selectedReferenceName,
 }) => {
     const handleFieldSelection = (fieldName: string, selected: boolean) => {
         onSelectedFieldsChange((prevSelectedFields) => {
@@ -46,7 +46,7 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
         name: field.name,
         displayName: field.displayName,
         header: field.header,
-        displayState: getDisplayState(field, selectedSuborganism, schema),
+        displayState: getDisplayState(field, selectedReferenceName, schema),
         isChecked: downloadFieldVisibilities.get(field.name)?.isChecked ?? false,
     }));
 
@@ -63,17 +63,17 @@ export const FieldSelectorModal: FC<FieldSelectorProps> = ({
 
 function getDisplayState(
     field: Metadata,
-    selectedSuborganism: string | null,
+    selectedReferenceName: string | null,
     schema: Schema,
 ): FieldItemDisplayState | undefined {
     if (field.name === ACCESSION_VERSION_FIELD) {
         return { type: fieldItemDisplayStateType.alwaysChecked };
     }
 
-    if (!isActiveForSelectedSuborganism(selectedSuborganism, field)) {
+    if (!isActiveForSelectedReferenceName(selectedReferenceName, field)) {
         return {
             type: fieldItemDisplayStateType.disabled,
-            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForSuborganism} is selected.`,
+            tooltip: `This is only available when the ${schema.suborganismIdentifierField} ${field.onlyForReferenceName} is selected.`,
         };
     }
 

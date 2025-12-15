@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { SuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
+import type { SegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
 import {
     intoMutationSearchParams,
     type MutationQuery,
@@ -12,7 +12,7 @@ import {
 
 describe('mutation', () => {
     describe('single segment', () => {
-        const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+        const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-main',
@@ -51,7 +51,7 @@ describe('mutation', () => {
             ],
             ...aminoAcidInsertionCases,
         ])('parses the valid mutation string "%s"', (input, expected) => {
-            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationString(input, mockSegmentAndGeneInfo);
             expect(result).toEqual(expected);
         });
 
@@ -74,13 +74,13 @@ describe('mutation', () => {
             'INS_label-GENE1:23:TTT:',
             'INS_label-GENE1:23:TTT:INVALID',
         ])('returns undefined for invalid mutation string %s', (input) => {
-            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationString(input, mockSegmentAndGeneInfo);
             expect(result).toBeUndefined();
         });
     });
 
     describe('single segmented case with multiple suborganism', () => {
-        const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+        const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-main',
@@ -153,21 +153,21 @@ describe('mutation', () => {
             ],
             ...aminoAcidInsertionCases,
         ])('parses the valid mutation string "%s"', (input, expected) => {
-            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationString(input, mockSegmentAndGeneInfo);
             expect(result).toEqual(expected);
         });
 
         it.each(['lapisName-main:A123T', 'label-main:A123T'])(
             'returns undefined for invalid mutation string %s',
             (input) => {
-                const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+                const result = parseMutationString(input, mockSegmentAndGeneInfo);
                 expect(result).toBeUndefined();
             },
         );
     });
 
     describe('multi-segment', () => {
-        const mockSuborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+        const mockSegmentAndGeneInfo: SegmentAndGeneInfo = {
             nucleotideSegmentInfos: [
                 {
                     lapisName: 'lapisName-SEQ1',
@@ -244,7 +244,7 @@ describe('mutation', () => {
             ],
             ...aminoAcidInsertionCases,
         ])('parses the valid mutation string "%s"', (input, expected) => {
-            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationString(input, mockSegmentAndGeneInfo);
             expect(result).toEqual(expected);
         });
 
@@ -262,12 +262,12 @@ describe('mutation', () => {
             'ins_23:A:T',
             'INS_4:G:T',
         ])('returns undefined for invalid mutation string %s', (input) => {
-            const result = parseMutationString(input, mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationString(input, mockSegmentAndGeneInfo);
             expect(result).toBeUndefined();
         });
 
         it('parses a comma-separated mutation string', () => {
-            const result = parseMutationsString('label-GENE1:A23T, label-SEQ1:123C', mockSuborganismSegmentAndGeneInfo);
+            const result = parseMutationsString('label-GENE1:A23T, label-SEQ1:123C', mockSegmentAndGeneInfo);
             expect(result).toEqual([
                 {
                     baseType: 'aminoAcid',
@@ -305,7 +305,7 @@ describe('mutation', () => {
         it('removes specified mutation queries', () => {
             const result = removeMutationQueries(
                 'label-GENE1:A23T, label-SEQ1:123C',
-                mockSuborganismSegmentAndGeneInfo,
+                mockSegmentAndGeneInfo,
                 'aminoAcid',
                 'substitutionOrDeletion',
             );
@@ -315,7 +315,7 @@ describe('mutation', () => {
         it('converts mutations to search params', () => {
             const params = intoMutationSearchParams(
                 'label-GENE1:A23T, label-SEQ1:123C, INS_label-SEQ1:100:G',
-                mockSuborganismSegmentAndGeneInfo,
+                mockSegmentAndGeneInfo,
             );
             expect(params).toEqual({
                 nucleotideMutations: ['lapisName-SEQ1:123C'],

@@ -12,7 +12,7 @@ import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
-import { stillRequiresSuborganismSelection } from './stillRequiresSuborganismSelection.tsx';
+import { stillRequiresReferenceNameSelection } from './stillRequiresReferenceNameSelection.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
@@ -25,7 +25,7 @@ import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
-import { getSuborganismSegmentAndGeneInfo } from '../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import { getSegmentAndGeneInfo } from '../../utils/getSegmentAndGeneInfo.tsx';
 import {
     getColumnVisibilitiesFromQuery,
     getFieldVisibilitiesFromQuery,
@@ -93,6 +93,7 @@ export const InnerSearchFullUI = ({
         setPreviewHalfScreen,
         selectedSuborganism,
         setSelectedSuborganism,
+        selectedReferences,
         page,
         setPage,
         setSomeFieldValues,
@@ -156,9 +157,9 @@ export const InnerSearchFullUI = ({
                 filterSchema,
                 fieldValues,
                 hiddenFieldValues,
-                getSuborganismSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedSuborganism),
+                getSegmentAndGeneInfo(referenceGenomeLightweightSchema, selectedReferences),
             ),
-        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedSuborganism, filterSchema],
+        [fieldValues, hiddenFieldValues, referenceGenomeLightweightSchema, selectedReferences, filterSchema],
     );
 
     /**
@@ -214,7 +215,7 @@ export const InnerSearchFullUI = ({
 
     const showMutationSearch =
         schema.submissionDataTypes.consensusSequences &&
-        !stillRequiresSuborganismSelection(referenceGenomeLightweightSchema, selectedSuborganism);
+        !stillRequiresReferenceNameSelection(referenceGenomeLightweightSchema, selectedSuborganism);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -224,7 +225,7 @@ export const InnerSearchFullUI = ({
                 schema={schema}
                 columnVisibilities={columnVisibilities}
                 setAColumnVisibility={setAColumnVisibility}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceName={selectedSuborganism}
             />
             <SeqPreviewModal
                 key={previewedSeqId ?? 'seq-modal'}
@@ -255,6 +256,7 @@ export const InnerSearchFullUI = ({
                     suborganismIdentifierField={schema.suborganismIdentifierField}
                     selectedSuborganism={selectedSuborganism}
                     setSelectedSuborganism={setSelectedSuborganism}
+                    selectedReferences={selectedReferences}
                 />
             </div>
             <div
@@ -351,7 +353,7 @@ export const InnerSearchFullUI = ({
                                 dataUseTermsEnabled={dataUseTermsEnabled}
                                 schema={schema}
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
-                                selectedSuborganism={selectedSuborganism}
+                                selectedReferenceName={selectedSuborganism}
                                 suborganismIdentifierField={schema.suborganismIdentifierField}
                             />
                             {linkOuts !== undefined && linkOuts.length > 0 && (
