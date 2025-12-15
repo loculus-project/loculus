@@ -12,7 +12,7 @@ import {
     type InsertionCount,
     type MutationProportionCount,
 } from '../../types/lapis.ts';
-import { type ReferenceGenomes, type ReferenceName } from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomes } from '../../types/referencesGenomes.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type GetTableDataResult = {

@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesLightweightSchema, type ReferenceName } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';

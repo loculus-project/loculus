@@ -382,7 +382,7 @@ describe('SearchFullUI', () => {
                     name: 'field1',
                     type: 'string',
                     displayName: 'Field 1',
-                    onlyForReferenceName: 'suborganism1',
+                    onlyForReference: 'suborganism1',
                     initiallyVisible: true,
                 },
                 {
