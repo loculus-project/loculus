@@ -217,7 +217,7 @@ The dictionaries are populated from the reference genome.
 * For unprocessed sequences that were already stored before this change,
   there was a migration that assigned the dictionary based on which segment the sequence mapped to.
   This was possible because they still had the segment name as the object key.
-* For processed sequences, it uses the corresponding segment/gene sequence from the reference genome.
+* For processed sequences, the corresponding segment/gene reference genome is used as the compression dictionary.
 
 See [#4769](https://github.com/loculus-project/loculus/issues/4769) for the implementation.
 
