@@ -1593,10 +1593,35 @@
       "description": "TODO",
       "default": "You must agree to the <a href=\"http://main.loculus.org/terms\">terms of use</a>."
     },
-    "siloImportLimitSeconds": {
-      "type": "integer",
-      "description": "TODO",
-      "default": 3600
+    "siloImport": {
+      "type": "object",
+      "description": "Configuration for SILO import process",
+      "properties": {
+        "siloTimeoutSeconds": {
+          "type": "integer",
+          "description": "Timeout for SILO preprocessing runs in seconds",
+          "default": 3600,
+          "minimum": 1
+        },
+        "hardRefreshIntervalSeconds": {
+          "type": "integer",
+          "description": "Interval in seconds for forcing a hard refresh (re-download) of data, regardless of ETag",
+          "default": 3600,
+          "minimum": 1
+        },
+        "pollIntervalSeconds": {
+          "type": "integer",
+          "description": "Interval in seconds between checking for new data",
+          "default": 30,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "default": {
+        "siloTimeoutSeconds": 3600,
+        "hardRefreshIntervalSeconds": 3600,
+        "pollIntervalSeconds": 30
+      }
     },
     "gitHubEditLink": {
       "type": "string",

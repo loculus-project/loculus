@@ -24,7 +24,10 @@ website:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true
     enableSubmissionPages: true
-siloImportLimitSeconds: 3600
+siloImport:
+  siloTimeoutSeconds: 3600
+  hardRefreshIntervalSeconds: 3600
+  pollIntervalSeconds: 30
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
