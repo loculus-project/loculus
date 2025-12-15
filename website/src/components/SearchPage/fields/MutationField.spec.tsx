@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import type { SegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 
-const singleReferenceSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
+const singleReferenceSegmentAndGeneInfo: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [{ lapisName: 'main', label: 'main' }],
     geneInfos: [
         { lapisName: 'gene1', label: 'gene1' },
@@ -14,7 +14,7 @@ const singleReferenceSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo = {
     isMultiSegmented: false,
 };
 
-const multiReferenceGenomeLightweightSchema: SuborganismSegmentAndGeneInfo = {
+const multiReferenceGenomeLightweightSchema: SegmentAndGeneInfo = {
     nucleotideSegmentInfos: [
         { lapisName: 'seg1', label: 'seg1' },
         { lapisName: 'seg2', label: 'seg2' },
@@ -29,7 +29,7 @@ const multiReferenceGenomeLightweightSchema: SuborganismSegmentAndGeneInfo = {
 function renderField(
     value: string,
     onChange: (mutationFilter: string) => void,
-    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo,
+    suborganismSegmentAndGeneInfo: SegmentAndGeneInfo,
 ) {
     render(
         <MutationField

@@ -33,23 +33,23 @@ type VisiblitySelectableAccessor = (field: MetadataFilter) => boolean;
 
 export class MetadataVisibility {
     public readonly isChecked: boolean;
-    private readonly onlyForSuborganism: string | undefined;
+    private readonly onlyForReferenceName: string | undefined;
 
-    constructor(isChecked: boolean, onlyForSuborganism: string | undefined) {
+    constructor(isChecked: boolean, onlyForReferenceName: string | undefined) {
         this.isChecked = isChecked;
-        this.onlyForSuborganism = onlyForSuborganism;
+        this.onlyForReferenceName = onlyForReferenceName;
     }
 
-    public isVisible(selectedSuborganism: string | null) {
+    public isVisible(selectedReferenceName: string | null) {
         if (!this.isChecked) {
             return false;
         }
 
-        if (this.onlyForSuborganism === undefined || selectedSuborganism === null) {
+        if (this.onlyForReferenceName === undefined || selectedReferenceName === null) {
             return true;
         }
 
-        return this.onlyForSuborganism === selectedSuborganism;
+        return this.onlyForReferenceName === selectedReferenceName;
     }
 }
 
@@ -80,7 +80,7 @@ const getFieldOrColumnVisibilitiesFromQuery = (
 
         const visibility = new MetadataVisibility(
             explicitVisibilitiesInUrlByFieldName.get(fieldName) ?? initiallyVisibleAccessor(field),
-            field.onlyForSuborganism,
+            field.onlyForReferenceName,
         );
 
         visibilities.set(fieldName, visibility);

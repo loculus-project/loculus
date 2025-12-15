@@ -10,7 +10,6 @@ import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts'
 import {
     type ReferenceAccession,
     type ReferenceGenomesLightweightSchema,
-    SINGLE_REFERENCE,
 } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { ACTIVE_FILTER_BADGE_TEST_ID } from '../common/ActiveFilters.tsx';
@@ -73,10 +72,12 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
+    segments: {
+        main: {
+            references: ['ref1'],
+            insdcAccessions: { ref1: defaultAccession },
+            genesByReference: { ref1: ['gene1', 'gene2'] },
+        },
     },
 };
 
@@ -381,7 +382,7 @@ describe('SearchFullUI', () => {
                     name: 'field1',
                     type: 'string',
                     displayName: 'Field 1',
-                    onlyForSuborganism: 'suborganism1',
+                    onlyForReferenceName: 'suborganism1',
                     initiallyVisible: true,
                 },
                 {
@@ -391,15 +392,18 @@ describe('SearchFullUI', () => {
                 },
             ],
             referenceGenomeLightweightSchema: {
-                suborganism1: {
-                    nucleotideSegmentNames: ['main'],
-                    geneNames: ['gene1'],
-                    insdcAccessionFull: [defaultAccession],
-                },
-                suborganism2: {
-                    nucleotideSegmentNames: ['main'],
-                    geneNames: ['gene1'],
-                    insdcAccessionFull: [defaultAccession],
+                segments: {
+                    main: {
+                        references: ['suborganism1', 'suborganism2'],
+                        insdcAccessions: {
+                            suborganism1: defaultAccession,
+                            suborganism2: defaultAccession,
+                        },
+                        genesByReference: {
+                            suborganism1: ['gene1'],
+                            suborganism2: ['gene1'],
+                        },
+                    },
                 },
             },
         });
