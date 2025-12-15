@@ -130,7 +130,7 @@ jobs:
             type=raw,value=commit-${{ needs.check-cache.outputs.sha-short }}
       - name: Download digests
         if: needs.check-cache.outputs.cache-hit == 'false'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: ${{ runner.temp }}/digests
           pattern: digests-*
