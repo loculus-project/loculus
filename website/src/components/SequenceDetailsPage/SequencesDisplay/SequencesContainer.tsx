@@ -1,7 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { type ReferenceGenomesLightweightSchema, type ReferenceName } from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { getSegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import {
