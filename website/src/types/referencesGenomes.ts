@@ -30,8 +30,8 @@ export const segmentFirstReferenceGenomes = z.record(
             sequence: z.string(),
             insdcAccessionFull: z.string().optional(),
             genes: z.record(z.string(), z.object({ sequence: z.string() })).optional(),
-        })
-    )
+        }),
+    ),
 );
 export type SegmentFirstReferenceGenomes = z.infer<typeof segmentFirstReferenceGenomes>;
 
@@ -40,10 +40,13 @@ export type ReferenceGenomes = SegmentFirstReferenceGenomes;
 
 // Lightweight schema for segment-first mode
 export type ReferenceGenomesLightweightSchema = {
-    segments: Record<SegmentName, {
-        references: ReferenceName[];
-        insdcAccessions: Record<ReferenceName, ReferenceAccession>;
-        // Genes available for each reference in this segment
-        genesByReference: Record<ReferenceName, GeneName[]>;
-    }>;
+    segments: Record<
+        SegmentName,
+        {
+            references: ReferenceName[];
+            insdcAccessions: Record<ReferenceName, ReferenceAccession>;
+            // Genes available for each reference in this segment
+            genesByReference: Record<ReferenceName, GeneName[]>;
+        }
+    >;
 };
