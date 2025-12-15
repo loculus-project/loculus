@@ -9,10 +9,7 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import {
-    type ReferenceGenomesLightweightSchema,
-    type ReferenceAccession,
-} from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 const defaultAccession: ReferenceAccession = {
