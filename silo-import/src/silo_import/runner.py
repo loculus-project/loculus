@@ -30,7 +30,6 @@ class ImporterRunner:
         self.silo = SiloInstructor(paths.run_silo, paths.silo_done)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
-        self.last_hard_refresh: float = 0
 
     def _clear_download_directories(self) -> None:
         """Clear all timestamped download directories on startup."""
@@ -44,25 +43,18 @@ class ImporterRunner:
     def run_once(self) -> None:
         prune_timestamped_directories(self.paths.output_dir)
 
-        # Determine if hard refresh needed
-        hard_refresh = time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
-
-        # Use special ETag for hard refresh to force re-download
-        last_etag = SPECIAL_ETAG_NONE if hard_refresh else self.current_etag
-
         try:
-            download = self.download_manager.download_release(self.config, self.paths, last_etag)
+            download = self.download_manager.download_release(
+                self.config, self.paths, self.current_etag
+            )
         except (NotModifiedError, HashUnchangedError) as skip:
             logger.info("Skipping run: %s", skip)
             if skip.new_etag is not None:
                 self.current_etag = skip.new_etag
-            if hard_refresh:
-                self.last_hard_refresh = time.time()
             return
         except (DecompressionFailedError, RecordCountMismatchError) as skip:
+            # Don't update ETag on data validation errors
             logger.warning("Skipping run: %s", skip)
-            if skip.new_etag is not None:
-                self.current_etag = skip.new_etag
             return
 
         try:
@@ -90,9 +82,6 @@ class ImporterRunner:
 
         # Mark success and update state
         self.current_etag = download.etag
-
-        if hard_refresh:
-            self.last_hard_refresh = time.time()
 
         logger.info("Run complete; waiting %s seconds", self.config.poll_interval)
 

@@ -26,7 +26,7 @@ class RecordCountMismatchError(SkipRunError):
     """Mismatch between expected and actual record count."""
 
     def __init__(self, new_etag: str | None = None) -> None:
-        super().__init__("New payload matches the previous run's hash.")
+        super().__init__("Record count mismatch")
         self.new_etag = new_etag
 
 

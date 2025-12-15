@@ -28,7 +28,6 @@ def test_full_import_cycle_with_real_zstd_data(
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -87,7 +86,6 @@ def test_full_import_cycle_with_real_zstd_data(
     assert output_records == records, "Output records should match input"
 
     assert runner.current_etag == 'W/"abc123"', "ETag should be updated"
-    assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"
 
     # Verify lineage file was downloaded
     assert paths.lineage_definition_file.exists(), "Lineage file should exist"
@@ -109,7 +107,6 @@ def test_multiple_runs_with_state_persistence(
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,  # Long interval to prevent hard refresh
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -142,8 +139,6 @@ def test_multiple_runs_with_state_persistence(
     ack_thread_r1.join(timeout=2)
 
     assert runner.current_etag == 'W/"etag1"'
-    first_hard_refresh = runner.last_hard_refresh
-    assert first_hard_refresh > 0
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert len(input_dirs) == 1
     first_dir = input_dirs[0]
@@ -157,7 +152,6 @@ def test_multiple_runs_with_state_persistence(
 
     # State should be preserved
     assert runner.current_etag == 'W/"etag1"', "ETag should remain unchanged on 304"
-    assert runner.last_hard_refresh == first_hard_refresh, "Hard refresh time unchanged on 304"
 
     # No new directories should be created
     new_input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -191,74 +185,11 @@ def test_multiple_runs_with_state_persistence(
     assert output_records == records_v2
 
 
-def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test hard refresh forces re-download even with valid ETag."""
-    config = ImporterConfig(
-        backend_base_url="http://backend",
-        lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=2,  # Short interval for testing
-        poll_interval=1,
-        silo_run_timeout=5,
-        root_dir=tmp_path,
-    )
-    paths = ImporterPaths.from_root(tmp_path)
-    paths.ensure_directories()
-
-    monkeypatch.setattr(
-        lineage,
-        "_download_lineage_file",
-        lambda url, path: path.write_text("lineage: data\n"),  # noqa: ARG005
-    )
-
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
-    body = compress_ndjson(records)
-
-    # Run 1: Initial import
-    responses_r1 = [
-        MockHttpResponse(
-            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
-        )
-    ]
-    mock_download_r1, _ = make_mock_download_func(responses_r1)
-
-    runner = ImporterRunner(config, paths)
-    runner.download_manager = DownloadManager(download_func=mock_download_r1)
-
-    ack_thread_r1 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r1.join(timeout=2)
-
-    assert runner.current_etag == 'W/"initial"'
-    initial_refresh_time = runner.last_hard_refresh
-
-    # Wait for hard refresh interval to elapse
-    time.sleep(2.1)
-
-    # Run 2: Should force hard refresh (no ETag sent)
-    # Server would normally return 304 with ETag, but hard refresh sends ETag="0"
-    responses_r2 = [
-        MockHttpResponse(
-            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
-        )
-    ]
-    mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
-    runner.download_manager = DownloadManager(download_func=mock_download_r2)
-
-    ack_thread_r2 = mock_silo_prepro_success(paths)
-    runner.run_once()
-    ack_thread_r2.join(timeout=2)
-
-    # Hard refresh should update timestamp even if data unchanged
-    assert runner.last_hard_refresh > initial_refresh_time, "Hard refresh time should be updated"
-    assert not responses_list_r2, "Should have made download request (hard refresh)"
-
-
 def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that errors during import properly clean up artifacts."""
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=2,  # Short timeout to trigger failure
         root_dir=tmp_path,
@@ -306,7 +237,6 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -354,7 +284,6 @@ def test_interrupted_run_cleanup_and_hash_skip(
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,

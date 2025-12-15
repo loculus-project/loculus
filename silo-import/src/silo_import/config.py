@@ -10,7 +10,6 @@ from pathlib import Path
 class ImporterConfig:
     backend_base_url: str
     lineage_definitions: dict[int, str] | None
-    hard_refresh_interval: int
     poll_interval: int
     silo_run_timeout: int
     root_dir: Path
@@ -34,7 +33,6 @@ class ImporterConfig:
                 msg = "LINEAGE_DEFINITIONS must be valid JSON"
                 raise RuntimeError(msg) from exc
 
-        hard_refresh_interval = int(env.get("HARD_REFRESH_INTERVAL", "3600"))
         poll_interval = int(env.get("SILO_IMPORT_POLL_INTERVAL_SECONDS", "30"))
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
@@ -43,7 +41,6 @@ class ImporterConfig:
         return cls(
             backend_base_url=backend_base_url.rstrip("/"),
             lineage_definitions=lineage_definitions,
-            hard_refresh_interval=hard_refresh_interval,
             poll_interval=poll_interval,
             silo_run_timeout=silo_run_timeout,
             root_dir=root_dir,

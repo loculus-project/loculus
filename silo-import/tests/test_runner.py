@@ -23,7 +23,6 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -61,7 +60,6 @@ def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     records_out = read_ndjson_file(paths.silo_input_data_path)
     assert records_out == records
     assert runner.current_etag == 'W/"123"'
-    assert runner.last_hard_refresh > 0
     assert paths.lineage_definition_file.read_text(encoding="utf-8") == "lineage: data"
 
     input_dirs = [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
@@ -75,7 +73,6 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -88,7 +85,6 @@ def test_runner_skips_on_not_modified(tmp_path: Path) -> None:
 
     runner = ImporterRunner(config, paths)
     runner.current_etag = 'W/"old"'
-    runner.last_hard_refresh = time.time()  # Mark as recently refreshed
     runner.download_manager = DownloadManager(download_func=mock_download)
     runner.run_once()
 
@@ -104,7 +100,6 @@ def test_runner_skips_on_hash_match_updates_etag(
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions={1: "http://lineage"},
-        hard_refresh_interval=1,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -146,10 +141,10 @@ def test_runner_skips_on_hash_match_updates_etag(
 
 
 def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
+    """Test that record count mismatch skips run without updating ETag."""
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
-        hard_refresh_interval=1,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -172,16 +167,17 @@ def test_runner_cleans_up_on_record_mismatch(tmp_path: Path) -> None:
     assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
     assert not responses_list
+    # ETag should NOT be updated on data validation error
     assert runner.current_etag == "old_etag"
 
 
 def test_runner_cleans_up_on_decompress_failure(
     tmp_path: Path,
 ) -> None:
+    """Test that decompression failure skips run without updating ETag."""
     config = ImporterConfig(
         backend_base_url="http://backend",
         lineage_definitions=None,
-        hard_refresh_interval=1000,
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
@@ -199,10 +195,10 @@ def test_runner_cleans_up_on_decompress_failure(
     runner = ImporterRunner(config, paths)
     runner.current_etag = 'W/"old"'
     runner.download_manager = DownloadManager(download_func=mock_download)
-
     runner.run_once()
 
     assert not paths.run_silo.exists()
     assert not [p for p in paths.input_dir.iterdir() if p.is_dir() and p.name.isdigit()]
+    # ETag should NOT be updated on data validation error
     assert runner.current_etag == 'W/"old"'
     assert not responses_list
