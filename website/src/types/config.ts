@@ -202,6 +202,8 @@ export const websiteConfig = z.object({
     logo: logoConfig,
     bannerMessage: z.string().optional(),
     bannerMessageURL: z.string().optional(),
+    submissionBannerMessage: z.string().optional(),
+    submissionBannerMessageURL: z.string().optional(),
     welcomeMessageHTML: z.string().optional().nullable(),
     additionalHeadHTML: z.string().optional(),
     gitHubEditLink: z.string().optional(),

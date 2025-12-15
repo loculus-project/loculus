@@ -1000,6 +1000,18 @@
       "default": "",
       "description": "URL to fetch banner message HTML from - if set will be polled regularly for banner text, e.g. notice of temporary downtime, and overwrite the 'bannerMessage'-config"
     },
+    "submissionBannerMessage": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "Banner message (as HTML) to display on submission pages"
+    },
+    "submissionBannerMessageURL": {
+      "groups": ["general"],
+      "type": "string",
+      "default": "",
+      "description": "URL to fetch submission banner message HTML from - if set will be polled regularly for banner text on submission pages"
+    },
     "welcomeMessageHTML": {
       "groups": ["general"],
       "type": ["string", "null"],
