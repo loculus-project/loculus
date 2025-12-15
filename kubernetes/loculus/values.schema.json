@@ -805,70 +805,60 @@
           "groups": ["organism"],
           "docsIncludePrefix": false,
           "type": "object",
-          "description": "An object where the keys are the suborganism names and the values are a [Reference Genome](#reference-genome-type). If there is only one suborganism, then the key must be \"singleReference\".",
+          "description": "Segment-first reference genome structure. The top-level keys are segment names, and each segment maps to reference genomes keyed by reference name (e.g., CV-A16, CV-A10). Each reference contains a nucleotide sequence and optionally genes. All segments must define the same set of reference names.",
+          "additionalProperties": false,
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "nucleotideSequences": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Nucleotide sequence (type)](#nucleotidesequence-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence"
-                      },
-                      "sequence": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      },
-                      "insdcAccessionFull": {
-                        "groups": ["nucleotide-sequence"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "INSDC accession of the sequence"
-                      }
+              "description": "Segment name (e.g., 'main', 'L', 'M', 'S')",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "type": "object",
+                  "description": "Reference name (e.g., 'CV-A16', 'CV-A10', or 'singleReference')",
+                  "additionalProperties": false,
+                  "properties": {
+                    "sequence": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "The nucleotide sequence for this segment/reference combination"
                     },
-                    "required": ["name", "sequence"]
-                  }
-                },
-                "genes": {
-                  "groups": ["reference-genome"],
-                  "docsIncludePrefix": false,
-                  "type": "array",
-                  "description": "Array of [Gene (type)](#gene-type)",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string",
-                        "description": "Name of the sequence."
-                      },
-                      "sequence": {
-                        "groups": ["gene"],
-                        "docsIncludePrefix": false,
-                        "type": "string"
-                      }
+                    "insdcAccessionFull": {
+                      "groups": ["nucleotide-sequence"],
+                      "docsIncludePrefix": false,
+                      "type": "string",
+                      "description": "INSDC accession of the sequence"
                     },
-                    "required": ["name", "sequence"]
-                  }
+                    "genes": {
+                      "groups": ["gene"],
+                      "docsIncludePrefix": false,
+                      "type": "object",
+                      "description": "Genes for this segment/reference combination",
+                      "patternProperties": {
+                        "^[a-zA-Z0-9_-]+$": {
+                          "type": "object",
+                          "description": "Gene name (e.g., 'VP4', 'NS1')",
+                          "additionalProperties": false,
+                          "properties": {
+                            "sequence": {
+                              "groups": ["gene"],
+                              "docsIncludePrefix": false,
+                              "type": "string",
+                              "description": "The amino acid or nucleotide sequence for this gene"
+                            }
+                          },
+                          "required": ["sequence"]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["sequence"]
                 }
-              }
+              },
+              "additionalProperties": false
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "required": ["schema"]

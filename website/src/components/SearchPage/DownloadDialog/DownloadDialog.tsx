@@ -24,7 +24,7 @@ type DownloadDialogProps = {
     dataUseTermsEnabled: boolean;
     schema: Schema;
     richFastaHeaderFields: Schema['richFastaHeaderFields'];
-    selectedSuborganism: string | null;
+    selectedReferenceName: string | null;
     suborganismIdentifierField: string | undefined;
 };
 
@@ -36,7 +36,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     dataUseTermsEnabled,
     schema,
     richFastaHeaderFields,
-    selectedSuborganism,
+    selectedReferenceName,
     suborganismIdentifierField,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -45,8 +45,8 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     const closeDialog = () => setIsOpen(false);
 
     const { nucleotideSequences, genes, useMultiSegmentEndpoint, defaultFastaHeaderTemplate } = useMemo(
-        () => getSequenceNames(referenceGenomesLightweightSchema, selectedSuborganism),
-        [referenceGenomesLightweightSchema, selectedSuborganism],
+        () => getSequenceNames(referenceGenomesLightweightSchema, selectedReferenceName),
+        [referenceGenomesLightweightSchema, selectedReferenceName],
     );
 
     const [downloadFormState, setDownloadFormState] = useState<DownloadFormState>(
@@ -63,7 +63,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         return new Map(
             schema.metadata.map((field) => [
                 field.name,
-                new MetadataVisibility(selectedFields.has(field.name), field.onlyForSuborganism),
+                new MetadataVisibility(selectedFields.has(field.name), field.onlyForReferenceName),
             ]),
         );
     }, [selectedFields, schema]);
@@ -76,7 +76,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         defaultFastaHeaderTemplate,
         getVisibleFields: () => [
             ...Array.from(downloadFieldVisibilities.entries())
-                .filter(([_, visibility]) => visibility.isVisible(selectedSuborganism))
+                .filter(([_, visibility]) => visibility.isVisible(selectedReferenceName))
                 .map(([name]) => name),
         ],
         metadata: schema.metadata,
@@ -103,7 +103,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         downloadFieldVisibilities={downloadFieldVisibilities}
                         onSelectedFieldsChange={setSelectedFields}
                         richFastaHeaderFields={richFastaHeaderFields}
-                        selectedSuborganism={selectedSuborganism}
+                        selectedReferenceName={selectedReferenceName}
                         suborganismIdentifierField={suborganismIdentifierField}
                     />
                     {dataUseTermsEnabled && (
