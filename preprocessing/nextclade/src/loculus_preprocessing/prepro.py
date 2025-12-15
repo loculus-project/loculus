@@ -264,18 +264,26 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     nucleotide_insertions: dict[SequenceName, list[NucleotideInsertion]] = {}
     amino_acid_insertions: dict[GeneName, list[AminoAcidInsertion]] = {}
 
+    # For minimizer classification, transform segment names by appending "-main"
+    def transform_segment_dict(d: dict) -> dict:
+        if config.segment_classification_method == SegmentClassificationMethod.MINIMIZER:
+            return {f"{k}-main": v for k, v in d.items()}
+        return d
+
     return SubmissionData(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
             data=ProcessedData(
                 metadata=output_metadata,
-                unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
+                unalignedNucleotideSequences=transform_segment_dict(
+                    unprocessed.unalignedNucleotideSequences
+                ),
                 alignedNucleotideSequences=aligned_nucleotide_sequences,
                 nucleotideInsertions=nucleotide_insertions,
                 alignedAminoAcidSequences=aligned_aminoacid_sequences,
                 aminoAcidInsertions=amino_acid_insertions,
-                sequenceNameToFastaId=sequenceNameToFastaId,
+                sequenceNameToFastaId=transform_segment_dict(sequenceNameToFastaId),
             ),
             errors=errors,
             warnings=warnings,
@@ -476,17 +484,26 @@ def process_single(
         accession_version, unprocessed, config
     )
 
+    # For minimizer classification, transform segment names by appending "-main"
+    # This is needed for multi-reference mode where backend expects "{reference}-main"
+    def transform_segment_dict(d: dict) -> dict:
+        if config.segment_classification_method == SegmentClassificationMethod.MINIMIZER:
+            return {f"{k}-main": v for k, v in d.items()}
+        return d
+
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences=unprocessed.unalignedNucleotideSequences,
-            alignedNucleotideSequences=unprocessed.alignedNucleotideSequences,
-            nucleotideInsertions=unprocessed.nucleotideInsertions,
+            unalignedNucleotideSequences=transform_segment_dict(
+                unprocessed.unalignedNucleotideSequences
+            ),
+            alignedNucleotideSequences=transform_segment_dict(unprocessed.alignedNucleotideSequences),
+            nucleotideInsertions=transform_segment_dict(unprocessed.nucleotideInsertions),
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
-            sequenceNameToFastaId=unprocessed.sequenceNameToFastaId,
+            sequenceNameToFastaId=transform_segment_dict(unprocessed.sequenceNameToFastaId),
         ),
         errors=list(set(unprocessed.errors + iupac_errors + alignment_errors + metadata_errors)),
         warnings=list(set(unprocessed.warnings + alignment_warnings + metadata_warnings)),
@@ -524,6 +541,7 @@ def process_single_unaligned(
         errors=list(set(iupac_errors + metadata_errors + segment_assignment.alert.errors)),
         warnings=list(set(metadata_warnings)),
         sequenceNameToFastaId=segment_assignment.sequenceNameToFastaId,
+        config=config,
     )
 
 
