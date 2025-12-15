@@ -2232,3 +2232,4 @@ defaultResources:
 ingest:
   ncbiGatewayUrl: null
   mirrorBucket: null
+submissionBannerMessageURL: https://pathoplexus.github.io/announcement_banners/submissionbanner.txt
