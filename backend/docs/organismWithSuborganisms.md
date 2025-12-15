@@ -18,10 +18,10 @@ The "multi-pathogen" feature should roughly work as follows:
 * For LAPIS and the backend, each suborganism is treated as an additional segment.
   As LAPIS instances only support one organism,
   we configure LAPIS on the organism level and treat each suborganism as a segment with its own reference.
-* The website will try to create an immersion experience for each suborganism: 
-  * Mutation and lineage search will only be available once the user has selected a specific suborganism.
-  * Only show segments and genes relevant for that suborganism.
-  * Strip the suborganism name from sequence names in the UI.
+* The website will try to create an immersive experience for each suborganism: 
+  * Mutation and lineage searches are available only after a specific suborganism is selected.
+  * Only segments and genes relevant to the selected suborganism are displayed.
+  * Sequence names in the UI omit the suborganism name.
 
 The issue [#3984](https://github.com/loculus-project/loculus/issues/3984) contains links to implementation steps.
 
