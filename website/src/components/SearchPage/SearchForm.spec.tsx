@@ -6,10 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import {
-    type ReferenceGenomesLightweightSchema,
-    type ReferenceAccession,
-} from '../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type ReferenceAccession } from '../../types/referencesGenomes.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
@@ -154,21 +151,18 @@ describe('SearchForm', () => {
                 <SearchForm
                     organism={testOrganism}
                     filterSchema={
-                        new MetadataFilterSchema([
-                            ...defaultSearchFormFilters,
-                            { name: 'My genotype', type: 'string' },
-                        ])
+                        new MetadataFilterSchema([...defaultSearchFormFilters, { name: 'My genotype', type: 'string' }])
                     }
                     clientConfig={testConfig.public}
                     fieldValues={{}}
                     setSomeFieldValues={setSomeFieldValues}
-                    lapisUrl="http://lapis.dummy.url"
+                    lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     referenceGenomeLightweightSchema={multiPathogenReferenceGenomesLightweightSchema}
                     lapisSearchParameters={{}}
                     showMutationSearch={true}
-                    suborganismIdentifierField="My genotype"
+                    suborganismIdentifierField='My genotype'
                     selectedSuborganism={null}
                     setSelectedSuborganism={setSelectedSuborganism}
                     selectedReferences={{}}

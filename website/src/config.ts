@@ -283,11 +283,14 @@ export function getReferenceGenomes(organism: string): SegmentFirstReferenceGeno
 
 export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
     const referenceGenomes = getReferenceGenomes(organism);
-    const segments: Record<string, {
-        references: string[];
-        insdcAccessions: Record<string, ReferenceAccession>;
-        genesByReference: Record<string, string[]>;
-    }> = {};
+    const segments: Record<
+        string,
+        {
+            references: string[];
+            insdcAccessions: Record<string, ReferenceAccession>;
+            genesByReference: Record<string, string[]>;
+        }
+    > = {};
 
     // Transform segment-first structure to lightweight schema
     for (const [segmentName, referenceMap] of Object.entries(referenceGenomes)) {
