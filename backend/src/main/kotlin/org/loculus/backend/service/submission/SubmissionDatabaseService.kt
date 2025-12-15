@@ -79,8 +79,8 @@ import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.service.groupmanagement.GroupsTable
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
@@ -679,14 +679,21 @@ class SubmissionDatabaseService(
     }.count()
 
     // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
-        DataUseTermsTable,
-        JoinType.LEFT,
-        additionalConstraint = {
-            (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                (DataUseTermsTable.isNewestDataUseTerms)
-        },
-    )
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView
+        .join(
+            DataUseTermsTable,
+            JoinType.LEFT,
+            additionalConstraint = {
+                (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                    (DataUseTermsTable.isNewestDataUseTerms)
+            },
+        )
+        .join(
+            GroupsTable,
+            JoinType.INNER,
+            onColumn = SequenceEntriesView.groupIdColumn,
+            otherColumn = GroupsTable.id,
+        )
         .select(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
@@ -701,6 +708,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.pipelineVersionColumn,
             DataUseTermsTable.dataUseTermsTypeColumn,
             DataUseTermsTable.restrictedUntilColumn,
+            GroupsTable.groupNameColumn,
         )
         .where {
             SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
@@ -720,7 +728,7 @@ class SubmissionDatabaseService(
                 isRevocation = it[SequenceEntriesView.isRevocationColumn],
                 submitter = it[SequenceEntriesView.submitterColumn],
                 groupId = it[SequenceEntriesView.groupIdColumn],
-                groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
+                groupName = it[GroupsTable.groupNameColumn],
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
                 processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
