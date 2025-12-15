@@ -9,7 +9,6 @@ import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import {
     type ReferenceAccession,
     type ReferenceGenomesLightweightSchema,
-    type ReferenceName,
 } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
