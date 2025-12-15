@@ -73,7 +73,7 @@ defaultOrganisms:
           segment_classification_method: "minimizer"
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nextclade_sequence_and_datasets:
-            - name: CV-A16
+            - name: CV-A16 # This does not work yet with multi-segment organisms: https://github.com/loculus-project/loculus/issues/5663
               nextclade_dataset_name: enpen/enterovirus/cv-a16
               accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
               gene_prefix: "CV-A16-"
