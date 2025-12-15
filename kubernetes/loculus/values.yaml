@@ -1489,39 +1489,6 @@ defaultOrganisms:
               sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
             prM:
               sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
-      2K:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/2K.fasta]]"
-      NS1:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS1.fasta]]"
-      NS2A:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2A.fasta]]"
-      NS2B:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS2B.fasta]]"
-      NS3:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS3.fasta]]"
-      NS4A:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4A.fasta]]"
-      NS4B:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS4B.fasta]]"
-      NS5:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/NS5.fasta]]"
-      capsid:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/capsid.fasta]]"
-      env:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/env.fasta]]"
-      prM:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/west-nile/prM.fasta]]"
   dummy-organism:
     schema:
       submissionDataTypes: *defaultSubmissionDataTypes
@@ -1880,27 +1847,20 @@ defaultOrganisms:
           genes:
             RdRp:
               sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-            GPC:
-              sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-            NP:
-              sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
       M:
         singleReference:
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_M.fasta]]"
           insdcAccessionFull: NC_005300.2
+          genes:
+            GPC:
+              sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
       S:
         singleReference:
           sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/reference_S.fasta]]"
           insdcAccessionFull: NC_005302.1
-      RdRp:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/RdRp.fasta]]"
-      GPC:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/GPC.fasta]]"
-      NP:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
+          genes:
+            NP:
+              sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/cchf/NP.fasta]]"
   enteroviruses:
     <<: *defaultOrganismConfig
     enabled: true
