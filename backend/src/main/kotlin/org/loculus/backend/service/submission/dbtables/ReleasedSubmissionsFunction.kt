@@ -18,6 +18,7 @@ import org.loculus.backend.service.submission.CompressedSequence
  * Typed binding over get_released_submissions(p_organism text).
  */
 class ReleasedSubmissionsFunction(private val organism: Organism) : Table() {
+    override val tableName: String = "released_submissions_function"
     val accession: Column<String> = text("accession")
     val version: Column<Long> = long("version")
     val isRevocation: Column<Boolean> = bool("is_revocation")
@@ -37,7 +38,8 @@ class ReleasedSubmissionsFunction(private val organism: Organism) : Table() {
         val escapedOrganism = organism.name.replace("'", "''")
         queryBuilder.append("get_released_submissions('")
         queryBuilder.append(escapedOrganism)
-        queryBuilder.append("')")
+        queryBuilder.append("') as ")
+        queryBuilder.append(tableName)
     }
 
     fun query(): Query = selectAll().orderBy(accession to SortOrder.ASC, version to SortOrder.ASC)
