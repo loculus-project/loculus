@@ -9,6 +9,7 @@ Motivation:
 - It's inconvenient for submitters to have to split their uploads by suborganism, 
   just because the sequences map to different references
 - Much of the flexibility at the organism level isn't actually used in practice, causing configuration overhead
+- Data from different suborganisms cannot be viewed or downloaded together.
 
 The "multi-pathogen" feature should roughly work as follows:
 
