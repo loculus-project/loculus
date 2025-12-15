@@ -10,7 +10,7 @@ Motivation:
   just because the sequences map to different references
 - Much of the flexibility at the organism level isn't actually used in practice, causing configuration overhead
 
-It should roughly work as follows:
+The "multi-pathogen" feature should roughly work as follows:
 
 * User uploads sequences without having to explicitly specify the suborganism (or segment) in the sequence header
 * Preprocessing pipeline will figure out which suborganism (and segment) each sequence belongs to
