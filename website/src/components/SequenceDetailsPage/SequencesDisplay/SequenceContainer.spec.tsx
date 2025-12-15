@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
+import type {
+    ReferenceAccession,
+    ReferenceGenomesLightweightSchema,
+} from '../../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -54,7 +57,14 @@ function renderSingleReferenceSequenceViewer({
     nucleotideSegmentNames: string[];
     genes: string[];
 }) {
-    const segments: Record<string, { references: string[]; insdcAccessions: {}; genesByReference: Record<string, string[]> }> = {};
+    const segments: Record<
+        string,
+        {
+            references: string[];
+            insdcAccessions: Record<string, ReferenceAccession>;
+            genesByReference: Record<string, string[]>;
+        }
+    > = {};
     const segmentReferences: Record<string, string> = {};
 
     for (const segmentName of nucleotideSegmentNames) {
@@ -66,10 +76,7 @@ function renderSingleReferenceSequenceViewer({
         segmentReferences[segmentName] = 'ref1';
     }
 
-    renderSequenceViewer(
-        { segments },
-        segmentReferences,
-    );
+    renderSequenceViewer({ segments }, segmentReferences);
 }
 
 const multiSegmentName = 'main2';

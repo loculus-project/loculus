@@ -51,7 +51,7 @@ export const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
                 <TabGroup>
                     <TabList className='flex space-x-1 border-b border-gray-300 mb-3'>
                         {segments.map((segmentName) => {
-                            const hasSelection = selectedReferences[segmentName] !== undefined && selectedReferences[segmentName] !== null;
+                            const hasSelection = selectedReferences[segmentName] !== null;
                             return (
                                 <Tab
                                     key={segmentName}
@@ -66,7 +66,10 @@ export const SegmentReferenceSelector: FC<SegmentReferenceSelectorProps> = ({
                                     <span className='flex items-center gap-1.5'>
                                         {segmentName}
                                         {hasSelection && (
-                                            <span className='inline-block w-2 h-2 bg-primary-500 rounded-full' title='Reference selected' />
+                                            <span
+                                                className='inline-block w-2 h-2 bg-primary-500 rounded-full'
+                                                title='Reference selected'
+                                            />
                                         )}
                                     </span>
                                 </Tab>

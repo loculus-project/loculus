@@ -6,10 +6,7 @@ import ReferenceSequenceLinkButton from './ReferenceSequenceLinkButton';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import {
-    type ReferenceAccession,
-    type ReferenceGenomesLightweightSchema,
-} from '../../types/referencesGenomes';
+import { type ReferenceAccession, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes';
 import AkarInfo from '~icons/ri/information-line';
 
 interface Props {
@@ -46,9 +43,8 @@ const DataTableComponent: React.FC<Props> = ({
     if (segmentReferences !== null) {
         for (const [segmentName, referenceName] of Object.entries(segmentReferences)) {
             const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
-            if (segmentData && segmentData.insdcAccessions[referenceName]) {
-                reference.push(segmentData.insdcAccessions[referenceName]);
-            }
+            const accession = segmentData.insdcAccessions[referenceName];
+            reference.push(accession);
         }
     }
     const hasReferenceAccession = reference.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
@@ -71,11 +67,11 @@ const DataTableComponent: React.FC<Props> = ({
                     <div key={header} className='p-4 pl-0'>
                         <div className='flex flex-row'>
                             <h1 className='py-2 text-lg font-semibold border-b mr-2'>{header}</h1>
-                            {reference !== null && hasReferenceAccession && header.includes('Alignment') && (
+                            {hasReferenceAccession && header.includes('Alignment') && (
                                 <ReferenceSequenceLinkButton reference={reference} />
                             )}
                         </div>
-                        {reference !== null && hasReferenceAccession && header.includes('mutation') && (
+                        {hasReferenceAccession && header.includes('mutation') && (
                             <h2 className='pt-2 text-xs text-gray-500'>
                                 <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
                                 Mutations called relative to the <ReferenceDisplay reference={reference} /> reference

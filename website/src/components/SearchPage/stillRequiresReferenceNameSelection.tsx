@@ -6,7 +6,7 @@ export function stillRequiresReferenceNameSelection(
 ) {
     // Check if there are multiple references in any segment
     const hasMultipleReferences = Object.values(referenceGenomeLightweightSchema.segments).some(
-        (segmentData) => segmentData.references.length > 1
+        (segmentData) => segmentData.references.length > 1,
     );
     return hasMultipleReferences && selectedReferenceName === null;
 }

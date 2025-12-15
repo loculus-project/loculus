@@ -286,7 +286,7 @@ export function getSequenceNames(
 
         for (const segmentName of segments) {
             const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
-            const genes = segmentData.genesByReference[referenceName] || [];
+            const genes = segmentData.genesByReference[referenceName] ?? [];
             allGenes.push(...genes);
         }
 
@@ -312,7 +312,7 @@ export function getSequenceNames(
 
     for (const segmentName of segments) {
         const segmentData = referenceGenomeLightweightSchema.segments[segmentName];
-        const genes = segmentData.genesByReference[selectedReferenceName] || [];
+        const genes = segmentData.genesByReference[selectedReferenceName] ?? [];
         allGenes.push(...genes);
     }
 

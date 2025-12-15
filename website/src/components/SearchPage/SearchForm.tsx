@@ -186,7 +186,7 @@ export const SearchForm = ({
                             />
                         </div>
 
-                        {showMutationSearch && suborganismSegmentAndGeneInfo !== null && (
+                        {showMutationSearch && (
                             <MutationField
                                 suborganismSegmentAndGeneInfo={suborganismSegmentAndGeneInfo}
                                 value={'mutation' in fieldValues ? fieldValues.mutation! : ''}
