@@ -74,8 +74,8 @@ export const metadata = z.object({
     order: z.number().optional(),
     orderOnDetailsPage: z.number().optional(),
     includeInDownloadsByDefault: z.boolean().optional(),
-    onlyForReferenceName: z.string().optional(),  // DEPRECATED: Use onlyForReference instead
-    onlyForReference: z.string().optional(),    // NEW: Scopes field to a specific reference (replaces onlyForReferenceName)
+    onlyForReferenceName: z.string().optional(), // DEPRECATED: Use onlyForReference instead
+    onlyForReference: z.string().optional(), // NEW: Scopes field to a specific reference (replaces onlyForReferenceName)
 });
 
 export const inputFieldOption = z.object({
