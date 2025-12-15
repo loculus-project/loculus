@@ -132,8 +132,9 @@ Consequences:
   It just needs to make sure that the preprocessing output contains all segments and genes that are required for SILO.
 * The names of the segments shown on the website will be different from the names of the segments in LAPIS and the backend.
   (In the single pathogen case, they will still be the same.)
-* When users use an API directly,
-  they will need to be aware of the suborganism names in sequence names and mutation names.
+* When users query data from the API,
+  they will need to prepend the suborganism names in sequence names and mutation names.
+* The preprocessing pipeline needs the capability to determine the suborganism of a submitted entry.
 
 ## Submission
 
