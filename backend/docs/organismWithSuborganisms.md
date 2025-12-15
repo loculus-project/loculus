@@ -125,12 +125,12 @@ that merges all suborganisms by prepending the suborganism name to the sequence 
 }
 ```
 
-Consequence:
+Consequences:
 
 * The backend only knows the merged reference genome and will not know about the individual suborganisms.
   It should be relatively agnostic to how the organisms are structured.
   It just needs to make sure that the preprocessing output contains all segments and genes that are required for SILO.
-* The reference genomes of the website will be different from reference genome in LAPIS and the backend.
+* The names of the segments shown on the website will be different from the names of the segments in LAPIS and the backend.
   (In the single pathogen case, they will still be the same.)
 * When users use an API directly,
   they will need to be aware of the suborganism names in sequence names and mutation names.
