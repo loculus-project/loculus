@@ -15,8 +15,9 @@ The "multi-pathogen" feature should roughly work as follows:
 
 * User uploads sequences without having to explicitly specify the suborganism (or segment) in the sequence header
 * Preprocessing pipeline will figure out which suborganism (and segment) each sequence belongs to
-* For LAPIS and backend, each suborganism is treated the way segments already are.
-  There will be a LAPIS instance for that organism that has a nucleotide segment for each suborganism. 
+* For LAPIS and the backend, each suborganism is treated as an additional segment.
+  As LAPIS instances only support one organism,
+  we configure LAPIS on the organism level and treat each suborganism as a segment with its own reference.
 * The website will try to create an immersion experience for each suborganism: 
   * Mutation and lineage search will only be available once the user has selected a specific suborganism.
   * Only show segments and genes relevant for that suborganism.
