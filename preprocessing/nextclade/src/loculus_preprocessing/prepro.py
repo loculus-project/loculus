@@ -142,7 +142,7 @@ def add_nextclade_metadata(
     )  # type: ignore[assignment]
 
     match nextclade_path:
-        case "frameshifts":
+        case "frameShifts":
             return process_frameshifts(raw)
         case "stopCodons.stopCodons":
             return process_stop_codons(raw)
