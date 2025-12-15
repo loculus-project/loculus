@@ -4,8 +4,8 @@ The purpose of this feature is to allow a single top level organism to contain m
 
 Motivation:
 
-- Current organism architecture doesn't scale well for virus species with few sequences each:
-  each organism requires separate pods for LAPIS/SILO, ingest, preprocessing
+- The current organism-based architecture does not scale effectively for virus species that have only a small number of sequences per organism.
+  each organism requires separate pods for LAPIS/SILO, ingest and preprocessing.
 - It's inconvenient for submitters to have to split their uploads by suborganism, 
   just because the sequences map to different references
 - Much of the flexibility at the organism level isn't actually used in practice, causing configuration overhead
