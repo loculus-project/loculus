@@ -173,6 +173,12 @@ bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
 bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
 {{ end }}
+{{ if $.Values.submissionBannerMessageURL }}
+submissionBannerMessageURL: {{ quote $.Values.submissionBannerMessageURL }}
+{{ end }}
+{{ if $.Values.submissionBannerMessage }}
+submissionBannerMessage: {{ quote $.Values.submissionBannerMessage }}
+{{ end }}
 {{ if $.Values.gitHubEditLink }}
 gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
 {{ end }}

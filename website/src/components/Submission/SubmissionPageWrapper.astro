@@ -1,8 +1,11 @@
 ---
 import { SubmissionGroupSelector } from './SubmissionGroupSelector';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getWebsiteConfig } from '../../config';
+import { getRemoteSubmissionBannerMessage } from '../../services/bannerMessageService';
 import { type GetGroupsAndCurrentGroupResult } from '../../utils/submissionPages';
 import NeedToLogin from '../common/NeedToLogin.astro';
+import { Banner } from '../common/Banner';
 
 interface Props {
     title: string;
@@ -12,6 +15,11 @@ interface Props {
 
 const { title, disablePageTitle = false, groupsResult } = Astro.props;
 const { pathname, search } = Astro.url;
+
+const { submissionBannerMessage: configSubmissionBannerMessage } = getWebsiteConfig();
+const remoteSubmissionBannerMessage = await getRemoteSubmissionBannerMessage();
+const submissionBannerMessage = remoteSubmissionBannerMessage ?? configSubmissionBannerMessage;
+const lastTimeSubmissionBannerWasClosed = Astro.cookies.get('lastTimeSubmissionBannerWasClosed')?.value;
 ---
 
 <BaseLayout title={title} fullWidth>
@@ -19,6 +27,17 @@ const { pathname, search } = Astro.url;
         groupsResult.match(
             ({ currentGroup: group, groupsOfUser }) => (
                 <>
+                    <Banner
+                        message={submissionBannerMessage}
+                        lastTimeBannerWasClosed={
+                            lastTimeSubmissionBannerWasClosed !== undefined
+                                ? parseInt(lastTimeSubmissionBannerWasClosed, 10)
+                                : undefined
+                        }
+                        serverTime={Date.now()}
+                        cookieName='lastTimeSubmissionBannerWasClosed'
+                        client:load
+                    />
                     <SubmissionGroupSelector
                         groups={groupsOfUser}
                         selectedGroupId={group.groupId}
