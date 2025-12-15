@@ -5,11 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesContainer } from './SequencesContainer.tsx';
 import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
-import {
-    type NucleotideSegmentNames,
-    type ReferenceGenomesLightweightSchema,
-    SINGLE_REFERENCE,
-} from '../../../types/referencesGenomes.ts';
+import type { ReferenceGenomesLightweightSchema } from '../../../types/referencesGenomes.ts';
 
 vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
@@ -35,7 +31,7 @@ const BUTTON_ROLE = 'button';
 
 function renderSequenceViewer(
     referenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema,
-    suborganism: string,
+    segmentReferences: Record<string, string>,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
@@ -45,7 +41,7 @@ function renderSequenceViewer(
                 clientConfig={testConfig.public}
                 referenceGenomeLightweightSchema={referenceGenomeLightweightSchema}
                 loadSequencesAutomatically={false}
-                suborganism={suborganism}
+                segmentReferences={segmentReferences}
             />
         </QueryClientProvider>,
     );
@@ -55,18 +51,24 @@ function renderSingleReferenceSequenceViewer({
     nucleotideSegmentNames,
     genes,
 }: {
-    nucleotideSegmentNames: NucleotideSegmentNames;
+    nucleotideSegmentNames: string[];
     genes: string[];
 }) {
+    const segments: Record<string, { references: string[]; insdcAccessions: {}; genesByReference: Record<string, string[]> }> = {};
+    const segmentReferences: Record<string, string> = {};
+
+    for (const segmentName of nucleotideSegmentNames) {
+        segments[segmentName] = {
+            references: ['ref1'],
+            insdcAccessions: {},
+            genesByReference: { ref1: genes },
+        };
+        segmentReferences[segmentName] = 'ref1';
+    }
+
     renderSequenceViewer(
-        {
-            [SINGLE_REFERENCE]: {
-                geneNames: genes,
-                nucleotideSegmentNames,
-                insdcAccessionFull: [],
-            },
-        },
-        SINGLE_REFERENCE,
+        { segments },
+        segmentReferences,
     );
 }
 
@@ -171,18 +173,18 @@ describe('SequencesContainer', () => {
 
             renderSequenceViewer(
                 {
-                    [suborganism1]: {
-                        nucleotideSegmentNames: ['main'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
-                    },
-                    [suborganism2]: {
-                        nucleotideSegmentNames: ['main'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
+                    segments: {
+                        main: {
+                            references: [suborganism1, suborganism2],
+                            insdcAccessions: {},
+                            genesByReference: {
+                                [suborganism1]: [],
+                                [suborganism2]: [],
+                            },
+                        },
                     },
                 },
-                suborganism1,
+                { main: suborganism1 },
             );
 
             click(LOAD_SEQUENCES_BUTTON);
@@ -219,18 +221,26 @@ describe('SequencesContainer', () => {
 
             renderSequenceViewer(
                 {
-                    [suborganism1]: {
-                        nucleotideSegmentNames: ['main'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
-                    },
-                    [suborganism2]: {
-                        nucleotideSegmentNames: ['segment1', 'segment2'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
+                    segments: {
+                        segment1: {
+                            references: [suborganism1, suborganism2],
+                            insdcAccessions: {},
+                            genesByReference: {
+                                [suborganism1]: [],
+                                [suborganism2]: [],
+                            },
+                        },
+                        segment2: {
+                            references: [suborganism1, suborganism2],
+                            insdcAccessions: {},
+                            genesByReference: {
+                                [suborganism1]: [],
+                                [suborganism2]: [],
+                            },
+                        },
                     },
                 },
-                suborganism2,
+                { segment1: suborganism2, segment2: suborganism2 },
             );
 
             click(LOAD_SEQUENCES_BUTTON);
