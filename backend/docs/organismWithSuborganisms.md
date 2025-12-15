@@ -226,7 +226,7 @@ See [#4769](https://github.com/loculus-project/loculus/issues/4769) for the impl
 The preprocessing pipeline will need to assign each sequence to a segment, if there are multiple segments
 (including validation and useful error messages for the submitter).
 
-The preprocessing pipeline uses `nextclade sort` with a suitable minimizer index to classify each sequence into a suborganism.
+Our Nextclade-based preprocessing pipeline uses `nextclade sort` (or `nextclade align`) with a suitable minimizer index to classify each sequence into a suborganism.
 Once the suborganism is assigned, it runs Nextclade with the correct Nextclade dataset.
 
 ## Preprocessing output
