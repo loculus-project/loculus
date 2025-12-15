@@ -1936,22 +1936,22 @@ defaultOrganisms:
           nextclade_sequence_and_datasets:
             - name: CV-A16-main
               nextclade_dataset_name: enpen/enterovirus/cv-a16
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+              accepted_sort_matches: ["CV-A16", "community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
               gene_prefix: "CV-A16-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: CV-A10-main
               nextclade_dataset_name: enpen/enterovirus/cv-a10
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+              accepted_sort_matches: ["CV-A10", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
               gene_prefix: "CV-A10-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-A71-main
               nextclade_dataset_name: enpen/enterovirus/ev-a71
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+              accepted_sort_matches: ["EV-A71", "community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
               gene_prefix: "EV-A71-"
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
             - name: EV-D68-main
               gene_prefix: "EV-D68-"
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+              accepted_sort_matches: ["EV-D68", "community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
               genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
               nextclade_dataset_name: enpen/enterovirus/ev-d68
               nextclade_dataset_server: https://data.clades.nextstrain.org/v3
