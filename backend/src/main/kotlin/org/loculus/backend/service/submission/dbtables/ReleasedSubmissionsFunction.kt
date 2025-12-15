@@ -6,13 +6,13 @@ import org.jetbrains.exposed.sql.QueryBuilder
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.service.submission.CompressedSequence
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.service.submission.CompressedSequence
 
 /**
  * Typed binding over get_released_submissions(p_organism text).
