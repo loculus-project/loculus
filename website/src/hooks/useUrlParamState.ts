@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type { FieldValueUpdate } from '../types/config.ts';
 
-type ParamType = 'string' | 'boolean' | 'nullable-string';
+type ParamType = 'string' | 'boolean' | 'nullable-string' | 'json';
 
 /**
  * A hook that syncs state with URL parameters.
@@ -40,14 +40,31 @@ function useUrlParamState<T>(
                     throw Error('Expected string, found array value in state.');
                 }
                 return (urlValue ?? '') as T;
+            case 'json':
+                if (typeof urlValue === 'string') {
+                    try {
+                        return JSON.parse(urlValue) as T;
+                    } catch {
+                        return defaultValue;
+                    }
+                }
+                return defaultValue;
         }
     }
 
     const updateUrlParam = useCallback(
         (newValue: T) => {
-            setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
+            let serializedValue: string | null;
+            if (shouldRemove(newValue)) {
+                serializedValue = null;
+            } else if (paramType === 'json') {
+                serializedValue = JSON.stringify(newValue);
+            } else {
+                serializedValue = String(newValue);
+            }
+            setSomeFieldValues([paramName, serializedValue]);
         },
-        [paramName, setSomeFieldValues, shouldRemove],
+        [paramName, setSomeFieldValues, shouldRemove, paramType],
     );
 
     return [valueState, updateUrlParam];

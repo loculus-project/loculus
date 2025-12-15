@@ -13,9 +13,8 @@ import {
     websiteConfig,
 } from './types/config.ts';
 import {
-    type NamedSequence,
     type ReferenceAccession,
-    type ReferenceGenomes,
+    type SegmentFirstReferenceGenomes,
     type ReferenceGenomesLightweightSchema,
 } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
@@ -47,14 +46,14 @@ export function validateWebsiteConfig(config: WebsiteConfig): Error[] {
             });
         }
 
-        const knownSuborganisms = Object.keys(schema.referenceGenomes);
+        const knownReferenceNames = Object.keys(schema.referenceGenomes);
 
         schema.schema.metadata.forEach((metadatum) => {
-            const onlyForSuborganism = metadatum.onlyForSuborganism;
-            if (onlyForSuborganism !== undefined && !knownSuborganisms.includes(onlyForSuborganism)) {
+            const onlyForReferenceName = metadatum.onlyForReferenceName;
+            if (onlyForReferenceName !== undefined && !knownReferenceNames.includes(onlyForReferenceName)) {
                 errors.push(
                     new Error(
-                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForSuborganism}' in 'onlyForSuborganism'.`,
+                        `Metadata field '${metadatum.name}' in organism '${organism}' references unknown suborganism '${onlyForReferenceName}' in 'onlyForReferenceName'.`,
                     ),
                 );
             }
@@ -278,29 +277,45 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomes {
+export function getReferenceGenomes(organism: string): SegmentFirstReferenceGenomes {
     return getConfig(organism).referenceGenomes;
 }
 
-const getAccession = (n: NamedSequence): ReferenceAccession => {
-    return {
-        name: n.name,
-        insdcAccessionFull: n.insdcAccessionFull,
-    };
-};
-
 export const getReferenceGenomeLightweightSchema = (organism: string): ReferenceGenomesLightweightSchema => {
     const referenceGenomes = getReferenceGenomes(organism);
-    return Object.fromEntries(
-        Object.entries(referenceGenomes).map(([suborganism, referenceGenome]) => [
-            suborganism,
-            {
-                nucleotideSegmentNames: referenceGenome.nucleotideSequences.map((n) => n.name),
-                geneNames: referenceGenome.genes.map((n) => n.name),
-                insdcAccessionFull: referenceGenome.nucleotideSequences.map((n) => getAccession(n)),
-            },
-        ]),
-    );
+    const segments: Record<string, {
+        references: string[];
+        insdcAccessions: Record<string, ReferenceAccession>;
+        genesByReference: Record<string, string[]>;
+    }> = {};
+
+    // Transform segment-first structure to lightweight schema
+    for (const [segmentName, referenceMap] of Object.entries(referenceGenomes)) {
+        segments[segmentName] = {
+            references: Object.keys(referenceMap),
+            insdcAccessions: {},
+            genesByReference: {},
+        };
+
+        for (const [referenceName, referenceData] of Object.entries(referenceMap)) {
+            // Add INSDC accession
+            if (referenceData.insdcAccessionFull) {
+                segments[segmentName].insdcAccessions[referenceName] = {
+                    name: referenceName,
+                    insdcAccessionFull: referenceData.insdcAccessionFull,
+                };
+            }
+
+            // Add genes for this reference
+            if (referenceData.genes) {
+                segments[segmentName].genesByReference[referenceName] = Object.keys(referenceData.genes);
+            } else {
+                segments[segmentName].genesByReference[referenceName] = [];
+            }
+        }
+    }
+
+    return { segments };
 };
 
 export function seqSetsAreEnabled() {

@@ -2,7 +2,7 @@ import { Transition } from '@headlessui/react';
 import { type ChangeEvent, type FC, Fragment, useMemo, useState } from 'react';
 
 import { FloatingLabelContainer } from './FloatingLabelContainer.tsx';
-import type { SuborganismSegmentAndGeneInfo } from '../../../utils/getSuborganismSegmentAndGeneInfo.tsx';
+import type { SegmentAndGeneInfo } from '../../../utils/getSegmentAndGeneInfo.tsx';
 import {
     type MutationQuery,
     parseMutationsString,
@@ -14,7 +14,7 @@ import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '../../
 import DisplaySearchDocs from '../DisplaySearchDocs';
 
 interface MutationFieldProps {
-    suborganismSegmentAndGeneInfo: SuborganismSegmentAndGeneInfo;
+    suborganismSegmentAndGeneInfo: SegmentAndGeneInfo;
     value: string;
     onChange: (mutationFilter: string) => void;
 }

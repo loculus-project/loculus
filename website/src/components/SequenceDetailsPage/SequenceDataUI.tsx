@@ -10,7 +10,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { type Schema, type SequenceFlaggingConfig } from '../../types/config';
-import { type ReferenceGenomesLightweightSchema, type Suborganism } from '../../types/referencesGenomes';
+import { type ReferenceGenomesLightweightSchema, type ReferenceName } from '../../types/referencesGenomes';
 import { type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
@@ -19,7 +19,7 @@ import MdiEye from '~icons/mdi/eye';
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
-    suborganism: Suborganism | null;
+    segmentReferences: Record<string, string> | null;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     schema: Schema;
@@ -33,7 +33,7 @@ interface Props {
 export const SequenceDataUI: FC<Props> = ({
     tableData,
     organism,
-    suborganism,
+    segmentReferences,
     accessionVersion,
     dataUseTermsHistory,
     schema,
@@ -64,15 +64,15 @@ export const SequenceDataUI: FC<Props> = ({
             {isRestricted && <RestrictedUseWarning />}
             <DataTable
                 dataTableData={dataTableData}
-                suborganism={suborganism}
+                segmentReferences={segmentReferences}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
             />
-            {schema.submissionDataTypes.consensusSequences && suborganism !== null && (
+            {schema.submissionDataTypes.consensusSequences && segmentReferences !== null && (
                 <div className='mt-10'>
                     <SequencesContainer
                         organism={organism}
-                        suborganism={suborganism}
+                        segmentReferences={segmentReferences}
                         accessionVersion={accessionVersion}
                         clientConfig={clientConfig}
                         referenceGenomeLightweightSchema={referenceGenomeSequenceNames}
