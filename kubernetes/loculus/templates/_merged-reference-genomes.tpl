@@ -42,10 +42,10 @@
   {{- end -}}
 
 {{- else -}}
-  {{/* Multi-reference mode - prefix with reference name */}}
+{{/* Multi-reference mode - prefix with reference name */}}
 
-  {{/* Process each reference */}}
-  {{- range $refName := $referenceNames -}}
+{{/* Process each reference */}}
+{{- range $refName := $referenceNames -}}
     {{/* Process each segment */}}
     {{- range $segmentName, $refMap := $segmentFirstConfig -}}
       {{- $refData := index $refMap $refName -}}
@@ -67,7 +67,7 @@
         {{- end -}}
       {{- end -}}
     {{- end -}}
-  {{- end -}}
+{{- end -}}
 
 {{- end -}}
 
