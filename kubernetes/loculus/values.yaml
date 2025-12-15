@@ -1402,33 +1402,6 @@ defaultOrganisms:
               sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
             L:
               sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
-      NP:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/NP.fasta]]"
-      VP35:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP35.fasta]]"
-      VP40:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP40.fasta]]"
-      GP:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/GP.fasta]]"
-      ssGP:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/ssGP.fasta]]"
-      sGP:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/sGP.fasta]]"
-      VP30:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP30.fasta]]"
-      VP24:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/VP24.fasta]]"
-      L:
-        singleReference:
-          sequence: "[[URL:https://corneliusroemer.github.io/seqs/artefacts/ebola-sudan/L.fasta]]"
   west-nile:
     <<: *defaultOrganismConfig
     schema:
