@@ -1867,7 +1867,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Enterovirus"
-      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68]
+      nucleotideSequences: [CV-A16-main, CV-A10-main, EV-A71-main, EV-D68-main]
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
@@ -1891,7 +1891,7 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             args:
-              segment: CV-A16
+              segment: CV-A16-main
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_cv_a10
@@ -1899,7 +1899,7 @@ defaultOrganisms:
           onlyForSuborganism: CV-A10
           preprocessing:
             args:
-              segment: CV-A10
+              segment: CV-A10-main
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_a71
@@ -1907,7 +1907,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-A71
           preprocessing:
             args:
-              segment: EV-A71
+              segment: EV-A71-main
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_d68
@@ -1915,7 +1915,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-D68
           preprocessing:
             args:
-              segment: EV-D68
+              segment: EV-D68-main
             inputs: {input: nextclade.clade}
         - name: genotype
           displayName: Genotype
