@@ -1,5 +1,5 @@
 import { validateSingleValue } from './extractFieldValue';
-import { getSuborganismSegmentAndGeneInfo } from './getSuborganismSegmentAndGeneInfo.tsx';
+import { getSegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
 import {
     getColumnVisibilitiesFromQuery,
     MetadataFilterSchema,
@@ -23,11 +23,19 @@ export const performLapisSearchQueries = async (
     hiddenFieldValues: FieldValues,
     organism: string,
 ): Promise<SearchResponse> => {
-    const suborganism = extractSuborganism(schema, state);
+    const suborganism = extractReferenceName(schema, state);
 
-    const suborganismSegmentAndGeneInfo = getSuborganismSegmentAndGeneInfo(
+    // Build segment references - all segments use the same reference
+    const segmentReferences: Record<string, string> = {};
+    if (suborganism !== null) {
+        for (const segmentName of Object.keys(referenceGenomeLightweightSchema.segments)) {
+            segmentReferences[segmentName] = suborganism;
+        }
+    }
+
+    const suborganismSegmentAndGeneInfo = getSegmentAndGeneInfo(
         referenceGenomeLightweightSchema,
-        suborganism,
+        Object.keys(segmentReferences).length > 0 ? segmentReferences : {},
     );
 
     const filterSchema = new MetadataFilterSchema(schema.metadata);
@@ -78,7 +86,7 @@ export const performLapisSearchQueries = async (
     };
 };
 
-function extractSuborganism(schema: Schema, state: QueryState): string | null {
+function extractReferenceName(schema: Schema, state: QueryState): string | null {
     if (schema.suborganismIdentifierField === undefined) {
         return null;
     }

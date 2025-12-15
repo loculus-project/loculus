@@ -4,7 +4,6 @@ import { getReferenceGenomeLightweightSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { ACCESSION_VERSION_FIELD } from '../../../settings.ts';
-import { SINGLE_REFERENCE } from '../../../types/referencesGenomes.ts';
 import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute.ts';
 
 export const GET: APIRoute = createDownloadAPIRoute(
@@ -16,10 +15,14 @@ export const GET: APIRoute = createDownloadAPIRoute(
 
         const referenceGenomeLightweightSchema = getReferenceGenomeLightweightSchema(organism);
 
-        if (SINGLE_REFERENCE in referenceGenomeLightweightSchema) {
-            const { nucleotideSegmentNames } = referenceGenomeLightweightSchema[SINGLE_REFERENCE];
-            if (nucleotideSegmentNames.length > 1) {
-                return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, nucleotideSegmentNames);
+        // Check if single reference mode (all segments have only one reference)
+        const segments = Object.entries(referenceGenomeLightweightSchema.segments);
+        const isSingleReference = segments.every(([_, segmentData]) => segmentData.references.length === 1);
+
+        if (isSingleReference) {
+            const segmentNames = Object.keys(referenceGenomeLightweightSchema.segments);
+            if (segmentNames.length > 1) {
+                return lapisClient.getMultiSegmentSequenceFasta(accessionVersion, segmentNames);
             }
 
             return lapisClient.getSequenceFasta(accessionVersion);

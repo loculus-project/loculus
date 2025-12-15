@@ -16,7 +16,7 @@ const defaultConfig: WebsiteConfig = {
 };
 
 describe('validateWebsiteConfig', () => {
-    it('should fail when "onlyForSuborganism" is not a valid organism', () => {
+    it('should fail when "onlyForReferenceName" is not a valid organism', () => {
         const errors = validateWebsiteConfig({
             ...defaultConfig,
             organisms: {
@@ -27,7 +27,7 @@ describe('validateWebsiteConfig', () => {
                             {
                                 type: 'string',
                                 name: 'test field',
-                                onlyForSuborganism: 'nonExistentSuborganism',
+                                onlyForReferenceName: 'nonExistentReferenceName',
                             },
                         ],
                         inputFields: [],
@@ -44,7 +44,7 @@ describe('validateWebsiteConfig', () => {
 
         expect(errors).toHaveLength(1);
         expect(errors[0].message).contains(
-            `Metadata field 'test field' in organism 'dummyOrganism' references unknown suborganism 'nonExistentSuborganism' in 'onlyForSuborganism'.`,
+            `Metadata field 'test field' in organism 'dummyOrganism' references unknown suborganism 'nonExistentReferenceName' in 'onlyForReferenceName'.`,
         );
     });
 
