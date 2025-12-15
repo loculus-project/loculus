@@ -3,12 +3,16 @@
 {{- $lapisNucleotideSequences := list -}}
 {{- $lapisGenes := list -}}
 
+{{/* Handle empty reference genomes */}}
+{{- if or (not $segmentFirstConfig) (eq (len $segmentFirstConfig) 0) -}}
+{{- $result := dict "nucleotideSequences" (list) "genes" (list) -}}
+{{- $result | toYaml -}}
+{{- else -}}
+
 {{/* Extract all unique reference names from the first segment */}}
 {{- $referenceNames := list -}}
-{{- if $segmentFirstConfig -}}
-  {{- $firstSegment := first (values $segmentFirstConfig) -}}
-  {{- $referenceNames = keys $firstSegment -}}
-{{- end -}}
+{{- $firstSegment := first (values $segmentFirstConfig) -}}
+{{- $referenceNames = keys $firstSegment -}}
 
 {{/* Check if this is single-reference mode (only one reference across all segments) */}}
 {{- if eq (len $referenceNames) 1 -}}
@@ -69,6 +73,7 @@
 
 {{- $result := dict "nucleotideSequences" $lapisNucleotideSequences "genes" $lapisGenes -}}
 {{- $result | toYaml -}}
+{{- end -}}
 {{- end -}}
 
 
