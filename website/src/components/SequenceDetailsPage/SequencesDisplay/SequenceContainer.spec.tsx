@@ -168,8 +168,9 @@ describe('SequencesContainer', () => {
         test('should render single segmented sequences', async () => {
             const alignedSequence = `${suborganism1}AlignedSequence`;
             const sequence = `${suborganism1}Sequence`;
-            mockRequest.lapis.alignedNucleotideSequencesMultiSegment(200, `>some\n${alignedSequence}`, suborganism1);
-            mockRequest.lapis.unalignedNucleotideSequencesMultiSegment(200, `>some\n${sequence}`, suborganism1);
+            // Single segment uses non-segmented endpoints even in multi-reference mode
+            mockRequest.lapis.alignedNucleotideSequences(200, `>some\n${alignedSequence}`);
+            mockRequest.lapis.unalignedNucleotideSequences(200, `>some\n${sequence}`);
 
             renderSequenceViewer(
                 {

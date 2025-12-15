@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
@@ -75,7 +75,6 @@ const defaultSearchVisibilities = new Map<string, MetadataVisibility>([
 
 const setSomeFieldValues = vi.fn();
 const setASearchVisibility = vi.fn();
-const setSelectedReferenceName = vi.fn();
 
 const renderSearchForm = ({
     filterSchema = new MetadataFilterSchema([...defaultSearchFormFilters]),
@@ -120,6 +119,10 @@ const renderSearchForm = ({
 };
 
 describe('SearchForm', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('renders without crashing', () => {
         renderSearchForm();
         expect(screen.getByText('Field 1')).toBeInTheDocument();
@@ -145,20 +148,39 @@ describe('SearchForm', () => {
     });
 
     it('should render the suborganism selector in the multi pathogen case', async () => {
-        renderSearchForm({
-            filterSchema: new MetadataFilterSchema([
-                ...defaultSearchFormFilters,
-                { name: 'My genotype', type: 'string' },
-            ]),
-            suborganismIdentifierField: 'My genotype',
-            referenceGenomeLightweightSchema: multiPathogenReferenceGenomesLightweightSchema,
-        });
+        const setSelectedSuborganism = vi.fn();
+        render(
+            <QueryClientProvider client={queryClient}>
+                <SearchForm
+                    organism={testOrganism}
+                    filterSchema={
+                        new MetadataFilterSchema([
+                            ...defaultSearchFormFilters,
+                            { name: 'My genotype', type: 'string' },
+                        ])
+                    }
+                    clientConfig={testConfig.public}
+                    fieldValues={{}}
+                    setSomeFieldValues={setSomeFieldValues}
+                    lapisUrl="http://lapis.dummy.url"
+                    searchVisibilities={defaultSearchVisibilities}
+                    setASearchVisibility={setASearchVisibility}
+                    referenceGenomeLightweightSchema={multiPathogenReferenceGenomesLightweightSchema}
+                    lapisSearchParameters={{}}
+                    showMutationSearch={true}
+                    suborganismIdentifierField="My genotype"
+                    selectedSuborganism={null}
+                    setSelectedSuborganism={setSelectedSuborganism}
+                    selectedReferences={{}}
+                />
+            </QueryClientProvider>,
+        );
 
-        const suborganismSelector = screen.getByRole('combobox', { name: 'My genotype' });
+        const suborganismSelector = await screen.findByRole('combobox', { name: 'My genotype' });
         expect(suborganismSelector).toBeInTheDocument();
         await userEvent.selectOptions(suborganismSelector, 'suborganism1');
 
-        expect(setSelectedReferenceName).toHaveBeenCalledWith('suborganism1');
+        expect(setSelectedSuborganism).toHaveBeenCalledWith('suborganism1');
     });
 
     it('opens advanced options modal with version status and revocation fields', async () => {

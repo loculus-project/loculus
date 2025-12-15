@@ -42,7 +42,7 @@ export function getSegmentAndGeneInfo(
 
         // Add gene info if reference is selected
         if (selectedRef) {
-            const geneNames = segmentData.genesByReference[selectedRef] || [];
+            const geneNames = segmentData.genesByReference[selectedRef];
             for (const geneName of geneNames) {
                 geneInfos.push(getGeneInfoWithReference(geneName, refForNaming));
             }

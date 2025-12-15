@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { describe, expect, test } from 'vitest';
 
 import { getSegmentAndGeneInfo } from './getSegmentAndGeneInfo.tsx';
@@ -119,24 +120,26 @@ describe('getSegmentAndGeneInfo', () => {
             const schema: ReferenceGenomesLightweightSchema = {
                 segments: {
                     segment1: {
-                        references: ['ref1'],
+                        references: ['CV-A16', 'CV-A10'],
                         insdcAccessions: {},
                         genesByReference: {
-                            ref1: ['gene1'],
+                            'CV-A16': ['gene1'],
+                            'CV-A10': ['gene1'],
                         },
                     },
                     segment2: {
-                        references: ['ref1'],
+                        references: ['CV-A16', 'CV-A10'],
                         insdcAccessions: {},
                         genesByReference: {
-                            ref1: ['gene2'],
+                            'CV-A16': ['gene2'],
+                            'CV-A10': ['gene2'],
                         },
                     },
                 },
             };
 
             const selectedReferences = {
-                segment1: 'ref1',
+                segment1: 'CV-A16',
                 // segment2 not selected
             };
 
