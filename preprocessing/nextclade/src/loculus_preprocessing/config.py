@@ -88,6 +88,7 @@ class Config:
     embl: EmblInfoMetadataPropertyNames = dataclasses.field(
         default_factory=EmblInfoMetadataPropertyNames
     )
+    insdc_ingest_group_id: int = 1
 
 
 def assign_nextclade_sequence_and_dataset(
