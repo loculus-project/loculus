@@ -1,11 +1,11 @@
 ---
 import { SubmissionGroupSelector } from './SubmissionGroupSelector';
-import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getWebsiteConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRemoteSubmissionBannerMessage } from '../../services/bannerMessageService';
 import { type GetGroupsAndCurrentGroupResult } from '../../utils/submissionPages';
-import NeedToLogin from '../common/NeedToLogin.astro';
 import { Banner } from '../common/Banner';
+import NeedToLogin from '../common/NeedToLogin.astro';
 
 interface Props {
     title: string;
