@@ -1867,7 +1867,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       organismName: "Enterovirus"
-      nucleotideSequences: [CV-A16-main, CV-A10-main, EV-A71-main, EV-D68-main]
+      nucleotideSequences: [CV-A16, CV-A10, EV-A71, EV-D68]
       image: "/images/organisms/enterovirus.jpg"
       linkOuts:
         - name: "Nextclade (CV-A16)"
