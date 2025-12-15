@@ -20,6 +20,7 @@ import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -290,26 +291,52 @@ class SubmissionDatabaseService(
         log.info { "Updating metadata with external metadata received from $externalMetadataUpdater" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        val accessionVersions = mutableListOf<String>()
-        reader.lineSequence().forEach { line ->
-            val submittedExternalMetadata =
-                try {
-                    objectMapper.readValue<ExternalSubmittedData>(line)
-                } catch (e: JacksonException) {
-                    throw BadRequestException(
-                        "Failed to deserialize NDJSON line: ${e.message}",
-                        e,
-                    )
-                }
-            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+        // Parse all entries first
+        val allExternalMetadata = reader.lineSequence().map { line ->
+            try {
+                objectMapper.readValue<ExternalSubmittedData>(line)
+            } catch (e: JacksonException) {
+                throw BadRequestException(
+                    "Failed to deserialize NDJSON line: ${e.message}",
+                    e,
+                )
+            }
+        }.toList()
 
-            insertExternalMetadata(
-                submittedExternalMetadata,
-                organism,
-                externalMetadataUpdater,
-            )
+        if (allExternalMetadata.isEmpty()) {
+            return
         }
 
+        // Validate all external metadata schemas (in-memory validation, no DB queries)
+        allExternalMetadata.forEach { submittedExternalMetadata ->
+            validateExternalMetadata(submittedExternalMetadata, organism, externalMetadataUpdater)
+        }
+
+        // Batch validate all accession versions exist and are approved (single DB query)
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionsExist(allExternalMetadata)
+                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatOrganismIs(organism)
+        }
+
+        // Batch upsert all external metadata
+        val now = dateProvider.getCurrentDateTime()
+        ExternalMetadataTable.batchUpsert(
+            allExternalMetadata,
+            keys = arrayOf(
+                ExternalMetadataTable.accessionColumn,
+                ExternalMetadataTable.versionColumn,
+                ExternalMetadataTable.updaterIdColumn,
+            ),
+        ) {
+            this[ExternalMetadataTable.accessionColumn] = it.accession
+            this[ExternalMetadataTable.versionColumn] = it.version
+            this[ExternalMetadataTable.updaterIdColumn] = externalMetadataUpdater
+            this[ExternalMetadataTable.externalMetadataColumn] = it.externalMetadata
+            this[ExternalMetadataTable.updatedAtColumn] = now
+        }
+
+        val accessionVersions = allExternalMetadata.map { it.displayAccessionVersion() }
         auditLogger.log(
             description = (
                 "Updated external metadata of ${accessionVersions.size} sequences:" +
@@ -317,50 +344,6 @@ class SubmissionDatabaseService(
                 ),
             username = externalMetadataUpdater,
         )
-    }
-
-    private fun insertExternalMetadata(
-        submittedExternalMetadata: ExternalSubmittedData,
-        organism: Organism,
-        externalMetadataUpdater: String,
-    ) {
-        accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(submittedExternalMetadata)
-                .andThatSequenceEntriesAreInStates(
-                    listOf(Status.APPROVED_FOR_RELEASE),
-                )
-                .andThatOrganismIs(organism)
-        }
-        validateExternalMetadata(
-            submittedExternalMetadata,
-            organism,
-            externalMetadataUpdater,
-        )
-
-        val numberInserted =
-            ExternalMetadataTable.update(
-                where = {
-                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
-                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
-                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
-                },
-            ) {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
-
-        if (numberInserted != 1) {
-            ExternalMetadataTable.insert {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
-        }
     }
 
     private fun insertProcessedData(
