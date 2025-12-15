@@ -67,10 +67,8 @@ fields:
     header: Submission details
     orderOnDetailsPage: 5040
   - name: submittedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date submitted (exact)
     orderOnDetailsPage: 5050
   - name: releasedAtTimestamp
@@ -80,10 +78,8 @@ fields:
     columnWidth: 100
     orderOnDetailsPage: 5060
   - name: releasedDate
-    type: string
+    type: date
     hideOnSequenceDetailsPage: true
-    generateIndex: true
-    autocomplete: true
     displayName: Date released (exact)
     columnWidth: 100
     orderOnDetailsPage: 5070
