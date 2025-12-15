@@ -124,7 +124,7 @@ jobs:
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -140,7 +140,7 @@ jobs:
           kubectl describe pods -l app=loculus | tee pod_descriptions/describe_pods.txt
       - name: Upload pod descriptions
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: pod-descriptions-${{ matrix.browser }}
           path: pod_descriptions/
@@ -152,7 +152,7 @@ jobs:
         run: ./.github/scripts/collect_kubernetes_logs.sh
       - name: Upload Kubernetes logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kubernetes-logs-${{ matrix.browser }}
           path: kubernetes_logs/
