@@ -54,7 +54,12 @@ export async function getTableData(
                     }),
                 )
                 .andThen((data) => {
-                    const segmentReferencesResult = getSegmentReferences(data.details, schema, referenceGenomes, accessionVersion);
+                    const segmentReferencesResult = getSegmentReferences(
+                        data.details,
+                        schema,
+                        referenceGenomes,
+                        accessionVersion,
+                    );
                     if (segmentReferencesResult.isErr()) {
                         return err(segmentReferencesResult.error);
                     }
@@ -344,7 +349,10 @@ function computeSequenceDisplayName(
     return originalSequenceName;
 }
 
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[], segmentReferences: Record<string, string> | null) {
+function deletionsToCommaSeparatedString(
+    mutationData: MutationProportionCount[],
+    segmentReferences: Record<string, string> | null,
+) {
     const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
@@ -393,7 +401,10 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         .join(', ');
 }
 
-function insertionsToCommaSeparatedString(insertionData: InsertionCount[], segmentReferences: Record<string, string> | null) {
+function insertionsToCommaSeparatedString(
+    insertionData: InsertionCount[],
+    segmentReferences: Record<string, string> | null,
+) {
     return insertionData
         .map((insertion) => {
             const sequenceDisplayName = computeSequenceDisplayName(insertion.sequenceName, segmentReferences);

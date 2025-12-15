@@ -14,7 +14,7 @@ export function getSegmentAndGeneDisplayNameMap(
 
             // Add genes for this segment/reference
             const singleRef = segmentData.references[0];
-            const genes = segmentData.genesByReference[singleRef];
+            const genes = segmentData.genesByReference[singleRef] ?? [];
             for (const geneName of genes) {
                 mappingEntries.push([geneName, geneName]);
             }
@@ -25,7 +25,7 @@ export function getSegmentAndGeneDisplayNameMap(
                 mappingEntries.push([lapisSegmentName, segmentName]);
 
                 // Add genes for this segment/reference
-                const genes = segmentData.genesByReference[referenceName];
+                const genes = segmentData.genesByReference[referenceName] ?? [];
                 for (const geneName of genes) {
                     const lapisGeneName = `${referenceName}-${geneName}`;
                     mappingEntries.push([lapisGeneName, geneName]);
