@@ -98,6 +98,7 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
+import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
 
@@ -643,9 +644,14 @@ class SubmissionDatabaseService(
         return accessionVersionsToUpdate
     }
 
+    private fun durationTillNowInMs(startTime: Instant): Long {
+        return dateProvider.getCurrentInstant().minus(startTime, DateTimeUnit.MILLISECOND)
+    }
+
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {
+        val startTime = dateProvider.getCurrentInstant()
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
-        return SequenceEntriesView
+        val result = SequenceEntriesView
             .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
@@ -654,12 +660,15 @@ class SubmissionDatabaseService(
             }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
+        log.info { "Getting latest versions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
     }
 
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
+        val startTime = dateProvider.getCurrentInstant()
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
-        return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+        val result = SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     (SequenceEntriesView.isRevocationColumn eq true) and
@@ -667,75 +676,86 @@ class SubmissionDatabaseService(
             }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
+        log.info { "Getting latest revocation versions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
     }
 
     // Make sure to keep in sync with streamReleasedSubmissions query
-    fun countReleasedSubmissions(organism: Organism): Long = SequenceEntriesView.select(
-        SequenceEntriesView.accessionColumn,
-    ).where {
-        SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-            organism,
-        )
-    }.count()
-
-    // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
-        DataUseTermsTable,
-        JoinType.LEFT,
-        additionalConstraint = {
-            (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                (DataUseTermsTable.isNewestDataUseTerms)
-        },
-    )
-        .select(
+    fun countReleasedSubmissions(organism: Organism): Long {
+        val startTime = dateProvider.getCurrentInstant()
+        val result = SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,
-            SequenceEntriesView.versionColumn,
-            SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.versionCommentColumn,
-            SequenceEntriesView.jointDataColumn,
-            SequenceEntriesView.submitterColumn,
-            SequenceEntriesView.groupIdColumn,
-            SequenceEntriesView.submittedAtTimestampColumn,
-            SequenceEntriesView.releasedAtTimestampColumn,
-            SequenceEntriesView.submissionIdColumn,
-            SequenceEntriesView.pipelineVersionColumn,
-            DataUseTermsTable.dataUseTermsTypeColumn,
-            DataUseTermsTable.restrictedUntilColumn,
-        )
-        .where {
+        ).where {
             SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
                 organism,
             )
-        }
-        .orderBy(
-            SequenceEntriesView.accessionColumn to SortOrder.ASC,
-            SequenceEntriesView.versionColumn to SortOrder.ASC,
+        }.count()
+        log.info { "Counting released submissions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
+    }
+
+    // Make sure to keep in sync with countReleasedSubmissions query
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
+        log.info { "Streaming released submissions for $organism" }
+        return SequenceEntriesView.join(
+            DataUseTermsTable,
+            JoinType.LEFT,
+            additionalConstraint = {
+                (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                        (DataUseTermsTable.isNewestDataUseTerms)
+            },
         )
-        .fetchSize(streamBatchSize)
-        .asSequence()
-        .map {
-            RawProcessedData(
-                accession = it[SequenceEntriesView.accessionColumn],
-                version = it[SequenceEntriesView.versionColumn],
-                isRevocation = it[SequenceEntriesView.isRevocationColumn],
-                submitter = it[SequenceEntriesView.submitterColumn],
-                groupId = it[SequenceEntriesView.groupIdColumn],
-                groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
-                submissionId = it[SequenceEntriesView.submissionIdColumn],
-                processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
-                    null -> emptyProcessedDataProvider.provide(organism)
-                    else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
-                },
-                pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn]!!,
-                submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
-                releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
-                dataUseTerms = DataUseTerms.fromParameters(
-                    DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
-                    it[DataUseTermsTable.restrictedUntilColumn],
-                ),
-                versionComment = it[SequenceEntriesView.versionCommentColumn],
+            .select(
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+                SequenceEntriesView.isRevocationColumn,
+                SequenceEntriesView.versionCommentColumn,
+                SequenceEntriesView.jointDataColumn,
+                SequenceEntriesView.submitterColumn,
+                SequenceEntriesView.groupIdColumn,
+                SequenceEntriesView.submittedAtTimestampColumn,
+                SequenceEntriesView.releasedAtTimestampColumn,
+                SequenceEntriesView.submissionIdColumn,
+                SequenceEntriesView.pipelineVersionColumn,
+                DataUseTermsTable.dataUseTermsTypeColumn,
+                DataUseTermsTable.restrictedUntilColumn,
             )
+            .where {
+                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                    organism,
+                )
+            }
+            .orderBy(
+                SequenceEntriesView.accessionColumn to SortOrder.ASC,
+                SequenceEntriesView.versionColumn to SortOrder.ASC,
+            )
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                RawProcessedData(
+                    accession = it[SequenceEntriesView.accessionColumn],
+                    version = it[SequenceEntriesView.versionColumn],
+                    isRevocation = it[SequenceEntriesView.isRevocationColumn],
+                    submitter = it[SequenceEntriesView.submitterColumn],
+                    groupId = it[SequenceEntriesView.groupIdColumn],
+                    groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
+                    submissionId = it[SequenceEntriesView.submissionIdColumn],
+                    processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
+                        null -> emptyProcessedDataProvider.provide(organism)
+                        else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
+                    },
+                    pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn]!!,
+                    submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
+                    releasedAtTimestamp = it[SequenceEntriesView.releasedAtTimestampColumn]!!,
+                    dataUseTerms = DataUseTerms.fromParameters(
+                        DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
+                        it[DataUseTermsTable.restrictedUntilColumn],
+                    ),
+                    versionComment = it[SequenceEntriesView.versionCommentColumn],
+                )
+            }
         }
+    }
 
     /**
      * Returns a paginated list of sequences matching the given filters.
