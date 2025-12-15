@@ -1,4 +1,5 @@
 import csv
+import dataclasses
 import json
 import logging
 import os
@@ -876,6 +877,12 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
 
             # Add aligned sequences to aligned_nucleotide_sequences
             # Modifies aligned_nucleotide_sequences in place
+            # For minimizer classification, append "-main" to segment name for backend submission
+            segment_output_name = (
+                f"{segment}-main"
+                if config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
+                else segment
+            )
             aligned_nucleotide_sequences = load_aligned_nuc_sequences(
                 result_dir_seg, name, aligned_nucleotide_sequences
             )
@@ -885,11 +892,15 @@ def enrich_with_nextclade(  # noqa: C901, PLR0914
             nextclade_metadata = parse_nextclade_json(
                 result_dir_seg, nextclade_metadata, name, unaligned_nucleotide_sequences
             )  # this includes the "annotation" field
+            # Pass segment_output_name to parse_nextclade_tsv by temporarily modifying sequence_and_dataset
+            sequence_and_dataset_copy = dataclasses.replace(
+                sequence_and_dataset, name=segment_output_name
+            )
             amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions,
                 nucleotide_insertions,
                 result_dir_seg,
-                sequence_and_dataset,
+                sequence_and_dataset_copy,
             )
 
     return {
