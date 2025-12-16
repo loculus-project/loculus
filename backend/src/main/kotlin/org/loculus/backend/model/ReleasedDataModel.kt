@@ -36,6 +36,7 @@ import org.loculus.backend.utils.Version
 import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -62,19 +63,18 @@ open class ReleasedDataModel(
     private val s3Service: S3Service,
     private val objectMapper: ObjectMapper,
 ) {
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
-        log.info { "Fetching released submissions from database for organism $organism" }
-
-        val latestVersions = submissionDatabaseService.getLatestVersions(organism)
-        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
-
         val earliestReleaseDateConfig = backendConfig.getInstanceConfig(organism).schema.earliestReleaseDate
         val finder = if (earliestReleaseDateConfig.enabled) {
             EarliestReleaseDateFinder(earliestReleaseDateConfig.externalFields)
         } else {
             null
         }
+
+        log.info { "Fetching released submissions from database for organism $organism" }
+        val latestVersions = submissionDatabaseService.getLatestVersions(organism)
+        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
         log.info { "Starting to stream released submissions for organism $organism" }
         return submissionDatabaseService.streamReleasedSubmissions(organism)

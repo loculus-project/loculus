@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -20,12 +21,15 @@ import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.extract
+import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
@@ -649,34 +653,28 @@ class SubmissionDatabaseService(
     private fun durationTillNowInMs(startTime: Instant): Long =
         dateProvider.getCurrentInstant().minus(startTime, DateTimeUnit.MILLISECOND)
 
+    private fun latestVersionQuery(organism: Organism): Query = SequenceEntriesTable
+        .select(SequenceEntriesTable.versionColumn)
+        .withDistinctOn(SequenceEntriesTable.accessionColumn)
+        .where {
+            SequenceEntriesTable.releasedAtTimestampColumn.isNotNull() and SequenceEntriesTable.organismIs(organism)
+        }
+        .orderBy(SequenceEntriesTable.versionColumn to SortOrder.DESC)
+
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {
         val startTime = dateProvider.getCurrentInstant()
-        val maxVersionExpression = SequenceEntriesTable.versionColumn.max()
-        val result = SequenceEntriesTable
-            .select(SequenceEntriesTable.accessionColumn, maxVersionExpression)
-            .where {
-                SequenceEntriesTable.releasedAtTimestampColumn.isNotNull() and SequenceEntriesTable.organismIs(
-                    organism,
-                )
-            }
-            .groupBy(SequenceEntriesTable.accessionColumn)
-            .associate { it[SequenceEntriesTable.accessionColumn] to it[maxVersionExpression]!! }
+        val result = latestVersionQuery(organism)
+            .associate { it[SequenceEntriesTable.accessionColumn] to it[SequenceEntriesTable.versionColumn] }
         log.info { "Getting latest versions for $organism took ${durationTillNowInMs(startTime)} ms" }
         return result
     }
 
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
         val startTime = dateProvider.getCurrentInstant()
-        val maxVersionExpression = SequenceEntriesTable.versionColumn.max()
-
-        val result = SequenceEntriesTable.select(SequenceEntriesTable.accessionColumn, maxVersionExpression)
-            .where {
-                SequenceEntriesTable.releasedAtTimestampColumn.isNotNull() and
-                    (SequenceEntriesTable.isRevocationColumn eq true) and
-                    SequenceEntriesTable.organismIs(organism)
-            }
-            .groupBy(SequenceEntriesTable.accessionColumn)
-            .associate { it[SequenceEntriesTable.accessionColumn] to it[maxVersionExpression]!! }
+        val result = latestVersionQuery(organism)
+            .andWhere { SequenceEntriesTable.isRevocationColumn eq true }
+            .orderBy(SequenceEntriesTable.versionColumn to SortOrder.DESC)
+            .associate { it[SequenceEntriesTable.accessionColumn] to it[versionColumn] }
         log.info { "Getting latest revocation versions for $organism took ${durationTillNowInMs(startTime)} ms" }
         return result
     }
@@ -684,9 +682,7 @@ class SubmissionDatabaseService(
     // Make sure to keep in sync with streamReleasedSubmissions query
     fun countReleasedSubmissions(organism: Organism): Long {
         val startTime = dateProvider.getCurrentInstant()
-        val result = SequenceEntriesTable.select(
-            SequenceEntriesTable.accessionColumn,
-        ).where {
+        val result = SequenceEntriesTable.selectAll().where {
             SequenceEntriesTable.releasedAtTimestampColumn.isNotNull() and SequenceEntriesTable.organismIs(
                 organism,
             )
@@ -695,41 +691,45 @@ class SubmissionDatabaseService(
         return result
     }
 
-    // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
-        val releasedFunction = ReleasedSubmissionsFunction(organism)
-        return releasedFunction.query()
-            .fetchSize(streamBatchSize)
-            .asSequence()
-            .map {
-                val storedValue = it[releasedFunction.jointMetadata]
-                val processedData = when (storedValue) {
-                    null -> emptyProcessedDataProvider.provide(organism)
-                    else -> processedDataPostprocessor.retrieveFromStoredValue(storedValue, organism)
-                }
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = ReleasedEntriesView
+        .selectAll()
+        .where {
+            (ReleasedEntriesView.organismColumn eq organism.name) and
+                (ReleasedEntriesView.pipelineVersionColumn eq getCurrentProcessingPipelineVersion(organism))
+        }
+        .orderBy(
+            ReleasedEntriesView.accessionColumn to SortOrder.ASC,
+            ReleasedEntriesView.versionColumn to SortOrder.ASC,
+        )
+        .fetchSize(streamBatchSize)
+        .asSequence()
+        .map {
+            RawProcessedData(
+                accession = it[ReleasedEntriesView.accessionColumn],
+                version = it[ReleasedEntriesView.versionColumn],
+                isRevocation = it[ReleasedEntriesView.isRevocationColumn],
+                versionComment = it[ReleasedEntriesView.versionCommentColumn],
+                submitter = it[ReleasedEntriesView.submitterColumn],
+                groupId = it[ReleasedEntriesView.groupIdColumn],
+                groupName = it[ReleasedEntriesView.groupNameColumn],
+                submittedAtTimestamp = it[ReleasedEntriesView.submittedAtTimestampColumn],
+                releasedAtTimestamp = it[ReleasedEntriesView.releasedAtTimestampColumn],
+                submissionId = it[ReleasedEntriesView.submissionIdColumn],
+                processedData = it[ReleasedEntriesView.processedDataWithExternalMetadataColumn]?.let {
+                    processedDataPostprocessor.retrieveFromStoredValue(
+                        it,
+                        organism,
+                    )
+                } ?: emptyProcessedDataProvider.provide(organism),
+                pipelineVersion = it[ReleasedEntriesView.pipelineVersionColumn],
+                dataUseTerms = DataUseTerms.fromParameters(
+                    DataUseTermsType.fromString(it[ReleasedEntriesView.dataUseTermsTypeColumn]),
+                    it[ReleasedEntriesView.restrictedUntilColumn],
+                ),
+            )
+        }
 
-                RawProcessedData(
-                    accession = it[releasedFunction.accession],
-                    version = it[releasedFunction.version],
-                    isRevocation = it[releasedFunction.isRevocation],
-                    versionComment = it[releasedFunction.versionComment],
-                    submitter = it[releasedFunction.submitter],
-                    groupId = it[releasedFunction.groupId],
-                    groupName = GroupEntity[it[releasedFunction.groupId]].groupName,
-                    submittedAtTimestamp = it[releasedFunction.submittedAt],
-                    releasedAtTimestamp = it[releasedFunction.releasedAt],
-                    submissionId = it[releasedFunction.submissionId],
-                    processedData = processedData,
-                    pipelineVersion = it[releasedFunction.pipelineVersion],
-                    dataUseTerms = DataUseTerms.fromParameters(
-                        DataUseTermsType.fromString(it[releasedFunction.dataUseTermsType]),
-                        it[releasedFunction.restrictedUntil],
-                    ),
-                )
-            }
-    }
-
-    /**
+/**
      * Returns a paginated list of sequences matching the given filters.
      * Also returns status counts and processing result counts.
      * Note that counts are totals: _not_ affected by pagination, status or processing result filter;
@@ -837,14 +837,11 @@ class SubmissionDatabaseService(
         return Status.entries.associateWith { statusCounts[it] ?: 0 }
     }
 
-    /**
+/**
      * How many processing results have errors, just warnings, or none?
      * Considers only SequenceEntries that are PROCESSED.
      */
-    private fun getProcessingResultCounts(
-        organism: Organism,
-        groupCondition: Op<Boolean>,
-    ): Map<ProcessingResult, Int> {
+    private fun getProcessingResultCounts(organism: Organism, groupCondition: Op<Boolean>): Map<ProcessingResult, Int> {
         val processingResultColumn = SequenceEntriesView.processingResultColumn
         val countColumn = Count(stringLiteral("*"))
 
@@ -1134,7 +1131,7 @@ class SubmissionDatabaseService(
         )
     }
 
-    /**
+/**
      * Returns AccessionVersions submitted by groups that the given user is part of
      * and that are approved for release.
      */
@@ -1281,7 +1278,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    /**
+/**
      * Delete all entries from the [SequenceEntriesPreprocessedDataTable] that belong to
      * the given organism and are older than the earliest preprocessing pipeline version to keep.
      */
@@ -1308,7 +1305,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    /**
+/**
      * Looks for new preprocessing pipeline version with [findNewPreprocessingPipelineVersion];
      * if a new version is found, the [CurrentProcessingPipelineTable] is updated accordingly.
      * If the [CurrentProcessingPipelineTable] is updated, the newly set version is returned.
