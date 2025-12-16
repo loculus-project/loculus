@@ -812,7 +812,7 @@ CREATE INDEX sequence_entries_organism_idx ON public.sequence_entries USING btre
 -- Name: sequence_entries_organism_not_revocation_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX sequence_entries_organism_not_revocation_idx ON public.sequence_entries USING btree (organism, accession, version) WHERE (NOT is_revocation);
+CREATE INDEX sequence_entries_organism_not_revocation_idx ON public.sequence_entries USING btree (organism) WHERE (NOT is_revocation);
 
 
 --
