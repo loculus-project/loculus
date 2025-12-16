@@ -5,6 +5,7 @@
 
 drop view if exists sequence_entries_view cascade;
 drop view if exists external_metadata_view cascade;
+drop view if exists all_external_metadata cascade;
 
 create view sequence_entries_view as
 select
