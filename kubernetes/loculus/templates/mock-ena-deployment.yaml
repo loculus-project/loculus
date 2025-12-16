@@ -67,6 +67,9 @@ kind: Service
 metadata:
   name: mock-ena-service
 spec:
+  {{- if .Values.mockEnaClusterIP }}
+  clusterIP: {{ .Values.mockEnaClusterIP }}
+  {{- end }}
   selector:
     app: loculus
     component: mock-ena

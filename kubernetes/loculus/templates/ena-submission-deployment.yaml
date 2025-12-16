@@ -22,6 +22,13 @@ spec:
         component: loculus-ena-submission
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- if and .Values.enableMockEna .Values.mockEnaClusterIP }}
+      hostAliases:
+        - ip: {{ .Values.mockEnaClusterIP | quote }}
+          hostnames:
+            - "wwwdev.ebi.ac.uk"
+            - "www.ebi.ac.uk"
+      {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
         - name: wait-for-mock-ena
@@ -122,7 +129,8 @@ spec:
                   key: password
             {{- if .Values.enableMockEna }}
             - name: MOCK_ENA_URL
-              value: "https://mock-ena-service"
+              # Use the real hostname so both Python code and webin-cli use the same resolution via hostAliases
+              value: "https://wwwdev.ebi.ac.uk"
             - name: MOCK_ENA_CA_CERT
               value: "/mock-ena-certs/ca.crt"
             - name: REQUESTS_CA_BUNDLE
@@ -135,26 +143,21 @@ spec:
             - sh
             - -c
             - |
-              # Setup mock ENA environment
-              if [ -n "$MOCK_ENA_URL" ]; then
+              # Setup mock ENA environment for webin-cli
+              if [ -n "$MOCK_ENA_CA_CERT" ] && [ -f "$MOCK_ENA_CA_CERT" ]; then
                 echo "Setting up mock ENA environment..."
-                MOCK_HOST=$(echo "$MOCK_ENA_URL" | sed -E 's|https?://([^:/]+).*|\1|')
-                MOCK_IP=$(getent hosts "$MOCK_HOST" | awk '{ print $1 }' | head -1)
-                if [ -n "$MOCK_IP" ]; then
-                  echo "$MOCK_IP wwwdev.ebi.ac.uk" >> /etc/hosts
-                  echo "$MOCK_IP www.ebi.ac.uk" >> /etc/hosts
-                  echo "Added hosts entries for $MOCK_IP"
+                # hostAliases handles /etc/hosts, just need to import CA cert to Java truststore
+                JAVA_CACERTS=$(find /usr -name "cacerts" -type f 2>/dev/null | head -1)
+                if [ -n "$JAVA_CACERTS" ]; then
+                  keytool -import -trustcacerts -keystore "$JAVA_CACERTS" \
+                    -storepass changeit -noprompt -alias mock-ena-ca \
+                    -file "$MOCK_ENA_CA_CERT" 2>/dev/null || true
+                  echo "Imported CA cert to Java truststore: $JAVA_CACERTS"
+                else
+                  echo "WARNING: Could not find Java cacerts file"
                 fi
-                # Import CA cert to Java truststore for webin-cli
-                if [ -n "$MOCK_ENA_CA_CERT" ] && [ -f "$MOCK_ENA_CA_CERT" ]; then
-                  JAVA_CACERTS=$(find /usr -name "cacerts" -type f 2>/dev/null | head -1)
-                  if [ -n "$JAVA_CACERTS" ]; then
-                    keytool -import -trustcacerts -keystore "$JAVA_CACERTS" \
-                      -storepass changeit -noprompt -alias mock-ena-ca \
-                      -file "$MOCK_ENA_CA_CERT" 2>/dev/null || true
-                    echo "Imported CA cert to Java truststore"
-                  fi
-                fi
+                echo "Mock ENA setup complete. Hosts file entries:"
+                grep -E "(wwwdev|www)\.ebi\.ac\.uk" /etc/hosts || echo "(no entries found)"
               fi
               # Run the main command
               exec ena_deposition --config-file=/config/config.yaml
