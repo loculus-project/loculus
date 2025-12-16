@@ -1,0 +1,75 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if .Values.enableMockEna }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-ena
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: mock-ena
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app: loculus
+        component: mock-ena
+    spec:
+      {{- include "possiblePriorityClassName" . | nindent 6 }}
+      containers:
+        - name: mock-ena
+          image: "ghcr.io/loculus-project/mock-ena:{{ $dockerTag }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: MOCK_ENA_DB_PATH
+              value: "/data/mock-ena.db"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-ena-service
+spec:
+  selector:
+    app: loculus
+    component: mock-ena
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+{{- end }}

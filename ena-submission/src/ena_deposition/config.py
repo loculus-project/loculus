@@ -79,7 +79,29 @@ class Config:
 
 
 def secure_ena_connection(config: Config):
-    """Modify passed-in config object"""
+    """Modify passed-in config object.
+
+    If MOCK_ENA_URL environment variable is set, uses the mock ENA service
+    instead of the real ENA endpoints. This is used for integration testing.
+    """
+    # Check for mock ENA URL override
+    mock_ena_url = os.getenv("MOCK_ENA_URL")
+    if mock_ena_url:
+        logger.info(f"Using mock ENA service at: {mock_ena_url}")
+        config.test = True
+        config.ena_submission_url = f"{mock_ena_url}/ena/submit/drop-box/submit"
+        config.ena_reports_service_url = f"{mock_ena_url}/ena/submit/report"
+        # For mock mode, use local test URLs for approved/suppressed lists
+        config.approved_list_url = (
+            config.approved_list_test_url
+            or "https://pathoplexus.github.io/ena-submission/test/approved_ena_submission_list.json"
+        )
+        config.suppressed_list_url = (
+            config.suppressed_list_test_url
+            or "https://pathoplexus.github.io/ena-submission/test/ppx-accessions-suppression-list.txt"
+        )
+        return
+
     submit_to_ena_prod = config.submit_to_ena_prod
     if submit_to_ena_prod and (config.backend_url not in config.allowed_submission_hosts):
         logger.warning("WARNING: backend_url not in allowed_hosts")

@@ -1364,6 +1364,12 @@
       "default": false,
       "description": "If true, disables ENA (European Nucleotide Archive) submission service."
     },
+    "enableMockEna": {
+      "groups": ["services"],
+      "type": "boolean",
+      "default": false,
+      "description": "If true, deploys a mock ENA service for testing and redirects ENA submission traffic to it."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",

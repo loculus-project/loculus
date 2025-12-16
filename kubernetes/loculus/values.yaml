@@ -19,6 +19,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 disableEnaSubmission: true
+enableMockEna: false
 website:
   websiteConfig:
     enableLoginNavigationItem: true
