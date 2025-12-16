@@ -127,6 +127,7 @@ class DownloadManager:
             RecordCountMismatch: Record count doesn't match header
             RuntimeError: Other download or validation errors
         """
+        logger.info(f"Starting download from backend with ETag: {last_etag}")
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
         data_path = download_dir / DATA_FILENAME
