@@ -40,97 +40,6 @@ $$;
 ALTER FUNCTION public.create_update_trigger_for_table(table_name text) OWNER TO postgres;
 
 --
--- Name: get_released_submissions(text); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.get_released_submissions(p_organism text) RETURNS TABLE(accession text, version bigint, is_revocation boolean, version_comment text, joint_metadata jsonb, submitter text, group_id integer, submitted_at timestamp without time zone, released_at timestamp without time zone, submission_id text, pipeline_version bigint, data_use_terms_type text, restricted_until date)
-    LANGUAGE sql STABLE
-    AS $$
-WITH
--- First identify the released entries for this organism
-released_entries AS (
-    SELECT se.accession, se.version
-    FROM sequence_entries se
-    WHERE se.released_at IS NOT NULL
-      AND se.organism = p_organism
-),
--- Pre-aggregate external metadata ONLY for the entries we need
-aem AS (
-    SELECT
-        em.accession,
-        em.version,
-        jsonb_merge_agg(em.external_metadata) AS external_metadata
-    FROM external_metadata em
-    WHERE EXISTS (
-        SELECT 1 FROM released_entries re
-        WHERE re.accession = em.accession AND re.version = em.version
-    )
-    GROUP BY em.accession, em.version
-),
--- Pre-compute newest data use terms ONLY for the entries we need
-newest_dut AS (
-    SELECT DISTINCT ON (dut.accession)
-        dut.accession,
-        dut.data_use_terms_type,
-        dut.restricted_until
-    FROM data_use_terms_table dut
-    WHERE EXISTS (
-        SELECT 1 FROM released_entries re
-        WHERE re.accession = dut.accession
-    )
-    ORDER BY dut.accession, dut.change_date DESC
-)
-SELECT
-    se.accession,
-    se.version,
-    se.is_revocation,
-    se.version_comment,
-    -- Build joint_metadata: processed_data merged with external metadata
-    sepd.processed_data ||
-    CASE
-        WHEN aem.external_metadata IS NULL
-        THEN jsonb_build_object('metadata', sepd.processed_data -> 'metadata')
-        ELSE jsonb_build_object('metadata', (sepd.processed_data -> 'metadata') || aem.external_metadata)
-    END AS joint_metadata,
-    se.submitter,
-    se.group_id,
-    se.submitted_at,
-    se.released_at,
-    se.submission_id,
-    COALESCE(sepd.pipeline_version, cpp.version) AS pipeline_version,
-    dut.data_use_terms_type,
-    dut.restricted_until
-FROM sequence_entries se
-JOIN current_processing_pipeline cpp
-    ON cpp.organism = se.organism
-LEFT JOIN sequence_entries_preprocessed_data sepd
-    ON se.accession = sepd.accession
-    AND se.version = sepd.version
-    AND sepd.pipeline_version = cpp.version
-LEFT JOIN aem
-    ON aem.accession = se.accession
-    AND aem.version = se.version
-LEFT JOIN newest_dut dut
-    ON dut.accession = se.accession
-WHERE se.released_at IS NOT NULL
-  AND se.organism = p_organism
-ORDER BY se.accession, se.version;
-$$;
-
-
-ALTER FUNCTION public.get_released_submissions(p_organism text) OWNER TO postgres;
-
---
--- Name: FUNCTION get_released_submissions(p_organism text); Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON FUNCTION public.get_released_submissions(p_organism text) IS 'Optimized function for streaming released submissions.
-Uses CTEs to pre-filter and aggregate external metadata and data use terms only for
-entries matching the given organism. ~80x faster than sequence_entries_view approach.
-Expected runtime: ~2-3s per organism vs ~200s with the view.';
-
-
---
 -- Name: jsonb_concat(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -475,6 +384,49 @@ CREATE TABLE public.metadata_upload_aux_table (
 
 
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
+
+--
+-- Name: released_entries_view; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.released_entries_view AS
+ SELECT se.accession,
+    se.version,
+    se.submission_id,
+    se.submitter,
+    se.approver,
+    se.group_id,
+    se.submitted_at,
+    se.released_at,
+    se.is_revocation,
+    se.version_comment,
+    se.organism,
+    cpp.version AS pipeline_version,
+        CASE
+            WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
+            ELSE (sepd.processed_data || jsonb_build_object('metadata', ((sepd.processed_data -> 'metadata'::text) || aem.external_metadata)))
+        END AS processed_data_with_external_metadata,
+    newest_dut.data_use_terms_type,
+    newest_dut.restricted_until,
+    gt.group_name
+   FROM (((((public.sequence_entries se
+     JOIN public.current_processing_pipeline cpp ON ((cpp.organism = se.organism)))
+     LEFT JOIN public.sequence_entries_preprocessed_data sepd ON (((se.accession = sepd.accession) AND (se.version = sepd.version) AND (sepd.pipeline_version = cpp.version))))
+     JOIN ( SELECT DISTINCT ON (dut.accession) dut.accession,
+            dut.data_use_terms_type,
+            dut.restricted_until
+           FROM public.data_use_terms_table dut
+          ORDER BY dut.accession, dut.change_date DESC) newest_dut ON ((newest_dut.accession = se.accession)))
+     LEFT JOIN ( SELECT em.accession,
+            em.version,
+            public.jsonb_merge_agg(em.external_metadata) AS external_metadata
+           FROM public.external_metadata em
+          GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))))
+     JOIN public.groups_table gt ON ((se.group_id = gt.group_id)))
+  WHERE (se.released_at IS NOT NULL);
+
+
+ALTER VIEW public.released_entries_view OWNER TO postgres;
 
 --
 -- Name: seqset_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -879,10 +831,45 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 
 
 --
+-- Name: dut_acc_changedata_include_duttype_restricted_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX dut_acc_changedata_include_duttype_restricted_idx ON public.data_use_terms_table USING btree (accession, change_date DESC) INCLUDE (data_use_terms_type, restricted_until);
+
+
+--
+-- Name: external_metadata_accession_version_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX external_metadata_accession_version_idx ON public.external_metadata USING btree (accession, version);
+
+
+--
 -- Name: flyway_schema_history_s_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: se_released_organism_acc_version_desc_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX se_released_organism_acc_version_desc_idx ON public.sequence_entries USING btree (organism, accession, version DESC) WHERE (released_at IS NOT NULL);
+
+
+--
+-- Name: se_released_revoked_organism_acc_version_desc_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX se_released_revoked_organism_acc_version_desc_idx ON public.sequence_entries USING btree (organism, accession, version DESC) WHERE ((released_at IS NOT NULL) AND (is_revocation = true));
+
+
+--
+-- Name: sepd_pipeline_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_pipeline_idx ON public.sequence_entries_preprocessed_data USING btree (pipeline_version);
 
 
 --
