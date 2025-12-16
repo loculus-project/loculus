@@ -45,7 +45,15 @@ class ImporterRunner:
         prune_timestamped_directories(self.paths.output_dir)
 
         # Determine if hard refresh needed
-        hard_refresh = time.time() - self.last_hard_refresh >= self.config.hard_refresh_interval
+        time_since_last_hard_refresh = time.time() - self.last_hard_refresh
+        hard_refresh = time_since_last_hard_refresh >= self.config.hard_refresh_interval
+
+        if hard_refresh:
+            logger.info(
+                "Triggering hard refresh (%.0fs since last, interval=%ds)",
+                time_since_last_hard_refresh,
+                self.config.hard_refresh_interval,
+            )
 
         # Use special ETag for hard refresh to force re-download
         last_etag = SPECIAL_ETAG_NONE if hard_refresh else self.current_etag

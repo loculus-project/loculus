@@ -15,7 +15,14 @@ def configure_logging() -> None:
 
 def main() -> None:
     configure_logging()
+    logger = logging.getLogger(__name__)
     config = ImporterConfig.from_env()
+    logger.info(
+        "Starting silo-import with config: hard_refresh_interval=%ds, poll_interval=%ds, silo_run_timeout=%ds",
+        config.hard_refresh_interval,
+        config.poll_interval,
+        config.silo_run_timeout,
+    )
     paths = ImporterPaths.from_root(config.root_dir)
     run_forever(config, paths)
 
