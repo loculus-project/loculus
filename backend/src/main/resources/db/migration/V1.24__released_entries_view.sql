@@ -10,6 +10,8 @@ SELECT
     se.released_at,
     se.is_revocation,
     se.version_comment,
+    se.organism,
+    sepd.pipeline_version,
     CASE
         WHEN aem.external_metadata IS NULL THEN sepd.processed_data
         ELSE sepd.processed_data || jsonb_build_object(
@@ -18,7 +20,7 @@ SELECT
         )
     END AS processed_data_with_external_metadata,
     newest_dut.data_use_terms_type,
-    newest_dut.restricted_until
+    newest_dut.restricted_until,
     gt.group_name
 FROM
     public.sequence_entries se

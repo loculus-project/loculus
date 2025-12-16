@@ -654,12 +654,15 @@ class SubmissionDatabaseService(
         dateProvider.getCurrentInstant().minus(startTime, DateTimeUnit.MILLISECOND)
 
     private fun latestVersionQuery(organism: Organism): Query = SequenceEntriesTable
-        .select(SequenceEntriesTable.versionColumn)
+        .select(SequenceEntriesTable.accessionColumn, SequenceEntriesTable.versionColumn)
         .withDistinctOn(SequenceEntriesTable.accessionColumn)
         .where {
             SequenceEntriesTable.releasedAtTimestampColumn.isNotNull() and SequenceEntriesTable.organismIs(organism)
         }
-        .orderBy(SequenceEntriesTable.versionColumn to SortOrder.DESC)
+        .orderBy(
+            SequenceEntriesTable.accessionColumn to SortOrder.ASC,
+            SequenceEntriesTable.versionColumn to SortOrder.DESC,
+        )
 
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {
         val startTime = dateProvider.getCurrentInstant()
@@ -729,7 +732,7 @@ class SubmissionDatabaseService(
             )
         }
 
-/**
+    /**
      * Returns a paginated list of sequences matching the given filters.
      * Also returns status counts and processing result counts.
      * Note that counts are totals: _not_ affected by pagination, status or processing result filter;

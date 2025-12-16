@@ -39,7 +39,7 @@ object ReleasedEntriesView : Table(RELEASED_ENTRIES_VIEW_NAME) {
     val releasedAtTimestampColumn = datetime("released_at")
     val isRevocationColumn = bool("is_revocation").default(false)
     val versionCommentColumn = varchar("version_comment", 255).nullable()
-    val dataUseTermsTypeColumn = varchar("data_use_terms", 255)
+    val dataUseTermsTypeColumn = varchar("data_use_terms_type", 255)
     val restrictedUntilColumn = date("restricted_until").nullable()
     val organismColumn = varchar("organism", 255)
     val pipelineVersionColumn = long(name = "pipeline_version")
