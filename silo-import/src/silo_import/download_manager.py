@@ -6,10 +6,10 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from http.client import BAD_REQUEST
 from pathlib import Path
 
 import requests
-from fastapi import Header
 
 from .config import ImporterConfig
 from .constants import (
@@ -143,7 +143,7 @@ class DownloadManager:
                 300,
             )
 
-            if response.status_code >= 400:
+            if response.status_code >= BAD_REQUEST:
                 msg = (
                     f"Failed to download data: HTTP {response.status_code}."
                     f"Headers: {response.headers} Body: "
