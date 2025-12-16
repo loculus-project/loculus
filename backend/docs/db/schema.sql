@@ -795,10 +795,31 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: sequence_entries_organism_covering_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_covering_idx ON public.sequence_entries USING btree (organism) INCLUDE (accession);
+
+
+--
 -- Name: sequence_entries_organism_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX sequence_entries_organism_idx ON public.sequence_entries USING btree (organism);
+
+
+--
+-- Name: sequence_entries_organism_not_revocation_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_organism_not_revocation_idx ON public.sequence_entries USING btree (organism) WHERE (NOT is_revocation);
+
+
+--
+-- Name: sequence_entries_preprocessed_data_accession_version_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sequence_entries_preprocessed_data_accession_version_idx ON public.sequence_entries_preprocessed_data USING btree (accession, version);
 
 
 --
