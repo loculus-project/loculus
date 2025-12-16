@@ -147,7 +147,7 @@ spec:
               if [ -n "$MOCK_ENA_CA_CERT" ] && [ -f "$MOCK_ENA_CA_CERT" ]; then
                 echo "Setting up mock ENA environment..."
                 # hostAliases handles /etc/hosts, just need to import CA cert to Java truststore
-                JAVA_CACERTS=$(find /usr -name "cacerts" -type f 2>/dev/null | head -1)
+                JAVA_CACERTS=$(find /opt /usr -name "cacerts" -type f 2>/dev/null | head -1)
                 if [ -n "$JAVA_CACERTS" ]; then
                   keytool -import -trustcacerts -keystore "$JAVA_CACERTS" \
                     -storepass changeit -noprompt -alias mock-ena-ca \
