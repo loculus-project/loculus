@@ -1,0 +1,5 @@
+# Generated certificates - created at build/runtime
+*.crt
+*.key
+*.pem
+*.srl
