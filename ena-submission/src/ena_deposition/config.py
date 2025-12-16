@@ -76,6 +76,11 @@ class Config:
     log_level: str = "DEBUG"
     ena_checklist: str | None = None
     set_alias_suffix: str | None = None  # Add to test revisions in dev
+    # S3 configuration for uploading submission lists
+    s3_endpoint: str | None = None
+    s3_bucket: str | None = None
+    s3_access_key: str | None = None
+    s3_secret_key: str | None = None
 
 
 def secure_ena_connection(config: Config):
@@ -127,6 +132,18 @@ def get_config(config_file: str) -> Config:
         "ENA_PASSWORD", relevant_config["ena_submission_password"]
     )
     relevant_config["db_url"] = os.getenv("DB_URL", relevant_config["db_url"])
+
+    # S3 configuration from environment
+    relevant_config["s3_endpoint"] = os.getenv(
+        "S3_ENDPOINT", relevant_config.get("s3_endpoint")
+    )
+    relevant_config["s3_bucket"] = os.getenv("S3_BUCKET", relevant_config.get("s3_bucket"))
+    relevant_config["s3_access_key"] = os.getenv(
+        "S3_ACCESS_KEY", relevant_config.get("s3_access_key")
+    )
+    relevant_config["s3_secret_key"] = os.getenv(
+        "S3_SECRET_KEY", relevant_config.get("s3_secret_key")
+    )
 
     config = Config(**relevant_config)
     secure_ena_connection(config)

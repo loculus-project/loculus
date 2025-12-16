@@ -5,7 +5,9 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+import boto3
 import requests
+from botocore.exceptions import ClientError
 from slack_sdk import WebClient, web
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,77 @@ class SlackConfig:
     slack_token: str
     slack_channel_id: str
     last_notification_sent: datetime | None
+
+
+@dataclass
+class S3Config:
+    endpoint: str | None
+    bucket: str | None
+    access_key: str | None
+    secret_key: str | None
+
+
+def s3_conn_init(
+    endpoint: str | None = None,
+    bucket: str | None = None,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+) -> S3Config:
+    """Initialize S3 configuration from provided values or environment variables."""
+    return S3Config(
+        endpoint=os.getenv("S3_ENDPOINT", endpoint),
+        bucket=os.getenv("S3_BUCKET", bucket),
+        access_key=os.getenv("S3_ACCESS_KEY", access_key),
+        secret_key=os.getenv("S3_SECRET_KEY", secret_key),
+    )
+
+
+def upload_file_to_s3(
+    config: S3Config, file_path: str, s3_key: str | None = None
+) -> bool:
+    """
+    Upload a file to S3/MinIO bucket under ena-deposition directory.
+
+    Args:
+        config: S3 configuration with endpoint, bucket, and credentials
+        file_path: Path to local file to upload
+        s3_key: Optional S3 object key. If not provided, uses ena-deposition/{filename}
+
+    Returns:
+        True if upload successful, False otherwise
+    """
+    if not config.endpoint or not config.bucket:
+        logger.info("S3 not configured (missing endpoint or bucket), skipping upload")
+        return False
+
+    if not config.access_key or not config.secret_key:
+        logger.warning("S3 credentials not configured, skipping upload")
+        return False
+
+    try:
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=config.endpoint,
+            aws_access_key_id=config.access_key,
+            aws_secret_access_key=config.secret_key,
+        )
+
+        # Use ena-deposition directory prefix
+        if s3_key is None:
+            filename = os.path.basename(file_path)
+            s3_key = f"ena-deposition/{filename}"
+
+        logger.info(f"Uploading {file_path} to s3://{config.bucket}/{s3_key}")
+        s3_client.upload_file(file_path, config.bucket, s3_key)
+        logger.info(f"Successfully uploaded to s3://{config.bucket}/{s3_key}")
+        return True
+
+    except ClientError as e:
+        logger.error(f"Failed to upload file to S3: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error uploading to S3: {e}")
+        return False
 
 
 def slack_conn_init(

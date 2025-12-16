@@ -19,6 +19,15 @@ data:
               "s3:ExistingObjectTag/public": "true"
             }
           }
+        },
+        {
+          "Effect": "Allow",
+          "Action": ["s3:GetObject", "s3:ListBucket"],
+          "Resource": [
+            "arn:aws:s3:::{{ .Values.s3.bucket.bucket }}/ena-deposition/*",
+            "arn:aws:s3:::{{ .Values.s3.bucket.bucket }}"
+          ],
+          "Principal": "*"
         }
       ]
     }

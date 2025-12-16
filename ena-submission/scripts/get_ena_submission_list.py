@@ -10,9 +10,12 @@ import requests
 from ena_deposition.call_loculus import fetch_released_entries
 from ena_deposition.config import Config, get_config
 from ena_deposition.notifications import (
+    S3Config,
     SlackConfig,
     notify,
+    s3_conn_init,
     slack_conn_init,
+    upload_file_to_s3,
     upload_file_with_comment,
 )
 from ena_deposition.submission_db_helper import (
@@ -150,16 +153,26 @@ def filter_for_submission(
     )
 
 
-def send_slack_notification_with_file(
+def send_notification_with_file(
     slack_config: SlackConfig,
+    s3_config: S3Config,
     message: str,
     entries_to_submit: dict[AccessionVersion, dict[str, Any]],
-    output_file,
+    output_file: str,
 ) -> None:
+    """Write entries to file and upload to S3 and/or send to Slack."""
     len_entries = len(entries_to_submit)
     logger.info(f"Writing {len_entries} sequences to {output_file}")
     Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
 
+    # Upload to S3 if configured
+    if s3_config.endpoint and s3_config.bucket:
+        logger.info("Uploading file to S3")
+        s3_success = upload_file_to_s3(s3_config, output_file)
+        if not s3_success:
+            logger.warning("S3 upload failed, will rely on Slack notification")
+
+    # Send Slack notification with file
     logger.info("Sending slack notification with file")
     if not slack_config.slack_hook:
         logger.info("Could not find slack hook, cannot send message")
@@ -202,6 +215,12 @@ def get_ena_submission_list(config_file) -> None:
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
+    s3_config = s3_conn_init(
+        endpoint=config.s3_endpoint,
+        bucket=config.s3_bucket,
+        access_key=config.s3_access_key,
+        secret_key=config.s3_secret_key,
+    )
 
     all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
@@ -224,8 +243,8 @@ def get_ena_submission_list(config_file) -> None:
                 f"{len(submission_results.entries_to_submit)} sequences"
             )
             output_file = f"{organism}_{output_file_suffix}"
-            send_slack_notification_with_file(
-                slack_config, message, submission_results.entries_to_submit, output_file
+            send_notification_with_file(
+                slack_config, s3_config, message, submission_results.entries_to_submit, output_file
             )
         if submission_results.entries_with_ext_metadata_to_submit:
             message = (
@@ -238,8 +257,9 @@ def get_ena_submission_list(config_file) -> None:
                 " and biosamples."
             )
             output_file = f"{organism}_with_ena_fields_{output_file_suffix}"
-            send_slack_notification_with_file(
+            send_notification_with_file(
                 slack_config,
+                s3_config,
                 message,
                 submission_results.entries_with_ext_metadata_to_submit,
                 output_file,
@@ -251,8 +271,9 @@ def get_ena_submission_list(config_file) -> None:
                 " investigate if these need to be suppressed on ENA."
             )
             output_file = f"{organism}_revoked_{output_file_suffix}"
-            send_slack_notification_with_file(
+            send_notification_with_file(
                 slack_config,
+                s3_config,
                 message,
                 submission_results.revoked_entries,
                 output_file,
