@@ -18,7 +18,7 @@ disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
 disableIngest: false
-disableEnaSubmission: true
+disableEnaSubmission: false
 enableMockEna: false
 mockEnaClusterIP: ""  # Static ClusterIP for mock-ena service (e.g., "10.43.200.200" for k3d)
 website:
