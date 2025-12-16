@@ -1,6 +1,5 @@
 -- Add index on (accession, version) without pipeline_version for faster lookups
 -- This improves query performance on sequence_entries_view which joins on these columns
-DROP INDEX IF EXISTS sequence_entries_preprocessed_data_accession_version_idx;
 
 CREATE INDEX IF NOT EXISTS sequence_entries_preprocessed_data_accession_version_idx
 ON sequence_entries_preprocessed_data (accession, version);
@@ -12,10 +11,9 @@ ON sequence_entries_preprocessed_data (accession, version);
 --   ORDER BY accession LIMIT $2
 --
 -- The partial index enables Index Only Scan and eliminates runtime filtering
-DROP INDEX IF EXISTS sequence_entries_organism_not_revocation_idx;
 
 CREATE INDEX IF NOT EXISTS sequence_entries_organism_not_revocation_idx
-ON sequence_entries (organism, accession, version)
+ON sequence_entries (organism)
 WHERE NOT is_revocation;
 
 -- Covering index for DISTINCT organism query used in pipeline version checks
@@ -27,7 +25,5 @@ WHERE NOT is_revocation;
 -- it does 36k+ heap fetches scanning 170k rows to return just 4 organisms.
 
 -- Drop first in case a previous attempt left an invalid index
-DROP INDEX IF EXISTS sequence_entries_organism_covering_idx;
-
-CREATE INDEX sequence_entries_organism_covering_idx
+CREATE INDEX IF NOT EXISTS sequence_entries_organism_covering_idx
 ON sequence_entries (organism) INCLUDE (accession);
