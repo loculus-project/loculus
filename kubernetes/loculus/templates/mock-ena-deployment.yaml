@@ -25,7 +25,8 @@ spec:
       containers:
         - name: mock-ena
           image: "ghcr.io/loculus-project/mock-ena:{{ $dockerTag }}"
-          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          # Use IfNotPresent since mock-ena may be built locally for testing
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: 100m
