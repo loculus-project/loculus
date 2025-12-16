@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import requests
+from fastapi import Header
 
 from .config import ImporterConfig
 from .constants import (
@@ -142,6 +143,16 @@ class DownloadManager:
                 300,
             )
 
+            if response.status_code >= 400:
+                msg = (
+                    f"Failed to download data: HTTP {response.status_code}."
+                    f"Headers: {response.headers} Body: "
+                    + data_path.read_text(encoding="utf-8", errors="replace")
+                    if data_path.exists()
+                    else "missing"
+                )
+                raise RuntimeError(msg)
+
             # Check for 304 Not Modified
             if response.status_code == 304:  # noqa: PLR2004
                 logger.info("Backend returned 304 Not Modified; skipping import")
@@ -149,11 +160,7 @@ class DownloadManager:
                 raise NotModifiedError
 
             # Extract and validate ETag
-            etag_value = response.headers.get("etag")
-            if not etag_value:
-                safe_remove(download_dir)
-                msg = f"Response headers: {response.headers} did not contain an ETag header"
-                raise RuntimeError(msg)
+            etag_value = response.headers.get("etag", 0)
 
             # Parse expected record count from header
             expected_count = parse_int_header(response.headers.get("x-total-records"))
