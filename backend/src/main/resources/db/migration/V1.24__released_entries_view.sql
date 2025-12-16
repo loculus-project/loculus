@@ -11,7 +11,7 @@ SELECT
     se.is_revocation,
     se.version_comment,
     se.organism,
-    sepd.pipeline_version,
+    cpp.version AS pipeline_version,
     CASE
         WHEN aem.external_metadata IS NULL THEN sepd.processed_data
         ELSE sepd.processed_data || jsonb_build_object(
@@ -24,8 +24,12 @@ SELECT
     gt.group_name
 FROM
     public.sequence_entries se
-    INNER JOIN public.sequence_entries_preprocessed_data sepd ON se.accession = sepd.accession
-    AND se.version = sepd.version
+    JOIN public.current_processing_pipeline cpp
+        ON cpp.organism = se.organism
+    LEFT JOIN public.sequence_entries_preprocessed_data sepd
+        ON se.accession = sepd.accession
+        AND se.version = sepd.version
+        AND sepd.pipeline_version = cpp.version
     INNER JOIN (
         SELECT
             DISTINCT ON (dut.accession) dut.accession,
