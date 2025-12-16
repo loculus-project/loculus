@@ -19,6 +19,8 @@ type UseSearchPageStateParams = {
     filterSchema: MetadataFilterSchema;
 };
 
+type SegmentReferenceSelections = Record<string, string>;
+
 export function useSearchPageState({
     initialQueryDict,
     schema,
@@ -82,7 +84,7 @@ export function useSearchPageState({
                         delete newState[MUTATION_KEY];
                         filterSchema
                             .ungroupedMetadataFilters()
-                            .filter((metadataFilter) => metadataFilter.onlyForSuborganism !== undefined)
+                            .filter((metadataFilter) => metadataFilter.onlyForReference !== undefined)
                             .forEach((metadataFilter) => {
                                 delete newState[metadataFilter.name];
                             });
@@ -120,6 +122,20 @@ export function useSearchPageState({
         'nullable-string',
         (value) => value === null,
     );
+
+    // Compute selectedReferences from selectedSuborganism for backward compatibility
+    // In the new segment-first mode, all segments use the same reference
+    const selectedReferences: SegmentReferenceSelections = useMemo(() => {
+        if (selectedSuborganism === null) {
+            return {};
+        }
+        // TODO: This assumes all segments use the same reference
+        // In future, this could be enhanced to support per-segment selection
+        const refs: SegmentReferenceSelections = {};
+        // We don't have segment information here, so return empty object
+        // The actual segment references will be built in components that have schema access
+        return refs;
+    }, [selectedSuborganism]);
 
     const removeFilter = useCallback(
         (metadataFilterName: string) => {
@@ -218,6 +234,7 @@ export function useSearchPageState({
             setPreviewHalfScreen,
             selectedSuborganism,
             setSelectedSuborganism,
+            selectedReferences,
             page,
             setPage,
             setSomeFieldValues,
@@ -237,6 +254,7 @@ export function useSearchPageState({
             setPreviewHalfScreen,
             selectedSuborganism,
             setSelectedSuborganism,
+            selectedReferences,
             page,
             setPage,
             setSomeFieldValues,

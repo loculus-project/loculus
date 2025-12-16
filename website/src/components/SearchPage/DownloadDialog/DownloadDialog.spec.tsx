@@ -9,11 +9,7 @@ import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
 import { ACCESSION_VERSION_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../../settings.ts';
 import type { Metadata, Schema } from '../../../types/config.ts';
 import { versionStatuses } from '../../../types/lapis';
-import {
-    type ReferenceGenomesLightweightSchema,
-    type ReferenceAccession,
-    SINGLE_REFERENCE,
-} from '../../../types/referencesGenomes.ts';
+import { type ReferenceGenomesLightweightSchema, type ReferenceAccession } from '../../../types/referencesGenomes.ts';
 import { MetadataFilterSchema } from '../../../utils/search.ts';
 
 const defaultAccession: ReferenceAccession = {
@@ -22,23 +18,28 @@ const defaultAccession: ReferenceAccession = {
 };
 
 const defaultReferenceGenomesLightweightSchema: ReferenceGenomesLightweightSchema = {
-    [SINGLE_REFERENCE]: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
+    segments: {
+        main: {
+            references: ['ref1'],
+            insdcAccessions: { ref1: defaultAccession },
+            genesByReference: { ref1: ['gene1', 'gene2'] },
+        },
     },
 };
 
 const multiPathogenReferenceGenomeLightweightSchema: ReferenceGenomesLightweightSchema = {
-    suborganism1: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
-    },
-    suborganism2: {
-        nucleotideSegmentNames: ['main'],
-        geneNames: ['gene1', 'gene2'],
-        insdcAccessionFull: [defaultAccession],
+    segments: {
+        main: {
+            references: ['suborganism1', 'suborganism2'],
+            insdcAccessions: {
+                suborganism1: defaultAccession,
+                suborganism2: defaultAccession,
+            },
+            genesByReference: {
+                suborganism1: ['gene1', 'gene2'],
+                suborganism2: ['gene1', 'gene2'],
+            },
+        },
     },
 };
 
@@ -109,7 +110,7 @@ async function renderDialog({
             dataUseTermsEnabled={dataUseTermsEnabled}
             schema={schema}
             richFastaHeaderFields={richFastaHeaderFields}
-            selectedSuborganism={selectedSuborganism}
+            selectedReferenceName={selectedSuborganism}
             suborganismIdentifierField={suborganismIdentifierField}
         />,
     );
@@ -391,7 +392,7 @@ describe('DownloadDialog', () => {
                 suborganismIdentifierField: 'genotype',
             });
 
-            expect(screen.getByText('select a genotype', { exact: false })).toBeVisible();
+            expect(screen.getByText('select a reference', { exact: false })).toBeVisible();
             expect(screen.queryByLabelText(alignedNucleotideSequencesLabel)).not.toBeInTheDocument();
             expect(screen.queryByLabelText(alignedAminoAcidSequencesLabel)).not.toBeInTheDocument();
         });
@@ -465,14 +466,14 @@ describe('DownloadDialog', () => {
             expectRouteInPathMatches(path, `/sample/alignedAminoAcidSequences/suborganism1-gene2`);
         });
 
-        const metadataWithOnlyForSuborganism: Metadata[] = [
+        const metadataWithOnlyForReferenceName: Metadata[] = [
             {
                 name: 'field1',
                 displayName: 'Field 1',
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForSuborganism: 'suborganism1',
+                onlyForReferenceName: 'suborganism1',
             },
             {
                 name: 'field2',
@@ -480,7 +481,7 @@ describe('DownloadDialog', () => {
                 type: 'string',
                 header: 'Group 1',
                 includeInDownloadsByDefault: true,
-                onlyForSuborganism: 'suborganism2',
+                onlyForReferenceName: 'suborganism2',
             },
             {
                 name: ACCESSION_VERSION_FIELD,
@@ -489,12 +490,12 @@ describe('DownloadDialog', () => {
             },
         ];
 
-        test('should include "onlyForSuborganism" selected fields in download if no suborganism is selected', async () => {
+        test('should include "onlyForReferenceName" selected fields in download if no suborganism is selected', async () => {
             await renderDialog({
                 referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
                 selectedSuborganism: null,
                 suborganismIdentifierField: 'genotype',
-                metadata: metadataWithOnlyForSuborganism,
+                metadata: metadataWithOnlyForReferenceName,
             });
 
             await checkAgreement();
@@ -510,7 +511,7 @@ describe('DownloadDialog', () => {
                 referenceGenomesLightweightSchema: multiPathogenReferenceGenomeLightweightSchema,
                 selectedSuborganism: 'suborganism2',
                 suborganismIdentifierField: 'genotype',
-                metadata: metadataWithOnlyForSuborganism,
+                metadata: metadataWithOnlyForReferenceName,
             });
 
             await checkAgreement();

@@ -174,7 +174,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 1',
                     includeInDownloadsByDefault: true,
-                    onlyForSuborganism: 'suborganism1',
+                    onlyForReferenceName: 'suborganism1',
                 },
                 {
                     name: 'field3',
@@ -182,7 +182,7 @@ describe('FieldSelectorModal', () => {
                     type: 'string',
                     header: 'Group 2',
                     includeInDownloadsByDefault: true,
-                    onlyForSuborganism: 'suborganism2',
+                    onlyForReferenceName: 'suborganism2',
                 },
                 accessionVersionField,
             ]);
@@ -217,12 +217,12 @@ describe('FieldSelectorModal', () => {
                     new Map(
                         metadata.map((field) => [
                             field.name,
-                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForSuborganism),
+                            new MetadataVisibility(result.current[0].has(field.name), field.onlyForReferenceName),
                         ]),
                     )
                 }
                 onSelectedFieldsChange={result.current[1]}
-                selectedSuborganism={selectedSuborganism}
+                selectedReferenceName={selectedSuborganism}
             />
         );
 

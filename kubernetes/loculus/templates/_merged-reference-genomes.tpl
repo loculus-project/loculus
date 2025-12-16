@@ -1,60 +1,88 @@
 {{- define "loculus.mergeReferenceGenomes" -}}
-{{- $referenceGenomes := . -}}
+{{- $segmentFirstConfig := . -}}
 {{- $lapisNucleotideSequences := list -}}
 {{- $lapisGenes := list -}}
 
-{{- if len $referenceGenomes | eq 1 }}
-  {{- include "loculus.generateReferenceGenome" (first (values $referenceGenomes)) -}}
-{{- else }}
-  {{- range $suborganismName, $referenceGenomeRaw := $referenceGenomes -}}
-    {{- $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml -}}
+{{/* Handle empty reference genomes */}}
+{{- if or (not $segmentFirstConfig) (eq (len $segmentFirstConfig) 0) -}}
+{{- $result := dict "nucleotideSequences" (list) "genes" (list) -}}
+{{- $result | toYaml -}}
+{{- else -}}
 
-    {{- $nucleotideSequences := $referenceGenome.nucleotideSequences -}}
-    {{- if $nucleotideSequences -}}
-      {{- if eq (len $nucleotideSequences) 1 -}}
-        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-          "name" $suborganismName
-          "sequence" (first $nucleotideSequences).sequence)
-        -}}
-      {{- else -}}
-        {{- range $sequence := $nucleotideSequences -}}
-          {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-            "name" (printf "%s-%s" $suborganismName $sequence.name)
-            "sequence" $sequence.sequence
+{{/* Extract all unique reference names from the first segment */}}
+{{- $referenceNames := list -}}
+{{- $firstSegment := first (values $segmentFirstConfig) -}}
+{{- $referenceNames = keys $firstSegment -}}
+
+{{/* Check if this is single-reference mode (only one reference across all segments) */}}
+{{- if eq (len $referenceNames) 1 -}}
+  {{/* Single reference mode - no prefixing */}}
+  {{- $singleRef := first $referenceNames -}}
+
+  {{/* Process each segment */}}
+  {{- range $segmentName, $refMap := $segmentFirstConfig -}}
+    {{- $refData := index $refMap $singleRef -}}
+    {{- if $refData -}}
+      {{/* Add nucleotide sequence */}}
+      {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
+        "name" $segmentName
+        "sequence" $refData.sequence
+      ) -}}
+
+      {{/* Add genes if present */}}
+      {{- if $refData.genes -}}
+        {{- range $geneName, $geneData := $refData.genes -}}
+          {{- $lapisGenes = append $lapisGenes (dict
+            "name" $geneName
+            "sequence" $geneData.sequence
           ) -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
-
-    {{- if $referenceGenome.genes -}}
-      {{- range $gene := $referenceGenome.genes -}}
-        {{- $lapisGenes = append $lapisGenes (dict
-          "name" (printf "%s-%s" $suborganismName $gene.name)
-          "sequence" $gene.sequence)
-        -}}
-      {{- end -}}
-    {{- end -}}
   {{- end -}}
 
-  {{- $result := dict "nucleotideSequences" $lapisNucleotideSequences "genes" $lapisGenes -}}
-  {{- $result | toYaml -}}
+{{- else -}}
+{{/* Multi-reference mode - prefix with reference name */}}
+
+{{/* Process each reference */}}
+{{- range $refName := $referenceNames -}}
+    {{/* Process each segment */}}
+    {{- range $segmentName, $refMap := $segmentFirstConfig -}}
+      {{- $refData := index $refMap $refName -}}
+      {{- if $refData -}}
+        {{/* Add nucleotide sequence with reference prefix */}}
+        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
+          "name" (printf "%s-%s" $refName $segmentName)
+          "sequence" $refData.sequence
+        ) -}}
+
+        {{/* Add genes with reference prefix if present */}}
+        {{- if $refData.genes -}}
+          {{- range $geneName, $geneData := $refData.genes -}}
+            {{- $lapisGenes = append $lapisGenes (dict
+              "name" (printf "%s-%s" $refName $geneName)
+              "sequence" $geneData.sequence
+            ) -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
 {{- end -}}
 
+{{- end -}}
+
+{{- $result := dict "nucleotideSequences" $lapisNucleotideSequences "genes" $lapisGenes -}}
+{{- $result | toYaml -}}
+{{- end -}}
 {{- end -}}
 
 
 {{- define "loculus.extractUniqueRawNucleotideSequenceNames" -}}
-{{- $referenceGenomes := . -}}
-{{- $segmentNames := list -}}
+{{- $segmentFirstConfig := . -}}
 
-{{- range $suborganismName, $referenceGenomeRaw := $referenceGenomes -}}
-  {{- $referenceGenome := include "loculus.generateReferenceGenome" $referenceGenomeRaw | fromYaml -}}
-
-  {{- range $sequence := $referenceGenome.nucleotideSequences -}}
-    {{- $segmentNames = append $segmentNames $sequence.name -}}
-  {{- end -}}
-{{- end -}}
+{{/* Extract segment names directly from top-level keys */}}
+{{- $segmentNames := keys $segmentFirstConfig -}}
 
 segments:
-{{- $segmentNames | uniq | toYaml | nindent 2 -}}
+{{- $segmentNames | sortAlpha | toYaml | nindent 2 -}}
 {{- end -}}
