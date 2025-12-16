@@ -98,6 +98,7 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Locale
+import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
 
@@ -643,9 +644,13 @@ class SubmissionDatabaseService(
         return accessionVersionsToUpdate
     }
 
+    private fun durationTillNowInMs(startTime: Instant): Long =
+        dateProvider.getCurrentInstant().minus(startTime, DateTimeUnit.MILLISECOND)
+
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {
+        val startTime = dateProvider.getCurrentInstant()
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
-        return SequenceEntriesView
+        val result = SequenceEntriesView
             .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
@@ -654,12 +659,15 @@ class SubmissionDatabaseService(
             }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
+        log.info { "Getting latest versions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
     }
 
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
+        val startTime = dateProvider.getCurrentInstant()
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
-        return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+        val result = SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     (SequenceEntriesView.isRevocationColumn eq true) and
@@ -667,16 +675,23 @@ class SubmissionDatabaseService(
             }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
+        log.info { "Getting latest revocation versions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
     }
 
     // Make sure to keep in sync with streamReleasedSubmissions query
-    fun countReleasedSubmissions(organism: Organism): Long = SequenceEntriesView.select(
-        SequenceEntriesView.accessionColumn,
-    ).where {
-        SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-            organism,
-        )
-    }.count()
+    fun countReleasedSubmissions(organism: Organism): Long {
+        val startTime = dateProvider.getCurrentInstant()
+        val result = SequenceEntriesView.select(
+            SequenceEntriesView.accessionColumn,
+        ).where {
+            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                organism,
+            )
+        }.count()
+        log.info { "Counting released submissions for $organism took ${durationTillNowInMs(startTime)} ms" }
+        return result
+    }
 
     // Make sure to keep in sync with countReleasedSubmissions query
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
