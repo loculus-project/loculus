@@ -142,11 +142,13 @@ def get_metadata_of_group(
             if segment in segment_map
         ]
     )
-    segments_list_str = FASTA_IDS_SEPARATOR.join([
-                f"{joint_key}_{segment}"
-                for segment in config.nucleotide_sequences
-                if segment in segment_map
-            ])
+    segments_list_str = FASTA_IDS_SEPARATOR.join(
+        [
+            f"{joint_key}_{segment}"
+            for segment in config.nucleotide_sequences
+            if segment in segment_map
+        ]
+    )
     grouped_metadata["id"] = joint_key
     grouped_metadata["fastaIds"] = segments_list_str
 
