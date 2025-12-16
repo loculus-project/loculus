@@ -160,7 +160,7 @@ class DownloadManager:
                 raise NotModifiedError
 
             # Extract and validate ETag
-            etag_value = response.headers.get("etag", 0)
+            etag_value = response.headers.get("etag", "0")
 
             # Parse expected record count from header
             expected_count = parse_int_header(response.headers.get("x-total-records"))
