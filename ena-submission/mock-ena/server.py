@@ -5,7 +5,7 @@ import os
 import secrets
 import sqlite3
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -34,7 +34,7 @@ _counters: dict[str, int] = {
 }
 
 # SQLite database for state persistence (configurable via env var)
-DB_PATH = Path(os.environ.get("MOCK_ENA_DB_PATH", "/tmp/mock-ena.db"))
+DB_PATH = Path(os.environ.get("MOCK_ENA_DB_PATH", "/tmp/mock-ena.db"))  # noqa: S108
 
 
 def get_db():
@@ -142,14 +142,13 @@ async def submit_xml(
     if not submission_xml:
         return create_error_receipt("Missing SUBMISSION file")
 
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
 
     if project_xml:
         return handle_project_submission(project_xml, now)
-    elif sample_xml:
+    if sample_xml:
         return handle_sample_submission(sample_xml, now)
-    else:
-        return create_error_receipt("Missing PROJECT or SAMPLE file")
+    return create_error_receipt("Missing PROJECT or SAMPLE file")
 
 
 def handle_project_submission(project_xml: str, timestamp: str) -> Response:
@@ -178,7 +177,8 @@ def handle_project_submission(project_xml: str, timestamp: str) -> Response:
 
         # Store in database
         conn.execute(
-            "INSERT INTO projects (alias, accession, submission_accession, created_at) VALUES (?, ?, ?, ?)",
+            """INSERT INTO projects (alias, accession, submission_accession, created_at)
+               VALUES (?, ?, ?, ?)""",
             (alias, project_accession, submission_accession, timestamp),
         )
         conn.commit()
@@ -229,7 +229,9 @@ def handle_sample_submission(sample_xml: str, timestamp: str) -> Response:
 
         # Store in database
         conn.execute(
-            "INSERT INTO samples (alias, accession, biosample_accession, submission_accession, created_at) VALUES (?, ?, ?, ?, ?)",
+            """INSERT INTO samples
+               (alias, accession, biosample_accession, submission_accession, created_at)
+               VALUES (?, ?, ?, ?, ?)""",
             (alias, sample_accession, biosample_accession, submission_accession, timestamp),
         )
         conn.commit()
@@ -257,7 +259,7 @@ def handle_sample_submission(sample_xml: str, timestamp: str) -> Response:
 
 def create_error_receipt(error_message: str) -> Response:
     """Create an error receipt XML response."""
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
     receipt = f"""<?xml version="1.0" encoding="UTF-8"?>
 <RECEIPT receiptDate="{timestamp}" success="false">
     <MESSAGES>
@@ -269,7 +271,7 @@ def create_error_receipt(error_message: str) -> Response:
 
 @app.post("/ena/submit/webin/auth/token")
 async def auth_token(
-    username: Annotated[str, Depends(verify_credentials)],
+    _username: Annotated[str, Depends(verify_credentials)],
 ):
     """Authentication endpoint - returns a mock JWT token."""
     # Return a mock token
@@ -291,7 +293,7 @@ async def webin_v2_submit(
     logger.info(f"Received webin-v2 submission from user: {username}")
     logger.info(f"Body preview: {body[:500] if body else 'empty'}...")
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
 
     # Generate ERZ accession for assembly
     erz_accession = generate_accession("ERZ", "assembly")
@@ -321,14 +323,15 @@ async def webin_v2_submit(
     return {
         "accession": erz_accession,
         "status": "COMPLETED",
-        "message": f"The following analysis accession was assigned to the submission: {erz_accession}",
+        "message": f"The following analysis accession was assigned to the "
+        f"submission: {erz_accession}",
     }
 
 
 @app.get("/ena/submit/report/analysis-process/{erz_accession}")
 async def get_analysis_process(
     erz_accession: str,
-    username: Annotated[str, Depends(verify_credentials)],
+    _username: Annotated[str, Depends(verify_credentials)],
 ):
     """
     Get assembly processing status.
@@ -359,7 +362,9 @@ async def get_analysis_process(
                 "acc": acc_string,
                 "processingStatus": assembly["status"],
                 "processingStart": assembly["created_at"],
-                "processingEnd": assembly["created_at"] if assembly["status"] == "COMPLETED" else None,
+                "processingEnd": (
+                    assembly["created_at"] if assembly["status"] == "COMPLETED" else None
+                ),
                 "processingError": None,
             }
         }
@@ -411,4 +416,5 @@ async def reset_state():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8090)
+
+    uvicorn.run(app, host="0.0.0.0", port=8090)  # noqa: S104

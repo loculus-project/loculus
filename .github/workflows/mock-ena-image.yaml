@@ -1,0 +1,86 @@
+name: mock-ena-image
+on:
+  pull_request:
+    paths:
+      - "ena-submission/mock-ena/**"
+      - ".github/workflows/mock-ena-image.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "ena-submission/mock-ena/**"
+      - ".github/workflows/mock-ena-image.yaml"
+  workflow_dispatch:
+env:
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/mock-ena
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  sha: ${{ github.event.pull_request.head.sha || github.sha }}
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-mock-ena
+  cancel-in-progress: true
+jobs:
+  mock-ena-image:
+    name: Build mock-ena Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      checks: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Shorten sha
+        run: echo "sha=${sha::7}" >> $GITHUB_ENV
+      - name: Generate files hash
+        id: files-hash
+        run: |
+          DIR_HASH=$(echo -n ${{ hashFiles('ena-submission/mock-ena/**', '.github/workflows/mock-ena-image.yaml') }})
+          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+      - name: Setup Docker metadata
+        id: dockerMetadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.DIR_HASH }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=raw,value=commit-${{ env.sha }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check if image exists
+        id: check-image
+        run: |
+          EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} > /dev/null 2>&1 && echo "true" || echo "false")
+          echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push image if input files changed
+        if: env.CACHE_HIT == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ena-submission/mock-ena
+          push: true
+          tags: ${{ steps.dockerMetadata.outputs.tags }}
+          cache-from: type=gha,scope=mock-ena-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=mock-ena-${{ github.ref }}
+          platforms: linux/amd64
+      - name: Retag and push existing image if cache hit
+        if: env.CACHE_HIT == 'true'
+        run: |
+          TAGS=(${{ steps.dockerMetadata.outputs.tags }})
+          for TAG in "${TAGS[@]}"; do
+            docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
+          done
+      # Run smoke test to ensure the image is functional
+      - name: Run smoke test
+        run: |
+          docker run -d --name mock-ena-test -p 8080:80 ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
+          sleep 5
+          curl -s http://localhost:8080/ | grep -q "mock-ena"
+          docker stop mock-ena-test

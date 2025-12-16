@@ -23,6 +23,26 @@ spec:
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
+        {{- if .Values.enableMockEna }}
+        - name: wait-for-mock-ena
+          image: curlimages/curl:8.5.0
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for mock-ena-service to be ready..."
+              until curl -sf -k https://mock-ena-service/; do
+                echo "Mock ENA not ready yet, waiting..."
+                sleep 2
+              done
+              echo "Mock ENA is ready!"
+              # Fetch and save the CA certificate
+              echo | openssl s_client -connect mock-ena-service:443 -servername wwwdev.ebi.ac.uk 2>/dev/null | openssl x509 > /certs/ca.crt
+              echo "CA certificate saved"
+          volumeMounts:
+            - name: mock-ena-certs
+              mountPath: /certs
+        {{- end }}
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
           resources:
@@ -102,19 +122,44 @@ spec:
                   key: password
             {{- if .Values.enableMockEna }}
             - name: MOCK_ENA_URL
-              value: "http://mock-ena-service"
+              value: "https://mock-ena-service"
+            - name: MOCK_ENA_CA_CERT
+              value: "/mock-ena-certs/ca.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/mock-ena-certs/ca.crt"
+            - name: SSL_CERT_FILE
+              value: "/mock-ena-certs/ca.crt"
             {{- end }}
           args:
-            - ena_deposition 
+            {{- if .Values.enableMockEna }}
+            - sh
+            - -c
+            - |
+              # Setup mock ENA environment (hosts entries and CA cert)
+              scripts/setup-mock-ena.sh
+              # Run the main command
+              exec ena_deposition --config-file=/config/config.yaml
+            {{- else }}
+            - ena_deposition
             - "--config-file=/config/config.yaml"
+            {{- end }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
+            {{- if .Values.enableMockEna }}
+            - name: mock-ena-certs
+              mountPath: /mock-ena-certs
+              readOnly: true
+            {{- end }}
       volumes:
         - name: loculus-ena-submission-config-volume
           configMap:
             name: loculus-ena-submission-config
+        {{- if .Values.enableMockEna }}
+        - name: mock-ena-certs
+          emptyDir: {}
+        {{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
