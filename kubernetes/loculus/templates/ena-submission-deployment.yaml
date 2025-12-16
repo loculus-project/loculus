@@ -43,9 +43,15 @@ spec:
                 sleep 2
               done
               echo "Mock ENA is ready!"
-              # Fetch and save the CA certificate
-              echo | openssl s_client -connect mock-ena-service:443 -servername wwwdev.ebi.ac.uk 2>/dev/null | openssl x509 > /certs/ca.crt
-              echo "CA certificate saved"
+              # Fetch the CA certificate from the mock-ena /ca.crt endpoint
+              curl -sf -k https://mock-ena-service/ca.crt > /certs/ca.crt
+              # Verify we got a certificate
+              if grep -q "BEGIN CERTIFICATE" /certs/ca.crt; then
+                echo "CA certificate saved successfully ($(wc -l < /certs/ca.crt) lines)"
+              else
+                echo "ERROR: Failed to fetch CA certificate"
+                exit 1
+              fi
           volumeMounts:
             - name: mock-ena-certs
               mountPath: /certs

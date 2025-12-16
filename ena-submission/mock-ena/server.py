@@ -103,6 +103,18 @@ async def health():
     return {"status": "ok", "service": "mock-ena"}
 
 
+@app.get("/ca.crt")
+async def get_ca_cert():
+    """Serve the CA certificate for clients that need to trust this server."""
+    ca_cert_path = Path(__file__).parent / "certs" / "ca.crt"
+    if ca_cert_path.exists():
+        return PlainTextResponse(
+            content=ca_cert_path.read_text(),
+            media_type="application/x-pem-file",
+        )
+    raise HTTPException(status_code=404, detail="CA certificate not found")
+
+
 @app.post("/ena/submit/drop-box/submit")
 async def submit_xml(
     request: Request,

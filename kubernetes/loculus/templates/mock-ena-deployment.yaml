@@ -68,6 +68,7 @@ kind: Service
 metadata:
   name: mock-ena-service
 spec:
+  {{- template "loculus.serviceType" . }}
   {{- if .Values.mockEnaClusterIP }}
   clusterIP: {{ .Values.mockEnaClusterIP }}
   {{- end }}
@@ -77,5 +78,8 @@ spec:
   ports:
     - port: 443
       targetPort: 443
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30443
+      {{- end }}
       name: https
 {{- end }}
