@@ -25,7 +25,7 @@ spec:
       initContainers:
         {{- if .Values.enableMockEna }}
         - name: wait-for-mock-ena
-          image: curlimages/curl:8.5.0
+          image: nicolaka/netshoot:latest
           command:
             - sh
             - -c
@@ -135,8 +135,27 @@ spec:
             - sh
             - -c
             - |
-              # Setup mock ENA environment (hosts entries and CA cert)
-              scripts/setup-mock-ena.sh
+              # Setup mock ENA environment
+              if [ -n "$MOCK_ENA_URL" ]; then
+                echo "Setting up mock ENA environment..."
+                MOCK_HOST=$(echo "$MOCK_ENA_URL" | sed -E 's|https?://([^:/]+).*|\1|')
+                MOCK_IP=$(getent hosts "$MOCK_HOST" | awk '{ print $1 }' | head -1)
+                if [ -n "$MOCK_IP" ]; then
+                  echo "$MOCK_IP wwwdev.ebi.ac.uk" >> /etc/hosts
+                  echo "$MOCK_IP www.ebi.ac.uk" >> /etc/hosts
+                  echo "Added hosts entries for $MOCK_IP"
+                fi
+                # Import CA cert to Java truststore for webin-cli
+                if [ -n "$MOCK_ENA_CA_CERT" ] && [ -f "$MOCK_ENA_CA_CERT" ]; then
+                  JAVA_CACERTS=$(find /usr -name "cacerts" -type f 2>/dev/null | head -1)
+                  if [ -n "$JAVA_CACERTS" ]; then
+                    keytool -import -trustcacerts -keystore "$JAVA_CACERTS" \
+                      -storepass changeit -noprompt -alias mock-ena-ca \
+                      -file "$MOCK_ENA_CA_CERT" 2>/dev/null || true
+                    echo "Imported CA cert to Java truststore"
+                  fi
+                fi
+              fi
               # Run the main command
               exec ena_deposition --config-file=/config/config.yaml
             {{- else }}
