@@ -37,38 +37,34 @@ def transform_record(record: dict) -> dict:
     result = {}
 
     metadata = record.get("metadata", {})
-    if isinstance(metadata, dict):
-        result.update(metadata)
+    result.update(metadata)
 
     nucleotide_insertions = record.get("nucleotideInsertions", {})
     amino_acid_insertions = record.get("aminoAcidInsertions", {})
 
     # Process aligned nucleotide sequences
     aligned_nuc_seqs = record.get("alignedNucleotideSequences", {})
-    if isinstance(aligned_nuc_seqs, dict):
-        for segment_key, sequence_value in aligned_nuc_seqs.items():
-            if sequence_value is None:
-                result[segment_key] = None
-            else:
-                insertions = nucleotide_insertions.get(segment_key, [])
-                result[segment_key] = {"sequence": sequence_value, "insertions": insertions}
+    for segment_key, sequence_value in aligned_nuc_seqs.items():
+        if sequence_value is None:
+            result[segment_key] = None
+        else:
+            insertions = nucleotide_insertions.get(segment_key, [])
+            result[segment_key] = {"sequence": sequence_value, "insertions": insertions}
 
     # Process aligned amino acid sequences
     aligned_aa_seqs = record.get("alignedAminoAcidSequences", {})
-    if isinstance(aligned_aa_seqs, dict):
-        for gene_key, sequence_value in aligned_aa_seqs.items():
-            if sequence_value is None:
-                result[gene_key] = None
-            else:
-                insertions = amino_acid_insertions.get(gene_key, [])
-                result[gene_key] = {"sequence": sequence_value, "insertions": insertions}
+    for gene_key, sequence_value in aligned_aa_seqs.items():
+        if sequence_value is None:
+            result[gene_key] = None
+        else:
+            insertions = amino_acid_insertions.get(gene_key, [])
+            result[gene_key] = {"sequence": sequence_value, "insertions": insertions}
 
     # Process unaligned nucleotide sequences
     unaligned_nuc_seqs = record.get("unalignedNucleotideSequences", {})
-    if isinstance(unaligned_nuc_seqs, dict):
-        for segment_key, sequence_value in unaligned_nuc_seqs.items():
-            unaligned_key = f"unaligned_{segment_key}"
-            result[unaligned_key] = sequence_value
+    for segment_key, sequence_value in unaligned_nuc_seqs.items():
+        unaligned_key = f"unaligned_{segment_key}"
+        result[unaligned_key] = sequence_value
 
     return result
 
