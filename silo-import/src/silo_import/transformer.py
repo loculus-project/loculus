@@ -7,6 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 def transform_data_format(data_path, transformed_path):
+    """
+    See https://github.com/GenSpectrum/LAPIS-SILO/tree/main/tools/legacyNdjsonTransformer
+    for details on input and output format.
+    """
     data_path = Path(data_path)
     transformed_path = Path(transformed_path)
 
