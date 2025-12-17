@@ -20,6 +20,21 @@ import {
 const TEST_GROUP_ID = 1;
 
 /**
+ * Ensure a test group exists in the database for ENA submissions.
+ * The ENA submission pipeline needs valid group info to create projects.
+ */
+function ensureTestGroupExists(): void {
+    const insertCmd = `kubectl exec deploy/loculus-database -- psql -U postgres -d loculus -c "INSERT INTO groups_table (group_id, group_name, institution, address_line_1, address_line_2, address_city, address_postal_code, address_state, address_country, contact_email) VALUES (${TEST_GROUP_ID}, 'ENA Test Group', 'Test Institute', '123 Test Street', '', 'Test City', '12345', '', 'Germany', 'test@example.com') ON CONFLICT (group_id) DO NOTHING;" 2>/dev/null || true`;
+
+    try {
+        execSync(insertCmd, { timeout: 30000, encoding: 'utf-8' });
+        console.log('Test group ensured');
+    } catch {
+        console.log('Note: Test group creation skipped (may already exist or DB not accessible)');
+    }
+}
+
+/**
  * Reset the ENA submission database tables.
  */
 function resetEnaSubmissionDatabase(): void {
@@ -49,6 +64,9 @@ test.describe('ENA Deposition API', () => {
         } catch {
             // If reset fails, mock ENA might not be available
         }
+
+        // Ensure test group exists (needed for full flow tests)
+        ensureTestGroupExists();
 
         // Reset ENA submission database state
         resetEnaSubmissionDatabase();
@@ -170,12 +188,6 @@ test.describe('ENA Deposition API', () => {
     });
 
     test('Full API-driven submission flow: submit and wait for completion', async () => {
-        // This test requires a fully configured Loculus backend with groups table
-        // In minimal test environments, skip this test
-        test.skip(
-            true,
-            'This test requires a complete Loculus backend with groups. Run in full e2e environment.',
-        );
         test.setTimeout(600000); // 10 minutes for full flow
 
         const isApiHealthy = await checkEnaDepositionHealth();
@@ -202,7 +214,7 @@ test.describe('ENA Deposition API', () => {
                     groupId: TEST_GROUP_ID,
                     dataUseTerms: 'OPEN',
                     submissionId: `full_api_test_${timestamp}`,
-                    authors: 'Full API Test Author',
+                    authors: 'Test, Author',
                     authorAffiliations: 'Test Institute',
                     geoLocCountry: 'Germany',
                     sampleCollectionDate: '2024-01-15',
@@ -368,12 +380,6 @@ test.describe('ENA Deposition API', () => {
     });
 
     test('External metadata is populated after successful submission', async () => {
-        // This test requires a fully configured Loculus backend with groups table
-        // In minimal test environments, skip this test
-        test.skip(
-            true,
-            'This test requires a complete Loculus backend with groups. Run in full e2e environment.',
-        );
         test.setTimeout(600000); // 10 minutes for full flow
 
         const isApiHealthy = await checkEnaDepositionHealth();
@@ -399,7 +405,7 @@ test.describe('ENA Deposition API', () => {
                     groupId: TEST_GROUP_ID,
                     dataUseTerms: 'OPEN',
                     submissionId: `ext_meta_test_${timestamp}`,
-                    authors: 'External Metadata Test',
+                    authors: 'Metadata, Test',
                     authorAffiliations: 'Test Institute',
                     geoLocCountry: 'Germany',
                     sampleCollectionDate: '2024-01-15',
