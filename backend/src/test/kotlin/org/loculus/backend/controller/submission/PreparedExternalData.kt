@@ -1,8 +1,8 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.node.StringNode
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.utils.Accession
+import tools.jackson.databind.node.StringNode
 
 val defaultExternalMetadata =
     ExternalSubmittedData(

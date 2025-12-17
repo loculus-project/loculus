@@ -1,10 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.node.BooleanNode
-import tools.jackson.databind.node.DoubleNode
-import tools.jackson.databind.node.IntNode
-import tools.jackson.databind.node.NullNode
-import tools.jackson.databind.node.StringNode
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.GeneName
 import org.loculus.backend.api.GeneticSequence
@@ -18,6 +13,11 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.DoubleNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 
 const val MAIN_SEGMENT = "main"
 const val SOME_LONG_GENE = "someLongGene"

@@ -1,12 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.ObjectMapper
-import tools.jackson.databind.node.BooleanNode
-import tools.jackson.databind.node.IntNode
-import tools.jackson.databind.node.NullNode
-import tools.jackson.databind.node.StringNode
-import tools.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -83,6 +76,13 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
+import tools.jackson.module.kotlin.readValue
 import kotlin.time.Clock
 import kotlin.time.Instant
 

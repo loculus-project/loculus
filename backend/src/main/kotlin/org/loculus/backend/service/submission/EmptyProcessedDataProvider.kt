@@ -1,11 +1,11 @@
 package org.loculus.backend.service.submission
 
-import tools.jackson.databind.node.NullNode
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Component
+import tools.jackson.databind.node.NullNode
 
 @Component
 class EmptyProcessedDataProvider(private val backendConfig: BackendConfig) {

@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.files
 
-import tools.jackson.module.kotlin.jacksonObjectMapper
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
@@ -17,6 +16,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.*
 
 class FilesClient(private val mockMvc: MockMvc) {
@@ -103,7 +103,9 @@ fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
     .contentAsString
     .let {
         val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { FileIdAndWriteUrl(UUID.fromString(it.get("fileId").stringValue()), it.get("url").stringValue()) }
+        responseJson.map {
+            FileIdAndWriteUrl(UUID.fromString(it.get("fileId").stringValue()), it.get("url").stringValue())
+        }
     }
 
 fun ResultActions.andGetFileIdsAndMultipartUrls(): List<FileIdAndMultipartWriteUrl> = andReturn()

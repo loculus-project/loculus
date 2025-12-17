@@ -6,15 +6,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import tools.jackson.core.JsonGenerator
-import tools.jackson.databind.SerializationContext
-import tools.jackson.databind.annotation.JsonSerialize
-import tools.jackson.databind.ser.std.StdSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.utils.Accession
+import tools.jackson.core.JsonGenerator
+import tools.jackson.databind.SerializationContext
+import tools.jackson.databind.annotation.JsonSerialize
+import tools.jackson.databind.ser.std.StdSerializer
 
 data class DataUseTermsHistoryEntry(
     val accession: Accession,

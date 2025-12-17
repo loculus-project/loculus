@@ -1,7 +1,5 @@
 package org.loculus.backend.utils
 
-import tools.jackson.databind.node.NullNode
-import tools.jackson.databind.node.StringNode
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
@@ -11,6 +9,8 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.service.submission.RawProcessedData
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 
 class EarliestReleaseDateFinderTest {
 

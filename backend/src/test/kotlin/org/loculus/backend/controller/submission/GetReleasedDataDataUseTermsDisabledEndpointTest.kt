@@ -1,8 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.node.BooleanNode
-import tools.jackson.databind.node.IntNode
-import tools.jackson.databind.node.StringNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import kotlinx.datetime.toLocalDateTime
@@ -35,6 +32,9 @@ import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.StringNode
 import kotlin.time.Clock
 
 @EndpointTest(

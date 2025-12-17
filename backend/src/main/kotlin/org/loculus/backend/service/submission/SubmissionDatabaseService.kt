@@ -1,8 +1,5 @@
 package org.loculus.backend.service.submission
 
-import tools.jackson.core.JacksonException
-import tools.jackson.databind.ObjectMapper
-import tools.jackson.module.kotlin.readValue
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
@@ -94,6 +91,9 @@ import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader

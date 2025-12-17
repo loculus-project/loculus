@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.datauseterms
 
-import tools.jackson.databind.ObjectMapper
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.controller.jwtForDefaultUser
@@ -11,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import tools.jackson.databind.ObjectMapper
 
 val DEFAULT_DATA_USE_CHANGE_REQUEST = DataUseTermsChangeRequest(
     accessions = listOf("1", "2"),

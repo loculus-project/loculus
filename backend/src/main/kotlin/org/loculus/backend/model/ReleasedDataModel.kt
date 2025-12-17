@@ -1,11 +1,5 @@
 package org.loculus.backend.model
 
-import tools.jackson.databind.ObjectMapper
-import tools.jackson.databind.node.BooleanNode
-import tools.jackson.databind.node.IntNode
-import tools.jackson.databind.node.LongNode
-import tools.jackson.databind.node.NullNode
-import tools.jackson.databind.node.StringNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
@@ -37,6 +31,12 @@ import org.loculus.backend.utils.toTimestamp
 import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.LongNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -166,7 +166,8 @@ open class ReleasedDataModel(
                 rawProcessedData.isRevocation,
                 {
                     mapOf(
-                        "versionComment" to (rawProcessedData.versionComment?.let { StringNode(it) } ?: NullNode.instance),
+                        "versionComment" to
+                            (rawProcessedData.versionComment?.let { StringNode(it) } ?: NullNode.instance),
                     )
                 },
             ) +

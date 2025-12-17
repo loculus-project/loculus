@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.files
 
-import tools.jackson.databind.ObjectMapper
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
@@ -17,6 +16,7 @@ import org.loculus.backend.controller.jwtForAlternativeUser
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],

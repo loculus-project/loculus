@@ -2,11 +2,6 @@ package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
-import tools.jackson.core.JsonParser
-import tools.jackson.databind.DeserializationContext
-import tools.jackson.databind.ValueDeserializer
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
@@ -15,6 +10,11 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.annotation.JsonDeserialize
 
 data class Accessions(val accessions: List<Accession>)
 

@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItems
 import org.hamcrest.Matchers.`is`
@@ -33,6 +32,7 @@ import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.module.kotlin.readValue
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest

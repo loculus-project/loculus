@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.groupmanagement
 
-import tools.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup
@@ -16,6 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 
 const val NEW_GROUP_NAME = "newGroup"
 val NEW_GROUP = NewGroup(

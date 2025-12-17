@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import io.mockk.every
 import io.mockk.mockk
@@ -34,6 +33,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import tools.jackson.module.kotlin.readValue
 
 @EndpointTest
 class GetOriginalMetadataEndpointTest(

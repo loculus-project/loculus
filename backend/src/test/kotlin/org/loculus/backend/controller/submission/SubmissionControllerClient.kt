@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
@@ -30,6 +29,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(

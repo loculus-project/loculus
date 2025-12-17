@@ -1,7 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.node.NullNode
-import tools.jackson.module.kotlin.jacksonObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasKey
@@ -23,6 +21,8 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.databind.node.NullNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],

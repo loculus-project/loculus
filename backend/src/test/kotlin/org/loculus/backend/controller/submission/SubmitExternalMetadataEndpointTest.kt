@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import tools.jackson.databind.node.StringNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
@@ -20,6 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.node.StringNode
 
 @EndpointTest
 class SubmitExternalMetadataEndpointTest(

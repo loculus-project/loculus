@@ -1,7 +1,5 @@
 package org.loculus.backend.service
 
-import tools.jackson.databind.node.NullNode
-import tools.jackson.databind.node.StringNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasKey
 import org.hamcrest.Matchers.not
@@ -13,6 +11,8 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.ProcessedMetadataPostprocessor
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 
 @SpringBootTestWithoutDatabase
 class ProcessedMetadataPostprocessorTest(

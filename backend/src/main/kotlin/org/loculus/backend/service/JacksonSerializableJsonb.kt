@@ -1,11 +1,11 @@
 package org.loculus.backend.service
 
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.json.jsonb
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
 import tools.jackson.module.kotlin.readValue
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.json.jsonb
 
 val jacksonObjectMapper: ObjectMapper = JsonMapper.builder()
     .addModule(KotlinModule.Builder().build())
