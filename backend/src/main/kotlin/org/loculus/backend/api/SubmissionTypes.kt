@@ -2,11 +2,11 @@ package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
@@ -239,7 +239,7 @@ data class Insertion(
     override fun toString(): String = "$position:$sequence"
 }
 
-class InsertionDeserializer : JsonDeserializer<Insertion>() {
+class InsertionDeserializer : ValueDeserializer<Insertion>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion =
         Insertion.fromString(p.valueAsString)
 }

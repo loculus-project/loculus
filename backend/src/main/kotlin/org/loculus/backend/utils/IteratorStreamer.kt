@@ -1,6 +1,6 @@
 package org.loculus.backend.utils
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import java.io.OutputStream
 

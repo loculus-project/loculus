@@ -1,11 +1,11 @@
 package org.loculus.backend.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.LongNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileCategory
@@ -120,7 +120,7 @@ open class ReleasedDataModel(
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
         val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
-            TextNode(currentDataUseTerms.restrictedUntil.toString())
+            StringNode(currentDataUseTerms.restrictedUntil.toString())
         } else {
             NullNode.getInstance()
         }
@@ -138,26 +138,26 @@ open class ReleasedDataModel(
 
         val metadata = rawProcessedData.processedData.metadata +
             mapOf(
-                ("accession" to TextNode(rawProcessedData.accession)),
+                ("accession" to StringNode(rawProcessedData.accession)),
                 ("version" to LongNode(rawProcessedData.version)),
-                ("submissionId" to TextNode(rawProcessedData.submissionId)),
-                ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())),
+                ("submissionId" to StringNode(rawProcessedData.submissionId)),
+                ("accessionVersion" to StringNode(rawProcessedData.displayAccessionVersion())),
                 ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)),
-                ("submitter" to TextNode(rawProcessedData.submitter)),
+                ("submitter" to StringNode(rawProcessedData.submitter)),
                 ("groupId" to IntNode(rawProcessedData.groupId)),
-                ("groupName" to TextNode(rawProcessedData.groupName)),
-                ("submittedDate" to TextNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())),
+                ("groupName" to StringNode(rawProcessedData.groupName)),
+                ("submittedDate" to StringNode(rawProcessedData.submittedAtTimestamp.toUtcDateString())),
                 ("submittedAtTimestamp" to LongNode(rawProcessedData.submittedAtTimestamp.toTimestamp())),
                 ("releasedAtTimestamp" to LongNode(rawProcessedData.releasedAtTimestamp.toTimestamp())),
-                ("releasedDate" to TextNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
-                ("versionStatus" to TextNode(versionStatus.name)),
+                ("releasedDate" to StringNode(rawProcessedData.releasedAtTimestamp.toUtcDateString())),
+                ("versionStatus" to StringNode(versionStatus.name)),
                 ("pipelineVersion" to LongNode(rawProcessedData.pipelineVersion)),
             ) +
             conditionalMetadata(
                 backendConfig.dataUseTerms.enabled,
                 {
                     mapOf(
-                        "dataUseTerms" to TextNode(currentDataUseTerms.type.name),
+                        "dataUseTerms" to StringNode(currentDataUseTerms.type.name),
                         "dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil,
                     )
                 },
@@ -166,7 +166,7 @@ open class ReleasedDataModel(
                 rawProcessedData.isRevocation,
                 {
                     mapOf(
-                        "versionComment" to TextNode(rawProcessedData.versionComment),
+                        "versionComment" to StringNode(rawProcessedData.versionComment),
                     )
                 },
             ) +
@@ -174,7 +174,7 @@ open class ReleasedDataModel(
                 earliestReleaseDate != null,
                 {
                     mapOf(
-                        "earliestReleaseDate" to TextNode(earliestReleaseDate!!.toUtcDateString()),
+                        "earliestReleaseDate" to StringNode(earliestReleaseDate!!.toUtcDateString()),
                     )
                 },
             ) +
@@ -182,7 +182,7 @@ open class ReleasedDataModel(
                 dataUseTermsUrl != null,
                 {
                     mapOf(
-                        "dataUseTermsUrl" to TextNode(dataUseTermsUrl!!),
+                        "dataUseTermsUrl" to StringNode(dataUseTermsUrl!!),
                     )
                 },
             ) +
@@ -195,7 +195,7 @@ open class ReleasedDataModel(
                         rawProcessedData.processedData.files ?: emptyMap(),
                     )
                     filesFieldNames.associateWith { NullNode.instance } + filesWithUrls.mapValues { (_, value) ->
-                        TextNode(objectMapper.writeValueAsString(value))
+                        StringNode(objectMapper.writeValueAsString(value))
                     }
                 },
             )

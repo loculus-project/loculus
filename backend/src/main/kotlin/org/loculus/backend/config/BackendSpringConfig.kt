@@ -1,8 +1,9 @@
 package org.loculus.backend.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
@@ -197,9 +198,11 @@ internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<Stri
 }
 
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
-    val config = objectMapper
+    val mapper = (objectMapper as JsonMapper)
+        .rebuild()
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .readValue<BackendConfig>(File(configPath))
+        .build()
+    val config = mapper.readValue<BackendConfig>(File(configPath))
     logger.info { "Loaded backend config from $configPath" }
     logger.info { "Config: $config" }
     val validationErrors = validateEarliestReleaseDateFields(config)

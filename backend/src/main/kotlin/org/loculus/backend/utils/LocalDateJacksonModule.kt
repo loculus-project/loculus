@@ -1,12 +1,12 @@
 package org.loculus.backend.utils
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.module.SimpleModule
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.ValueSerializer
+import tools.jackson.databind.SerializationContext
+import tools.jackson.databind.module.SimpleModule
 import kotlinx.datetime.LocalDate
 import org.springframework.context.annotation.Configuration
 
@@ -18,12 +18,12 @@ class LocalDateJacksonModule : SimpleModule() {
     }
 }
 
-class LocalDateSerializer : JsonSerializer<LocalDate>() {
-    override fun serialize(value: LocalDate, gen: JsonGenerator, serializers: SerializerProvider) {
+class LocalDateSerializer : ValueSerializer<LocalDate>() {
+    override fun serialize(value: LocalDate, gen: JsonGenerator, ctxt: SerializationContext) {
         gen.writeString(value.toString())
     }
 }
 
-class LocalDateDeserializer : JsonDeserializer<LocalDate>() {
+class LocalDateDeserializer : ValueDeserializer<LocalDate>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDate = LocalDate.parse(p.text)
 }

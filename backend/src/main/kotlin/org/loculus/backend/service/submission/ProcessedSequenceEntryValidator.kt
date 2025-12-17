@@ -1,7 +1,7 @@
 package org.loculus.backend.service.submission
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.NullNode
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.NullNode
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap

@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
+    implementation "tools.jackson.module:jackson-module-kotlin"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "io.minio:minio:8.6.0"
     implementation "org.apache.commons:commons-csv:1.14.1"
@@ -57,7 +57,6 @@ dependencies {
     implementation "org.postgresql:postgresql"
     implementation "org.redundent:kotlin-xml-builder:1.9.3"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
-    implementation "org.springframework.boot:spring-boot-jackson2" // TODO(#5753): jackson 2 is deprecated
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.springframework.boot:spring-boot-starter-jdbc"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
