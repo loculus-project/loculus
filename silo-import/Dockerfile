@@ -30,7 +30,7 @@ COPY src /app/src
 
 RUN pip install --no-cache-dir --upgrade pip \
     && apt-get update \
-    && apt-get install -y curl \
+    && apt-get install -y curl zstd \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir .
 

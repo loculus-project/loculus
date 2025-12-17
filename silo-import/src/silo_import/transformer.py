@@ -8,7 +8,7 @@ def transform_data_format(data_path, transformed_path):
 
     cmd = (
         f"zstdcat {data_path} | "
-        f"../legacyNdjsonTransformer/target/release/legacy-ndjson-transformer | "
+        f"/usr/local/bin/legacy-ndjson-transformer | "
         f"zstd > {transformed_path}"
     )
 
