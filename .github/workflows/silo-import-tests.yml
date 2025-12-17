@@ -30,8 +30,9 @@ jobs:
         run: |
           REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
           COMMIT=0679453f5cbd20a813cd964e8600c40aad9165af
-          cargo install --git "$REPO" --rev "$COMMIT" --root "$HOME/.local"
-          sudo install -m 0755 "$HOME/.local/bin/legacy-ndjson-transformer" /usr/local/bin/legacy-ndjson-transformer
+          cargo install --git "$REPO" --rev "$COMMIT"
+      - name: Add cargo bin to PATH
+        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - name: Run tests
         run: |
           python -m pytest
