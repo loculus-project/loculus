@@ -40,6 +40,8 @@ function resetEnaSubmissionDatabase(): void {
  * These are pure API tests that don't require website authentication.
  */
 test.describe('ENA Deposition API', () => {
+    // Run tests serially to avoid race conditions with database resets
+    test.describe.configure({ mode: 'serial' });
     test.beforeEach(async () => {
         // Reset mock ENA state before each test
         try {
@@ -167,95 +169,87 @@ test.describe('ENA Deposition API', () => {
         console.log(`Submission detail retrieved: ${accession}`);
     });
 
-    test(
-        'Full API-driven submission flow: submit and wait for completion',
-        async () => {
-            // This test requires a fully configured Loculus backend with groups table
-            // In minimal test environments, skip this test
-            test.skip(
-                true,
-                'This test requires a complete Loculus backend with groups. Run in full e2e environment.',
-            );
-            test.setTimeout(600000); // 10 minutes for full flow
+    test('Full API-driven submission flow: submit and wait for completion', async () => {
+        // This test requires a fully configured Loculus backend with groups table
+        // In minimal test environments, skip this test
+        test.skip(
+            true,
+            'This test requires a complete Loculus backend with groups. Run in full e2e environment.',
+        );
+        test.setTimeout(600000); // 10 minutes for full flow
 
-            const isApiHealthy = await checkEnaDepositionHealth();
-            const isMockEnaHealthy = await checkMockEnaHealth();
+        const isApiHealthy = await checkEnaDepositionHealth();
+        const isMockEnaHealthy = await checkMockEnaHealth();
 
-            if (!isApiHealthy || !isMockEnaHealthy) {
-                test.skip(true, 'ENA Deposition API or Mock ENA is not available');
-                return;
-            }
+        if (!isApiHealthy || !isMockEnaHealthy) {
+            test.skip(true, 'ENA Deposition API or Mock ENA is not available');
+            return;
+        }
 
-            const timestamp = Date.now();
-            const accession = `LOC_FULL_API${timestamp}`;
+        const timestamp = Date.now();
+        const accession = `LOC_FULL_API${timestamp}`;
 
-            // Submit via the API
-            console.log('Submitting via API...');
-            const submitResponse = await submitToEna([
-                {
-                    accession,
-                    version: 1,
-                    organism: 'cchf',
-                    group_id: TEST_GROUP_ID,
-                    metadata: {
-                        accessionVersion: `${accession}.1`,
-                        groupId: TEST_GROUP_ID,
-                        dataUseTerms: 'OPEN',
-                        submissionId: `full_api_test_${timestamp}`,
-                        authors: 'Full API Test Author',
-                        authorAffiliations: 'Test Institute',
-                        geoLocCountry: 'Germany',
-                        sampleCollectionDate: '2024-01-15',
-                        hostNameScientific: 'Homo sapiens',
-                        hostTaxonId: '9606',
-                        specimenCollectorSampleId: `FULL-API-SAMPLE-${timestamp}`,
-                    },
-                    unaligned_nucleotide_sequences: {
-                        L: 'ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG',
-                        M: 'GCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTA',
-                        S: 'TACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACG',
-                    },
-                },
-            ]);
-
-            expect(submitResponse.submitted).toContain(`${accession}.1`);
-            console.log('Submission accepted');
-
-            // Wait for project creation in mock ENA
-            console.log('Waiting for project creation in mock ENA...');
-            const project = await waitForMockEnaProject(120000);
-            expect(project.accession).toMatch(/^PRJEB\d+$/);
-            console.log(`Project created: ${project.accession}`);
-
-            // Wait for sample creation
-            console.log('Waiting for sample creation in mock ENA...');
-            const samples = await waitForMockEnaSamples(1, 180000);
-            expect(samples.length).toBeGreaterThanOrEqual(1);
-            console.log(`Sample created: ${samples[0].accession}`);
-
-            // Wait for assembly submission
-            console.log('Waiting for assembly submission...');
-            const assemblies = await waitForMockEnaAssemblies(1, 240000);
-            expect(assemblies.length).toBeGreaterThanOrEqual(1);
-            expect(assemblies[0].erz_accession).toMatch(/^ERZ\d+$/);
-            console.log(`Assembly created: ${assemblies[0].erz_accession}`);
-
-            // Verify final submission status via API
-            console.log('Verifying final submission status...');
-            const finalDetail = await waitForSubmissionStatus(
+        // Submit via the API
+        console.log('Submitting via API...');
+        const submitResponse = await submitToEna([
+            {
                 accession,
-                1,
-                'SENT_TO_LOCULUS',
-                300000,
-            );
-            expect(finalDetail.status_all).toBe('SENT_TO_LOCULUS');
-            expect(finalDetail.project_status).toBe('SUBMITTED');
-            expect(finalDetail.sample_status).toBe('SUBMITTED');
-            expect(finalDetail.assembly_status).toBe('SUBMITTED');
+                version: 1,
+                organism: 'cchf',
+                group_id: TEST_GROUP_ID,
+                metadata: {
+                    accessionVersion: `${accession}.1`,
+                    groupId: TEST_GROUP_ID,
+                    dataUseTerms: 'OPEN',
+                    submissionId: `full_api_test_${timestamp}`,
+                    authors: 'Full API Test Author',
+                    authorAffiliations: 'Test Institute',
+                    geoLocCountry: 'Germany',
+                    sampleCollectionDate: '2024-01-15',
+                    hostNameScientific: 'Homo sapiens',
+                    hostTaxonId: '9606',
+                    specimenCollectorSampleId: `FULL-API-SAMPLE-${timestamp}`,
+                },
+                unaligned_nucleotide_sequences: {
+                    L: 'ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG',
+                    M: 'GCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTA',
+                    S: 'TACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACG',
+                },
+            },
+        ]);
 
-            console.log('Full API-driven flow completed successfully!');
-        },
-    );
+        expect(submitResponse.submitted).toContain(`${accession}.1`);
+        console.log('Submission accepted');
+
+        // Wait for project creation in mock ENA
+        console.log('Waiting for project creation in mock ENA...');
+        const project = await waitForMockEnaProject(120000);
+        expect(project.accession).toMatch(/^PRJEB\d+$/);
+        console.log(`Project created: ${project.accession}`);
+
+        // Wait for sample creation
+        console.log('Waiting for sample creation in mock ENA...');
+        const samples = await waitForMockEnaSamples(1, 180000);
+        expect(samples.length).toBeGreaterThanOrEqual(1);
+        console.log(`Sample created: ${samples[0].accession}`);
+
+        // Wait for assembly submission
+        console.log('Waiting for assembly submission...');
+        const assemblies = await waitForMockEnaAssemblies(1, 240000);
+        expect(assemblies.length).toBeGreaterThanOrEqual(1);
+        expect(assemblies[0].erz_accession).toMatch(/^ERZ\d+$/);
+        console.log(`Assembly created: ${assemblies[0].erz_accession}`);
+
+        // Verify final submission status via API
+        console.log('Verifying final submission status...');
+        const finalDetail = await waitForSubmissionStatus(accession, 1, 'SENT_TO_LOCULUS', 300000);
+        expect(finalDetail.status_all).toBe('SENT_TO_LOCULUS');
+        expect(finalDetail.project_status).toBe('SUBMITTED');
+        expect(finalDetail.sample_status).toBe('SUBMITTED');
+        expect(finalDetail.assembly_status).toBe('SUBMITTED');
+
+        console.log('Full API-driven flow completed successfully!');
+    });
 
     test('Filtering submissions by organism works', async () => {
         test.setTimeout(120000);
@@ -368,7 +362,9 @@ test.describe('ENA Deposition API', () => {
             expect(overlap.length).toBe(0);
         }
 
-        console.log(`Pagination test passed: page1=${page1.items.length}, page2=${page2.items.length}`);
+        console.log(
+            `Pagination test passed: page1=${page1.items.length}, page2=${page2.items.length}`,
+        );
     });
 
     test('External metadata is populated after successful submission', async () => {
