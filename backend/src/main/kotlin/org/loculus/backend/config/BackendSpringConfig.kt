@@ -58,7 +58,7 @@ private val logger = mu.KotlinLogging.logger {}
 @Configuration
 @EnableScheduling
 @ImportAutoConfiguration(
-    value = [ExposedAutoConfigurationCompat::class],
+    value = [ExposedAutoConfigurationCompat::class], // TODO(#5754) Revert shim once exposed supports spring boot 4
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 @ConfigurationPropertiesScan("org.loculus.backend")

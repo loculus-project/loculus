@@ -1,5 +1,4 @@
 // TODO(#5754) Remove shim once exposed supports spring boot 4
-// TODO(#5754) Remove shim once exposed supports spring boot 4
 package org.loculus.backend.config
 
 import org.jetbrains.exposed.spring.DatabaseInitializer
