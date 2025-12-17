@@ -56,7 +56,7 @@ class UseNewerProcessingPipelineVersionTaskTest(
         assertThat(submissionDatabaseService.getCurrentProcessingPipelineVersion(Organism(DEFAULT_ORGANISM)), `is`(3L))
 
         submissionControllerClient.extractUnprocessedData(numberOfSequenceEntries = 10, pipelineVersion = 2)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
     }
 
     @Suppress("ktlint:standard:max-line-length")

@@ -85,7 +85,7 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -114,7 +114,7 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -173,7 +173,7 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -199,7 +199,7 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -229,7 +229,7 @@ class SubmitEndpointFileSharingTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity())
+            .andExpect(status().isUnprocessableContent())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(

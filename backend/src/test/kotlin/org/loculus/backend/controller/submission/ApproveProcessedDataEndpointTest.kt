@@ -138,7 +138,7 @@ class ApproveProcessedDataEndpointTest(
                 AccessionVersion(nonExistentAccession, 1),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.detail", containsString("Accession versions $nonExistentAccession.1 do not exist")))
 
@@ -158,7 +158,7 @@ class ApproveProcessedDataEndpointTest(
                 nonExistingVersion,
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -188,7 +188,7 @@ class ApproveProcessedDataEndpointTest(
             scope = ALL,
             accessionVersionsInCorrectState + accessionVersionNotInCorrectState,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -219,7 +219,7 @@ class ApproveProcessedDataEndpointTest(
             defaultOrganismData.getAccessionVersions() + otherOrganismData.getAccessionVersions(),
             organism = OTHER_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("$.detail")
@@ -349,7 +349,7 @@ class ApproveProcessedDataEndpointTest(
             scope = WITHOUT_WARNINGS,
             accessionVersionsFilter = listOf(AccessionVersion(accessionOfDataWithErrors, 1)),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
 
         convenienceClient.getSequenceEntry(accession = accessionOfDataWithErrors, version = 1)
             .assertStatusIs(PROCESSED)

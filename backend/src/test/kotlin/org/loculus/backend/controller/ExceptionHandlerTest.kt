@@ -80,7 +80,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
@@ -91,7 +91,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))

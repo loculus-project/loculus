@@ -181,7 +181,7 @@ class ReviseEndpointTest(
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
-        ).andExpect(status().isUnprocessableEntity)
+        ).andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -206,7 +206,7 @@ class ReviseEndpointTest(
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
-        ).andExpect(status().isUnprocessableEntity)
+        ).andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -226,7 +226,7 @@ class ReviseEndpointTest(
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -263,7 +263,7 @@ class ReviseEndpointTest(
             DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -384,7 +384,7 @@ class ReviseEndpointTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -413,7 +413,7 @@ class ReviseEndpointTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -449,7 +449,7 @@ class ReviseEndpointTest(
                     ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -559,7 +559,7 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "contains no value for 'id'",
             ),
@@ -572,7 +572,7 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "The metadata file does not contain either header 'id' or 'submissionId'",
             ),
@@ -586,7 +586,7 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "Duplicate submission_id found in metadata file: sameHeader",
             ),
@@ -601,7 +601,7 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "Sequence file contains at least one duplicate submissionId",
             ),
@@ -623,7 +623,7 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "Sequence file contains 2 FASTA ids that are not present in the metadata file: 'notInMetadata', 'notInMetadata2'",
             ),
@@ -642,7 +642,7 @@ class ReviseEndpointTest(
                             AC
                     """.trimIndent(),
                 ),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
             ),
@@ -656,7 +656,7 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "The revised metadata file does not contain the header 'accession'",
             ),
@@ -670,7 +670,7 @@ class ReviseEndpointTest(
                     """.trimIndent(),
                 ),
                 SubmitFiles.sequenceFileWith(),
-                status().isUnprocessableEntity,
+                status().isUnprocessableContent,
                 "Unprocessable Entity",
                 "contains no value for 'accession'",
             ),

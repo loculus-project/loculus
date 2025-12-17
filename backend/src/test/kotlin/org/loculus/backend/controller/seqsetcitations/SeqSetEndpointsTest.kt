@@ -166,7 +166,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             .andExpect(status().isOk)
 
         client.deleteSeqSet(seqSetId, 1)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(

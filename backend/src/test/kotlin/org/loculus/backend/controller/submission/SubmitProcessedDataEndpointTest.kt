@@ -245,7 +245,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             invalidDataScenario.processedDataThatNeedsAValidAccession.copy(accession = accessions.first()),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
@@ -266,7 +266,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
             PreparedProcessedData.successfullyProcessed(accession = nonExistentAccession),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -292,7 +292,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = accessions.first())
                 .copy(version = nonExistentVersion),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -317,7 +317,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = accessionsInProcessing.first()),
             PreparedProcessedData.successfullyProcessed(accession = accessionsNotInProcessing.first()),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -364,7 +364,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(accession = accession),
             organism = DEFAULT_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -385,7 +385,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = defaultOrganismAccession),
             organism = DEFAULT_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath("\$.detail").value("Unknown fields in metadata: specialOtherField."),
             )
@@ -446,7 +446,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
     }
 
     @Test
@@ -467,7 +467,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.detail", containsString("not part of the configured output categories")))
     }
 
@@ -490,7 +490,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(jsonPath("$.detail", containsString("duplicate file names")))
     }
 
@@ -512,7 +512,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "$.detail",
@@ -545,7 +545,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(
                 jsonPath(
                     "$.detail",
