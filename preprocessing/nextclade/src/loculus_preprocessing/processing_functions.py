@@ -993,7 +993,7 @@ class ProcessingFunctions:
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
         # Allow ingested data to include fields not in options
-        elif args["submitter"] == "insdc_ingest_user":
+        elif args["is_insdc_ingest_group"]:
             return ProcessingResult(
                 datum=input_datum,
                 warnings=[
