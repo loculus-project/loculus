@@ -21,8 +21,8 @@ import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile

@@ -31,7 +31,7 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.testutil.TestEnvironment
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AliasFor

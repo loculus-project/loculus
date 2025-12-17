@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '4.0.0'
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
@@ -41,12 +41,14 @@ repositories {
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation "org.springframework.boot:spring-boot-jackson2" // Jackson 2 compatibility for Spring Boot 4.0
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
+    implementation "org.springframework.boot:spring-boot-starter-flyway" // Required explicitly in Spring Boot 4.0
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
     implementation platform("org.jetbrains.exposed:exposed-bom:0.61.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter"
@@ -72,6 +74,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
+    testImplementation "org.springframework.boot:spring-boot-test-autoconfigure"
+    testImplementation "org.springframework.boot:spring-boot-webmvc-test"
+    testImplementation platform("org.testcontainers:testcontainers-bom:1.20.4") // Match Spring Boot 4.0 managed version
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
     testImplementation "io.jsonwebtoken:jjwt-api"
     testImplementation "io.jsonwebtoken:jjwt-impl"
