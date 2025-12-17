@@ -3,7 +3,6 @@ from pathlib import Path
 
 
 def transform_data_format(data_path, transformed_path):
-
     data_path = Path(data_path)
     transformed_path = Path(transformed_path)
 
