@@ -11,7 +11,9 @@ from helpers import (
     MockHttpResponse,
     compress_ndjson,
     make_mock_download_func,
+    mock_records,
     mock_silo_prepro_success,
+    mock_transformed_records,
     read_ndjson_file,
 )
 from silo_import import lineage
@@ -36,21 +38,7 @@ def test_full_import_cycle_with_real_zstd_data(
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    # Create realistic multi-record dataset
-    records = [
-        {
-            "metadata": {"pipelineVersion": "1", "accession": "seq1"},
-            "unalignedNucleotideSequences": {"main": "ATCG"},
-        },
-        {
-            "metadata": {"pipelineVersion": "1", "accession": "seq2"},
-            "unalignedNucleotideSequences": {"main": "GCTA"},
-        },
-        {
-            "metadata": {"pipelineVersion": "1", "accession": "seq3"},
-            "unalignedNucleotideSequences": {"main": "TTAA"},
-        },
-    ]
+    records = mock_records()
     body = compress_ndjson(records)
 
     responses = [
@@ -84,13 +72,9 @@ def test_full_import_cycle_with_real_zstd_data(
     # Verify complete import
     assert paths.silo_input_data_path.exists(), "SILO input data should exist"
     output_records = read_ndjson_file(paths.silo_input_data_path)
-    # Expected transformed records
-    expected_records = [
-        {"pipelineVersion": "1", "accession": "seq1", "unaligned_main": "ATCG"},
-        {"pipelineVersion": "1", "accession": "seq2", "unaligned_main": "GCTA"},
-        {"pipelineVersion": "1", "accession": "seq3", "unaligned_main": "TTAA"},
-    ]
-    assert output_records == expected_records, "Output records should match transformed format"
+    assert output_records == mock_transformed_records(), (
+        "Output records should match transformed format"
+    )
 
     assert runner.current_etag == 'W/"abc123"', "ETag should be updated"
     assert runner.last_hard_refresh > 0, "Hard refresh timestamp should be set"
@@ -130,8 +114,8 @@ def test_multiple_runs_with_state_persistence(
     )
 
     # Run 1: Initial import
-    records_v1 = [{"metadata": {"pipelineVersion": "1"}, "data": "v1"}]
-    body_v1 = compress_ndjson(records_v1)
+    records_v1 = mock_records()[0]
+    body_v1 = compress_ndjson([records_v1])
 
     responses_r1 = [
         MockHttpResponse(
@@ -171,8 +155,8 @@ def test_multiple_runs_with_state_persistence(
     assert new_input_dirs[0] == first_dir, "Should keep previous input directory after 304"
 
     # Run 3: New data with different ETag
-    records_v2 = [{"metadata": {"pipelineVersion": "1", "data": "v2"}}]
-    body_v2 = compress_ndjson(records_v2)
+    records_v2 = mock_records()[1]
+    body_v2 = compress_ndjson([records_v2])
 
     responses_r3 = [
         MockHttpResponse(
@@ -194,8 +178,7 @@ def test_multiple_runs_with_state_persistence(
 
     # Verify latest data is correct
     output_records = read_ndjson_file(paths.silo_input_data_path)
-    transformed_records = [{"pipelineVersion": "1", "data": "v2"}]
-    assert output_records == transformed_records
+    assert output_records == [mock_transformed_records()[1]]
 
 
 def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -217,13 +200,13 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
         lambda url, path: path.write_text("lineage: data\n"),  # noqa: ARG005
     )
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
 
     # Run 1: Initial import
     responses_r1 = [
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "3"}, body=body
         )
     ]
     mock_download_r1, _ = make_mock_download_func(responses_r1)
@@ -245,7 +228,7 @@ def test_hard_refresh_forces_redownload(tmp_path: Path, monkeypatch: pytest.Monk
     # Server would normally return 304 with ETag, but hard refresh sends ETag="0"
     responses_r2 = [
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"initial"', "x-total-records": "3"}, body=body
         )
     ]
     mock_download_r2, responses_list_r2 = make_mock_download_func(responses_r2)
@@ -273,12 +256,12 @@ def test_error_recovery_cleans_up_properly(tmp_path: Path, monkeypatch: pytest.M
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
 
     responses = [
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"test"', "x-total-records": "3"}, body=body
         )
     ]
     mock_download, _ = make_mock_download_func(responses)
@@ -321,12 +304,12 @@ def test_lineage_download_failure_cleanup(tmp_path: Path, monkeypatch: pytest.Mo
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
+    records = mock_records()
     body = compress_ndjson(records)
 
     responses = [
         MockHttpResponse(
-            status=200, headers={"ETag": 'W/"test"', "x-total-records": "1"}, body=body
+            status=200, headers={"ETag": 'W/"test"', "x-total-records": "3"}, body=body
         )
     ]
     mock_download, _ = make_mock_download_func(responses)
@@ -369,8 +352,8 @@ def test_interrupted_run_cleanup_and_hash_skip(
     paths = ImporterPaths.from_root(tmp_path)
     paths.ensure_directories()
 
-    records = [{"metadata": {"pipelineVersion": "1"}, "value": 1}]
-    body = compress_ndjson(records)
+    records = mock_records()[0]
+    body = compress_ndjson([records])
 
     # First download: successful completion
     responses_r1 = [

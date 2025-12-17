@@ -12,6 +12,61 @@ from silo_import.file_io import write_text
 from silo_import.download_manager import HttpResponse
 
 
+def mock_records():
+    return [
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq1"},
+            "unalignedNucleotideSequences": {"main": "ATCG"},
+            "alignedNucleotideSequences": {"main": "ATCG"},
+            "alignedAminoAcidSequences": {"gene1": "MYKW"},
+            "nucleotideInsertions": {"main": ["123:A", "456:T"]},
+            "aminoAcidInsertions": {"gene1": ["1:M", "2:Y"]},
+        },
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq2"},
+            "unalignedNucleotideSequences": {"main": "GCTA"},
+            "alignedNucleotideSequences": {"main": "GCTA"},
+            "alignedAminoAcidSequences": {"gene1": "MYKW"},
+            "nucleotideInsertions": {"main": ["123:A"]},
+            "aminoAcidInsertions": {"gene1": ["1:M", "2:Y"]},
+        },
+        {
+            "metadata": {"pipelineVersion": "1", "accession": "seq3"},
+            "unalignedNucleotideSequences": {"main": "TTAA"},
+            "alignedNucleotideSequences": {"main": "TTAA"},
+            "alignedAminoAcidSequences": {"gene1": "MYKW"},
+            "nucleotideInsertions": {"main": ["123:A", "456:T"]},
+            "aminoAcidInsertions": {"gene1": ["1:M", "2:Y"]},
+        },
+    ]
+
+
+def mock_transformed_records():
+    return [
+        {
+            "pipelineVersion": "1",
+            "accession": "seq1",
+            "unaligned_main": "ATCG",
+            "main": {"sequence": "ATCG", "insertions": ["123:A", "456:T"]},
+            "gene1": {"sequence": "MYKW", "insertions": ["1:M", "2:Y"]},
+        },
+        {
+            "pipelineVersion": "1",
+            "accession": "seq2",
+            "unaligned_main": "GCTA",
+            "main": {"sequence": "GCTA", "insertions": ["123:A"]},
+            "gene1": {"sequence": "MYKW", "insertions": ["1:M", "2:Y"]},
+        },
+        {
+            "pipelineVersion": "1",
+            "accession": "seq3",
+            "unaligned_main": "TTAA",
+            "main": {"sequence": "TTAA", "insertions": ["123:A", "456:T"]},
+            "gene1": {"sequence": "MYKW", "insertions": ["1:M", "2:Y"]},
+        },
+    ]
+
+
 def compress_ndjson(records: Iterable[dict]) -> bytes:
     payload = "\n".join(json.dumps(record) for record in records) + "\n"
     compressor = zstandard.ZstdCompressor()
@@ -20,8 +75,8 @@ def compress_ndjson(records: Iterable[dict]) -> bytes:
 
 def read_ndjson_file(path: Path) -> list[dict]:
     decompressor = zstandard.ZstdDecompressor()
-    with path.open("rb") as handle:
-        data = decompressor.decompress(handle.read())
+    with path.open("rb") as handle, decompressor.stream_reader(handle) as reader:
+        data = reader.read()
     return [json.loads(line) for line in data.decode("utf-8").splitlines() if line]
 
 
