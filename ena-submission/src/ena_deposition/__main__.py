@@ -6,7 +6,7 @@ import click
 
 from ena_deposition.check_external_visibility import check_and_update_visibility
 
-from .api import start_api
+from .api.app import start_api
 from .config import Config, get_config
 from .create_assembly import create_assembly
 from .create_project import create_project
