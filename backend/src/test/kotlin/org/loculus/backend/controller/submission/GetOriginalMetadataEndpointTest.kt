@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import io.mockk.every
 import io.mockk.mockk

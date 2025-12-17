@@ -1,11 +1,11 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.DoubleNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.StringNode
+import tools.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
@@ -108,8 +108,8 @@ class SubmitProcessedDataEndpointTest(
         val sequenceEntryToEdit = convenienceClient.getSequenceEntryToEdit(accession = accessions.first(), version = 1)
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("qc", DoubleNode(0.987654321)))
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("age", IntNode(42)))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("region", TextNode("Europe")))
-        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("pangoLineage", TextNode("XBB.1.5")))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("region", StringNode("Europe")))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("pangoLineage", StringNode("XBB.1.5")))
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("booleanColumn", BooleanNode.TRUE))
     }
 
@@ -610,7 +610,7 @@ class SubmitProcessedDataEndpointTest(
 
         // Step 6: check file is publicly accessible
         val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
-        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asString()
         val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
         val fileUrl = fileList.first()["url"]!!
         val client = HttpClient.newHttpClient()
@@ -675,7 +675,7 @@ class SubmitProcessedDataEndpointTest(
 
         // Step 6: check file is publicly accessible
         val releasedData = convenienceClient.getReleasedData(organism = DEFAULT_ORGANISM)
-        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val filesJson = releasedData.first().metadata["myFileCategory"]!!.asString()
         val fileList: List<Map<String, String>> = objectMapper.readValue(filesJson)
         val fileUrl = fileList.first()["url"]!!
         val client = HttpClient.newHttpClient()

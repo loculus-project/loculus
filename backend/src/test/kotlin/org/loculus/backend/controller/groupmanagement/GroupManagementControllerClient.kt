@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.groupmanagement
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.NewGroup

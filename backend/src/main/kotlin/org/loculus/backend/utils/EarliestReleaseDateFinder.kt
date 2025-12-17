@@ -37,7 +37,7 @@ class EarliestReleaseDateFinder(private val fields: List<String>) {
         var earliestReleaseDate = rawProcessedData.releasedAtTimestamp
 
         fields.forEach { field ->
-            rawProcessedData.processedData.metadata[field]?.textValue()?.let { dateText ->
+            rawProcessedData.processedData.metadata[field]?.stringValue()?.let { dateText ->
                 val date = try {
                     LocalDateTime(LocalDate.parse(dateText), LocalTime.fromSecondOfDay(0))
                 } catch (e: IllegalArgumentException) {

@@ -1,7 +1,7 @@
 package org.loculus.backend.utils
 
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
@@ -55,7 +55,7 @@ fun row(
     processedData = ProcessedData(
         metadata = fieldValues.map { (field, date) ->
             field to
-                if (date != null) TextNode(date.date.format(LocalDate.Formats.ISO)) else NullNode.getInstance()
+                if (date != null) StringNode(date.date.format(LocalDate.Formats.ISO)) else NullNode.getInstance()
         }.toMap(),
         unalignedNucleotideSequences = emptyMap(),
         alignedNucleotideSequences = emptyMap(),

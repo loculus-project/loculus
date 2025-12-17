@@ -1,7 +1,7 @@
 package org.loculus.backend.service
 
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasKey
 import org.hamcrest.Matchers.not
@@ -33,9 +33,9 @@ class ProcessedMetadataPostprocessorTest(
 
         val testData = ProcessedData<String>(
             metadata = mapOf(
-                configuredPresent to TextNode("value1"),
+                configuredPresent to StringNode("value1"),
                 configuredNull to NullNode.instance,
-                unconfiguredPresent to TextNode("value2"),
+                unconfiguredPresent to StringNode("value2"),
                 unconfiguredNull to NullNode.instance,
             ),
             unalignedNucleotideSequences = emptyMap(),

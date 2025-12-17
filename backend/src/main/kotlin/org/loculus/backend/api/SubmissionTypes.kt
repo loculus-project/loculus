@@ -134,7 +134,7 @@ data class SequenceEntryVersionToEdit(
 typealias SegmentName = String
 typealias GeneName = String
 typealias GeneticSequence = String
-typealias MetadataMap = Map<String, JsonNode>
+typealias MetadataMap = Map<String, JsonNode?>
 
 data class ProcessedData<SequenceType>(
     @Schema(

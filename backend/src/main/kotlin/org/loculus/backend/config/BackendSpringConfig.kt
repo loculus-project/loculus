@@ -3,6 +3,7 @@ package org.loculus.backend.config
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
 import tools.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
@@ -22,9 +23,11 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer
 import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
@@ -81,6 +84,18 @@ class BackendSpringConfig {
         useNestedTransactions = true
         sqlLogger = Slf4jSqlDebugLogger
     }
+
+    @Bean
+    @Primary
+    fun jacksonJsonMapper(): ObjectMapper = JsonMapper.builderWithJackson2Defaults()
+        .addModule(
+            KotlinModule.Builder()
+                .disable(tools.jackson.module.kotlin.KotlinFeature.StrictNullChecks)
+                .build(),
+        )
+        .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
 
     @Bean
     fun backendConfig(
@@ -201,6 +216,7 @@ fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendCo
     val mapper = (objectMapper as JsonMapper)
         .rebuild()
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .build()
     val config = mapper.readValue<BackendConfig>(File(configPath))
     logger.info { "Loaded backend config from $configPath" }

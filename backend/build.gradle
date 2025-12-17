@@ -40,6 +40,7 @@ repositories {
 
 dependencies {
     implementation "tools.jackson.module:jackson-module-kotlin"
+    implementation "tools.jackson.dataformat:jackson-dataformat-yaml"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "io.minio:minio:8.6.0"
     implementation "org.apache.commons:commons-csv:1.14.1"

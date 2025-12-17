@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.TextNode
+import tools.jackson.databind.node.StringNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
@@ -62,7 +62,7 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", StringNode("GENBANK1000.1")))
     }
 
     @Test
@@ -87,8 +87,8 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
-        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", StringNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", StringNode("DB1.1")))
     }
 
     @Test
@@ -161,7 +161,7 @@ class SubmitExternalMetadataEndpointTest(
 
     private fun getReleasedSequenceEntry(accession: Accession): ProcessedData<GeneticSequence> {
         val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accession }
+            .find { it.metadata["accession"]?.stringValue() == accession }
 
         assertThat(releasedSequenceEntry, notNullValue())
         return releasedSequenceEntry!!

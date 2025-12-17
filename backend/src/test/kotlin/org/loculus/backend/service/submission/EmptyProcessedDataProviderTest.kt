@@ -1,6 +1,6 @@
 package org.loculus.backend.service.submission
 
-import com.fasterxml.jackson.databind.node.NullNode
+import tools.jackson.databind.node.NullNode
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test

@@ -1,8 +1,9 @@
 package org.loculus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
+import tools.jackson.module.kotlin.readValue
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -64,7 +65,10 @@ fun jsonContainsAccessionVersionsInAnyOrder(expectedVersions: List<AccessionVers
 
 fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
 
-val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
+val jacksonObjectMapper: ObjectMapper = JsonMapper.builder()
+    .addModule(KotlinModule.Builder().build())
+    .findAndAddModules()
+    .build()
 
 inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
     andExpect(status().isOk)

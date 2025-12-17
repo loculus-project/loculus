@@ -25,5 +25,5 @@ class LocalDateSerializer : ValueSerializer<LocalDate>() {
 }
 
 class LocalDateDeserializer : ValueDeserializer<LocalDate>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDate = LocalDate.parse(p.text)
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDate = LocalDate.parse(p.string)
 }

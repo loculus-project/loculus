@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
@@ -437,9 +437,9 @@ class ApproveProcessedDataEndpointTest(
         client.approveProcessedSequenceEntries(ALL)
         val releasedData = convenienceClient.getReleasedData()
 
-        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asText())
+        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asString())
 
-        val fileUrl = tree.get(0).get("url").asText()
+        val fileUrl = tree.get(0).get("url").asString()
 
         val client = HttpClient.newHttpClient()
         val request = HttpRequest.newBuilder()

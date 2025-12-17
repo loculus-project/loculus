@@ -166,7 +166,7 @@ open class ReleasedDataModel(
                 rawProcessedData.isRevocation,
                 {
                     mapOf(
-                        "versionComment" to StringNode(rawProcessedData.versionComment),
+                        "versionComment" to (rawProcessedData.versionComment?.let { StringNode(it) } ?: NullNode.instance),
                     )
                 },
             ) +

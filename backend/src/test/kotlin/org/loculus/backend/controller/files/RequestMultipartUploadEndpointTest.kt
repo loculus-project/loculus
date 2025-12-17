@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.files
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
@@ -82,7 +82,7 @@ class RequestMultipartUploadEndpointTest(
         val httpClient = HttpClients.createDefault()
 
         urls.forEach { urlNode ->
-            val put = HttpPut(urlNode.textValue()).apply {
+            val put = HttpPut(urlNode.stringValue()).apply {
                 entity = ByteArrayEntity(partContent, ContentType.APPLICATION_OCTET_STREAM)
             }
             val response = httpClient.execute(put)

@@ -127,7 +127,7 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
 
     when (metadata.type) {
         MetadataType.DATE -> {
-            if (!isValidDate(fieldValue.asText())) {
+            if (!isValidDate(fieldValue.asString())) {
                 throw ProcessingValidationException(
                     "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
                         "found value '$fieldValue'.",
@@ -140,7 +140,7 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
     }
 
     val isOfCorrectPrimitiveType = when (metadata.type) {
-        MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isTextual
+        MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isString
         MetadataType.INTEGER -> fieldValue.isInt
         MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
         MetadataType.NUMBER -> fieldValue.isNumber

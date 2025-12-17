@@ -1,8 +1,8 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.TextNode
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.StringNode
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import kotlinx.datetime.toLocalDateTime
@@ -102,36 +102,36 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
         response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
-            val id = it.metadata["accession"]!!.asText()
+            val id = it.metadata["accession"]!!.asString()
             val version = it.metadata["version"]!!.asLong()
             assertThat(version, `is`(1))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
-                "accession" to TextNode(id),
+                "accession" to StringNode(id),
                 "version" to IntNode(version.toInt()),
-                "accessionVersion" to TextNode("$id.$version"),
+                "accessionVersion" to StringNode("$id.$version"),
                 "isRevocation" to BooleanNode.FALSE,
-                "submitter" to TextNode(DEFAULT_USER_NAME),
-                "groupName" to TextNode(DEFAULT_GROUP_NAME_CHANGED),
-                "versionStatus" to TextNode("LATEST_VERSION"),
-                "releasedDate" to TextNode(currentDate),
-                "submittedDate" to TextNode(currentDate),
+                "submitter" to StringNode(DEFAULT_USER_NAME),
+                "groupName" to StringNode(DEFAULT_GROUP_NAME_CHANGED),
+                "versionStatus" to StringNode("LATEST_VERSION"),
+                "releasedDate" to StringNode(currentDate),
+                "submittedDate" to StringNode(currentDate),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
 
             for ((key, value) in it.metadata) {
                 when (key) {
-                    "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                    "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
 
-                    "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                    "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
 
-                    "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+                    "submissionId" -> assertThat(value!!.stringValue(), matchesPattern("^custom\\d$"))
 
-                    "groupId" -> assertThat(value.intValue(), `is`(groupId))
+                    "groupId" -> assertThat(value!!.intValue(), `is`(groupId))
 
                     else -> {
                         assertThat(expectedMetadata.keys, hasItem(key))
-                        assertThat(value, `is`(expectedMetadata[key]))
+                        assertThat(value!!, `is`(expectedMetadata[key]))
                     }
                 }
             }

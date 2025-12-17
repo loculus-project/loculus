@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItems
 import org.hamcrest.Matchers.`is`
@@ -101,7 +101,7 @@ class SubmissionJourneyWithFilesTest(
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val releasedData = convenienceClient.getReleasedData()
-        val releasedFileMappingString = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val releasedFileMappingString = releasedData.first().metadata["myFileCategory"]!!.asString()
         val fileMapping: List<Map<String, String>> = jacksonObjectMapper.readValue(releasedFileMappingString)
         assertThat(fileMapping.size, `is`(2))
         val contents = fileMapping.map { downloadFromUrl(it["url"]!!) }
@@ -205,7 +205,7 @@ class SubmissionJourneyWithFilesTest(
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val releasedData = convenienceClient.getReleasedData()
-        val releasedFileMappingString = releasedData.first().metadata["myFileCategory"]!!.asText()
+        val releasedFileMappingString = releasedData.first().metadata["myFileCategory"]!!.asString()
         val fileMapping: List<Map<String, String>> = jacksonObjectMapper.readValue(releasedFileMappingString)
         assertThat(fileMapping.size, `is`(2))
         val contents = fileMapping.map { downloadFromUrl(it["url"]!!) }

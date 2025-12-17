@@ -1,6 +1,6 @@
 package org.loculus.backend.controller.files
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
@@ -77,7 +77,7 @@ class RequestUploadEndpointTest(
         val url = objectMapper.readTree(responseContent)
             .get(0)
             .get("url")
-            .textValue()
+            .stringValue()
 
         val content = "test content".toByteArray()
         val request = HttpPut(url)

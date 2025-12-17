@@ -1,8 +1,9 @@
 package org.loculus.backend
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.dataformat.yaml.YAMLFactory
+import tools.jackson.dataformat.yaml.YAMLMapper
+import tools.jackson.module.kotlin.KotlinModule
 import org.hamcrest.core.StringContains.containsString
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -42,7 +43,9 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().contentType("application/vnd.oai.openapi"))
             .andReturn()
 
-        val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+        val objectMapper = YAMLMapper.builder(YAMLFactory())
+            .addModule(KotlinModule.Builder().build())
+            .build()
         val yaml = objectMapper.readTree(result.response.contentAsString)
         assertTrue(yaml.has("openapi"))
         assertTrue(yaml.get("paths").has("/{organism}/submit"))
