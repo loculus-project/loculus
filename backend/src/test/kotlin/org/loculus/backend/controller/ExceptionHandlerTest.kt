@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private val validRoute = addOrganismToPath("submit")
 
-private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
+private val validRequest = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
     .param("groupId", "5")

@@ -221,7 +221,7 @@ class GetReleasedDataEndpointTest(
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()

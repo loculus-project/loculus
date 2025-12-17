@@ -4,6 +4,7 @@ import io.jsonwebtoken.Jwts
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import java.security.KeyPair
 import java.time.Instant
@@ -27,8 +28,10 @@ fun generateJwtFor(username: String, roles: List<String> = emptyList()): String 
     .claim("realm_access", mapOf("roles" to roles))
     .compact()
 
-fun MockHttpServletRequestBuilder.withAuth(bearerToken: String? = jwtForDefaultUser): MockHttpServletRequestBuilder =
-    when (bearerToken) {
+// Generic extension function that works with all MockMvc request builder types
+fun <T : AbstractMockHttpServletRequestBuilder<*>> T.withAuth(bearerToken: String? = jwtForDefaultUser): T {
+    return when (bearerToken) {
         null -> this
-        else -> this.header("Authorization", "Bearer $bearerToken")
+        else -> this.header("Authorization", "Bearer $bearerToken") as T
     }
+}
