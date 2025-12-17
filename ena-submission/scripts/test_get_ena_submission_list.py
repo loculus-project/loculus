@@ -37,7 +37,6 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
 
 class GetSubmissionListTests(unittest.TestCase):
     @patch("get_ena_submission_list.fetch_released_entries")
-    @patch("get_ena_submission_list.notify")
     @patch("get_ena_submission_list.upload_file_with_comment")
     @patch("get_ena_submission_list.slack_conn_init")
     @patch("get_ena_submission_list.highest_version_in_submission_table")
@@ -48,7 +47,6 @@ class GetSubmissionListTests(unittest.TestCase):
         mock_highest_version_in_submission_table: Mock,
         mock_slack_conn_init: Mock,
         mock_upload_file_with_comment: Mock,
-        mock_notify: Mock,
         mock_fetch_released_entries: Mock,
     ):
         # Mock database calls, adding a LOC_submitted entry with version 1
