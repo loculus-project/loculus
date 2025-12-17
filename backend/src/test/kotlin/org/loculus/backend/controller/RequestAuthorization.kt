@@ -29,9 +29,8 @@ fun generateJwtFor(username: String, roles: List<String> = emptyList()): String 
     .compact()
 
 // Generic extension function that works with all MockMvc request builder types
-fun <T : AbstractMockHttpServletRequestBuilder<*>> T.withAuth(bearerToken: String? = jwtForDefaultUser): T {
-    return when (bearerToken) {
+fun <T : AbstractMockHttpServletRequestBuilder<*>> T.withAuth(bearerToken: String? = jwtForDefaultUser): T =
+    when (bearerToken) {
         null -> this
         else -> this.header("Authorization", "Bearer $bearerToken") as T
     }
-}

@@ -3,7 +3,9 @@ package org.loculus.backend
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
-@SpringBootApplication
+@SpringBootApplication(
+    excludeName = ["org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration"],
+)
 class BackendApplication
 
 fun main(args: Array<String>) {

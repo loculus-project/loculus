@@ -7,7 +7,6 @@ import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
@@ -59,7 +58,7 @@ private val logger = mu.KotlinLogging.logger {}
 @Configuration
 @EnableScheduling
 @ImportAutoConfiguration(
-    value = [ExposedAutoConfiguration::class],
+    value = [ExposedAutoConfigurationCompat::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 @ConfigurationPropertiesScan("org.loculus.backend")
