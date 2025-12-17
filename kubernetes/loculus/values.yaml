@@ -2051,7 +2051,7 @@ additionalHeadHTML: ""
 images:
   lapisSilo:
     repository: "ghcr.io/genspectrum/lapis-silo"
-    tag: "v0.7.10.2@sha256:18b03238e879c1cb990fed71679afa0d6335bec7e20c15e2bd1b53787df32321"
+    tag: "0.8.6@sha256:e6d69ec7f38542b9b76ff2f59c96dda22a12d74b7ef1f3d88f516b6173d63d54"
     pullPolicy: Always
   siloImporter:
     repository: "ghcr.io/loculus-project/silo-import"
