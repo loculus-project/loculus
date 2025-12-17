@@ -199,7 +199,7 @@ class DownloadManager:
                 raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
-            _handle_previous_directory(paths, download_dir, data_path, etag_value)
+            _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
 
             # Prune old directories
             prune_timestamped_directories(paths.input_dir)
@@ -252,7 +252,7 @@ def _handle_previous_directory(
     previous_dirs.sort(key=lambda item: int(item.name))
     previous_dir = previous_dirs[-1]
 
-    previous_data_path = previous_dir / DATA_FILENAME
+    previous_data_path = previous_dir / TRANSFORMED_DATA_FILENAME
 
     # Clean up previous directory with no data
     if not previous_data_path.exists():
