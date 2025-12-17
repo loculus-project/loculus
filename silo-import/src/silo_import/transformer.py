@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 
 
@@ -12,7 +12,7 @@ def transform_data_format(data_path, transformed_path):
         f"zstd > {transformed_path}"
     )
 
-    subprocess.run(
+    subprocess.run(  # noqa: S602
         cmd,
         shell=True,
         check=True,
