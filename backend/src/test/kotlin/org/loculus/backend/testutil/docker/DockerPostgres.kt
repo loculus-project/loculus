@@ -5,7 +5,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.File
 
 class DockerPostgres : PostgresProvider {
-    private val container = PostgreSQLContainer("postgres:latest")
+    // Keep version in sync with dev db (in helm) and prod db
+    private val container = PostgreSQLContainer("postgres:15.12")
 
     override val jdbcUrl: String
         get() = container.jdbcUrl
