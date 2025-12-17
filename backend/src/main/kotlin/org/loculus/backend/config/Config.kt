@@ -1,11 +1,9 @@
 package org.loculus.backend.config
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.StringUtils.lowerCase
 import org.loculus.backend.api.Organism
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class BackendConfig(
     val websiteUrl: String,
     val backendUrl: String,
@@ -47,10 +45,8 @@ enum class FileUrlType {
     override fun toString(): String = lowerCase(name)
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class InstanceConfig(val schema: Schema, val referenceGenome: ReferenceGenome)
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class Schema(
     val organismName: String,
     val metadata: List<Metadata>,
@@ -108,7 +104,6 @@ sealed class BaseMetadata {
     abstract val required: Boolean
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class Metadata(
     override val name: String,
     override val type: MetadataType,

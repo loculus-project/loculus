@@ -18,11 +18,11 @@ import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
 import tools.jackson.databind.node.NullNode
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -36,7 +36,7 @@ class GetReleasedDataFileSharingEndpointTest(
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val filesClient: FilesClient,
 ) {
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = jacksonObjectMapper
 
     @Test
     fun `GIVEN processed data with files THEN return file information in metadata`() {

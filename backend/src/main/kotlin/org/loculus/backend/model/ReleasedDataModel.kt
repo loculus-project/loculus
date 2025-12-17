@@ -196,6 +196,8 @@ open class ReleasedDataModel(
                         rawProcessedData.processedData.files ?: emptyMap(),
                     )
                     filesFieldNames.associateWith { NullNode.instance } + filesWithUrls.mapValues { (_, value) ->
+                        // TODO(#5754) This produces a double-encoded JSON string in the metadata map.
+                        // Change to valueToTree(value) once the API consumer (website) is ready.
                         StringNode(objectMapper.writeValueAsString(value))
                     }
                 },

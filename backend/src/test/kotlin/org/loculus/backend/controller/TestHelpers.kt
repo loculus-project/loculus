@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
@@ -66,8 +67,14 @@ fun jsonContainsAccessionVersionsInAnyOrder(expectedVersions: List<AccessionVers
 fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
 
 val jacksonObjectMapper: ObjectMapper = JsonMapper.builder()
-    .addModule(KotlinModule.Builder().build())
+    .addModule(
+        KotlinModule.Builder()
+            .disable(tools.jackson.module.kotlin.KotlinFeature.StrictNullChecks)
+            .build(),
+    )
     .findAndAddModules()
+    .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
     .build()
 
 inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {

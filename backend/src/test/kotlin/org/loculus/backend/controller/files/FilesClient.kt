@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.*
 
 class FilesClient(private val mockMvc: MockMvc) {
@@ -50,7 +49,7 @@ class FilesClient(private val mockMvc: MockMvc) {
         val request = post("/files/complete-multipart-upload")
             .withAuth(jwt)
             .contentType(MediaType.APPLICATION_JSON)
-        fileIdAndEtags?.let { request.content(jacksonObjectMapper().writeValueAsString(it)) }
+        fileIdAndEtags?.let { request.content(jacksonObjectMapper.writeValueAsString(it)) }
         return mockMvc.perform(request)
     }
 
@@ -94,7 +93,7 @@ fun ResultActions.andGetFileIds(): List<FileId> = andReturn()
     .response
     .contentAsString
     .let {
-        val responseJson = jacksonObjectMapper().readTree(it)
+        val responseJson = jacksonObjectMapper.readTree(it)
         responseJson.map { UUID.fromString(it.get("fileId").stringValue()) }
     }
 
@@ -102,7 +101,7 @@ fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
     .response
     .contentAsString
     .let {
-        val responseJson = jacksonObjectMapper().readTree(it)
+        val responseJson = jacksonObjectMapper.readTree(it)
         responseJson.map {
             FileIdAndWriteUrl(UUID.fromString(it.get("fileId").stringValue()), it.get("url").stringValue())
         }
@@ -112,7 +111,7 @@ fun ResultActions.andGetFileIdsAndMultipartUrls(): List<FileIdAndMultipartWriteU
     .response
     .contentAsString
     .let { body ->
-        val root = jacksonObjectMapper().readTree(body)
+        val root = jacksonObjectMapper.readTree(body)
         root.map { node ->
             val fileId = UUID.fromString(node.get("fileId").stringValue())
             val urls = node.get("urls").map { it.stringValue() }
