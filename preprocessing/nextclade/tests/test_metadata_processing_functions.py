@@ -69,7 +69,7 @@ test_case_definitions = [
         accession_id="21",
         expected_metadata={
             "name_required": "name",
-            "concatenated_string": "LOC_1.1",
+            "concatenated_string": "LOC_21.1",
             "required_collection_date": None,
         },
         group_id=1,
