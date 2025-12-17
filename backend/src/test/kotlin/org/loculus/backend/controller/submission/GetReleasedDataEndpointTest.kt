@@ -481,7 +481,6 @@ private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
 
 @EndpointTest
 @Import(GetReleasedDataEndpointWithDataUseTermsUrlTestConfig::class)
-@TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
 class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,

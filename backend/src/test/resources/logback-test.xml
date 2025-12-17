@@ -5,21 +5,12 @@
         </encoder>
     </appender>
 
-    <appender name="SQL_FILE" class="ch.qos.logback.core.FileAppender">
-        <file>tmp/sql-debug.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%date %level - %message%n</pattern>
-        </encoder>
-    </appender>
-
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
 
     <logger name="Exposed" level="debug" additivity="false">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="SQL_FILE"/>
     </logger>
 
     <logger name="org.loculus" level="debug" />

@@ -22,7 +22,6 @@ import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomize
 import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
@@ -86,16 +85,15 @@ class BackendSpringConfig {
     }
 
     @Bean
-    @Primary
-    fun jacksonJsonMapper(): ObjectMapper = JsonMapper.builderWithJackson2Defaults()
-        .addModule(
+    fun loculusJacksonCustomizer(): JsonMapperBuilderCustomizer = JsonMapperBuilderCustomizer { builder ->
+        builder.addModule(
             KotlinModule.Builder()
                 .disable(tools.jackson.module.kotlin.KotlinFeature.StrictNullChecks)
                 .build(),
         )
-        .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .build()
+        builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    }
 
     @Bean
     fun backendConfig(
