@@ -158,7 +158,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+    with requests.get(url, headers=headers, timeout=60, stream=True) as response:
         response.raise_for_status()
         for line_no, line in enumerate(
             response.iter_lines(decode_unicode=True), start=1
