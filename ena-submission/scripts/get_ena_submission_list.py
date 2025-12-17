@@ -52,12 +52,10 @@ def fetch_suppressed_accessions(config: Config) -> set[AccessionVersion]:
             f"Failed to retrieve list of suppressed sequences due to requests exception: {e}"
         )
         raise e
-    accession_versions_strings = {
-        line.strip() for line in response.text.splitlines() if line.strip()
-    }
     return {
-        AccessionVersion(line.split(".")[0], int(line.split(".")[1]))
-        for line in accession_versions_strings
+        AccessionVersion.from_string(line.strip())
+        for line in response.text.splitlines()
+        if line.strip()
     }
 
 
