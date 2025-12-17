@@ -64,6 +64,16 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="insdc_ingest group can submit without required fields",
+        input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        accession_id="21",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_1.1",
+            "required_collection_date": None,
+        },
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "submissionId": "invalid_option",
