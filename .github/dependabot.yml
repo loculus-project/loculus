@@ -91,6 +91,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: pip
+    directory: preprocessing/nextclade
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: conda
     directory: ingest
     schedule:
@@ -110,6 +119,15 @@ updates:
           - "minor"
           - "patch"
   - package-ecosystem: pip
+    directory: ena-submission
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: conda
     directory: ena-submission
     schedule:
       interval: monthly
