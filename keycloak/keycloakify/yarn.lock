@@ -2575,15 +2575,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-storybook@npm:^9.1.15":
-  version: 9.1.15
-  resolution: "eslint-plugin-storybook@npm:9.1.15"
+"eslint-plugin-storybook@npm:^10.1.10":
+  version: 10.1.10
+  resolution: "eslint-plugin-storybook@npm:10.1.10"
   dependencies:
     "@typescript-eslint/utils": "npm:^8.8.1"
   peerDependencies:
     eslint: ">=8"
-    storybook: ^9.1.15
-  checksum: 10c0/762218665cc8dba17749ef6f4a57a1c9c2d1a0a72f0e06c003481c46b1fae69c54dcdc29053c925d3a2e54184009e53de154ea082bbab7c11f659a016396a72e
+    storybook: ^10.1.10
+  checksum: 10c0/7c891a849481e68fec354752f00c69b94c689c6b382671c48fb539cb086a626273be668b0fb7ceceb170a4b0f5dcb38a57d6cd093f349c1ff6f5ba2565fae765
   languageName: node
   linkType: hard
 
@@ -3346,7 +3346,7 @@ __metadata:
     eslint: "npm:^9.39.1"
     eslint-plugin-react-hooks: "npm:^7.0.1"
     eslint-plugin-react-refresh: "npm:^0.4.24"
-    eslint-plugin-storybook: "npm:^9.1.15"
+    eslint-plugin-storybook: "npm:^10.1.10"
     keycloakify: "npm:^11.13.2"
     prettier: "npm:3.7.3"
     react: "npm:^18.2.0"
