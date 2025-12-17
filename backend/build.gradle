@@ -53,7 +53,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
     implementation "org.jsoup:jsoup:1.21.2"
     implementation "org.keycloak:keycloak-admin-client:26.0.7"
-    implementation "org.postgresql:postgresql"
+    runtimeOnly "org.postgresql:postgresql"
     implementation "org.redundent:kotlin-xml-builder:1.9.3"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
