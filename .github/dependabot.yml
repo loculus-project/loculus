@@ -82,3 +82,48 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: conda
+    directory: preprocessing/nextclade
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: conda
+    directory: ingest
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: pip
+    directory: cli
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: pip
+    directory: ena-submission
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: pip
+    directory: silo-import
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
