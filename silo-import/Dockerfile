@@ -3,21 +3,11 @@ FROM rust:1.78-slim AS rust-builder
 
 WORKDIR /build
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-  && rm -rf /var/lib/apt/lists/*
-
 ARG REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
-ARG REV=main
+ARG COMMIT=0679453f5cbd20a813cd964e8600c40aad9165af
 
-RUN git clone --filter=blob:none --no-checkout $REPO repo \
- && cd repo \
- && git sparse-checkout init --cone \
- && git sparse-checkout set tools/legacyNdjsonTransformer \
- && git checkout $REV
-
-WORKDIR /build/repo/tools/legacyNdjsonTransformer
-RUN cargo build --release
+# Install the binary into /usr/local/cargo/bin
+RUN cargo install --git $REPO --rev $COMMIT
 
 # --- Python runtime stage ---
 FROM python:3.11-slim
@@ -35,9 +25,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir .
 
 # Copy the compiled Rust binary into PATH
-COPY --from=rust-builder \
-  /build/repo/tools/legacyNdjsonTransformer/target/release/legacy-ndjson-transformer \
-  /usr/local/bin/legacy-ndjson-transformer
-
+COPY --from=rust-builder /usr/local/cargo/bin/legacy-ndjson-transformer /usr/local/bin/legacy-ndjson-transformer
 
 ENTRYPOINT ["silo-import"]
