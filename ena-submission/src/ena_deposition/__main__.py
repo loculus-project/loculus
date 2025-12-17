@@ -11,7 +11,6 @@ from .config import Config, get_config
 from .create_assembly import create_assembly
 from .create_project import create_project
 from .create_sample import create_sample
-from .trigger_submission_to_ena import trigger_submission_to_ena
 from .upload_external_metadata_to_loculus import upload_external_metadata
 
 stop_event = threading.Event()
@@ -25,15 +24,7 @@ logger = logging.getLogger(__name__)
     required=True,
     type=click.Path(exists=True),
 )
-@click.option(
-    "--input-file",
-    type=click.Path(exists=True),
-    help=(
-        "(for debugging) Path to a file containing submission data. "
-        "If provided, the script will trigger submission from this file."
-    ),
-)
-def run(config_file: str, input_file: str | None) -> None:
+def run(config_file: str) -> None:
     logging.basicConfig(
         encoding="utf-8",
         level=logging.INFO,
@@ -46,10 +37,6 @@ def run(config_file: str, input_file: str | None) -> None:
     logging.getLogger("requests").setLevel(logging.INFO)  # For requests, debug level is too verbose
     logger.info(f"Config: {config}")
 
-    if input_file:
-        logger.info("Triggering submission from file")
-        trigger_submission_to_ena(config, stop_event, input_file=input_file)
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(create_project, config, stop_event),
@@ -59,8 +46,6 @@ def run(config_file: str, input_file: str | None) -> None:
             executor.submit(start_api, config, stop_event),
             executor.submit(check_and_update_visibility, config, stop_event),
         ]
-        if not input_file:
-            futures.append(executor.submit(trigger_submission_to_ena, config, stop_event))
         for future in concurrent.futures.as_completed(futures):
             try:
                 future.result()

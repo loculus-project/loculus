@@ -72,8 +72,8 @@ from ena_deposition.submission_db_helper import (
     find_conditions_in_db,
     in_submission_table,
     update_db_where_conditions,
+    upload_sequences,
 )
-from ena_deposition.trigger_submission_to_ena import upload_sequences
 from ena_deposition.upload_external_metadata_to_loculus import (
     get_external_metadata_and_send_to_loculus,
 )

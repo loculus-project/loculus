@@ -10,11 +10,11 @@ from psycopg2.pool import SimpleConnectionPool
 
 from ..submission_db_helper import (
     StatusAll,
+    SubmissionTableEntry,
     TableName,
     add_to_submission_table,
     find_conditions_in_db,
     in_submission_table,
-    SubmissionTableEntry,
 )
 from .schemas import (
     PaginatedSubmissions,
@@ -25,7 +25,6 @@ from .schemas import (
     SubmissionStatusAll,
     SubmissionSummary,
     SubmitError,
-    SubmitItem,
     SubmitRequest,
     SubmitResponse,
     TableStatus,

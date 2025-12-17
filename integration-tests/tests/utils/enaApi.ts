@@ -289,3 +289,360 @@ export async function waitForEnaBiosampleAccessions(
         { timeout, description: `${expectedCount} biosample accessions in ENA deposition` },
     );
 }
+
+/**
+ * Wait for a specific number of assemblies to appear in the mock ENA state.
+ */
+export async function waitForMockEnaAssemblies(
+    expectedCount: number,
+    timeout: number = 240000,
+): Promise<MockEnaAssembly[]> {
+    return waitFor(
+        async () => {
+            const state = await getMockEnaState();
+            if (state.assemblies.length >= expectedCount) {
+                return state.assemblies;
+            }
+            return undefined;
+        },
+        { timeout, description: `${expectedCount} assemblies in mock ENA` },
+    );
+}
+
+/**
+ * Wait for ENA submissions to include at least the expected number of INSDC accessions.
+ */
+export async function waitForEnaInsdcAccessions(
+    expectedCount: number,
+    timeout: number = 240000,
+): Promise<EnaSubmittedResponse> {
+    return waitFor(
+        async () => {
+            const response = await getEnaSubmittedAccessions();
+            if (response.insdcAccessions.length >= expectedCount) {
+                return response;
+            }
+            return undefined;
+        },
+        { timeout, description: `${expectedCount} INSDC accessions in ENA deposition` },
+    );
+}
+
+/**
+ * Wait for a specific assembly ERZ accession to have a GCA accession assigned.
+ */
+export async function waitForAssemblyWithGca(
+    erzAccession: string,
+    timeout: number = 240000,
+): Promise<MockEnaAssembly> {
+    return waitFor(
+        async () => {
+            const state = await getMockEnaState();
+            const assembly = state.assemblies.find(
+                (a) => a.erz_accession === erzAccession && a.gca_accession !== null,
+            );
+            return assembly;
+        },
+        { timeout, description: `assembly ${erzAccession} with GCA accession` },
+    );
+}
+
+// ============================================================================
+// ENA Deposition API Client Functions
+// ============================================================================
+
+export interface EnaSubmissionSummary {
+    accession: string;
+    version: number;
+    organism: string;
+    group_id: number;
+    status_all: string;
+    started_at: string;
+    finished_at: string | null;
+    has_errors: boolean;
+    error_count: number;
+}
+
+export interface PaginatedSubmissions {
+    items: EnaSubmissionSummary[];
+    total: number;
+    page: number;
+    size: number;
+    pages: number;
+}
+
+export interface EnaSubmissionDetail {
+    accession: string;
+    version: number;
+    organism: string;
+    group_id: number;
+    status_all: string;
+    metadata: Record<string, unknown>;
+    unaligned_nucleotide_sequences: Record<string, string | null>;
+    errors: string[] | null;
+    warnings: string[] | null;
+    started_at: string;
+    finished_at: string | null;
+    external_metadata: Record<string, unknown> | null;
+    project_status: string | null;
+    sample_status: string | null;
+    assembly_status: string | null;
+    project_result: Record<string, unknown> | null;
+    sample_result: Record<string, unknown> | null;
+    assembly_result: Record<string, unknown> | null;
+}
+
+export interface EnaPreviewItem {
+    accession: string;
+    version: number;
+    organism: string;
+    group_id: number;
+    metadata: Record<string, unknown>;
+    unaligned_nucleotide_sequences: Record<string, string | null>;
+    validation_errors: string[];
+    validation_warnings: string[];
+}
+
+export interface EnaPreviewResponse {
+    previews: EnaPreviewItem[];
+}
+
+export interface EnaSubmitResponse {
+    submitted: string[];
+    errors: Array<{ accession: string; version: number; message: string }>;
+}
+
+export interface EnaErrorItem {
+    accession: string;
+    version: number;
+    organism: string;
+    group_id: number;
+    table: string;
+    error_messages: string[];
+    status: string;
+    started_at: string;
+    can_retry: boolean;
+}
+
+export interface PaginatedErrors {
+    items: EnaErrorItem[];
+    total: number;
+    page: number;
+    size: number;
+    pages: number;
+}
+
+export interface EnaActionResponse {
+    success: boolean;
+    message: string;
+}
+
+export interface EnaHealthResponse {
+    status: string;
+    message: string;
+}
+
+/**
+ * Get the ENA deposition API health status.
+ */
+export async function getEnaDepositionApiHealth(): Promise<EnaHealthResponse> {
+    const url = `${getEnaDepositionBaseUrl()}/api/health`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get ENA deposition API health: ${response.status}`);
+    }
+
+    return response.json() as Promise<EnaHealthResponse>;
+}
+
+/**
+ * Get submissions from the ENA deposition API.
+ */
+export async function getEnaSubmissions(params?: {
+    status?: string;
+    organism?: string;
+    group_id?: number;
+    page?: number;
+    size?: number;
+}): Promise<PaginatedSubmissions> {
+    const url = new URL(`${getEnaDepositionBaseUrl()}/api/submissions`);
+    if (params) {
+        if (params.status) url.searchParams.set('status', params.status);
+        if (params.organism) url.searchParams.set('organism', params.organism);
+        if (params.group_id !== undefined)
+            url.searchParams.set('group_id', params.group_id.toString());
+        if (params.page !== undefined) url.searchParams.set('page', params.page.toString());
+        if (params.size !== undefined) url.searchParams.set('size', params.size.toString());
+    }
+
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get ENA submissions: ${response.status}`);
+    }
+
+    return response.json() as Promise<PaginatedSubmissions>;
+}
+
+/**
+ * Get a single submission detail from the ENA deposition API.
+ */
+export async function getEnaSubmissionDetail(
+    accession: string,
+    version: number,
+): Promise<EnaSubmissionDetail> {
+    const url = `${getEnaDepositionBaseUrl()}/api/submissions/${accession}/${version}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get ENA submission detail: ${response.status}`);
+    }
+
+    return response.json() as Promise<EnaSubmissionDetail>;
+}
+
+/**
+ * Generate a preview of what will be submitted to ENA.
+ */
+export async function generateEnaPreview(accessions: string[]): Promise<EnaPreviewResponse> {
+    const url = `${getEnaDepositionBaseUrl()}/api/submissions/preview`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessions }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to generate ENA preview: ${response.status}`);
+    }
+
+    return response.json() as Promise<EnaPreviewResponse>;
+}
+
+/**
+ * Submit sequences to ENA via the deposition API.
+ */
+export async function submitToEna(
+    submissions: Array<{
+        accession: string;
+        version: number;
+        organism: string;
+        group_id: number;
+        metadata: Record<string, unknown>;
+        unaligned_nucleotide_sequences: Record<string, string | null>;
+    }>,
+): Promise<EnaSubmitResponse> {
+    const url = `${getEnaDepositionBaseUrl()}/api/submissions/submit`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ submissions }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to submit to ENA: ${response.status}`);
+    }
+
+    return response.json() as Promise<EnaSubmitResponse>;
+}
+
+/**
+ * Get errors from the ENA deposition API.
+ */
+export async function getEnaErrors(params?: {
+    table?: string;
+    organism?: string;
+    group_id?: number;
+    page?: number;
+    size?: number;
+}): Promise<PaginatedErrors> {
+    const url = new URL(`${getEnaDepositionBaseUrl()}/api/errors`);
+    if (params) {
+        if (params.table) url.searchParams.set('table', params.table);
+        if (params.organism) url.searchParams.set('organism', params.organism);
+        if (params.group_id !== undefined)
+            url.searchParams.set('group_id', params.group_id.toString());
+        if (params.page !== undefined) url.searchParams.set('page', params.page.toString());
+        if (params.size !== undefined) url.searchParams.set('size', params.size.toString());
+    }
+
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to get ENA errors: ${response.status}`);
+    }
+
+    return response.json() as Promise<PaginatedErrors>;
+}
+
+/**
+ * Retry a failed ENA submission.
+ */
+export async function retryEnaSubmission(
+    accession: string,
+    version: number,
+    editedMetadata?: Record<string, unknown>,
+): Promise<EnaActionResponse> {
+    const url = `${getEnaDepositionBaseUrl()}/api/errors/${accession}/${version}/retry`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: editedMetadata ? JSON.stringify({ edited_metadata: editedMetadata }) : '{}',
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to retry ENA submission: ${response.status}`);
+    }
+
+    return response.json() as Promise<EnaActionResponse>;
+}
+
+/**
+ * Wait for a submission to reach a specific status.
+ */
+export async function waitForSubmissionStatus(
+    accession: string,
+    version: number,
+    expectedStatus: string,
+    timeout: number = 240000,
+): Promise<EnaSubmissionDetail> {
+    return waitFor(
+        async () => {
+            try {
+                const detail = await getEnaSubmissionDetail(accession, version);
+                if (detail.status_all === expectedStatus) {
+                    return detail;
+                }
+                return undefined;
+            } catch {
+                return undefined;
+            }
+        },
+        {
+            timeout,
+            description: `submission ${accession}.${version} to reach status ${expectedStatus}`,
+        },
+    );
+}

@@ -2,15 +2,11 @@
 
 ## Process Overview
 
-The `loculus-get-ena-submission-list-cronjob` calls the `/get-released-data` backend-endpoint
-and creates a list of all loculus sequences that can be submitted to ENA.
-It then creates a Slack notification with this list,
-after manual review the list can be uploaded to [github.com/pathoplexus/ena-submission](https://github.com/pathoplexus/ena-submission/).
-
-The ena-deposition pod queries this GitHub repo for new sequences.
-Upon finding a new sequence to submit to ENA the pod uploads it to the `ena-deposition` schema in the backend.
-This triggers the ENA submission process, there are three main steps to this submission:
+The ENA deposition service provides an API-driven approach to submitting sequences to ENA.
+Submissions are triggered via the `/api/submissions/submit` endpoint, which adds entries to the submission table.
+The background workers then process these submissions through three main steps:
 creation of projects, samples and assemblies.
+
 If all these steps succeed the ena-deposition pod will upload the results of this submission (e.g. new INSDC accessions) as external metadata to the backend using the `submit-external-metadata` backend-endpoint.
 The backend only accepts metadata in this request that is in the `externalMetadata` schema.
 The backend then updates the metadata in the `sequence_entries_view` in the database with the external metadata values -
@@ -20,6 +16,19 @@ To avoid re-ingesting the sequences submitted by the ena-deposition pod,
 ingest also queries the `ena-deposition` schema for the INSDC sample
 and INSDC assembly accessions of samples Loculus submitted to the INSDC.
 Sequences with these accessions are filtered out of the data ingested from the INSDC.
+
+## API Endpoints
+
+The ENA deposition service exposes the following API endpoints:
+
+- `GET /api/health` - Health check
+- `GET /api/submissions` - List submissions with pagination and filtering
+- `GET /api/submissions/{accession}/{version}` - Get submission detail
+- `POST /api/submissions/preview` - Generate preview of what will be submitted to ENA
+- `POST /api/submissions/submit` - Submit sequences to ENA
+- `GET /api/errors` - List submissions with errors
+- `GET /api/errors/{accession}/{version}` - Get error detail
+- `POST /api/errors/{accession}/{version}/retry` - Retry a failed submission
 
 ## Cronjob
 
@@ -37,10 +46,6 @@ This script runs once daily as a kubernetes cronjob. It calls the Loculus backen
 ## Threads
 
 The ena_deposition package, runs the following functions in parallel (via threads):
-
-### trigger_submission_to_ena
-
-Download file in `approved_list_url` every 30s. If data is not in submission table already (and not a revision) upload data to `ena-submission.submission_table`.
 
 ### create_project
 
@@ -290,17 +295,19 @@ cp ../website/tests/config/ena-submission-config.yaml config/config.yaml
 python scripts/get_ena_submission_list.py --config-file=config/config.yaml --output-file=results/ena_submission_list.json
 ```
 
-4. Check contents and then rename to `results/approved_ena_submission_list.json`, trigger ena submission by adding entries to the submission table and using the `--input-file` flag
-
-```sh
-cp results/ena_submission_list.json results/approved_ena_submission_list.json
-ena_deposition --config-file=config/config.yaml --input-file=results/approved_ena_submission_list.json
-```
-
-Alternatively you can upload data to the [test folder](https://github.com/pathoplexus/ena-submission/blob/main/test/approved_ena_submission_list.json) and run:
+4. Start the ena_deposition service and use the API to submit sequences:
 
 ```sh
 ena_deposition --config-file=config/config.yaml
+```
+
+5. Submit sequences via the API (in a separate terminal):
+
+```sh
+# Submit using curl or the website UI
+curl -X POST http://localhost:5000/api/submissions/submit \
+  -H "Content-Type: application/json" \
+  -d '{"submissions": [...]}'
 ```
 
 Note that if you use data that you have not uploaded to Loculus the final step (uploading the results of ENA submission to Loculus) will fail as the accession will be unknown.
