@@ -26,7 +26,7 @@ from .errors import (
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
-from .transformer import transform_data_format
+from .transformer import TransformationError, transform_data_format
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
@@ -189,7 +189,12 @@ class DownloadManager:
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
             # Convert to new SILO format
-            transform_data_format(data_path, transformed_path)
+            try:
+                transform_data_format(data_path, transformed_path)
+            except Exception as exc:
+                logger.error("Data transformation failed: %s", exc)
+                safe_remove(download_dir)
+                raise TransformationError from exc
 
             # Validate record count
             try:

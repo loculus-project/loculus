@@ -6,6 +6,10 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+class TransformationError(Exception):
+    """Raised when data transformation fails"""
+
+
 def transform_data_format(data_path, transformed_path):
     """
     See https://github.com/GenSpectrum/LAPIS-SILO/tree/main/tools/legacyNdjsonTransformer
@@ -32,4 +36,4 @@ def transform_data_format(data_path, transformed_path):
     except subprocess.CalledProcessError as e:
         msg = f"Subprocess failed: {e.stderr}"
         logger.error(msg)
-        raise BaseException(msg) from e
+        raise TransformationError(msg) from e
