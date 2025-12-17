@@ -72,6 +72,7 @@ test_case_definitions = [
             "concatenated_string": "LOC_1.1",
             "required_collection_date": None,
         },
+        group_id=1,
     ),
     Case(
         name="invalid_option",

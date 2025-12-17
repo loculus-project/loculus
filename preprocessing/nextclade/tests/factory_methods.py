@@ -76,7 +76,7 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
-        group_id: int = 2
+        group_id: int = 2,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -177,7 +177,7 @@ class Case:
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
             sequences=self.input_sequence,
-            group_id=self.group_id
+            group_id=self.group_id,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
