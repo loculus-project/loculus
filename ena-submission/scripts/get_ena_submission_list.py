@@ -87,9 +87,7 @@ def filter_for_submission(
     )
     suppressed_accessions = fetch_suppressed_accessions(config)
     for entry in entries_iterator:
-        accession_version = AccessionVersion(
-            entry["metadata"]["accession"], int(entry["metadata"]["version"])
-        )
+        accession_version = AccessionVersion.from_string(entry["metadata"]["accessionVersion"])
         if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
         if entry["metadata"]["groupId"] == config.ingest_pipeline_submission_group:
