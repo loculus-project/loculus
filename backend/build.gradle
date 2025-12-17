@@ -40,7 +40,6 @@ repositories {
 
 dependencies {
     implementation "tools.jackson.module:jackson-module-kotlin"
-    implementation "tools.jackson.dataformat:jackson-dataformat-yaml"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "io.minio:minio:8.6.0"
     implementation "org.apache.commons:commons-csv:1.14.1"
@@ -69,6 +68,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.tukaani:xz:1.11'
 
+    testImplementation "tools.jackson.dataformat:jackson-dataformat-yaml"
     testImplementation "com.ninja-squad:springmockk:5.0.1"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
     testImplementation "io.jsonwebtoken:jjwt-api"
