@@ -156,6 +156,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
         "Content-Type": "application/json",
         "X-Request-ID": request_id,
     }
+    log.info(f"Fetching released data from {url} with request id {request_id}")
 
     with requests.get(url, headers=headers, timeout=60, stream=True) as response:
         response.raise_for_status()
