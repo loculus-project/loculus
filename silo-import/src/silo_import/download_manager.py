@@ -14,6 +14,7 @@ import requests
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
+    TRANSFORMED_DATA_FILENAME,
 )
 from .decompressor import analyze_ndjson
 from .errors import (
@@ -25,6 +26,7 @@ from .errors import (
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
+from .transformer import transform_data_format
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
@@ -132,6 +134,7 @@ class DownloadManager:
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
         data_path = download_dir / DATA_FILENAME
+        transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
         try:
             # Download data from backend
@@ -185,6 +188,9 @@ class DownloadManager:
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
+            # Convert to new SILO format
+            transform_data_format(data_path, transformed_path)
+
             # Validate record count
             try:
                 validate_record_count(analysis.record_count, expected_count)
@@ -200,7 +206,7 @@ class DownloadManager:
 
             return DownloadResult(
                 directory=download_dir,
-                data_path=data_path,
+                data_path=transformed_path,
                 etag=etag_value,
                 pipeline_versions=analysis.pipeline_versions,
             )
