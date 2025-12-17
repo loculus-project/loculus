@@ -45,7 +45,7 @@ class DownloadResult:
     """Result of a successful download."""
 
     directory: Path
-    data_path: Path
+    transformed_path: Path
     etag: str
     pipeline_versions: set[int]
 
@@ -206,7 +206,7 @@ class DownloadManager:
 
             return DownloadResult(
                 directory=download_dir,
-                data_path=transformed_path,
+                transformed_path=transformed_path,
                 etag=etag_value,
                 pipeline_versions=analysis.pipeline_versions,
             )
