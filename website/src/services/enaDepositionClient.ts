@@ -2,8 +2,28 @@ import { enaDepositionApi } from './enaDepositionApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getInstanceLogger } from '../logger.ts';
 import type { SubmitItem } from '../types/enaDeposition.ts';
+import type { InstanceLogger } from '../logger.ts';
 
-const instanceLogger = getInstanceLogger('EnaDepositionClient');
+// Create a browser-safe logger that only uses server-side logging when available
+const createClientSafeLogger = (): InstanceLogger => {
+    // Check if we're running in the browser
+    if (typeof window !== 'undefined') {
+        // Browser environment - use console logging
+        return {
+            error: (message: string) => console.error(`[EnaDepositionClient] ${message}`),
+            warn: (message: string) => console.warn(`[EnaDepositionClient] ${message}`),
+            info: (message: string) => console.info(`[EnaDepositionClient] ${message}`),
+            http: (message: string) => console.log(`[EnaDepositionClient] ${message}`),
+            verbose: (message: string) => console.log(`[EnaDepositionClient] ${message}`),
+            debug: (message: string) => console.debug(`[EnaDepositionClient] ${message}`),
+            silly: (message: string) => console.debug(`[EnaDepositionClient] ${message}`),
+        };
+    }
+    // Server environment - use winston
+    return getInstanceLogger('EnaDepositionClient');
+};
+
+const instanceLogger = createClientSafeLogger();
 
 export class EnaDepositionClient extends ZodiosWrapperClient<typeof enaDepositionApi> {
     public static create(enaDepositionUrl: string, logger = instanceLogger) {
