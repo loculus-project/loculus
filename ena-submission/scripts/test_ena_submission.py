@@ -32,6 +32,8 @@ from ena_deposition.ena_submission_helper import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
+    MoleculeType,
+    Topology,
     default_project_set,
     default_sample_set_type,
 )
@@ -48,24 +50,22 @@ with open("config/defaults.yaml", encoding="utf-8") as f:
 
 
 def mock_organism() -> EnaOrganismDetails:
-    metadata_dict = {
-        "taxon_id": 12345,
-        "scientific_name": "Test scientific name",
-        "molecule_type": "genomic RNA",
-        "organismName": "Test organism",
-    }
-    return EnaOrganismDetails(**metadata_dict)
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+    )
 
 
 def mock_multi_segmented_organism() -> EnaOrganismDetails:
-    metadata_dict = {
-        "taxon_id": 12345,
-        "scientific_name": "Test scientific name",
-        "molecule_type": "genomic RNA",
-        "organismName": "Test organism",
-        "topology": "circular",
-    }
-    return EnaOrganismDetails(**metadata_dict)
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        topology=Topology.CIRCULAR
+    )
 
 
 def mock_config():
