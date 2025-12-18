@@ -55,7 +55,7 @@ def loculus_organism_to_ena_organism(config: Config) -> dict[str, list[ENAOrgani
                     "Could not find suborganismIdentifierField in enaOrganism "
                     f"config for {ena_organism}"
                 )
-                logger.debug(error_msg)
+                logger.error(error_msg)
                 raise ValueError(error_msg) from None
             loculus_organism_to_ena_organism[details.loculusOrganism].append(
                 ENAOrganism(
