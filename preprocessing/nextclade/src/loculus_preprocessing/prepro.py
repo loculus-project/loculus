@@ -198,13 +198,14 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
     spec: ProcessingSpec,
     output_field: str,
-    submitter: str | None,
+    group_id: int | None,
     submitted_at: str | None,
     input_data: InputMetadata,
     input_fields: list[str],
+    config: Config,
 ) -> ProcessingResult:
     args = dict(spec.args)
-    args["submitter"] = submitter
+    args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["accession_version"] = accession_version
 
@@ -223,13 +224,13 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     return processing_result
 
 
-def processed_entry_no_alignment(
+def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
     accession_version: AccessionVersion,
     unprocessed: UnprocessedData,
     output_metadata: ProcessedMetadata,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
-    sequenceNameToFastaId: dict[SegmentName, str],
+    sequenceNameToFastaId: dict[SegmentName, str],  # noqa: N803
 ) -> SubmissionData:
     """Process a single sequence without alignment"""
 
@@ -319,22 +320,27 @@ def get_output_metadata(
                 errors.extend(input_metadata.errors)
                 warnings.extend(input_metadata.warnings)
                 input_fields.append(input_path)
-                submitter = unprocessed.inputMetadata["submitter"]
+                group_id = (
+                    int(unprocessed.inputMetadata["group_id"])
+                    if unprocessed.inputMetadata["group_id"]
+                    else None
+                )
                 submitted_at = unprocessed.inputMetadata["submittedAt"]
             else:
                 input_data[arg_name] = unprocessed.metadata.get(input_path)
                 input_fields.append(input_path)
-                submitter = unprocessed.submitter
+                group_id = unprocessed.group_id
                 submitted_at = unprocessed.submittedAt
 
         processing_result = _call_processing_function(
             accession_version=accession_version,
             spec=spec,
             output_field=output_field,
-            submitter=submitter,
+            group_id=group_id,
             submitted_at=submitted_at,
             input_data=input_data,
             input_fields=input_fields,
+            config=config,
         )
 
         output_metadata[output_field] = processing_result.datum
@@ -343,7 +349,7 @@ def get_output_metadata(
         if (
             null_per_backend(processing_result.datum)
             and spec.required
-            and submitter != "insdc_ingest_user"
+            and group_id != config.insdc_ingest_group_id
         ):
             errors.append(
                 ProcessingAnnotation.from_fields(

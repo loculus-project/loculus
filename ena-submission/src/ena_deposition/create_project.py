@@ -59,7 +59,7 @@ def construct_project_set_object(
     submissions of the same project for testing.
     (ENA blocks multiple submissions with the same alias)
     """
-    metadata_dict = config.organisms[entry["organism"]]["enaDeposition"]
+    metadata_dict = config.organisms[entry["organism"]]
     alias = get_alias(
         f"{entry['group_id']}:{entry['organism']}:{config.unique_project_suffix}",
         test,
@@ -74,22 +74,20 @@ def construct_project_set_object(
     project_type = ProjectType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        name=(
-            f"{metadata_dict['scientific_name']}: Genome sequencing by {group_name}, {center_name}"
-        ),
+        name=(f"{metadata_dict.scientific_name}: Genome sequencing by {group_name}, {center_name}"),
         title=(
-            f"{metadata_dict['scientific_name']}: Genome sequencing by "
+            f"{metadata_dict.scientific_name}: Genome sequencing by "
             f"{group_name}, {center_name}, {address_string}"
         ),
         description=(
-            f"Automated upload of {metadata_dict['scientific_name']} sequences "
+            f"Automated upload of {metadata_dict.scientific_name} sequences "
             f"submitted by {group_name}, {center_name}, {address_string} "
             f"to {config.db_name}"
         ),
         submission_project=SubmissionProject(
             organism=OrganismType(
-                taxon_id=metadata_dict["taxon_id"],
-                scientific_name=metadata_dict["scientific_name"],
+                taxon_id=metadata_dict.taxon_id,
+                scientific_name=metadata_dict.scientific_name,
             )
         ),
         project_links=ProjectLinks(

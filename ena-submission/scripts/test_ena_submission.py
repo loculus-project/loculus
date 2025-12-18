@@ -12,6 +12,7 @@ from unittest import mock
 
 import xmltodict
 import yaml
+from ena_deposition.config import EnaOrganismDetails, ManifestFieldDetails, MetadataMapping
 from ena_deposition.create_assembly import (
     create_chromosome_list_object,
     create_manifest_object,
@@ -31,6 +32,8 @@ from ena_deposition.ena_submission_helper import (
     reformat_authors_from_loculus_to_embl_style,
 )
 from ena_deposition.ena_types import (
+    MoleculeType,
+    Topology,
     default_project_set,
     default_sample_set_type,
 )
@@ -46,18 +49,37 @@ with open("config/defaults.yaml", encoding="utf-8") as f:
     defaults = yaml.safe_load(f)
 
 
+def mock_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+    )
+
+
+def mock_multi_segmented_organism() -> EnaOrganismDetails:
+    return EnaOrganismDetails(
+        taxon_id=12345,
+        scientific_name="Test scientific name",
+        molecule_type=MoleculeType.GENOMIC_RNA,
+        organismName="Test organism",
+        topology=Topology.CIRCULAR
+    )
+
+
 def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    metadata_dict = {
-        "taxon_id": "Test taxon",
-        "scientific_name": "Test scientific name",
-        "molecule_type": "genomic RNA",
+    config.organisms = {"Test organism": mock_organism()}
+    config.metadata_mapping = {
+        key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
-    config.organisms = {"Test organism": {"enaDeposition": metadata_dict}}
-    config.metadata_mapping = defaults["metadata_mapping"]
-    config.manifest_fields_mapping = defaults["manifest_fields_mapping"]
+    config.manifest_fields_mapping = {
+        key: ManifestFieldDetails(**item)
+        for key, item in defaults["manifest_fields_mapping"].items()
+    }
     config.ena_checklist = "ERC000033"
     config.set_alias_suffix = None
     config.is_broker = True
@@ -264,17 +286,12 @@ class AssemblyCreationTests(unittest.TestCase):
             "sampleCollectionDate": "2024-01-01",
             "geoLocCountry": "Italy",
         }
-        organism_metadata = {
-            "scientific_name": "Test organism",
-            "molecule_type": "genomic RNA",
-            "topology": "linear",
-        }
         unaligned_sequences = {
             "main": "ATCGATCGATCG",
         }
 
         flatfile_path = create_flatfile(
-            config, metadata, organism_metadata, unaligned_sequences, dir="./tmp"
+            config, metadata, mock_organism(), unaligned_sequences, dir="./tmp"
         )
 
         with gzip.open(flatfile_path, "rt", encoding="utf-8") as f:
@@ -293,7 +310,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
     def test_create_chromosome_list_multi_segment(self):
         chromosome_list = create_chromosome_list_object(
-            self.unaligned_sequences_multi, self.seq_key, {"topology": "circular"}
+            self.unaligned_sequences_multi, self.seq_key, mock_multi_segmented_organism()
         )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
@@ -306,7 +323,9 @@ class AssemblyCreationTests(unittest.TestCase):
         )
 
     def test_create_chromosome_list(self):
-        chromosome_list = create_chromosome_list_object(self.unaligned_sequences, self.seq_key, {})
+        chromosome_list = create_chromosome_list_object(
+            self.unaligned_sequences, self.seq_key, mock_organism()
+        )
         file_name_chromosome_list = create_chromosome_list(chromosome_list)
 
         with gzip.GzipFile(file_name_chromosome_list, "rb") as gz:
@@ -353,7 +372,7 @@ class AssemblyCreationTests(unittest.TestCase):
             "ADDRESS": "Fake center name, Basel, BS, Switzerland",
             "ASSEMBLYNAME": "LOC_0001TLY.1",
             "ASSEMBLY_TYPE": "isolate",
-            "AUTHORS": "M. Ammar M.S.;",
+            "AUTHORS": "Umair M., Haider S.A., Jamal Z., Ammar M., Hakim R., Ali Q., Salman M.;",
             "COVERAGE": "1",
             "PROGRAM": "Ivar",
             "PLATFORM": "Illumina",
