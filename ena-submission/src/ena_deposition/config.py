@@ -51,7 +51,7 @@ class EnaOrganismDetails(BaseModel):
     topology: Topology = Topology.LINEAR
 
 
-type EnaOrganismName = str
+EnaOrganismName = str
 
 
 class Config(BaseModel):
