@@ -64,6 +64,17 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="insdc_ingest group can submit without required fields",
+        input_metadata={"submissionId": "missing_one_required_field", "name_required": "name"},
+        accession_id="21",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_21.1",
+            "required_collection_date": None,
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "submissionId": "invalid_option",
@@ -605,6 +616,8 @@ accepted_authors = {
     "Smith,Anna Maria;Perez,Jose X;": "Smith, Anna Maria; Perez, Jose X.",
     "de souza, a.": "de souza, A.",
     "McGregor, Ewan": "McGregor, Ewan",
+    "'t Hooft, Gerard": "'t Hooft, Gerard",
+    "Tandoc, A. 3rd": "Tandoc, A. 3rd",
 }
 not_accepted_authors = [
     ";",
@@ -617,6 +630,7 @@ not_accepted_authors = [
     "Anna Maria Smith",
     "Smith9, Anna;",
     "Anna Smith, Cameron Tucker, and Jose Perez",
+    "Count4th, EwanMcGregor, Count4th",
 ]
 
 

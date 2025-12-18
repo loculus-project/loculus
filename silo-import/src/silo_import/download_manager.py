@@ -6,6 +6,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from http.client import BAD_REQUEST
 from pathlib import Path
 
 import requests
@@ -127,6 +128,7 @@ class DownloadManager:
             RecordCountMismatch: Record count doesn't match header
             RuntimeError: Other download or validation errors
         """
+        logger.info(f"Starting download from backend with ETag: {last_etag}")
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
         data_path = download_dir / DATA_FILENAME
@@ -140,6 +142,16 @@ class DownloadManager:
                 last_etag,
                 300,
             )
+
+            if response.status_code >= BAD_REQUEST:
+                msg = (
+                    f"Failed to download data: HTTP {response.status_code}."
+                    f"Headers: {response.headers} Body: "
+                    + data_path.read_text(encoding="utf-8", errors="replace")
+                    if data_path.exists()
+                    else "missing"
+                )
+                raise RuntimeError(msg)
 
             # Check for 304 Not Modified
             if response.status_code == 304:  # noqa: PLR2004

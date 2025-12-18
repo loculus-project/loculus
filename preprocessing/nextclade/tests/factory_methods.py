@@ -76,6 +76,7 @@ class UnprocessedEntryFactory:
         metadata_dict: dict[str, str | None],
         accession_id: str,
         sequences: dict[SegmentName, NucleotideSequence | None],
+        group_id: int = 2,
     ) -> UnprocessedEntry:
         return UnprocessedEntry(
             accessionVersion=f"LOC_{accession_id}.1",
@@ -84,7 +85,7 @@ class UnprocessedEntryFactory:
                 submittedAt=str(
                     datetime.strptime("2021-12-15", "%Y-%m-%d").replace(tzinfo=pytz.utc).timestamp()
                 ),
-                group_id=2,
+                group_id=group_id,
                 metadata=metadata_dict,
                 unalignedNucleotideSequences=sequences,
             ),
@@ -167,6 +168,7 @@ class Case:
     expected_errors: list[ProcessingAnnotation] | None = None
     expected_warnings: list[ProcessingAnnotation] | None = None
     expected_processed_alignment: ProcessedAlignment | None = None
+    group_id: int = 2
 
     def create_test_case(self, factory_custom: ProcessedEntryFactory) -> ProcessingTestCase:
         if not self.expected_processed_alignment:
@@ -175,6 +177,7 @@ class Case:
             metadata_dict=self.input_metadata,
             accession_id=self.accession_id,
             sequences=self.input_sequence,
+            group_id=self.group_id,
         )
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,

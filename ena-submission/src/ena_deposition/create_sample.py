@@ -4,13 +4,11 @@ import threading
 import time
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any
 
 import pytz
-from attr import dataclass
 from psycopg2.pool import SimpleConnectionPool
 
-from .config import Config
+from .config import Config, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
     create_ena_sample,
@@ -47,31 +45,14 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class MetadataMapping:
-    loculus_fields: list[str]
-    default: str | None = None
-    function: str | None = None
-    args: list[str] | None = None
-    units: str | None = None
-
-
 def get_sample_attributes(
-    metadata_mapping: dict[str, dict[str, Any]], sample_metadata: dict[str, str]
+    metadata_mapping: dict[str, MetadataMapping], sample_metadata: dict[str, str]
 ) -> list[SampleAttribute]:
     """Turn Loculus metadata into ENA sample attributes per metadata_mapping."""
 
     result: list[SampleAttribute] = []
 
-    for field_name, field_config in metadata_mapping.items():
-        mapping = MetadataMapping(
-            loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
-            default=field_config.get("default"),  # type: ignore[arg-type]
-            function=field_config.get("function"),  # type: ignore[arg-type]
-            args=field_config.get("args"),  # type: ignore[arg-type]
-            units=field_config.get("units"),  # type: ignore[arg-type]
-        )
-
+    for field_name, mapping in metadata_mapping.items():
         loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
 
         # Fields with function and args are processed differently
@@ -137,7 +118,7 @@ def construct_sample_set_object(
     sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
     center_name = sample_data_in_submission_table["center_name"]
     organism: str = sample_data_in_submission_table["organism"]  # type: ignore
-    organism_metadata = config.organisms[organism]["enaDeposition"]
+    organism_metadata = config.organisms[organism]
     alias = get_alias(
         f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
         test,
@@ -154,14 +135,14 @@ def construct_sample_set_object(
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        title=f"{organism_metadata['scientific_name']}: Genome sequencing",
+        title=f"{organism_metadata.scientific_name}: Genome sequencing",
         description=(
-            f"Automated upload of {organism_metadata['scientific_name']} sequences submitted by "
+            f"Automated upload of {organism_metadata.scientific_name} sequences submitted by "
             f"{center_name} from {config.db_name}"
         ),
         sample_name=SampleName(
-            taxon_id=organism_metadata["taxon_id"],
-            scientific_name=organism_metadata["scientific_name"],
+            taxon_id=organism_metadata.taxon_id,
+            scientific_name=organism_metadata.scientific_name,
         ),
         sample_links=SampleLinks(
             sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]

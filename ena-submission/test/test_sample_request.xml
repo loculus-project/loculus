@@ -2,7 +2,7 @@
         <SAMPLE center_name="Fake center name" alias="LOC_0001TLY:Test organism:Test suffix">
                 <TITLE>Test scientific name: Genome sequencing</TITLE>
                 <SAMPLE_NAME>
-                        <TAXON_ID>Test taxon</TAXON_ID>
+                        <TAXON_ID>12345</TAXON_ID>
                         <SCIENTIFIC_NAME>Test scientific name</SCIENTIFIC_NAME>
                 </SAMPLE_NAME>
                 <DESCRIPTION>Automated upload of Test scientific name sequences submitted by Fake center name from Loculus</DESCRIPTION>
@@ -53,7 +53,7 @@
                         </SAMPLE_ATTRIBUTE>
                         <SAMPLE_ATTRIBUTE>
                                 <TAG>authors</TAG>
-                                <VALUE>M. Ammar, M. Salman, M. Umair, Q. Ali, R. Hakim, S.A. Haider, Z. Jamal</VALUE>
+                                <VALUE>Umair, M.; Haider, S. A.; Jamal, Z.; Ammar, M.; Hakim, R.; Ali, Q.; Salman, M.</VALUE>
                         </SAMPLE_ATTRIBUTE>
                         <SAMPLE_ATTRIBUTE>
                                 <TAG>collector name</TAG>

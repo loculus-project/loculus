@@ -14,7 +14,7 @@ from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition import call_loculus
 
-from .config import Config
+from .config import Config, EnaOrganismDetails
 from .ena_submission_helper import (
     CreationResult,
     create_chromosome_list,
@@ -24,7 +24,6 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
-    get_molecule_type,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -32,7 +31,6 @@ from .ena_types import (
     AssemblyChromosomeListFileObject,
     AssemblyManifest,
     ChromosomeType,
-    Topology,
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
@@ -56,7 +54,9 @@ logger = logging.getLogger(__name__)
 
 
 def create_chromosome_list_object(
-    unaligned_sequences: dict[str, str], seq_key: dict[str, str], organism_metadata: dict[str, str]
+    unaligned_sequences: dict[str, str],
+    seq_key: dict[str, str],
+    organism_metadata: EnaOrganismDetails,
 ) -> AssemblyChromosomeListFile:
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_900094155.1?show=chromosomes as a template
     # Use https://www.ebi.ac.uk/ena/browser/view/GCA_000854165.1?show=chromosomes for multi-segment
@@ -68,7 +68,7 @@ def create_chromosome_list_object(
     segment_order = get_segment_order(unaligned_sequences)
 
     for segment_name in segment_order:
-        topology = Topology(organism_metadata.get("topology", "linear"))
+        topology = organism_metadata.topology
         if multi_segment:
             entry = AssemblyChromosomeListFileObject(
                 object_name=f"{seq_key['accession']}_{segment_name}",
@@ -128,10 +128,10 @@ def get_address(config: Config, entry: dict[str, Any]) -> str | None:
 def get_assembly_values_in_metadata(config: Config, metadata: dict[str, str]) -> dict[str, str]:
     assembly_values = {}
     for key in config.manifest_fields_mapping:
-        default = config.manifest_fields_mapping[key].get("default")
-        loculus_fields = config.manifest_fields_mapping[key]["loculus_fields"]
-        type = config.manifest_fields_mapping[key].get("type")
-        function = config.manifest_fields_mapping[key].get("function")
+        default = config.manifest_fields_mapping[key].default
+        loculus_fields = config.manifest_fields_mapping[key].loculus_fields
+        type = config.manifest_fields_mapping[key].type
+        function = config.manifest_fields_mapping[key].function
         if type == "int":
             if len(loculus_fields) != 1:
                 msg = (
@@ -201,7 +201,7 @@ def create_manifest_object(
     )
 
     unaligned_nucleotide_sequences = submission_table_entry["unaligned_nucleotide_sequences"]
-    organism_metadata = config.organisms[submission_table_entry["organism"]]["enaDeposition"]
+    organism_metadata = config.organisms[submission_table_entry["organism"]]
     chromosome_list_object = create_chromosome_list_object(
         unaligned_nucleotide_sequences, submission_table_entry, organism_metadata
     )
@@ -222,7 +222,7 @@ def create_manifest_object(
             flatfile=flat_file,
             chromosome_list=chromosome_list_file,
             description=get_description(config, metadata),
-            moleculetype=get_molecule_type(organism_metadata),
+            moleculetype=organism_metadata.molecule_type,
             **assembly_values,  # type: ignore
             address=get_address(config, submission_table_entry),
         )
@@ -395,7 +395,7 @@ def can_be_revised(config: Config, db_config: SimpleConnectionPool, entry: dict[
 
     differing_fields = {}
     for mapping in config.manifest_fields_mapping.values():
-        loculus_field_names = mapping.get("loculus_fields", [])
+        loculus_field_names = mapping.loculus_fields
         for loculus_field_name in loculus_field_names:
             last_entry = last_version_entry["metadata"].get(loculus_field_name)
             new_entry = entry["metadata"].get(loculus_field_name)

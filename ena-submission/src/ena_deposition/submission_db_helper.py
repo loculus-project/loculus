@@ -128,6 +128,20 @@ class AccessionVersion:
     accession: Accession
     version: Version
 
+    @classmethod
+    def from_string(cls, s: str) -> "AccessionVersion":
+        if s.count(".") != 1:
+            msg = (
+                f"Invalid AccessionVersion string '{s}': "
+                "expected exactly one '.' separating accession and version"
+            )
+            raise ValueError(msg)
+        accession_str, version_str = s.split(".", 1)
+        return cls(
+            accession=accession_str,
+            version=int(version_str),
+        )
+
 
 @dataclass(frozen=True)
 class ProjectId:
