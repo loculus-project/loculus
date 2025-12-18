@@ -117,7 +117,8 @@ kind: CronJob
 metadata:
   name: loculus-get-ena-submission-list-cronjob
 spec:
-  schedule: "0 1,13 * * *" # run twice a day at 1am and 1pm
+   # run twice a day to ensure at least once no overlap with argo cd refresh
+  schedule: "0 1,13 * * *"
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
