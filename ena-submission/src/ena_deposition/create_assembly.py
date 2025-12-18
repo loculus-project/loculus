@@ -744,10 +744,12 @@ def assembly_table_handle_errors(
     messages = []
 
     if entries_waiting:
+        top3_accessions = [entry.get("accession") for entry in entries_waiting[:3]]
         msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_waiting)} entries in assembly_table in"
-            f" status WAITING for over {config.waiting_threshold_hours}h"
+            f"{len(entries_waiting)} entries in assembly_table in "
+            f"status WAITING for over {config.waiting_threshold_hours}h. "
+            f"First accessions: {top3_accessions}"
         )
         messages.append(msg)
 
