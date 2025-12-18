@@ -1,13 +1,9 @@
 package org.loculus.backend.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
-import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
@@ -21,14 +17,20 @@ import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
+import tools.jackson.module.kotlin.readValue
 import java.io.File
 import javax.sql.DataSource
 
@@ -59,7 +61,7 @@ private val logger = mu.KotlinLogging.logger {}
 @Configuration
 @EnableScheduling
 @ImportAutoConfiguration(
-    value = [ExposedAutoConfiguration::class],
+    value = [ExposedAutoConfigurationCompat::class], // TODO(#5754) Revert shim once exposed supports spring boot 4
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 @ConfigurationPropertiesScan("org.loculus.backend")
@@ -80,6 +82,17 @@ class BackendSpringConfig {
     fun databaseConfig() = DatabaseConfig {
         useNestedTransactions = true
         sqlLogger = Slf4jSqlDebugLogger
+    }
+
+    @Bean
+    fun loculusJacksonCustomizer(): JsonMapperBuilderCustomizer = JsonMapperBuilderCustomizer { builder ->
+        builder.addModule(
+            KotlinModule.Builder()
+                .disable(tools.jackson.module.kotlin.KotlinFeature.StrictNullChecks)
+                .build(),
+        )
+        builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
     }
 
     @Bean
@@ -198,9 +211,12 @@ internal fun validateEarliestReleaseDateFields(config: BackendConfig): List<Stri
 }
 
 fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendConfig {
-    val config = objectMapper
+    val mapper = (objectMapper as JsonMapper)
+        .rebuild()
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .readValue<BackendConfig>(File(configPath))
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
+    val config = mapper.readValue<BackendConfig>(File(configPath))
     logger.info { "Loaded backend config from $configPath" }
     logger.info { "Config: $config" }
     val validationErrors = validateEarliestReleaseDateFields(config)

@@ -1,10 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.api.GeneName
 import org.loculus.backend.api.GeneticSequence
@@ -18,6 +13,11 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.DoubleNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 
 const val MAIN_SEGMENT = "main"
 const val SOME_LONG_GENE = "someLongGene"
@@ -25,13 +25,13 @@ const val SOME_SHORT_GENE = "someShortGene"
 
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(
-        "date" to TextNode("2002-12-15"),
-        "host" to TextNode("google.com"),
-        "region" to TextNode("Europe"),
-        "country" to TextNode("Spain"),
+        "date" to StringNode("2002-12-15"),
+        "host" to StringNode("google.com"),
+        "region" to StringNode("Europe"),
+        "country" to StringNode("Spain"),
         "age" to IntNode(42),
         "qc" to DoubleNode(0.987654321),
-        "pangoLineage" to TextNode("XBB.1.5"),
+        "pangoLineage" to StringNode("XBB.1.5"),
         "division" to NullNode.instance,
         "dateSubmitted" to NullNode.instance,
         "sex" to NullNode.instance,
@@ -68,14 +68,14 @@ val defaultProcessedData = ProcessedData(
 
 val defaultProcessedDataMultiSegmented = ProcessedData(
     metadata = mapOf(
-        "date" to TextNode("2002-12-15"),
-        "host" to TextNode("google.com"),
-        "region" to TextNode("Europe"),
-        "country" to TextNode("Spain"),
-        "specialOtherField" to TextNode("specialOtherValue"),
+        "date" to StringNode("2002-12-15"),
+        "host" to StringNode("google.com"),
+        "region" to StringNode("Europe"),
+        "country" to StringNode("Spain"),
+        "specialOtherField" to StringNode("specialOtherValue"),
         "age" to IntNode(42),
         "qc" to DoubleNode(0.9),
-        "pangoLineage" to TextNode("XBB.1.5"),
+        "pangoLineage" to StringNode("XBB.1.5"),
     ),
     unalignedNucleotideSequences = mapOf(
         "notOnlySegment" to "NNACTGNN",
@@ -108,10 +108,10 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
 
 val defaultProcessedDataWithoutSequences = ProcessedData<GeneticSequence>(
     metadata = mapOf(
-        "date" to TextNode("2002-12-15"),
-        "host" to TextNode("google.com"),
-        "region" to TextNode("Europe"),
-        "country" to TextNode("Spain"),
+        "date" to StringNode("2002-12-15"),
+        "host" to StringNode("google.com"),
+        "region" to StringNode("Europe"),
+        "country" to StringNode("Spain"),
         "division" to NullNode.instance,
     ),
     unalignedNucleotideSequences = emptyMap(),
@@ -206,7 +206,7 @@ object PreparedProcessedData {
     fun withUnknownMetadataField(accession: Accession, fields: List<String>) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         data = defaultProcessedData.copy(
-            metadata = defaultProcessedData.metadata + fields.map { it to TextNode("value for $it") },
+            metadata = defaultProcessedData.metadata + fields.map { it to StringNode("value for $it") },
         ),
     )
 
@@ -222,7 +222,7 @@ object PreparedProcessedData {
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
                 "region" to IntNode(5),
-                "age" to TextNode("not a number"),
+                "age" to StringNode("not a number"),
             ),
         ),
     )
@@ -231,7 +231,7 @@ object PreparedProcessedData {
         accession = accession,
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
-                "date" to TextNode("1.2.2021"),
+                "date" to StringNode("1.2.2021"),
             ),
         ),
     )
@@ -240,7 +240,7 @@ object PreparedProcessedData {
         accession = accession,
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
-                "booleanColumn" to TextNode("not a boolean"),
+                "booleanColumn" to StringNode("not a boolean"),
             ),
         ),
     )

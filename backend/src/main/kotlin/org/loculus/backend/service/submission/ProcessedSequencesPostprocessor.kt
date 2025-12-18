@@ -1,10 +1,10 @@
 package org.loculus.backend.service.submission
 
-import com.fasterxml.jackson.databind.node.NullNode
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
+import tools.jackson.databind.node.NullNode
 
 @Service
 class ProcessedSequencesPostprocessor(private val backendConfig: BackendConfig) {

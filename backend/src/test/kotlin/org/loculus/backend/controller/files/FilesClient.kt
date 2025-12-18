@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.files
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.loculus.backend.api.FileCategory
 import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.api.FileIdAndMultipartWriteUrl
@@ -50,7 +49,7 @@ class FilesClient(private val mockMvc: MockMvc) {
         val request = post("/files/complete-multipart-upload")
             .withAuth(jwt)
             .contentType(MediaType.APPLICATION_JSON)
-        fileIdAndEtags?.let { request.content(jacksonObjectMapper().writeValueAsString(it)) }
+        fileIdAndEtags?.let { request.content(jacksonObjectMapper.writeValueAsString(it)) }
         return mockMvc.perform(request)
     }
 
@@ -94,26 +93,28 @@ fun ResultActions.andGetFileIds(): List<FileId> = andReturn()
     .response
     .contentAsString
     .let {
-        val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { UUID.fromString(it.get("fileId").textValue()) }
+        val responseJson = jacksonObjectMapper.readTree(it)
+        responseJson.map { UUID.fromString(it.get("fileId").stringValue()) }
     }
 
 fun ResultActions.andGetFileIdsAndUrls(): List<FileIdAndWriteUrl> = andReturn()
     .response
     .contentAsString
     .let {
-        val responseJson = jacksonObjectMapper().readTree(it)
-        responseJson.map { FileIdAndWriteUrl(UUID.fromString(it.get("fileId").textValue()), it.get("url").textValue()) }
+        val responseJson = jacksonObjectMapper.readTree(it)
+        responseJson.map {
+            FileIdAndWriteUrl(UUID.fromString(it.get("fileId").stringValue()), it.get("url").stringValue())
+        }
     }
 
 fun ResultActions.andGetFileIdsAndMultipartUrls(): List<FileIdAndMultipartWriteUrl> = andReturn()
     .response
     .contentAsString
     .let { body ->
-        val root = jacksonObjectMapper().readTree(body)
+        val root = jacksonObjectMapper.readTree(body)
         root.map { node ->
-            val fileId = UUID.fromString(node.get("fileId").textValue())
-            val urls = node.get("urls").map { it.textValue() }
+            val fileId = UUID.fromString(node.get("fileId").stringValue())
+            val urls = node.get("urls").map { it.stringValue() }
             FileIdAndMultipartWriteUrl(fileId, urls)
         }
     }

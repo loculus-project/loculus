@@ -9,7 +9,9 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <logger name="Exposed" level="debug" />
+    <logger name="Exposed" level="debug" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
 
     <logger name="org.loculus" level="debug" />
     <logger name="org.testcontainers" level="warn" />

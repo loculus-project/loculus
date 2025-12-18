@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
@@ -20,6 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.node.StringNode
 
 @EndpointTest
 class SubmitExternalMetadataEndpointTest(
@@ -62,7 +62,7 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", StringNode("GENBANK1000.1")))
     }
 
     @Test
@@ -87,8 +87,8 @@ class SubmitExternalMetadataEndpointTest(
 
         val releasedSequenceEntry = getReleasedSequenceEntry(accession)
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
-        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", StringNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", StringNode("DB1.1")))
     }
 
     @Test
@@ -104,7 +104,7 @@ class SubmitExternalMetadataEndpointTest(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
                 externalMetadataUpdater = "other_db",
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -124,7 +124,7 @@ class SubmitExternalMetadataEndpointTest(
             .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -147,7 +147,7 @@ class SubmitExternalMetadataEndpointTest(
             .submitExternalMetadata(
                 PreparedExternalMetadata.successfullySubmitted(accession = accession),
             )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail")
@@ -161,7 +161,7 @@ class SubmitExternalMetadataEndpointTest(
 
     private fun getReleasedSequenceEntry(accession: Accession): ProcessedData<GeneticSequence> {
         val releasedSequenceEntry = convenienceClient.getReleasedData()
-            .find { it.metadata["accession"]?.textValue() == accession }
+            .find { it.metadata["accession"]?.stringValue() == accession }
 
         assertThat(releasedSequenceEntry, notNullValue())
         return releasedSequenceEntry!!

@@ -2,7 +2,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.7'
     // If kotlin version bumped, check if gradle version can be bumped as well 
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
@@ -12,6 +11,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.spring' version '2.2.21'
     id 'org.jlleitschuh.gradle.ktlint' version '14.0.1'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
+    id 'org.springframework.boot' version '4.0.0'
 }
 
 group = 'org.loculus'
@@ -39,47 +39,50 @@ repositories {
 }
 
 dependencies {
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
-    implementation "org.jetbrains.kotlin:kotlin-reflect"
+    implementation "tools.jackson.module:jackson-module-kotlin"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
-    implementation "org.postgresql:postgresql"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
-    implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
+    implementation "org.flywaydb:flyway-database-postgresql"
+    implementation "org.hibernate.validator:hibernate-validator"
     implementation platform("org.jetbrains.exposed:exposed-bom:0.61.0")
-    implementation "org.jetbrains.exposed:exposed-spring-boot-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
+    implementation "org.jetbrains.exposed:exposed-spring-boot-starter"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat"
-    implementation "org.hibernate.validator:hibernate-validator"
+    implementation "org.jsoup:jsoup:1.21.2"
     implementation "org.keycloak:keycloak-admin-client:26.0.7"
-    implementation("io.minio:minio:8.6.0")
-    implementation("software.amazon.awssdk:s3:2.40.8")
-
+    runtimeOnly "org.postgresql:postgresql"
+    implementation "org.redundent:kotlin-xml-builder:1.9.3"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
+    implementation "org.springframework.boot:spring-boot-starter-flyway"
+    implementation "org.springframework.boot:spring-boot-starter-jdbc"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
-
-    implementation 'org.apache.commons:commons-compress'
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "software.amazon.awssdk:s3:2.40.8"
     implementation 'com.github.luben:zstd-jni:1.5.7-6'
-    implementation 'org.tukaani:xz:1.11'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    implementation("org.redundent:kotlin-xml-builder:1.9.3")
-    implementation("org.jsoup:jsoup:1.21.2")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test") {
-        exclude group: "org.mockito"
-    }
+    testImplementation "tools.jackson.dataformat:jackson-dataformat-yaml"
+    testImplementation "io.minio:minio:8.6.0"
+    testImplementation "org.tukaani:xz:1.11"
+    testImplementation "com.ninja-squad:springmockk:5.0.1"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
     testImplementation "io.jsonwebtoken:jjwt-api"
     testImplementation "io.jsonwebtoken:jjwt-impl"
     testImplementation "io.jsonwebtoken:jjwt-jackson"
-    testImplementation "com.ninja-squad:springmockk:5.0.1"
-    testImplementation "org.testcontainers:postgresql"
-    testImplementation "org.testcontainers:minio"
     testImplementation "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.springframework.boot:spring-boot-test-autoconfigure"
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude group: "org.mockito"
+    }
+    testImplementation "org.springframework.boot:spring-boot-webmvc-test"
+    testImplementation platform("org.testcontainers:testcontainers-bom:2.0.3")
+    testImplementation "org.testcontainers:testcontainers-minio"
+    testImplementation "org.testcontainers:testcontainers-postgresql"
     ktlint("com.pinterest.ktlint:ktlint-cli:1.8.0") {
         attributes {
             attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))

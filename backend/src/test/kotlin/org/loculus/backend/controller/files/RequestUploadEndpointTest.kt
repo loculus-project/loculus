@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.files
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
@@ -24,6 +23,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -77,7 +77,7 @@ class RequestUploadEndpointTest(
         val url = objectMapper.readTree(responseContent)
             .get(0)
             .get("url")
-            .textValue()
+            .stringValue()
 
         val content = "test content".toByteArray()
         val request = HttpPut(url)

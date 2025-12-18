@@ -1,7 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasKey
@@ -20,9 +18,11 @@ import org.loculus.backend.controller.files.FilesClient
 import org.loculus.backend.controller.files.andGetFileIdsAndUrls
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.databind.node.NullNode
 
 @EndpointTest(
     properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
@@ -36,7 +36,7 @@ class GetReleasedDataFileSharingEndpointTest(
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
     @Autowired private val filesClient: FilesClient,
 ) {
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = jacksonObjectMapper
 
     @Test
     fun `GIVEN processed data with files THEN return file information in metadata`() {
@@ -73,13 +73,13 @@ class GetReleasedDataFileSharingEndpointTest(
         assertThat(responseBody, hasSize(accessionVersions.size))
         for (entry in responseBody) {
             assertThat(entry.metadata, hasKey("myFileCategory"))
-            val myFileCategory = objectMapper.readTree(entry.metadata["myFileCategory"]!!.asText()).toList()
+            val myFileCategory = objectMapper.readTree(entry.metadata["myFileCategory"]!!.asString()).toList()
             assertThat(myFileCategory, hasSize(2))
             fileIds.forEachIndexed { i, id ->
                 val file = myFileCategory[i]
-                assertThat(file["fileId"].asText(), `is`(fileIds[i].toString()))
-                assertThat(file["name"].asText(), `is`("file$i.txt"))
-                assertThat(file["url"].asText(), containsString(fileIds[i].toString()))
+                assertThat(file["fileId"].asString(), `is`(fileIds[i].toString()))
+                assertThat(file["name"].asString(), `is`("file$i.txt"))
+                assertThat(file["url"].asString(), containsString(fileIds[i].toString()))
             }
 
             assertThat(entry.metadata, hasKey("myOtherFileCategory"))

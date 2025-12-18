@@ -365,7 +365,7 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "contains no value for 'id'",
                     DEFAULT_ORGANISM,
@@ -380,7 +380,7 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "The metadata file does not contain either header 'id' or 'submissionId'",
                     DEFAULT_ORGANISM,
@@ -396,7 +396,7 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "Metadata file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
@@ -413,7 +413,7 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "Sequence file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
@@ -435,7 +435,7 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "Sequence file contains 1 FASTA ids that are not present in the metadata file: 'notInMetadata'",
                     DEFAULT_ORGANISM,
@@ -456,7 +456,7 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
+                    status().isUnprocessableContent,
                     "Unprocessable Entity",
                     "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
                     DEFAULT_ORGANISM,
@@ -539,7 +539,7 @@ class SubmitEndpointTest(
             sequencesFile,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(

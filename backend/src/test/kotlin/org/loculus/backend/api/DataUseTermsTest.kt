@@ -1,7 +1,5 @@
 package org.loculus.backend.api
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.LocalDate
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.`is`
@@ -9,6 +7,8 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.springframework.beans.factory.annotation.Autowired
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 
 @SpringBootTestWithoutDatabase
 class DataUseTermsTest(@Autowired private val objectMapper: ObjectMapper) {

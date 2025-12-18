@@ -1,7 +1,5 @@
 package org.loculus.backend.utils
 
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
@@ -11,6 +9,8 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.service.submission.RawProcessedData
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
 
 class EarliestReleaseDateFinderTest {
 
@@ -55,7 +55,7 @@ fun row(
     processedData = ProcessedData(
         metadata = fieldValues.map { (field, date) ->
             field to
-                if (date != null) TextNode(date.date.format(LocalDate.Formats.ISO)) else NullNode.getInstance()
+                if (date != null) StringNode(date.date.format(LocalDate.Formats.ISO)) else NullNode.getInstance()
         }.toMap(),
         unalignedNucleotideSequences = emptyMap(),
         alignedNucleotideSequences = emptyMap(),

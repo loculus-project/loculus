@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
@@ -34,6 +33,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -138,7 +138,7 @@ class ApproveProcessedDataEndpointTest(
                 AccessionVersion(nonExistentAccession, 1),
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.detail", containsString("Accession versions $nonExistentAccession.1 do not exist")))
 
@@ -158,7 +158,7 @@ class ApproveProcessedDataEndpointTest(
                 nonExistingVersion,
             ),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -188,7 +188,7 @@ class ApproveProcessedDataEndpointTest(
             scope = ALL,
             accessionVersionsInCorrectState + accessionVersionNotInCorrectState,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath(
@@ -219,7 +219,7 @@ class ApproveProcessedDataEndpointTest(
             defaultOrganismData.getAccessionVersions() + otherOrganismData.getAccessionVersions(),
             organism = OTHER_ORGANISM,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("$.detail")
@@ -349,7 +349,7 @@ class ApproveProcessedDataEndpointTest(
             scope = WITHOUT_WARNINGS,
             accessionVersionsFilter = listOf(AccessionVersion(accessionOfDataWithErrors, 1)),
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
 
         convenienceClient.getSequenceEntry(accession = accessionOfDataWithErrors, version = 1)
             .assertStatusIs(PROCESSED)
@@ -437,9 +437,9 @@ class ApproveProcessedDataEndpointTest(
         client.approveProcessedSequenceEntries(ALL)
         val releasedData = convenienceClient.getReleasedData()
 
-        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asText())
+        val tree = objectMapper.readTree(releasedData[0].metadata["myFileCategory"]!!.asString())
 
-        val fileUrl = tree.get(0).get("url").asText()
+        val fileUrl = tree.get(0).get("url").asString()
 
         val client = HttpClient.newHttpClient()
         val request = HttpRequest.newBuilder()

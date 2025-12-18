@@ -1,7 +1,5 @@
 package org.loculus.backend.service.submission
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.NullNode
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap
@@ -15,6 +13,8 @@ import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
 import org.loculus.backend.controller.ProcessingValidationException
 import org.springframework.stereotype.Component
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.NullNode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -127,7 +127,7 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
 
     when (metadata.type) {
         MetadataType.DATE -> {
-            if (!isValidDate(fieldValue.asText())) {
+            if (!isValidDate(fieldValue.asString())) {
                 throw ProcessingValidationException(
                     "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
                         "found value '$fieldValue'.",
@@ -140,7 +140,7 @@ private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
     }
 
     val isOfCorrectPrimitiveType = when (metadata.type) {
-        MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isTextual
+        MetadataType.STRING, MetadataType.AUTHORS -> fieldValue.isString
         MetadataType.INTEGER -> fieldValue.isInt
         MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
         MetadataType.NUMBER -> fieldValue.isNumber

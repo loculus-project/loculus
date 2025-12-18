@@ -1,15 +1,15 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.utils.Accession
+import tools.jackson.databind.node.StringNode
 
 val defaultExternalMetadata =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
         externalMetadata = mapOf(
-            "insdcAccessionFull" to TextNode("GENBANK1000.1"),
+            "insdcAccessionFull" to StringNode("GENBANK1000.1"),
         ),
     )
 
@@ -18,7 +18,7 @@ val otherExternalMetadata =
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
         externalMetadata = mapOf(
-            "other_db_accession" to TextNode("DB1.1"),
+            "other_db_accession" to StringNode("DB1.1"),
         ),
     )
 

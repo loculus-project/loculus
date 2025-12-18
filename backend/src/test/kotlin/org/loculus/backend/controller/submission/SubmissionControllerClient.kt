@@ -1,6 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
@@ -30,6 +29,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import tools.jackson.databind.ObjectMapper
 
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
@@ -60,13 +60,12 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }
             .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
-            .param(
-                "restrictedUntil",
+            .apply {
                 when (dataUseTerm) {
-                    is DataUseTerms.Restricted -> dataUseTerm.restrictedUntil.toString()
-                    else -> null
-                },
-            )
+                    is DataUseTerms.Restricted -> param("restrictedUntil", dataUseTerm.restrictedUntil.toString())
+                    else -> this
+                }
+            }
             .withAuth(jwt),
     )
 
@@ -165,11 +164,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-sequences", organism = organism))
             .withAuth(jwt)
-            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
-            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
-            .param("page", page?.toString())
-            .param("size", size?.toString()),
+            .apply { groupIdsFilter?.let { param("groupIdsFilter", it.joinToString(",") { it.toString() }) } }
+            .apply { statusesFilter?.let { param("statusesFilter", it.joinToString(",") { it.name }) } }
+            .apply { processingResultFilter?.let { param("processingResultFilter", it.joinToString(",") { it.name }) } }
+            .apply { page?.let { param("page", it.toString()) } }
+            .apply { size?.let { param("size", it.toString()) } },
     )
 
     fun getSequenceEntryToEdit(
@@ -318,9 +317,9 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                     else -> it.param("compression", compression)
                 }
             }
-            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
-            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-            .param("fields", fields?.joinToString(",")),
+            .apply { groupIdsFilter?.let { param("groupIdsFilter", it.joinToString(",") { it.toString() }) } }
+            .apply { statusesFilter?.let { param("statusesFilter", it.joinToString(",") { it.name }) } }
+            .apply { fields?.let { param("fields", it.joinToString(",")) } },
     )
 
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String =

@@ -6,15 +6,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.utils.Accession
+import tools.jackson.core.JsonGenerator
+import tools.jackson.databind.SerializationContext
+import tools.jackson.databind.annotation.JsonSerialize
+import tools.jackson.databind.ser.std.StdSerializer
 
 data class DataUseTermsHistoryEntry(
     val accession: Accession,
@@ -117,13 +117,13 @@ data class DataUseTermsChangeRequest(
 )
 
 private class LocalDateSerializer : StdSerializer<LocalDate>(LocalDate::class.java) {
-    override fun serialize(value: LocalDate, gen: JsonGenerator, provider: SerializerProvider) {
+    override fun serialize(value: LocalDate, gen: JsonGenerator, provider: SerializationContext) {
         gen.writeString(value.toString())
     }
 }
 
 private class LocalDateTimeSerializer : StdSerializer<LocalDateTime>(LocalDateTime::class.java) {
-    override fun serialize(value: LocalDateTime, gen: JsonGenerator, provider: SerializerProvider) {
+    override fun serialize(value: LocalDateTime, gen: JsonGenerator, provider: SerializationContext) {
         gen.writeString(value.toString())
     }
 }

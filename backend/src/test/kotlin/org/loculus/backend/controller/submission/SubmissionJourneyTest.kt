@@ -244,7 +244,7 @@ class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenie
 
     private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData<GeneticSequence>>) = processedData
         .map { it.metadata }
-        .map { it["accessionVersion"]!!.asText() }
+        .map { it["accessionVersion"]!!.asString() }
 
     private fun getAccessionVersions(sequenceEntryVersions: List<AccessionVersionInterface>) =
         sequenceEntryVersions.map { it.displayAccessionVersion() }

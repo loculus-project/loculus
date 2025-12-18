@@ -1,12 +1,5 @@
 package org.loculus.backend.controller.submission
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.luben.zstd.ZstdInputStream
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -83,6 +76,13 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.IntNode
+import tools.jackson.databind.node.NullNode
+import tools.jackson.databind.node.StringNode
+import tools.jackson.module.kotlin.readValue
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -159,32 +159,32 @@ class GetReleasedDataEndpointTest(
         response.andExpect(header().string("x-total-records", NUMBER_OF_SEQUENCES.toString()))
 
         responseBody.forEach {
-            val id = it.metadata["accession"]!!.asText()
+            val id = it.metadata["accession"]!!.asString()
             val version = it.metadata["version"]!!.asLong()
             assertThat(version, `is`(1))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
-                "accession" to TextNode(id),
+                "accession" to StringNode(id),
                 "version" to IntNode(version.toInt()),
-                "accessionVersion" to TextNode("$id.$version"),
+                "accessionVersion" to StringNode("$id.$version"),
                 "isRevocation" to BooleanNode.FALSE,
-                "submitter" to TextNode(DEFAULT_USER_NAME),
-                "groupName" to TextNode(DEFAULT_GROUP_NAME_CHANGED),
-                "versionStatus" to TextNode("LATEST_VERSION"),
-                "dataUseTerms" to TextNode("OPEN"),
-                "releasedDate" to TextNode(currentDate),
-                "submittedDate" to TextNode(currentDate),
+                "submitter" to StringNode(DEFAULT_USER_NAME),
+                "groupName" to StringNode(DEFAULT_GROUP_NAME_CHANGED),
+                "versionStatus" to StringNode("LATEST_VERSION"),
+                "dataUseTerms" to StringNode("OPEN"),
+                "releasedDate" to StringNode(currentDate),
+                "submittedDate" to StringNode(currentDate),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
                 "pipelineVersion" to IntNode(DEFAULT_PIPELINE_VERSION.toInt()),
             )
 
             for ((key, value) in it.metadata) {
                 when (key) {
-                    "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
-                    "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
-                    "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
-                    "groupId" -> assertThat(value.intValue(), `is`(groupId))
-                    else -> assertThat(value, `is`(expectedMetadata[key]))
+                    "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
+                    "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
+                    "submissionId" -> assertThat(value!!.stringValue(), matchesPattern("^custom\\d$"))
+                    "groupId" -> assertThat(value!!.intValue(), `is`(groupId))
+                    else -> assertThat(value!!, `is`(expectedMetadata[key]))
                 }
             }
             assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
@@ -221,7 +221,7 @@ class GetReleasedDataEndpointTest(
 
         responseAfterMoreDataAdded.andExpect(status().isOk)
             .andExpect(header().string(ETAG, notNullValue()))
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
 
         val responseBodyMoreData = responseAfterMoreDataAdded
             .expectNdjsonAndGetContent<ReleasedData>()
@@ -319,29 +319,29 @@ class GetReleasedDataEndpointTest(
             when (key) {
                 "isRevocation" -> assertThat(value, `is`(BooleanNode.TRUE))
 
-                "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
+                "versionStatus" -> assertThat(value, `is`(StringNode("LATEST_VERSION")))
 
-                "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                "submittedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
 
-                "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value)
+                "releasedAtTimestamp" -> expectIsTimestampWithCurrentYear(value!!)
 
-                "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
+                "submitter" -> assertThat(value, `is`(StringNode(DEFAULT_USER_NAME)))
 
-                "groupName" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+                "groupName" -> assertThat(value, `is`(StringNode(DEFAULT_GROUP_NAME)))
 
-                "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
+                "groupId" -> assertThat(value!!.intValue(), `is`(greaterThan(0)))
 
                 "accession", "version", "accessionVersion", "submissionId" -> {}
 
-                "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
+                "dataUseTerms" -> assertThat(value, `is`(StringNode("OPEN")))
 
-                "submittedDate" -> assertThat(value, `is`(TextNode(currentDate)))
+                "submittedDate" -> assertThat(value, `is`(StringNode(currentDate)))
 
-                "releasedDate" -> assertThat(value, `is`(TextNode(currentDate)))
+                "releasedDate" -> assertThat(value, `is`(StringNode(currentDate)))
 
                 "versionComment" -> assertThat(
                     value,
-                    `is`(TextNode("This is a test revocation")),
+                    `is`(StringNode("This is a test revocation")),
                 )
 
                 "pipelineVersion" -> assertThat(value, `is`(IntNode(DEFAULT_PIPELINE_VERSION.toInt())))
@@ -437,11 +437,11 @@ class GetReleasedDataEndpointTest(
 
         // assert that the accessions are sorted
         assertThat(data.size, Matchers.`is`(12))
-        val actualAccessionOrder = data.map { it.metadata["accession"]!!.asText() }
+        val actualAccessionOrder = data.map { it.metadata["accession"]!!.asString() }
         assertThat(actualAccessionOrder, equalTo(actualAccessionOrder.sorted()))
 
         // assert that _within_ each accession block, it's sorted by version
-        val accessionChunks = data.groupBy { it.metadata["accession"]!!.asText() }
+        val accessionChunks = data.groupBy { it.metadata["accession"]!!.asString() }
         assertThat(accessionChunks.size, Matchers.`is`(accessions.size))
         accessionChunks.values
             .map { chunk -> chunk.map { it.metadata["version"]!!.asLong() } }
@@ -481,7 +481,6 @@ private const val RESTRICTED_DATA_USE_TERMS_URL = "restrictedUrl"
 
 @EndpointTest
 @Import(GetReleasedDataEndpointWithDataUseTermsUrlTestConfig::class)
-@TestPropertySource(properties = ["spring.main.allow-bean-definition-overriding=true"])
 class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val dataUseTermsClient: DataUseTermsControllerClient,
@@ -574,18 +573,18 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     ) {
         val releasedData = submissionControllerClient.getReleasedData()
             .expectNdjsonAndGetContent<ReleasedData>()
-            .find { it.metadata["accessionVersion"]?.textValue() == accessionVersion.displayAccessionVersion() }!!
+            .find { it.metadata["accessionVersion"]?.stringValue() == accessionVersion.displayAccessionVersion() }!!
 
-        assertThat(releasedData.metadata["dataUseTerms"]?.textValue(), `is`(dataUseTerms))
+        assertThat(releasedData.metadata["dataUseTerms"]!!.stringValue(), `is`(dataUseTerms))
         when (restrictedUntilDate) {
-            null -> assertThat(releasedData.metadata["dataUseTermsRestrictedUntil"], `is`(NullNode.instance))
+            null -> assertThat(releasedData.metadata["dataUseTermsRestrictedUntil"]!!, `is`(NullNode.instance))
 
             else -> assertThat(
-                releasedData.metadata["dataUseTermsRestrictedUntil"]?.textValue(),
+                releasedData.metadata["dataUseTermsRestrictedUntil"]!!.stringValue(),
                 `is`(restrictedUntilDate.toString()),
             )
         }
-        assertThat(releasedData.metadata["dataUseTermsUrl"]?.textValue(), `is`(dataUseTermsUrl))
+        assertThat(releasedData.metadata["dataUseTermsUrl"]!!.stringValue(), `is`(dataUseTermsUrl))
     }
 
     @TestConfiguration
@@ -620,10 +619,10 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
 private fun List<ReleasedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
     val processedData =
-        find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
+        find { it.metadata["accession"]?.asString() == accession && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")
 
-    return processedData.metadata["versionStatus"]!!.asText()
+    return processedData.metadata["versionStatus"]!!.asString()
 }
 
 data class PreparedVersions(

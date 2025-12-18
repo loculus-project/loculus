@@ -12,7 +12,7 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmitModel
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private val validRoute = addOrganismToPath("submit")
 
-private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
+private val validRequest = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
     .param("groupId", "5")
@@ -80,7 +80,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
@@ -91,7 +91,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
 
         mockMvc.perform(validRequest)
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))

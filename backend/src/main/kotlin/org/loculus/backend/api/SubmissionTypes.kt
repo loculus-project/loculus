@@ -2,11 +2,6 @@ package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
@@ -15,6 +10,11 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.annotation.JsonDeserialize
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -134,7 +134,7 @@ data class SequenceEntryVersionToEdit(
 typealias SegmentName = String
 typealias GeneName = String
 typealias GeneticSequence = String
-typealias MetadataMap = Map<String, JsonNode>
+typealias MetadataMap = Map<String, JsonNode?>
 
 data class ProcessedData<SequenceType>(
     @Schema(
@@ -239,7 +239,7 @@ data class Insertion(
     override fun toString(): String = "$position:$sequence"
 }
 
-class InsertionDeserializer : JsonDeserializer<Insertion>() {
+class InsertionDeserializer : ValueDeserializer<Insertion>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion =
         Insertion.fromString(p.valueAsString)
 }
