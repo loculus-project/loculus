@@ -108,3 +108,7 @@ metadata_mapping:
 db_username: postgres
 db_password: unsecure
 db_url: "jdbc:postgresql://127.0.0.1:5432/loculus"
+retry_threshold_hours: 4
+slack_retry_threshold_hours: 12
+submitting_time_threshold_min: 15
+waiting_threshold_hours: 48
