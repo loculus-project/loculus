@@ -262,7 +262,7 @@ def upload_handle_errors(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            slack_retry_threshold_min=slack_time_threshold,
         )
 
 

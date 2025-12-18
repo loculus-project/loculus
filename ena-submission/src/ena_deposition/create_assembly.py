@@ -729,8 +729,8 @@ def assembly_table_handle_errors(
     """
     1. Find all entries in assembly_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
-    2. If time since last slack notification is over slack_retry_threshold_hours send notification
-    3. Trigger retry if time since last retry is over retry_threshold_hours
+    2. If time since last slack notification is over slack_retry_threshold_min send notification
+    3. Trigger retry if time since last retry is over retry_threshold_min
     """
     entries_waiting = find_waiting_in_db(
         db_config, TableName.ASSEMBLY_TABLE, time_threshold=config.waiting_threshold_hours
@@ -763,7 +763,7 @@ def assembly_table_handle_errors(
             entries_with_errors,
             db_config,
             table_name=TableName.ASSEMBLY_TABLE,
-            retry_threshold_hours=config.retry_threshold_hours,
+            retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if assembly has in fact been created
@@ -777,7 +777,7 @@ def assembly_table_handle_errors(
             "\n".join(messages),
             slack_config,
             time=now,
-            time_threshold=config.slack_retry_threshold_hours,
+            slack_retry_threshold_min=config.slack_retry_threshold_min,
         )
 
     return last_retry_time

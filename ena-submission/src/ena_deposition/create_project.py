@@ -370,8 +370,8 @@ def project_table_handle_errors(
     """
     1. Find all entries in project_table in state HAS_ERRORS or SUBMITTING
         over submitting_time_threshold_min
-    2. If time since last slack_notification is over slack_retry_threshold_hours send notification
-    3. Retry entries if time since last retry is over retry_threshold_hours
+    2. If time since last slack_notification is over slack_retry_threshold_min send notification
+    3. Retry entries if time since last retry is over retry_threshold_min
     """
     entries_with_errors = find_errors_or_stuck_in_db(
         db_config, TableName.PROJECT_TABLE, time_threshold=config.submitting_time_threshold_min
@@ -386,13 +386,13 @@ def project_table_handle_errors(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=config.slack_retry_threshold_hours,
+            slack_retry_threshold_min=config.slack_retry_threshold_min,
         )
         return trigger_retry_if_exists(
             entries_with_errors,
             db_config,
             table_name=TableName.PROJECT_TABLE,
-            retry_threshold_hours=config.retry_threshold_hours,
+            retry_threshold_min=config.retry_threshold_min,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if project has in fact been created

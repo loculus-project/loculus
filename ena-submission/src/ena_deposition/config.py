@@ -116,8 +116,8 @@ class Config(BaseModel):
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
 
-    retry_threshold_hours: int = 4
-    slack_retry_threshold_hours: int = 12
+    retry_threshold_min: int = 240
+    slack_retry_threshold_min: int = 720
     submitting_time_threshold_min: int = 15
     waiting_threshold_hours: int = 48
 
