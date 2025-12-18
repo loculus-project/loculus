@@ -160,9 +160,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line_no, line in enumerate(
-            response.iter_lines(decode_unicode=True), start=1
-        ):
+        for line_no, line in enumerate(response.iter_lines(decode_unicode=True), start=1):
             try:
                 full_json = json.loads(line)
             except json.JSONDecodeError as e:

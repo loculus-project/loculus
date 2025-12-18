@@ -12,9 +12,11 @@ from ena_deposition.loculus_models import Group
 from .config import Config
 from .ena_submission_helper import (
     CreationResult,
+    accession_exists,
     create_ena_project,
     get_alias,
-    set_error_if_accession_not_exists,
+    set_accession_does_not_exist_error,
+    trigger_retry_if_exists,
 )
 from .ena_types import (
     OrganismType,
@@ -35,7 +37,7 @@ from .submission_db_helper import (
     add_to_project_table,
     db_init,
     find_conditions_in_db,
-    find_errors_in_db,
+    find_errors_or_stuck_in_db,
     update_db_where_conditions,
     update_with_retry,
 )
@@ -130,16 +132,13 @@ def set_project_table_entry(db_config, config, row):
         return
 
     logger.info("Checking if bioproject actually exists and is public")
-    if (
-        set_error_if_accession_not_exists(
+    if not accession_exists(bioproject, config):
+        set_accession_does_not_exist_error(
             conditions=group_key,
             accession=bioproject,
             accession_type="BIOPROJECT",
             db_pool=db_config,
-            config=config,
         )
-        is False
-    ):
         return
 
     logger.info("Adding bioprojectAccession to project_table")
@@ -366,34 +365,40 @@ def project_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
-    time_threshold: int = 15,
-    slack_time_threshold: int = 12,
-):
+    last_retry_time: datetime | None,
+) -> datetime | None:
     """
-    - time_threshold: (minutes)
-    - slack_time_threshold: (hours)
-
-    1. Find all entries in project_table in state HAS_ERRORS or SUBMITTING over time_threshold
-    2. If time since last slack_notification is over slack_time_threshold send notification
+    1. Find all entries in project_table in state HAS_ERRORS or SUBMITTING
+        over submitting_time_threshold_min
+    2. If time since last slack_notification is over slack_retry_threshold_min send notification
+    3. Retry entries if time since last retry is over retry_threshold_min
     """
-    entries_with_errors = find_errors_in_db(
-        db_config, TableName.PROJECT_TABLE, time_threshold=time_threshold
+    entries_with_errors = find_errors_or_stuck_in_db(
+        db_config, TableName.PROJECT_TABLE, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_with_errors)} entries"
-            f" in project_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f"{len(entries_with_errors)} entries in project_table in status"
+            f" HAS_ERRORS or SUBMITTING for over {config.submitting_time_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            slack_retry_threshold_min=config.slack_retry_threshold_min,
+        )
+        return trigger_retry_if_exists(
+            entries_with_errors,
+            db_config,
+            table_name=TableName.PROJECT_TABLE,
+            retry_threshold_min=config.retry_threshold_min,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if project has in fact been created
         # If created update project_table
         # If not retry 3 times, then raise for manual intervention
+    return last_retry_time
 
 
 def create_project(config: Config, stop_event: threading.Event):
@@ -403,6 +408,7 @@ def create_project(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -413,5 +419,7 @@ def create_project(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         project_table_create(db_config, config, test=config.test)
-        project_table_handle_errors(db_config, config, slack_config)
+        last_retry_time = project_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)

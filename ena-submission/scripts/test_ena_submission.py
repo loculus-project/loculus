@@ -64,7 +64,7 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
         scientific_name="Test scientific name",
         molecule_type=MoleculeType.GENOMIC_RNA,
         organismName="Test organism",
-        topology=Topology.CIRCULAR
+        topology=Topology.CIRCULAR,
     )
 
 

@@ -374,7 +374,7 @@ def _test_successful_assembly_submission(
     sequences_to_upload: dict[str, Any],
     single_segment: bool = False,
 ) -> None:
-    create_assembly_submission_table_start(db_config)
+    create_assembly_submission_table_start(db_config, config)
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -397,7 +397,7 @@ def _test_successful_assembly_submission(
 def _test_successful_assembly_submission_no_wait(
     db_config: SimpleConnectionPool, config: Config, sequences_to_upload: dict[str, Any]
 ) -> None:
-    create_assembly_submission_table_start(db_config)
+    create_assembly_submission_table_start(db_config, config)
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -415,7 +415,7 @@ def _test_assembly_submission_errored(
     sequences_to_upload: dict[str, Any],
     mock_notify: Mock,
 ) -> None:
-    create_assembly_submission_table_start(db_config)
+    create_assembly_submission_table_start(db_config, config)
     check_assembly_submission_started(db_config, sequences_to_upload)
 
     assert config.test, "Not submitting to dev - stopping"
@@ -424,7 +424,12 @@ def _test_assembly_submission_errored(
     assembly_table_create(db_config, config, test=config.test)
     check_assembly_submission_has_errors(db_config, sequences_to_upload)
 
-    assembly_table_handle_errors(db_config, config, slack_config, time_threshold=0)
+    assembly_table_handle_errors(
+        db_config,
+        config,
+        slack_config,
+        last_retry_time=datetime.now(tz=pytz.utc),
+    )
     msg = (
         f"{config.backend_url}: ENA Submission pipeline found 1 entries in assembly_table in "
         "status HAS_ERRORS or SUBMITTING for over 0m"
@@ -580,15 +585,16 @@ def multi_segment_submission(
 class TestSubmission:
     def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
+        self.config.submitting_time_threshold_min = 0
         self.db_config = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
         )
         delete_all_records(self.db_config)
         # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
-            slack_hook=self.config.slack_hook,
-            slack_token=self.config.slack_token,
-            slack_channel_id=self.config.slack_channel_id,
+            slack_hook=self.config.slack_hook or "",
+            slack_token=self.config.slack_token or "",
+            slack_channel_id=self.config.slack_channel_id or "",
             last_notification_sent=datetime.now(tz=pytz.utc) - timedelta(days=1),
         )
         assert (
@@ -835,7 +841,10 @@ class TestIncorrectBioprojectPassed(TestSubmission):
         create_project_submission_table_start(self.db_config, self.config)
         check_project_submission_has_errors(self.db_config, sequences_to_upload)
         project_table_handle_errors(
-            self.db_config, self.config, self.slack_config, time_threshold=0
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc),
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in project_table "
@@ -878,9 +887,15 @@ class TestKnownBioprojectAndBioSample(TestSubmission):
 
 
 class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
+    @patch(
+        "ena_deposition.ena_submission_helper.update_with_retry",
+        autospec=True,
+    )
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     @patch("ena_deposition.notifications.notify", autospec=True)
-    def test_submit(self, mock_notify: Mock, mock_get_group_info: Mock) -> None:
+    def test_submit(
+        self, mock_notify: Mock, mock_get_group_info: Mock, mock_update_with_retry: Mock
+    ) -> None:
         """
         Test submitting sequences with known public bioproject and invalid biosample
         """
@@ -903,12 +918,18 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
         # check sample submission fails and sends notification
         create_sample_submission_table_start(self.db_config, config=self.config)
         check_sample_submission_has_errors(self.db_config, sequences_to_upload)
-        sample_table_handle_errors(self.db_config, self.config, self.slack_config, time_threshold=0)
+        sample_table_handle_errors(
+            self.db_config,
+            self.config,
+            self.slack_config,
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
+        )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "
             "in status HAS_ERRORS or SUBMITTING for over 0m"
         )
         mock_notify.assert_called_once_with(self.slack_config, msg)
+        mock_update_with_retry.assert_called_once()
 
 
 class TestRevisionAssemblyModificationTests(TestSubmission):

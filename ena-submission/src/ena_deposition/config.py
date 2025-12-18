@@ -116,6 +116,11 @@ class Config(BaseModel):
     min_between_ena_checks: int = 5
     log_level: str = "DEBUG"
 
+    retry_threshold_min: int = 240
+    slack_retry_threshold_min: int = 720
+    submitting_time_threshold_min: int = 15
+    waiting_threshold_hours: int = 48
+
 
 def secure_ena_connection(config: Config):
     """Modify passed-in config object"""

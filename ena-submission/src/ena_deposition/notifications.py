@@ -66,7 +66,7 @@ def upload_file_with_comment(
 
 
 def send_slack_notification(
-    comment: str, slack_config: SlackConfig, time: datetime, time_threshold: int = 12
+    comment: str, slack_config: SlackConfig, time: datetime, slack_retry_threshold_min: int
 ):
     """
     Sends a slack notification if current time is over time_threshold hours
@@ -77,7 +77,7 @@ def send_slack_notification(
         return
     if (
         not slack_config.last_notification_sent
-        or time - timedelta(hours=time_threshold) > slack_config.last_notification_sent
+        or time - timedelta(minutes=slack_retry_threshold_min) > slack_config.last_notification_sent
     ):
         logger.warning(comment)
         try:

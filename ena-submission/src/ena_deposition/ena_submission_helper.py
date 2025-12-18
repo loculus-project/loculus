@@ -1,4 +1,3 @@
-import datetime
 import glob
 import gzip
 import json
@@ -10,8 +9,9 @@ import string
 import subprocess  # noqa: S404
 import tempfile
 from collections import defaultdict
-from collections.abc import Sequence
-from dataclasses import Field, dataclass, is_dataclass
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import Field, asdict, dataclass, is_dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal, Protocol
 
@@ -51,11 +51,15 @@ from .ena_types import (
     XmlNone,
 )
 from .submission_db_helper import (
+    AssemblyTableEntry,
     ProjectTableEntry,
     SampleTableEntry,
     Status,
+    TableName,
+    add_to_assembly_table,
     add_to_project_table,
     add_to_sample_table,
+    update_with_retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -132,7 +136,7 @@ def dataclass_to_xml(dataclass_instance: DataclassProtocol, root_name="root") ->
 
 def get_submission_dict(hold_until_date: str | None = None) -> Submission:
     if not hold_until_date:
-        hold_until_date = datetime.datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
+        hold_until_date = datetime.now(tz=pytz.utc).strftime("%Y-%m-%d")
     return Submission(
         actions=Actions(action=[Action(add=""), Action(hold=Hold(XmlAttribute(hold_until_date)))])
     )
@@ -159,7 +163,7 @@ def get_alias(prefix: str, test=False, set_alias_suffix: str | None = None) -> X
         return XmlAttribute(f"{prefix}:{set_alias_suffix}")
     if test:
         entropy = "".join(random.choices(string.ascii_letters + string.digits, k=4))  # noqa: S311
-        timestamp = datetime.datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(tz=pytz.utc).strftime("%Y%m%d_%H%M%S")
         return XmlAttribute(f"{prefix}:{timestamp}_{entropy}")
 
     return XmlAttribute(prefix)
@@ -819,44 +823,107 @@ def get_chromsome_accessions(
         raise ValueError(msg) from e
 
 
-def set_error_if_accession_not_exists(
-    conditions: dict[str, str | dict[str, str]],
+def accession_exists(
     accession: str,
-    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"],
-    db_pool: SimpleConnectionPool,
     config: Config,
 ) -> bool:
-    """Make request to ENA to check if an accession exists"""
+    """Make request to ENA to check if an accession exists
+    Returns True if accession exists, False otherwise.
+    """
     url = f"https://www.ebi.ac.uk/ena/browser/api/summary/{accession}"
     try:
         response = ena_http_get_with_retry(config, url)
-        exists = int(response.json()["total"]) > 0
-        if exists:
-            return True
+        return int(response.json()["total"]) > 0
     except Exception as e:
         logger.error(f"Error checking if accession exists: {e!s}")
+        return False
 
+
+def set_accession_does_not_exist_error(
+    conditions: dict[str, str | dict[str, str]],
+    accession: str,
+    accession_type: Literal["BIOPROJECT"] | Literal["BIOSAMPLE"] | Literal["RUN_REF"],
+    db_pool: SimpleConnectionPool,
+):
     error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
     logger.error(error_text)
 
     succeeded: bool | int | None
-    if accession_type == "BIOSAMPLE":
-        sample_table_entry = SampleTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=[error_text],
-            result={"ena_sample_accession": accession, "biosample_accession": accession},
-        )
-        succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    else:
-        project_table_entry = ProjectTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=[error_text],
-            result={"bioproject_accession": accession},
-        )
-        succeeded = add_to_project_table(db_pool, project_table_entry)
+    match accession_type:
+        case "BIOSAMPLE":
+            sample_table_entry = SampleTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"ena_sample_accession": accession, "biosample_accession": accession},
+            )
+            succeeded = add_to_sample_table(db_pool, sample_table_entry)
+        case "BIOPROJECT":
+            project_table_entry = ProjectTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"bioproject_accession": accession},
+            )
+            succeeded = add_to_project_table(db_pool, project_table_entry)
+        case "RUN_REF":
+            assembly_table_entry = AssemblyTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={},  # type: ignore
+            )
+            succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
-    return False
+
+
+def trigger_retry_if_exists(
+    entries_with_errors: Iterable[Mapping[str, Any]],
+    db_config: SimpleConnectionPool,
+    table_name: TableName,
+    retry_threshold_min: int,
+    error_substring: str = "does not exist in ENA",
+    last_retry: datetime | None = None,
+) -> datetime | None:
+    if (
+        last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(minutes=retry_threshold_min) < last_retry
+    ):
+        return last_retry
+    for entry in entries_with_errors:
+        if error_substring not in str(entry.get("errors", "")):
+            continue
+        match table_name:
+            case TableName.PROJECT_TABLE:
+                primary_key = ProjectTableEntry(**entry).primary_key
+            case TableName.SAMPLE_TABLE:
+                primary_key = SampleTableEntry(**entry).primary_key
+            case TableName.ASSEMBLY_TABLE:
+                primary_key = AssemblyTableEntry(**entry).primary_key
+            case _:
+                logger.error(f"Unknown table name: {table_name}")
+                continue
+
+        logger.info(
+            f"Retrying submission {primary_key} in {table_name} with error: '{entry.get('errors')}'"
+        )
+
+        update_values = {
+            "status": Status.READY,
+            "errors": None,
+            "finished_at": None,
+            "result": None,
+        }
+        try:
+            update_with_retry(
+                db_config=db_config,
+                conditions=asdict(primary_key),
+                update_values=update_values,
+                table_name=table_name,
+            )
+            last_retry = datetime.now(tz=pytz.utc)
+        except Exception as e:
+            logger.error(f"Failed to update {table_name} entry for retry: {e!s}")
+    return last_retry
