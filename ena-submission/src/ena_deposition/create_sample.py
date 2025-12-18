@@ -391,9 +391,6 @@ def sample_table_handle_errors(
     config: Config,
     slack_config: SlackConfig,
     last_retry_time: datetime | None,
-    submitting_time_threshold_min: int = 15,
-    retry_threshold_hours: int = 4,
-    slack_retry_threshold_hours: int = 12,
 ) -> datetime | None:
     """
     1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING
@@ -401,25 +398,25 @@ def sample_table_handle_errors(
     2. If time since last slack_notification is over slack_retry_threshold_hours send notification
     """
     entries_with_errors = find_errors_or_stuck_in_db(
-        db_config, TableName.SAMPLE_TABLE, time_threshold=submitting_time_threshold_min
+        db_config, TableName.SAMPLE_TABLE, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
             f"{len(entries_with_errors)} entries in sample_table in status "
-            f"HAS_ERRORS or SUBMITTING for over {submitting_time_threshold_min}m"
+            f"HAS_ERRORS or SUBMITTING for over {config.submitting_time_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_retry_threshold_hours,
+            time_threshold=config.slack_retry_threshold_hours,
         )
         last_retry_time = trigger_retry_if_exists(
             entries_with_errors,
             db_config,
             table_name=TableName.SAMPLE_TABLE,
-            retry_threshold_hours=retry_threshold_hours,
+            retry_threshold_hours=config.retry_threshold_hours,
             last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created

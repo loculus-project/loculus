@@ -428,7 +428,6 @@ def _test_assembly_submission_errored(
         db_config,
         config,
         slack_config,
-        submitting_time_threshold_min=0,
         last_retry_time=datetime.now(tz=pytz.utc),
     )
     msg = (
@@ -586,15 +585,16 @@ def multi_segment_submission(
 class TestSubmission:
     def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
+        self.config.submitting_time_threshold_min = 0
         self.db_config = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
         )
         delete_all_records(self.db_config)
         # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
-            slack_hook=self.config.slack_hook,
-            slack_token=self.config.slack_token,
-            slack_channel_id=self.config.slack_channel_id,
+            slack_hook=self.config.slack_hook or "",
+            slack_token=self.config.slack_token or "",
+            slack_channel_id=self.config.slack_channel_id or "",
             last_notification_sent=datetime.now(tz=pytz.utc) - timedelta(days=1),
         )
         assert (
@@ -844,7 +844,6 @@ class TestIncorrectBioprojectPassed(TestSubmission):
             self.db_config,
             self.config,
             self.slack_config,
-            submitting_time_threshold_min=0,
             last_retry_time=datetime.now(tz=pytz.utc),
         )
         msg = (
@@ -923,9 +922,7 @@ class TestKnownBioprojectAndIncorrectBioSample(TestSubmission):
             self.db_config,
             self.config,
             self.slack_config,
-            submitting_time_threshold_min=0,
-            retry_threshold_hours=0,
-            last_retry_time=datetime.now(tz=pytz.utc),
+            last_retry_time=datetime.now(tz=pytz.utc) - timedelta(hours=5),
         )
         msg = (
             f"{self.config.backend_url}: ENA Submission pipeline found 1 entries in sample_table "

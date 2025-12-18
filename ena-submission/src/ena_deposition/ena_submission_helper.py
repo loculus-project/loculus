@@ -883,8 +883,8 @@ def trigger_retry_if_exists(
     entries_with_errors: Iterable[Mapping[str, Any]],
     db_config: SimpleConnectionPool,
     table_name: TableName,
+    retry_threshold_hours: int,
     error_substring: str = "does not exist in ENA",
-    retry_threshold_hours: int = 1,
     last_retry: datetime | None = None,
 ) -> datetime | None:
     if (
