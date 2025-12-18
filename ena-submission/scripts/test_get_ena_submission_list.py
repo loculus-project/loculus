@@ -69,7 +69,7 @@ class GetSubmissionListTests(unittest.TestCase):
         get_ena_submission_list.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
         mock_upload_file_with_comment.assert_called()
         mock_upload_file_with_comment.assert_any_call(
-            slack_cfg,
+            ANY,
             "cchf_ena_submission_list.json",
             "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1 sequences",
         )
