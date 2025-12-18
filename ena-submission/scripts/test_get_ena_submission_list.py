@@ -1,9 +1,8 @@
 # ruff: noqa: S101 (allow asserts in tests))
 import json
-from collections.abc import Iterator
-from types import SimpleNamespace
-from typing import Any
 import unittest
+from collections.abc import Iterator
+from typing import Any
 from unittest.mock import ANY, Mock, patch
 
 import get_ena_submission_list
