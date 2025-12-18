@@ -238,6 +238,20 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `GIVEN groups are created WHEN group is queried by name THEN expect that exactly one group is returned`() {
+        client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+        client.createNewGroup(group = ALTERNATIVE_DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+
+        client.getGroupsFilterByName(name = DEFAULT_GROUP_NAME, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk())
+            .andExpect { jsonPath("\$.size()", `is`(1)) }
+            // filtering should be case-insensitive
+            .andExpect { jsonPath("\$[0].groupName", `is`(DEFAULT_GROUP_NAME.lowercase())) }
+    }
+
+    @Test
     fun `WHEN creating a group with invalid fields THEN expect error`() {
         client.createNewGroupWithBody("{}")
             .andExpect(status().isBadRequest)
