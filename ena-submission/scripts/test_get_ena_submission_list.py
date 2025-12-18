@@ -1,10 +1,11 @@
 # ruff: noqa: S101 (allow asserts in tests))
 import json
+import unittest
 from collections.abc import Iterator
-from types import SimpleNamespace
 from typing import Any
+from unittest.mock import ANY, Mock, patch
 
-import get_ena_submission_list as get_ena_submission_list_mod
+import get_ena_submission_list
 import orjsonl
 from deepdiff import DeepDiff
 
@@ -33,67 +34,44 @@ def fake_fetch_released_entries(config, organism) -> Iterator[dict[str, Any]]:  
     )
 
 
-class MockSuppressedList:
-    text = "LOC01.1\n"
+class GetSubmissionListTests(unittest.TestCase):
+    @patch("get_ena_submission_list.fetch_suppressed_accessions")
+    @patch("get_ena_submission_list.fetch_released_entries")
+    @patch("get_ena_submission_list.upload_file_with_comment")
+    @patch("get_ena_submission_list.highest_version_in_submission_table")
+    @patch("get_ena_submission_list.db_init")
+    def test_happy_path_single_upload_and_file_content(
+        self,
+        mock_db_init: Mock,
+        mock_highest_version_in_submission_table: Mock,
+        mock_upload_file_with_comment: Mock,
+        mock_fetch_released_entries: Mock,
+        mock_fetch_suppressed_accessions: Mock,
+    ):
+        # Mock database calls, adding a LOC_submitted entry with version 1
+        class DummyPool: ...
 
-    def raise_for_status(self):
-        pass
+        mock_db_init.return_value = DummyPool()
+        mock_highest_version_in_submission_table.return_value = {"LOC_submitted": 1}
+
+        mock_upload_file_with_comment.return_value = {"ok": True}
+        mock_fetch_released_entries.side_effect = fake_fetch_released_entries
+        mock_fetch_suppressed_accessions.return_value = {"LOC01.1"}
+
+        get_ena_submission_list.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
+        mock_upload_file_with_comment.assert_called()
+        mock_upload_file_with_comment.assert_any_call(
+            ANY,
+            "cchf_ena_submission_list.json",
+            "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1 sequences",
+        )
+        assert mock_upload_file_with_comment.call_args.args[2].startswith(
+            "http://localhost:8079: cchf - ENA Submission pipeline found 1 sequences with ena"
+        )
+        json_diff(
+            mock_upload_file_with_comment.call_args_list[0].args[1], APPROVED_RELEASED_DATA_PATH
+        )
 
 
-def test_happy_path_single_upload_and_file_content(monkeypatch):
-    # Mock database calls, adding a LOC_submitted entry with version 1
-    class DummyPool: ...
-
-    monkeypatch.setattr(get_ena_submission_list_mod, "db_init", lambda **_: DummyPool())
-    monkeypatch.setattr(
-        get_ena_submission_list_mod,
-        "highest_version_in_submission_table",
-        lambda **_: {"LOC_submitted": 1},
-    )
-
-    # Mock slack connection
-    slack_cfg = SimpleNamespace(
-        slack_hook="dummy_hook",
-        slack_token="dummy_token",  # noqa: S106
-        slack_channel_id="dummy_channel",
-    )
-    monkeypatch.setattr(get_ena_submission_list_mod, "slack_conn_init", lambda **_: slack_cfg)
-
-    # Mock slack upload_file_with_comment and notify functions and count number of calls
-    upload_calls = []
-
-    def fake_upload_file_with_comment(sc, path, message):
-        upload_calls.append({"sc": sc, "path": path, "message": message})
-        return {"ok": True}
-
-    monkeypatch.setattr(
-        get_ena_submission_list_mod, "upload_file_with_comment", fake_upload_file_with_comment
-    )
-
-    def mock_get(*args, **kwargs):  # noqa: ARG001
-        return MockSuppressedList()
-
-    monkeypatch.setattr(get_ena_submission_list_mod.requests, "get", mock_get)
-
-    notify_calls = []
-    monkeypatch.setattr(
-        get_ena_submission_list_mod,
-        "notify",
-        lambda *args, **kwargs: notify_calls.append((args, kwargs)),
-    )
-
-    monkeypatch.setattr(
-        "get_ena_submission_list.fetch_released_entries",
-        fake_fetch_released_entries,
-        raising=True,
-    )
-
-    get_ena_submission_list_mod.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
-    assert upload_calls, "Expected a Slack file upload, but none happened"
-    assert upload_calls[0]["message"].startswith(
-        "http://localhost:8079: cchf - ENA Submission pipeline wants to submit 1"
-    )
-    assert upload_calls[1]["message"].startswith(
-        "http://localhost:8079: cchf - ENA Submission pipeline found 1 sequences with ena"
-    )
-    json_diff(upload_calls[0]["path"], APPROVED_RELEASED_DATA_PATH)
+if __name__ == "__main__":
+    unittest.main()
