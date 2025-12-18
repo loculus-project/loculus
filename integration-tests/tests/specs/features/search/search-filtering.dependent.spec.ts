@@ -18,6 +18,12 @@ test.describe('Search filtering functionality', () => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();
 
+        // Check if version is visible and pipelineVersion is not visible in the field selector
+        await page.getByRole('button', { name: 'Add search fields' }).click();
+        await expect(page.getByRole('checkbox', { name: 'Pipeline version' })).not.toBeVisible();
+        await expect(page.getByRole('checkbox', { name: 'Version', exact: true })).toBeVisible();
+        await page.getByTestId('field-selector-close-button').click();
+
         await searchPage.select('Collection country', 'France');
 
         const rows = searchPage.getSequenceRows();
