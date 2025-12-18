@@ -15,7 +15,6 @@ from psycopg2.pool import SimpleConnectionPool
 from ena_deposition import call_loculus
 
 from .config import Config, EnaOrganismDetails
-from .config import Config, EnaOrganismDetails
 from .ena_submission_helper import (
     CreationResult,
     accession_exists,
