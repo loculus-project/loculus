@@ -56,7 +56,7 @@ class GetSubmissionListTests(unittest.TestCase):
 
         mock_upload_file_with_comment.return_value = {"ok": True}
         mock_fetch_released_entries.side_effect = fake_fetch_released_entries
-        mock_fetch_suppressed_accessions.return_value = "LOC01.1"
+        mock_fetch_suppressed_accessions.return_value = {"LOC01.1"}
 
         get_ena_submission_list.get_ena_submission_list.callback(config_file=str(CONFIG_FILE))  # type: ignore
         mock_upload_file_with_comment.assert_called()
