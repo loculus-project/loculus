@@ -1,14 +1,9 @@
 ---
 import { getVersionsData } from './getVersionsData';
+import { VersionsWithDiff } from '../../../components/VersionDiff/VersionsWithDiff.tsx';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { routes } from '../../../routes/routes';
-import {
-    extractAccessionVersion,
-    getAccessionVersionString,
-    parseAccessionVersionFromString,
-} from '../../../utils/extractAccessionVersion';
-import { getVersionStatusColor, getVersionStatusLabel } from '../../../utils/getVersionStatusColor';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 
 const accessionVersion = Astro.params.accessionVersion!;
 const { accession } = parseAccessionVersionFromString(accessionVersion);
@@ -20,38 +15,14 @@ const { organism, versionListResult } = await getVersionsData(accession);
         <h1 class='title'>Versions for accession {accession}</h1>
     </div>
 
-    <ul class='p-3'>
-        {
-            versionListResult.match(
-                (list) => {
-                    return list.map((version) => (
-                        <li class='mb-4'>
-                            <div class='mb-2'>
-                                <div class='font-semibold'>{version.submittedAtTimestamp}</div>
-                                <div class='flex flex-row gap-3 justify-start'>
-                                    <a
-                                        href={routes.sequenceEntryDetailsPage(
-                                            getAccessionVersionString(extractAccessionVersion(version)),
-                                        )}
-                                        class='hover:no-underline'
-                                    >
-                                        {getAccessionVersionString(extractAccessionVersion(version))}
-                                    </a>
-
-                                    <p
-                                        class={`${getVersionStatusColor(version.versionStatus, version.isRevocation)} ml-2`}
-                                    >
-                                        {getVersionStatusLabel(version.versionStatus, version.isRevocation)}
-                                    </p>
-                                </div>
-                            </div>
-                        </li>
-                    ));
-                },
-                (error) => {
-                    return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
-                },
-            )
-        }
-    </ul>
+    {
+        versionListResult.match(
+            (list) => {
+                return <VersionsWithDiff versions={list} accession={accession} client:load />;
+            },
+            (error) => {
+                return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
+            },
+        )
+    }
 </BaseLayout>
