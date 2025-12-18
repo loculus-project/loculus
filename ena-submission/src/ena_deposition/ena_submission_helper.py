@@ -849,30 +849,31 @@ def set_accession_does_not_exist_error(
     logger.error(error_text)
 
     succeeded: bool | int | None
-    if accession_type == "BIOSAMPLE":
-        sample_table_entry = SampleTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=[error_text],
-            result={"ena_sample_accession": accession, "biosample_accession": accession},
-        )
-        succeeded = add_to_sample_table(db_pool, sample_table_entry)
-    if accession_type == "BIOPROJECT":
-        project_table_entry = ProjectTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=[error_text],
-            result={"bioproject_accession": accession},
-        )
-        succeeded = add_to_project_table(db_pool, project_table_entry)
-    if accession_type == "RUN_REF":
-        assembly_table_entry = AssemblyTableEntry(
-            **conditions,  # type: ignore
-            status=Status.HAS_ERRORS,
-            errors=[error_text],
-            result={},  # type: ignore
-        )
-        succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
+    match accession_type:
+        case "BIOSAMPLE":
+            sample_table_entry = SampleTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"ena_sample_accession": accession, "biosample_accession": accession},
+            )
+            succeeded = add_to_sample_table(db_pool, sample_table_entry)
+        case "BIOPROJECT":
+            project_table_entry = ProjectTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={"bioproject_accession": accession},
+            )
+            succeeded = add_to_project_table(db_pool, project_table_entry)
+        case "RUN_REF":
+            assembly_table_entry = AssemblyTableEntry(
+                **conditions,  # type: ignore
+                status=Status.HAS_ERRORS,
+                errors=[error_text],
+                result={},  # type: ignore
+            )
+            succeeded = add_to_assembly_table(db_pool, assembly_table_entry)
 
     if not succeeded:
         logger.warning(f"{accession_type} creation failed and DB update failed.")
