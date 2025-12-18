@@ -1,0 +1,21 @@
+# Values for testing ENA submission with mock ENA
+# Only enables CCHF organism to speed up deployment
+
+enableMockEna: true
+mockEnaClusterIP: "10.43.200.200"  # Fixed ClusterIP for k3d
+disableEnaSubmission: false  # Override the e2e default
+
+# Disable organisms we don't need (merged with defaultOrganisms)
+defaultOrganisms:
+  ebola-sudan:
+    enabled: false
+  west-nile:
+    enabled: false
+  dummy-organism:
+    enabled: false
+  dummy-organism-with-files:
+    enabled: false
+  not-aligned-organism:
+    enabled: false
+  enteroviruses:
+    enabled: false

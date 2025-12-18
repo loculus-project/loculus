@@ -1,0 +1,17 @@
+# Ignore local certificates - they are generated at build time
+certs/*.crt
+certs/*.key
+certs/*.pem
+
+# Ignore local SQLite database
+*.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
