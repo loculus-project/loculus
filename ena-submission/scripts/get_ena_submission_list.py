@@ -213,7 +213,7 @@ def get_ena_submission_list(config_file) -> None:
     all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
         ena_specific_metadata_fields = [
-            value["name"] for value in config.organisms[organism]["externalMetadata"]
+            metadata_field.name for metadata_field in config.organisms[organism].externalMetadata
         ]
         logger.info(f"Getting released sequences for organism: {organism}")
 
