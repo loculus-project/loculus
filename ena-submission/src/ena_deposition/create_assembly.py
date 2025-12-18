@@ -25,7 +25,6 @@ from .ena_submission_helper import (
     get_authors,
     get_description,
     get_ena_analysis_process,
-    get_molecule_type,
     set_accession_does_not_exist_error,
     trigger_retry_if_exists,
 )
