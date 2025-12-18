@@ -19,7 +19,6 @@ fields:
     hideOnSequenceDetailsPage: true
   - name: version
     type: int
-    notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submissionId
     displayName: Submission ID
