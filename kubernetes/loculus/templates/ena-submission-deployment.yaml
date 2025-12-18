@@ -117,7 +117,7 @@ kind: CronJob
 metadata:
   name: loculus-get-ena-submission-list-cronjob
 spec:
-  schedule: "0 0 * * *" # get submission list daily at midnight
+  schedule: "0 1,13 * * *". # run twice a day at 1am and 1pm
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
