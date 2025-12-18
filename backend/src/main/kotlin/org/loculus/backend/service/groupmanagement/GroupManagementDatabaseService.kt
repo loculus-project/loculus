@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
@@ -146,23 +147,15 @@ class GroupManagementDatabaseService(
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
     }
 
-    fun getAllGroups(): List<Group> = GroupEntity.all()
-        .map {
-            Group(
-                groupId = it.id.value,
-                groupName = it.groupName,
-                institution = it.institution,
-                address = Address(
-                    line1 = it.addressLine1,
-                    line2 = it.addressLine2,
-                    postalCode = it.addressPostalCode,
-                    city = it.addressCity,
-                    state = it.addressState,
-                    country = it.addressCountry,
-                ),
-                contactEmail = it.contactEmail,
-            )
+    fun getGroups(name: String?): List<Group> {
+        val entities = if (name == null) {
+            GroupEntity.all()
+        } else {
+            GroupEntity.find { GroupsTable.groupNameColumn.lowerCase() eq name.lowercase() } // just case-insensitive perfect matches for now
         }
+
+        return entities.map { it.toGroup() }
+    }
 
     private fun GroupEntity.updateWith(group: NewGroup) {
         groupName = group.groupName
