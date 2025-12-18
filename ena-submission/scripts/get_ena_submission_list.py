@@ -117,7 +117,8 @@ def filter_for_submission(
         ]
         if ena_specific_metadata:
             logger.warning(
-                f"Found sequence: {accession_version} with ena-specific-metadata fields and not "
+                f"Found sequence: {accession_version} with ena-specific-metadata fields: "
+                f"{ena_specific_metadata} and not "
                 f"submitted by us or {config.ingest_pipeline_submission_group}: "
                 f"{ena_specific_metadata}"
             )
@@ -213,7 +214,7 @@ def get_ena_submission_list(config_file) -> None:
     all_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
     for organism in config.organisms:
         ena_specific_metadata_fields = [
-            value["name"] for value in config.organisms[organism]["externalMetadata"]
+            metadata_field.name for metadata_field in config.organisms[organism].externalMetadata
         ]
         logger.info(f"Getting released sequences for organism: {organism}")
 
