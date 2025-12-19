@@ -160,7 +160,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
     with requests.get(
-        url, headers=headers, params={"enaDeposition": "true"}, timeout=3600, stream=True
+        url, headers=headers, params={"filterForEnaDeposition": "true"}, timeout=3600, stream=True
     ) as response:
         response.raise_for_status()
         for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):

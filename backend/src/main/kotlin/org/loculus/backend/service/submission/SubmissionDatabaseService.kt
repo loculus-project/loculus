@@ -695,7 +695,7 @@ class SubmissionDatabaseService(
     }
 
     // Make sure to keep in sync with countReleasedSubmissions query
-    fun streamReleasedSubmissions(organism: Organism, enaDeposition: Boolean = false): Sequence<RawProcessedData> =
+    fun streamReleasedSubmissions(organism: Organism, filterForEnaDeposition: Boolean = false): Sequence<RawProcessedData> =
         SequenceEntriesView.join(
             DataUseTermsTable,
             JoinType.LEFT,
@@ -723,7 +723,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     SequenceEntriesView.organismIs(organism) and
                     (
-                        if (enaDeposition) {
+                        if (filterForEnaDeposition) {
                             (SequenceEntriesView.enDepositionStatusIs(EnaDepositionStatus.READY))
                         } else {
                             Op.TRUE

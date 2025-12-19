@@ -88,7 +88,7 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = 1)
 
-        val response = submissionControllerClient.getReleasedData(enaDeposition = "true")
+        val response = submissionControllerClient.getReleasedData(filterForEnaDeposition = "true")
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         responseBody.forEach {
