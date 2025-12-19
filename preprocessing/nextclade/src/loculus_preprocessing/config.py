@@ -1,5 +1,4 @@
 import argparse
-import dataclasses
 import logging
 import os
 from enum import StrEnum
@@ -19,7 +18,7 @@ CLI_TYPES = [str, int, float, bool]
 
 class EmblInfoMetadataPropertyNames(BaseModel):
     country_property: str = "geoLocCountry"
-    admin_level_properties: list[str] = dataclasses.field(
+    admin_level_properties: list[str] = Field(
         default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
     )
     collection_date_property: str = "sampleCollectionDate"
