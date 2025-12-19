@@ -203,7 +203,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
-    args = dict(spec.args)
+    args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["accession_version"] = accession_version
