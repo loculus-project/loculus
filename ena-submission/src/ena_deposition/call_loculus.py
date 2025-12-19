@@ -9,8 +9,8 @@ from http import HTTPMethod
 from typing import Any
 
 import orjson
+import orjsonl
 import requests
-from xopen import xopen
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
@@ -181,26 +181,22 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
             with open(temp_file_path, "wb") as f:
                 shutil.copyfileobj(response.raw, f)
 
-        # Iterate over lines manually to provide detailed error messages
-        with xopen(temp_file_path, "rb") as f:
+        try:
             wanted_keys = {"metadata", "unalignedNucleotideSequences"}
-            for line_no, line in enumerate(f, start=1):
-                try:
-                    full_json = orjson.loads(line)
-                    yield {k: v for k, v in full_json.items() if k in wanted_keys}
-                except orjson.JSONDecodeError as e:
-                    head = line[:200]
-                    tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
+            line_no = 0
+            for full_json in orjsonl.stream(temp_file_path):
+                line_no += 1
+                yield {k: v for k, v in full_json.items() if k in wanted_keys}
+        except orjson.JSONDecodeError as e:
+            # line_no is the number of successfully parsed lines so far.
+            # The failure happened on the next line.
+            error_line = line_no + 1
+            error_msg = (
+                f"Invalid NDJSON from {url}\n"
+                f"request_id={request_id}\n"
+                f"line={error_line}\n"
+                f"json_error={e}\n"
+            )
 
-                    error_msg = (
-                        f"Invalid NDJSON from {url}\n"
-                        f"request_id={request_id}\n"
-                        f"line={line_no}\n"
-                        f"bytes={len(line)}\n"
-                        f"json_error={e}\n"
-                        f"head={head!r}\n"
-                        f"tail={tail!r}"
-                    )
-
-                    logger.error(error_msg)
-                    raise RuntimeError(error_msg) from e
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
