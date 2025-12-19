@@ -138,23 +138,26 @@ def filter_for_submission(
         else:
             revoked_entries.discard(accession_version.accession)
 
+    # Build all three result dicts in a single pass
+    result_entries_to_submit: dict[AccessionVersion, dict[str, Any]] = {}
+    result_entries_with_ext_metadata: dict[AccessionVersion, dict[str, Any]] = {}
+    result_revoked_entries: dict[AccessionVersion, dict[str, Any]] = {}
+
+    for entry in entries_to_submit.values():
+        accession = entry["metadata"]["accession"]
+        accession_version = entry["metadata"]["accessionVersion"]
+
+        if accession in revoked_entries:
+            result_revoked_entries[accession_version] = entry
+        elif accession in entries_with_external_metadata:
+            result_entries_with_ext_metadata[accession_version] = entry
+        else:
+            result_entries_to_submit[accession_version] = entry
+
     return SubmissionResults(
-        entries_to_submit={
-            entry["metadata"]["accessionVersion"]: entry
-            for entry in entries_to_submit.values()
-            if entry["metadata"]["accession"]
-            not in (entries_with_external_metadata | revoked_entries)
-        },
-        entries_with_ext_metadata_to_submit={
-            entry["metadata"]["accessionVersion"]: entry
-            for entry in entries_to_submit.values()
-            if entry["metadata"]["accession"] in entries_with_external_metadata
-        },
-        revoked_entries={
-            entry["metadata"]["accessionVersion"]: entry
-            for entry in entries_to_submit.values()
-            if entry["metadata"]["accession"] in revoked_entries
-        },
+        entries_to_submit=result_entries_to_submit,
+        entries_with_ext_metadata_to_submit=result_entries_with_ext_metadata,
+        revoked_entries=result_revoked_entries,
     )
 
 
