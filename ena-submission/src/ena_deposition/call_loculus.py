@@ -7,7 +7,6 @@ from http import HTTPMethod
 from typing import Any
 
 import orjson
-import orjsonl
 import requests
 
 from .config import Config
@@ -167,7 +166,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                 continue
 
             try:
-                full_json = orjsonl.loads(line)
+                full_json = orjson.loads(line)
             except orjson.JSONDecodeError as e:
                 head = line[:200]
                 tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
