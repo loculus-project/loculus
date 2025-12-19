@@ -79,7 +79,7 @@ class ImporterRunner:
             return
 
         try:
-            update_lineage_definitions(download.pipeline_versions, self.config, self.paths)
+            update_lineage_definitions(download.pipeline_version, self.config, self.paths)
         except Exception:
             logger.exception("Failed to download lineage definitions; cleaning up input")
             safe_remove(self.paths.silo_input_data_path)
