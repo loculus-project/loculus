@@ -161,7 +161,7 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line_no, line in enumerate(response.iter_lines(chunk_size=655360), start=1):
+        for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
             if not line:
                 continue
 
