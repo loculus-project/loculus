@@ -257,7 +257,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             }.also {
                 when (filterForEnaDeposition) {
                     null -> it
-                    else -> it.param("enaDeposition", filterForEnaDeposition)
+                    else -> it.param("filterForEnaDeposition", filterForEnaDeposition)
                 }
             },
     )

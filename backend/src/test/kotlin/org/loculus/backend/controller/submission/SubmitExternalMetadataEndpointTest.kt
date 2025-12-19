@@ -90,6 +90,9 @@ class SubmitExternalMetadataEndpointTest(
 
         assertThat(releasedSequenceEntry.metadata, hasEntry("insdcAccessionFull", TextNode("GENBANK1000.1")))
         assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
+        val filteredReleasedSequenceEntry = convenienceClient.getReleasedData(filterForEnaDeposition = "true")
+            .find { it.metadata["accession"]?.textValue() == accession }
+        assertThat(filteredReleasedSequenceEntry, nullValue())
     }
 
     @Test
@@ -115,9 +118,6 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntryAfter = getReleasedSequenceEntry(accession)
 
         assertThat(releasedSequenceEntryBefore.metadata, equalTo(releasedSequenceEntryAfter.metadata))
-        val filteredReleasedSequenceEntry = convenienceClient.getReleasedData(filterForEnaDeposition = "true")
-            .find { it.metadata["accession"]?.textValue() == accession }
-        assertThat(filteredReleasedSequenceEntry, nullValue())
     }
 
     @Test
