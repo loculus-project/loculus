@@ -154,31 +154,19 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     request_id = str(uuid.uuid4())
     url = f"{organism_url(config, organism)}/get-released-data"
+    params = {"compression": "zstd"}
 
     headers = {
         "Content-Type": "application/json",
         "X-Request-ID": request_id,
-        "Accept-Encoding": "zstd, gzip, deflate",
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Initial dummy path, updated after headers are checked
-        temp_file_path = os.path.join(temp_dir, "downloaded_data")
+        temp_file_path = os.path.join(temp_dir, "downloaded_data.zst")
 
-        with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+        with requests.get(url, headers=headers, params=params, timeout=3600, stream=True) as response:
             response.raise_for_status()
-
-            # Determine file extension based on Content-Encoding
-            content_encoding = response.headers.get("Content-Encoding", "").lower()
-            if "zstd" in content_encoding:
-                extension = ".zst"
-            elif "gzip" in content_encoding:
-                extension = ".gz"
-            else:
-                extension = ".jsonl"
-
-            temp_file_path += extension
 
             # Ensure we get raw bytes to preserve compression
             response.raw.decode_content = False
