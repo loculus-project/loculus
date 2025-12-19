@@ -189,19 +189,18 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                     yield {k: v for k, v in full_json.items() if k in wanted_keys}
         except orjson.JSONDecodeError as e:
             line_content = getattr(e, "doc", "")
-            head_len = 200
-            tail_len = 200
-            head = line_content[:head_len]
-            tail_start = max(head_len, len(line_content) - tail_len)
-            tail = line_content[tail_start:]
+            if len(line_content) > 400:
+                if isinstance(line_content, bytes):
+                    line_content = line_content[:200] + b"..." + line_content[-200:]
+                else:
+                    line_content = line_content[:200] + "..." + line_content[-200:]
 
             error_msg = (
                 f"Invalid NDJSON from {url}\n"
                 f"request_id={request_id}\n"
-                f"line={pbar.n + 1}\n"
+                f"line_no={pbar.n + 1}\n"
                 f"json_error={e}\n"
-                f"head={head!r}\n"
-                f"tail={tail!r}"
+                f"line={line_content!r}"
             )
 
             logger.error(error_msg)
