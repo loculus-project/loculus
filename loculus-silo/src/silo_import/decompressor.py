@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import orjsonl
-import zstandard
 
 logger = logging.getLogger(__name__)
 
@@ -36,16 +35,14 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
     logger.info("Starting analyze_and_transform_ndjson")
     record_count = 0
     pipeline_version: int | None = None
-    decompressor = zstandard.ZstdDecompressor()
 
     try:
-        with path.open("rb") as compressed, decompressor.stream_reader(compressed) as reader:
-            for record in orjsonl.stream(reader):
-                record_count += 1
-                if pipeline_version is None:
-                    pipeline_version = record.get("metadata", {}).get("pipelineVersion")
+        for record in orjsonl.stream(path):
+            record_count += 1
+            if pipeline_version is None:
+                pipeline_version = record.get("metadata", {}).get("pipelineVersion")
 
-    except zstandard.ZstdError as exc:
+    except Exception as exc:
         msg = f"Failed to decompress {path}: {exc}"
         logger.error(msg)
         raise RuntimeError(msg) from exc
