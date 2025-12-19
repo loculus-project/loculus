@@ -11,6 +11,7 @@ from typing import Any
 import orjson
 import orjsonl
 import requests
+from tqdm import tqdm
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
@@ -183,14 +184,14 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
         try:
             wanted_keys = {"metadata", "unalignedNucleotideSequences"}
-            line_no = 0
-            for line_no, full_json in enumerate(orjsonl.stream(temp_file_path), start=1):
-                yield {k: v for k, v in full_json.items() if k in wanted_keys}
+            with tqdm(orjsonl.stream(temp_file_path), unit=" records", mininterval=2.0) as pbar:
+                for full_json in pbar:
+                    yield {k: v for k, v in full_json.items() if k in wanted_keys}
         except orjson.JSONDecodeError as e:
             error_msg = (
                 f"Invalid NDJSON from {url}\n"
                 f"request_id={request_id}\n"
-                f"line={line_no + 1}\n"
+                f"line={pbar.n + 1}\n"
                 f"json_error={e}\n"
             )
 
