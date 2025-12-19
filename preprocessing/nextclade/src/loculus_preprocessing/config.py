@@ -1,14 +1,13 @@
 import argparse
-import copy
 import dataclasses
 import logging
 import os
-from dataclasses import dataclass
 from enum import StrEnum
 from types import UnionType
 from typing import Any, get_args
 
 import yaml
+from pydantic import BaseModel, Field, model_validator
 
 from loculus_preprocessing.datatypes import MoleculeType, SegmentClassificationMethod, Topology
 
@@ -18,8 +17,7 @@ logger = logging.getLogger(__name__)
 CLI_TYPES = [str, int, float, bool]
 
 
-@dataclass
-class EmblInfoMetadataPropertyNames:
+class EmblInfoMetadataPropertyNames(BaseModel):
     country_property: str = "geoLocCountry"
     admin_level_properties: list[str] = dataclasses.field(
         default_factory=lambda: ["geoLocAdmin1", "geoLocAdmin2", "geoLocCity", "geoLocSite"]
@@ -39,20 +37,17 @@ class AlignmentRequirement(StrEnum):
     NONE = "NONE"
 
 
-@dataclass
-class NextcladeSequenceAndDataset:
+class NextcladeSequenceAndDataset(BaseModel):
     name: str = "main"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
-    accepted_sort_matches: list[str] = dataclasses.field(default_factory=list)
+    accepted_sort_matches: list[str] = Field(default_factory=list)
     gene_prefix: str | None = None
-    genes: list[str] = dataclasses.field(default_factory=list)
+    genes: list[str] = Field(default_factory=list)
 
 
-@dataclass
-class Config:
-    config_file: str | None = None
+class Config(BaseModel):
     log_level: str = "DEBUG"
     keep_tmp_dir: bool = False
     batch_size: int = 5
@@ -66,11 +61,8 @@ class Config:
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    nextclade_sequence_and_datasets: list[NextcladeSequenceAndDataset] = dataclasses.field(
-        default_factory=list
-    )
-    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
-    multi_segment: bool = False
+    nextclade_sequence_and_datasets: list[NextcladeSequenceAndDataset] = Field(default_factory=list)
+    processing_spec: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN
@@ -85,67 +77,45 @@ class Config:
     topology: Topology = Topology.LINEAR
     db_name: str = "Loculus"
     # The 'embl' section of the config contains metadata property names for the EMBL file
-    embl: EmblInfoMetadataPropertyNames = dataclasses.field(
-        default_factory=EmblInfoMetadataPropertyNames
-    )
+    embl: EmblInfoMetadataPropertyNames = Field(default_factory=EmblInfoMetadataPropertyNames)
     insdc_ingest_group_id: int = 1
 
+    @model_validator(mode="after")
+    def finalize(self):
+        for ds in self.nextclade_sequence_and_datasets:
+            if ds.nextclade_dataset_server is None:
+                ds.nextclade_dataset_server = self.nextclade_dataset_server
 
-def assign_nextclade_sequence_and_dataset(
-    nuc_seq_values: list[dict[str, Any]], config: Config
-) -> list[NextcladeSequenceAndDataset]:
-    if not isinstance(nuc_seq_values, list):
-        error_msg = f"nextclade_sequence_and_datasets should be a list of dicts, got: {type(nuc_seq_values)}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-    nextclade_sequence_and_dataset_list: list[NextcladeSequenceAndDataset] = []
-    for value in nuc_seq_values:
-        if value is None or not isinstance(value, dict):
-            continue
-        seq_and_dataset = NextcladeSequenceAndDataset()
-        for seq_key, seq_value in value.items():
-            if hasattr(seq_and_dataset, seq_key) and seq_value is not None:
-                setattr(seq_and_dataset, seq_key, seq_value)
-        if not seq_and_dataset.nextclade_dataset_server:
-            seq_and_dataset.nextclade_dataset_server = config.nextclade_dataset_server
-        nextclade_sequence_and_dataset_list.append(seq_and_dataset)
-    return nextclade_sequence_and_dataset_list
+        if not any(ds.nextclade_dataset_name for ds in self.nextclade_sequence_and_datasets):
+            self.alignment_requirement = AlignmentRequirement.NONE
+
+        if not self.backend_host:  # Set here so we can use organism
+            self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
+
+        return self
+
+    def multi_segment(self) -> bool:
+        return len(self.nextclade_sequence_and_datasets) > 1
 
 
-def set_alignment_requirement(config: Config) -> AlignmentRequirement:
-    need_nextclade_dataset: bool = False
-    for sequence in config.nextclade_sequence_and_datasets:
-        if sequence.nextclade_dataset_name:
-            need_nextclade_dataset = True
-    if not need_nextclade_dataset:
-        return AlignmentRequirement.NONE
-    return config.alignment_requirement
+def load_config(config_file: str | None, args) -> Config:
+    if config_file:
+        with open(config_file, encoding="utf-8") as file:
+            yaml_config = yaml.safe_load(file)
+            logger.debug(f"Loaded config from {config_file}: {yaml_config}")
+        config = Config(**yaml_config)
+    else:
+        config = Config()
+    # Use environment variables if available
+    for key in config.__dict__:
+        env_var = f"PREPROCESSING_{key.upper()}"
+        if env_var in os.environ:
+            setattr(config, key, os.environ[env_var])
 
-
-def load_config_from_yaml(config_file: str, config: Config | None = None) -> Config:
-    config = Config() if config is None else copy.deepcopy(config)
-    with open(config_file, encoding="utf-8") as file:
-        yaml_config = yaml.safe_load(file)
-        logger.debug(f"Loaded config from {config_file}: {yaml_config}")
-    for key, value in yaml_config.items():
-        if value is not None and hasattr(config, key):
-            if key == "nextclade_sequence_and_datasets":
-                setattr(config, key, assign_nextclade_sequence_and_dataset(value, config))
-                continue
-            attr = getattr(config, key)
-            if isinstance(attr, StrEnum):
-                try:
-                    enum_value = type(attr)(value)
-                except ValueError as e:
-                    msg = f"Invalid value '{value}' for enum {type(attr).__name__}"
-                    raise ValueError(msg) from e
-                setattr(config, key, enum_value)
-                continue
+    # Overwrite config with CLI args
+    for key, value in args.__dict__.items():
+        if value is not None:
             setattr(config, key, value)
-            if key == "embl_info" and isinstance(value, dict):
-                for embl_key, embl_value in value.items():
-                    if hasattr(config.embl, embl_key) and embl_value is not None:
-                        setattr(config.embl, embl_key, embl_value)
     return config
 
 
@@ -200,25 +170,4 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     )
 
     # Start with lowest precedence config, then overwrite with higher precedence
-    config = load_config_from_yaml(config_file_path) if config_file_path else Config()
-
-    # Use environment variables if available
-    for key in config.__dict__:
-        env_var = f"PREPROCESSING_{key.upper()}"
-        if env_var in os.environ:
-            setattr(config, key, os.environ[env_var])
-
-    # Overwrite config with CLI args
-    for key, value in args.__dict__.items():
-        if value is not None:
-            setattr(config, key, value)
-
-    if not config.backend_host:  # Set here so we can use organism
-        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
-
-    config.alignment_requirement = set_alignment_requirement(config)
-
-    if len(config.nextclade_sequence_and_datasets) > 1:
-        config.multi_segment = True
-
-    return config
+    return load_config(config_file_path, args)
