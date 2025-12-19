@@ -19,7 +19,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: ghcr.io/cloudnative-pg/postgresql:15
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
@@ -49,7 +49,7 @@ jobs:
         args: -locations=filesystem:./backend/src/main/resources/db/migration/ migrate
 
     - name: Generate new schema
-      uses: docker://postgres:16
+      uses: docker://ghcr.io/cloudnative-pg/postgresql:16
       with:
         args: >
           bash -c "PGPASSWORD=postgres pg_dump 
