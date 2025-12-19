@@ -80,6 +80,23 @@ class GetReleasedDataDataUseTermsDisabledEndpointTest(
     }
 
     @Test
+    fun `GIVEN released data called with enaDeposition=true THEN groupId 1 data is excluded`() {
+        val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = groupId)
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(groupId = 1)
+
+        val response = submissionControllerClient.getReleasedData(enaDeposition = "true")
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+        responseBody.forEach {
+            assertThat(it.metadata["groupId"], not(`is`(1)))
+        }
+    }
+
+    @Test
     fun `GIVEN released data exists THEN returns with additional metadata fields & no data use terms properties`() {
         val groupId = groupClient.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
