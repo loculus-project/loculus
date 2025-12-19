@@ -36,7 +36,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
-    args: FunctionArgs = Field(default_factory=dict)
+    args: FunctionArgs | None = Field(default_factory=dict)
 
 
 class AlignmentRequirement(StrEnum):
