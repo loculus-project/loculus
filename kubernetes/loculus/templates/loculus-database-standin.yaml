@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: database
-        image: ghcr.io/cloudnative-pg/postgresql:15
+        image: ghcr.io/cloudnative-pg/postgresql:15.12
         args:
           - "-c"
           - "shared_preload_libraries=pg_stat_statements"
