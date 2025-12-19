@@ -6,6 +6,7 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.notNullValue
+import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
@@ -114,6 +115,9 @@ class SubmitExternalMetadataEndpointTest(
         val releasedSequenceEntryAfter = getReleasedSequenceEntry(accession)
 
         assertThat(releasedSequenceEntryBefore.metadata, equalTo(releasedSequenceEntryAfter.metadata))
+        val filteredReleasedSequenceEntry = convenienceClient.getReleasedData(filterForEnaDeposition = "true")
+            .find { it.metadata["accession"]?.textValue() == accession }
+        assertThat(filteredReleasedSequenceEntry, nullValue())
     }
 
     @Test
