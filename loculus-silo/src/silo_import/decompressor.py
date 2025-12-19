@@ -40,7 +40,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
         for record in orjsonl.stream(path):
             record_count += 1
             if pipeline_version is None:
-                pipeline_version = record.get("metadata", {}).get("pipelineVersion")
+                pipeline_version = record.get("metadata", {}).get("pipelineVersion")  # type: ignore
 
     except Exception as exc:
         msg = f"Failed to decompress {path}: {exc}"
