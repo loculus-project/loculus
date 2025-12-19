@@ -1,0 +1,16 @@
+# Configuration for mirroring Docker Hub images to ghcr.io
+# This file maps source images from Docker Hub to their mirrored locations under ghcr.io/loculus-project
+#
+# Format:
+# - source: The source image from Docker Hub (format: repository:tag)
+#   destination: The destination image in ghcr.io (format: ghcr.io/loculus-project/[name]:tag)
+#   description: Description of what the image is used for
+
+images:
+  - source: flyway/flyway:10-alpine
+    destination: ghcr.io/loculus-project/flyway:10-alpine
+    description: "Flyway database migration tool (used in schema-dump workflow)"
+  
+  - source: flyway/flyway:11.10.0-alpine-mongo
+    destination: ghcr.io/loculus-project/flyway:11.10.0-alpine-mongo
+    description: "Flyway database migration tool with MongoDB support (used in ena-submission)"
