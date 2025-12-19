@@ -7,6 +7,7 @@ from http import HTTPMethod
 from typing import Any
 
 import orjson
+import orjsonl
 import requests
 
 from .config import Config
@@ -161,12 +162,12 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line_no, line in enumerate(response.iter_lines(), start=1):  # bytes, not str
+        for line_no, line in enumerate(response.iter_lines(), start=1):
             if not line:
                 continue
 
             try:
-                full_json = orjson.loads(line)
+                full_json = orjsonl.loads(line)
             except orjson.JSONDecodeError as e:
                 head = line[:200]
                 tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
