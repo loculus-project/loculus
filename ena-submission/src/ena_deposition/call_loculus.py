@@ -184,17 +184,13 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
         try:
             wanted_keys = {"metadata", "unalignedNucleotideSequences"}
             line_no = 0
-            for full_json in orjsonl.stream(temp_file_path):
-                line_no += 1
+            for line_no, full_json in enumerate(orjsonl.stream(temp_file_path), start=1):
                 yield {k: v for k, v in full_json.items() if k in wanted_keys}
         except orjson.JSONDecodeError as e:
-            # line_no is the number of successfully parsed lines so far.
-            # The failure happened on the next line.
-            error_line = line_no + 1
             error_msg = (
                 f"Invalid NDJSON from {url}\n"
                 f"request_id={request_id}\n"
-                f"line={error_line}\n"
+                f"line={line_no + 1}\n"
                 f"json_error={e}\n"
             )
 
