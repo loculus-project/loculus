@@ -19,7 +19,7 @@ CREATE VIEW public.sequence_entries_view AS
             WHEN (aem.has_ena_updater) THEN 'DEPOSITED'::text
             WHEN (se.group_id = 1) THEN 'INGESTED'::text
             ELSE 'READY'::text
-        END as ena_deposition_status
+        END AS ena_deposition_status,
     sepd.processed_data,
         CASE
             WHEN (aem.external_metadata IS NULL) THEN sepd.processed_data
