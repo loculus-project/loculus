@@ -86,7 +86,11 @@ def filter_for_submission(
         db_conn_pool=db_pool, organism=organism
     )
     suppressed_accessions = fetch_suppressed_accessions(config)
+    processed_entries = 0
     for entry in entries_iterator:
+        processed_entries += 1
+        if processed_entries % 1000:
+            logger.debug(f"Successfully processed {processed_entries} entries.")
         accession_version = AccessionVersion.from_string(entry["metadata"]["accessionVersion"])
         if entry["metadata"]["dataUseTerms"] != "OPEN":
             continue
