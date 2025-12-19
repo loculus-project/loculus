@@ -530,7 +530,7 @@ def assign_segment_using_header(
     duplicate_segments = set()
     if not config.nextclade_sequence_and_datasets or not input_unaligned_sequences:
         return segment_assignment
-    if not config.multi_segment():
+    if not config.multi_segment:
         return assign_single_segment(input_unaligned_sequences, config)
     for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
@@ -654,7 +654,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
         for entry in unprocessed
     }
 
-    if not config.multi_segment():
+    if not config.multi_segment:
         batch = assign_all_single_segments(
             unprocessed,
             config=config,

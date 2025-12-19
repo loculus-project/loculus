@@ -36,7 +36,7 @@ class ProcessingSpec(BaseModel):
     inputs: FunctionInputs
     function: FunctionName = "identity"
     required: bool = False
-    args: FunctionArgs | None = Field(default_factory=dict)
+    args: FunctionArgs | None = None
 
 
 class AlignmentRequirement(StrEnum):
@@ -107,6 +107,7 @@ class Config(BaseModel):
 
         return self
 
+    @property
     def multi_segment(self) -> bool:
         return len(self.nextclade_sequence_and_datasets) > 1
 
