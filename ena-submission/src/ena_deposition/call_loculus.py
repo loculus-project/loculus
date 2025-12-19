@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import uuid
@@ -6,6 +5,7 @@ from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
+import orjson
 import requests
 
 from .config import Config
@@ -160,10 +160,13 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line_no, line in enumerate(response.iter_lines(decode_unicode=True), start=1):
+        for line_no, line in enumerate(response.iter_lines(), start=1):  # bytes, not str
+            if not line:
+                continue
+
             try:
-                full_json = json.loads(line)
-            except json.JSONDecodeError as e:
+                full_json = orjson.loads(line)
+            except orjson.JSONDecodeError as e:
                 head = line[:200]
                 tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
 
