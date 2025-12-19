@@ -177,15 +177,19 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     else:
         config = Config()
     # Use environment variables if available
-    for key in config.__dict__:
+    env_overrides = {}
+    for key in Config.model_fields:
         env_var = f"PREPROCESSING_{key.upper()}"
         if env_var in os.environ:
-            setattr(config, key, os.environ[env_var])
+            env_overrides[key] = os.environ[env_var]
+
+    if env_overrides:
+        config = Config(**{**config.model_dump(), **env_overrides})
 
     # Overwrite config with CLI args
-    for key, value in args.__dict__.items():
-        if value is None:
-            continue
-        if key in Config.model_fields:
-            setattr(config, key, value)
+    cli_overrides = {
+        k: v for k, v in args.__dict__.items() if v is not None and k in Config.model_fields
+    }
+    if cli_overrides:
+        config = Config(**{**config.model_dump(), **cli_overrides})
     return config
