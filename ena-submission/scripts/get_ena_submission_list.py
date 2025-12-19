@@ -82,9 +82,11 @@ def filter_for_submission(
     entries_to_submit: dict[Accession, dict[str, Any]] = {}
     entries_with_external_metadata: set[Accession] = set()
     revoked_entries: set[Accession] = set()
+    logger.debug("Querying ENA db for latest version of submissions")
     highest_submitted_version = highest_version_in_submission_table(
         db_conn_pool=db_pool, organism=organism
     )
+    logger.debug("Starting processing of data from Loculus backend")
     suppressed_accessions = fetch_suppressed_accessions(config)
     for idx, entry in enumerate(entries_iterator):
         if idx % 1000 == 0:
