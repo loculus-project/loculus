@@ -310,7 +310,8 @@ open class SubmissionController(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
         @Parameter(
-            description = "(Optional) Filter to return only sequences ready for ENA deposition (excludes already deposited and ingested sequences)",
+            description = "(Optional) Filter to return only sequences ready for ENA deposition " +
+                "(excludes already deposited and ingested sequences)",
         )
         @RequestParam(
             name = "filterForEnaDeposition",
