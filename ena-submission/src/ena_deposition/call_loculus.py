@@ -1,14 +1,16 @@
 import json
 import logging
 import os
+import shutil
 import tempfile
 import uuid
 from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
-import orjsonl
+import orjson
 import requests
+from xopen import xopen
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
@@ -165,25 +167,40 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
         temp_file_path = os.path.join(temp_dir, "downloaded_data.zst")
 
         with requests.get(
-            url, headers=headers, params=params, timeout=config.backend_http_timeout_seconds
+            url,
+            headers=headers,
+            params=params,
+            timeout=config.backend_http_timeout_seconds,
+            stream=True,
         ) as response:
             response.raise_for_status()
 
+            # Ensure we get raw bytes to preserve compression
+            response.raw.decode_content = False
+
             with open(temp_file_path, "wb") as f:
-                f.write(response.content)
+                shutil.copyfileobj(response.raw, f)
 
-        try:
+        # Iterate over lines manually to provide detailed error messages
+        with xopen(temp_file_path, "rb") as f:
             wanted_keys = {"metadata", "unalignedNucleotideSequences"}
-            yield from (
-                {k: v for k, v in record.items() if k in wanted_keys}
-                for record in orjsonl.load(temp_file_path)
-            )
-        except Exception as e:
-            error_msg = (
-                f"Invalid NDJSON from {url}\n"
-                f"request_id={request_id}\n"
-                f"json_error={e}\n"
-            )
+            for line_no, line in enumerate(f, start=1):
+                try:
+                    full_json = orjson.loads(line)
+                    yield {k: v for k, v in full_json.items() if k in wanted_keys}
+                except orjson.JSONDecodeError as e:
+                    head = line[:200]
+                    tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
 
-            logger.error(error_msg)
-            raise RuntimeError(error_msg) from e
+                    error_msg = (
+                        f"Invalid NDJSON from {url}\n"
+                        f"request_id={request_id}\n"
+                        f"line={line_no}\n"
+                        f"bytes={len(line)}\n"
+                        f"json_error={e}\n"
+                        f"head={head!r}\n"
+                        f"tail={tail!r}"
+                    )
+
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg) from e
