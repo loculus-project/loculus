@@ -1,6 +1,6 @@
 # The version number is also used in the ena-submission-workflow-tests.yml file to extract the Flyway version dynamically.
 # We thus require a specific major.minor.patch version here
-FROM flyway/flyway:11.10.0-alpine-mongo
+FROM ghcr.io/flyway/flyway:11.10.0-alpine-mongo
 
 # Copy configuration and SQL files
 COPY conf /flyway/conf
