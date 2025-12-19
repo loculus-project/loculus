@@ -18,6 +18,10 @@ from .loculus_models import Group, GroupDetails
 
 logger = logging.getLogger(__name__)
 
+# Constants for error logging truncation
+MAX_LOG_LINE_LENGTH = 400
+LOG_SNIPPET_LENGTH = 200
+
 
 def backend_url(config: Config) -> str:
     """Right strip the URL to remove trailing slashes"""
@@ -189,11 +193,19 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
                     yield {k: v for k, v in full_json.items() if k in wanted_keys}
         except orjson.JSONDecodeError as e:
             line_content = getattr(e, "doc", "")
-            if len(line_content) > 400:
+            if len(line_content) > MAX_LOG_LINE_LENGTH:
                 if isinstance(line_content, bytes):
-                    line_content = line_content[:200] + b"..." + line_content[-200:]
+                    line_content = (
+                        line_content[:LOG_SNIPPET_LENGTH]
+                        + b"..."
+                        + line_content[-LOG_SNIPPET_LENGTH:]
+                    )
                 else:
-                    line_content = line_content[:200] + "..." + line_content[-200:]
+                    line_content = (
+                        line_content[:LOG_SNIPPET_LENGTH]
+                        + "..."
+                        + line_content[-LOG_SNIPPET_LENGTH:]
+                    )
 
             error_msg = (
                 f"Invalid NDJSON from {url}\n"
