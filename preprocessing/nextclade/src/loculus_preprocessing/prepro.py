@@ -385,13 +385,13 @@ def alignment_errors_warnings(
         ):
             message = (
                 "Nucleotide sequence failed to align"
-                if not config.multi_segment
+                if not config.multi_segment()
                 else f"Nucleotide sequence for {segment} failed to align"
             )
             annotation = ProcessingAnnotation.from_single(
                 segment, AnnotationSourceType.NUCLEOTIDE_SEQUENCE, message=message
             )
-            if config.multi_segment and config.alignment_requirement == AlignmentRequirement.ANY:
+            if config.multi_segment() and config.alignment_requirement == AlignmentRequirement.ANY:
                 warnings.append(annotation)
             else:
                 errors.append(annotation)
@@ -401,7 +401,7 @@ def alignment_errors_warnings(
     if (
         not aligned_segments
         and unprocessed.unalignedNucleotideSequences
-        and config.multi_segment
+        and config.multi_segment()
         and config.alignment_requirement == AlignmentRequirement.ANY
     ):
         errors.append(
