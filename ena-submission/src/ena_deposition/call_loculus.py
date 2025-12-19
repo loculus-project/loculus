@@ -1,11 +1,14 @@
 import json
 import logging
 import os
+import shutil
+import tempfile
 import uuid
 from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
+import orjsonl
 import requests
 
 from .config import Config
@@ -155,33 +158,47 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     headers = {
         "Content-Type": "application/json",
         "X-Request-ID": request_id,
+        "Accept-Encoding": "zstd, gzip, deflate",
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
-    with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
-        response.raise_for_status()
-        for line_no, line in enumerate(response.iter_lines(decode_unicode=True), start=1):
-            try:
-                full_json = json.loads(line)
-            except json.JSONDecodeError as e:
-                head = line[:200]
-                tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Initial dummy path, updated after headers are checked
+        temp_file_path = os.path.join(temp_dir, "downloaded_data")
 
-                error_msg = (
-                    f"Invalid NDJSON from {url}\n"
-                    f"request_id={request_id}\n"
-                    f"line={line_no}\n"
-                    f"bytes={len(line)}\n"
-                    f"json_error={e}\n"
-                    f"head={head!r}\n"
-                    f"tail={tail!r}"
-                )
+        with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
+            response.raise_for_status()
 
-                logger.error(error_msg)
-                raise RuntimeError(error_msg) from e
+            # Determine file extension based on Content-Encoding
+            content_encoding = response.headers.get("Content-Encoding", "").lower()
+            if "zstd" in content_encoding:
+                extension = ".zst"
+            elif "gzip" in content_encoding:
+                extension = ".gz"
+            else:
+                extension = ".jsonl"
 
-            yield {
-                k: v
-                for k, v in full_json.items()
-                if k in {"metadata", "unalignedNucleotideSequences"}
-            }
+            temp_file_path += extension
+
+            # Ensure we get raw bytes to preserve compression
+            response.raw.decode_content = False
+
+            with open(temp_file_path, "wb") as f:
+                shutil.copyfileobj(response.raw, f)
+
+        try:
+            for full_json in orjsonl.load(temp_file_path):
+                yield {
+                    k: v
+                    for k, v in full_json.items()
+                    if k in {"metadata", "unalignedNucleotideSequences"}
+                }
+        except Exception as e:
+            error_msg = (
+                f"Invalid NDJSON from {url}\n"
+                f"request_id={request_id}\n"
+                f"json_error={e}\n"
+            )
+
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
