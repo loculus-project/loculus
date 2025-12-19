@@ -382,6 +382,8 @@ enum class PreprocessingStatus {
     PROCESSED,
 }
 
+val InsdcIngestGroupId = 1
+
 enum class EnaDepositionStatus {
     INGESTED,
     READY,

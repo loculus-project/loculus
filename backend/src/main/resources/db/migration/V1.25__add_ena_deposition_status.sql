@@ -1,3 +1,12 @@
+-- Adds a ena_deposition_status for each accessionVersion:
+-- If accessionVersion was submitted by the InsdcIngestGroupId=1 set status to INGESTED (in INSDC)
+-- If accessionVersion was deposited by the ENA deposition pod (there exists external metadata for that accessionVersion)
+-- set status to DEPOSITED (in INSDC)
+-- Else set status to READY - the deposition pod will revisions, revocations etc.
+
+-- Note the accessionVersion might have been sent to the ENA deposition pod and might even be deposited
+-- but until the ENA deposition pod updates the external metadata the state will stay in READY.
+
 drop view if exists sequence_entries_view cascade;
 
 CREATE VIEW public.sequence_entries_view AS
