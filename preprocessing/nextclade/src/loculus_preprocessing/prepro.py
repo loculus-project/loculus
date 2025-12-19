@@ -277,14 +277,7 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec_dict in config.processing_spec.items():
-        spec = ProcessingSpec(
-            inputs=spec_dict.inputs,
-            function=spec_dict.function,
-            required=spec_dict.required,
-            args=spec_dict.args,
-        )
-        spec.args = {} if spec.args is None else spec.args
+    for output_field, spec in config.processing_spec.items():
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
