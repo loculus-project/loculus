@@ -382,10 +382,10 @@ enum class PreprocessingStatus {
     PROCESSED,
 }
 
-enum class EnaDepositionStatus{
+enum class EnaDepositionStatus {
     INGESTED,
     READY,
-    DEPOSITED
+    DEPOSITED,
 }
 
 enum class VersionStatus {

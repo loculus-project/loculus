@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.EnaDepositionStatus
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
@@ -83,5 +84,5 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
 
     fun submitterIsOneOf(submitterNames: List<String>) = submitterColumn inList submitterNames
-     fun enDepositionStatusIs(status: EnaDepositionStatus) = enaDepositionStatusColumn eq status.name
+    fun enDepositionStatusIs(status: EnaDepositionStatus) = enaDepositionStatusColumn eq status.name
 }

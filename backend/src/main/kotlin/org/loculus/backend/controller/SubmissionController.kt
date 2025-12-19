@@ -312,7 +312,7 @@ open class SubmissionController(
         @RequestParam(
             name = "enaDeposition",
             required = false,
-            defaultValue = "false"
+            defaultValue = "false",
         ) enaDeposition: Boolean,
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
