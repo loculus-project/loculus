@@ -97,29 +97,6 @@ class Config(BaseModel):
         return len(self.nextclade_sequence_and_datasets) > 1
 
 
-def load_config(config_file: str | None, args) -> Config:
-    if config_file:
-        with open(config_file, encoding="utf-8") as file:
-            yaml_config = yaml.safe_load(file)
-            logger.debug(f"Loaded config from {config_file}: {yaml_config}")
-        config = Config(**yaml_config)
-    else:
-        config = Config()
-    # Use environment variables if available
-    for key in config.__dict__:
-        env_var = f"PREPROCESSING_{key.upper()}"
-        if env_var in os.environ:
-            setattr(config, key, os.environ[env_var])
-
-    # Overwrite config with CLI args
-    for key, value in args.__dict__.items():
-        if value is None:
-            continue
-        if key in Config.model_fields:
-            setattr(config, key, value)
-    return config
-
-
 def base_type(field_type: Any) -> type:
     """Pull the non-None type from a Union, e.g. `str | None` -> `str`"""
     if type(field_type) is UnionType:
@@ -178,4 +155,23 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     )
 
     # Start with lowest precedence config, then overwrite with higher precedence
-    return load_config(config_file_path, args)
+    if config_file_path:
+        with open(config_file_path, encoding="utf-8") as file:
+            yaml_config = yaml.safe_load(file)
+            logger.debug(f"Loaded config from {config_file_path}: {yaml_config}")
+        config = Config(**yaml_config)
+    else:
+        config = Config()
+    # Use environment variables if available
+    for key in config.__dict__:
+        env_var = f"PREPROCESSING_{key.upper()}"
+        if env_var in os.environ:
+            setattr(config, key, os.environ[env_var])
+
+    # Overwrite config with CLI args
+    for key, value in args.__dict__.items():
+        if value is None:
+            continue
+        if key in Config.model_fields:
+            setattr(config, key, value)
+    return config
