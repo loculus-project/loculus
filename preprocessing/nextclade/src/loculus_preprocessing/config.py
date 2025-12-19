@@ -113,7 +113,9 @@ def load_config(config_file: str | None, args) -> Config:
 
     # Overwrite config with CLI args
     for key, value in args.__dict__.items():
-        if value is not None:
+        if value is None:
+            continue
+        if key in Config.model_fields:
             setattr(config, key, value)
     return config
 
