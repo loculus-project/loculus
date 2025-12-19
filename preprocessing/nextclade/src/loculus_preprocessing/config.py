@@ -131,17 +131,24 @@ def kebab(s: str) -> str:
     return s.replace("_", "-")
 
 
-def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.ArgumentParser:
+def generate_argparse_from_model(config_cls: type[BaseModel]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line arguments for Config class")
-    for field in dataclasses.fields(config_cls):
-        field_name = kebab(field.name)
-        field_type = base_type(field.type)
+
+    parser.add_argument("--config-file")
+
+    for name, field in config_cls.model_fields.items():
+        field_type = base_type(field.annotation)
         if field_type not in CLI_TYPES:
             continue
+
+        arg_name = f"--{kebab(name)}"
+
         if field_type is bool:
-            parser.add_argument(f"--{field_name}", action=argparse.BooleanOptionalAction)
+            parser.add_argument(arg_name, action=argparse.BooleanOptionalAction)
         else:
-            parser.add_argument(f"--{field_name}", type=field_type)
+            # no default here -> stays None if not provided
+            parser.add_argument(arg_name, type=field_type)
+
     return parser
 
 
@@ -159,7 +166,7 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
         logging.basicConfig(level=env_log_level)
 
     if not ignore_args:
-        parser = generate_argparse_from_dataclass(Config)
+        parser = generate_argparse_from_model(Config)
         args = parser.parse_args()
     else:
         args = argparse.Namespace()
