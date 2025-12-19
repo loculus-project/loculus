@@ -309,6 +309,11 @@ open class SubmissionController(
     fun getReleasedData(
         @PathVariable @Valid organism: Organism,
         @RequestParam compression: CompressionFormat?,
+        @RequestParam(
+            name = "enaDeposition",
+            required = false,
+            defaultValue = "false"
+        ) enaDeposition: Boolean,
         @Parameter(
             description = "(Optional) Only retrieve all released data if Etag has changed.",
         ) @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
@@ -334,7 +339,7 @@ open class SubmissionController(
         // Alternatively, we could read once to file while counting and then stream the file
 
         val streamBody = streamTransactioned(compression, endpoint = "get-released-data", organism = organism) {
-            releasedDataModel.getReleasedData(organism)
+            releasedDataModel.getReleasedData(organism, enaDeposition)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }

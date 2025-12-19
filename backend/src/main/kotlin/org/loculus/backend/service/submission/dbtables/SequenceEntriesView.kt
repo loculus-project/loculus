@@ -47,6 +47,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
     val pipelineVersionColumn = long("pipeline_version").nullable()
+    val enaDepositionStatusColumn = varchar("ena_deposition_status", 255)
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 
@@ -82,4 +83,5 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
 
     fun submitterIsOneOf(submitterNames: List<String>) = submitterColumn inList submitterNames
+     fun enDepositionStatusIs(status: EnaDepositionStatus) = enaDepositionStatusColumn eq status.name
 }

@@ -382,6 +382,12 @@ enum class PreprocessingStatus {
     PROCESSED,
 }
 
+enum class EnaDepositionStatus{
+    INGESTED,
+    READY,
+    DEPOSITED
+}
+
 enum class VersionStatus {
     REVOKED, // This is not the highest version of the sequence entry, and a higher version is a revocation
     REVISED, // This is not the highest version of the sequence entry, and no higher version is a revocation
