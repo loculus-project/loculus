@@ -1,16 +1,23 @@
-# Configuration for mirroring Docker Hub images to ghcr.io
-# This file maps source images from Docker Hub to their mirrored locations under ghcr.io/loculus-project
-#
-# Format:
-# - source: The source image from Docker Hub (format: repository:tag)
-#   destination: The destination image in ghcr.io (format: ghcr.io/loculus-project/[name]:tag)
-#   description: Description of what the image is used for
+# Mirror configuration: Maps source images from any registry to ghcr.io/loculus-project
+# Supports Docker Hub, Quay.io, K8s registry, etc.
+# Format: source → destination
 
 images:
+  # Flyway images (Docker Hub)
   - source: flyway/flyway:10-alpine
     destination: ghcr.io/loculus-project/flyway:10-alpine
-    description: "Flyway database migration tool (used in schema-dump workflow)"
   
   - source: flyway/flyway:11.10.0-alpine-mongo
     destination: ghcr.io/loculus-project/flyway:11.10.0-alpine-mongo
-    description: "Flyway database migration tool with MongoDB support (used in ena-submission)"
+  
+  # MinIO (Quay.io)
+  - source: quay.io/minio/minio:latest
+    destination: ghcr.io/loculus-project/minio:latest
+  
+  # Keycloak (Quay.io)
+  - source: quay.io/keycloak/keycloak:23.0
+    destination: ghcr.io/loculus-project/keycloak:23.0
+  
+  # Busybox (K8s registry)
+  - source: registry.k8s.io/busybox:latest
+    destination: ghcr.io/loculus-project/busybox:latest

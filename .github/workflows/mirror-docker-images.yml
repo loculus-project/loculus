@@ -1,14 +1,12 @@
-name: Mirror Docker Images to GHCR
+name: Mirror Images to GHCR
 
 on:
   schedule:
-    # Run daily at 3 AM UTC to check for updates
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
   workflow_dispatch:
     inputs:
       force_mirror:
-        description: 'Force mirror all images even if they already exist'
-        required: false
+        description: 'Force mirror all images'
         type: boolean
         default: false
 
@@ -17,85 +15,53 @@ permissions:
   contents: read
 
 jobs:
-  mirror-images:
+  mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read image mirror configuration
-        id: read-config
+      - name: Log in to Docker Hub (if secrets available)
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_READ_PUBLIC }}
+
+      - name: Mirror images
+        env:
+          FORCE: ${{ inputs.force_mirror || 'false' }}
         run: |
+          set -euo pipefail
+          
           # Install yq for YAML parsing
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
           
-          # Read the configuration file
-          echo "Images to mirror:"
-          yq eval '.images[] | .source + " -> " + .destination' .github/docker-image-mirror-config.yaml
-
-      - name: Mirror images
-        env:
-          FORCE_MIRROR: ${{ inputs.force_mirror || 'false' }}
-        run: |
-          set -euo pipefail
-          
-          # Read each image from the configuration
           images=$(yq eval '.images | length' .github/docker-image-mirror-config.yaml)
           
           for i in $(seq 0 $((images - 1))); do
             source=$(yq eval ".images[$i].source" .github/docker-image-mirror-config.yaml)
-            destination=$(yq eval ".images[$i].destination" .github/docker-image-mirror-config.yaml)
-            description=$(yq eval ".images[$i].description" .github/docker-image-mirror-config.yaml)
+            dest=$(yq eval ".images[$i].destination" .github/docker-image-mirror-config.yaml)
             
-            echo ""
-            echo "=================================================="
-            echo "Mirroring: $source"
-            echo "To: $destination"
-            echo "Description: $description"
-            echo "=================================================="
+            echo "Mirroring: $source → $dest"
             
-            # Check if destination already exists (unless force_mirror is true)
-            if [ "$FORCE_MIRROR" != "true" ]; then
-              if docker manifest inspect "$destination" > /dev/null 2>&1; then
-                echo "✓ Image $destination already exists in GHCR, skipping..."
-                continue
-              fi
+            # Skip if exists (unless forced)
+            if [ "$FORCE" != "true" ] && docker manifest inspect "$dest" > /dev/null 2>&1; then
+              echo "  ✓ Already exists, skipping"
+              continue
             fi
             
-            # Pull the source image
-            echo "Pulling source image: $source"
             docker pull "$source"
-            
-            # Tag it for the destination
-            echo "Tagging as: $destination"
-            docker tag "$source" "$destination"
-            
-            # Push to GHCR
-            echo "Pushing to GHCR: $destination"
-            docker push "$destination"
-            
-            echo "✓ Successfully mirrored $source to $destination"
+            docker tag "$source" "$dest"
+            docker push "$dest"
+            echo "  ✓ Mirrored successfully"
           done
           
-          echo ""
-          echo "=================================================="
-          echo "✓ All images mirrored successfully!"
-          echo "=================================================="
-
-      - name: Summary
-        run: |
-          echo "### Mirror Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The following images have been mirrored from Docker Hub to GHCR:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          yq eval '.images[] | "- `" + .source + "` → `" + .destination + "`"' .github/docker-image-mirror-config.yaml >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "You can now update your workflows and Dockerfiles to use the GHCR images instead of Docker Hub." >> $GITHUB_STEP_SUMMARY
+          echo "✓ All images mirrored"
