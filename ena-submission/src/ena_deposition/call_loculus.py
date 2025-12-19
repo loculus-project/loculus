@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import shutil
 import tempfile
 import uuid
 from collections.abc import Iterator
@@ -165,22 +164,20 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_file_path = os.path.join(temp_dir, "downloaded_data.zst")
 
-        with requests.get(url, headers=headers, params=params, timeout=3600, stream=True) as response:
+        with requests.get(
+            url, headers=headers, params=params, timeout=config.backend_http_timeout_seconds
+        ) as response:
             response.raise_for_status()
 
-            # Ensure we get raw bytes to preserve compression
-            response.raw.decode_content = False
-
             with open(temp_file_path, "wb") as f:
-                shutil.copyfileobj(response.raw, f)
+                f.write(response.content)
 
         try:
-            for full_json in orjsonl.load(temp_file_path):
-                yield {
-                    k: v
-                    for k, v in full_json.items()
-                    if k in {"metadata", "unalignedNucleotideSequences"}
-                }
+            wanted_keys = {"metadata", "unalignedNucleotideSequences"}
+            yield from (
+                {k: v for k, v in record.items() if k in wanted_keys}
+                for record in orjsonl.load(temp_file_path)
+            )
         except Exception as e:
             error_msg = (
                 f"Invalid NDJSON from {url}\n"
