@@ -8,7 +8,14 @@ from typing import Any, get_args
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
-from loculus_preprocessing.datatypes import MoleculeType, SegmentClassificationMethod, Topology
+from loculus_preprocessing.datatypes import (
+    FunctionArgs,
+    FunctionInputs,
+    FunctionName,
+    MoleculeType,
+    SegmentClassificationMethod,
+    Topology,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +30,13 @@ class EmblInfoMetadataPropertyNames(BaseModel):
     )
     collection_date_property: str = "sampleCollectionDate"
     authors_property: str = "authors"
+
+
+class ProcessingSpec(BaseModel):
+    inputs: FunctionInputs
+    function: FunctionName = "identity"
+    required: bool = False
+    args: FunctionArgs = Field(default_factory=dict)
 
 
 class AlignmentRequirement(StrEnum):
@@ -61,7 +75,7 @@ class Config(BaseModel):
 
     organism: str = "mpox"
     nextclade_sequence_and_datasets: list[NextcladeSequenceAndDataset] = Field(default_factory=list)
-    processing_spec: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
     segment_classification_method: SegmentClassificationMethod = SegmentClassificationMethod.ALIGN

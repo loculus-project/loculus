@@ -14,7 +14,7 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config
+from .config import AlignmentRequirement, Config, ProcessingSpec
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -34,7 +34,6 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     ProcessingResult,
-    ProcessingSpec,
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
@@ -280,10 +279,10 @@ def get_output_metadata(
 
     for output_field, spec_dict in config.processing_spec.items():
         spec = ProcessingSpec(
-            inputs=spec_dict["inputs"],
-            function=spec_dict["function"],
-            required=spec_dict.get("required", False),
-            args=spec_dict.get("args", {}),
+            inputs=spec_dict.inputs,
+            function=spec_dict.function,
+            required=spec_dict.required,
+            args=spec_dict.args,
         )
         spec.args = {} if spec.args is None else spec.args
         input_data: InputMetadata = {}
