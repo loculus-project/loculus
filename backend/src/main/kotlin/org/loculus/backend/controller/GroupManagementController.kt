@@ -68,9 +68,8 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     @Operation(description = "Get a list of groups. Supports filtering by name request parameter")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getGroups(
-        @RequestParam(required = false) name: String?
-    ): List<Group> = groupManagementDatabaseService.getGroups(name)
+    fun getGroups(@RequestParam(required = false) name: String?): List<Group> =
+        groupManagementDatabaseService.getGroups(name)
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)

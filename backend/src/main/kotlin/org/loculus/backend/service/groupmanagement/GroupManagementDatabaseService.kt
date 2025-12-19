@@ -151,7 +151,10 @@ class GroupManagementDatabaseService(
         val entities = if (name == null) {
             GroupEntity.all()
         } else {
-            GroupEntity.find { GroupsTable.groupNameColumn.lowerCase() eq name.lowercase() } // just case-insensitive perfect matches for now
+            GroupEntity.find {
+                // just case-insensitive perfect matches for now
+                GroupsTable.groupNameColumn.lowerCase() eq name.lowercase()
+            }
         }
 
         return entities.map { it.toGroup() }
