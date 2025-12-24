@@ -1368,10 +1368,11 @@ defaultOrganisms:
       configFile:
         taxon_id: 3052460
     enaDeposition:
-      configFile:
-        taxon_id: 186540
-        scientific_name: "Sudan ebolavirus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 186540
+          scientific_name: "Sudan ebolavirus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1448,10 +1449,11 @@ defaultOrganisms:
       configFile:
         taxon_id: 3048448
     enaDeposition:
-      configFile:
-        taxon_id: 11082
-        scientific_name: "West Nile virus"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 11082
+          scientific_name: "West Nile virus"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1766,10 +1768,10 @@ defaultOrganisms:
       - <<: *preprocessing
         configFile:
           <<: *preprocessingConfigFile
-          log_level: DEBUG
           taxon_id: 3052518
           scientific_name: "Orthonairovirus haemorrhagiae"
           molecule_type: "genomic RNA"
+          log_level: DEBUG
           minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nextclade_sequence_and_datasets:
             - name: L
@@ -1789,10 +1791,11 @@ defaultOrganisms:
           method: "align"
           nextclade_dataset_name: community/pathoplexus/cchfv
     enaDeposition:
-      configFile:
-        taxon_id: 3052518
-        scientific_name: "Orthonairovirus haemorrhagiae"
-        molecule_type: "genomic RNA"
+      singleReference:
+        configFile:
+          taxon_id: 3052518
+          scientific_name: "Orthonairovirus haemorrhagiae"
+          molecule_type: "genomic RNA"
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1927,6 +1930,31 @@ defaultOrganisms:
       configFile:
         taxon_id: 12059
         subsample_fraction: 0.2
+    enaDeposition:
+      CV-A16:
+        configFile:
+          taxon_id: 31704
+          scientific_name: "Coxsackievirus A16"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      CV-A10:
+        configFile:
+          taxon_id: 42769
+          scientific_name: "Coxsackievirus A10"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-A71:
+        configFile:
+          taxon_id: 39054
+          scientific_name: "Enterovirus A71"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
+      EV-D68:
+        configFile:
+          taxon_id: 42789
+          scientific_name: "Enterovirus D68"
+          molecule_type: "genomic RNA"
+        suborganismIdentifierField: genotype
     referenceGenomes:
       CV-A16:
         nucleotideSequences:

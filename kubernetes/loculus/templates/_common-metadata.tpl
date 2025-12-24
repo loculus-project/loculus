@@ -509,13 +509,24 @@ fields:
 
 {{/* Generate ENA submission config from passed config object */}}
 {{- define "loculus.generateENASubmissionConfig" }}
-organisms:
+enaOrganisms:
   {{- range $key, $instance := (include "loculus.enabledOrganisms" . | fromJson) }}
   {{- if $instance.enaDeposition }}
+  {{- range $suborganismName, $configFile := $instance.enaDeposition -}}
+  {{- if eq $suborganismName "singleReference" }}
   {{ $key }}:
-    {{- with $instance.schema }}
-    {{- $instance.enaDeposition.configFile | toYaml | nindent 4 }}
+  {{- else }}
+  {{ $suborganismName }}:
+    loculusOrganism: {{ quote $key }}
+  {{- end }}
+  {{- with $instance.schema }}
+    {{ $configFile.configFile | toYaml | nindent 4 }}
+    {{- if $configFile.suborganismIdentifierField }}
+    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- end }}
     organismName: {{ quote .organismName }}
+    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
       {{- $args := dict
         "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata
@@ -524,6 +535,7 @@ organisms:
       {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
       {{- $metadata.fields | default list | toYaml | nindent 6 }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}

@@ -11,7 +11,7 @@ from psycopg2.pool import SimpleConnectionPool
 
 from ena_deposition.call_loculus import submit_external_metadata
 
-from .config import Config
+from .config import Config, EnaOrganismDetails
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     StatusAll,
@@ -82,7 +82,10 @@ def get_biosample_accession_from_db(
 
 
 def get_assembly_accessions_from_db(
-    db_config: SimpleConnectionPool, accession: str, version: str
+    db_config: SimpleConnectionPool,
+    accession: str,
+    version: str,
+    organism: EnaOrganismDetails,
 ) -> tuple[dict[str, str], bool]:
     result = _get_results_of_single_db_record(
         db_config,
@@ -103,8 +106,7 @@ def get_assembly_accessions_from_db(
 
     segment_names = result.get("segment_order", [])
     for segment in segment_names:
-        # NOTE: Assume that no multi-segment organism ever has a segment named "main"
-        segment_suffix = f"_{segment}" if segment_names != ["main"] else ""
+        segment_suffix = f"_{segment}" if organism.is_multi_segment() else ""
 
         base_key = f"insdc_accession{segment_suffix}"
         if base_key in result:
@@ -122,15 +124,16 @@ def get_assembly_accessions_from_db(
 
 
 def get_external_metadata_to_upload(
-    db_config: SimpleConnectionPool, entry: dict[str, Any]
+    db_config: SimpleConnectionPool, entry: dict[str, Any], config: Config
 ) -> tuple[dict[str, Any], bool]:
     accession = entry["accession"]
     version = entry["version"]
+    organism = config.enaOrganisms[entry["organism"]]
 
     bioproject_accession = get_bioproject_accession_from_db(db_config, entry["project_id"])
     biosample_accession = get_biosample_accession_from_db(db_config, accession, version)
     assembly_accession, all_assemblies_present = get_assembly_accessions_from_db(
-        db_config, accession, version
+        db_config, accession, version, organism
     )
 
     return {
@@ -161,7 +164,7 @@ def get_external_metadata_and_send_to_loculus(
             accession = entry["accession"]
             version = entry["version"]
             accession_version = f"{accession}.{version}"
-            data, all_present = get_external_metadata_to_upload(db_config, entry)
+            data, all_present = get_external_metadata_to_upload(db_config, entry, config)
             seq_key = {"accession": accession, "version": version}
 
             previously_uploaded: dict[str, Any] = entry.get("external_metadata", {})
