@@ -111,6 +111,7 @@ class Config(BaseModel):
     set_alias_suffix: str | None = None  # Add to test revisions in dev
 
     ena_http_timeout_seconds: int = 60
+    backend_http_timeout_seconds: int = 3600
     ena_public_search_timeout_seconds: int = 120
     ncbi_public_search_timeout_seconds: int = 120
     ena_http_get_retry_attempts: int = 3
