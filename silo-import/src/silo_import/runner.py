@@ -88,7 +88,7 @@ class ImporterRunner:
 
         # Prepare input for SILO
         safe_remove(self.paths.silo_input_data_path)
-        shutil.copyfile(download.data_path, self.paths.silo_input_data_path)
+        shutil.copyfile(download.transformed_path, self.paths.silo_input_data_path)
 
         run_id = str(int(time.time()))
         self.silo.request_run(run_id)

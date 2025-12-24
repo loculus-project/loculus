@@ -6,7 +6,8 @@ from __future__ import annotations
 SPECIAL_ETAG_NONE = "0"
 
 # File names for downloaded data
-DATA_FILENAME = "data.ndjson.zst"
+DATA_FILENAME = "untransformed_data.ndjson.zst"
+TRANSFORMED_DATA_FILENAME = "data.ndjson.zst"  # name is set by SILO
 LINEAGES_FILENAME = "lineage_definitions.yaml"
 
 # Sentinel file names
