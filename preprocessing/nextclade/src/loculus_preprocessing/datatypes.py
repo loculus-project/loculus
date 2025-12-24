@@ -90,14 +90,6 @@ FunctionInputs = dict[ArgName, InputField]
 FunctionArgs = dict[ArgName, ArgValue]
 
 
-@dataclass
-class ProcessingSpec:
-    inputs: FunctionInputs
-    function: FunctionName
-    required: bool | None
-    args: FunctionArgs
-
-
 # For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:

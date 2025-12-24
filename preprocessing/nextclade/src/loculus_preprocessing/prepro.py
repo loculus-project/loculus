@@ -14,7 +14,7 @@ from .backend import (
     submit_processed_sequences,
     upload_embl_file_to_presigned_url,
 )
-from .config import AlignmentRequirement, Config
+from .config import AlignmentRequirement, Config, ProcessingSpec
 from .datatypes import (
     AccessionVersion,
     AminoAcidInsertion,
@@ -34,7 +34,6 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingAnnotationAlignment,
     ProcessingResult,
-    ProcessingSpec,
     SegmentClassificationMethod,
     SegmentName,
     SubmissionData,
@@ -204,7 +203,7 @@ def _call_processing_function(  # noqa: PLR0913, PLR0917
     input_fields: list[str],
     config: Config,
 ) -> ProcessingResult:
-    args = dict(spec.args)
+    args = dict(spec.args) if spec.args else {}
     args["is_insdc_ingest_group"] = config.insdc_ingest_group_id == group_id
     args["submittedAt"] = submitted_at
     args["accession_version"] = accession_version
@@ -278,14 +277,7 @@ def get_output_metadata(
     warnings: list[ProcessingAnnotation] = []
     output_metadata: ProcessedMetadata = {}
 
-    for output_field, spec_dict in config.processing_spec.items():
-        spec = ProcessingSpec(
-            inputs=spec_dict["inputs"],
-            function=spec_dict["function"],
-            required=spec_dict.get("required", False),
-            args=spec_dict.get("args", {}),
-        )
-        spec.args = {} if spec.args is None else spec.args
+    for output_field, spec in config.processing_spec.items():
         input_data: InputMetadata = {}
         input_fields: list[str] = []
         if output_field == "length":
