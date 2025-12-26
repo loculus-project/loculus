@@ -81,4 +81,15 @@ spec:
             timeoutSeconds: 5
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-lapis-{{ $key }}-pdb
+spec:
+  maxUnavailable: {{ $.Values.pdb.lapis.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: lapis-{{ $key }}
 {{- end }}
