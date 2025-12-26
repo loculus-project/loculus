@@ -1,0 +1,12 @@
+{{- if not .Values.disableBackend }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loculus-backend-pdb
+spec:
+  maxUnavailable: {{ .Values.pdb.backend.maxUnavailable | default 1 }}
+  selector:
+    matchLabels:
+      app: loculus
+      component: backend
+{{- end }}

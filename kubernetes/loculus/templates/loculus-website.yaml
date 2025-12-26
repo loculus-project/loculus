@@ -21,6 +21,22 @@ spec:
         app: loculus
         component: website
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loculus
+                    - key: component
+                      operator: In
+                      values:
+                        - website
+                topologyKey: kubernetes.io/hostname
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag "imagePullPolicy" $.Values.imagePullPolicy) | nindent 8 }}
