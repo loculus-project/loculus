@@ -332,13 +332,23 @@ export const info = z.object({
 
 export type Info = z.infer<typeof info>;
 
-export const requestUploadResponse = z.array(
+export const requestMultipartUploadResponse = z.array(
     z.object({
         fileId: z.string().uuid(),
-        url: z.string(),
+        urls: z.array(z.string()),
     }),
 );
-export type RequestUploadResponse = z.infer<typeof requestUploadResponse>;
+
+export type RequestMultipartUploadResponse = z.infer<typeof requestMultipartUploadResponse>;
+
+export const completeMultipartUploadRequest = z.array(
+    z.object({
+        fileId: z.string().uuid(),
+        etags: z.array(z.string()),
+    }),
+);
+
+export type CompleteMultipartUploadRequest = z.infer<typeof completeMultipartUploadRequest>;
 
 export const pipelineVersionStatistics = z.record(z.record(z.number()));
 export type PipelineVersionStatistics = z.infer<typeof pipelineVersionStatistics>;
