@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload
 import software.amazon.awssdk.services.s3.model.CompletedPart
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
@@ -229,6 +230,20 @@ class S3Service(private val s3Config: S3Config) {
         } catch (e: S3Exception) {
             if (e.statusCode() == 404 || e.awsErrorDetails().errorCode() == "NoSuchKey") null else throw e
         }
+    }
+
+    /**
+     * Deletes a file from S3.
+     */
+    fun deleteFile(fileId: FileId) = s3ErrorMapping {
+        val config = getS3BucketConfig()
+        s3Client.deleteObject(
+            DeleteObjectRequest.builder()
+                .bucket(config.bucket)
+                .key(getFileIdPath(fileId))
+                .build(),
+        )
+        Unit
     }
 }
 
