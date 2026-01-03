@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type { FieldValueUpdate } from '../types/config.ts';
@@ -14,6 +14,7 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  * @param setSomeFieldValues Function to update field values
  * @param paramType Type of the parameter for proper parsing/serialization
  * @param shouldRemove Function to determine if the parameter should be removed from URL
+ * @param setState Optional direct state setter to bypass setSomeFieldValues (prevents pagination reset)
  * @returns [value, setValue] tuple similar to useState
  */
 function useUrlParamState<T>(
@@ -23,6 +24,7 @@ function useUrlParamState<T>(
     setSomeFieldValues: (...fieldValuesToSet: FieldValueUpdate[]) => void,
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
+    setState?: Dispatch<SetStateAction<QueryState>>,
 ): [T, (newValue: T) => void] {
     const valueState = useMemo(
         () => (paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue),
@@ -45,9 +47,23 @@ function useUrlParamState<T>(
 
     const updateUrlParam = useCallback(
         (newValue: T) => {
-            setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
+            if (setState) {
+                // Direct state update without resetting pagination
+                setState((prev: QueryState) => {
+                    const newState = { ...prev };
+                    if (shouldRemove(newValue)) {
+                        delete newState[paramName];
+                    } else {
+                        newState[paramName] = String(newValue);
+                    }
+                    return newState;
+                });
+            } else {
+                // Use setSomeFieldValues which resets pagination
+                setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
+            }
         },
-        [paramName, setSomeFieldValues, shouldRemove],
+        [paramName, setSomeFieldValues, shouldRemove, setState],
     );
 
     return [valueState, updateUrlParam];

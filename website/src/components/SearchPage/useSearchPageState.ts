@@ -103,6 +103,7 @@ export function useSearchPageState({
         setSomeFieldValues,
         'nullable-string',
         (value) => !value,
+        setState, // Pass setState directly to avoid resetting pagination
     );
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
         'halfScreen',
@@ -111,6 +112,7 @@ export function useSearchPageState({
         setSomeFieldValues,
         'boolean',
         (value) => !value,
+        setState, // Pass setState directly to avoid resetting pagination
     );
     const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
         schema.suborganismIdentifierField ?? '',
