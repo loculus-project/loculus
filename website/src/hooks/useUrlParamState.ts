@@ -17,7 +17,10 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  * @param setState Optional direct state setter to bypass setSomeFieldValues. Use this ONLY for
  *                 UI-only state parameters (like modal open/close) that should NOT reset pagination.
  *                 When provided, updates are applied directly to the URL state without triggering
- *                 pagination reset. Search filter parameters should NOT use this.
+ *                 pagination reset. When NOT provided, falls back to setSomeFieldValues which will
+ *                 reset pagination to page 1. This should be the same setState function returned by
+ *                 useStateSyncedWithUrlQueryParams in the parent component.
+ *                 Search filter parameters should NOT use this option.
  * @returns [value, setValue] tuple similar to useState
  */
 function useUrlParamState<T>(
