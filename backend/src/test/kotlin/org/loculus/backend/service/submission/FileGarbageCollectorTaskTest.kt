@@ -99,7 +99,7 @@ class FileGarbageCollectorTaskTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = eightDaysOld,
-            mapOf("test_category" to listOf(FileIdAndName(oldReferencedFileId, "test.txt"))),
+            mapOf("submission id" to mapOf("test_category" to listOf(FileIdAndName(oldReferencedFileId, "test.txt")))),
         )
 
         // Verify initial state: 3 files exist
