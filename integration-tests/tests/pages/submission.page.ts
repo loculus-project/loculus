@@ -304,31 +304,29 @@ export class BulkSubmissionPage extends SubmissionPage {
         groupId?: string | number;
         isRestricted?: boolean;
     }): Promise<ReviewPage> {
-        // Determine the actual count and normalize inputs to arrays
-        const metadataArray = Array.isArray(metadata) ? metadata : [];
-        const sequenceDataArray = Array.isArray(sequenceData) ? sequenceData : [];
-
+        // Determine the actual count
         const actualCount = Array.isArray(metadata)
             ? metadata.length
             : Array.isArray(sequenceData)
               ? sequenceData.length
               : (count ?? 1);
 
-        // If single metadata/sequenceData provided, replicate it
+        // Normalize metadata to array
         const finalMetadata: Array<{
             submissionId: string;
             collectionCountry: string;
             collectionDate: string;
             authorAffiliations: string;
         }> = Array.isArray(metadata)
-            ? metadataArray
+            ? metadata
             : Array.from({ length: actualCount }, (_, i) => ({
                   ...metadata,
                   submissionId: `${metadata.submissionId}-${i}`,
               }));
 
+        // Normalize sequenceData to array
         const finalSequenceData: Array<Record<string, string>> = Array.isArray(sequenceData)
-            ? sequenceDataArray
+            ? sequenceData
             : Array.from({ length: actualCount }, () => ({ ...sequenceData }));
 
         if (groupId) {
