@@ -6,8 +6,8 @@ import { SeqPreviewModal } from './SeqPreviewModal';
 import { testOrganism } from '../../../vitest.setup.ts';
 import type { Group } from '../../types/backend.ts';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
-import { SINGLE_REFERENCE, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 import type { DetailsJson } from '../../types/detailsJson.ts';
+import { SINGLE_REFERENCE, type ReferenceGenomesLightweightSchema } from '../../types/referencesGenomes.ts';
 
 // Mock fetch for loading sequence details
 const mockFetch = vi.fn();
@@ -101,7 +101,7 @@ describe('SeqPreviewModal', () => {
     beforeEach(() => {
         mockFetch.mockResolvedValue({
             ok: true,
-            json: async () => mockDetailsJson,
+            json: () => Promise.resolve(mockDetailsJson),
         });
     });
 
@@ -347,7 +347,7 @@ describe('SeqPreviewModal', () => {
 
             // Click on backdrop
             if (backdrop) {
-                await userEvent.click(backdrop as Element);
+                await userEvent.click(backdrop);
             }
 
             // onClose should be called by the Dialog component
@@ -390,7 +390,7 @@ describe('SeqPreviewModal', () => {
 
             mockFetch.mockResolvedValue({
                 ok: true,
-                json: async () => detailsWithHistory,
+                json: () => Promise.resolve(detailsWithHistory),
             });
 
             renderSeqPreviewModal();
@@ -440,9 +440,7 @@ describe('SeqPreviewModal', () => {
         it('should handle JSON parsing errors gracefully', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
-                json: async () => {
-                    throw new Error('JSON parse error');
-                },
+                json: () => Promise.reject(new Error('JSON parse error')),
             });
 
             renderSeqPreviewModal();
