@@ -11,10 +11,13 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  * @param paramName The name of the URL parameter to sync with
  * @param queryState The current URL query state object
  * @param defaultValue The default value to use if the parameter is not present in the URL
- * @param setSomeFieldValues Function to update field values
+ * @param setSomeFieldValues Function to update field values (resets pagination to page 1)
  * @param paramType Type of the parameter for proper parsing/serialization
  * @param shouldRemove Function to determine if the parameter should be removed from URL
- * @param setState Optional direct state setter to bypass setSomeFieldValues (prevents pagination reset)
+ * @param setState Optional direct state setter to bypass setSomeFieldValues. Use this ONLY for
+ *                 UI-only state parameters (like modal open/close) that should NOT reset pagination.
+ *                 When provided, updates are applied directly to the URL state without triggering
+ *                 pagination reset. Search filter parameters should NOT use this.
  * @returns [value, setValue] tuple similar to useState
  */
 function useUrlParamState<T>(
