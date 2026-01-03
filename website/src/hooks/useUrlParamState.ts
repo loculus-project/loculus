@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { QueryState } from '../components/SearchPage/useStateSyncedWithUrlQueryParams.ts';
 import type { FieldValueUpdate } from '../types/config.ts';
@@ -11,16 +11,9 @@ type ParamType = 'string' | 'boolean' | 'nullable-string';
  * @param paramName The name of the URL parameter to sync with
  * @param queryState The current URL query state object
  * @param defaultValue The default value to use if the parameter is not present in the URL
- * @param setSomeFieldValues Function to update field values (resets pagination to page 1)
+ * @param setSomeFieldValues Function to update field values
  * @param paramType Type of the parameter for proper parsing/serialization
  * @param shouldRemove Function to determine if the parameter should be removed from URL
- * @param setState Optional direct state setter to bypass setSomeFieldValues. Use this ONLY for
- *                 UI-only state parameters (like modal open/close) that should NOT reset pagination.
- *                 When provided, updates are applied directly to the URL state without triggering
- *                 pagination reset. When NOT provided, falls back to setSomeFieldValues which will
- *                 reset pagination to page 1. This should be the same setState function returned by
- *                 useStateSyncedWithUrlQueryParams in the parent component.
- *                 Search filter parameters should NOT use this option.
  * @returns [value, setValue] tuple similar to useState
  */
 function useUrlParamState<T>(
@@ -30,7 +23,6 @@ function useUrlParamState<T>(
     setSomeFieldValues: (...fieldValuesToSet: FieldValueUpdate[]) => void,
     paramType: ParamType = 'string',
     shouldRemove: (value: T) => boolean,
-    setState?: Dispatch<SetStateAction<QueryState>>,
 ): [T, (newValue: T) => void] {
     const valueState = useMemo(
         () => (paramName in queryState ? parseUrlValue(queryState[paramName], paramType) : defaultValue),
@@ -53,23 +45,9 @@ function useUrlParamState<T>(
 
     const updateUrlParam = useCallback(
         (newValue: T) => {
-            if (setState) {
-                // Direct state update without resetting pagination
-                setState((prev: QueryState) => {
-                    const newState = { ...prev };
-                    if (shouldRemove(newValue)) {
-                        delete newState[paramName];
-                    } else {
-                        newState[paramName] = String(newValue);
-                    }
-                    return newState;
-                });
-            } else {
-                // Use setSomeFieldValues which resets pagination
-                setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
-            }
+            setSomeFieldValues([paramName, shouldRemove(newValue) ? null : String(newValue)]);
         },
-        [paramName, setSomeFieldValues, shouldRemove, setState],
+        [paramName, setSomeFieldValues, shouldRemove],
     );
 
     return [valueState, updateUrlParam];

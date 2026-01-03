@@ -12,6 +12,9 @@ import {
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
 
+// UI-only parameters that should not reset pagination when changed
+const UI_ONLY_PARAMS = new Set(['selectedSeq', 'halfScreen']);
+
 type UseSearchPageStateParams = {
     initialQueryDict: QueryState;
     schema: Schema;
@@ -53,6 +56,9 @@ export function useSearchPageState({
      * For multi-select fields, we handle fieldValuesToSet as an array where:
      * - If value is an array, it sets multiple values for that field
      * - If value is '' or null, it clears the field
+     *
+     * Resets pagination to page 1 unless the parameter is a UI-only parameter
+     * (like selectedSeq or halfScreen) that doesn't affect search results.
      */
     const setSomeFieldValues: SetSomeFieldValues = useCallback(
         (...fieldValuesToSet: FieldValueUpdate[]) => {
@@ -91,9 +97,14 @@ export function useSearchPageState({
 
                 return newState;
             });
-            setPage(1);
+
+            // Only reset pagination if not a UI-only parameter
+            const shouldResetPagination = fieldValuesToSet.some(([key]) => !UI_ONLY_PARAMS.has(key));
+            if (shouldResetPagination) {
+                setPage(1);
+            }
         },
-        [setState, setPage, hiddenFieldValues],
+        [setState, setPage, hiddenFieldValues, schema.suborganismIdentifierField, filterSchema],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
@@ -103,7 +114,6 @@ export function useSearchPageState({
         setSomeFieldValues,
         'nullable-string',
         (value) => !value,
-        setState, // Pass setState directly to avoid resetting pagination
     );
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
         'halfScreen',
@@ -112,7 +122,6 @@ export function useSearchPageState({
         setSomeFieldValues,
         'boolean',
         (value) => !value,
-        setState, // Pass setState directly to avoid resetting pagination
     );
     const [selectedSuborganism, setSelectedSuborganism] = useUrlParamState<string | null>(
         schema.suborganismIdentifierField ?? '',
