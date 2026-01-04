@@ -298,6 +298,12 @@ As mentioned above, if you're using a VPC and have to set up nginx on a differen
 
 :::
 
+:::note
+
+If you are using a custom port for the public address (e.g., not 443 for https), you need to replace `$host` with `$http_host` in the Nginx config as, otherwise, the website will redirect to the wrong port. In general, it is however recommended to use `$host`.
+
+:::
+
 Reload nginx with
 
 ```bash
