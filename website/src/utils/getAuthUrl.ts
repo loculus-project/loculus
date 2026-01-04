@@ -3,7 +3,6 @@ import { realmPath } from './realmPath.ts';
 import { routes } from '../routes/routes';
 
 export const getAuthUrl = async (redirectUrl: string) => {
-    console.log('getAuthUrl/redirectUrl', redirectUrl);
     const logout = routes.logout();
     if (redirectUrl.endsWith(logout)) {
         redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());
@@ -15,11 +14,14 @@ export const getAuthUrl = async (redirectUrl: string) => {
         return `/503?service=Authentication`;
     }
     /* eslint-disable @typescript-eslint/naming-convention */
-    return client.authorizationUrl({
+    console.log('getAuthUrl/redirectUrl', redirectUrl);
+    const authUrl = client.authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
     });
+    console.log('getAuthUrl/authUrl', authUrl);
+    return authUrl;
     /* eslint-enable @typescript-eslint/naming-convention */
 };
 
