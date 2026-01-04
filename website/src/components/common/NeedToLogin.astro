@@ -12,9 +12,11 @@ let { message } = Astro.props;
 if (message === undefined) {
     message = 'You need to log in to access this page.';
 }
+console.log('NeedToLogin/loginUrl', loginUrl)
 ---
 
 <div class='mt-6 message max-w-4xl mx-auto'>
+    <b>--> {loginUrl}</b>
     <IcOutlineLogin className='w-12 h-12 inline-block mr-2' />
     <div>
         <p>{message}</p>
