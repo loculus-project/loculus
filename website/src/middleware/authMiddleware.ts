@@ -270,8 +270,13 @@ const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
+    logger.debug(`[MIDDLEWARE] context.url: ${context.url.href}`);
+    logger.debug(`[MIDDLEWARE] context.url.port: ${context.url.port}`);
+    logger.debug(`[MIDDLEWARE] X-Forwarded-Port: ${context.request.headers.get('X-Forwarded-Port')}`);
+    logger.debug(`[MIDDLEWARE] X-Forwarded-Host: ${context.request.headers.get('X-Forwarded-Host')}`);
+    logger.debug(`[MIDDLEWARE] Host: ${context.request.headers.get('Host')}`);
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = await getAuthUrl(redirectUrl);
+    const authUrl = await getAuthUrl(redirectUrl, 'MIDDLEWARE');
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);

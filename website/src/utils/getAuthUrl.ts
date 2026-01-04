@@ -2,7 +2,8 @@ import { KeycloakClientManager } from './KeycloakClientManager';
 import { realmPath } from './realmPath.ts';
 import { routes } from '../routes/routes';
 
-export const getAuthUrl = async (redirectUrl: string) => {
+export const getAuthUrl = async (redirectUrl: string, context?: string) => {
+    const logContext = context ? `[${context}]` : '';
     const logout = routes.logout();
     if (redirectUrl.endsWith(logout)) {
         redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());
@@ -14,19 +15,19 @@ export const getAuthUrl = async (redirectUrl: string) => {
         return `/503?service=Authentication`;
     }
     /* eslint-disable @typescript-eslint/naming-convention */
-    console.log('getAuthUrl/redirectUrl', redirectUrl);
+    console.log(`${logContext} getAuthUrl/redirectUrl`, redirectUrl);
     const authUrl = client.authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
     });
-    console.log('getAuthUrl/authUrl', authUrl);
+    console.log(`${logContext} getAuthUrl/authUrl`, authUrl);
     return authUrl;
     /* eslint-enable @typescript-eslint/naming-convention */
 };
 
 export const getAuthBaseUrl = async () => {
-    const authUrl = await getAuthUrl('/');
+    const authUrl = await getAuthUrl('/', 'GET_BASE_URL');
     const index = authUrl.indexOf('/realms');
     if (index === -1) {
         return null;

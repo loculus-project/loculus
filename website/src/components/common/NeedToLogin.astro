@@ -2,7 +2,7 @@
 import { getAuthUrl } from '../../utils/getAuthUrl';
 import IcOutlineLogin from '~icons/ic/outline-login';
 
-const loginUrl = await getAuthUrl(Astro.url.toString());
+const loginUrl = await getAuthUrl(Astro.url.toString(), 'SSR_NEED_TO_LOGIN');
 
 interface Props {
     message?: string;

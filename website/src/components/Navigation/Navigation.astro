@@ -23,7 +23,13 @@ const siteName = websiteConfig.name;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
-const loginUrl = await getAuthUrl(Astro.url.toString());
+console.log('[SSR_NAVIGATION] Astro.url before getAuthUrl:', Astro.url.href);
+console.log('[SSR_NAVIGATION] Astro.url.port:', Astro.url.port);
+console.log('[SSR_NAVIGATION] Astro.request.headers X-Forwarded-Port:', Astro.request.headers.get('X-Forwarded-Port'));
+console.log('[SSR_NAVIGATION] Astro.request.headers X-Forwarded-Host:', Astro.request.headers.get('X-Forwarded-Host'));
+console.log('[SSR_NAVIGATION] Astro.request.headers Host:', Astro.request.headers.get('Host'));
+
+const loginUrl = await getAuthUrl(Astro.url.toString(), 'SSR_NAVIGATION');
 
 const topNavigationItems = navigationItems.top(isLoggedIn, loginUrl);
 ---
