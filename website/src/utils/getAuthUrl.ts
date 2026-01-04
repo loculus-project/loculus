@@ -3,6 +3,7 @@ import { realmPath } from './realmPath.ts';
 import { routes } from '../routes/routes';
 
 export const getAuthUrl = async (redirectUrl: string) => {
+    console.log('getAuthUrl/redirectUrl', redirectUrl);
     const logout = routes.logout();
     if (redirectUrl.endsWith(logout)) {
         redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());

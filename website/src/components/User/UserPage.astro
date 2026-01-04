@@ -19,6 +19,7 @@ const accessToken = getAccessToken(session)!;
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
 const keycloakClient = await KeycloakClientManager.getClient();
+console.log('logoutUrl', logoutUrl.href)
 const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
     post_logout_redirect_uri: logoutUrl.href, // eslint-disable-line @typescript-eslint/naming-convention
 });
