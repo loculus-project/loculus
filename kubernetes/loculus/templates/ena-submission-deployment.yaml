@@ -22,13 +22,6 @@ spec:
         component: loculus-ena-submission
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
-      {{- if and .Values.enableMockEna .Values.mockEnaClusterIP }}
-      hostAliases:
-        - ip: {{ .Values.mockEnaClusterIP | quote }}
-          hostnames:
-            - "wwwdev.ebi.ac.uk"
-            - "www.ebi.ac.uk"
-      {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
         - name: wait-for-mock-ena
@@ -38,23 +31,11 @@ spec:
             - -c
             - |
               echo "Waiting for mock-ena-service to be ready..."
-              until curl -sf -k https://mock-ena-service/; do
+              until curl -sf http://mock-ena-service/; do
                 echo "Mock ENA not ready yet, waiting..."
                 sleep 2
               done
               echo "Mock ENA is ready!"
-              # Fetch the CA certificate from the mock-ena /ca.crt endpoint
-              curl -sf -k https://mock-ena-service/ca.crt > /certs/ca.crt
-              # Verify we got a certificate
-              if grep -q "BEGIN CERTIFICATE" /certs/ca.crt; then
-                echo "CA certificate saved successfully ($(wc -l < /certs/ca.crt) lines)"
-              else
-                echo "ERROR: Failed to fetch CA certificate"
-                exit 1
-              fi
-          volumeMounts:
-            - name: mock-ena-certs
-              mountPath: /certs
         {{- end }}
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
@@ -135,59 +116,20 @@ spec:
                   key: password
             {{- if .Values.enableMockEna }}
             - name: MOCK_ENA_URL
-              # Use internal service name with HTTPS for mock ENA
-              value: "https://mock-ena-service"
-            - name: MOCK_ENA_CA_CERT
-              value: "/mock-ena-certs/ca.crt"
-            - name: REQUESTS_CA_BUNDLE
-              value: "/mock-ena-certs/ca.crt"
-            - name: SSL_CERT_FILE
-              value: "/mock-ena-certs/ca.crt"
+              # Use internal service name with HTTP for mock ENA
+              value: "http://mock-ena-service"
             {{- end }}
           args:
-            {{- if .Values.enableMockEna }}
-            - sh
-            - -c
-            - |
-              # Setup mock ENA environment for webin-cli
-              if [ -n "$MOCK_ENA_CA_CERT" ] && [ -f "$MOCK_ENA_CA_CERT" ]; then
-                echo "Setting up mock ENA environment..."
-                # hostAliases handles /etc/hosts, just need to import CA cert to Java truststore
-                JAVA_CACERTS=$(find /opt /usr -name "cacerts" -type f 2>/dev/null | head -1)
-                if [ -n "$JAVA_CACERTS" ]; then
-                  keytool -import -trustcacerts -keystore "$JAVA_CACERTS" \
-                    -storepass changeit -noprompt -alias mock-ena-ca \
-                    -file "$MOCK_ENA_CA_CERT" 2>/dev/null || true
-                  echo "Imported CA cert to Java truststore: $JAVA_CACERTS"
-                else
-                  echo "WARNING: Could not find Java cacerts file"
-                fi
-                echo "Mock ENA setup complete. Hosts file entries:"
-                grep -E "(wwwdev|www)\.ebi\.ac\.uk" /etc/hosts || echo "(no entries found)"
-              fi
-              # Run the main command
-              exec ena_deposition --config-file=/config/config.yaml
-            {{- else }}
             - ena_deposition
             - "--config-file=/config/config.yaml"
-            {{- end }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
-            {{- if .Values.enableMockEna }}
-            - name: mock-ena-certs
-              mountPath: /mock-ena-certs
-              readOnly: true
-            {{- end }}
       volumes:
         - name: loculus-ena-submission-config-volume
           configMap:
             name: loculus-ena-submission-config
-        {{- if .Values.enableMockEna }}
-        - name: mock-ena-certs
-          emptyDir: {}
-        {{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob

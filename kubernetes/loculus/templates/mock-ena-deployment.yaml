@@ -35,28 +35,28 @@ spec:
               cpu: 500m
               memory: 256Mi
           ports:
-            - containerPort: 443
-              name: https
+            - containerPort: 80
+              name: http
           env:
             - name: MOCK_ENA_DB_PATH
               value: "/data/mock-ena.db"
             - name: MOCK_ENA_USE_HTTPS
-              value: "true"
+              value: "false"
           volumeMounts:
             - name: data
               mountPath: /data
           livenessProbe:
             httpGet:
               path: /
-              port: 443
-              scheme: HTTPS
+              port: 80
+              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /
-              port: 443
-              scheme: HTTPS
+              port: 80
+              scheme: HTTP
             initialDelaySeconds: 5
             periodSeconds: 10
       volumes:
@@ -76,10 +76,10 @@ spec:
     app: loculus
     component: mock-ena
   ports:
-    - port: 443
-      targetPort: 443
+    - port: 80
+      targetPort: 80
       {{- if ne $.Values.environment "server" }}
-      nodePort: 30443
+      nodePort: 30080
       {{- end }}
-      name: https
+      name: http
 {{- end }}
