@@ -59,6 +59,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Add CORS middleware to allow requests from the website
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for now; can be restricted in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include routers
 app.include_router(submissions.router)
 app.include_router(errors.router)
