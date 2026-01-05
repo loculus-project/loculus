@@ -9,18 +9,11 @@
 {{- $result | toYaml -}}
 {{- else -}}
 
-{{/* Extract all unique reference names from the first segment */}}
-{{- $referenceNames := list -}}
-{{- $firstSegment := first (values $segmentFirstConfig) -}}
-{{- $referenceNames = keys $firstSegment -}}
+{{- range $segmentName, $refMap := $segmentFirstConfig -}}
+  {{- if eq (len $refMap) 1 -}}
+    {{/* Single reference mode - no suffix */}}
+    {{- $singleRef := first $refMap -}}
 
-{{/* Check if this is single-reference mode (only one reference across all segments) */}}
-{{- if eq (len $referenceNames) 1 -}}
-  {{/* Single reference mode - no prefixing */}}
-  {{- $singleRef := first $referenceNames -}}
-
-  {{/* Process each segment */}}
-  {{- range $segmentName, $refMap := $segmentFirstConfig -}}
     {{- $refData := index $refMap $singleRef -}}
     {{- if $refData -}}
       {{/* Add nucleotide sequence */}}
@@ -42,31 +35,34 @@
   {{- end -}}
 
 {{- else -}}
-{{/* Multi-reference mode - prefix with reference name */}}
-
-{{/* Process each reference */}}
-{{- range $refName := $referenceNames -}}
-    {{/* Process each segment */}}
-    {{- range $segmentName, $refMap := $segmentFirstConfig -}}
-      {{- $refData := index $refMap $refName -}}
-      {{- if $refData -}}
-        {{/* Add nucleotide sequence with reference prefix */}}
+{{/* Multi-reference mode - suffix with reference name */}}
+  {{- range $refName, $refData := $refMap -}}
+    {{- if $refData -}}
+      {{- if eq len($segmentFirstConfig) 1-}}
+        {{/* Add nucleotide sequence without segmentName */}}
         {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-          "name" (printf "%s-%s" $refName $segmentName)
+          "name" $refName
           "sequence" $refData.sequence
         ) -}}
+      {{- else -}}
+        {{/* Add nucleotide sequence with reference suffix */}}
+        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
+          "name" (printf "%s-%s" $segmentName $refName)
+          "sequence" $refData.sequence
+        ) -}}
+      {{- end -}}
 
-        {{/* Add genes with reference prefix if present */}}
-        {{- if $refData.genes -}}
-          {{- range $geneName, $geneData := $refData.genes -}}
-            {{- $lapisGenes = append $lapisGenes (dict
-              "name" (printf "%s-%s" $refName $geneName)
-              "sequence" $geneData.sequence
-            ) -}}
-          {{- end -}}
+      {{/* Add genes with reference prefix if present */}}
+      {{- if $refData.genes -}}
+        {{- range $geneName, $geneData := $refData.genes -}}
+          {{- $lapisGenes = append $lapisGenes (dict
+            "name" (printf "%s-%s" $geneName $refName)
+            "sequence" $geneData.sequence
+          ) -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
+  {{- end -}}
 {{- end -}}
 
 {{- end -}}
