@@ -12,23 +12,22 @@
 {{- range $segmentName, $refMap := $segmentFirstConfig -}}
   {{- if eq (len $refMap) 1 -}}
     {{/* Single reference mode - no suffix */}}
-    {{- $singleRef := first $refMap -}}
+    {{- range $refName, $refData := $refMap -}}
+      {{- if $refData -}}
+        {{/* Add nucleotide sequence */}}
+        {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
+          "name" $segmentName
+          "sequence" $refData.sequence
+        ) -}}
 
-    {{- $refData := index $refMap $singleRef -}}
-    {{- if $refData -}}
-      {{/* Add nucleotide sequence */}}
-      {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
-        "name" $segmentName
-        "sequence" $refData.sequence
-      ) -}}
-
-      {{/* Add genes if present */}}
-      {{- if $refData.genes -}}
-        {{- range $geneName, $geneData := $refData.genes -}}
-          {{- $lapisGenes = append $lapisGenes (dict
-            "name" $geneName
-            "sequence" $geneData.sequence
-          ) -}}
+        {{/* Add genes if present */}}
+        {{- if $refData.genes -}}
+          {{- range $geneName, $geneData := $refData.genes -}}
+            {{- $lapisGenes = append $lapisGenes (dict
+              "name" $geneName
+              "sequence" $geneData.sequence
+            ) -}}
+          {{- end -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
@@ -38,7 +37,7 @@
 {{/* Multi-reference mode - suffix with reference name */}}
   {{- range $refName, $refData := $refMap -}}
     {{- if $refData -}}
-      {{- if eq len($segmentFirstConfig) 1-}}
+      {{- if eq (len $segmentFirstConfig) 1 -}}
         {{/* Add nucleotide sequence without segmentName */}}
         {{- $lapisNucleotideSequences = append $lapisNucleotideSequences (dict
           "name" $refName
@@ -69,7 +68,6 @@
 
 {{- $result := dict "nucleotideSequences" $lapisNucleotideSequences "genes" $lapisGenes -}}
 {{- $result | toYaml -}}
-{{- end -}}
 {{- end -}}
 
 
