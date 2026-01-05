@@ -16,6 +16,7 @@ The SILO importer downloads data from the Loculus backend, [transforms the data 
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
+cargo install --git https://github.com/GenSpectrum/LAPIS-SILO.git --rev 0679453f5cbd20a813cd964e8600c40aad9165af
 BACKEND_BASE_URL="http://localhost:8079/organism" python -m silo_import
 ```
 
