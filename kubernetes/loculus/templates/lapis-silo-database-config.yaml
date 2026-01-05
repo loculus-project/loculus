@@ -2,60 +2,33 @@
 {{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
-
 {{- $key := $item.key }}
-
 {{- $organismContent := $item.contents }}
 
 {{- $lineageSystem := $organismContent | include "loculus.lineageSystemForOrganism" }}
-
 ---
-
 apiVersion: v1
-
 kind: ConfigMap
-
 metadata:
-
   name: lapis-silo-database-config-{{ $key }}
-
 data:
-
   {{- with ($organismContent.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
-
   {{- $args := merge (dict "commonMetadata" $commonMetadata) . }}
-
   database_config.yaml: |
-
     {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
-
   {{- end }}
 
-
-
   preprocessing_config.yaml: |
-
     ndjsonInputFilename: data.ndjson.zst
-
     referenceGenomeFilename: reference_genomes.json
-
     {{- if $lineageSystem }}
-
     lineageDefinitionsFilename: lineage_definitions.yaml
-
     {{- end }}
 
-
-
   reference_genomes.json: |
-
     {{ include "loculus.mergeReferenceGenomes" $organismContent.referenceGenomes | fromYaml | toJson }}
 
-
-
   silo_import_wrapper.sh: |
-
     {{ range $importScriptWrapperLines }}
-
     {{ . }}{{ end }}
 {{- end }}
