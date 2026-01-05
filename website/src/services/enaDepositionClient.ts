@@ -1,86 +1,98 @@
+import { Zodios } from '@zodios/core';
+import { err, ok, type Result } from 'neverthrow';
+import type { AxiosError } from 'axios';
+
 import { enaDepositionApi } from './enaDepositionApi.ts';
-import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
-import type { SubmitItem } from '../types/enaDeposition.ts';
+import type { SubmitItem, PaginatedSubmissions, PaginatedErrors, SubmissionPreviewResponse, SubmitResponse } from '../types/enaDeposition.ts';
+import type { ProblemDetail } from '../types/backend.ts';
 
-// Browser-safe logger interface
-interface BrowserSafeLogger {
-    error: (message: string) => void;
-    warn: (message: string) => void;
-    info: (message: string) => void;
-    http: (message: string) => void;
-    verbose: (message: string) => void;
-    debug: (message: string) => void;
-    silly: (message: string) => void;
-}
+/**
+ * Browser-safe ENA deposition client.
+ * Does not use winston logger to avoid `process is not defined` errors in the browser.
+ */
+export class EnaDepositionClient {
+    private readonly zodios;
 
-// Browser-safe logger using console - no server-side dependencies
-const instanceLogger: BrowserSafeLogger = {
-    error: (message: string) => console.error(`[EnaDepositionClient] ${message}`),
-    warn: (message: string) => console.warn(`[EnaDepositionClient] ${message}`),
-    info: (message: string) => console.info(`[EnaDepositionClient] ${message}`),
-    http: (message: string) => console.log(`[EnaDepositionClient] ${message}`),
-    verbose: (message: string) => console.log(`[EnaDepositionClient] ${message}`),
-    debug: (message: string) => console.debug(`[EnaDepositionClient] ${message}`),
-    silly: (message: string) => console.debug(`[EnaDepositionClient] ${message}`),
-};
-
-export class EnaDepositionClient extends ZodiosWrapperClient<typeof enaDepositionApi> {
-    public static create(enaDepositionUrl: string, logger = instanceLogger) {
-        return new EnaDepositionClient(
-            enaDepositionUrl,
-            enaDepositionApi,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            (axiosError) => axiosError.data,
-            logger,
-            'ena-deposition',
-        );
+    private constructor(enaDepositionUrl: string) {
+        this.zodios = new Zodios(enaDepositionUrl, enaDepositionApi);
     }
 
-    public health() {
-        return this.call('health', {});
+    public static create(enaDepositionUrl: string) {
+        return new EnaDepositionClient(enaDepositionUrl);
     }
 
-    public getSubmissions(params?: {
+    private createError(e: unknown): ProblemDetail {
+        const error = e as AxiosError;
+        return {
+            type: 'about:blank',
+            title: error.message ?? 'Unknown error',
+            status: error.response?.status ?? 0,
+            detail: 'Error from ENA deposition service',
+            instance: 'ena-deposition',
+        };
+    }
+
+    public async getSubmissions(params?: {
         status?: string;
         organism?: string;
         group_id?: number;
         page?: number;
         size?: number;
-    }) {
-        return this.call('getSubmissions', { queries: params ?? {} });
+    }): Promise<Result<PaginatedSubmissions, ProblemDetail>> {
+        try {
+            const response = await this.zodios.getSubmissions({ queries: params ?? {} });
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
     }
 
-    public getSubmissionDetail(accession: string, version: number) {
-        return this.call('getSubmissionDetail', { params: { accession, version: version.toString() } });
-    }
-
-    public generatePreview(accessions: string[]) {
-        return this.call('generatePreview', { accessions }, {});
-    }
-
-    public submitToEna(submissions: SubmitItem[]) {
-        return this.call('submitToEna', { submissions }, {});
-    }
-
-    public getErrors(params?: {
+    public async getErrors(params?: {
         table?: string;
         organism?: string;
         group_id?: number;
         page?: number;
         size?: number;
-    }) {
-        return this.call('getErrors', { queries: params ?? {} });
+    }): Promise<Result<PaginatedErrors, ProblemDetail>> {
+        try {
+            const response = await this.zodios.getErrors({ queries: params ?? {} });
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
     }
 
-    public getErrorDetail(accession: string, version: number) {
-        return this.call('getErrorDetail', { params: { accession, version: version.toString() } });
+    public async generatePreview(accessions: string[]): Promise<Result<SubmissionPreviewResponse, ProblemDetail>> {
+        try {
+            const response = await this.zodios.generatePreview({ accessions }, {});
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
     }
 
-    public retrySubmission(accession: string, version: number, editedMetadata?: Record<string, unknown>) {
-        return this.call(
-            'retrySubmission',
-            editedMetadata ? { edited_metadata: editedMetadata } : {},
-            { params: { accession, version: version.toString() } },
-        );
+    public async submitToEna(submissions: SubmitItem[]): Promise<Result<SubmitResponse, ProblemDetail>> {
+        try {
+            const response = await this.zodios.submitToEna({ submissions }, {});
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
+    }
+
+    public async retrySubmission(
+        accession: string,
+        version: number,
+        editedMetadata?: Record<string, unknown>,
+    ): Promise<Result<{ success: boolean; message: string }, ProblemDetail>> {
+        try {
+            const response = await this.zodios.retrySubmission(
+                editedMetadata ? { edited_metadata: editedMetadata } : {},
+                { params: { accession, version: version.toString() } },
+            );
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
     }
 }
