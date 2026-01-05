@@ -654,6 +654,12 @@ def create_ena_assembly(
     logger.error(error_message)
     errors.append(error_message)
 
+    try:
+        manifest_contents = Path(manifest_filename).read_text(encoding="utf-8")
+        logger.info(f"manifest.tsv contents:\n{manifest_contents}")
+    except Exception as e:
+        logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
+
     for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
         logger.info(f"Attempting to print webin-cli log file: {file_path}")
         try:
