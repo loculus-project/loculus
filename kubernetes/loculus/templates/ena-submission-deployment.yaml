@@ -135,8 +135,8 @@ spec:
                   key: password
             {{- if .Values.enableMockEna }}
             - name: MOCK_ENA_URL
-              # Use the real hostname so both Python code and webin-cli use the same resolution via hostAliases
-              value: "https://wwwdev.ebi.ac.uk"
+              # Use internal service name with HTTP for mock ENA
+              value: "http://mock-ena-service:8080"
             - name: MOCK_ENA_CA_CERT
               value: "/mock-ena-certs/ca.crt"
             - name: REQUESTS_CA_BUNDLE
