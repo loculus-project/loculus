@@ -3,7 +3,7 @@ import { err, ok, type Result } from 'neverthrow';
 import type { AxiosError } from 'axios';
 
 import { enaDepositionApi } from './enaDepositionApi.ts';
-import type { SubmitItem, PaginatedSubmissions, PaginatedErrors, SubmissionPreviewResponse, SubmitResponse } from '../types/enaDeposition.ts';
+import type { SubmitItem, PaginatedSubmissions, PaginatedErrors, PreviewResponse, SubmitResponse } from '../types/enaDeposition.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 
 /**
@@ -62,7 +62,7 @@ export class EnaDepositionClient {
         }
     }
 
-    public async generatePreview(accessions: string[]): Promise<Result<SubmissionPreviewResponse, ProblemDetail>> {
+    public async generatePreview(accessions: string[]): Promise<Result<PreviewResponse, ProblemDetail>> {
         try {
             const response = await this.zodios.generatePreview({ accessions }, {});
             return ok(response);

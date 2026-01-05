@@ -49,6 +49,7 @@ spec:
 {{- $backendHost := printf "backend%s%s" .Values.subdomainSeparator .Values.host }}
 {{- $keycloakHost := (printf "authentication%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $minioHost := (printf "s3%s%s" $.Values.subdomainSeparator $.Values.host) }}
+{{- $enaDepositionHost := (printf "ena-deposition%s%s" $.Values.subdomainSeparator $.Values.host) }}
 {{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
@@ -166,5 +167,29 @@ spec:
   tls:
     - hosts:
         - "{{ $minioHost }}"
+{{- end }}
+{{- if not .Values.disableEnaSubmission }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-ena-deposition-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+spec:
+  rules:
+    - host: "{{ $enaDepositionHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-ena-submission-service
+                port:
+                  number: 5000
+  tls:
+    - hosts:
+        - "{{ $enaDepositionHost }}"
 {{- end }}
 {{- end }}
