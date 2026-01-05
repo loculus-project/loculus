@@ -14,6 +14,7 @@ import requests
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
+    TRANSFORMED_DATA_FILENAME,
 )
 from .decompressor import analyze_ndjson
 from .errors import (
@@ -25,6 +26,7 @@ from .errors import (
 from .filesystem import prune_timestamped_directories, safe_remove
 from .hash_comparator import md5_file
 from .paths import ImporterPaths
+from .transformer import TransformationError, transform_data_format
 from .validator import RecordCountValidationError, parse_int_header, validate_record_count
 
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ class DownloadResult:
     """Result of a successful download."""
 
     directory: Path
-    data_path: Path
+    transformed_path: Path
     etag: str
     pipeline_versions: set[int]
 
@@ -132,6 +134,7 @@ class DownloadManager:
         # Create timestamped directory for this download
         download_dir = _create_download_directory(paths.input_dir)
         data_path = download_dir / DATA_FILENAME
+        transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
         try:
             # Download data from backend
@@ -185,6 +188,14 @@ class DownloadManager:
 
             logger.info("Downloaded %s records (ETag %s)", analysis.record_count, etag_value)
 
+            # Convert to new SILO format
+            try:
+                transform_data_format(data_path, transformed_path)
+            except Exception as exc:
+                logger.error("Data transformation failed: %s", exc)
+                safe_remove(download_dir)
+                raise TransformationError from exc
+
             # Validate record count
             try:
                 validate_record_count(analysis.record_count, expected_count)
@@ -193,14 +204,14 @@ class DownloadManager:
                 raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
-            _handle_previous_directory(paths, download_dir, data_path, etag_value)
+            _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
 
             # Prune old directories
             prune_timestamped_directories(paths.input_dir)
 
             return DownloadResult(
                 directory=download_dir,
-                data_path=data_path,
+                transformed_path=transformed_path,
                 etag=etag_value,
                 pipeline_versions=analysis.pipeline_versions,
             )
@@ -246,7 +257,7 @@ def _handle_previous_directory(
     previous_dirs.sort(key=lambda item: int(item.name))
     previous_dir = previous_dirs[-1]
 
-    previous_data_path = previous_dir / DATA_FILENAME
+    previous_data_path = previous_dir / TRANSFORMED_DATA_FILENAME
 
     # Clean up previous directory with no data
     if not previous_data_path.exists():
