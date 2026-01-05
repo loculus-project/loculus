@@ -1,5 +1,5 @@
 # --- Rust builder stage ---
-FROM rust:1.78-slim AS rust-builder
+FROM rust:1.92-slim AS rust-builder
 
 WORKDIR /build
 
