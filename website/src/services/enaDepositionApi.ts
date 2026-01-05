@@ -7,6 +7,7 @@ import {
     errorItem,
     healthResponse,
     paginatedErrors,
+    paginatedReadyToSubmit,
     paginatedSubmissions,
     previewResponse,
     submissionDetail,
@@ -132,6 +133,20 @@ const retrySubmissionEndpoint = makeEndpoint({
     ],
 });
 
+const getReadyToSubmitEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/api/submissions/ready',
+    alias: 'getReadyToSubmit',
+    parameters: [
+        { name: 'organism', type: 'Query', schema: z.string().optional() },
+        { name: 'group_id', type: 'Query', schema: z.number().optional() },
+        { name: 'page', type: 'Query', schema: z.number().optional() },
+        { name: 'size', type: 'Query', schema: z.number().optional() },
+    ],
+    response: paginatedReadyToSubmit,
+    errors: [{ status: 'default', schema: problemDetail }],
+});
+
 export const enaDepositionApi = makeApi([
     healthEndpoint,
     getSubmissionsEndpoint,
@@ -141,4 +156,5 @@ export const enaDepositionApi = makeApi([
     getErrorsEndpoint,
     getErrorDetailEndpoint,
     retrySubmissionEndpoint,
+    getReadyToSubmitEndpoint,
 ]);

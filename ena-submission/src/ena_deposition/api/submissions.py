@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Query
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 
+from ..call_loculus import fetch_released_entries
 from ..submission_db_helper import (
     StatusAll,
     SubmissionTableEntry,
@@ -17,9 +18,11 @@ from ..submission_db_helper import (
     in_submission_table,
 )
 from .schemas import (
+    PaginatedReadyToSubmit,
     PaginatedSubmissions,
     PreviewRequest,
     PreviewResponse,
+    ReadyToSubmitItem,
     SubmissionDetail,
     SubmissionPreviewItem,
     SubmissionStatusAll,
@@ -332,3 +335,109 @@ def submit_to_ena(request: SubmitRequest) -> SubmitResponse:
             )
 
     return SubmitResponse(submitted=submitted, errors=errors)
+
+
+def get_app_config():
+    """Get application config from app state."""
+    from .app import get_config
+
+    return get_config()
+
+
+def _has_insdc_accession(metadata: dict[str, Any]) -> bool:
+    """Check if the sequence already has an INSDC accession."""
+    # Check for any insdcAccessionFull field that is not None/empty
+    for key, value in metadata.items():
+        if key.startswith("insdcAccessionFull") and value:
+            return True
+    return False
+
+
+@router.get("/ready", response_model=PaginatedReadyToSubmit)
+def list_ready_to_submit(
+    organism: str | None = Query(None, description="Filter by organism"),
+    group_id: int | None = Query(None, description="Filter by group ID"),
+    page: int = Query(0, ge=0, description="Page number (0-indexed)"),
+    size: int = Query(20, ge=1, le=100, description="Page size"),
+) -> PaginatedReadyToSubmit:
+    """List sequences that are ready to be submitted to ENA.
+
+    Fetches released sequences from the Loculus backend that don't have
+    INSDC accessions yet and are not already in the submission queue.
+    """
+    config = get_app_config()
+    db_pool = get_db_pool()
+
+    # Get list of configured organisms for ENA deposition
+    ena_organisms = list(config.enaOrganisms.keys())
+
+    # Filter by organism if specified
+    if organism:
+        if organism not in ena_organisms:
+            return PaginatedReadyToSubmit(
+                items=[], total=0, page=page, size=size, pages=0
+            )
+        ena_organisms = [organism]
+
+    all_items: list[ReadyToSubmitItem] = []
+
+    for org in ena_organisms:
+        try:
+            for entry in fetch_released_entries(config, org):
+                metadata = entry.get("metadata", {})
+
+                # Skip if already has INSDC accession
+                if _has_insdc_accession(metadata):
+                    continue
+
+                accession = metadata.get("accession")
+                version = metadata.get("version")
+
+                if not accession or version is None:
+                    continue
+
+                # Skip if already in submission table
+                if in_submission_table(
+                    db_pool, {"accession": accession, "version": version}
+                ):
+                    continue
+
+                # Filter by group_id if specified
+                entry_group_id = metadata.get("groupId")
+                if group_id is not None and entry_group_id != group_id:
+                    continue
+
+                all_items.append(
+                    ReadyToSubmitItem(
+                        accession=accession,
+                        version=version,
+                        organism=org,
+                        group_id=entry_group_id or 0,
+                        group_name=metadata.get("groupName", ""),
+                        submitted_date=metadata.get("submittedDate", ""),
+                        metadata=metadata,
+                        unaligned_nucleotide_sequences=entry.get(
+                            "unalignedNucleotideSequences", {}
+                        ),
+                    )
+                )
+        except Exception as e:
+            logger.warning(f"Failed to fetch released entries for {org}: {e}")
+            continue
+
+    # Sort by submitted date descending
+    all_items.sort(key=lambda x: x.submitted_date, reverse=True)
+
+    # Paginate
+    total = len(all_items)
+    start = page * size
+    end = start + size
+    paginated_items = all_items[start:end]
+
+    return PaginatedReadyToSubmit(
+        items=paginated_items,
+        total=total,
+        page=page,
+        size=size,
+        pages=math.ceil(total / size) if size > 0 else 0,
+    )

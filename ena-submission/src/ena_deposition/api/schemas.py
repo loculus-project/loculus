@@ -186,3 +186,26 @@ class HealthResponse(BaseModel):
 
     status: str
     message: str
+
+
+class ReadyToSubmitItem(BaseModel):
+    """A sequence that is ready to be submitted to ENA."""
+
+    accession: str
+    version: int
+    organism: str
+    group_id: int
+    group_name: str
+    submitted_date: str
+    metadata: dict[str, Any]
+    unaligned_nucleotide_sequences: dict[str, str | None]
+
+
+class PaginatedReadyToSubmit(BaseModel):
+    """Paginated list of sequences ready to submit."""
+
+    items: list[ReadyToSubmitItem]
+    total: int
+    page: int
+    size: int
+    pages: int

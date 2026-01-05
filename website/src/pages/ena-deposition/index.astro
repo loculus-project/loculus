@@ -1,8 +1,8 @@
 ---
 import { EnaDepositionPage } from '../../components/EnaDeposition/EnaDepositionPage';
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { getRuntimeConfig } from '../../config';
 
 const accessToken = getAccessToken(Astro.locals.session);
 const clientConfig = getRuntimeConfig().public;

@@ -150,3 +150,26 @@ export const healthResponse = z.object({
 });
 
 export type HealthResponse = z.infer<typeof healthResponse>;
+
+export const readyToSubmitItem = z.object({
+    accession: z.string(),
+    version: z.number(),
+    organism: z.string(),
+    group_id: z.number(),
+    group_name: z.string(),
+    submitted_date: z.string(),
+    metadata: z.record(z.unknown()),
+    unaligned_nucleotide_sequences: z.record(z.string().nullable()),
+});
+
+export type ReadyToSubmitItem = z.infer<typeof readyToSubmitItem>;
+
+export const paginatedReadyToSubmit = z.object({
+    items: z.array(readyToSubmitItem),
+    total: z.number(),
+    page: z.number(),
+    size: z.number(),
+    pages: z.number(),
+});
+
+export type PaginatedReadyToSubmit = z.infer<typeof paginatedReadyToSubmit>;

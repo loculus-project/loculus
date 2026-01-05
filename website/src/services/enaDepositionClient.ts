@@ -1,10 +1,10 @@
 import { Zodios } from '@zodios/core';
-import { err, ok, type Result } from 'neverthrow';
 import type { AxiosError } from 'axios';
+import { err, ok, type Result } from 'neverthrow';
 
 import { enaDepositionApi } from './enaDepositionApi.ts';
-import type { SubmitItem, PaginatedSubmissions, PaginatedErrors, PreviewResponse, SubmitResponse } from '../types/enaDeposition.ts';
 import type { ProblemDetail } from '../types/backend.ts';
+import type { SubmitItem, PaginatedSubmissions, PaginatedErrors, PreviewResponse, SubmitResponse, PaginatedReadyToSubmit } from '../types/enaDeposition.ts';
 
 /**
  * Browser-safe ENA deposition client.
@@ -90,6 +90,20 @@ export class EnaDepositionClient {
                 editedMetadata ? { edited_metadata: editedMetadata } : {},
                 { params: { accession, version: version.toString() } },
             );
+            return ok(response);
+        } catch (e) {
+            return err(this.createError(e));
+        }
+    }
+
+    public async getReadyToSubmit(params?: {
+        organism?: string;
+        group_id?: number;
+        page?: number;
+        size?: number;
+    }): Promise<Result<PaginatedReadyToSubmit, ProblemDetail>> {
+        try {
+            const response = await this.zodios.getReadyToSubmit({ queries: params ?? {} });
             return ok(response);
         } catch (e) {
             return err(this.createError(e));

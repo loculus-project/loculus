@@ -1,50 +1,69 @@
 import { type FC, useState, useEffect, useCallback } from 'react';
 
 import type { EnaDepositionClient } from '../../services/enaDepositionClient';
-import type { SubmissionPreviewItem, SubmitItem } from '../../types/enaDeposition';
+import type { ReadyToSubmitItem, SubmissionPreviewItem, SubmitItem } from '../../types/enaDeposition';
 
-interface Props {
-    accessions: string[];
-    client: EnaDepositionClient;
+interface BaseProps {
     onClose: () => void;
     onSubmit: (items: SubmitItem[]) => void;
 }
 
-export const JsonPreviewModal: FC<Props> = ({ accessions, client, onClose, onSubmit }) => {
-    const [previews, setPreviews] = useState<SubmissionPreviewItem[]>([]);
+interface FetchModeProps extends BaseProps {
+    mode: 'fetch';
+    accessions: string[];
+    client: EnaDepositionClient;
+}
+
+interface PreloadedModeProps extends BaseProps {
+    mode: 'preloaded';
+    items: ReadyToSubmitItem[];
+}
+
+type Props = FetchModeProps | PreloadedModeProps;
+
+type PreviewItem = SubmissionPreviewItem | (ReadyToSubmitItem & { validation_errors: string[]; validation_warnings: string[] });
+
+export const JsonPreviewModal: FC<Props> = (props) => {
+    const { onClose, onSubmit } = props;
+    const [previews, setPreviews] = useState<PreviewItem[]>([]);
     const [editedJson, setEditedJson] = useState<Record<string, string>>({});
     const [activeIndex, setActiveIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    const initializeEditedJson = useCallback((items: PreviewItem[]) => {
+        const initial: Record<string, string> = {};
+        items.forEach((p) => {
+            const key = `${p.accession}.${p.version}`;
+            initial[key] = JSON.stringify(
+                {
+                    accession: p.accession,
+                    version: p.version,
+                    organism: p.organism,
+                    group_id: p.group_id,
+                    metadata: p.metadata,
+                    unaligned_nucleotide_sequences: p.unaligned_nucleotide_sequences,
+                },
+                null,
+                2,
+            );
+        });
+        setEditedJson(initial);
+    }, []);
+
     const fetchPreviews = useCallback(async () => {
+        if (props.mode !== 'fetch') return;
+
         setLoading(true);
         setError(null);
 
-        const result = await client.generatePreview(accessions);
+        const result = await props.client.generatePreview(props.accessions);
 
         result.match(
             (response) => {
                 setPreviews(response.previews);
-                // Initialize edited JSON with original data
-                const initial: Record<string, string> = {};
-                response.previews.forEach((p) => {
-                    const key = `${p.accession}.${p.version}`;
-                    initial[key] = JSON.stringify(
-                        {
-                            accession: p.accession,
-                            version: p.version,
-                            organism: p.organism,
-                            group_id: p.group_id,
-                            metadata: p.metadata,
-                            unaligned_nucleotide_sequences: p.unaligned_nucleotide_sequences,
-                        },
-                        null,
-                        2,
-                    );
-                });
-                setEditedJson(initial);
+                initializeEditedJson(response.previews);
                 setLoading(false);
             },
             (err) => {
@@ -52,11 +71,23 @@ export const JsonPreviewModal: FC<Props> = ({ accessions, client, onClose, onSub
                 setLoading(false);
             },
         );
-    }, [client, accessions]);
+    }, [props, initializeEditedJson]);
 
     useEffect(() => {
-        void fetchPreviews();
-    }, [fetchPreviews]);
+        if (props.mode === 'preloaded') {
+            // Convert ReadyToSubmitItem to preview format
+            const previewItems: PreviewItem[] = props.items.map((item) => ({
+                ...item,
+                validation_errors: [],
+                validation_warnings: [],
+            }));
+            setPreviews(previewItems);
+            initializeEditedJson(previewItems);
+            setLoading(false);
+        } else {
+            void fetchPreviews();
+        }
+    }, [props.mode, props, fetchPreviews, initializeEditedJson]);
 
     const handleSubmit = () => {
         setSubmitting(true);
@@ -65,7 +96,7 @@ export const JsonPreviewModal: FC<Props> = ({ accessions, client, onClose, onSub
             const items: SubmitItem[] = Object.values(editedJson).map((json) => JSON.parse(json) as SubmitItem);
             onSubmit(items);
         } catch {
-            // eslint-disable-next-line no-alert
+             
             alert('Invalid JSON. Please check the format.');
             setSubmitting(false);
         }
