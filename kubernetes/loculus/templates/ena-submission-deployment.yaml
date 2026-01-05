@@ -135,8 +135,8 @@ spec:
                   key: password
             {{- if .Values.enableMockEna }}
             - name: MOCK_ENA_URL
-              # Use internal service name with HTTP for mock ENA
-              value: "http://mock-ena-service:8080"
+              # Use internal service name with HTTPS for mock ENA
+              value: "https://mock-ena-service"
             - name: MOCK_ENA_CA_CERT
               value: "/mock-ena-certs/ca.crt"
             - name: REQUESTS_CA_BUNDLE
