@@ -97,6 +97,7 @@ export const SearchForm = ({
     const fieldItems: FieldItem[] = filterSchema.filters
         .filter((filter) => filter.name !== ACCESSION_FIELD) // Exclude accession field
         .filter((filter) => filter.name !== suborganismIdentifierField)
+        .filter((filter) => !filter.notSearchable)
         .map((filter) => ({
             name: filter.name,
             displayName: filter.displayName ?? sentenceCase(filter.name),

@@ -14,10 +14,7 @@ import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
-import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.files.FilesDatabaseService
-import org.loculus.backend.service.files.S3Service
-import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -31,13 +28,16 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "id"
-const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+const val METADATA_ID_HEADER = "id"
+const val METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT = "submissionId"
+const val FASTA_IDS_HEADER = "fastaIds"
+const val FASTA_IDS_SEPARATOR = " "
 
 const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
+typealias FastaId = String
 typealias SegmentName = String
 
 const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
@@ -85,7 +85,6 @@ class SubmitModel(
     private val submissionIdFilesMappingPreconditionValidator: SubmissionIdFilesMappingPreconditionValidator,
     private val dateProvider: DateProvider,
     private val backendConfig: BackendConfig,
-    private val s3Service: S3Service,
 ) {
 
     companion object AcceptedFileTypes {
@@ -126,8 +125,13 @@ class SubmitModel(
         val metadataSubmissionIds = uploadDatabaseService.getMetadataUploadSubmissionIds(uploadId).toSet()
         if (requiresConsensusSequenceFile(submissionParams.organism)) {
             log.debug { "Validating submission with uploadId $uploadId" }
-            val sequenceSubmissionIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
-            validateSubmissionIdSetsForConsensusSequences(metadataSubmissionIds, sequenceSubmissionIds)
+            val metadataFastaIds = uploadDatabaseService.getFastaIdsForMetadata(uploadId).flatten()
+            val metadataFastaIdsSet = metadataFastaIds.toSet()
+            if (metadataFastaIdsSet.size < metadataFastaIds.size) {
+                throw UnprocessableEntityException("Metadata file contains duplicate fastaIds.")
+            }
+            val sequenceFastaIds = uploadDatabaseService.getSequenceUploadSubmissionIds(uploadId).toSet()
+            validateSubmissionIdSetsForConsensusSequences(metadataFastaIdsSet, sequenceFastaIds)
         }
 
         if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
@@ -142,7 +146,7 @@ class SubmitModel(
         submissionParams.files?.let { submittedFiles ->
             val fileSubmissionIds = submittedFiles.keys
             validateSubmissionIdSetsForFiles(metadataSubmissionIds, fileSubmissionIds)
-            validateFileExistenceAndGroupOwnership(submittedFiles, submissionParams, uploadId)
+            validateFileGroupOwnership(submittedFiles, submissionParams, uploadId)
         }
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
@@ -167,6 +171,7 @@ class SubmitModel(
             metadataFileTypes,
             metadataTempFileToDelete,
         )
+        val requireConsensusSequence = requiresConsensusSequenceFile(submissionParams.organism)
         try {
             uploadMetadata(uploadId, submissionParams, metadataStream, batchSize)
         } finally {
@@ -175,30 +180,30 @@ class SubmitModel(
 
         val sequenceFile = submissionParams.sequenceFile
         if (sequenceFile == null) {
-            if (requiresConsensusSequenceFile(submissionParams.organism)) {
+            if (requireConsensusSequence) {
                 throw BadRequestException(
                     "Submissions for organism ${submissionParams.organism.name} require a sequence file.",
                 )
             }
-        } else {
-            if (!requiresConsensusSequenceFile(submissionParams.organism)) {
-                throw BadRequestException(
-                    "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
-                )
-            }
+            return
+        }
+        if (!requireConsensusSequence) {
+            throw BadRequestException(
+                "Sequence uploads are not allowed for organism ${submissionParams.organism.name}.",
+            )
+        }
 
-            val sequenceTempFileToDelete = MaybeFile()
-            try {
-                val sequenceStream = getStreamFromFile(
-                    sequenceFile,
-                    uploadId,
-                    sequenceFileTypes,
-                    sequenceTempFileToDelete,
-                )
-                uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
-            } finally {
-                sequenceTempFileToDelete.delete()
-            }
+        val sequenceTempFileToDelete = MaybeFile()
+        try {
+            val sequenceStream = getStreamFromFile(
+                sequenceFile,
+                uploadId,
+                sequenceFileTypes,
+                sequenceTempFileToDelete,
+            )
+            uploadSequences(uploadId, sequenceStream, batchSize, submissionParams.organism)
+        } finally {
+            sequenceTempFileToDelete.delete()
         }
     }
 
@@ -250,10 +255,15 @@ class SubmitModel(
                 "from $submissionParams.submitter with UploadId $uploadId"
         }
         val now = dateProvider.getCurrentDateTime()
+        val maxSequencesPerEntry = backendConfig.getInstanceConfig(submissionParams.organism)
+            .schema
+            .submissionDataTypes
+            .maxSequencesPerEntry
+
         try {
             when (submissionParams) {
                 is SubmissionParams.OriginalSubmissionParams -> {
-                    metadataEntryStreamAsSequence(metadataStream)
+                    metadataEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
@@ -269,7 +279,7 @@ class SubmitModel(
                 }
 
                 is SubmissionParams.RevisionSubmissionParams -> {
-                    revisionEntryStreamAsSequence(metadataStream)
+                    revisionEntryStreamAsSequence(metadataStream, maxSequencesPerEntry)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
@@ -344,14 +354,17 @@ class SubmitModel(
 
         if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
             val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
-                "Metadata file contains ${metadataKeysNotInSequences.size} ids that are not present " +
-                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+                "Metadata file contains ${metadataKeysNotInSequences.size} FASTA ids that are not present " +
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) {
+                        "'$it'"
+                    } + ". "
             } else {
                 ""
             }
             val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
-                "Sequence file contains ${sequenceKeysNotInMetadata.size} ids that are not present " +
-                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+                "Sequence file contains ${sequenceKeysNotInMetadata.size} FASTA ids that are not present " +
+                    "in the metadata file: " +
+                    sequenceKeysNotInMetadata.toList().joinToString(limit = 10) { "'$it'" }
             } else {
                 ""
             }
@@ -364,33 +377,26 @@ class SubmitModel(
         if (filesKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
                 "File upload contains ${filesKeysNotInMetadata.size} submissionIds that are not present in the " +
-                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10),
+                    "metadata file: " + filesKeysNotInMetadata.toList().joinToString(limit = 10) { "'$it'" },
             )
         }
     }
 
-    private fun validateFileExistenceAndGroupOwnership(
+    private fun validateFileGroupOwnership(
         submittedFiles: SubmissionIdFilesMap,
         submissionParams: SubmissionParams,
         uploadId: String,
     ) {
-        val usedFileIds = submittedFiles.getAllFileIds()
-        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
-
-        log.debug { "Validating that all submitted file IDs exist." }
-        val notExistingIds = usedFileIds.subtract(fileGroups.keys)
-        if (notExistingIds.isNotEmpty()) {
-            throw BadRequestException("The File IDs $notExistingIds do not exist.")
-        }
-
         log.debug {
             "Validating that submitted files belong to the group that their associated submission belongs to."
         }
+        val usedFileIds = submittedFiles.getAllFileIds()
+        val fileGroups = filesDatabaseService.getGroupIds(usedFileIds)
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             fileGroups.forEach {
                 if (it.value != submissionParams.groupId) {
                     throw BadRequestException(
-                        "The File ${it.key} does not belong to group ${submissionParams.groupId}.",
+                        "File ${it.key} does not belong to group ${submissionParams.groupId}.",
                     )
                 }
             }

@@ -1,10 +1,12 @@
 import json
 import logging
 import os
+import uuid
 from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
+import orjson
 import requests
 
 from .config import Config
@@ -94,8 +96,9 @@ def submit_external_metadata(
         f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
     )
     endpoint: str = "submit-external-metadata"
+    loculus_organism = config.enaOrganisms[organism].loculusOrganism or organism
 
-    url = f"{organism_url(config, organism)}/{endpoint}"
+    url = f"{organism_url(config, loculus_organism)}/{endpoint}"
     params = {
         "externalMetadataUpdater": "ena",
     }
@@ -148,17 +151,42 @@ def get_group_info(config: Config, group_id: int) -> Group:
 def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, Any]]:
     """Get sequences that are ready for release"""
 
+    request_id = str(uuid.uuid4())
     url = f"{organism_url(config, organism)}/get-released-data"
 
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "X-Request-ID": request_id,
+    }
+    logger.info(f"Fetching released data from {url} with request id {request_id}")
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line in response.iter_lines():
-            full_json = json.loads(line)
-            filtered_json = {
+        for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
+            if not line:
+                continue
+
+            try:
+                full_json = orjson.loads(line)
+            except orjson.JSONDecodeError as e:
+                head = line[:200]
+                tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
+
+                error_msg = (
+                    f"Invalid NDJSON from {url}\n"
+                    f"request_id={request_id}\n"
+                    f"line={line_no}\n"
+                    f"bytes={len(line)}\n"
+                    f"json_error={e}\n"
+                    f"head={head!r}\n"
+                    f"tail={tail!r}"
+                )
+
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from e
+
+            yield {
                 k: v
                 for k, v in full_json.items()
                 if k in {"metadata", "unalignedNucleotideSequences"}
             }
-            yield filtered_json

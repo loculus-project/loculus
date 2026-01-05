@@ -45,10 +45,10 @@ test('Download metadata with POST and check number of cols', async ({ page, brow
     const searchPage = new SearchPage(page);
     await searchPage.ebolaSudan();
 
-    const loculusId = await searchPage.waitForLoculusId();
-    expect(loculusId).toBeTruthy();
+    const accessionVersions = await searchPage.waitForSequencesInSearch(1);
+    const { accession } = accessionVersions[0];
 
-    const query = `${loculusId}\n${'A'.repeat(2000)}`;
+    const query = `${accession}\n${'A'.repeat(2000)}`;
     await searchPage.enterAccessions(query);
 
     await page.getByRole('button', { name: 'Download all entries' }).click();

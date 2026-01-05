@@ -14,7 +14,7 @@ export const detailsJsonSchema = z.object({
     dataUseTermsHistory: z.array(dataUseTermsHistoryEntry),
     schema: schema,
     clientConfig: serviceUrls,
-    suborganism: suborganism,
+    suborganism: suborganism.nullable(),
     isRevocation: z.boolean(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
 });

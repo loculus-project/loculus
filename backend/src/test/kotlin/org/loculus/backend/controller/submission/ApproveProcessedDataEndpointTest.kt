@@ -40,7 +40,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG" ],
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$S3_CONFIG"],
 )
 class ApproveProcessedDataEndpointTest(
     @Autowired val client: SubmissionControllerClient,

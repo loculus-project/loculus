@@ -1,21 +1,21 @@
-import json
 import logging
 import re
 import threading
 import time
+from dataclasses import asdict
 from datetime import datetime
-from typing import Any
 
 import pytz
-from attr import dataclass
 from psycopg2.pool import SimpleConnectionPool
 
-from .config import Config
+from .config import Config, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
+    accession_exists,
     create_ena_sample,
     get_alias,
-    set_error_if_accession_not_exists,
+    set_accession_does_not_exist_error,
+    trigger_retry_if_exists,
 )
 from .ena_types import (
     ProjectLink,
@@ -30,6 +30,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
+    AccessionVersion,
     SampleTableEntry,
     Status,
     StatusAll,
@@ -37,7 +38,7 @@ from .submission_db_helper import (
     add_to_sample_table,
     db_init,
     find_conditions_in_db,
-    find_errors_in_db,
+    find_errors_or_stuck_in_db,
     is_revision,
     update_db_where_conditions,
     update_with_retry,
@@ -46,31 +47,14 @@ from .submission_db_helper import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class MetadataMapping:
-    loculus_fields: list[str]
-    default: str | None = None
-    function: str | None = None
-    args: list[str] | None = None
-    units: str | None = None
-
-
 def get_sample_attributes(
-    metadata_mapping: dict[str, dict[str, Any]], sample_metadata: dict[str, str]
+    metadata_mapping: dict[str, MetadataMapping], sample_metadata: dict[str, str]
 ) -> list[SampleAttribute]:
     """Turn Loculus metadata into ENA sample attributes per metadata_mapping."""
 
     result: list[SampleAttribute] = []
 
-    for field_name, field_config in metadata_mapping.items():
-        mapping = MetadataMapping(
-            loculus_fields=field_config["loculus_fields"],  # type: ignore[arg-type]
-            default=field_config.get("default"),  # type: ignore[arg-type]
-            function=field_config.get("function"),  # type: ignore[arg-type]
-            args=field_config.get("args"),  # type: ignore[arg-type]
-            units=field_config.get("units"),  # type: ignore[arg-type]
-        )
-
+    for field_name, mapping in metadata_mapping.items():
         loculus_metadata_field_values = map(sample_metadata.get, mapping.loculus_fields)
 
         # Fields with function and args are processed differently
@@ -102,7 +86,9 @@ def get_sample_attributes(
                     )
                     continue
         else:
-            value = "; ".join(value for value in loculus_metadata_field_values if value is not None)
+            value = "; ".join(
+                str(value) for value in loculus_metadata_field_values if value is not None
+            )
 
         if value_or_default := value or mapping.default:
             result.append(
@@ -134,7 +120,7 @@ def construct_sample_set_object(
     sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
     center_name = sample_data_in_submission_table["center_name"]
     organism: str = sample_data_in_submission_table["organism"]  # type: ignore
-    organism_metadata = config.organisms[organism]["enaDeposition"]
+    organism_metadata = config.enaOrganisms[organism]
     alias = get_alias(
         f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
         test,
@@ -151,14 +137,14 @@ def construct_sample_set_object(
     sample_type = SampleType(
         center_name=XmlAttribute(center_name),
         alias=alias,
-        title=f"{organism_metadata['scientific_name']}: Genome sequencing",
+        title=f"{organism_metadata.scientific_name}: Genome sequencing",
         description=(
-            f"Automated upload of {organism_metadata['scientific_name']} sequences submitted by "
+            f"Automated upload of {organism_metadata.scientific_name} sequences submitted by "
             f"{center_name} from {config.db_name}"
         ),
         sample_name=SampleName(
-            taxon_id=organism_metadata["taxon_id"],
-            scientific_name=organism_metadata["scientific_name"],
+            taxon_id=organism_metadata.taxon_id,
+            scientific_name=organism_metadata.scientific_name,
         ),
         sample_links=SampleLinks(
             sample_link=[ProjectLink(xref_link=XrefType(db=config.db_name, id=entry["accession"]))]
@@ -177,16 +163,13 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
-    if (
-        set_error_if_accession_not_exists(
+    if not accession_exists(biosample, config):
+        set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",
             db_pool=db_config,
-            config=config,
         )
-        is False
-    ):
         return
 
     entry = {
@@ -295,10 +278,10 @@ def submission_table_update(db_config: SimpleConnectionPool):
             raise RuntimeError(error_msg)
 
 
-def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_old_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if entry is incorrectly added older version - error and do not submit"""
-    version = int(seq_key["version"])
-    accession = {"accession": seq_key["accession"]}
+    version = int(seq_key.version)
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
@@ -307,16 +290,16 @@ def is_old_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     if version < all_versions[-1]:
         update_values = {
             "status": Status.HAS_ERRORS,
-            "errors": json.dumps(["Revision version is not the latest version"]),
+            "errors": ["Revision version is not the latest version"],
             "started_at": datetime.now(tz=pytz.utc),
         }
         logger.error(
-            f"Sample creation failed for {seq_key['accession']} version {version} "
+            f"Sample creation failed for {seq_key.accession} version {version} "
             "as it is not the latest version."
         )
         update_with_retry(
             db_config=db_config,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
             reraise=False,
@@ -343,14 +326,14 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
     )
     logger.debug(f"Found {len(ready_to_submit_sample)} entries in sample_table in status READY")
     for row in ready_to_submit_sample:
-        seq_key = {"accession": row["accession"], "version": row["version"]}
+        seq_key = AccessionVersion(accession=row["accession"], version=row["version"])
         if is_old_version(db_config, seq_key):
             logger.warning(f"Skipping submission for {seq_key} as it is not the latest version.")
             continue
 
         logger.info(f"Processing sample_table entry for {seq_key}")
         sample_data_in_submission_table = find_conditions_in_db(
-            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=seq_key
+            db_config, table_name=TableName.SUBMISSION_TABLE, conditions=asdict(seq_key)
         )
 
         sample_set = construct_sample_set_object(
@@ -363,7 +346,7 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         number_rows_updated = update_db_where_conditions(
             db_config,
             table_name=TableName.SAMPLE_TABLE,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -380,24 +363,24 @@ def sample_table_create(db_config: SimpleConnectionPool, config: Config, test: b
         if sample_creation_results.result:
             update_values = {
                 "status": Status.SUBMITTED,
-                "result": json.dumps(sample_creation_results.result),
+                "result": sample_creation_results.result,
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Sample creation succeeded for {seq_key['accession']} version {seq_key['version']}"
+                f"Sample creation succeeded for {seq_key.accession} version {seq_key.version}"
             )
         else:
             update_values = {
                 "status": Status.HAS_ERRORS,
-                "errors": json.dumps(sample_creation_results.errors),
+                "errors": sample_creation_results.errors,
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
-                f"Sample creation failed for {seq_key['accession']} version {seq_key['version']}"
+                f"Sample creation failed for {seq_key.accession} version {seq_key.version}"
             )
         update_with_retry(
             db_config=db_config,
-            conditions=seq_key,
+            conditions=asdict(seq_key),
             update_values=update_values,
             table_name=TableName.SAMPLE_TABLE,
         )
@@ -407,33 +390,39 @@ def sample_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
-    time_threshold: int = 15,
-    slack_time_threshold: int = 12,
-):
+    last_retry_time: datetime | None,
+) -> datetime | None:
     """
-    - time_threshold: (minutes)
-    - slack_time_threshold: (hours)
-    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING over time_threshold
-    2. If time since last slack_notification is over slack_time_threshold send notification
+    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING
+        over submitting_time_threshold_min
+    2. If time since last slack_notification is over slack_retry_threshold_min send notification
     """
-    entries_with_errors = find_errors_in_db(
-        db_config, TableName.SAMPLE_TABLE, time_threshold=time_threshold
+    entries_with_errors = find_errors_or_stuck_in_db(
+        db_config, TableName.SAMPLE_TABLE, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_with_errors)} entries"
-            f" in sample_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f"{len(entries_with_errors)} entries in sample_table in status "
+            f"HAS_ERRORS or SUBMITTING for over {config.submitting_time_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            slack_retry_threshold_min=config.slack_retry_threshold_min,
+        )
+        last_retry_time = trigger_retry_if_exists(
+            entries_with_errors,
+            db_config,
+            table_name=TableName.SAMPLE_TABLE,
+            retry_threshold_min=config.retry_threshold_min,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created
         # If created update sample_table
         # If not retry 3 times, then raise for manual intervention
+    return last_retry_time
 
 
 def create_sample(config: Config, stop_event: threading.Event):
@@ -443,6 +432,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -453,5 +443,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
-        sample_table_handle_errors(db_config, config, slack_config)
+        last_retry_time = sample_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)

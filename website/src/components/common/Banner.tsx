@@ -6,9 +6,15 @@ interface BannerProps {
     message?: string;
     lastTimeBannerWasClosed: number | undefined;
     serverTime: number;
+    cookieName?: string;
 }
 
-export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed, serverTime }) => {
+export const Banner: React.FC<BannerProps> = ({
+    message,
+    lastTimeBannerWasClosed,
+    serverTime,
+    cookieName = 'lastTimeBannerWasClosed',
+}) => {
     const timeToKeepBannerClosed = 1000 * 60 * 60 * 24;
     if (
         message === undefined ||
@@ -21,7 +27,7 @@ export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed
     const serverClientOffset = serverTime - initialClientTime;
 
     const setBannerClosed = () => {
-        document.cookie = `lastTimeBannerWasClosed=${Date.now() + serverClientOffset}; max-age=${60 * 60 * 24 * 365}`;
+        document.cookie = `${cookieName}=${Date.now() + serverClientOffset}; max-age=${60 * 60 * 24 * 365}`;
         window.location.reload();
     };
 

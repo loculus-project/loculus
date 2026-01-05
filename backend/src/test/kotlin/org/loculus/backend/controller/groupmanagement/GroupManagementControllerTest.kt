@@ -85,6 +85,27 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `GIVEN I am not authenticated WHEN I query a group THEN returns public details only`() {
+        val defaultGroupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.getDetailsOfGroup(defaultGroupId, jwt = null)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.group.groupName").value(DEFAULT_GROUP_NAME))
+            .andExpect(jsonPath("\$.group.institution").value(DEFAULT_GROUP.institution))
+            .andExpect(jsonPath("\$.group.address.line1").value(DEFAULT_GROUP.address.line1))
+            .andExpect(jsonPath("\$.group.address.line2").value(DEFAULT_GROUP.address.line2))
+            .andExpect(jsonPath("\$.group.address.city").value(DEFAULT_GROUP.address.city))
+            .andExpect(jsonPath("\$.group.address.state").value(DEFAULT_GROUP.address.state))
+            .andExpect(jsonPath("\$.group.address.postalCode").value(DEFAULT_GROUP.address.postalCode))
+            .andExpect(jsonPath("\$.group.address.country").value(DEFAULT_GROUP.address.country))
+            .andExpect(jsonPath("\$.group.contactEmail").isEmpty())
+            .andExpect(jsonPath("\$.users").isEmpty())
+    }
+
+    @Test
     fun `GIVEN I created a group WHEN I query my groups THEN returns created group`() {
         val jwtForAnotherUser = generateJwtFor(UUID.randomUUID().toString() + "testuser")
 
@@ -416,7 +437,6 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.getDetailsOfGroup(groupId = 123, jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
             Scenario(

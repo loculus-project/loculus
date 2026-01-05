@@ -27,14 +27,24 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int): GroupDetails {
+    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
-        val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
 
-        return GroupDetails(
-            group = groupEntity.toGroup(),
-            users = users.map { User(it.userName) },
-        )
+        return when (user is AuthenticatedUser) {
+            true -> {
+                val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
+                GroupDetails(
+                    group = groupEntity.toGroup(),
+                    users = users.map { User(it.userName) },
+                )
+            }
+
+            false ->
+                GroupDetails(
+                    group = groupEntity.toGroup(redactEmail = true),
+                    users = null,
+                )
+        }
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
@@ -71,6 +81,7 @@ class GroupManagementDatabaseService(
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
         val groupsQuery = when (authenticatedUser.isSuperUser) {
             true -> GroupsTable.selectAll()
+
             false ->
                 UserGroupsTable
                     .join(
@@ -165,7 +176,7 @@ class GroupManagementDatabaseService(
         contactEmail = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(): Group = Group(
+    private fun GroupEntity.toGroup(redactEmail: Boolean = false): Group = Group(
         groupId = this.id.value,
         groupName = this.groupName,
         institution = this.institution,
@@ -177,6 +188,6 @@ class GroupManagementDatabaseService(
             state = this.addressState,
             country = this.addressCountry,
         ),
-        contactEmail = this.contactEmail,
+        contactEmail = if (redactEmail) null else this.contactEmail,
     )
 }

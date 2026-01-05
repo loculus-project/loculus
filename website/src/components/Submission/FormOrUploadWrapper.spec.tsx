@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -6,7 +6,6 @@ import { describe, expect, test, vi } from 'vitest';
 import { FormOrUploadWrapper, type FileFactory, type InputError, type SequenceData } from './FormOrUploadWrapper';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings';
 import type { InputField } from '../../types/config';
-import { SINGLE_REFERENCE } from '../../types/referencesGenomes.ts';
 import { Button } from '../common/Button';
 
 const DUMMY_METADATA_TEMPLATE_FIELDS = new Map<string, InputField[]>([
@@ -61,16 +60,10 @@ const MockSaveWrapper = ({
                 action='submit'
                 organism='foo'
                 setFileFactory={setFileFactory}
-                referenceGenomeLightweightSchema={{
-                    [SINGLE_REFERENCE]: {
-                        nucleotideSegmentNames: ['foo', 'bar'],
-                        geneNames: [],
-                        insdcAccessionFull: [],
-                    },
-                }}
                 metadataTemplateFields={DUMMY_METADATA_TEMPLATE_FIELDS}
                 submissionDataTypes={{
                     consensusSequences: enableConsensusSequences,
+                    maxSequencesPerEntry: 2,
                 }}
             />
             <Button onClick={handler}>generate</Button>
@@ -101,11 +94,13 @@ describe('FormOrUploadWrapper', () => {
             expect(input).toHaveValue(value);
         }
 
-        async function uploadSegmentData(segment: string, data: string) {
-            const file = new File([data], 'foo.txt', { type: 'text/plain' });
-            await userEvent.upload(screen.getByLabelText(new RegExp(`${segment} segment file`, 'i')), file);
+        async function uploadSegmentData(fastaHeader: string, data: string) {
+            const fasta = `>${fastaHeader}\n${data}`;
+            const file = new File([fasta], 'foo.fasta', { type: 'text/plain' });
+            const uploadInput = () => screen.getByLabelText(new RegExp('Add a segment', 'i'));
+            await waitFor(() => expect(uploadInput()).toBeVisible());
+            await userEvent.upload(uploadInput(), file);
         }
-
         test('renders all metadata fields and sequence segments', () => {
             renderForm(true);
             expect(screen.getByText(/ID/)).toBeTruthy();
@@ -114,8 +109,6 @@ describe('FormOrUploadWrapper', () => {
             const collectionCountryLabel = document.querySelector('label[for="collectionCountry"]');
             expect(collectionCountryLabel).toHaveTextContent('Collection country');
             expect(screen.getByText(/Host/)).toBeTruthy();
-            expect(screen.getByText(/foo/)).toBeTruthy();
-            expect(screen.getByText(/bar/)).toBeTruthy();
         });
 
         test('error when nothing is entered', async () => {

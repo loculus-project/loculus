@@ -1,8 +1,18 @@
 import type { APIRoute } from 'astro';
 
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism.ts';
-import { getSchema } from '../../../config.ts';
-import { SUBMISSION_ID_INPUT_FIELD } from '../../../settings.ts';
+import { getSchema, getSubmissionIdInputFields } from '../../../config.ts';
+import type { InputField } from '../../../types/config.ts';
+
+function createRowFromField(field: InputField): string {
+    const guidance = field.guidance ? ` ${field.guidance}` : '';
+    return [
+        field.name,
+        field.required ? 'Yes' : 'No',
+        field.definition ? `${field.definition}${guidance}`.trim() : '',
+        field.example ?? '',
+    ].join('\t');
+}
 
 export const GET: APIRoute = ({ params }) => {
     const rawOrganism = params.organism!;
@@ -12,27 +22,19 @@ export const GET: APIRoute = ({ params }) => {
             status: 404,
         });
     }
+    const schema = getSchema(organism.key);
 
-    const extraFields = [SUBMISSION_ID_INPUT_FIELD];
-
-    const tableHeader = 'Field Name\tRequired\tDefinition\tGuidance\tExample';
-
-    const { inputFields } = getSchema(organism.key);
-
-    const headers: Record<string, string> = {
-        'Content-Type': 'text/tsv', // eslint-disable-line @typescript-eslint/naming-convention
-    };
+    const tsvTemplate = [
+        ['Field Name', 'Required', 'Definition', 'Example'].join('\t'),
+        ...[...getSubmissionIdInputFields(schema), ...schema.inputFields].map((field) => createRowFromField(field)),
+    ].join('\n');
 
     const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_overview.tsv`;
-    headers['Content-Disposition'] = `attachment; filename="${filename}"`;
-
-    const fieldNames = inputFields.map(
-        (field) =>
-            `${field.name}\t${field.required ?? ''}\t${field.definition ?? ''} ${field.guidance ?? ''}\t${field.example ?? ''}`,
-    );
-    const tsvTemplate = [tableHeader, ...extraFields, ...fieldNames].join('\n');
 
     return new Response(tsvTemplate, {
-        headers,
+        headers: {
+            'Content-Type': 'text/tsv', // eslint-disable-line @typescript-eslint/naming-convention
+            'Content-Disposition': `attachment; filename="${filename}"`, // eslint-disable-line @typescript-eslint/naming-convention
+        },
     });
 };

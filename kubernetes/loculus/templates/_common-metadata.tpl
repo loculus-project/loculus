@@ -19,7 +19,6 @@ fields:
     hideOnSequenceDetailsPage: true
   - name: version
     type: int
-    notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submissionId
     displayName: Submission ID
@@ -146,7 +145,7 @@ fields:
 {{- end -}}
 {{- range $toAdd }}
   {{- $key := .name }}
-  {{- $metadataMap = merge $metadataMap (dict $key .) -}}
+  {{- $metadataMap = set $metadataMap $key . -}}
 {{- end -}}
 {{- $patchedMetadata := list -}}
 {{- range $key, $value := $metadataMap }}
@@ -172,6 +171,12 @@ bannerMessageURL: {{ quote $.Values.bannerMessageURL }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ else if or $.Values.runDevelopmentMainDatabase $.Values.runDevelopmentKeycloakDatabase }}
 bannerMessage: "Warning: Development or Keycloak main database is enabled. Development environment only."
+{{ end }}
+{{ if $.Values.submissionBannerMessageURL }}
+submissionBannerMessageURL: {{ quote $.Values.submissionBannerMessageURL }}
+{{ end }}
+{{ if $.Values.submissionBannerMessage }}
+submissionBannerMessage: {{ quote $.Values.submissionBannerMessage }}
 {{ end }}
 {{ if $.Values.gitHubEditLink }}
 gitHubEditLink: {{ quote $.Values.gitHubEditLink }}
@@ -234,7 +239,7 @@ organisms:
       files: {{ .files | toYaml | nindent 8 }}
       {{ end }}
       metadata:
-        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "referenceGenomes" $instance.referenceGenomes}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
         {{ if .files }}
@@ -326,15 +331,14 @@ organisms:
 
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
-fields:
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
-{{/* A segmented organism is defined by having more than 1 segment */}}
-{{- $segments := .nucleotideSequences }}
-{{- $is_segmented := gt (len $segments) 1 }}
+fields:
 {{- range $metadataList }}
-{{- if and $is_segmented .perSegment }}
+{{- if and $isSegmented .perSegment }}
 {{- $currentItem := . }}
-{{- range $segment := $segments }}
+{{- range $segment := $rawUniqueSegments }}
 {{- with $currentItem }}
 {{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ printf "%s_%s" .name $segment | quote }}
@@ -362,6 +366,8 @@ fields:
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
+zstdCompressionLevel: {{ $.Values.zstdCompressionLevel }}
+pipelineVersionUpgradeCheckIntervalSeconds: {{ $.Values.pipelineVersionUpgradeCheckIntervalSeconds }}
 name: {{ quote $.Values.name }}
 dataUseTerms:
   {{$.Values.dataUseTerms | toYaml | nindent 2}}
@@ -378,7 +384,6 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       {{- include "loculus.submissionDataTypes" . | nindent 6 }}
       {{- if .files }}
@@ -386,12 +391,12 @@ organisms:
         {{ .files | toYaml | nindent 8 }}
       {{- end }}
       metadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
-        {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       externalMetadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
-        {{ $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "referenceGenomes" $instance.referenceGenomes }}
+        {{- $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
         {{ $metadata.fields | default list | toYaml | nindent 8 }}
       earliestReleaseDate:
       {{- if .earliestReleaseDate }}
@@ -435,14 +440,14 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
-fields:
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
-{{- $segments := .nucleotideSequences }}
-{{- $is_segmented := gt (len $segments) 1 }}
+fields:
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- if and $is_segmented .perSegment }}
-{{- range $segment := $segments }}
+{{- if and $isSegmented .perSegment }}
+{{- range $segment := $rawUniqueSegments }}
 {{- with $currentItem }}
   - name: {{ printf "%s_%s" .name $segment | quote }}
     type: {{ .type | default "string" | quote }}
@@ -459,15 +464,15 @@ fields:
 
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendExternalMetadata" }}
-fields:
+{{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" .referenceGenomes | fromYaml).segments }}
+{{- $isSegmented := gt (len $rawUniqueSegments) 1 }}
 {{- $metadataList := .metadata }}
-{{- $segments := .nucleotideSequences }}
-{{- $is_segmented := gt (len $segments) 1 }}
+fields:
 {{- range $metadataList }}
 {{- $currentItem := . }}
 {{- if eq .header "INSDC" }}
-{{- if and $is_segmented .perSegment }}
-{{- range $segment := $segments }}
+{{- if and $isSegmented .perSegment }}
+{{- range $segment := $rawUniqueSegments }}
 {{- with $currentItem }}
   - name: {{ printf "%s_%s" .name $segment | quote }}
     type: {{ .type | default "string" | quote }}
@@ -508,21 +513,35 @@ fields:
 
 {{/* Generate ENA submission config from passed config object */}}
 {{- define "loculus.generateENASubmissionConfig" }}
-organisms:
+enaOrganisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
 {{- $instance := $item.contents }}
   {{- if $instance.enaDeposition }}
+  {{- range $suborganismName, $configFile := $instance.enaDeposition -}}
+  {{- if eq $suborganismName "singleReference" }}
   {{ $key }}:
-    {{- with $instance.schema }}
-    {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
-    enaDeposition: {{- $instance.enaDeposition.configFile | toYaml | nindent 6 }}
+  {{- else }}
+  {{ $suborganismName }}:
+    loculusOrganism: {{ quote $key }}
+  {{- end }}
+  {{- with $instance.schema }}
+    {{ $configFile.configFile | toYaml | nindent 4 }}
+    {{- if $configFile.suborganismIdentifierField }}
+    suborganismIdentifierField: {{ quote $configFile.suborganismIdentifierField }}
+    {{- end }}
     organismName: {{ quote .organismName }}
+    {{- $rawUniqueSegments := (include "loculus.extractUniqueRawNucleotideSequenceNames" $instance.referenceGenomes | fromYaml).segments }}
+    segments: {{ $rawUniqueSegments | toYaml | nindent 6 }}
     externalMetadata:
-      {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+      {{- $args := dict
+        "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata
+        "referenceGenomes" $instance.referenceGenomes
+      }}
       {{-  $metadata := include "loculus.generateBackendExternalMetadata" $args | fromYaml }}
       {{- $metadata.fields | default list | toYaml | nindent 6 }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}

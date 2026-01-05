@@ -159,10 +159,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return this.call(endpoint, request as LapisBaseRequest);
     }
 
-    public getUnalignedSequences(accessionVersion: string) {
+    public getUnalignedSequences(accessionVersion: string, options: { fastaHeaderTemplate?: string } = {}) {
         return this.call('unalignedNucleotideSequences', {
             [this.schema.primaryKey]: accessionVersion,
             dataFormat: 'FASTA',
+            ...options,
         });
     }
 
@@ -182,8 +183,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return Result.combine(results);
     }
 
-    public getSequenceFasta(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
-        return this.getUnalignedSequences(accessionVersion);
+    public getSequenceFasta(
+        accessionVersion: string,
+        options: { fastaHeaderTemplate?: string } = {},
+    ): Promise<Result<string, ProblemDetail>> {
+        return this.getUnalignedSequences(accessionVersion, options);
     }
 
     public async getMultiSegmentSequenceFasta(

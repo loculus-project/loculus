@@ -76,6 +76,7 @@ open class ReleasedDataModel(
             null
         }
 
+        log.info { "Starting to stream released submissions for organism $organism" }
         return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map {
                 computeAdditionalMetadataFields(

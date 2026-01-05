@@ -233,7 +233,7 @@ The following could be implement as post-MVP features:
 
    The file specification rows are:
 
-   - FASTA: sequences in fasta format
+   - FLATFILE: sequences in embl flatfile format (alternatively use FASTA)
    - CHROMOSOME_LIST: list of chromosomes
 
    An example manifest.tsv:
@@ -246,7 +246,7 @@ The following could be implement as post-MVP features:
    COVERAGE	100
    PROGRAM	iVar
    PLATFORM	Illumina
-   FASTA	genome.fasta.gz
+   FLATFILE	genome.embl.gz
    CHROMOSOME_LIST	chromosome_list.tsv
    ```
 

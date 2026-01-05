@@ -1,16 +1,15 @@
 batch_size: 100
 alignment_requirement: ALL
-genes:
-- NPEbolaSudan
-- VP35EbolaSudan
-- VP24EbolaZaire
-- LEbolaZaire
 log_level: DEBUG
-nextclade_dataset_name: ebola-dataset
-nextclade_dataset_server: fake_url
-nucleotideSequences:
-- ebola-sudan
-- ebola-zaire
+minimizer_url: TEST
+segment_classification_method: "minimizer"
+nextclade_sequence_and_datasets:
+- name: ebola-sudan
+  nextclade_dataset_name: ebola-dataset/ebola-sudan
+  genes: [NPEbolaSudan, VP35EbolaSudan]
+- name: ebola-zaire
+  nextclade_dataset_name: ebola-dataset/ebola-zaire
+  genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:
   totalInsertedNucs_ebola-zaire:

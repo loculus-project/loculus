@@ -20,17 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: datasets
-          create-args: ncbi-datasets-cli s3cmd
-      - name: Download NCBI Dataset
+          create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd seqkit
+      - name: Download NCBI Dataset and create tzst archive
         shell: bash -l {0}
         run: |
           datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
           unzip -o ${{ inputs.taxon_id }}.zip
           tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset
+          cat md5sum.txt
+          ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
+          seqkit stats ncbi_dataset/data/genomic.fna
       - name: Create S3cmd config
         run: |
           cat <<EOF > ~/.s3cfg

@@ -1,5 +1,21 @@
 import { Page, expect } from '@playwright/test';
 import { getFromLinkTargetAndAssertContent } from '../utils/link-helpers';
+import { EditPage } from './edit.page';
+import { ReviewPage } from './review.page';
+
+function makeAccessionVersion({
+    accession,
+    version,
+}: {
+    accession: string;
+    version: number;
+}): AccessionVersion {
+    return { accession, version, accessionVersion: `${accession}.${version}` };
+}
+
+export type AccessionVersion = { accession: string; version: number; accessionVersion: string };
+
+const accessionVersionRegex = /LOC_[A-Z0-9]+\.[0-9]+/;
 
 export class SearchPage {
     constructor(private page: Page) {}
@@ -84,21 +100,6 @@ export class SearchPage {
         await this.page.getByRole('button', { name: 'Reset' }).click();
     }
 
-    async waitForLoculusId(timeout = 60000): Promise<string | null> {
-        await this.page.waitForFunction(
-            () => {
-                const content = document.body.innerText;
-                return /LOC_[A-Z0-9]+\.[0-9]+/.test(content);
-            },
-            { timeout },
-        );
-
-        const content = await this.page.content();
-        const loculusIdMatch = content.match(/LOC_[A-Z0-9]+\.[0-9]+/);
-        const loculusId = loculusIdMatch ? loculusIdMatch[0] : null;
-        return loculusId;
-    }
-
     getSequenceRows() {
         return this.page.locator('[data-testid="sequence-row"]');
     }
@@ -108,11 +109,41 @@ export class SearchPage {
         await rows.nth(rowIndex).click();
     }
 
-    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string | null> {
+    async openPreviewOfAccessionVersion(accessionVersion: string) {
+        await this.getSequenceRows().filter({ hasText: accessionVersion }).click();
+    }
+
+    async reviseSequence() {
+        // Sometimes clicking revise button doesn't register, so let's wait for sequence viewer to be visible first
+        // See #5447
+        await expect(this.page.getByTestId('fixed-length-text-viewer')).toBeVisible();
+
+        const reviseButton = this.page.getByRole('link', { name: 'Revise this sequence' });
+        await expect(reviseButton).toBeVisible();
+        await reviseButton.click();
+        await expect(this.page.getByText(/^Create new revision from LOC_\w+\.\d+$/)).toBeVisible();
+        return new EditPage(this.page);
+    }
+
+    async revokeSequence(revocationReason: string = 'Test revocation') {
+        const revokeButton = this.page.getByRole('button', { name: 'Revoke this sequence' });
+        await expect(revokeButton).toBeVisible();
+        await revokeButton.click();
+
+        await expect(
+            this.page.getByText('Are you sure you want to create a revocation for this sequence?'),
+        ).toBeVisible();
+        await this.page.getByPlaceholder('Enter reason for revocation').fill(revocationReason);
+        await this.page.getByRole('button', { name: 'Confirm' }).click();
+
+        return new ReviewPage(this.page);
+    }
+
+    async clickOnSequenceAndGetAccession(rowIndex = 0): Promise<string> {
         const rows = this.getSequenceRows();
         const row = rows.nth(rowIndex);
         const rowText = await row.innerText();
-        const accessionVersionMatch = rowText.match(/LOC_[A-Z0-9]+\.[0-9]+/);
+        const accessionVersionMatch = rowText.match(accessionVersionRegex);
         const accessionVersion = accessionVersionMatch ? accessionVersionMatch[0] : null;
         await row.click();
         return accessionVersion;
@@ -181,5 +212,85 @@ export class SearchPage {
 
     async closeDetailsModal() {
         await this.page.getByTestId('close-preview-button').click();
+    }
+
+    async searchByGroupId(organism: string, groupId: number) {
+        await this.page.goto(`/${organism}/search?visibility_groupId=true&groupId=${groupId}`);
+    }
+
+    async goToReleasedSequences(organism: string, groupId: number | string) {
+        await this.page.goto(`/${organism}/submission/${groupId}/released`);
+    }
+
+    async getAccessionVersions(): Promise<AccessionVersion[]> {
+        const rows = this.getSequenceRows();
+        const count = await rows.count();
+
+        if (count === 0) {
+            return [];
+        }
+
+        const accessions: AccessionVersion[] = [];
+        for (let i = 0; i < count; i++) {
+            const rowText = await rows.nth(i).innerText();
+            const match = rowText.match(accessionVersionRegex);
+            if (match) {
+                const [accession, version] = match[0].split('.');
+                accessions.push(
+                    makeAccessionVersion({ accession, version: Number.parseInt(version) }),
+                );
+            }
+        }
+
+        return accessions;
+    }
+
+    /**
+     * Wait for sequences to appear in search after release (handles indexing delay)
+     */
+    async waitForSequencesInSearch(
+        minCount: number,
+        timeoutMs: number = 60000,
+    ): Promise<AccessionVersion[]> {
+        let accessions: AccessionVersion[] = [];
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    accessions = await this.getAccessionVersions();
+                    return accessions.length;
+                },
+                {
+                    message: `Expected at least ${minCount} sequences to appear in search results`,
+                    timeout: timeoutMs,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeGreaterThanOrEqual(minCount);
+        return accessions;
+    }
+
+    async waitForAccessionVersionInSearch(expectedAccession: string, expectedVersion: number) {
+        await expect
+            .poll(
+                async () => {
+                    await this.page.reload();
+                    const accessionVersions = await this.getAccessionVersions();
+                    return accessionVersions.some(
+                        ({ accession, version }) =>
+                            accession === expectedAccession && version === expectedVersion,
+                    );
+                },
+                {
+                    message: `Did not find accession version ${expectedAccession}.${expectedVersion} in search results`,
+                    timeout: 60000,
+                    intervals: [2000, 5000],
+                },
+            )
+            .toBeTruthy();
+    }
+
+    async expectResultTableCellText(text: string) {
+        await expect(this.page.getByRole('cell', { name: text })).toBeVisible();
     }
 }

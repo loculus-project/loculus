@@ -114,7 +114,11 @@ class SubmissionConvenienceClient(
         }
 
         val submit = client.submit(
-            DefaultFiles.metadataFile,
+            if (isMultiSegmented) {
+                DefaultFiles.multiSegmentedMetadataFile
+            } else {
+                DefaultFiles.metadataFile
+            },
             if (doesNotAllowConsensusSequenceFile) {
                 null
             } else if (isMultiSegmented) {
@@ -211,6 +215,7 @@ class SubmissionConvenienceClient(
             *accessionVersions.map {
                 when (organism) {
                     DEFAULT_ORGANISM -> PreparedProcessedData.successfullyProcessed(accession = it.accession)
+
                     OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
                         accession = it.accession,
                     )

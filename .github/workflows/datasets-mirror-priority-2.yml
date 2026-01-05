@@ -2,7 +2,7 @@ name: Mirror NCBI Datasets (Priority 2 - Daily)
 on:
   workflow_dispatch:  # Allows manual triggering to re-run all priority-2 taxa
   schedule:
-    - cron: '12 2 * * *' # Runs daily at 02:12 UTC
+    - cron: '12 3 * * *' # Runs daily at 03:12 UTC
 jobs:
   mirror:
     strategy:

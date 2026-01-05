@@ -83,7 +83,11 @@ spec:
               value: {{ index $.Values.lineageSystemDefinitions $lineageSystem | toJson | quote }}
             {{- end }}
             - name: SILO_RUN_TIMEOUT_SECONDS
-              value: {{ $.Values.siloImportLimitSeconds | quote }}
+              value: {{ $.Values.siloImport.siloTimeoutSeconds | quote }}
+            - name: HARD_REFRESH_INTERVAL
+              value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
+            - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
+              value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json

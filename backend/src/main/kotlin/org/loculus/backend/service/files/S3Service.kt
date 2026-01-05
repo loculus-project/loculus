@@ -247,14 +247,17 @@ fun <T> s3ErrorMapping(block: () -> T): T {
                 "EntityTooSmall: Your proposed upload is smaller than the minimum allowed object size. " +
                     "Each part, except the last one, must be at least 5 MB.",
             )
+
             "InvalidPart" -> UnprocessableEntityException(
                 "InvalidPart: One or more of the specified parts could not be found. The part may not have been " +
                     "uploaded, or the specified etag may not match the part's etag.",
             )
+
             "InvalidPartOrder" -> UnprocessableEntityException(
                 "The list of parts was not in ascending order. The parts list must be specified in order " +
                     "by part number.",
             )
+
             else -> RuntimeException("Unexpected S3 error: ${e.awsErrorDetails().errorCode()}")
         }
     }

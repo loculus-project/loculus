@@ -37,10 +37,13 @@ data class Group(
     val institution: String,
     @Schema(description = "The address of the institution.")
     val address: Address,
-    @Schema(description = "The contact email for the group.", example = "something@loculus.org")
-    val contactEmail: String,
+    @Schema(
+        description = "The contact email for the group. Will be `null` if not authenticated.",
+        example = "something@loculus.org",
+    )
+    val contactEmail: String?,
 )
 
 data class User(val name: String)
 
-data class GroupDetails(val group: Group, val users: List<User>)
+data class GroupDetails(val group: Group, val users: List<User>?)

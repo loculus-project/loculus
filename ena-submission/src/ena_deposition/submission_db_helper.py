@@ -2,9 +2,10 @@ import json
 import logging
 import os
 import re
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Final
 
 import psycopg2
@@ -63,33 +64,27 @@ def db_init(
     )
 
 
-class StatusAll(Enum):
-    READY_TO_SUBMIT = 0
-    SUBMITTING_PROJECT = 1
-    SUBMITTED_PROJECT = 2
-    SUBMITTING_SAMPLE = 3
-    SUBMITTED_SAMPLE = 4
-    SUBMITTING_ASSEMBLY = 5
-    SUBMITTED_ALL = 6
-    SENT_TO_LOCULUS = 7
-    HAS_ERRORS_PROJECT = 8
-    HAS_ERRORS_ASSEMBLY = 9
-    HAS_ERRORS_SAMPLE = 10
-    HAS_ERRORS_EXT_METADATA_UPLOAD = 11
-
-    def __str__(self):
-        return self.name
+class StatusAll(StrEnum):
+    READY_TO_SUBMIT = "READY_TO_SUBMIT"
+    SUBMITTING_PROJECT = "SUBMITTING_PROJECT"
+    SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
+    SUBMITTING_SAMPLE = "SUBMITTING_SAMPLE"
+    SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
+    SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
+    SUBMITTED_ALL = "SUBMITTED_ALL"
+    SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
+    HAS_ERRORS_PROJECT = "HAS_ERRORS_PROJECT"
+    HAS_ERRORS_ASSEMBLY = "HAS_ERRORS_ASSEMBLY"
+    HAS_ERRORS_SAMPLE = "HAS_ERRORS_SAMPLE"
+    HAS_ERRORS_EXT_METADATA_UPLOAD = "HAS_ERRORS_EXT_METADATA_UPLOAD"
 
 
-class Status(Enum):
-    READY = 0
-    SUBMITTING = 1
-    SUBMITTED = 2
-    HAS_ERRORS = 3
-    WAITING = 4  # Only for assembly creation
-
-    def __str__(self):
-        return self.name
+class Status(StrEnum):
+    READY = "READY"
+    SUBMITTING = "SUBMITTING"
+    SUBMITTED = "SUBMITTED"
+    HAS_ERRORS = "HAS_ERRORS"
+    WAITING = "WAITING"  # Only for assembly creation
 
 
 class TableName(StrEnum):
@@ -124,22 +119,55 @@ def validate_column_name(table_name: str, column_name: str):
         raise ValueError(msg)
 
 
+type Accession = str
+type Version = int
+
+
+@dataclass(frozen=True)
+class AccessionVersion:
+    accession: Accession
+    version: Version
+
+    @classmethod
+    def from_string(cls, s: str) -> "AccessionVersion":
+        if s.count(".") != 1:
+            msg = (
+                f"Invalid AccessionVersion string '{s}': "
+                "expected exactly one '.' separating accession and version"
+            )
+            raise ValueError(msg)
+        accession_str, version_str = s.split(".", 1)
+        return cls(
+            accession=accession_str,
+            version=int(version_str),
+        )
+
+
+@dataclass(frozen=True)
+class ProjectId:
+    project_id: int | None
+
+
 @dataclass
 class SubmissionTableEntry:
-    accession: str
-    version: str
+    accession: Accession
+    version: Version
     organism: str
     group_id: int
-    errors: str | None = None
-    warnings: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status_all: StatusAll = StatusAll.READY_TO_SUBMIT
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    metadata: str | None = None
-    unaligned_nucleotide_sequences: str | None = None
+    unaligned_nucleotide_sequences: dict[str, str | None] = field(default_factory=dict)
     center_name: str | None = None
-    external_metadata: str | None = None
+    external_metadata: dict[str, str | Sequence[str]] | None = None
     project_id: int | None = None
+
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
 
 
 @dataclass(kw_only=True)
@@ -147,54 +175,69 @@ class ProjectTableEntry:
     group_id: int
     organism: str
     project_id: int | None = None
-    errors: str | None = None
-    warnings: str | None = None
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
     center_name: str | None = None
-    result: dict[str, str] | str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
+
+    @property
+    def primary_key(self) -> ProjectId:
+        return ProjectId(project_id=self.project_id)
 
 
 @dataclass(kw_only=True)
 class SampleTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
+    accession: Accession
+    version: Version
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    result: dict[str, str] | str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_first_publicly_visible: datetime | None = None
     ncbi_first_publicly_visible: datetime | None = None
+
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
 
 
 @dataclass(kw_only=True)
 class AssemblyTableEntry:
-    accession: str
-    version: int
-    errors: str | None = None
-    warnings: str | None = None
+    accession: Accession
+    version: Version
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     status: Status = Status.READY
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    result: str | None = None
+    result: dict[str, str | Sequence[str]] | None = None
     ena_nucleotide_first_publicly_visible: datetime | None = None
     ncbi_nucleotide_first_publicly_visible: datetime | None = None
     ena_gca_first_publicly_visible: datetime | None = None
     ncbi_gca_first_publicly_visible: datetime | None = None
 
+    @property
+    def primary_key(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
 
-type Accession = str
-type AccessionVersion = str
-type Version = int
+
+def type_conversion(value: Any) -> Any:
+    if isinstance(value, (Status, StatusAll)):
+        return str(value)
+    if isinstance(value, (dict, list)):
+        return json.dumps(value)
+    return value
 
 
 def highest_version_in_submission_table(
-    db_conn_pool: SimpleConnectionPool, organism: str
+    db_conn_pool: SimpleConnectionPool,
 ) -> dict[Accession, Version]:
     """
     Returns the highest version for a given accession in the submission table.
@@ -206,10 +249,9 @@ def highest_version_in_submission_table(
             query = f"""
                 SELECT accession, MAX(version) AS version
                 FROM {TableName.SUBMISSION_TABLE}
-                WHERE organism = %s
                 GROUP BY accession
             """  # noqa: S608
-            cur.execute(query, (organism,))
+            cur.execute(query)
             results = cur.fetchall()
     finally:
         db_conn_pool.putconn(con)
@@ -217,7 +259,9 @@ def highest_version_in_submission_table(
 
 
 def delete_records_in_db(
-    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, str]
+    db_conn_pool: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, str],
 ) -> int:
     """
     Deletes records from the specified table based on the given conditions.
@@ -247,10 +291,7 @@ def delete_records_in_db(
 
             cur.execute(
                 query,
-                tuple(
-                    str(value) if isinstance(value, (Status, StatusAll)) else value
-                    for value in conditions.values()
-                ),
+                tuple(type_conversion(value) for value in conditions.values()),
             )
 
             deleted_rows = cur.rowcount  # Get number of affected rows
@@ -264,7 +305,9 @@ def delete_records_in_db(
 
 
 def find_conditions_in_db(
-    db_conn_pool: SimpleConnectionPool, table_name: TableName, conditions: dict[str, Any]
+    db_conn_pool: SimpleConnectionPool,
+    table_name: TableName,
+    conditions: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """
     Return all records from the specified table that match all the conditions
@@ -294,10 +337,7 @@ def find_conditions_in_db(
                     where_conditions.append(f"{key} IS NULL")
                 else:
                     where_conditions.append(f"{key} = %s")
-                    if isinstance(value, (Status, StatusAll)):
-                        params.append(str(value))
-                    else:
-                        params.append(value)
+                    params.append(type_conversion(value))
             if where_conditions:
                 query += " WHERE " + " AND ".join(where_conditions)
 
@@ -309,7 +349,7 @@ def find_conditions_in_db(
     return results
 
 
-def find_errors_in_db(
+def find_errors_or_stuck_in_db(
     db_conn_pool: SimpleConnectionPool, table_name: TableName, time_threshold: int = 15
 ) -> list[dict[str, str]]:
     con = db_conn_pool.getconn()
@@ -321,11 +361,11 @@ def find_errors_in_db(
 
             query = f"""
                 SELECT * FROM {table_name}
-                WHERE (status = 'HAS_ERRORS' AND started_at < %s)
+                WHERE (status = 'HAS_ERRORS')
                 OR (status = 'SUBMITTING' AND started_at < %s)
             """  # noqa: S608
 
-            cur.execute(query, (min_start_time, min_start_time))
+            cur.execute(query, (min_start_time,))
 
             results = cur.fetchall()
     finally:
@@ -381,7 +421,7 @@ def find_waiting_in_db(
 def update_db_where_conditions(
     db_conn_pool: SimpleConnectionPool,
     table_name: TableName,
-    conditions: dict[str, str | int],
+    conditions: Mapping[str, str | int],
     update_values: dict[str, Any],
 ) -> int:
     updated_row_count = 0
@@ -409,18 +449,9 @@ def update_db_where_conditions(
             )
             query += f" WHERE {where_clause} AND ( {where_not_equal_clause} )"
             parameters = (
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in update_values.values()
-                )
-                + tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                )
-                + tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in update_values.values()
-                )
+                tuple(type_conversion(value) for value in update_values.values())
+                + tuple(type_conversion(value) for value in conditions.values())
+                + tuple(type_conversion(value) for value in update_values.values())
             )
 
             cur.execute(query, parameters)
@@ -440,7 +471,7 @@ def update_db_where_conditions(
 
 def update_with_retry(
     db_config: SimpleConnectionPool,
-    conditions: dict[str, str],
+    conditions: Mapping[str, Any],
     table_name: TableName,
     update_values: dict[str, Any],
     reraise: bool = True,
@@ -588,7 +619,7 @@ def add_to_assembly_table(
         db_conn_pool.putconn(con)
 
 
-def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
+def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions: dict[str, Any]) -> bool:
     con = db_conn_pool.getconn()
     try:
         with con, con.cursor() as cur:
@@ -601,10 +632,7 @@ def in_submission_table(db_conn_pool: SimpleConnectionPool, conditions) -> bool:
             query += f" WHERE {where_clause}"
             cur.execute(
                 query,
-                tuple(
-                    str(value) if (isinstance(value, (Status, StatusAll))) else value
-                    for value in conditions.values()
-                ),
+                tuple(type_conversion(value) for value in conditions.values()),
             )
             in_db = bool(cur.rowcount)
     finally:
@@ -632,8 +660,8 @@ def add_to_submission_table(
                     str(submission_table_entry.status_all),
                     submission_table_entry.started_at,
                     submission_table_entry.finished_at,
-                    submission_table_entry.metadata,
-                    submission_table_entry.unaligned_nucleotide_sequences,
+                    json.dumps(submission_table_entry.metadata),
+                    json.dumps(submission_table_entry.unaligned_nucleotide_sequences),
                     json.dumps(submission_table_entry.external_metadata),
                 ),
             )
@@ -647,12 +675,12 @@ def add_to_submission_table(
         db_conn_pool.putconn(con)
 
 
-def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
+def is_revision(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> bool:
     """Check if the entry is a revision"""
-    version = seq_key["version"]
+    version = seq_key.version
     if version == "1":
         return False
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )
@@ -660,10 +688,10 @@ def is_revision(db_config: SimpleConnectionPool, seq_key: dict[str, str]):
     return len(all_versions) > 1 and version == all_versions[-1]
 
 
-def last_version(db_config: SimpleConnectionPool, seq_key: dict[str, str]) -> int | None:
+def last_version(db_config: SimpleConnectionPool, seq_key: AccessionVersion) -> int | None:
     if not is_revision(db_config, seq_key):
         return None
-    accession = {"accession": seq_key["accession"]}
+    accession = {"accession": seq_key.accession}
     sample_data_in_submission_table = find_conditions_in_db(
         db_config, table_name=TableName.SUBMISSION_TABLE, conditions=accession
     )

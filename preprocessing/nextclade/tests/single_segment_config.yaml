@@ -1,16 +1,13 @@
 batch_size: 100
-genes:
-- NPEbolaSudan
-- VP35EbolaSudan
 log_level: DEBUG
-nextclade_dataset_name: ebola-sudan-test-dataset
-nextclade_dataset_server: fake_url
+nextclade_dataset_server: TEST
 scientific_name: "Test Ebola Sudan Virus"
 molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
-nucleotideSequences:
-- main
+nextclade_sequence_and_datasets:
+- nextclade_dataset_name: ebola-sudan
+  genes: [NPEbolaSudan, VP35EbolaSudan]
 organism: ebola-sudan-test
 processing_spec:
   completeness:
@@ -37,6 +34,12 @@ processing_spec:
     function: identity
     inputs:
       input: nextclade.totalDeletions
+  nonExistentField: # Regression test for #5628
+    args:
+      type: str
+    function: identity
+    inputs:
+      input: nextclade.some.non.existent.path
   length:
     args:
       type: int
