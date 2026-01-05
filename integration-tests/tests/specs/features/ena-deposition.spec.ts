@@ -23,21 +23,21 @@ import {
  */
 test.describe('ENA Deposition Management UI', () => {
     test.beforeEach(async () => {
-        // Check if services are available
+        // Check if services are available - fail with detailed info if not
         const isApiHealthy = await checkEnaDepositionHealth();
         const isMockEnaHealthy = await checkMockEnaHealth();
 
-        if (!isApiHealthy || !isMockEnaHealthy) {
-            test.skip(true, 'ENA Deposition API or Mock ENA is not available');
-            return;
-        }
+        expect(
+            isApiHealthy,
+            'ENA Deposition API is not healthy. Ensure ena-submission pod is running and accessible on port 30050.',
+        ).toBe(true);
+        expect(
+            isMockEnaHealthy,
+            'Mock ENA service is not healthy. Ensure mock-ena-service pod is running and accessible on port 30443.',
+        ).toBe(true);
 
         // Reset mock ENA state before each test
-        try {
-            await resetMockEnaState();
-        } catch (error) {
-            console.warn('Failed to reset mock ENA state:', error);
-        }
+        await resetMockEnaState();
     });
 
     test('should show login warning when not authenticated', async ({ browser }) => {
