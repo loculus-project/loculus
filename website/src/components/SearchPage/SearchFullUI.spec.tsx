@@ -201,6 +201,25 @@ describe('SearchFullUI', () => {
         expect(screen.queryByLabelText('Not searchable')).not.toBeInTheDocument();
     });
 
+    it('should not render fields with flag notSearchable in the field selector modal', async () => {
+        renderSearchFullUI({
+            searchFormFilters: [
+                {
+                    name: 'NotSearchable',
+                    displayName: 'Not searchable',
+                    type: 'string',
+                    autocomplete: false,
+                    notSearchable: true,
+                    initiallyVisible: false,
+                },
+            ],
+        });
+
+        const customizeButton = await screen.findByRole('button', { name: 'Add search fields' });
+        await userEvent.click(customizeButton);
+        expect(screen.queryByLabelText('Not searchable')).not.toBeInTheDocument();
+    });
+
     it('should display timestamp field', () => {
         const timestampFieldName = 'timestampField';
         renderSearchFullUI({

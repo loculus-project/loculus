@@ -55,6 +55,7 @@ def mock_organism() -> EnaOrganismDetails:
         scientific_name="Test scientific name",
         molecule_type=MoleculeType.GENOMIC_RNA,
         organismName="Test organism",
+        segments=["main"],
     )
 
 
@@ -64,7 +65,8 @@ def mock_multi_segmented_organism() -> EnaOrganismDetails:
         scientific_name="Test scientific name",
         molecule_type=MoleculeType.GENOMIC_RNA,
         organismName="Test organism",
-        topology=Topology.CIRCULAR
+        topology=Topology.CIRCULAR,
+        segments=["seg2", "seg3"],
     )
 
 
@@ -72,7 +74,7 @@ def mock_config():
     config = mock.Mock()
     config.db_name = "Loculus"
     config.unique_project_suffix = "Test suffix"
-    config.organisms = {"Test organism": mock_organism()}
+    config.enaOrganisms = {"Test organism": mock_organism()}
     config.metadata_mapping = {
         key: MetadataMapping(**item) for key, item in defaults["metadata_mapping"].items()
     }
@@ -387,7 +389,7 @@ class AssemblyCreationTests(unittest.TestCase):
     def test_get_chromsome_accessions(self):
         insdc_accession_range = "OZ189935-OZ189936"
         segment_order = ["seg2", "seg3"]
-        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_multi = get_chromsome_accessions(insdc_accession_range, segment_order, True)
         self.assertEqual(
             result_multi,
             {
@@ -400,7 +402,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["main"]
-        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, False)
         self.assertEqual(
             result_single,
             {
@@ -411,7 +413,7 @@ class AssemblyCreationTests(unittest.TestCase):
 
         insdc_accession_range = "OZ189935-OZ189935"
         segment_order = ["seg3"]
-        result_single = get_chromsome_accessions(insdc_accession_range, segment_order)
+        result_single = get_chromsome_accessions(insdc_accession_range, segment_order, True)
         self.assertEqual(
             result_single,
             {
@@ -426,7 +428,7 @@ class AssemblyCreationTests(unittest.TestCase):
             self.assertRaises(ValueError),
             self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
         ):
-            get_chromsome_accessions(insdc_accession_range, segment_order)
+            get_chromsome_accessions(insdc_accession_range, segment_order, False)
 
         insdc_accession_range = "OZ189935-TK189936"
         segment_order = ["A", "B"]
@@ -434,13 +436,13 @@ class AssemblyCreationTests(unittest.TestCase):
             self.assertRaises(ValueError),
             self.assertLogs("ena_deposition.ena_submission_helper", level="ERROR"),
         ):
-            get_chromsome_accessions(insdc_accession_range, segment_order)
+            get_chromsome_accessions(insdc_accession_range, segment_order, True)
 
     @mock.patch("requests.get")
     def test_get_ena_analysis_process(self, mock_post):
         mock_post.return_value = mock_requests_post(200, process_response_text)
         response = get_ena_analysis_process(
-            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"]
+            MOCK_CONFIG, erz_accession="ERZ000001", segment_order=["main"], organism=mock_organism()
         )
         desired_response = {
             "erz_accession": "ERZ000001",

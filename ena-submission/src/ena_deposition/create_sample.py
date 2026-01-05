@@ -11,9 +11,11 @@ from psycopg2.pool import SimpleConnectionPool
 from .config import Config, MetadataMapping
 from .ena_submission_helper import (
     CreationResult,
+    accession_exists,
     create_ena_sample,
     get_alias,
-    set_error_if_accession_not_exists,
+    set_accession_does_not_exist_error,
+    trigger_retry_if_exists,
 )
 from .ena_types import (
     ProjectLink,
@@ -36,7 +38,7 @@ from .submission_db_helper import (
     add_to_sample_table,
     db_init,
     find_conditions_in_db,
-    find_errors_in_db,
+    find_errors_or_stuck_in_db,
     is_revision,
     update_db_where_conditions,
     update_with_retry,
@@ -118,7 +120,7 @@ def construct_sample_set_object(
     sample_metadata: dict[str, str] = sample_data_in_submission_table["metadata"]  # type: ignore
     center_name = sample_data_in_submission_table["center_name"]
     organism: str = sample_data_in_submission_table["organism"]  # type: ignore
-    organism_metadata = config.organisms[organism]
+    organism_metadata = config.enaOrganisms[organism]
     alias = get_alias(
         f"{entry['accession']}:{organism}:{config.unique_project_suffix}",
         test,
@@ -161,16 +163,13 @@ def set_sample_table_entry(db_config, row, seq_key, config: Config):
 
     logger.info("Checking if biosample actually exists and is public")
     seq_key = {"accession": row["accession"], "version": row["version"]}
-    if (
-        set_error_if_accession_not_exists(
+    if not accession_exists(biosample, config):
+        set_accession_does_not_exist_error(
             conditions=seq_key,
             accession=biosample,
             accession_type="BIOSAMPLE",
             db_pool=db_config,
-            config=config,
         )
-        is False
-    ):
         return
 
     entry = {
@@ -391,33 +390,39 @@ def sample_table_handle_errors(
     db_config: SimpleConnectionPool,
     config: Config,
     slack_config: SlackConfig,
-    time_threshold: int = 15,
-    slack_time_threshold: int = 12,
-):
+    last_retry_time: datetime | None,
+) -> datetime | None:
     """
-    - time_threshold: (minutes)
-    - slack_time_threshold: (hours)
-    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING over time_threshold
-    2. If time since last slack_notification is over slack_time_threshold send notification
+    1. Find all entries in sample_table in state HAS_ERRORS or SUBMITTING
+        over submitting_time_threshold_min
+    2. If time since last slack_notification is over slack_retry_threshold_min send notification
     """
-    entries_with_errors = find_errors_in_db(
-        db_config, TableName.SAMPLE_TABLE, time_threshold=time_threshold
+    entries_with_errors = find_errors_or_stuck_in_db(
+        db_config, TableName.SAMPLE_TABLE, time_threshold=config.submitting_time_threshold_min
     )
     if len(entries_with_errors) > 0:
         error_msg = (
             f"{config.backend_url}: ENA Submission pipeline found "
-            f"{len(entries_with_errors)} entries"
-            f" in sample_table in status HAS_ERRORS or SUBMITTING for over {time_threshold}m"
+            f"{len(entries_with_errors)} entries in sample_table in status "
+            f"HAS_ERRORS or SUBMITTING for over {config.submitting_time_threshold_min}m"
         )
         send_slack_notification(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            time_threshold=slack_time_threshold,
+            slack_retry_threshold_min=config.slack_retry_threshold_min,
+        )
+        last_retry_time = trigger_retry_if_exists(
+            entries_with_errors,
+            db_config,
+            table_name=TableName.SAMPLE_TABLE,
+            retry_threshold_min=config.retry_threshold_min,
+            last_retry=last_retry_time,
         )
         # TODO: Query ENA to check if sample has in fact been created
         # If created update sample_table
         # If not retry 3 times, then raise for manual intervention
+    return last_retry_time
 
 
 def create_sample(config: Config, stop_event: threading.Event):
@@ -427,6 +432,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         slack_token_default=config.slack_token,
         slack_channel_id_default=config.slack_channel_id,
     )
+    last_retry_time: datetime | None = None
 
     while True:
         if stop_event.is_set():
@@ -437,5 +443,7 @@ def create_sample(config: Config, stop_event: threading.Event):
         submission_table_update(db_config)
 
         sample_table_create(db_config, config, test=config.test)
-        sample_table_handle_errors(db_config, config, slack_config)
+        last_retry_time = sample_table_handle_errors(
+            db_config, config, slack_config, last_retry_time
+        )
         time.sleep(config.time_between_iterations)

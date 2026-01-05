@@ -34,6 +34,7 @@ def analyze_ndjson(path: Path) -> NdjsonAnalysis:
     Raises:
         RuntimeError: If decompression or JSON parsing fails
     """
+    logger.info("Starting analyze_and_transform_ndjson")
     record_count = 0
     pipeline_versions: set[int] = set()
     decompressor = zstandard.ZstdDecompressor()

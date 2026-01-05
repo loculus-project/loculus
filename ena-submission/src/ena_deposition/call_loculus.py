@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from http import HTTPMethod
 from typing import Any
 
+import orjson
 import requests
 
 from .config import Config
@@ -95,8 +96,9 @@ def submit_external_metadata(
         f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
     )
     endpoint: str = "submit-external-metadata"
+    loculus_organism = config.enaOrganisms[organism].loculusOrganism or organism
 
-    url = f"{organism_url(config, organism)}/{endpoint}"
+    url = f"{organism_url(config, loculus_organism)}/{endpoint}"
     params = {
         "externalMetadataUpdater": "ena",
     }
@@ -160,12 +162,13 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
 
     with requests.get(url, headers=headers, timeout=3600, stream=True) as response:
         response.raise_for_status()
-        for line_no, line in enumerate(
-            response.iter_lines(decode_unicode=True), start=1
-        ):
+        for line_no, line in enumerate(response.iter_lines(chunk_size=65536), start=1):
+            if not line:
+                continue
+
             try:
-                full_json = json.loads(line)
-            except json.JSONDecodeError as e:
+                full_json = orjson.loads(line)
+            except orjson.JSONDecodeError as e:
                 head = line[:200]
                 tail = line[-200:] if len(line) > 200 else line  # noqa: PLR2004
 

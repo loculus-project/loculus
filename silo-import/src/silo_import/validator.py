@@ -26,6 +26,7 @@ def validate_record_count(actual: int, expected: int | None) -> None:
         logger.warning("Expected %s records but decoded %s", expected, actual)
         msg = f"Expected {expected} records but got {actual}"
         raise RecordCountValidationError(msg)
+    logger.info("Actual record count matches expected record count")
 
 
 def parse_int_header(value: str | None) -> int | None:
