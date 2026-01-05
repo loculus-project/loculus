@@ -1855,7 +1855,7 @@ defaultOrganisms:
           includeInDownloadsByDefault: true
           preprocessing:
             args:
-              segment: CV-A16-main
+              segment: CV-A16
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_cv_a10
@@ -1863,7 +1863,7 @@ defaultOrganisms:
           onlyForSuborganism: CV-A10
           preprocessing:
             args:
-              segment: CV-A10-main
+              segment: CV-A10
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_a71
@@ -1871,7 +1871,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-A71
           preprocessing:
             args:
-              segment: EV-A71-main
+              segment: EV-A71
             inputs: {input: nextclade.clade}
         - <<: *evMetadataAdd
           name: clade_ev_d68
@@ -1879,7 +1879,7 @@ defaultOrganisms:
           onlyForSuborganism: EV-D68
           preprocessing:
             args:
-              segment: EV-D68-main
+              segment: EV-D68
             inputs: {input: nextclade.clade}
         - name: genotype
           displayName: Genotype
