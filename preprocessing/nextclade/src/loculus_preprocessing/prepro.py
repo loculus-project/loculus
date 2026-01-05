@@ -499,7 +499,9 @@ def process_single(
             unalignedNucleotideSequences=transform_segment_dict(
                 unprocessed.unalignedNucleotideSequences
             ),
-            alignedNucleotideSequences=transform_segment_dict(unprocessed.alignedNucleotideSequences),
+            alignedNucleotideSequences=transform_segment_dict(
+                unprocessed.alignedNucleotideSequences
+            ),
             nucleotideInsertions=transform_segment_dict(unprocessed.nucleotideInsertions),
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
