@@ -43,13 +43,6 @@ spec:
                 sleep 2
               done
               echo "Mock ENA is ready"
-              # Fetch CA certificate for Java truststore
-              echo "Fetching mock ENA CA certificate..."
-              curl -sf http://mock-ena-service/ca.crt > /shared-hosts/mock-ena-ca.crt
-              echo "CA certificate saved"
-          volumeMounts:
-            - name: shared-hosts
-              mountPath: /shared-hosts
         {{- end }}
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
@@ -133,38 +126,9 @@ spec:
               # Use internal service name with HTTP for mock ENA
               value: "http://mock-ena-service"
             {{- end }}
-          {{- if .Values.enableMockEna }}
-          command:
-            - /usr/local/bin/_entrypoint.sh
-            - /bin/bash
-            - -c
-            - |
-              set -e
-              echo "Current /etc/hosts:"
-              cat /etc/hosts
-              # Import mock ENA CA cert into Java truststore for webin-cli
-              if [ -f /shared-hosts/mock-ena-ca.crt ]; then
-                echo "Importing mock ENA CA certificate into Java truststore..."
-                JAVA_BIN=$(which java)
-                JAVA_HOME=$(dirname $(dirname $(readlink -f $JAVA_BIN)))
-                CACERTS="$JAVA_HOME/lib/security/cacerts"
-                if [ -f "$CACERTS" ]; then
-                  keytool -importcert -trustcacerts -noprompt \
-                    -alias mock-ena-ca \
-                    -file /shared-hosts/mock-ena-ca.crt \
-                    -keystore "$CACERTS" \
-                    -storepass changeit 2>/dev/null || echo "CA cert may already be imported"
-                  echo "CA certificate imported to $CACERTS"
-                else
-                  echo "Warning: Java cacerts not found at $CACERTS"
-                fi
-              fi
-              exec ena_deposition --config-file=/config/config.yaml
-          {{- else }}
           args:
             - ena_deposition
             - "--config-file=/config/config.yaml"
-          {{- end }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml

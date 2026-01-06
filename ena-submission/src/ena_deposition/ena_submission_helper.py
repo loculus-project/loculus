@@ -567,6 +567,84 @@ def create_manifest(
     return filename
 
 
+MOCK_ENA_CA_CERT_PATH = Path("/tmp/mock-ena-ca.crt")  # noqa: S108
+
+
+def _import_mock_ena_ca_cert() -> None:
+    """
+    Fetch and import the mock-ENA CA certificate into Java truststore.
+
+    This is called before each webin-cli invocation when MOCK_ENA_URL is set,
+    ensuring we always have the current CA cert even if mock-ena has restarted.
+    """
+    mock_ena_url = os.getenv("MOCK_ENA_URL")
+    if not mock_ena_url:
+        return
+
+    try:
+        # Fetch CA cert from mock-ena service
+        ca_cert_url = f"{mock_ena_url}/ca.crt"
+        logger.info(f"Fetching mock-ENA CA certificate from {ca_cert_url}")
+        response = requests.get(ca_cert_url, timeout=10)
+        response.raise_for_status()
+        new_cert = response.text
+
+        # Check if cert has changed
+        if MOCK_ENA_CA_CERT_PATH.exists():
+            old_cert = MOCK_ENA_CA_CERT_PATH.read_text()
+            if old_cert == new_cert:
+                logger.debug("Mock-ENA CA certificate unchanged, skipping import")
+                return
+
+        # Save the new cert
+        MOCK_ENA_CA_CERT_PATH.write_text(new_cert)
+        logger.info("Mock-ENA CA certificate updated, importing into Java truststore")
+
+        # Find Java truststore
+        java_bin = subprocess.run(  # noqa: S603, S607
+            ["which", "java"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        java_home = Path(java_bin).resolve().parent.parent
+        cacerts = java_home / "lib" / "security" / "cacerts"
+
+        if not cacerts.exists():
+            logger.warning(f"Java truststore not found at {cacerts}")
+            return
+
+        # Import the CA cert (delete old one first to handle updates)
+        subprocess.run(  # noqa: S603, S607
+            [
+                "keytool", "-delete",
+                "-alias", "mock-ena-ca",
+                "-keystore", str(cacerts),
+                "-storepass", "changeit",
+            ],
+            capture_output=True,
+            check=False,  # Ignore error if alias doesn't exist
+        )
+
+        result = subprocess.run(  # noqa: S603, S607
+            [
+                "keytool", "-importcert", "-trustcacerts", "-noprompt",
+                "-alias", "mock-ena-ca",
+                "-file", str(MOCK_ENA_CA_CERT_PATH),
+                "-keystore", str(cacerts),
+                "-storepass", "changeit",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        if result.returncode == 0:
+            logger.info("Successfully imported mock-ENA CA certificate into Java truststore")
+        else:
+            logger.error(f"Failed to import CA cert: {result.stderr}")
+
+    except Exception as e:
+        logger.error(f"Error updating mock-ENA CA certificate: {e}")
+
+
 def post_webin_cli(
     config: Config,
     manifest_filename,
@@ -574,6 +652,9 @@ def post_webin_cli(
     center_name=None,
     test=True,
 ) -> subprocess.CompletedProcess:
+    # Ensure mock-ENA CA cert is up to date before calling webin-cli
+    _import_mock_ena_ca_cert()
+
     logger.debug(
         f"Posting manifest {manifest_filename} to ENA Webin CLI with test={test} and "
         f"center_name={center_name}"
