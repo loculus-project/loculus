@@ -4,7 +4,7 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python=3.14.2  # Pinned to 3.12.x series, check for patch updates within 3.12
+  - python=3.14.2
   - biopython=1.86
   - dpath=2.2.0
   - nextclade=3.18.1
