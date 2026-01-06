@@ -102,6 +102,8 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def finalize(self):
+        if not self.nextclade_sequence_and_datasets:
+            self.alignment_requirement = AlignmentRequirement.NONE
         for segment, ds_list in self.nextclade_sequence_and_datasets.items():
             for ds in ds_list:
                 multi_reference = len(ds_list) > 1
@@ -121,7 +123,7 @@ class Config(BaseModel):
 
     @property
     def multi_segment(self) -> bool:
-        return len(self.nextclade_sequence_and_datasets.keys()) > 1
+        return len(self.nextclade_sequence_and_datasets) > 1
 
     @property
     def flat_nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:

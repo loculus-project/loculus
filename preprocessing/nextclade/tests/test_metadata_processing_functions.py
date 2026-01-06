@@ -674,8 +674,6 @@ def test_preprocessing_without_consensus_sequences(config: Config) -> None:
         ),
     )
 
-    config.nextclade_sequence_and_datasets = [NextcladeSequenceAndDataset()]
-
     result = process_all([sequence_entry_data], "temp_dataset_dir", config)
     processed_entry = result[0].processed_entry
 
