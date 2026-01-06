@@ -455,6 +455,59 @@ async def get_dropbox_sample(sample_id: str):
     return Response(content=xml_response, media_type="application/xml")
 
 
+# Taxonomy endpoints for webin-cli validation
+@app.get("/ena/taxonomy/rest/tax-id/{tax_id}")
+async def get_taxonomy_by_id(tax_id: int):
+    """Return taxonomy info by tax ID for webin-cli validation."""
+    # Return a generic submittable response - webin-cli just needs to know it's valid
+    return {
+        "taxId": tax_id,
+        "scientificName": f"Organism {tax_id}",
+        "commonName": None,
+        "formalName": True,
+        "rank": "species",
+        "division": "VRL",
+        "lineage": "Viruses",
+        "geneticCode": 1,
+        "mitochondrialGeneticCode": 1,
+        "submittable": True,
+    }
+
+
+@app.get("/ena/taxonomy/rest/scientific-name/{name:path}")
+async def get_taxonomy_by_scientific_name(name: str):
+    """Return taxonomy info by scientific name for webin-cli validation."""
+    return {
+        "taxId": 12345,
+        "scientificName": name,
+        "commonName": None,
+        "formalName": True,
+        "rank": "species",
+        "division": "VRL",
+        "lineage": "Viruses",
+        "geneticCode": 1,
+        "mitochondrialGeneticCode": 1,
+        "submittable": True,
+    }
+
+
+@app.get("/ena/taxonomy/rest/any-name/{name:path}")
+async def get_taxonomy_by_any_name(name: str):
+    """Return taxonomy info by any name for webin-cli validation."""
+    return {
+        "taxId": 12345,
+        "scientificName": name,
+        "commonName": None,
+        "formalName": True,
+        "rank": "species",
+        "division": "VRL",
+        "lineage": "Viruses",
+        "geneticCode": 1,
+        "mitochondrialGeneticCode": 1,
+        "submittable": True,
+    }
+
+
 @app.post("/ena/submit/webin-v2/submit")
 async def webin_v2_submit(
     request: Request,
