@@ -133,10 +133,6 @@ spec:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
-            {{- if .Values.enableMockEna }}
-            - name: shared-hosts
-              mountPath: /shared-hosts
-            {{- end }}
         {{- if .Values.enableMockEna }}
         - name: port-forward
           image: alpine/socat:latest
@@ -157,10 +153,6 @@ spec:
         - name: loculus-ena-submission-config-volume
           configMap:
             name: loculus-ena-submission-config
-        {{- if .Values.enableMockEna }}
-        - name: shared-hosts
-          emptyDir: {}
-        {{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
