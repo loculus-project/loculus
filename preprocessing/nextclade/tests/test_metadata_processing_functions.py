@@ -10,7 +10,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
-from loculus_preprocessing.config import Config, NextcladeSequenceAndDataset, get_config
+from loculus_preprocessing.config import Config, get_config
 from loculus_preprocessing.datatypes import (
     ProcessedEntry,
     UnprocessedData,

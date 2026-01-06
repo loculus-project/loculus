@@ -111,6 +111,7 @@ class Config(BaseModel):
                     ds.nextclade_dataset_server = self.nextclade_dataset_server
                 ds.segment = segment
                 set_nuc_sequence_name(multi_reference, self.multi_segment, ds)
+                # TODO: this should be a suffix in future
                 ds.gene_prefix = ds.reference if multi_reference else None
 
             if not any(ds.nextclade_dataset_name for ds in ds_list):
@@ -128,6 +129,10 @@ class Config(BaseModel):
     @property
     def flat_nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:
         return [item for values in self.nextclade_sequence_and_datasets.values() for item in values]
+
+    @property
+    def multi_datasets(self) -> bool:
+        return len(self.flat_nextclade_sequence_and_datasets) > 1
 
 
 def set_nuc_sequence_name(

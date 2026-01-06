@@ -1282,8 +1282,8 @@ multi_pathogen_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "ebola-zaire-VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
+                "ebola-zaire-LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"ebola-zaire": "ebola-zaire"},
@@ -1313,8 +1313,8 @@ multi_pathogen_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+                "ebola-sudan-NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "ebola-sudan-VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={"ebola-sudan": "ebola-sudan"},
@@ -1359,10 +1359,10 @@ multi_pathogen_cases = [
             },
             nucleotideInsertions={},
             alignedAminoAcidSequences={
-                "NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
-                "VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
-                "LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
+                "ebola-sudan-NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
+                "ebola-sudan-VP35EbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "VP35"),
+                "ebola-zaire-VP24EbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "VP24"),
+                "ebola-zaire-LEbolaZaire": ebola_zaire_aa(sequence_with_mutation("ebola-zaire"), "L"),
             },
             aminoAcidInsertions={},
             sequenceNameToFastaId={

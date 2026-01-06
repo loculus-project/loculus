@@ -87,7 +87,7 @@ def mask_terminal_gaps(
 
 
 def create_gene_name(gene: str, gene_prefix: str | None) -> str:
-    return gene_prefix + gene if gene_prefix else gene
+    return gene_prefix + "-" + gene if gene_prefix else gene
 
 
 def parse_nextclade_tsv(
@@ -654,7 +654,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
         for entry in unprocessed
     }
 
-    if not config.multi_segment:
+    if not config.multi_datasets:
         batch = assign_all_single_segments(
             unprocessed,
             config=config,

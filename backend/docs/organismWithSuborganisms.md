@@ -73,16 +73,15 @@ defaultOrganisms:
           segment_classification_method: "minimizer"
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nextclade_sequence_and_datasets:
-            - name: CV-A16 # This does not work yet with multi-segment organisms: https://github.com/loculus-project/loculus/issues/5663
-              nextclade_dataset_name: enpen/enterovirus/cv-a16
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
-              gene_prefix: "CV-A16-"
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-            - name: CV-A10
-              nextclade_dataset_name: enpen/enterovirus/cv-a10
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
-              gene_prefix: "CV-A10-"
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+            main:
+              - reference: CV-A16
+                nextclade_dataset_name: enpen/enterovirus/cv-a16
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - reference: CV-A10
+                nextclade_dataset_name: enpen/enterovirus/cv-a10
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     # `referenceGenomes` is now an object { suborganismName: referenceGenomeOfThatSuborganism }
     # The special suborganism name `singleReference` must be used when there is only a single suborganism
