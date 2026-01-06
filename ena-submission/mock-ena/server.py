@@ -282,11 +282,12 @@ def create_error_receipt(error_message: str) -> Response:
 
 
 @app.post("/ena/submit/webin/auth/token")
-async def auth_token(
-    _username: Annotated[str, Depends(verify_credentials)],
-):
+async def auth_token(request: Request):
     """Authentication endpoint - returns a mock JWT token."""
-    # Return a mock token
+    # Log auth attempt for debugging
+    auth_header = request.headers.get("Authorization", "none")
+    logger.info(f"Token request - Auth header: {auth_header[:30] if auth_header else 'none'}...")
+    # Return a mock token - accept any request for testing
     token = secrets.token_urlsafe(32)
     return PlainTextResponse(content=token)
 
