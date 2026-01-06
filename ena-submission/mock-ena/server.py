@@ -384,12 +384,16 @@ async def webin_v2_submit(
 
     logger.info(f"Assembly submitted successfully: {erz_accession}")
 
-    # Return success response matching webin-cli expected format
+    # Return success response matching webin-cli Receipt format
     return {
-        "accession": erz_accession,
-        "status": "COMPLETED",
-        "message": f"The following analysis accession was assigned to the "
-        f"submission: {erz_accession}",
+        "success": True,
+        "analyses": [{"accession": erz_accession}],
+        "experiments": [],
+        "runs": [],
+        "samples": [],
+        "studies": [],
+        "projects": [],
+        "messages": {"errorMessages": [], "infoMessages": []},
     }
 
 
