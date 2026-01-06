@@ -640,38 +640,6 @@ async def reset_state():
 FTP_UPLOAD_DIR = tempfile.mkdtemp(prefix="mock_ena_ftp_")
 
 
-def start_ftp_server(port: int = 21, ssl: bool = True) -> FTPServer:
-    """Start a mock FTP server that accepts any credentials."""
-    # Create authorizer that accepts any user
-    authorizer = DummyAuthorizer()
-    # Add a user that matches any login - webin-cli uses ENA credentials
-    # We accept any username/password combo
-    authorizer.add_user("Webin-00000", "test", FTP_UPLOAD_DIR, perm="elradfmw")
-    # Also add anonymous for flexibility
-    authorizer.add_anonymous(FTP_UPLOAD_DIR, perm="elradfmw")
-
-    if ssl:
-        handler = TLS_FTPHandler
-        handler.certfile = "certs/chain.crt"
-        handler.keyfile = "certs/server.key"
-        handler.tls_control_required = False
-        handler.tls_data_required = False
-    else:
-        from pyftpdlib.handlers import FTPHandler
-
-        handler = FTPHandler
-
-    handler.authorizer = authorizer
-    handler.passive_ports = range(60000, 60100)
-
-    # Bind to all interfaces
-    server = FTPServer(("0.0.0.0", port), handler)  # noqa: S104
-    server.max_cons = 256
-    server.max_cons_per_ip = 5
-
-    return server
-
-
 class AcceptAllAuthorizer(DummyAuthorizer):
     """Authorizer that accepts any username/password combination."""
 
@@ -700,11 +668,15 @@ def start_mock_ftp_server(port: int = 21, ssl: bool = True) -> None:
         handler = FTPHandler
 
     handler.authorizer = authorizer
-    handler.passive_ports = range(60000, 60100)
+    # Use a single passive port for simplicity with socat forwarding
+    handler.passive_ports = range(60000, 60001)
+    # Tell clients to connect to localhost for passive mode (via socat)
+    handler.masquerade_address = "127.0.0.1"
 
     server = FTPServer(("0.0.0.0", port), handler)  # noqa: S104
     server.max_cons = 256
-    server.max_cons_per_ip = 5
+    # Allow many connections from same IP to handle webin-cli retries
+    server.max_cons_per_ip = 50
 
     logger.info(f"Starting FTP server on port {port} (SSL: {ssl})")
     logger.info(f"FTP upload directory: {FTP_UPLOAD_DIR}")

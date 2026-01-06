@@ -41,6 +41,8 @@ spec:
               name: https
             - containerPort: 21
               name: ftp
+            - containerPort: 60000
+              name: ftp-passive
           env:
             - name: MOCK_ENA_DB_PATH
               value: "/data/mock-ena.db"
@@ -93,4 +95,7 @@ spec:
       nodePort: 30021
       {{- end }}
       name: ftp
+    - port: 60000
+      targetPort: 60000
+      name: ftp-passive
 {{- end }}
