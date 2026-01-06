@@ -407,7 +407,7 @@ async def get_biosample(sample_id: str):
 async def get_dropbox_sample(sample_id: str):
     """
     ENA drop-box sample endpoint for webin-cli validation.
-    Returns sample metadata with taxon and organism info.
+    Returns sample XML with taxon and organism info.
     """
     conn = get_db()
     sample = conn.execute(
@@ -419,13 +419,24 @@ async def get_dropbox_sample(sample_id: str):
     if not sample:
         raise HTTPException(status_code=404, detail=f"Sample {sample_id} not found")
 
-    return {
-        "bioSampleId": sample["biosample_accession"],
-        "taxId": sample["tax_id"] or 2697049,
-        "organism": sample["scientific_name"] or "Unknown organism",
-        "fix": None,
-        "submittable": True,
-    }
+    tax_id = sample["tax_id"] or 2697049
+    scientific_name = sample["scientific_name"] or "Unknown organism"
+    biosample_accession = sample["biosample_accession"]
+
+    # Return XML format expected by webin-cli SampleXmlService
+    xml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+<SAMPLE accession="{sample['accession']}" alias="{sample['alias']}">
+    <IDENTIFIERS>
+        <PRIMARY_ID>{sample['accession']}</PRIMARY_ID>
+        <EXTERNAL_ID namespace="BioSample">{biosample_accession}</EXTERNAL_ID>
+    </IDENTIFIERS>
+    <TITLE>{sample['alias']}</TITLE>
+    <SAMPLE_NAME>
+        <TAXON_ID>{tax_id}</TAXON_ID>
+        <SCIENTIFIC_NAME>{scientific_name}</SCIENTIFIC_NAME>
+    </SAMPLE_NAME>
+</SAMPLE>"""
+    return Response(content=xml_response, media_type="application/xml")
 
 
 @app.post("/ena/submit/webin-v2/submit")
