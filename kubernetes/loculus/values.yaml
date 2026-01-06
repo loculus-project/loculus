@@ -1334,8 +1334,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         log_level: DEBUG
         batch_size: 100
         create_embl_file: true
-        nextclade_sequence_and_datasets:
-          main:
+        segments:
+          - name: main
+            references:
             - reference: singleReference
               genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
@@ -1357,8 +1358,9 @@ defaultOrganisms:
         version: [1, 2]
         configFile:
           <<: *preprocessingConfigFile
-          nextclade_sequence_and_datasets:
-            main:
+          segments:
+            - name: main
+              references:
               - nextclade_dataset_name: nextstrain/ebola/sudan
                 genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
@@ -1439,8 +1441,9 @@ defaultOrganisms:
         version: 1
         configFile:
           <<: *preprocessingConfigFile
-          nextclade_sequence_and_datasets:
-            main:
+          segments:
+            - name: main
+              references:
               - nextclade_dataset_name: nextstrain/wnv/all-lineages
                 genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
@@ -1705,8 +1708,9 @@ defaultOrganisms:
         configFile:
           log_level: DEBUG
           batch_size: 100
-          nextclade_sequence_and_datasets:
-            main:
+          segments:
+            - name: main
+              references:
               - reference: "singleReference"
                 genes: []
     referenceGenomes:
@@ -1777,14 +1781,17 @@ defaultOrganisms:
           molecule_type: "genomic RNA"
           log_level: DEBUG
           minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
-          nextclade_sequence_and_datasets:
-            L:
+          segments:
+            - name: L
+              references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/L
                 genes: [RdRp]
-            M: 
+            - name: M
+              references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/M
                 genes: [GPC]
-            S:
+            - name: S
+              references:
               - nextclade_dataset_name: community/pathoplexus/cchfv/S
                 genes: [NP]
     ingest:
@@ -1906,8 +1913,9 @@ defaultOrganisms:
           # TODO(https://github.com/loculus-project/loculus/issues/5673): switch creation on when multi-path is supported
           create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          nextclade_sequence_and_datasets:
-            main:
+          segments:
+            - name: main
+              references:
               - reference: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]

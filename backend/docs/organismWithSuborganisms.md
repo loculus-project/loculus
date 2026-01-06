@@ -72,8 +72,9 @@ defaultOrganisms:
           # use a minimizer to figure out which suborganism a submitted sequence belongs to
           segment_classification_method: "minimizer"
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
-          nextclade_sequence_and_datasets:
-            main:
+          segments:
+            - name: main
+              references:
               - reference: CV-A16
                 nextclade_dataset_name: enpen/enterovirus/cv-a16
                 accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]

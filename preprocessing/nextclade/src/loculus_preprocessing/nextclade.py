@@ -104,7 +104,7 @@ def parse_nextclade_tsv(
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
     defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
 ]:
-    segment = sequence_and_dataset.name
+    segment = sequence_and_dataset.lapis_name
     with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
@@ -212,7 +212,7 @@ def accepted_sort_matches_or_default(
         accepted_dataset_names.update(dataset.accepted_sort_matches)
     if dataset.nextclade_dataset_name:
         accepted_dataset_names.add(dataset.nextclade_dataset_name)
-    accepted_dataset_names.add(dataset.name)
+    accepted_dataset_names.add(dataset.lapis_name)
     return list(accepted_dataset_names)
 
 
@@ -331,17 +331,17 @@ def assign_segment(  # noqa: C901
         best_hit = best_hits[best_hits["seqName"] == seq_id]
 
         not_found = True
-        for dataset in config.flat_nextclade_sequence_and_datasets:
+        for dataset in config.nextclade_sequence_and_datasets:
             if (
                 config.segment_classification_method == SegmentClassificationMethod.ALIGN
-                and best_hit["segment"].iloc[0] == dataset.name
+                and best_hit["segment"].iloc[0] == dataset.lapis_name
             ) or (
                 config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
                 and best_hit["dataset"].iloc[0] in accepted_sort_matches_or_default(dataset)
             ):
                 not_found = False
                 sort_results_map.setdefault(dataset.segment, []).append(
-                    AssignedSegment(fasta_id=fasta_id, lapis_name=dataset.name)
+                    AssignedSegment(fasta_id=fasta_id, lapis_name=dataset.lapis_name)
                 )
                 break
 
@@ -386,8 +386,6 @@ def assign_segment(  # noqa: C901
             )
         )
 
-    print(segment_assignment)
-
     return segment_assignment
 
 
@@ -405,8 +403,8 @@ def assign_segment_with_nextclade_align(
         input_file = result_dir + "/input.fasta"
         id_map = write_nextclade_input_fasta(unprocessed, input_file)
 
-        for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
-            segment = sequence_and_dataset.name
+        for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+            segment = sequence_and_dataset.lapis_name
             result_file_seg = f"{result_dir}/sort_output_{segment}.tsv"
 
             command = [
@@ -540,11 +538,12 @@ def assign_segment_using_header(
     segment_assignment = SegmentAssignment()
     duplicate_segments = set()
     if not config.nextclade_sequence_and_datasets or not input_unaligned_sequences:
+        print("early return")
         return segment_assignment
     if not config.multi_segment:
         return assign_single_segment(input_unaligned_sequences, config)
-    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
-        segment = sequence_and_dataset.name
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+        segment = sequence_and_dataset.lapis_name
         unaligned_segment = [
             data
             for data in input_unaligned_sequences
@@ -579,7 +578,7 @@ def assign_segment_using_header(
                 f"{', '.join(remaining_segments)}. "
                 "Each metadata entry can have multiple corresponding fasta sequence "
                 "entries with format <submissionId>_<segmentName> valid segments are: "
-                f"{', '.join([seq.name for seq in config.flat_nextclade_sequence_and_datasets])}."
+                f"{', '.join([seq.lapis_name for seq in config.nextclade_sequence_and_datasets])}."
             )
         )
     if len(segment_assignment.unalignedNucleotideSequences) == 0 and not duplicate_segments:
@@ -704,8 +703,8 @@ def enrich_with_nextclade(  # noqa: PLR0914
         AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
     ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
-        for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
-            segment = sequence_and_dataset.name
+        for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+            segment = sequence_and_dataset.lapis_name
             result_dir_seg = result_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
@@ -785,7 +784,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
-    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
         dataset_download_command = [
             arg
             for arg in [
@@ -796,7 +795,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
                 f"--server={
                     sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
                 }",
-                f"--output-dir={dataset_dir}/{sequence_and_dataset.name}",
+                f"--output-dir={dataset_dir}/{sequence_and_dataset.lapis_name}",
                 f"--tag={sequence_and_dataset.nextclade_dataset_tag}"
                 if sequence_and_dataset.nextclade_dataset_tag
                 else "",

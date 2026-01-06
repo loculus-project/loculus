@@ -300,7 +300,7 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_") and output_field[7:] in [
-            seq.name for seq in config.flat_nextclade_sequence_and_datasets
+            seq.lapis_name for seq in config.nextclade_sequence_and_datasets
         ]:
             segment = output_field[7:]
             output_metadata[output_field] = get_sequence_length(
@@ -378,8 +378,8 @@ def alignment_errors_warnings(
         )
         return (errors, warnings)
     aligned_segments = set()
-    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
-        segment = sequence_and_dataset.name
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+        segment = sequence_and_dataset.lapis_name
         if segment not in unprocessed.unalignedNucleotideSequences:
             continue
         if unprocessed.nextcladeMetadata and (
@@ -421,8 +421,8 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
     if not config.create_embl_file or not nextclade_metadata:
         return None
     annotations: dict[str, Any] = {}
-    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
-        segment = sequence_and_dataset.name
+    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+        segment = sequence_and_dataset.lapis_name
         if segment in nextclade_metadata:
             annotations[segment] = None
             if nextclade_metadata[segment]:
@@ -477,6 +477,7 @@ def process_single_unaligned(
     config: Config,
 ) -> SubmissionData:
     """Process a single sequence per config"""
+    print("process single")
     segment_assignment = assign_segment_using_header(
         input_unaligned_sequences=unprocessed.unalignedNucleotideSequences,
         config=config,
@@ -531,6 +532,7 @@ def processed_entry_with_errors(id) -> SubmissionData:
 def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[SubmissionData]:
+    print(config)
     processed_results = []
     logger.debug(f"Processing {len(unprocessed)} unprocessed sequences")
     if config.alignment_requirement != AlignmentRequirement.NONE:

@@ -50,15 +50,32 @@ class AlignmentRequirement(StrEnum):
     NONE = "NONE"
 
 
+class Reference(BaseModel):
+    reference: str = "singleReference"
+    nextclade_dataset_name: str | None = None
+    nextclade_dataset_tag: str | None = None
+    nextclade_dataset_server: str | None = None
+    accepted_sort_matches: list[str] = Field(default_factory=list)
+    genes: list[str] = Field(default_factory=list)
+
+
+class Segment(BaseModel):
+    name: str = "main"
+    references: list[Reference] = Field(default_factory=list)
+
+
 class NextcladeSequenceAndDataset(BaseModel):
+    # name of the processed nucleotide sequence, as expected by the backend and LAPIS
+    lapis_name: str = "main"
     reference: str = "singleReference"
     segment: str = "main"
-    name: str = "main"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str | None = None
     accepted_sort_matches: list[str] = Field(default_factory=list)
     gene_prefix: str | None = None
+    # Names of genes in the Nextclade dataset; when concatenated with gene_prefix
+    # this must match the gene names expected by the backend and LAPIS
     genes: list[str] = Field(default_factory=list)
 
 
@@ -79,9 +96,7 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    nextclade_sequence_and_datasets: dict[SegmentName, list[NextcladeSequenceAndDataset]] = Field(
-        default_factory=dict
-    )
+    segments: list[Segment] = Field(default_factory=list)
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
@@ -102,19 +117,12 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def finalize(self):
-        if not self.nextclade_sequence_and_datasets:
+        if not self.segments:
             self.alignment_requirement = AlignmentRequirement.NONE
-        for segment, ds_list in self.nextclade_sequence_and_datasets.items():
-            for ds in ds_list:
-                multi_reference = len(ds_list) > 1
-                if ds.nextclade_dataset_server is None:
-                    ds.nextclade_dataset_server = self.nextclade_dataset_server
-                ds.segment = segment
-                set_nuc_sequence_name(multi_reference, self.multi_segment, ds)
-                # TODO: this should be a suffix in future
-                ds.gene_prefix = ds.reference if multi_reference else None
-
-            if not any(ds.nextclade_dataset_name for ds in ds_list):
+        for segment in self.segments:
+            if not segment.references or not any(
+                ds.nextclade_dataset_name for ds in segment.references
+            ):
                 self.alignment_requirement = AlignmentRequirement.NONE
 
         if not self.backend_host:  # Set here so we can use organism
@@ -124,27 +132,50 @@ class Config(BaseModel):
 
     @property
     def multi_segment(self) -> bool:
-        return len(self.nextclade_sequence_and_datasets) > 1
+        return len(self.segments) > 1
 
     @property
-    def flat_nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:
-        return [item for values in self.nextclade_sequence_and_datasets.values() for item in values]
+    def nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:
+        def build_ds(
+            reference: Reference | None, segment_name: str, multi_reference: bool
+        ) -> NextcladeSequenceAndDataset:
+            base = reference.model_dump() if reference else {}
+            ds = NextcladeSequenceAndDataset(
+                **base,
+                segment=segment_name,
+            )
+            if ds.nextclade_dataset_server is None:
+                ds.nextclade_dataset_server = self.nextclade_dataset_server
+            ds.lapis_name = set_lapis_name(multi_reference, self.multi_segment, ds)
+            # TODO: this should be a suffix in future
+            ds.gene_prefix = ds.reference if multi_reference else None
+            return ds
+
+        datasets: list[NextcladeSequenceAndDataset] = []
+
+        for segment in self.segments:
+            multi_reference = len(segment.references) > 1
+            references = segment.references or [None]
+
+            datasets.extend(build_ds(ref, segment.name, multi_reference) for ref in references)
+
+        return datasets
 
     @property
     def multi_datasets(self) -> bool:
-        return len(self.flat_nextclade_sequence_and_datasets) > 1
+        return len(self.nextclade_sequence_and_datasets) > 1
 
 
-def set_nuc_sequence_name(
+def set_lapis_name(
     multi_reference: bool, multi_segment: bool, ds: NextcladeSequenceAndDataset
-):
+) -> str:
     match (multi_reference, multi_segment):
         case (False, _):
-            ds.name = ds.segment
+            return ds.segment
         case (True, True):
-            ds.name = f"{ds.segment}-{ds.reference}"
+            return f"{ds.segment}-{ds.reference}"
         case (True, False):
-            ds.name = ds.reference
+            return ds.reference
 
 
 def base_type(field_type: Any) -> type:
