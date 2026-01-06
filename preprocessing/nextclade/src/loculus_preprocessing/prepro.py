@@ -80,7 +80,7 @@ class MultipleValidSegmentsError(Exception):
         self.segments = segments
         super().__init__()
 
-    def getProcessingAnnotation(
+    def get_processing_annotation(
         self, processed_field_name: str, organism: str
     ) -> ProcessingAnnotation:
         return ProcessingAnnotation(
@@ -91,7 +91,10 @@ class MultipleValidSegmentsError(Exception):
             processedFields=[
                 AnnotationSource(name=processed_field_name, type=AnnotationSourceType.METADATA)
             ],
-            message=f"Organism {organism} is configured to only accept one segment per submission, found multiple valid segments: {self.segments}.",
+            message=(
+                f"Organism {organism} is configured to only accept one segment per submission, "
+                f"found multiple valid segments: {self.segments}."
+            ),
         )
 
 
@@ -122,7 +125,7 @@ def add_nextclade_metadata(
     try:
         segment = get_segment(spec, unprocessed.nextcladeMetadata)
     except MultipleValidSegmentsError as e:
-        error_annotation = e.getProcessingAnnotation(
+        error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
         )
         logger.error(error_annotation.message)
@@ -166,7 +169,7 @@ def add_assigned_segment(
         return InputData(
             datum=None,
             errors=[
-                MultipleValidSegmentsError(valid_segments).getProcessingAnnotation(
+                MultipleValidSegmentsError(valid_segments).get_processing_annotation(
                     processed_field_name="ASSIGNED_SEGMENT", organism=config.organism
                 )
             ],
@@ -284,7 +287,7 @@ def get_output_metadata(
             try:
                 segment_name = get_segment(spec, unprocessed.unalignedNucleotideSequences)
             except MultipleValidSegmentsError as e:
-                error_annotation = e.getProcessingAnnotation(
+                error_annotation = e.get_processing_annotation(
                     processed_field_name=output_field, organism=config.organism
                 )
                 logger.error(error_annotation.message)
@@ -297,7 +300,7 @@ def get_output_metadata(
             continue
 
         if output_field.startswith("length_") and output_field[7:] in [
-            seq.name for seq in config.nextclade_sequence_and_datasets
+            seq.name for seq in config.flat_nextclade_sequence_and_datasets
         ]:
             segment = output_field[7:]
             output_metadata[output_field] = get_sequence_length(
@@ -375,7 +378,7 @@ def alignment_errors_warnings(
         )
         return (errors, warnings)
     aligned_segments = set()
-    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
         if segment not in unprocessed.unalignedNucleotideSequences:
             continue

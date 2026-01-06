@@ -6,8 +6,9 @@ molecule_type: "genomic RNA"
 topology: "linear"
 db_name: "Loculus"
 nextclade_sequence_and_datasets:
-- nextclade_dataset_name: ebola-sudan
-  genes: [NPEbolaSudan, VP35EbolaSudan]
+  main:
+    - nextclade_dataset_name: ebola-sudan
+      genes: [NPEbolaSudan, VP35EbolaSudan]
 organism: ebola-sudan-test
 processing_spec:
   completeness:

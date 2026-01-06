@@ -51,6 +51,8 @@ class AlignmentRequirement(StrEnum):
 
 
 class NextcladeSequenceAndDataset(BaseModel):
+    reference: str = "singleReference"
+    segment: str = "main"
     name: str = "main"
     nextclade_dataset_name: str | None = None
     nextclade_dataset_tag: str | None = None
@@ -58,6 +60,9 @@ class NextcladeSequenceAndDataset(BaseModel):
     accepted_sort_matches: list[str] = Field(default_factory=list)
     gene_prefix: str | None = None
     genes: list[str] = Field(default_factory=list)
+
+
+type SegmentName = str
 
 
 class Config(BaseModel):
@@ -74,7 +79,9 @@ class Config(BaseModel):
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
-    nextclade_sequence_and_datasets: list[NextcladeSequenceAndDataset] = Field(default_factory=list)
+    nextclade_sequence_and_datasets: dict[SegmentName, list[NextcladeSequenceAndDataset]] = Field(
+        default_factory=dict
+    )
     processing_spec: dict[str, ProcessingSpec] = Field(default_factory=dict)
 
     alignment_requirement: AlignmentRequirement = AlignmentRequirement.ALL
@@ -95,12 +102,15 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def finalize(self):
-        for ds in self.nextclade_sequence_and_datasets:
-            if ds.nextclade_dataset_server is None:
-                ds.nextclade_dataset_server = self.nextclade_dataset_server
+        for segment, ds_list in self.nextclade_sequence_and_datasets.items():
+            for ds in ds_list:
+                if ds.nextclade_dataset_server is None:
+                    ds.nextclade_dataset_server = self.nextclade_dataset_server
+                ds.segment = segment
+                set_nuc_sequence_name(len(ds_list) > 1, self.multi_segment, ds)
 
-        if not any(ds.nextclade_dataset_name for ds in self.nextclade_sequence_and_datasets):
-            self.alignment_requirement = AlignmentRequirement.NONE
+            if not any(ds.nextclade_dataset_name for ds in ds_list):
+                self.alignment_requirement = AlignmentRequirement.NONE
 
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
@@ -109,7 +119,23 @@ class Config(BaseModel):
 
     @property
     def multi_segment(self) -> bool:
-        return len(self.nextclade_sequence_and_datasets) > 1
+        return len(self.nextclade_sequence_and_datasets.keys()) > 1
+
+    @property
+    def flat_nextclade_sequence_and_datasets(self) -> list[NextcladeSequenceAndDataset]:
+        return [item for values in self.nextclade_sequence_and_datasets.values() for item in values]
+
+
+def set_nuc_sequence_name(
+    multi_reference: bool, multi_segment: bool, ds: NextcladeSequenceAndDataset
+):
+    match (multi_reference, multi_segment):
+        case (False, _):
+            ds.name = ds.segment
+        case (True, True):
+            ds.name = f"{ds.segment}-{ds.reference}"
+        case (True, False):
+            ds.name = ds.reference
 
 
 def base_type(field_type: Any) -> type:

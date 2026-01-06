@@ -1335,8 +1335,9 @@ defaultOrganismConfig: &defaultOrganismConfig
         batch_size: 100
         create_embl_file: true
         nextclade_sequence_and_datasets:
-          - name: "main"
-            genes: []
+          main:
+            - name: singleReference
+              genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
@@ -1357,8 +1358,9 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           nextclade_sequence_and_datasets:
-            - nextclade_dataset_name: nextstrain/ebola/sudan
-              genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+            main:
+              - nextclade_dataset_name: nextstrain/ebola/sudan
+                genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
           taxon_id: 186540
           scientific_name: "Sudan ebolavirus"
@@ -1438,8 +1440,9 @@ defaultOrganisms:
         configFile:
           <<: *preprocessingConfigFile
           nextclade_sequence_and_datasets:
-            - nextclade_dataset_name: nextstrain/wnv/all-lineages
-              genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
+            main:
+              - nextclade_dataset_name: nextstrain/wnv/all-lineages
+                genes: [capsid, prM, env, NS1, NS2A, NS2B, NS3, NS4A, 2K, NS4B, NS5]
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/wnv/data_output
           taxon_id: 11082
           scientific_name: "West Nile virus"
@@ -1703,8 +1706,9 @@ defaultOrganisms:
           log_level: DEBUG
           batch_size: 100
           nextclade_sequence_and_datasets:
-            - name: "main"
-              genes: []
+            main:
+              - name: "singleReference"
+                genes: []
     referenceGenomes:
       singleReference:
         nucleotideSequences:
@@ -1774,15 +1778,15 @@ defaultOrganisms:
           log_level: DEBUG
           minimizer_url: https://loculus-project.github.io/nextclade-sort-minimizers/data/CCHF/minimizer.json
           nextclade_sequence_and_datasets:
-            - name: L
-              nextclade_dataset_name: community/pathoplexus/cchfv/L
-              genes: [RdRp]
-            - name: M
-              nextclade_dataset_name: community/pathoplexus/cchfv/M
-              genes: [GPC]
-            - name: S
-              nextclade_dataset_name: community/pathoplexus/cchfv/S
-              genes: [NP]
+            L:
+              - nextclade_dataset_name: community/pathoplexus/cchfv/L
+                genes: [RdRp]
+            M: 
+              - nextclade_dataset_name: community/pathoplexus/cchfv/M
+                genes: [GPC]
+            S:
+              - nextclade_dataset_name: community/pathoplexus/cchfv/S
+                genes: [NP]
     ingest:
       <<: *ingest
       configFile:
@@ -1903,27 +1907,24 @@ defaultOrganisms:
           create_embl_file: false
           minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
           nextclade_sequence_and_datasets:
-            - name: CV-A16
-              nextclade_dataset_name: enpen/enterovirus/cv-a16
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
-              gene_prefix: "CV-A16-"
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-            - name: CV-A10
-              nextclade_dataset_name: enpen/enterovirus/cv-a10
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
-              gene_prefix: "CV-A10-"
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-            - name: EV-A71
-              nextclade_dataset_name: enpen/enterovirus/ev-a71
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
-              gene_prefix: "EV-A71-"
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-            - name: EV-D68
-              gene_prefix: "EV-D68-"
-              accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
-              genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
-              nextclade_dataset_name: enpen/enterovirus/ev-d68
-              nextclade_dataset_server: https://data.clades.nextstrain.org/v3
+            main:
+              - reference: CV-A16
+                nextclade_dataset_name: enpen/enterovirus/cv-a16
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/cva16", "community/hodcroftlab/enterovirus/enterovirus/linked/CV-A16"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - reference: CV-A10
+                nextclade_dataset_name: enpen/enterovirus/cv-a10
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/CV-A10"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - reference: EV-A71
+                nextclade_dataset_name: enpen/enterovirus/ev-a71
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-A71"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+              - reference: EV-D68
+                accepted_sort_matches: ["community/hodcroftlab/enterovirus/enterovirus/linked/EV-D68"]
+                genes: ["VP4", "VP2", "VP3", "VP1", "2A", "2B", "2C", "3A", "3B", "3C", "3D"]
+                nextclade_dataset_name: enpen/enterovirus/ev-d68
+                nextclade_dataset_server: https://data.clades.nextstrain.org/v3
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/evs-datasets/data_output
     ingest:
       <<: *ingest

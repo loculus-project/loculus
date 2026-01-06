@@ -3,8 +3,10 @@ alignment_requirement: NONE
 log_level: DEBUG
 minimizer_url: TEST
 nextclade_sequence_and_datasets:
-- name: ebola-sudan
-- name: ebola-zaire
+  ebola-sudan:
+    - reference: singleReference
+  ebola-zaire:
+    - reference: singleReference
 organism: multi-ebola-test
 processing_spec:
   length_ebola-sudan:
