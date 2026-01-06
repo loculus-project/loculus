@@ -291,6 +291,13 @@ async def auth_token(
     return PlainTextResponse(content=token)
 
 
+@app.get("/ena/submit/drop-box/cli/{version}")
+async def cli_version_check(version: str):
+    """Version check endpoint for webin-cli."""
+    # Return empty 200 to indicate the version is acceptable
+    return {"version": version, "status": "ok"}
+
+
 @app.post("/ena/submit/webin-v2/submit")
 async def webin_v2_submit(
     request: Request,
