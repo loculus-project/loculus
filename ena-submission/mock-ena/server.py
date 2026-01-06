@@ -460,10 +460,11 @@ async def get_dropbox_sample(sample_id: str):
 async def get_taxonomy_by_id(tax_id: int):
     """Return taxonomy info by tax ID for webin-cli validation."""
     # Return a generic submittable response - webin-cli just needs to know it's valid
+    # Note: commonName must be empty string, not null (webin-cli JSON parsing issue)
     return {
         "taxId": tax_id,
         "scientificName": f"Organism {tax_id}",
-        "commonName": None,
+        "commonName": "",
         "formalName": True,
         "rank": "species",
         "division": "VRL",
@@ -480,7 +481,7 @@ async def get_taxonomy_by_scientific_name(name: str):
     return {
         "taxId": 12345,
         "scientificName": name,
-        "commonName": None,
+        "commonName": "",
         "formalName": True,
         "rank": "species",
         "division": "VRL",
@@ -497,7 +498,7 @@ async def get_taxonomy_by_any_name(name: str):
     return {
         "taxId": 12345,
         "scientificName": name,
-        "commonName": None,
+        "commonName": "",
         "formalName": True,
         "rank": "species",
         "division": "VRL",
