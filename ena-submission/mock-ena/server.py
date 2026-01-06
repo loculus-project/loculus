@@ -403,6 +403,31 @@ async def get_biosample(sample_id: str):
     }
 
 
+@app.get("/ena/submit/drop-box/samples/{sample_id}")
+async def get_dropbox_sample(sample_id: str):
+    """
+    ENA drop-box sample endpoint for webin-cli validation.
+    Returns sample metadata with taxon and organism info.
+    """
+    conn = get_db()
+    sample = conn.execute(
+        "SELECT * FROM samples WHERE accession = ? OR biosample_accession = ?",
+        (sample_id, sample_id),
+    ).fetchone()
+    conn.close()
+
+    if not sample:
+        raise HTTPException(status_code=404, detail=f"Sample {sample_id} not found")
+
+    return {
+        "bioSampleId": sample["biosample_accession"],
+        "taxId": sample["tax_id"] or 2697049,
+        "organism": sample["scientific_name"] or "Unknown organism",
+        "fix": None,
+        "submittable": True,
+    }
+
+
 @app.post("/ena/submit/webin-v2/submit")
 async def webin_v2_submit(
     request: Request,
