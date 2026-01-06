@@ -1,5 +1,6 @@
 """Mock ENA server for testing ENA submission pipeline."""
 
+import gzip
 import logging
 import os
 import secrets
@@ -511,7 +512,7 @@ async def webin_v2_submit(
     form = await request.form()
     num_segments = 1  # Default to 1 segment
 
-    for key, value in form.items():
+    for _, value in form.items():
         if isinstance(value, UploadFile):
             content = (await value.read()).decode("utf-8")
         elif isinstance(value, str):
@@ -519,7 +520,7 @@ async def webin_v2_submit(
         else:
             continue
 
-        # Parse XML to count FILE elements (each segment has one FILE)
+        # Parse XML to find chromosome_list file and count segments
         if "<WEBIN>" in content or "<ANALYSIS" in content:
             try:
                 parsed = xmltodict.parse(content)
@@ -530,11 +531,27 @@ async def webin_v2_submit(
                 files = analysis.get("FILES", {})
                 file_list = files.get("FILE", [])
                 # Handle single file (dict) vs multiple files (list)
-                if isinstance(file_list, list):
-                    num_segments = len(file_list)
-                elif file_list:
-                    num_segments = 1
-                logger.info(f"Detected {num_segments} segments from submission XML")
+                if not isinstance(file_list, list):
+                    file_list = [file_list] if file_list else []
+
+                # Find chromosome_list file and read it to count segments
+                for f in file_list:
+                    if f.get("@filetype") == "chromosome_list":
+                        filename = f.get("@filename", "")
+                        # The filename is relative to FTP upload dir
+                        # e.g., "webin-cli-test/genome/LOC.../tmp123.gz"
+                        full_path = Path(FTP_UPLOAD_DIR) / filename
+                        if full_path.exists():
+                            try:
+                                with gzip.open(full_path, "rt") as gz:
+                                    lines = [l.strip() for l in gz if l.strip()]
+                                    num_segments = len(lines)
+                                    logger.info(f"Read chromosome_list: {num_segments} segments")
+                            except Exception as e:
+                                logger.warning(f"Failed to read chromosome_list: {e}")
+                        break
+
+                logger.info(f"Detected {num_segments} segments from submission")
             except Exception as e:
                 logger.warning(f"Failed to parse submission XML for segment count: {e}")
 
