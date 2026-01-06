@@ -1336,7 +1336,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         create_embl_file: true
         nextclade_sequence_and_datasets:
           main:
-            - name: singleReference
+            - reference: singleReference
               genes: []
         nextclade_dataset_server: https://data.clades.nextstrain.org/v3
   ingest: &ingest
@@ -1707,7 +1707,7 @@ defaultOrganisms:
           batch_size: 100
           nextclade_sequence_and_datasets:
             main:
-              - name: "singleReference"
+              - reference: "singleReference"
                 genes: []
     referenceGenomes:
       singleReference:
