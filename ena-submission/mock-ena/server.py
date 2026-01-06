@@ -9,6 +9,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
+import urllib.error
+import urllib.parse
+import urllib.request
+
 import xmltodict
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse, Response
@@ -455,58 +459,38 @@ async def get_dropbox_sample(sample_id: str):
     return Response(content=xml_response, media_type="application/xml")
 
 
-# Taxonomy endpoints for webin-cli validation
+# Taxonomy endpoints - proxy to real ENA for accurate responses
 @app.get("/ena/taxonomy/rest/tax-id/{tax_id}")
 async def get_taxonomy_by_id(tax_id: int):
-    """Return taxonomy info by tax ID for webin-cli validation."""
-    # Return a generic submittable response - webin-cli just needs to know it's valid
-    # Note: commonName must be empty string, not null (webin-cli JSON parsing issue)
-    return {
-        "taxId": tax_id,
-        "scientificName": f"Organism {tax_id}",
-        "commonName": "",
-        "formalName": True,
-        "rank": "species",
-        "division": "VRL",
-        "lineage": "Viruses",
-        "geneticCode": 1,
-        "mitochondrialGeneticCode": 1,
-        "submittable": True,
-    }
+    """Proxy taxonomy request to real ENA."""
+    url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/{tax_id}"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            return Response(content=response.read(), media_type="application/json")
+    except urllib.error.HTTPError as e:
+        raise HTTPException(status_code=e.code, detail=str(e))
 
 
 @app.get("/ena/taxonomy/rest/scientific-name/{name:path}")
 async def get_taxonomy_by_scientific_name(name: str):
-    """Return taxonomy info by scientific name for webin-cli validation."""
-    return {
-        "taxId": 12345,
-        "scientificName": name,
-        "commonName": "",
-        "formalName": True,
-        "rank": "species",
-        "division": "VRL",
-        "lineage": "Viruses",
-        "geneticCode": 1,
-        "mitochondrialGeneticCode": 1,
-        "submittable": True,
-    }
+    """Proxy taxonomy request to real ENA."""
+    url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/{urllib.parse.quote(name)}"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            return Response(content=response.read(), media_type="application/json")
+    except urllib.error.HTTPError as e:
+        raise HTTPException(status_code=e.code, detail=str(e))
 
 
 @app.get("/ena/taxonomy/rest/any-name/{name:path}")
 async def get_taxonomy_by_any_name(name: str):
-    """Return taxonomy info by any name for webin-cli validation."""
-    return {
-        "taxId": 12345,
-        "scientificName": name,
-        "commonName": "",
-        "formalName": True,
-        "rank": "species",
-        "division": "VRL",
-        "lineage": "Viruses",
-        "geneticCode": 1,
-        "mitochondrialGeneticCode": 1,
-        "submittable": True,
-    }
+    """Proxy taxonomy request to real ENA."""
+    url = f"https://www.ebi.ac.uk/ena/taxonomy/rest/any-name/{urllib.parse.quote(name)}"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            return Response(content=response.read(), media_type="application/json")
+    except urllib.error.HTTPError as e:
+        raise HTTPException(status_code=e.code, detail=str(e))
 
 
 @app.post("/ena/submit/webin-v2/submit")
