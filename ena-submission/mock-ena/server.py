@@ -507,10 +507,38 @@ async def webin_v2_submit(
     Handle Webin V2 assembly submission.
     This is called by the webin-cli for genome submissions.
     """
-    # Read the request body
-    body = await request.body()
+    # Parse multipart form data to extract the XML and count segments
+    form = await request.form()
+    num_segments = 1  # Default to 1 segment
+
+    for key, value in form.items():
+        if isinstance(value, UploadFile):
+            content = (await value.read()).decode("utf-8")
+        elif isinstance(value, str):
+            content = value
+        else:
+            continue
+
+        # Parse XML to count FILE elements (each segment has one FILE)
+        if "<WEBIN>" in content or "<ANALYSIS" in content:
+            try:
+                parsed = xmltodict.parse(content)
+                # Navigate to FILES in the ANALYSIS
+                webin = parsed.get("WEBIN", parsed)
+                analysis_set = webin.get("ANALYSIS_SET", {})
+                analysis = analysis_set.get("ANALYSIS", {})
+                files = analysis.get("FILES", {})
+                file_list = files.get("FILE", [])
+                # Handle single file (dict) vs multiple files (list)
+                if isinstance(file_list, list):
+                    num_segments = len(file_list)
+                elif file_list:
+                    num_segments = 1
+                logger.info(f"Detected {num_segments} segments from submission XML")
+            except Exception as e:
+                logger.warning(f"Failed to parse submission XML for segment count: {e}")
+
     logger.info(f"Received webin-v2 submission from user: {username}")
-    logger.info(f"Body preview: {body[:500] if body else 'empty'}...")
 
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
 
@@ -524,14 +552,21 @@ async def webin_v2_submit(
         (erz_accession, timestamp),
     )
 
-    # Also generate GCA and INSDC accessions immediately for testing
+    # Generate GCA and INSDC accessions
     gca_accession = generate_accession("GCA_", "genome") + ".1"
-    insdc_accession = f"OZ{_counters['chromosome']:06d}"
-    _counters["chromosome"] += 1
+
+    # Generate INSDC accession range based on number of segments
+    start_num = _counters["chromosome"]
+    end_num = start_num + num_segments - 1
+    if num_segments > 1:
+        insdc_accession_range = f"OZ{start_num:06d}-OZ{end_num:06d}"
+    else:
+        insdc_accession_range = f"OZ{start_num:06d}"
+    _counters["chromosome"] += num_segments
 
     conn.execute(
         "UPDATE assemblies SET gca_accession = ?, insdc_accessions = ? WHERE erz_accession = ?",
-        (gca_accession, insdc_accession, erz_accession),
+        (gca_accession, insdc_accession_range, erz_accession),
     )
     conn.commit()
     conn.close()
