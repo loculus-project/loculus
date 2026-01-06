@@ -692,8 +692,9 @@ async def reset_state():
     return {"status": "ok", "message": "State cleared"}
 
 
-# FTP Server setup
-FTP_UPLOAD_DIR = tempfile.mkdtemp(prefix="mock_ena_ftp_")
+# FTP Server setup - use fixed path so HTTP and FTP processes share the same directory
+FTP_UPLOAD_DIR = "/data/ftp-uploads"
+os.makedirs(FTP_UPLOAD_DIR, exist_ok=True)
 
 
 class AcceptAllAuthorizer(DummyAuthorizer):
