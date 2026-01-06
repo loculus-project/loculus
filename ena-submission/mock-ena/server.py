@@ -59,6 +59,8 @@ def init_db():
             accession TEXT NOT NULL,
             biosample_accession TEXT NOT NULL,
             submission_accession TEXT NOT NULL,
+            tax_id INTEGER,
+            scientific_name TEXT,
             created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS assemblies (
@@ -224,6 +226,13 @@ def handle_sample_submission(sample_xml: str, timestamp: str) -> Response:
         alias = sample.get("@alias", "unknown")
         logger.info(f"Processing sample with alias: {alias}")
 
+        # Extract taxon info from SAMPLE_NAME
+        sample_name = sample.get("SAMPLE_NAME", {})
+        tax_id = sample_name.get("TAXON_ID")
+        scientific_name = sample_name.get("SCIENTIFIC_NAME", "Unknown organism")
+        if tax_id:
+            tax_id = int(tax_id)
+
         # Check for duplicate
         conn = get_db()
         existing = conn.execute(
@@ -239,12 +248,12 @@ def handle_sample_submission(sample_xml: str, timestamp: str) -> Response:
         biosample_accession = generate_accession("SAMEA", "biosample")
         submission_accession = generate_accession("ERA", "submission")
 
-        # Store in database
+        # Store in database with taxon info
         conn.execute(
             """INSERT INTO samples
-               (alias, accession, biosample_accession, submission_accession, created_at)
-               VALUES (?, ?, ?, ?, ?)""",
-            (alias, sample_accession, biosample_accession, submission_accession, timestamp),
+               (alias, accession, biosample_accession, submission_accession, tax_id, scientific_name, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (alias, sample_accession, biosample_accession, submission_accession, tax_id, scientific_name, timestamp),
         )
         conn.commit()
         conn.close()
@@ -326,6 +335,16 @@ async def cli_reference_project(
     _username: Annotated[str, Depends(verify_credentials)],
 ):
     """Project/Study reference endpoint for webin-cli validation."""
+    conn = get_db()
+    # Look up by accession (PRJEB...)
+    project = conn.execute(
+        "SELECT * FROM projects WHERE accession = ?", (project_id,)
+    ).fetchone()
+    conn.close()
+
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+
     return {
         "bioProjectId": project_id,
         "locusTags": [],
@@ -339,9 +358,48 @@ async def cli_reference_sample(
     _username: Annotated[str, Depends(verify_credentials)],
 ):
     """Sample reference endpoint for webin-cli validation."""
+    conn = get_db()
+    # Look up by ERS accession or SAMEA biosample accession
+    sample = conn.execute(
+        "SELECT * FROM samples WHERE accession = ? OR biosample_accession = ?",
+        (sample_id, sample_id),
+    ).fetchone()
+    conn.close()
+
+    if not sample:
+        raise HTTPException(status_code=404, detail=f"Sample {sample_id} not found")
+
     return {
-        "bioSampleId": sample_id,
+        "bioSampleId": sample["biosample_accession"],
         "canBeReferenced": True,
+    }
+
+
+@app.get("/biosamples/v2/samples/{sample_id}")
+async def get_biosample(sample_id: str):
+    """
+    Biosamples API endpoint for webin-cli sample validation.
+    Returns sample metadata including taxon information.
+    Looks up by ERS accession or SAMEA biosample accession.
+    """
+    conn = get_db()
+    # Look up by either ERS accession or SAMEA biosample accession
+    sample = conn.execute(
+        "SELECT * FROM samples WHERE accession = ? OR biosample_accession = ?",
+        (sample_id, sample_id),
+    ).fetchone()
+    conn.close()
+
+    if not sample:
+        raise HTTPException(status_code=404, detail=f"Sample {sample_id} not found")
+
+    return {
+        "accession": sample["biosample_accession"],
+        "name": sample["alias"],
+        "taxId": sample["tax_id"] or 2697049,  # Default to SARS-CoV-2 if not set
+        "characteristics": {
+            "organism": [{"text": sample["scientific_name"] or "Unknown organism"}],
+        },
     }
 
 
