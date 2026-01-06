@@ -20,9 +20,7 @@ from factory_methods import (
 
 from loculus_preprocessing.config import AlignmentRequirement, Config, get_config
 from loculus_preprocessing.datatypes import (
-    AnnotationSource,
     AnnotationSourceType,
-    ProcessingAnnotation,
     SegmentClassificationMethod,
     SubmissionData,
     UnprocessedData,
