@@ -319,6 +319,31 @@ async def cli_version_check(version: str):
     }
 
 
+@app.get("/ena/submit/drop-box/cli/reference/project/{project_id}")
+async def cli_reference_project(
+    project_id: str,
+    _username: Annotated[str, Depends(verify_credentials)],
+):
+    """Project/Study reference endpoint for webin-cli validation."""
+    return {
+        "bioProjectId": project_id,
+        "locusTags": [],
+        "canBeReferenced": True,
+    }
+
+
+@app.get("/ena/submit/drop-box/cli/reference/sample/{sample_id}")
+async def cli_reference_sample(
+    sample_id: str,
+    _username: Annotated[str, Depends(verify_credentials)],
+):
+    """Sample reference endpoint for webin-cli validation."""
+    return {
+        "bioSampleId": sample_id,
+        "canBeReferenced": True,
+    }
+
+
 @app.post("/ena/submit/webin-v2/submit")
 async def webin_v2_submit(
     request: Request,
