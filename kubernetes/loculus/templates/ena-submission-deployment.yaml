@@ -22,18 +22,15 @@ spec:
         component: loculus-ena-submission
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- if .Values.enableMockEna }}
+      hostAliases:
+        - ip: "127.0.0.1"
+          hostnames:
+            - "wwwdev.ebi.ac.uk"
+            - "www.ebi.ac.uk"
+      {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
-        - name: setup-hosts-permissions
-          image: busybox:latest
-          securityContext:
-            runAsUser: 0
-          command:
-            - sh
-            - -c
-            - |
-              chmod 666 /etc/hosts
-              echo "Made /etc/hosts writable"
         - name: wait-for-mock-ena
           image: nicolaka/netshoot:latest
           command:
@@ -45,11 +42,7 @@ spec:
                 echo "Mock ENA not ready yet, waiting..."
                 sleep 2
               done
-              # Resolve mock-ena-service IP and add to /etc/hosts
-              MOCK_IP=$(getent hosts mock-ena-service | awk '{print $1}')
-              echo "Mock ENA is ready at IP: $MOCK_IP"
-              echo "$MOCK_IP wwwdev.ebi.ac.uk www.ebi.ac.uk" >> /etc/hosts
-              echo "Added mock ENA hosts to /etc/hosts"
+              echo "Mock ENA is ready"
               # Fetch CA certificate for Java truststore
               echo "Fetching mock ENA CA certificate..."
               curl -sf http://mock-ena-service/ca.crt > /shared-hosts/mock-ena-ca.crt
@@ -180,6 +173,22 @@ spec:
             - name: shared-hosts
               mountPath: /shared-hosts
             {{- end }}
+        {{- if .Values.enableMockEna }}
+        - name: port-forward
+          image: alpine/socat:latest
+          args:
+            - "TCP-LISTEN:443,fork,reuseaddr"
+            - "TCP:mock-ena-service:443"
+          securityContext:
+            runAsUser: 0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+        {{- end }}
       volumes:
         - name: loculus-ena-submission-config-volume
           configMap:
