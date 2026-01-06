@@ -538,17 +538,20 @@ async def webin_v2_submit(
 
     logger.info(f"Assembly submitted successfully: {erz_accession}")
 
-    # Return success response matching webin-cli Receipt format
-    return {
-        "success": True,
-        "analyses": [{"accession": erz_accession}],
-        "experiments": [],
-        "runs": [],
-        "samples": [],
-        "studies": [],
-        "projects": [],
-        "messages": {"errorMessages": [], "infoMessages": []},
-    }
+    # Generate submission accession
+    submission_accession = generate_accession("ERA", "submission")
+
+    # Return XML receipt format expected by webin-cli
+    receipt_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<RECEIPT receiptDate="{timestamp}" success="true">
+    <ANALYSIS accession="{erz_accession}" alias="webin-genome"/>
+    <SUBMISSION accession="{submission_accession}" alias="webin-genome"/>
+    <MESSAGES>
+        <INFO>Submission has been committed.</INFO>
+    </MESSAGES>
+</RECEIPT>"""
+
+    return Response(content=receipt_xml, media_type="application/xml")
 
 
 @app.get("/ena/submit/report/analysis-process/{erz_accession}")
