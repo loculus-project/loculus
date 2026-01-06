@@ -131,26 +131,34 @@ spec:
             {{- end }}
           {{- if .Values.enableMockEna }}
           command:
-            - sh
+            - /usr/local/bin/_entrypoint.sh
+            - /bin/bash
             - -c
             - |
+              set -e
               # Append mock ENA hosts to /etc/hosts for webin-cli
               if [ -f /shared-hosts/mock-ena-hosts ]; then
-                cat /shared-hosts/mock-ena-hosts >> /etc/hosts
-                echo "Added mock ENA hosts entries:"
+                cat /shared-hosts/mock-ena-hosts >> /etc/hosts 2>/dev/null || true
+                echo "Mock ENA hosts entries:"
                 cat /shared-hosts/mock-ena-hosts
               fi
               # Import mock ENA CA cert into Java truststore for webin-cli
               if [ -f /shared-hosts/mock-ena-ca.crt ]; then
                 echo "Importing mock ENA CA certificate into Java truststore..."
-                JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                # Find Java cacerts location
+                JAVA_BIN=$(which java)
+                JAVA_HOME=$(dirname $(dirname $(readlink -f $JAVA_BIN)))
                 CACERTS="$JAVA_HOME/lib/security/cacerts"
-                keytool -importcert -trustcacerts -noprompt \
-                  -alias mock-ena-ca \
-                  -file /shared-hosts/mock-ena-ca.crt \
-                  -keystore "$CACERTS" \
-                  -storepass changeit 2>/dev/null || echo "CA cert may already be imported"
-                echo "CA certificate imported"
+                if [ -f "$CACERTS" ]; then
+                  keytool -importcert -trustcacerts -noprompt \
+                    -alias mock-ena-ca \
+                    -file /shared-hosts/mock-ena-ca.crt \
+                    -keystore "$CACERTS" \
+                    -storepass changeit 2>/dev/null || echo "CA cert may already be imported"
+                  echo "CA certificate imported to $CACERTS"
+                else
+                  echo "Warning: Java cacerts not found at $CACERTS"
+                fi
               fi
               exec ena_deposition --config-file=/config/config.yaml
           {{- else }}
