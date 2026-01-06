@@ -22,13 +22,6 @@ spec:
         component: loculus-ena-submission
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
-      {{- if and .Values.enableMockEna .Values.mockEnaClusterIP }}
-      hostAliases:
-        - ip: {{ .Values.mockEnaClusterIP | quote }}
-          hostnames:
-            - "wwwdev.ebi.ac.uk"
-            - "www.ebi.ac.uk"
-      {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
         - name: wait-for-mock-ena
@@ -42,7 +35,17 @@ spec:
                 echo "Mock ENA not ready yet, waiting..."
                 sleep 2
               done
-              echo "Mock ENA is ready!"
+              # Resolve mock-ena-service IP and write to shared hosts file
+              MOCK_IP=$(getent hosts mock-ena-service | awk '{print $1}')
+              echo "Mock ENA is ready at IP: $MOCK_IP"
+              echo "$MOCK_IP wwwdev.ebi.ac.uk www.ebi.ac.uk" > /shared-hosts/mock-ena-hosts
+              # Fetch CA certificate for Java truststore
+              echo "Fetching mock ENA CA certificate..."
+              curl -sf http://mock-ena-service/ca.crt > /shared-hosts/mock-ena-ca.crt
+              echo "CA certificate saved"
+          volumeMounts:
+            - name: shared-hosts
+              mountPath: /shared-hosts
         {{- end }}
         - name: ena-submission-flyway
           image: "ghcr.io/loculus-project/ena-submission-flyway:{{ $dockerTag }}"
@@ -126,17 +129,51 @@ spec:
               # Use internal service name with HTTP for mock ENA
               value: "http://mock-ena-service"
             {{- end }}
+          {{- if .Values.enableMockEna }}
+          command:
+            - sh
+            - -c
+            - |
+              # Append mock ENA hosts to /etc/hosts for webin-cli
+              if [ -f /shared-hosts/mock-ena-hosts ]; then
+                cat /shared-hosts/mock-ena-hosts >> /etc/hosts
+                echo "Added mock ENA hosts entries:"
+                cat /shared-hosts/mock-ena-hosts
+              fi
+              # Import mock ENA CA cert into Java truststore for webin-cli
+              if [ -f /shared-hosts/mock-ena-ca.crt ]; then
+                echo "Importing mock ENA CA certificate into Java truststore..."
+                JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                CACERTS="$JAVA_HOME/lib/security/cacerts"
+                keytool -importcert -trustcacerts -noprompt \
+                  -alias mock-ena-ca \
+                  -file /shared-hosts/mock-ena-ca.crt \
+                  -keystore "$CACERTS" \
+                  -storepass changeit 2>/dev/null || echo "CA cert may already be imported"
+                echo "CA certificate imported"
+              fi
+              exec ena_deposition --config-file=/config/config.yaml
+          {{- else }}
           args:
             - ena_deposition
             - "--config-file=/config/config.yaml"
+          {{- end }}
           volumeMounts:
             - name: loculus-ena-submission-config-volume
               mountPath: /config/config.yaml
               subPath: config.yaml
+            {{- if .Values.enableMockEna }}
+            - name: shared-hosts
+              mountPath: /shared-hosts
+            {{- end }}
       volumes:
         - name: loculus-ena-submission-config-volume
           configMap:
             name: loculus-ena-submission-config
+        {{- if .Values.enableMockEna }}
+        - name: shared-hosts
+          emptyDir: {}
+        {{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob

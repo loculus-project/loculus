@@ -24,7 +24,6 @@ RUN mkdir -p /data
 # Expose both HTTP and HTTPS ports
 EXPOSE 80 443
 
-# Default to HTTP for internal cluster use
-# Override with MOCK_ENA_USE_HTTPS=true for HTTPS
-# Use chain.crt (server + CA) to send full certificate chain
-CMD ["sh", "-c", "if [ \"$MOCK_ENA_USE_HTTPS\" = 'true' ]; then uvicorn server:app --host 0.0.0.0 --port 443 --ssl-keyfile certs/server.key --ssl-certfile certs/chain.crt; else uvicorn server:app --host 0.0.0.0 --port 80; fi"]
+# Run both HTTP (port 80) and HTTPS (port 443) servers
+# HTTP for internal Python code, HTTPS for webin-cli (Java)
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port 443 --ssl-keyfile certs/server.key --ssl-certfile certs/chain.crt & uvicorn server:app --host 0.0.0.0 --port 80"]

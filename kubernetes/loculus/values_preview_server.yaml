@@ -1,6 +1,5 @@
 createTestAccounts: true
 enableMockEna: true
-mockEnaClusterIP: "10.43.200.200"
 secrets:
   smtp-password:
     type: sealedsecret

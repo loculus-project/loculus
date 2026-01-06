@@ -37,11 +37,11 @@ spec:
           ports:
             - containerPort: 80
               name: http
+            - containerPort: 443
+              name: https
           env:
             - name: MOCK_ENA_DB_PATH
               value: "/data/mock-ena.db"
-            - name: MOCK_ENA_USE_HTTPS
-              value: "false"
           volumeMounts:
             - name: data
               mountPath: /data
@@ -69,9 +69,6 @@ metadata:
   name: mock-ena-service
 spec:
   {{- template "loculus.serviceType" . }}
-  {{- if .Values.mockEnaClusterIP }}
-  clusterIP: {{ .Values.mockEnaClusterIP }}
-  {{- end }}
   selector:
     app: loculus
     component: mock-ena
@@ -82,4 +79,10 @@ spec:
       nodePort: 30080
       {{- end }}
       name: http
+    - port: 443
+      targetPort: 443
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30443
+      {{- end }}
+      name: https
 {{- end }}
