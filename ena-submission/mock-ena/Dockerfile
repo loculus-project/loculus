@@ -18,12 +18,14 @@ COPY . .
 RUN chmod +x certs/generate-certs.sh && certs/generate-certs.sh && \
     cat certs/server.crt certs/ca.crt > certs/chain.crt
 
-# Create directory for SQLite database
-RUN mkdir -p /data
+# Create directory for SQLite database and FTP uploads
+RUN mkdir -p /data /ftp-uploads
 
-# Expose both HTTP and HTTPS ports
-EXPOSE 80 443
+# Make startup script executable
+RUN chmod +x /app/start.sh
 
-# Run both HTTP (port 80) and HTTPS (port 443) servers
-# HTTP for internal Python code, HTTPS for webin-cli (Java)
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port 443 --ssl-keyfile certs/server.key --ssl-certfile certs/chain.crt & uvicorn server:app --host 0.0.0.0 --port 80"]
+# Expose HTTP, HTTPS, and FTP ports
+EXPOSE 80 443 21 60000-60100
+
+# Run all servers
+CMD ["/app/start.sh"]

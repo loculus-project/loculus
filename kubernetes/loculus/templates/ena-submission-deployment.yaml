@@ -28,6 +28,7 @@ spec:
           hostnames:
             - "wwwdev.ebi.ac.uk"
             - "www.ebi.ac.uk"
+            - "webin2.ebi.ac.uk"
       {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
@@ -134,11 +135,25 @@ spec:
               mountPath: /config/config.yaml
               subPath: config.yaml
         {{- if .Values.enableMockEna }}
-        - name: port-forward
+        - name: port-forward-https
           image: alpine/socat:latest
           args:
             - "TCP-LISTEN:443,fork,reuseaddr"
             - "TCP:mock-ena-service:443"
+          securityContext:
+            runAsUser: 0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+        - name: port-forward-ftp
+          image: alpine/socat:latest
+          args:
+            - "TCP-LISTEN:21,fork,reuseaddr"
+            - "TCP:mock-ena-service:21"
           securityContext:
             runAsUser: 0
           resources:

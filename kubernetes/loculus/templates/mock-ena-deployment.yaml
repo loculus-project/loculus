@@ -39,6 +39,8 @@ spec:
               name: http
             - containerPort: 443
               name: https
+            - containerPort: 21
+              name: ftp
           env:
             - name: MOCK_ENA_DB_PATH
               value: "/data/mock-ena.db"
@@ -85,4 +87,10 @@ spec:
       nodePort: 30443
       {{- end }}
       name: https
+    - port: 21
+      targetPort: 21
+      {{- if ne $.Values.environment "server" }}
+      nodePort: 30021
+      {{- end }}
+      name: ftp
 {{- end }}

@@ -4,6 +4,7 @@ import logging
 import os
 import secrets
 import sqlite3
+import tempfile
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,6 +18,9 @@ import xmltodict
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import TLS_FTPHandler
+from pyftpdlib.servers import FTPServer
 from starlette.datastructures import UploadFile
 
 logging.basicConfig(level=logging.INFO)
@@ -632,7 +636,90 @@ async def reset_state():
     return {"status": "ok", "message": "State cleared"}
 
 
+# FTP Server setup
+FTP_UPLOAD_DIR = tempfile.mkdtemp(prefix="mock_ena_ftp_")
+
+
+def start_ftp_server(port: int = 21, ssl: bool = True) -> FTPServer:
+    """Start a mock FTP server that accepts any credentials."""
+    # Create authorizer that accepts any user
+    authorizer = DummyAuthorizer()
+    # Add a user that matches any login - webin-cli uses ENA credentials
+    # We accept any username/password combo
+    authorizer.add_user("Webin-00000", "test", FTP_UPLOAD_DIR, perm="elradfmw")
+    # Also add anonymous for flexibility
+    authorizer.add_anonymous(FTP_UPLOAD_DIR, perm="elradfmw")
+
+    if ssl:
+        handler = TLS_FTPHandler
+        handler.certfile = "certs/chain.crt"
+        handler.keyfile = "certs/server.key"
+        handler.tls_control_required = False
+        handler.tls_data_required = False
+    else:
+        from pyftpdlib.handlers import FTPHandler
+
+        handler = FTPHandler
+
+    handler.authorizer = authorizer
+    handler.passive_ports = range(60000, 60100)
+
+    # Bind to all interfaces
+    server = FTPServer(("0.0.0.0", port), handler)  # noqa: S104
+    server.max_cons = 256
+    server.max_cons_per_ip = 5
+
+    return server
+
+
+class AcceptAllAuthorizer(DummyAuthorizer):
+    """Authorizer that accepts any username/password combination."""
+
+    def validate_authentication(self, username: str, password: str, handler) -> bool:
+        """Accept any credentials."""
+        # Dynamically add the user if they don't exist
+        if username not in self.user_table:
+            self.add_user(username, password, FTP_UPLOAD_DIR, perm="elradfmw")
+        return True
+
+
+def start_mock_ftp_server(port: int = 21, ssl: bool = True) -> None:
+    """Start FTP server in background thread."""
+    authorizer = AcceptAllAuthorizer()
+    authorizer.add_anonymous(FTP_UPLOAD_DIR, perm="elradfmw")
+
+    if ssl:
+        handler = TLS_FTPHandler
+        handler.certfile = "certs/chain.crt"
+        handler.keyfile = "certs/server.key"
+        handler.tls_control_required = False
+        handler.tls_data_required = False
+    else:
+        from pyftpdlib.handlers import FTPHandler
+
+        handler = FTPHandler
+
+    handler.authorizer = authorizer
+    handler.passive_ports = range(60000, 60100)
+
+    server = FTPServer(("0.0.0.0", port), handler)  # noqa: S104
+    server.max_cons = 256
+    server.max_cons_per_ip = 5
+
+    logger.info(f"Starting FTP server on port {port} (SSL: {ssl})")
+    logger.info(f"FTP upload directory: {FTP_UPLOAD_DIR}")
+
+    # Run in background thread
+    ftp_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    ftp_thread.start()
+
+    return server
+
+
 if __name__ == "__main__":
     import uvicorn
+
+    # Start FTP server in background
+    start_mock_ftp_server(port=21, ssl=True)
 
     uvicorn.run(app, host="0.0.0.0", port=8090)  # noqa: S104
