@@ -1245,18 +1245,6 @@ def test_create_flatfile():
     assert embl_str == expected_embl
 
 
-def multiple_valid_segments_error(metadata_name: str) -> ProcessingAnnotation:
-    return ProcessingAnnotation(
-        unprocessedFields=[
-            AnnotationSource(name="ebola-sudan", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
-            AnnotationSource(name="ebola-zaire", type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE),
-        ],
-        processedFields=[AnnotationSource(name=metadata_name, type=AnnotationSourceType.METADATA)],
-        message="Organism multi-ebola-test is configured to only accept one segment per submission,"
-        " found multiple valid segments: ['ebola-sudan', 'ebola-zaire'].",
-    )
-
-
 multi_pathogen_cases = [
     Case(
         name="with only first one uploaded",
@@ -1337,50 +1325,29 @@ multi_pathogen_cases = [
         expected_metadata={
             "totalInsertedNucs": None,
             "totalSnps": None,
-            "length": None,
+            "length": 0,
         },
-        expected_errors=[
-            ProcessingAnnotation(
-                unprocessedFields=[
-                    AnnotationSource(name="ASSIGNED_SEGMENT", type=AnnotationSourceType.METADATA)
-                ],
-                processedFields=[
-                    AnnotationSource(name="subtype", type=AnnotationSourceType.METADATA)
-                ],
-                message="Metadata field subtype is required.",
-            ),
-            multiple_valid_segments_error(metadata_name="ASSIGNED_SEGMENT"),
-            multiple_valid_segments_error(metadata_name="totalInsertions"),
-            multiple_valid_segments_error(metadata_name="totalSubstitutions"),
-        ],
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper.sequence_annotation_helper(
+                    "Multiple sequences (with fasta ids: ebola-zaire, ebola-sudan) align to main"
+                    " - only one entry is allowed.",
+                ),
+                ProcessingAnnotationHelper(
+                    ["ASSIGNED_SEGMENT"],
+                    ["subtype"],
+                    "Metadata field subtype is required.",
+                ),
+            ]
+        ),
         expected_warnings=[],
         expected_processed_alignment=ProcessedAlignment(
-            unalignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
-            alignedNucleotideSequences={
-                "ebola-sudan": sequence_with_mutation("ebola-sudan"),
-                "ebola-zaire": sequence_with_mutation("ebola-zaire"),
-            },
+            unalignedNucleotideSequences={},
+            alignedNucleotideSequences={},
             nucleotideInsertions={},
-            alignedAminoAcidSequences={
-                "ebola-sudan-NPEbolaSudan": ebola_sudan_aa(sequence_with_mutation("single"), "NP"),
-                "ebola-sudan-VP35EbolaSudan": ebola_sudan_aa(
-                    sequence_with_mutation("single"), "VP35"
-                ),
-                "ebola-zaire-VP24EbolaZaire": ebola_zaire_aa(
-                    sequence_with_mutation("ebola-zaire"), "VP24"
-                ),
-                "ebola-zaire-LEbolaZaire": ebola_zaire_aa(
-                    sequence_with_mutation("ebola-zaire"), "L"
-                ),
-            },
+            alignedAminoAcidSequences={},
             aminoAcidInsertions={},
-            sequenceNameToFastaId={
-                "ebola-sudan": "ebola-sudan",
-                "ebola-zaire": "ebola-zaire",
-            },
+            sequenceNameToFastaId={},
         ),
     ),
 ]

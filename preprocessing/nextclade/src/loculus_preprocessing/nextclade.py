@@ -7,6 +7,7 @@ import subprocess  # noqa: S404
 import sys
 from collections import defaultdict
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal
@@ -203,15 +204,15 @@ def run_sort(
 
 
 def accepted_sort_matches_or_default(
-    segment: NextcladeSequenceAndDataset,
+    dataset: NextcladeSequenceAndDataset,
 ) -> list[str]:
     accepted_dataset_names = set()
 
-    if segment.accepted_sort_matches:
-        accepted_dataset_names.update(segment.accepted_sort_matches)
-    if segment.nextclade_dataset_name:
-        accepted_dataset_names.add(segment.nextclade_dataset_name)
-    accepted_dataset_names.add(segment.name)
+    if dataset.accepted_sort_matches:
+        accepted_dataset_names.update(dataset.accepted_sort_matches)
+    if dataset.nextclade_dataset_name:
+        accepted_dataset_names.add(dataset.nextclade_dataset_name)
+    accepted_dataset_names.add(dataset.name)
     return list(accepted_dataset_names)
 
 
@@ -281,6 +282,12 @@ def write_nextclade_input_fasta(
     return id_map
 
 
+@dataclass
+class AssignedSegment:
+    fasta_id: FastaId
+    lapis_name: str
+
+
 def assign_segment(  # noqa: C901
     entry: UnprocessedEntry,
     id_map: dict[tuple[AccessionVersion, FastaId], str],
@@ -295,7 +302,7 @@ def assign_segment(  # noqa: C901
     4. If no sequences assigned and no errors about missing/duplicate segments, add error about
        no sequence data found (e.g. when alignment requirement is ANY and all sequences miss)
     """
-    sort_results_map: dict[SegmentName, list[str]] = defaultdict(list)
+    sort_results_map: dict[SegmentName, list[AssignedSegment]] = defaultdict(list)
     segment_assignment = SegmentAssignment()
 
     has_missing_segments = False
@@ -324,16 +331,18 @@ def assign_segment(  # noqa: C901
         best_hit = best_hits[best_hits["seqName"] == seq_id]
 
         not_found = True
-        for segment in config.flat_nextclade_sequence_and_datasets:
+        for dataset in config.flat_nextclade_sequence_and_datasets:
             if (
                 config.segment_classification_method == SegmentClassificationMethod.ALIGN
-                and best_hit["segment"].iloc[0] == segment.name
+                and best_hit["segment"].iloc[0] == dataset.name
             ) or (
                 config.segment_classification_method == SegmentClassificationMethod.MINIMIZER
-                and best_hit["dataset"].iloc[0] in accepted_sort_matches_or_default(segment)
+                and best_hit["dataset"].iloc[0] in accepted_sort_matches_or_default(dataset)
             ):
                 not_found = False
-                sort_results_map.setdefault(segment.name, []).append(fasta_id)
+                sort_results_map.setdefault(dataset.segment, []).append(
+                    AssignedSegment(fasta_id=fasta_id, lapis_name=dataset.name)
+                )
                 break
 
         if not_found:
@@ -349,20 +358,20 @@ def assign_segment(  # noqa: C901
             else:
                 segment_assignment.alert.warnings.append(annotation)
 
-    for segment_name, ids in sort_results_map.items():
+    for segment, ids in sort_results_map.items():
         if len(ids) > 1:
             has_duplicate_segments = True
             segment_assignment.alert.errors.append(
                 sequence_annotation(
-                    f"Multiple sequences (with fasta ids: {', '.join(ids)}) align "
-                    f"to {segment_name} - only one entry is allowed."
+                    f"Multiple sequences (with fasta ids: {', '.join([id.fasta_id for id in ids])})"
+                    f" align to {segment} - only one entry is allowed."
                 )
             )
             continue
 
-        segment_assignment.sequenceNameToFastaId[segment_name] = ids[0]
-        segment_assignment.unalignedNucleotideSequences[segment_name] = (
-            entry.data.unalignedNucleotideSequences[ids[0]]
+        segment_assignment.sequenceNameToFastaId[ids[0].lapis_name] = ids[0].fasta_id
+        segment_assignment.unalignedNucleotideSequences[ids[0].lapis_name] = (
+            entry.data.unalignedNucleotideSequences[ids[0].fasta_id]
         )
 
     if (
@@ -376,6 +385,8 @@ def assign_segment(  # noqa: C901
                 "check you are submitting to the correct organism.",
             )
         )
+
+    print(segment_assignment)
 
     return segment_assignment
 
