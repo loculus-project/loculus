@@ -294,8 +294,17 @@ async def auth_token(
 @app.get("/ena/submit/drop-box/cli/{version}")
 async def cli_version_check(version: str):
     """Version check endpoint for webin-cli."""
-    # Return valid=true to indicate the version is acceptable
-    return {"version": version, "valid": True}
+    # Return all required fields for webin-cli version check (snake_case)
+    return {
+        "valid": True,
+        "update": False,
+        "expire": False,
+        "min_version": "1.0.0",
+        "latest_version": version,
+        "next_min_version": None,
+        "next_min_version_date": None,
+        "comment": None,
+    }
 
 
 @app.post("/ena/submit/webin-v2/submit")
