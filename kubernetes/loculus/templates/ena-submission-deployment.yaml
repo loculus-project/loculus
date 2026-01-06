@@ -24,6 +24,16 @@ spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
       initContainers:
         {{- if .Values.enableMockEna }}
+        - name: setup-hosts-permissions
+          image: busybox:latest
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              chmod 666 /etc/hosts
+              echo "Made /etc/hosts writable"
         - name: wait-for-mock-ena
           image: nicolaka/netshoot:latest
           command:
@@ -35,10 +45,11 @@ spec:
                 echo "Mock ENA not ready yet, waiting..."
                 sleep 2
               done
-              # Resolve mock-ena-service IP and write to shared hosts file
+              # Resolve mock-ena-service IP and add to /etc/hosts
               MOCK_IP=$(getent hosts mock-ena-service | awk '{print $1}')
               echo "Mock ENA is ready at IP: $MOCK_IP"
-              echo "$MOCK_IP wwwdev.ebi.ac.uk www.ebi.ac.uk" > /shared-hosts/mock-ena-hosts
+              echo "$MOCK_IP wwwdev.ebi.ac.uk www.ebi.ac.uk" >> /etc/hosts
+              echo "Added mock ENA hosts to /etc/hosts"
               # Fetch CA certificate for Java truststore
               echo "Fetching mock ENA CA certificate..."
               curl -sf http://mock-ena-service/ca.crt > /shared-hosts/mock-ena-ca.crt
@@ -136,16 +147,11 @@ spec:
             - -c
             - |
               set -e
-              # Append mock ENA hosts to /etc/hosts for webin-cli
-              if [ -f /shared-hosts/mock-ena-hosts ]; then
-                cat /shared-hosts/mock-ena-hosts >> /etc/hosts 2>/dev/null || true
-                echo "Mock ENA hosts entries:"
-                cat /shared-hosts/mock-ena-hosts
-              fi
+              echo "Current /etc/hosts:"
+              cat /etc/hosts
               # Import mock ENA CA cert into Java truststore for webin-cli
               if [ -f /shared-hosts/mock-ena-ca.crt ]; then
                 echo "Importing mock ENA CA certificate into Java truststore..."
-                # Find Java cacerts location
                 JAVA_BIN=$(which java)
                 JAVA_HOME=$(dirname $(dirname $(readlink -f $JAVA_BIN)))
                 CACERTS="$JAVA_HOME/lib/security/cacerts"
