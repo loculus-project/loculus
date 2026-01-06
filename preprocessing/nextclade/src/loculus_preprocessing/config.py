@@ -104,10 +104,12 @@ class Config(BaseModel):
     def finalize(self):
         for segment, ds_list in self.nextclade_sequence_and_datasets.items():
             for ds in ds_list:
+                multi_reference = len(ds_list) > 1
                 if ds.nextclade_dataset_server is None:
                     ds.nextclade_dataset_server = self.nextclade_dataset_server
                 ds.segment = segment
-                set_nuc_sequence_name(len(ds_list) > 1, self.multi_segment, ds)
+                set_nuc_sequence_name(multi_reference, self.multi_segment, ds)
+                ds.gene_prefix = ds.reference if multi_reference else None
 
             if not any(ds.nextclade_dataset_name for ds in ds_list):
                 self.alignment_requirement = AlignmentRequirement.NONE
