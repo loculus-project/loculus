@@ -291,6 +291,18 @@ async def auth_token(
     return PlainTextResponse(content=token)
 
 
+@app.post("/ena/submit/webin/auth/login")
+async def auth_login(
+    _username: Annotated[str, Depends(verify_credentials)],
+):
+    """Login endpoint for webin-cli - returns authentication info."""
+    # Response must have authenticated=true and principle matching ^Webin-\d+
+    return {
+        "authenticated": True,
+        "principle": "Webin-00000",
+    }
+
+
 @app.get("/ena/submit/drop-box/cli/{version}")
 async def cli_version_check(version: str):
     """Version check endpoint for webin-cli."""
