@@ -22,6 +22,13 @@ spec:
         component: loculus-ena-submission
     spec:
       {{- include "possiblePriorityClassName" . | nindent 6 }}
+      {{- if and .Values.enableMockEna .Values.mockEnaClusterIP }}
+      hostAliases:
+        - ip: {{ .Values.mockEnaClusterIP | quote }}
+          hostnames:
+            - "wwwdev.ebi.ac.uk"
+            - "www.ebi.ac.uk"
+      {{- end }}
       initContainers:
         {{- if .Values.enableMockEna }}
         - name: wait-for-mock-ena
