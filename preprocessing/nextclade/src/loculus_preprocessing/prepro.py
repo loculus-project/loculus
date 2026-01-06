@@ -421,7 +421,7 @@ def unpack_annotations(config, nextclade_metadata: dict[str, Any] | None) -> dic
     if not config.create_embl_file or not nextclade_metadata:
         return None
     annotations: dict[str, Any] = {}
-    for sequence_and_dataset in config.nextclade_sequence_and_datasets:
+    for sequence_and_dataset in config.flat_nextclade_sequence_and_datasets:
         segment = sequence_and_dataset.name
         if segment in nextclade_metadata:
             annotations[segment] = None
