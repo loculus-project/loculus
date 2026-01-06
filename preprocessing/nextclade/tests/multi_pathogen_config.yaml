@@ -7,11 +7,11 @@ nextclade_dataset_server: TEST
 nextclade_sequence_and_datasets:
 - name: ebola-sudan
   nextclade_dataset_name: ebola-dataset/ebola-sudan
-  accepted_sort_matches: ebola-sudan
+  accepted_sort_matches: [ebola-sudan]
   genes: [NPEbolaSudan, VP35EbolaSudan]
 - name: ebola-zaire
   nextclade_dataset_name: ebola-dataset/ebola-zaire
-  accepted_sort_matches: ebola-zaire
+  accepted_sort_matches: [ebola-zaire]
   genes: [VP24EbolaZaire, LEbolaZaire]
 organism: multi-ebola-test
 processing_spec:
