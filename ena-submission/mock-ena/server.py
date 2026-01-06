@@ -497,6 +497,7 @@ async def get_taxonomy_by_any_name(name: str):
         raise HTTPException(status_code=e.code, detail=str(e))
 
 
+@app.post("/ena/submit/webin-v2/submit/")
 @app.post("/ena/submit/webin-v2/submit")
 async def webin_v2_submit(
     request: Request,
