@@ -329,6 +329,22 @@ async def cli_version_check(version: str):
     }
 
 
+@app.post("/ena/submit/drop-box/cli/ignore_errors/")
+async def cli_ignore_errors():
+    """Endpoint for webin-cli to report ignored errors."""
+    return {"success": True}
+
+
+@app.post("/ena/submit/drop-box/cli/submission/v2/ratelimit/")
+async def cli_ratelimit():
+    """Rate limit check endpoint for webin-cli."""
+    return {
+        "allowed": True,
+        "remaining": 1000,
+        "resetTime": None,
+    }
+
+
 @app.get("/ena/submit/drop-box/cli/reference/project/{project_id}")
 async def cli_reference_project(
     project_id: str,
