@@ -4,7 +4,7 @@ FROM rust:1.92-slim AS rust-builder
 WORKDIR /build
 
 ARG REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
-ARG COMMIT=0679453f5cbd20a813cd964e8600c40aad9165af
+ARG COMMIT=8d38b2739524cca52857d9d09ff05e9373cea4df
 
 # Install the binary into /usr/local/cargo/bin
 RUN cargo install --git $REPO --rev $COMMIT
