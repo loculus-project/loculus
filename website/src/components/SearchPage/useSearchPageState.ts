@@ -6,11 +6,16 @@ import type { FieldValues, FieldValueUpdate, Schema, SetSomeFieldValues } from '
 import type { OrderDirection } from '../../types/lapis.ts';
 import {
     COLUMN_VISIBILITY_PREFIX,
+    HALF_SCREEN_PARAM,
     MetadataFilterSchema,
     MUTATION_KEY,
     NULL_QUERY_VALUE,
+    SELECTED_SEQ_PARAM,
     VISIBILITY_PREFIX,
 } from '../../utils/search.ts';
+
+// UI-only parameters that should not reset pagination when changed
+const UI_ONLY_PARAMS = new Set([SELECTED_SEQ_PARAM, HALF_SCREEN_PARAM]);
 
 type UseSearchPageStateParams = {
     initialQueryDict: QueryState;
@@ -53,6 +58,9 @@ export function useSearchPageState({
      * For multi-select fields, we handle fieldValuesToSet as an array where:
      * - If value is an array, it sets multiple values for that field
      * - If value is '' or null, it clears the field
+     *
+     * Resets pagination to page 1 unless the parameter is a UI-only parameter
+     * (defined in UI_ONLY_PARAMS) that doesn't affect search results.
      */
     const setSomeFieldValues: SetSomeFieldValues = useCallback(
         (...fieldValuesToSet: FieldValueUpdate[]) => {
@@ -91,13 +99,18 @@ export function useSearchPageState({
 
                 return newState;
             });
-            setPage(1);
+
+            // Only reset pagination if not a UI-only parameter
+            const shouldResetPagination = fieldValuesToSet.some(([key]) => !UI_ONLY_PARAMS.has(key));
+            if (shouldResetPagination) {
+                setPage(1);
+            }
         },
-        [setState, setPage, hiddenFieldValues],
+        [setState, setPage, hiddenFieldValues, schema.suborganismIdentifierField, filterSchema],
     );
 
     const [previewedSeqId, setPreviewedSeqId] = useUrlParamState<string | null>(
-        'selectedSeq',
+        SELECTED_SEQ_PARAM,
         state,
         null,
         setSomeFieldValues,
@@ -105,7 +118,7 @@ export function useSearchPageState({
         (value) => !value,
     );
     const [previewHalfScreen, setPreviewHalfScreen] = useUrlParamState(
-        'halfScreen',
+        HALF_SCREEN_PARAM,
         state,
         false,
         setSomeFieldValues,

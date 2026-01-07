@@ -23,6 +23,10 @@ export const NULL_QUERY_VALUE = '_null_';
 
 export const MUTATION_KEY = 'mutation';
 
+// UI-only parameters that don't affect search results
+export const SELECTED_SEQ_PARAM = 'selectedSeq';
+export const HALF_SCREEN_PARAM = 'halfScreen';
+
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
