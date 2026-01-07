@@ -634,7 +634,7 @@
                           "description": "Details of the nextclade dataset for each reference",
                           "additionalProperties": false,
                           "properties": {
-                            "reference": {
+                            "reference_name": {
                               "groups": ["nextcladeSegment"],
                               "docsIncludePrefix": false,
                               "type": "string",
