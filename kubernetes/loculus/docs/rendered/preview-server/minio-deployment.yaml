@@ -5,22 +5,22 @@ metadata:
   name: minio-policies
 data:
   policy.json: |
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Action": "s3:GetObject",
-          "Resource": "arn:aws:s3:::loculus-preview-private/*",
-          "Principal": "*",
-          "Condition": {
-            "StringEquals": {
-              "s3:ExistingObjectTag/public": "true"
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::loculus-preview-private/*",
+            "Principal": "*",
+            "Condition": {
+              "StringEquals": {
+                "s3:ExistingObjectTag/public": "true"
+              }
             }
           }
-        }
-      ]
-    }
+        ]
+      }
 ---
 # Source: loculus/templates/minio-deployment.yaml
 apiVersion: apps/v1
