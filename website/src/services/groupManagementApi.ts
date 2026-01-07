@@ -72,8 +72,8 @@ const getAllGroupsEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
-            name: "name",
-            type: "Query",
+            name: 'name',
+            type: 'Query',
             schema: z.string().optional(),
         },
     ],

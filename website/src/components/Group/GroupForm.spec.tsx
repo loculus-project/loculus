@@ -13,7 +13,7 @@ const dummyGetAllGroups = async (_groupName?: string): Promise<GetAllGroupsResul
     return {
         succeeded: true,
         groups: [],
-    }
+    };
 };
 
 describe('GroupForm', () => {
@@ -21,7 +21,14 @@ describe('GroupForm', () => {
         const formTitle = 'Create group';
         const buttonText = 'Submit';
 
-        render(<GroupForm title={formTitle} buttonText={buttonText} onSubmit={noOpSubmit} getAllGroups={dummyGetAllGroups} />);
+        render(
+            <GroupForm
+                title={formTitle}
+                buttonText={buttonText}
+                onSubmit={noOpSubmit}
+                getAllGroups={dummyGetAllGroups}
+            />,
+        );
 
         expect(screen.getByRole('heading', { name: formTitle })).toBeVisible();
         expect(screen.getByRole('button', { name: buttonText })).toBeVisible();

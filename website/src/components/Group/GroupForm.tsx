@@ -20,16 +20,16 @@ import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
 
 const PLACEHOLDER_NEWGROUP: NewGroup = {
-    groupName: "",
-    institution: "",
+    groupName: '',
+    institution: '',
     address: {
-        line1: "",
-        city: "",
-        postalCode: "",
-        country: "",
+        line1: '',
+        city: '',
+        postalCode: '',
+        country: '',
     },
-    contactEmail: "",
-}
+    contactEmail: '',
+};
 
 interface GroupFormProps {
     /**
@@ -51,13 +51,13 @@ interface GroupFormProps {
      */
     onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
     /**
-     * Handler that can be used to check if the name of the group being created is 
+     * Handler that can be used to check if the name of the group being created is
      * already in use by another group in the database.
      * @param groupName Group name to filter the results by
-     * @returns A result object where the `groups` property 
+     * @returns A result object where the `groups` property
      *          is an array of existing Groups
      */
-    getAllGroups: (groupName?: string) => Promise<GetAllGroupsResult>
+    getAllGroups: (groupName?: string) => Promise<GetAllGroupsResult>;
 }
 
 export type GroupSubmitSuccess = {
@@ -121,7 +121,6 @@ export const GroupForm: FC<GroupFormProps> = ({ title, buttonText, defaultGroupD
         // Checks have already been done in `submitFromForm`, so we can just submit here
         await submitGroup(group);
     };
-
 
     return (
         <div className='p-4 max-w-6xl mx-auto'>

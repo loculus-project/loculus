@@ -16,7 +16,7 @@ interface GroupEditFormProps {
 const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
     const { groupId, ...groupInfo } = prefetchedGroupDetails.group;
 
-    const { getAllGroups }  = useGetAllGroups({
+    const { getAllGroups } = useGetAllGroups({
         clientConfig,
         accessToken,
     });

@@ -25,7 +25,7 @@ const getContinueSubmissionFromSearchParams = (searchParamsString: string): Cont
 };
 
 const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessToken, searchParams }) => {
-    const { getAllGroups }  = useGetAllGroups({
+    const { getAllGroups } = useGetAllGroups({
         clientConfig,
         accessToken,
     });

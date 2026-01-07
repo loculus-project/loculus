@@ -76,14 +76,8 @@ export const useGroupCreation = ({
     };
 };
 
-export const useGetAllGroups = ({
-    clientConfig,
-    accessToken,
-}: {
-    clientConfig: ClientConfig;
-    accessToken: string;
-}) => {
-    const {zodios} = useGroupManagementClient(clientConfig);
+export const useGetAllGroups = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
+    const { zodios } = useGroupManagementClient(clientConfig);
 
     const getAllGroups = useCallback(
         async (groupName?: string) => callGetAllGroups(accessToken, zodios)(groupName),
@@ -93,7 +87,7 @@ export const useGetAllGroups = ({
     return {
         getAllGroups,
     };
-}
+};
 
 export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
     const { zodios } = useGroupManagementClient(clientConfig);
@@ -148,12 +142,12 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
 }
 
 type GetAllGroupsSuccess = {
-    succeeded: true,
-    groups: Group[],
+    succeeded: true;
+    groups: Group[];
 };
 type GetAllGroupsError = {
-    succeeded: false,
-    errorMessage: string,
+    succeeded: false;
+    errorMessage: string;
 };
 export type GetAllGroupsResult = GetAllGroupsSuccess | GetAllGroupsError;
 
@@ -162,7 +156,7 @@ function callGetAllGroups(accessToken: string, zodios: ZodiosInstance<typeof gro
         try {
             const existingGroups = await zodios.getAllGroups({
                 headers: createAuthorizationHeader(accessToken),
-                queries: { name: groupName }
+                queries: { name: groupName },
             });
             return {
                 succeeded: true,
@@ -175,7 +169,7 @@ function callGetAllGroups(accessToken: string, zodios: ZodiosInstance<typeof gro
                 errorMessage: message,
             } as GetAllGroupsError;
         }
-    }
+    };
 }
 
 type EditGroupSuccess = {
