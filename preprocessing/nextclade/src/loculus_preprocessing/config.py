@@ -156,8 +156,7 @@ class Config(BaseModel):
 
         for segment in self.segments:
             multi_reference = len(segment.references) > 1
-            references = segment.references or [None]
-
+            references: list[Reference] | list[None] = segment.references or [None]
             datasets.extend(build_ds(ref, segment.name, multi_reference) for ref in references)
 
         return datasets
