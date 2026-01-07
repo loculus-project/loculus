@@ -98,11 +98,10 @@ class MultipleSequencesPerSegmentError(Exception):
         )
 
 
-def get_lapis_name(
-    spec: ProcessingSpec, data_per_dataset: dict[SequenceName, Any] | None, config: Config
+def get_name(
+    segment: SegmentName, data_per_dataset: dict[SequenceName, Any] | None, config: Config
 ) -> str | None:
-    """Returns the lapis_name of the dataset to use based on spec args"""
-    segment = spec.args.get("segment", "main") if spec.args else "main"
+    """Returns the name of the dataset to use based on spec args"""
     valid_datasets = (
         [key for key, value in data_per_dataset.items() if value] if data_per_dataset else []
     )
@@ -125,7 +124,8 @@ def add_nextclade_metadata(
     config: Config,
 ) -> InputData:
     try:
-        lapis_name = get_lapis_name(spec, unprocessed.nextcladeMetadata, config)
+        segment = spec.args.get("segment", "main") if spec.args else "main"
+        sequence_name = get_name(str(segment), unprocessed.nextcladeMetadata, config)
     except MultipleSequencesPerSegmentError as e:
         error_annotation = e.get_processing_annotation(
             processed_field_name=nextclade_path, organism=config.organism
@@ -135,13 +135,13 @@ def add_nextclade_metadata(
 
     if (
         not unprocessed.nextcladeMetadata
-        or lapis_name not in unprocessed.nextcladeMetadata
-        or unprocessed.nextcladeMetadata[lapis_name] is None
+        or sequence_name not in unprocessed.nextcladeMetadata
+        or unprocessed.nextcladeMetadata[sequence_name] is None
     ):
         return InputData(datum=None)
 
     raw: str | None = dpath.get(
-        unprocessed.nextcladeMetadata[lapis_name],
+        unprocessed.nextcladeMetadata[sequence_name],
         nextclade_path,
         separator=".",
         default=None,
@@ -265,12 +265,11 @@ def processed_entry_no_alignment(  # noqa: PLR0913, PLR0917
 
 def get_sequence_length(
     unaligned_nucleotide_sequences: dict[SegmentName, NucleotideSequence | None],
-    segment: SegmentName | None,
+    name: SequenceName | None,
 ) -> int:
-    if segment is None:
+    if name is None:
         return 0
-    # TODO: fix this
-    sequence = unaligned_nucleotide_sequences.get(segment)
+    sequence = unaligned_nucleotide_sequences.get(name)
     return len(sequence) if sequence else 0
 
 
@@ -288,7 +287,8 @@ def get_output_metadata(
         input_fields: list[str] = []
         if output_field == "length":
             try:
-                lapis_name = get_lapis_name(spec, unprocessed.unalignedNucleotideSequences, config)
+                segment = spec.args.get("segment", "main") if spec.args else "main"
+                sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
             except MultipleSequencesPerSegmentError as e:
                 error_annotation = e.get_processing_annotation(
                     processed_field_name=output_field, organism=config.organism
@@ -298,7 +298,7 @@ def get_output_metadata(
                 continue
 
             output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, lapis_name
+                unprocessed.unalignedNucleotideSequences, sequence_name
             )
             continue
 
@@ -306,8 +306,9 @@ def get_output_metadata(
             seq.name for seq in config.nextclade_sequence_and_datasets
         ]:
             segment = output_field[7:]
+            sequence_name = get_name(str(segment), unprocessed.unalignedNucleotideSequences, config)
             output_metadata[output_field] = get_sequence_length(
-                unprocessed.unalignedNucleotideSequences, segment
+                unprocessed.unalignedNucleotideSequences, sequence_name
             )
             continue
 
