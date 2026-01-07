@@ -401,7 +401,6 @@ def alignment_errors_warnings(
             if config.multi_datasets and config.alignment_requirement == AlignmentRequirement.ANY:
                 warnings.append(annotation)
             else:
-                # TODO: fix this
                 errors.append(annotation)
             continue
         aligned_sequences.add(name)
