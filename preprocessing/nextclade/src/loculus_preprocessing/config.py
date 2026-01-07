@@ -167,6 +167,9 @@ class Config(BaseModel):
 
     def get_dataset_by_name(self, name: str) -> NextcladeSequenceAndDataset:
         datasets = [ds for ds in self.nextclade_sequence_and_datasets if ds.name == name]
+        if len(datasets) == 0:
+            msg = f"No dataset found with name: {name}"
+            raise ValueError(msg)
         if len(datasets) > 1:
             raise Exception
         return datasets[0]

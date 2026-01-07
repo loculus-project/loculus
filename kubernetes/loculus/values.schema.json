@@ -638,7 +638,7 @@
                               "groups": ["nextcladeSegment"],
                               "docsIncludePrefix": false,
                               "type": "string",
-                              "description": "Name of the nucleotide sequence to which this dataset applies - defaults to 'main'."
+                              "description": "Name of the reference to use for alignment - defaults to 'singleReference'."
                             },
                             "nextclade_dataset_name": {
                               "groups": ["nextcladeSegment"],
